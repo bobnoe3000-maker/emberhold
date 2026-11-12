@@ -547,6 +547,57 @@ window.renderFaceBoard = async (o = {}) => {
   }
   return board.toDataURL('image/png');
 };
+// the face spike (faces-spike.cjs, 2026-11-12): the same looks as today's 3D parts and as the painted head, its expressions,
+// and both at the size a head is in play (a 56 px figure's head is ~18 px), drawn up 4× so the pixels show
+window.faceSpikeDebug = async (f) => {
+  const K = await import('./faces.js'), pic = K.facePictureOf(f).toDataURL('image/png');
+  const big = await window.renderPortrait({ id: 'dbg', model: 'Rogue', show: [], face: f }, { w: 300, h: 340, ss: 2, yaw: 0 });
+  return { pic, big };
+};
+window.renderFaceSpike = async (o = {}) => {
+  const K = await import('./faces.js');
+  const looks = [
+    ['fair · round', { skin: 'fair', hair: 'crop', hairColor: 'brown', brows: 'straight', eyes: 'round', iris: 'brown', mouth: 'line' }],
+    ['deep · sharp · scar', { skin: 'deep', hair: 'short', hairColor: 'black', brows: 'heavy', eyes: 'sharp', iris: 'amber', mouth: 'smirk', marks: ['scar'] }],
+    ['porcelain · wide · freckles', { skin: 'porcelain', hair: 'long', hairColor: 'flax', brows: 'arched', eyes: 'wide', iris: 'blue', mouth: 'smile', marks: ['freckles'], lashes: true }],
+    ['tan · narrow · beard', { skin: 'tan', hair: 'braid', hairColor: 'copper', brows: 'angry', eyes: 'narrow', iris: 'green', mouth: 'grim', beard: 'short' }],
+    ['umber · tired · old', { skin: 'umber', hair: 'bald', hairColor: 'grey', brows: 'thin', eyes: 'tired', iris: 'grey', mouth: 'frown', beard: 'full', marks: ['wrinkles'] }],
+    ['rose · patch', { skin: 'rose', hair: 'ponytail', hairColor: 'ash', brows: 'worried', eyes: 'round', iris: 'hazel', mouth: 'open', marks: ['eyepatch'] }],
+  ];
+  const exprLook = { skin: 'olive', hair: 'swept', hairColor: 'auburn', brows: 'straight', eyes: 'round', iris: 'green', mouth: 'line' };
+  const rows = [
+    ['today: the 3D parts', looks.map(([l, f]) => [l, { ...f, style: 'mesh' }])],
+    ['the painted head', looks.map(([l, f]) => [l, { ...f, style: 'painted' }])],
+    ['expressions (painted)', K.EXPRESSIONS.map((e) => [e, { ...exprLook, style: 'painted', expression: e }])],
+    ['paint & marks', [['warpaint', { ...looks[0][1], style: 'painted', marks: ['warpaint'], expression: 'stern' }], ['blush', { ...looks[2][1], style: 'painted', marks: ['blush'] }],
+      ['scar_cheek', { ...looks[3][1], style: 'painted', marks: ['scar_cheek'] }], ['fierce', { ...looks[1][1], style: 'painted', expression: 'fierce' }], ['round shape', { ...looks[0][1], style: 'painted', shape: 'round' }], ['oblong shape', { ...looks[2][1], style: 'painted', shape: 'oblong' }]]],
+  ];
+  const body = { id: 'spike', model: 'Rogue', show: [] }, cw = 96, ch = 112, sc = o.scale || 2, pad = 6, lab = 16, head = 22;
+  const small = { w: 20, h: 22 }, up = 4, cols = Math.max(...rows.map((r) => r[1].length));
+  const W = pad + cols * (cw * sc + pad), H = rows.reduce((n, r) => n + head + ch * sc + lab + pad, pad) + 2 * (head + small.h * up + lab + pad);
+  const board = document.createElement('canvas'); board.width = W; board.height = H;
+  const x = board.getContext('2d'); x.fillStyle = '#17131e'; x.fillRect(0, 0, W, H); x.imageSmoothingEnabled = false;
+  let y = pad;
+  const title = (t) => { x.fillStyle = '#f0c880'; x.font = '600 15px Georgia, serif'; x.fillText(t, pad, y + 16); y += head; };
+  for (const [name, cells] of rows) {
+    title(name);
+    for (let i = 0; i < cells.length; i++) {
+      const [label, f] = cells[i], img = new Image(); img.src = await window.renderPortrait({ ...body, face: f }, { w: cw, h: ch, ss: 3 }); await img.decode();
+      const cx = pad + i * (cw * sc + pad); x.fillStyle = '#221c2c'; x.fillRect(cx, y, cw * sc, ch * sc); x.drawImage(img, cx, y, cw * sc, ch * sc);
+      x.fillStyle = '#c8bca8'; x.font = '12px ui-monospace, Menlo, monospace'; x.fillText(label, cx + 2, y + ch * sc + 12);
+    }
+    y += ch * sc + lab + pad;
+  }
+  for (const [name, style] of [['in play, today (a head ~20 px, drawn 4×)', 'mesh'], ['in play, painted (a head ~20 px, drawn 4×)', 'painted']]) {
+    title(name);
+    for (let i = 0; i < looks.length; i++) {
+      const img = new Image(); img.src = await window.renderPortrait({ ...body, face: { ...looks[i][1], style } }, { w: small.w, h: small.h, ss: 1 }); await img.decode();
+      const cx = pad + i * (small.w * up + pad * 4); x.fillStyle = '#221c2c'; x.fillRect(cx, y, small.w * up, small.h * up); x.drawImage(img, cx, y, small.w * up, small.h * up);
+    }
+    y += small.h * up + lab + pad;
+  }
+  return board.toDataURL('image/png');
+};
 // dev probe: the head mesh and the head-bone accessories, as boxes in head-bone space (bind pose)
 window.probeHead = async (model) => {
   const g = await load(`./models/${model}.glb`), root = g.scene; root.updateMatrixWorld(true);

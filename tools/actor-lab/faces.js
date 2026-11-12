@@ -338,6 +338,187 @@ function ears(f, M, S) {
   return g;
 }
 
+// ── the painted head (the face spike, 2026-11-12; the owner: "Go with the packs proportions, selectable by player
+// expressions as a part of character creation. Start the spike", after the Meshtint Cute Series faces pack) ─────────────
+// Three parts, as the pack builds its heads (our own art, built in code; nothing of theirs): a smooth egg of a skull of our
+// own (a full crown, round cheeks, a soft narrow chin, the nose a sculpted bump, small set-in ears), fitted inside KayKit's
+// head so its helms, hoods and our hair shells still fit; a face mask, a curved patch following the skull's front; and on
+// the mask the whole face as one painted picture (eyes, brows, mouth, marks) on a canvas, the skin painted under it so a
+// blush or freckles blend. Big dark eyes with a glint, thick brows in the hair's colour, a short mouth line: what reads at
+// 56 px. An expression is the picture redrawn (brows' tilt, lids, the mouth), a part the player picks at creation.
+// Behind a switch for the spike: setFaceStyle('painted') or a face's own `style: 'painted'`.
+let STYLE = 'mesh';
+/** the face kit's style for every face without its own: 'mesh' (the parts in 3D, as before) or 'painted' @param {string} s */
+export const setFaceStyle = (s) => { STYLE = s === 'painted' ? 'painted' : 'mesh'; };
+export const faceStyle = () => STYLE;
+export const EXPRESSIONS = ['neutral', 'smile', 'happy', 'stern', 'sad', 'smug', 'surprised', 'fierce'];
+
+const CHIN = -0.01, CROWN = 1.05, HH = CROWN - CHIN;              // the egg's height, in KayKit's head (chin y 0, crown 1.05)
+const EGG = { cy: (CHIN + CROWN) / 2, cz: -0.03, ax: 0.55, ay: HH / 2, az: 0.55 };   // (KayKit's head fills x ±0.54, z −0.57…0.5: helms fit)
+// the nose, a bump in the skull's front: width (x), height (y), depth (z), its middle's height (s: 0 the chin, 1 the crown)
+const BUMP = { kk: [0.075, 0.065, 0.032, 0.32], button: [0.065, 0.055, 0.028, 0.31], long: [0.06, 0.09, 0.038, 0.33], hook: [0.065, 0.08, 0.044, 0.34], broad: [0.095, 0.06, 0.028, 0.31], snub: [0.06, 0.05, 0.024, 0.32] };
+/** a point on the painted skull: th the angle round it (0 the front, +x to the right as you face it), s the height (0 the chin, 1 the crown) */
+function eggAt(th, s, f, out = new THREE.Vector3()) {
+  const yU = 2 * s - 1, r = Math.sqrt(Math.max(0, 1 - yU * yU));
+  let x = Math.sin(th) * r, z = Math.cos(th) * r;
+  x *= lerp(0.82, 1, smooth(0.0, 0.4, s)) * (1 + 0.09 * bell(s, 0.3, 0.15));           // a broad round jaw, full cheeks (the pack's: no V to the chin)
+  z *= z > 0 ? lerp(0.9, 0.97, smooth(0.0, 0.4, s)) : 1.07;                             // a flatter face, a full crown behind
+  out.set(x * EGG.ax, EGG.cy + yU * EGG.ay, EGG.cz + z * EGG.az);
+  const [w, h, d, ns] = BUMP[f.nose] || BUMP.kk, dx = out.x / w, dy = (s - ns) * HH / h;
+  if (z > 0) out.z += d * Math.exp(-dx * dx - dy * dy) * (f.nose === 'snub' && dy > 0 ? 0.8 : 1);
+  if (f.nose === 'hook' && z > 0) out.y -= 0.02 * Math.exp(-dx * dx - dy * dy);
+  return out;
+}
+/** the painted skull (a triangle soup, as the kit's shells want), shaped by the face's shape */
+function eggSkull(f, S) {
+  const NT = 48, NS = 30, P = [], I = [], v = new THREE.Vector3();
+  for (let j = 0; j <= NS; j++) for (let i = 0; i <= NT; i++) { eggAt(-Math.PI + (2 * Math.PI * i) / NT, j / NS, f, v); if (S) S(v); P.push(v.x, v.y, v.z); }
+  for (let j = 0; j < NS; j++) for (let i = 0; i < NT; i++) { const a = j * (NT + 1) + i, b = a + 1, c = a + NT + 1, d = c + 1; I.push(a, b, c, b, d, c); }   // (wound outward: the kit's shells grow off it and keep its facing)
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setIndex(I); g.computeVertexNormals();
+  return g.toNonIndexed();
+}
+// the mask: the front of the skull from TH left to TH right and S0 to S1 up, a little proud of it; its picture's u and v
+const TH = 1.15, S0 = 0.06, S1 = 0.84, LIFT = 0.006;
+function faceMask(f, S) {
+  const NU = 28, NV = 24, P = [], U = [], I = [], v = new THREE.Vector3(), a = new THREE.Vector3(), b = new THREE.Vector3(), n = new THREE.Vector3(), e = 0.004;
+  for (let j = 0; j <= NV; j++) for (let i = 0; i <= NU; i++) {
+    const th = -TH + (2 * TH * i) / NU, s = S0 + ((S1 - S0) * j) / NV, at = (t, q, o) => { eggAt(t, q, f, o); if (S) S(o); return o; };
+    at(th, s, v); n.crossVectors(at(th, s + e, a).sub(at(th, s - e, b)), at(th + e, s, b).sub(at(th - e, s, n.clone()))).normalize();
+    if (n.z < 0 && Math.abs(th) < 1.4) n.negate();
+    v.addScaledVector(n, LIFT); P.push(v.x, v.y, v.z); U.push(i / NU, j / NV);
+  }
+  for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) { const p = j * (NU + 1) + i, q = p + 1, r = p + NU + 1, t = r + 1; I.push(p, q, r, q, t, r); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); g.setIndex(I); g.computeVertexNormals();
+  return g;
+}
+
+// the picture: authored in the head's own units on its front (x across, y up), drawn where the mask carries that point
+const PX = 512, toU = (x) => (Math.asin(Math.max(-0.98, Math.min(0.98, x / 0.52))) + TH) / (2 * TH), toV = (y) => ((y - CHIN) / HH - S0) / (S1 - S0);
+const cx = (x) => toU(x) * PX, cy = (y) => (1 - toV(y)) * PX, kx = PX / (2 * TH * 0.5), ky = PX / ((S1 - S0) * HH);   // (px a unit across, up)
+const hex = (c) => '#' + c.getHexString();
+// the pack's proportions: the eye line low on a full skull, big eyes far apart
+const PE = { x: 0.2, y: 0.39, rx: 0.085, ry: 0.112 };
+const PEYES = { round: { w: 1, h: 1, tilt: 0 }, wide: { w: 1.1, h: 1.12, tilt: 0, white: true }, narrow: { w: 1.08, h: 0.72, tilt: 0.04, lash: true }, tired: { w: 1, h: 0.95, tilt: -0.08, lid: 0.32, bags: true }, sharp: { w: 1.12, h: 0.8, tilt: 0.22, lash: true } };
+const PBROWS = { straight: { w: 0.12, t: 0.046, arch: 0.006, tilt: 0 }, arched: { w: 0.12, t: 0.042, arch: 0.034, tilt: 0 }, heavy: { w: 0.13, t: 0.066, arch: 0.008, tilt: 0.05 }, angry: { w: 0.12, t: 0.052, arch: 0.004, tilt: 0.2 }, worried: { w: 0.115, t: 0.044, arch: 0.012, tilt: -0.2 }, thin: { w: 0.11, t: 0.026, arch: 0.016, tilt: 0 } };
+// an expression: the brows turned (+ inner end down), raised, lids, and the mouth it wears (null: the face's own)
+const PEXPR = {
+  neutral:   { brow: 0, lift: 0, lid: 0, mouth: null },
+  smile:     { brow: -0.02, lift: 0.004, lid: 0, mouth: 'smile', cheek: true },
+  happy:     { brow: -0.06, lift: 0.012, lid: 0, mouth: 'grin', cheek: true, glad: true },
+  stern:     { brow: 0.2, lift: -0.008, lid: 0.24, mouth: 'grim' },
+  sad:       { brow: -0.22, lift: 0.004, lid: 0.12, mouth: 'frown', tear: true },
+  smug:      { brow: 0.05, lift: 0, lid: 0.34, mouth: 'smirk', oneBrow: true },
+  surprised: { brow: -0.1, lift: 0.028, lid: 0, mouth: 'open', small: true },
+  fierce:    { brow: 0.26, lift: -0.01, lid: 0.18, mouth: 'fangs', creases: true },
+};
+const faceCache = new Map();
+/** the face's picture, a canvas texture shared by every face drawn alike */
+function facePicture(f) {
+  const ex = PEXPR[f.expression] || PEXPR.neutral, key = JSON.stringify([f.skin, f.hairColor, f.browColor, f.eyes, f.iris, f.brows, f.mouth, f.marks, f.expression, f.lashes]);
+  if (faceCache.has(key)) return faceCache.get(key);
+  const c = document.createElement('canvas'); c.width = c.height = PX; const g = c.getContext('2d');
+  const skin = col(SKIN, f.skin, SKIN.fair), hairC = col(HAIR, f.browColor || f.hairColor, HAIR.brown), dark = lumOf(skin) < 0.28;
+  // (no skin under the features: the skull's own shows through, so the mask never shows as a patch of another tone under
+  // the game's light; a lid or a blush is painted in the skin's colour where it is)
+  const P = (x, y) => [cx(x), cy(y)];
+  const ink = '#1a110d', mouthC = hex(skin.clone().lerp(new THREE.Color('#3a1210'), 0.78)), lipC = hex(toned(skin, '#a04a40', 0.32, 0.84));
+  // cheeks (a smile's, a blush): soft, the skin turned rose
+  const cheeks = (a) => { for (const sd of [-1, 1]) { const [x, y] = P(sd * 0.25, 0.3), r = 0.06 * kx; const q = g.createRadialGradient(x, y, 0, x, y, r); q.addColorStop(0, hex(toned(skin, '#e05a58', 0.35, 1.0)) + Math.round(a * 255).toString(16).padStart(2, '0')); q.addColorStop(1, hex(skin) + '00'); g.fillStyle = q; g.fillRect(x - r, y - r, 2 * r, 2 * r); } };
+  if (ex.cheek || (f.marks || []).includes('blush')) cheeks(ex.cheek ? 0.45 : 0.6);
+  // the eyes: a big dark eye, the iris ringed in its colour, a glint; lids for a mood; a lash flick
+  const E = PEYES[f.eyes] || PEYES.round, irisC = col(IRIS, f.iris, IRIS.brown), patched = (f.marks || []).includes('eyepatch');
+  for (const sd of [-1, 1]) {
+    if (patched && sd > 0) continue;
+    const [ex0, ey0] = P(sd * PE.x, PE.y + ex.lift * 0.4), rx = PE.rx * E.w * kx, ry = PE.ry * E.h * ky * (ex.small ? 1.08 : 1), tilt = sd * E.tilt;
+    g.save(); g.translate(ex0, ey0); g.rotate(-tilt);
+    if (E.white || ex.small) { g.fillStyle = '#f4efe6'; g.beginPath(); g.ellipse(0, 0, rx * 1.12, ry * 1.06, 0, 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = ink; g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = hex(irisC); g.beginPath(); g.ellipse(0, ry * 0.12, rx * 0.72, ry * 0.7, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = ink; g.beginPath(); g.ellipse(0, ry * 0.12, rx * 0.42, ry * 0.44, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#ffffff'; g.beginPath(); g.ellipse(sd * rx * 0.32, -ry * 0.38, rx * 0.3, ry * 0.24, 0, 0, Math.PI * 2); g.fill();
+    g.globalAlpha = 0.85; g.beginPath(); g.ellipse(-sd * rx * 0.28, ry * 0.42, rx * 0.12, ry * 0.09, 0, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+    const lid = Math.max(E.lid || 0, ex.lid) * (ex.oneBrow && sd < 0 ? 0.25 : 1);
+    if (lid > 0) {                                                // the lid over the eye's top, in the skin, its edge a dark line
+      const ly = -ry + 2 * ry * lid, slant = sd * (ex.brow > 0 ? 0.25 : ex.brow < 0 ? -0.2 : 0) * ry;
+      g.fillStyle = hex(skin); g.beginPath(); g.moveTo(-rx * 1.3, -ry * 1.3); g.lineTo(rx * 1.3, -ry * 1.3); g.lineTo(rx * 1.3, ly - slant); g.lineTo(-rx * 1.3, ly + slant); g.closePath(); g.fill();
+      g.strokeStyle = ink; g.lineWidth = ry * 0.16; g.lineCap = 'round'; g.beginPath(); g.moveTo(-rx * 0.98, ly + slant * 0.98); g.lineTo(rx * 0.98, ly - slant * 0.98); g.stroke();
+    }
+    if (ex.glad) { g.strokeStyle = hex(skin); g.lineWidth = ry * 0.5; g.beginPath(); g.ellipse(0, ry * 1.05, rx * 1.2, ry * 0.7, 0, Math.PI * 1.1, Math.PI * 1.9); g.stroke(); }   // (a happy eye's lower lid rising)
+    if (E.lash || f.lashes) { g.strokeStyle = ink; g.lineWidth = ry * 0.14; g.lineCap = 'round'; g.beginPath(); g.moveTo(sd * rx * 0.7, -ry * 0.72); g.quadraticCurveTo(sd * rx * 1.2, -ry * 0.9, sd * rx * 1.45, -ry * 1.05); g.stroke(); }
+    if (E.bags) { g.strokeStyle = hex(skin.clone().multiplyScalar(0.72)); g.lineWidth = ry * 0.1; g.beginPath(); g.ellipse(0, ry * 0.95, rx * 0.8, ry * 0.3, 0, Math.PI * 0.15, Math.PI * 0.85); g.stroke(); }
+    g.restore();
+  }
+  if (patched) {                                                 // a patch over the right eye, its strap across the brow
+    const [x, y] = P(PE.x, PE.y); g.fillStyle = '#1c1616'; g.beginPath(); g.ellipse(x, y, PE.rx * 1.35 * kx, PE.ry * 1.15 * ky, 0, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#1c1616'; g.lineWidth = 0.018 * ky; g.beginPath(); g.moveTo(...P(-0.5, 0.68)); g.lineTo(...P(0.5, 0.36)); g.stroke();
+  }
+  // the brows: thick tapered strokes in the hair's colour, turned by the mood
+  const B = PBROWS[f.brows] || PBROWS.straight, browC = hex(hairC.clone().multiplyScalar(dark ? 0.9 : 0.78));
+  for (const sd of [-1, 1]) {
+    const tilt = B.tilt + ex.brow * (ex.oneBrow && sd < 0 ? -0.6 : 1), y0 = PE.y + 0.145 + ex.lift + (ex.oneBrow && sd < 0 ? 0.02 : 0);
+    const inner = [sd * 0.075, y0 - tilt * 0.05], outer = [sd * (0.075 + B.w * 1.35), y0 + tilt * 0.03 - B.arch * 0.3], mid = [sd * (0.075 + B.w * 0.65), y0 + B.arch + tilt * 0.005];
+    g.fillStyle = browC; g.beginPath();
+    const [ix, iy] = P(...inner), [mx, my] = P(...mid), [ox, oy] = P(...outer), t = B.t * ky;
+    g.moveTo(ix, iy - t * 0.55); g.quadraticCurveTo(mx, my - t * 1.1, ox, oy - t * 0.1); g.quadraticCurveTo(mx, my + t * 0.2, ix, iy + t * 0.6); g.closePath(); g.fill();
+  }
+  if (ex.creases) { g.strokeStyle = browC; g.lineWidth = 0.008 * ky; for (const d of [-0.02, 0.02]) { g.beginPath(); g.moveTo(...P(d - 0.01, PE.y + 0.07)); g.lineTo(...P(d * 1.4, PE.y + 0.13)); g.stroke(); } }   // a scowl's lines between the brows
+  // the mouth: a short line, curved for the mood; teeth or fangs where it shows them
+  const kind = ex.mouth || f.mouth || 'line', my = 0.17, mw = 0.1;
+  const curve = { line: 0, smile: 0.022, grin: 0.03, frown: -0.022, smirk: 0, grim: -0.01, open: 0, fangs: -0.012 }[kind] ?? 0;
+  g.lineCap = 'round'; g.strokeStyle = mouthC; g.lineWidth = (kind === 'grim' ? 0.028 : 0.022) * ky;
+  if (kind === 'open') { const [x, y] = P(0, my); g.fillStyle = mouthC; g.beginPath(); g.ellipse(x, y, (ex.small ? 0.026 : 0.04) * kx, (ex.small ? 0.032 : 0.03) * ky, 0, 0, Math.PI * 2); g.fill(); }
+  else if (kind === 'grin') {                                      // a wide open smile, the top teeth showing
+    g.fillStyle = mouthC; g.beginPath(); g.moveTo(...P(-mw, my + 0.012)); g.quadraticCurveTo(...P(0, my - 0.07), ...P(mw, my + 0.012)); g.closePath(); g.fill();
+    g.fillStyle = '#f4efe6'; g.beginPath(); g.moveTo(...P(-mw * 0.8, my + 0.006)); g.lineTo(...P(mw * 0.8, my + 0.006)); g.lineTo(...P(mw * 0.6, my - 0.012)); g.lineTo(...P(-mw * 0.6, my - 0.012)); g.closePath(); g.fill();
+  } else if (kind === 'smirk') { g.beginPath(); g.moveTo(...P(-mw * 0.8, my - 0.004)); g.quadraticCurveTo(...P(0.01, my - 0.01), ...P(mw, my + 0.022)); g.stroke(); }
+  else {
+    g.beginPath(); g.moveTo(...P(-mw, my + curve)); g.quadraticCurveTo(...P(0, my - curve), ...P(mw, my + curve)); g.stroke();
+    if (kind === 'fangs') { g.fillStyle = '#f4efe6'; for (const sd of [-1, 1]) { g.beginPath(); g.moveTo(...P(sd * 0.03, my + 0.004)); g.lineTo(...P(sd * 0.045, my + 0.002)); g.lineTo(...P(sd * 0.038, my - 0.03)); g.closePath(); g.fill(); } }
+  }
+  if (kind !== 'open' && kind !== 'grin' && !dark) { g.strokeStyle = lipC; g.lineWidth = 0.008 * ky; g.beginPath(); g.moveTo(...P(-0.025, my - 0.026)); g.quadraticCurveTo(...P(0, my - 0.036), ...P(0.025, my - 0.026)); g.globalAlpha = 0.6; g.stroke(); g.globalAlpha = 1; }   // (the lower lip, a hint)
+  // marks
+  for (const m of f.marks || []) {
+    if (m === 'scar') { g.strokeStyle = hex(toned(skin, '#d07a70', 0.45, 1.05)); g.lineWidth = 0.014 * ky; g.beginPath(); g.moveTo(...P(0.1, PE.y + 0.2)); g.lineTo(...P(0.27, PE.y - 0.08)); g.stroke();   // across the right brow, the pack's slash
+      g.lineWidth = 0.006 * ky; for (const t of [0.3, 0.55, 0.8]) { const x = lerp(0.1, 0.27, t), y = lerp(PE.y + 0.2, PE.y - 0.08, t); g.beginPath(); g.moveTo(...P(x - 0.025, y - 0.012)); g.lineTo(...P(x + 0.025, y + 0.012)); g.stroke(); } }
+    if (m === 'scar_cheek') { g.strokeStyle = hex(toned(skin, '#d07a70', 0.45, 1.05)); g.lineWidth = 0.012 * ky; g.beginPath(); g.moveTo(...P(-0.32, 0.36)); g.lineTo(...P(-0.2, 0.24)); g.stroke(); }
+    if (m === 'freckles') { g.fillStyle = hex(toned(skin, '#6a2a10', 0.5, 0.74)); for (const sd of [-1, 1]) for (const [x, y] of [[0.2, 0.33], [0.25, 0.31], [0.29, 0.34], [0.23, 0.36], [0.27, 0.28], [0.32, 0.31]]) { g.beginPath(); g.arc(...P(sd * x, y), 0.006 * kx, 0, Math.PI * 2); g.fill(); } }
+    if (m === 'wrinkles') { g.strokeStyle = hex(skin.clone().multiplyScalar(0.74)); g.lineWidth = 0.007 * ky; for (const y of [0.74, 0.79]) { g.beginPath(); g.moveTo(...P(-0.15, y)); g.quadraticCurveTo(...P(0, y + 0.012), ...P(0.15, y)); g.stroke(); } }
+    if (m === 'warpaint') { g.fillStyle = 'rgba(232,226,214,0.9)'; g.beginPath(); g.moveTo(...P(0.12, 0.54)); g.lineTo(...P(0.16, 0.54)); g.lineTo(...P(0.3, 0.26)); g.lineTo(...P(0.26, 0.26)); g.closePath(); g.fill();   // a stripe down through the right eye
+      g.beginPath(); g.moveTo(...P(0.12, 0.38)); g.lineTo(...P(0.32, 0.38)); g.lineTo(...P(0.32, 0.36)); g.lineTo(...P(0.12, 0.36)); g.closePath(); g.fill(); }
+  }
+  if (ex.tear) { g.fillStyle = 'rgba(180,215,240,0.85)'; for (const sd of [-1, 1]) { g.beginPath(); g.ellipse(...P(sd * (PE.x - 0.02), PE.y - PE.ry - 0.03), 0.008 * kx, 0.016 * ky, 0, 0, Math.PI * 2); g.fill(); } }
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  tex.generateMipmaps = false; tex.minFilter = THREE.LinearFilter;   // (no averaging down: at a 20 px head the eyes stay dark pixels, as the far face's dot eyes did)
+  faceCache.set(key, tex); return tex;
+}
+/** (a debug look at a face's picture: the canvas) */
+export const facePictureOf = (f) => facePicture(f).image;
+/** the painted head: skull, mask and picture, with the kit's ears, hair, beards and an earring on it */
+async function paintedFace(load, model, f) {
+  const mine = await kkHead(load, model), S = SHAPES[f.shape] || null;
+  const skin = col(SKIN, f.skin, SKIN.fair), hairC = col(HAIR, f.hairColor, HAIR.brown);
+  const M = { skin: std(skin, 0.72), hair: std(hairC, 0.85), beard: std(col(HAIR, f.beardColor, hairC), 0.9), stubble: std(skin.clone().multiplyScalar(0.7).lerp(col(HAIR, f.beardColor, hairC), 0.35), 1),
+    gold: std('#d8a848', 0.3, 0.8), tie: std(col(HAIR, f.tieColor, '#6a3a22'), 0.8), earIn: std(skin.clone().multiplyScalar(0.62).lerp(new THREE.Color('#7a3a34'), 0.25), 0.9) };
+  const head = new THREE.Group(); head.name = 'Face';
+  const tag = (o, part) => { o.traverse((q) => { if (q.isMesh && !q.userData.part) q.userData.part = part; }); return o; };
+  const skull = eggSkull(f, S);
+  head.add(tag(new THREE.Mesh(skull, M.skin), 'skin'));
+  const face = new THREE.Mesh(faceMask(f, S), new THREE.MeshStandardMaterial({ map: facePicture(f), alphaTest: 0.35, roughness: 0.72, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));   // (alphaTest, a cutout: the game's figure fade sets `transparent` by its opacity, world.js, and an opaque mask drew its clear parts black)
+  face.name = 'FaceMask'; head.add(tag(face, 'eye'));
+  if (f.ears === 'pointed') head.add(tag(ears(f, M, S), 'skin'));
+  else for (const sd of [-1, 1]) {                                // small round ears set low, a little back
+    const e = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 10), M.skin), p = eggAt(sd * Math.PI / 2, 0.38, f); if (S) S(p);
+    e.scale.set(0.55, 1.25, 0.95); e.position.set(p.x + sd * 0.012, p.y, p.z - 0.03); head.add(tag(e, 'skin'));
+  }
+  const on = surface(skull);
+  head.add(tag(await beard(load, skull, on, f, M, S), 'hair'));
+  if ((f.marks || []).includes('earring')) head.add(marks(on, { ...f, marks: ['earring'] }, M));
+  const hr = await hair(load, skull, f, M, S); hr.name = 'Hair'; head.add(tag(hr, 'hair'));
+  if (HAIRS[f.hair]?.kk) hr.traverse((o) => { if (o.isMesh) o.geometry = filterTris(o.geometry, () => true, grow(0.1)); });   // (KayKit's own long cuts were made for its smaller crown: out over ours)
+  head.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.userData.face = true; } });
+  return { head, replaces: [mine.headName], skull, on };
+}
+
 // every option of every part, for the face board (faces.cjs) and faces.json authors
 export const OPTIONS = {
   hair: Object.keys(HAIRS), eyes: Object.keys(EYES), brows: Object.keys(BROWS), mouth: Object.keys(MOUTHS),
@@ -350,6 +531,7 @@ export const OPTIONS = {
  * KayKit head meshes it replaces. `far` builds the atlas version (dot eyes, no marks, no lip).
  * @param {(url: string) => Promise<any>} load @param {string} model @param {any} f the face */
 export async function buildFace(load, model, f, { far = false } = {}) {
+  if ((f.style || STYLE) === 'painted' && f.skull !== 'own') return paintedFace(load, model, f);   // (the painted head: the face spike, below)
   const own = f.skull === 'own';
   const base = own ? await kkHead(load, model) : null, mine = await kkHead(load, model);
   const skin = col(SKIN, f.skin, SKIN.fair), hairC = col(HAIR, f.hairColor, HAIR.brown);

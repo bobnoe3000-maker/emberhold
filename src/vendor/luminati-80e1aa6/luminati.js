@@ -11628,8 +11628,9 @@ var zc = /* @__PURE__ */ e({
 	IRIS: () => Wc,
 	SHAPES: () => ll,
 	SKIN: () => Hc,
-	buildFace: () => Nl,
+	buildFace: () => ou,
 	kkHead: () => Yc,
+	setFaceStyle: () => Pl,
 	shellOf: () => ul
 }), Bc = (e, t) => `${Math.floor(e * 8)},${Math.floor(t * 4)}`, Vc = (e, t = .8, n = 0) => new l({
 	color: e,
@@ -12198,8 +12199,366 @@ function Ml(e, t, n) {
 	}
 	return r;
 }
+var Nl = "mesh", Pl = (e) => {
+	Nl = e === "painted" ? "painted" : "mesh";
+}, Fl = -.01, Il = 1.06, Ll = {
+	cy: 1.04 / 2,
+	cz: -.03,
+	ax: .55,
+	ay: Il / 2,
+	az: .55
+}, Rl = {
+	kk: [
+		.075,
+		.065,
+		.032,
+		.32
+	],
+	button: [
+		.065,
+		.055,
+		.028,
+		.31
+	],
+	long: [
+		.06,
+		.09,
+		.038,
+		.33
+	],
+	hook: [
+		.065,
+		.08,
+		.044,
+		.34
+	],
+	broad: [
+		.095,
+		.06,
+		.028,
+		.31
+	],
+	snub: [
+		.06,
+		.05,
+		.024,
+		.32
+	]
+};
+function zl(e, t, n, r = new P()) {
+	let i = 2 * t - 1, a = Math.sqrt(Math.max(0, 1 - i * i)), o = Math.sin(e) * a, s = Math.cos(e) * a;
+	o *= sl(.82, 1, ol(0, .4, t)) * (1 + .09 * cl(t, .3, .15)), s *= s > 0 ? sl(.9, .97, ol(0, .4, t)) : 1.07, r.set(o * Ll.ax, Ll.cy + i * Ll.ay, Ll.cz + s * Ll.az);
+	let [c, l, u, d] = Rl[n.nose] || Rl.kk, f = r.x / c, p = (t - d) * Il / l;
+	return s > 0 && (r.z += u * Math.exp(-f * f - p * p) * (n.nose === "snub" && p > 0 ? .8 : 1)), n.nose === "hook" && s > 0 && (r.y -= .02 * Math.exp(-f * f - p * p)), r;
+}
+function Bl(e, t) {
+	let n = [], r = [], i = new P();
+	for (let r = 0; r <= 30; r++) for (let a = 0; a <= 48; a++) zl(-Math.PI + 2 * Math.PI * a / 48, r / 30, e, i), t && t(i), n.push(i.x, i.y, i.z);
+	for (let e = 0; e < 30; e++) for (let t = 0; t < 48; t++) {
+		let n = e * 49 + t, i = n + 1, a = n + 48 + 1, o = a + 1;
+		r.push(n, i, a, i, o, a);
+	}
+	let a = new Fe();
+	return a.setAttribute("position", new O(n, 3)), a.setIndex(r), a.computeVertexNormals(), a.toNonIndexed();
+}
+var Vl = 1.15, Hl = .06, Ul = .006;
+function Wl(e, t) {
+	let n = [], r = [], i = [], a = new P(), o = new P(), s = new P(), c = new P(), l = .004;
+	for (let i = 0; i <= 24; i++) for (let u = 0; u <= 28; u++) {
+		let d = -1.15 + 2 * Vl * u / 28, f = Hl + .78 * i / 24, p = (n, r, i) => (zl(n, r, e, i), t && t(i), i);
+		p(d, f, a), c.crossVectors(p(d, f + l, o).sub(p(d, f - l, s)), p(d + l, f, s).sub(p(d - l, f, c.clone()))).normalize(), c.z < 0 && Math.abs(d) < 1.4 && c.negate(), a.addScaledVector(c, Ul), n.push(a.x, a.y, a.z), r.push(u / 28, i / 24);
+	}
+	for (let e = 0; e < 24; e++) for (let t = 0; t < 28; t++) {
+		let n = e * 29 + t, r = n + 1, a = n + 28 + 1, o = a + 1;
+		i.push(n, r, a, r, o, a);
+	}
+	let u = new Fe();
+	return u.setAttribute("position", new O(n, 3)), u.setAttribute("uv", new O(r, 2)), u.setIndex(i), u.computeVertexNormals(), u;
+}
+var Gl = 512, Kl = (e) => (Math.asin(Math.max(-.98, Math.min(.98, e / .52))) + Vl) / (2 * Vl), ql = (e) => ((e - Fl) / Il - Hl) / .78, Jl = (e) => Kl(e) * Gl, Yl = (e) => (1 - ql(e)) * Gl, Xl = Gl / (2 * Vl * .5), Zl = Gl / (.78 * Il), Ql = (e) => "#" + e.getHexString(), $l = {
+	x: .2,
+	y: .39,
+	rx: .085,
+	ry: .112
+}, eu = {
+	round: {
+		w: 1,
+		h: 1,
+		tilt: 0
+	},
+	wide: {
+		w: 1.1,
+		h: 1.12,
+		tilt: 0,
+		white: !0
+	},
+	narrow: {
+		w: 1.08,
+		h: .72,
+		tilt: .04,
+		lash: !0
+	},
+	tired: {
+		w: 1,
+		h: .95,
+		tilt: -.08,
+		lid: .32,
+		bags: !0
+	},
+	sharp: {
+		w: 1.12,
+		h: .8,
+		tilt: .22,
+		lash: !0
+	}
+}, tu = {
+	straight: {
+		w: .12,
+		t: .046,
+		arch: .006,
+		tilt: 0
+	},
+	arched: {
+		w: .12,
+		t: .042,
+		arch: .034,
+		tilt: 0
+	},
+	heavy: {
+		w: .13,
+		t: .066,
+		arch: .008,
+		tilt: .05
+	},
+	angry: {
+		w: .12,
+		t: .052,
+		arch: .004,
+		tilt: .2
+	},
+	worried: {
+		w: .115,
+		t: .044,
+		arch: .012,
+		tilt: -.2
+	},
+	thin: {
+		w: .11,
+		t: .026,
+		arch: .016,
+		tilt: 0
+	}
+}, nu = {
+	neutral: {
+		brow: 0,
+		lift: 0,
+		lid: 0,
+		mouth: null
+	},
+	smile: {
+		brow: -.02,
+		lift: .004,
+		lid: 0,
+		mouth: "smile",
+		cheek: !0
+	},
+	happy: {
+		brow: -.06,
+		lift: .012,
+		lid: 0,
+		mouth: "grin",
+		cheek: !0,
+		glad: !0
+	},
+	stern: {
+		brow: .2,
+		lift: -.008,
+		lid: .24,
+		mouth: "grim"
+	},
+	sad: {
+		brow: -.22,
+		lift: .004,
+		lid: .12,
+		mouth: "frown",
+		tear: !0
+	},
+	smug: {
+		brow: .05,
+		lift: 0,
+		lid: .34,
+		mouth: "smirk",
+		oneBrow: !0
+	},
+	surprised: {
+		brow: -.1,
+		lift: .028,
+		lid: 0,
+		mouth: "open",
+		small: !0
+	},
+	fierce: {
+		brow: .26,
+		lift: -.01,
+		lid: .18,
+		mouth: "fangs",
+		creases: !0
+	}
+}, ru = /* @__PURE__ */ new Map();
+function iu(e) {
+	let t = nu[e.expression] || nu.neutral, n = JSON.stringify([
+		e.skin,
+		e.hairColor,
+		e.browColor,
+		e.eyes,
+		e.iris,
+		e.brows,
+		e.mouth,
+		e.marks,
+		e.expression,
+		e.lashes
+	]);
+	if (ru.has(n)) return ru.get(n);
+	let r = document.createElement("canvas");
+	r.width = r.height = Gl;
+	let i = r.getContext("2d"), a = Gc(Hc, e.skin, Hc.fair), s = Gc(Uc, e.browColor || e.hairColor, Uc.brown), c = Kc(a) < .28, l = (e, t) => [Jl(e), Yl(t)], u = "#1a110d", d = Ql(a.clone().lerp(new N("#3a1210"), .78)), f = Ql(qc(a, "#a04a40", .32, .84));
+	(t.cheek || (e.marks || []).includes("blush")) && ((e) => {
+		for (let t of [-1, 1]) {
+			let [n, r] = l(t * .25, .3), o = .06 * Xl, s = i.createRadialGradient(n, r, 0, n, r, o);
+			s.addColorStop(0, Ql(qc(a, "#e05a58", .35, 1)) + Math.round(e * 255).toString(16).padStart(2, "0")), s.addColorStop(1, Ql(a) + "00"), i.fillStyle = s, i.fillRect(n - o, r - o, 2 * o, 2 * o);
+		}
+	})(t.cheek ? .45 : .6);
+	let p = eu[e.eyes] || eu.round, m = Gc(Wc, e.iris, Wc.brown), h = (e.marks || []).includes("eyepatch");
+	for (let n of [-1, 1]) {
+		if (h && n > 0) continue;
+		let [r, o] = l(n * $l.x, $l.y + t.lift * .4), s = $l.rx * p.w * Xl, c = $l.ry * p.h * Zl * (t.small ? 1.08 : 1), d = n * p.tilt;
+		i.save(), i.translate(r, o), i.rotate(-d), (p.white || t.small) && (i.fillStyle = "#f4efe6", i.beginPath(), i.ellipse(0, 0, s * 1.12, c * 1.06, 0, 0, Math.PI * 2), i.fill()), i.fillStyle = u, i.beginPath(), i.ellipse(0, 0, s, c, 0, 0, Math.PI * 2), i.fill(), i.fillStyle = Ql(m), i.beginPath(), i.ellipse(0, c * .12, s * .72, c * .7, 0, 0, Math.PI * 2), i.fill(), i.fillStyle = u, i.beginPath(), i.ellipse(0, c * .12, s * .42, c * .44, 0, 0, Math.PI * 2), i.fill(), i.fillStyle = "#ffffff", i.beginPath(), i.ellipse(n * s * .32, -c * .38, s * .3, c * .24, 0, 0, Math.PI * 2), i.fill(), i.globalAlpha = .85, i.beginPath(), i.ellipse(-n * s * .28, c * .42, s * .12, c * .09, 0, 0, Math.PI * 2), i.fill(), i.globalAlpha = 1;
+		let f = Math.max(p.lid || 0, t.lid) * (t.oneBrow && n < 0 ? .25 : 1);
+		if (f > 0) {
+			let e = -c + 2 * c * f, r = n * (t.brow > 0 ? .25 : t.brow < 0 ? -.2 : 0) * c;
+			i.fillStyle = Ql(a), i.beginPath(), i.moveTo(-s * 1.3, -c * 1.3), i.lineTo(s * 1.3, -c * 1.3), i.lineTo(s * 1.3, e - r), i.lineTo(-s * 1.3, e + r), i.closePath(), i.fill(), i.strokeStyle = u, i.lineWidth = c * .16, i.lineCap = "round", i.beginPath(), i.moveTo(-s * .98, e + r * .98), i.lineTo(s * .98, e - r * .98), i.stroke();
+		}
+		t.glad && (i.strokeStyle = Ql(a), i.lineWidth = c * .5, i.beginPath(), i.ellipse(0, c * 1.05, s * 1.2, c * .7, 0, Math.PI * 1.1, Math.PI * 1.9), i.stroke()), (p.lash || e.lashes) && (i.strokeStyle = u, i.lineWidth = c * .14, i.lineCap = "round", i.beginPath(), i.moveTo(n * s * .7, -c * .72), i.quadraticCurveTo(n * s * 1.2, -c * .9, n * s * 1.45, -c * 1.05), i.stroke()), p.bags && (i.strokeStyle = Ql(a.clone().multiplyScalar(.72)), i.lineWidth = c * .1, i.beginPath(), i.ellipse(0, c * .95, s * .8, c * .3, 0, Math.PI * .15, Math.PI * .85), i.stroke()), i.restore();
+	}
+	if (h) {
+		let [e, t] = l($l.x, $l.y);
+		i.fillStyle = "#1c1616", i.beginPath(), i.ellipse(e, t, $l.rx * 1.35 * Xl, $l.ry * 1.15 * Zl, 0, 0, Math.PI * 2), i.fill(), i.strokeStyle = "#1c1616", i.lineWidth = .018 * Zl, i.beginPath(), i.moveTo(...l(-.5, .68)), i.lineTo(...l(.5, .36)), i.stroke();
+	}
+	let g = tu[e.brows] || tu.straight, _ = Ql(s.clone().multiplyScalar(c ? .9 : .78));
+	for (let e of [-1, 1]) {
+		let n = g.tilt + t.brow * (t.oneBrow && e < 0 ? -.6 : 1), r = $l.y + .145 + t.lift + (t.oneBrow && e < 0 ? .02 : 0), a = [e * .075, r - n * .05], o = [e * (.075 + g.w * 1.35), r + n * .03 - g.arch * .3], s = [e * (.075 + g.w * .65), r + g.arch + n * .005];
+		i.fillStyle = _, i.beginPath();
+		let [c, u] = l(...a), [d, f] = l(...s), [p, m] = l(...o), h = g.t * Zl;
+		i.moveTo(c, u - h * .55), i.quadraticCurveTo(d, f - h * 1.1, p, m - h * .1), i.quadraticCurveTo(d, f + h * .2, c, u + h * .6), i.closePath(), i.fill();
+	}
+	if (t.creases) {
+		i.strokeStyle = _, i.lineWidth = .008 * Zl;
+		for (let e of [-.02, .02]) i.beginPath(), i.moveTo(...l(e - .01, $l.y + .07)), i.lineTo(...l(e * 1.4, $l.y + .13)), i.stroke();
+	}
+	let v = t.mouth || e.mouth || "line", y = .17, b = .1, x = {
+		line: 0,
+		smile: .022,
+		grin: .03,
+		frown: -.022,
+		smirk: 0,
+		grim: -.01,
+		open: 0,
+		fangs: -.012
+	}[v] ?? 0;
+	if (i.lineCap = "round", i.strokeStyle = d, i.lineWidth = (v === "grim" ? .028 : .022) * Zl, v === "open") {
+		let [e, n] = l(0, y);
+		i.fillStyle = d, i.beginPath(), i.ellipse(e, n, (t.small ? .026 : .04) * Xl, (t.small ? .032 : .03) * Zl, 0, 0, Math.PI * 2), i.fill();
+	} else if (v === "grin") i.fillStyle = d, i.beginPath(), i.moveTo(...l(-.1, .18200000000000002)), i.quadraticCurveTo(...l(0, .1), ...l(b, .18200000000000002)), i.closePath(), i.fill(), i.fillStyle = "#f4efe6", i.beginPath(), i.moveTo(...l(-.1 * .8, .17600000000000002)), i.lineTo(...l(b * .8, .17600000000000002)), i.lineTo(...l(b * .6, .158)), i.lineTo(...l(-.06, .158)), i.closePath(), i.fill();
+	else if (v === "smirk") i.beginPath(), i.moveTo(...l(-.1 * .8, .166)), i.quadraticCurveTo(...l(.01, .16), ...l(b, .192)), i.stroke();
+	else if (i.beginPath(), i.moveTo(...l(-.1, y + x)), i.quadraticCurveTo(...l(0, y - x), ...l(b, y + x)), i.stroke(), v === "fangs") {
+		i.fillStyle = "#f4efe6";
+		for (let e of [-1, 1]) i.beginPath(), i.moveTo(...l(e * .03, .17400000000000002)), i.lineTo(...l(e * .045, .17200000000000001)), i.lineTo(...l(e * .038, .14)), i.closePath(), i.fill();
+	}
+	v !== "open" && v !== "grin" && !c && (i.strokeStyle = f, i.lineWidth = .008 * Zl, i.beginPath(), i.moveTo(...l(-.025, .14400000000000002)), i.quadraticCurveTo(...l(0, .134), ...l(.025, .14400000000000002)), i.globalAlpha = .6, i.stroke(), i.globalAlpha = 1);
+	for (let t of e.marks || []) {
+		if (t === "scar") {
+			i.strokeStyle = Ql(qc(a, "#d07a70", .45, 1.05)), i.lineWidth = .014 * Zl, i.beginPath(), i.moveTo(...l(.1, $l.y + .2)), i.lineTo(...l(.27, $l.y - .08)), i.stroke(), i.lineWidth = .006 * Zl;
+			for (let e of [
+				.3,
+				.55,
+				.8
+			]) {
+				let t = sl(.1, .27, e), n = sl($l.y + .2, $l.y - .08, e);
+				i.beginPath(), i.moveTo(...l(t - .025, n - .012)), i.lineTo(...l(t + .025, n + .012)), i.stroke();
+			}
+		}
+		if (t === "scar_cheek" && (i.strokeStyle = Ql(qc(a, "#d07a70", .45, 1.05)), i.lineWidth = .012 * Zl, i.beginPath(), i.moveTo(...l(-.32, .36)), i.lineTo(...l(-.2, .24)), i.stroke()), t === "freckles") {
+			i.fillStyle = Ql(qc(a, "#6a2a10", .5, .74));
+			for (let e of [-1, 1]) for (let [t, n] of [
+				[.2, .33],
+				[.25, .31],
+				[.29, .34],
+				[.23, .36],
+				[.27, .28],
+				[.32, .31]
+			]) i.beginPath(), i.arc(...l(e * t, n), .006 * Xl, 0, Math.PI * 2), i.fill();
+		}
+		if (t === "wrinkles") {
+			i.strokeStyle = Ql(a.clone().multiplyScalar(.74)), i.lineWidth = .007 * Zl;
+			for (let e of [.74, .79]) i.beginPath(), i.moveTo(...l(-.15, e)), i.quadraticCurveTo(...l(0, e + .012), ...l(.15, e)), i.stroke();
+		}
+		t === "warpaint" && (i.fillStyle = "rgba(232,226,214,0.9)", i.beginPath(), i.moveTo(...l(.12, .54)), i.lineTo(...l(.16, .54)), i.lineTo(...l(.3, .26)), i.lineTo(...l(.26, .26)), i.closePath(), i.fill(), i.beginPath(), i.moveTo(...l(.12, .38)), i.lineTo(...l(.32, .38)), i.lineTo(...l(.32, .36)), i.lineTo(...l(.12, .36)), i.closePath(), i.fill());
+	}
+	if (t.tear) {
+		i.fillStyle = "rgba(180,215,240,0.85)";
+		for (let e of [-1, 1]) i.beginPath(), i.ellipse(...l(e * ($l.x - .02), $l.y - $l.ry - .03), .008 * Xl, .016 * Zl, 0, 0, Math.PI * 2), i.fill();
+	}
+	let S = new we(r);
+	return S.colorSpace = o, S.anisotropy = 4, S.generateMipmaps = !1, S.minFilter = Ie, ru.set(n, S), S;
+}
+async function au(e, t, n) {
+	let r = await Yc(e, t), i = ll[n.shape] || null, a = Gc(Hc, n.skin, Hc.fair), o = Gc(Uc, n.hairColor, Uc.brown), s = {
+		skin: Vc(a, .72),
+		hair: Vc(o, .85),
+		beard: Vc(Gc(Uc, n.beardColor, o), .9),
+		stubble: Vc(a.clone().multiplyScalar(.7).lerp(Gc(Uc, n.beardColor, o), .35), 1),
+		gold: Vc("#d8a848", .3, .8),
+		tie: Vc(Gc(Uc, n.tieColor, "#6a3a22"), .8),
+		earIn: Vc(a.clone().multiplyScalar(.62).lerp(new N("#7a3a34"), .25), .9)
+	}, c = new A();
+	c.name = "Face";
+	let u = (e, t) => (e.traverse((e) => {
+		e.isMesh && !e.userData.part && (e.userData.part = t);
+	}), e), d = Bl(n, i);
+	c.add(u(new M(d, s.skin), "skin"));
+	let f = new M(Wl(n, i), new l({
+		map: iu(n),
+		alphaTest: .35,
+		roughness: .72,
+		polygonOffset: !0,
+		polygonOffsetFactor: -2,
+		polygonOffsetUnits: -2
+	}));
+	if (f.name = "FaceMask", c.add(u(f, "eye")), n.ears === "pointed") c.add(u(Ml(n, s, i), "skin"));
+	else for (let e of [-1, 1]) {
+		let t = new M(new j(.075, 14, 10), s.skin), r = zl(e * Math.PI / 2, .38, n);
+		i && i(r), t.scale.set(.55, 1.25, .95), t.position.set(r.x + e * .012, r.y, r.z - .03), c.add(u(t, "skin"));
+	}
+	let p = dl(d);
+	c.add(u(await Al(e, d, p, n, s, i), "hair")), (n.marks || []).includes("earring") && c.add(jl(p, {
+		...n,
+		marks: ["earring"]
+	}, s));
+	let m = await Ol(e, d, n, s, i);
+	return m.name = "Hair", c.add(u(m, "hair")), Dl[n.hair]?.kk && m.traverse((e) => {
+		e.isMesh && (e.geometry = Xc(e.geometry, () => !0, rl(.1)));
+	}), c.traverse((e) => {
+		e.isMesh && (e.frustumCulled = !1, e.userData.face = !0);
+	}), {
+		head: c,
+		replaces: [r.headName],
+		skull: d,
+		on: p
+	};
+}
 Object.keys(Dl), Object.keys(gl), Object.keys(vl), Object.keys(bl), [...Object.keys(wl)], Object.keys(Hc), Object.keys(Wc), Object.keys(ll);
-async function Nl(e, t, n, { far: r = !1 } = {}) {
+async function ou(e, t, n, { far: r = !1 } = {}) {
+	if ((n.style || Nl) === "painted" && n.skull !== "own") return au(e, t, n);
 	let i = n.skull === "own", a = i ? await Yc(e, t) : null, o = await Yc(e, t), s = Gc(Hc, n.skin, Hc.fair), c = Gc(Uc, n.hairColor, Uc.brown), l = {
 		skin: Vc(s, .72),
 		hair: Vc(c, .85),
@@ -12252,14 +12611,14 @@ async function Nl(e, t, n, { far: r = !1 } = {}) {
 }
 //#endregion
 //#region ember3d/body.js
-var B = (e, t, n) => new P(e, t, n), Pl = (e, t, n) => {
+var B = (e, t, n) => new P(e, t, n), su = (e, t, n) => {
 	let r = Math.max(0, Math.min(1, (n - e) / (t - e)));
 	return r * r * (3 - 2 * r);
-}, Fl = (e, t, n) => e + (t - e) * n, Il = (e, t = .8, n = 0) => new l({
+}, cu = (e, t, n) => e + (t - e) * n, lu = (e, t = .8, n = 0) => new l({
 	color: e,
 	roughness: t,
 	metalness: n
-}), Ll = {
+}), uu = {
 	thin: {
 		w: .76,
 		d: .8,
@@ -12281,7 +12640,7 @@ var B = (e, t, n) => new P(e, t, n), Pl = (e, t, n) => {
 		belly: .12,
 		hip: 1.22
 	}
-}, Rl = class {
+}, du = class {
 	constructor(e) {
 		this.bones = e, this.P = [], this.SI = [], this.SW = [], this.idx = [];
 	}
@@ -12309,7 +12668,7 @@ var B = (e, t, n) => new P(e, t, n), Pl = (e, t, n) => {
 		return i.bind(t, n), i.frustumCulled = !1, i.userData.body = !0, i;
 	}
 };
-function zl(e, t, n, r, i, a, o, s, c = 0) {
+function fu(e, t, n, r, i, a, o, s, c = 0) {
 	let l = [];
 	for (let u = 0; u < o; u++) {
 		let d = 2 * Math.PI * u / o, f = Math.sin(d), p = t.clone().addScaledVector(n, Math.cos(d) * i).addScaledVector(r, f * a + (f > 0 ? c * f : 0));
@@ -12317,41 +12676,41 @@ function zl(e, t, n, r, i, a, o, s, c = 0) {
 	}
 	return l;
 }
-function Bl(e, t, n, r, i) {
+function pu(e, t, n, r, i) {
 	let a = t.length, o = r.clone().add(i).multiplyScalar(.5);
 	for (let r = 0; r < a; r++) {
 		let i = (r + 1) % a;
 		e.tri(t[r], t[i], n[i], o), e.tri(t[r], n[i], n[r], o);
 	}
 }
-function Vl(e, t, n, r, i) {
+function mu(e, t, n, r, i) {
 	let a = e.v(n, r), o = n.clone().sub(i.clone().multiplyScalar(.1));
 	for (let n = 0; n < t.length; n++) e.tri(a, t[n], t[(n + 1) % t.length], o);
 }
-function Hl(e, t, n, r, i = 8, { caps: a = [!0, !0], steps: o = 3 } = {}) {
+function hu(e, t, n, r, i = 8, { caps: a = [!0, !0], steps: o = 3 } = {}) {
 	let s = null, c = null, l = (a, o) => {
-		let s = t[a], c = t[Math.min(a + 1, t.length - 1)], l = s.p.clone().lerp(c.p, o), u = [Fl(s.r[0], c.r[0], o), Fl(s.r[1], c.r[1], o)], d = [[s.bone, 1]];
+		let s = t[a], c = t[Math.min(a + 1, t.length - 1)], l = s.p.clone().lerp(c.p, o), u = [cu(s.r[0], c.r[0], o), cu(s.r[1], c.r[1], o)], d = [[s.bone, 1]];
 		if (a + 1 < t.length - 1 || a + 1 === t.length - 1 && t[a + 1].bone !== s.bone) {
-			let e = Pl(.62, 1, o) * .5;
+			let e = su(.62, 1, o) * .5;
 			d[0][1] -= e, d.push([c.bone, e]);
 		}
 		if (a > 0) {
-			let e = (1 - Pl(0, .38, o)) * .5;
+			let e = (1 - su(0, .38, o)) * .5;
 			d[0][1] -= e, d.push([t[a - 1].bone, e]);
 		}
 		return {
 			c: l,
-			r: zl(e, l, n, r, u[0], u[1], i, d),
+			r: fu(e, l, n, r, u[0], u[1], i, d),
 			w: d
 		};
 	}, u = [];
 	for (let e = 0; e < t.length - 1; e++) for (let t = 0; t < o; t++) u.push(l(e, t / o));
 	u.push(l(t.length - 2, 1));
-	for (let t of u) s && Bl(e, s.r, t.r, c, t.c), s = t, c = t.c;
+	for (let t of u) s && pu(e, s.r, t.r, c, t.c), s = t, c = t.c;
 	let d = t[t.length - 1].p.clone().sub(t[0].p).normalize();
-	a[0] && Vl(e, u[0].r, u[0].c, u[0].w, d.clone().negate()), a[1] && Vl(e, u[u.length - 1].r, u[u.length - 1].c, u[u.length - 1].w, d);
+	a[0] && mu(e, u[0].r, u[0].c, u[0].w, d.clone().negate()), a[1] && mu(e, u[u.length - 1].r, u[u.length - 1].c, u[u.length - 1].w, d);
 }
-var Ul = [
+var gu = [
 	[
 		.36,
 		.23,
@@ -12392,53 +12751,53 @@ var Ul = [
 		.1,
 		.09
 	]
-], Wl = (e) => {
+], _u = (e) => {
 	if (e < .55) return [["hips", 1]];
 	if (e < .78) {
-		let t = Pl(.55, .78, e);
+		let t = su(.55, .78, e);
 		return [["hips", 1 - t], ["spine", t]];
 	}
 	if (e < .98) {
-		let t = Pl(.78, .98, e);
+		let t = su(.78, .98, e);
 		return [["spine", 1 - t], ["chest", t]];
 	}
 	return [["chest", 1]];
 };
-function Gl(e, t, { y0: n = .36, y1: r = 1.25, grow: i = 0, seg: a = 12, capBottom: o = !0, capTop: s = !0, flare: c = 0 } = {}) {
-	let l = Ul.filter(([e]) => e >= n - 1e-6 && e <= r + 1e-6), u = B(1, 0, 0), d = B(0, 0, 1), f = null, p = null, m = null;
+function vu(e, t, { y0: n = .36, y1: r = 1.25, grow: i = 0, seg: a = 12, capBottom: o = !0, capTop: s = !0, flare: c = 0 } = {}) {
+	let l = gu.filter(([e]) => e >= n - 1e-6 && e <= r + 1e-6), u = B(1, 0, 0), d = B(0, 0, 1), f = null, p = null, m = null;
 	for (let [n, r, o] of l) {
-		let s = t.belly * Pl(.55, .7, n) * (1 - Pl(.85, 1, n)), l = n < .7 ? Fl(t.hip, t.w, Pl(.46, .7, n)) : t.w, h = B(0, n, 0), g = zl(e, h, u, d, r * l + i + (n < .5 ? c : 0), o * t.d + i, a, Wl(n), s);
-		f && Bl(e, f.r, g, f.c, h), f = {
+		let s = t.belly * su(.55, .7, n) * (1 - su(.85, 1, n)), l = n < .7 ? cu(t.hip, t.w, su(.46, .7, n)) : t.w, h = B(0, n, 0), g = fu(e, h, u, d, r * l + i + (n < .5 ? c : 0), o * t.d + i, a, _u(n), s);
+		f && pu(e, f.r, g, f.c, h), f = {
 			r: g,
 			c: h
 		}, p ||= f, m = f;
 	}
-	o && Vl(e, p.r, p.c, Wl(p.c.y), B(0, -1, 0)), s && Vl(e, m.r, m.c, Wl(m.c.y), B(0, 1, 0));
+	o && mu(e, p.r, p.c, _u(p.c.y), B(0, -1, 0)), s && mu(e, m.r, m.c, _u(m.c.y), B(0, 1, 0));
 }
-function Kl(e, t, { y0: n = .62, y1: r = .1, flare: i = .14, seg: a = 16, grow: o = .02 } = {}) {
-	let s = null, [, c, l] = Ul.find(([e]) => e >= n) || Ul[2];
+function yu(e, t, { y0: n = .62, y1: r = .1, flare: i = .14, seg: a = 16, grow: o = .02 } = {}) {
+	let s = null, [, c, l] = gu.find(([e]) => e >= n) || gu[2];
 	for (let u = 0; u <= 5; u++) {
-		let d = u / 5, f = Fl(n, r, d), p = B(0, f, 0), m = c * t.hip + o + i * d, h = l * t.d + o + i * d * .8, g = [];
+		let d = u / 5, f = cu(n, r, d), p = B(0, f, 0), m = c * t.hip + o + i * d, h = l * t.d + o + i * d * .8, g = [];
 		for (let t = 0; t < a; t++) {
-			let n = 2 * Math.PI * t / a, r = Math.cos(n) * m, i = Math.sin(n) * h, o = Pl(-.1, .1, r), s = 1 - Pl(.42, .62, f);
+			let n = 2 * Math.PI * t / a, r = Math.cos(n) * m, i = Math.sin(n) * h, o = su(-.1, .1, r), s = 1 - su(.42, .62, f);
 			g.push(e.v(B(r, f, i), [
 				["hips", 1 - s],
 				["upperlegl", s * o],
 				["upperlegr", s * (1 - o)]
 			]));
 		}
-		s && Bl(e, s.ids, g, s.c, p), s = {
+		s && pu(e, s.ids, g, s.c, p), s = {
 			ids: g,
 			c: p
 		};
 	}
 }
-function ql(e, t, n, r, i, a, o, s = 4, c = 6) {
+function bu(e, t, n, r, i, a, o, s = 4, c = 6) {
 	let l = [];
 	for (let u = 0; u <= c; u++) {
-		let d = Fl(r, i, u / c), f = [];
+		let d = cu(r, i, u / c), f = [];
 		for (let r = 0; r <= s; r++) {
-			let i = Fl(t, n, r / s);
+			let i = cu(t, n, r / s);
 			f.push(e.v(B(i, d, a(i, d)), o(i, d)));
 		}
 		l.push(f);
@@ -12446,11 +12805,11 @@ function ql(e, t, n, r, i, a, o, s = 4, c = 6) {
 	let u = B(0, (r + i) / 2, 0);
 	for (let t = 0; t < c; t++) for (let n = 0; n < s; n++) e.tri(l[t][n], l[t][n + 1], l[t + 1][n + 1], u), e.tri(l[t][n], l[t + 1][n + 1], l[t + 1][n], u);
 }
-function Jl(e, t, n, r = 0) {
+function xu(e, t, n, r = 0) {
 	let i = t.limb, a = r;
 	for (let r of [1, -1]) {
 		let o = r > 0 ? "l" : "r", s = B(0, 1, 0), c = B(0, 0, 1), l = B(1, 0, 0);
-		n.arms && Hl(e, [
+		n.arms && hu(e, [
 			{
 				p: B(r * .2, 1.11, 0),
 				r: [.11 * i + a, .1 * i + a],
@@ -12466,7 +12825,7 @@ function Jl(e, t, n, r = 0) {
 				r: [.072 * i + a, .07 * i + a],
 				bone: "wrist" + o
 			}
-		].slice(0, n.armTo > .6 ? 3 : 2), s, c, 8, { caps: [!0, !0] }), n.hands && Hl(e, [
+		].slice(0, n.armTo > .6 ? 3 : 2), s, c, 8, { caps: [!0, !0] }), n.hands && hu(e, [
 			{
 				p: B(r * .7, 1.11, 0),
 				r: [.075 * i + a, .07 * i + a],
@@ -12482,7 +12841,7 @@ function Jl(e, t, n, r = 0) {
 				r: [.06 * i + a, .055 * i + a],
 				bone: "hand" + o
 			}
-		], s, c, 8), n.legs && Hl(e, [
+		], s, c, 8), n.legs && hu(e, [
 			{
 				p: B(r * .16, .56, 0),
 				r: [.13 * i * t.hip + a, .13 * i + a],
@@ -12498,7 +12857,7 @@ function Jl(e, t, n, r = 0) {
 				r: [.08 * i + a, .082 * i + a],
 				bone: "foot" + o
 			}
-		], l, c, 8, { caps: [!1, !0] }), n.feet && Hl(e, [
+		], l, c, 8, { caps: [!1, !0] }), n.feet && hu(e, [
 			{
 				p: B(r * .17, .065, -.08),
 				r: [.085 * i + a, .07 + a],
@@ -12517,7 +12876,7 @@ function Jl(e, t, n, r = 0) {
 		], l, B(0, 1, 0), 8);
 	}
 }
-var Yl = {
+var Su = {
 	fighter: {
 		top: "#4a3a34",
 		sleeves: "#4a3a34",
@@ -12603,7 +12962,7 @@ var Yl = {
 		robeTo: .2
 	}
 };
-async function Xl(e, t, n, { far: r = !1, findNode: i } = {}) {
+async function Cu(e, t, n, { far: r = !1, findNode: i } = {}) {
 	let a = null;
 	t.traverse((e) => {
 		e.isSkinnedMesh && /Body/.test(e.name) && (a = e);
@@ -12612,7 +12971,7 @@ async function Xl(e, t, n, { far: r = !1, findNode: i } = {}) {
 	t.traverse((e) => {
 		e.isMesh && (e.visible = !1);
 	});
-	let u = Object.fromEntries(o.bones.map((e, t) => [e.name, t])), d = Ll[n.build] || Ll.normal, f = Yl[n.outfit] || Yl.fighter, p = f.colors || {}, m = { ...n.face }, h = n.headgear === void 0 ? f.headgear : n.headgear;
+	let u = Object.fromEntries(o.bones.map((e, t) => [e.name, t])), d = uu[n.build] || uu.normal, f = Su[n.outfit] || Su.fighter, p = f.colors || {}, m = { ...n.face }, h = n.headgear === void 0 ? f.headgear : n.headgear;
 	h && h !== "hat" && ![
 		"crop",
 		"short",
@@ -12620,16 +12979,16 @@ async function Xl(e, t, n, { far: r = !1, findNode: i } = {}) {
 		void 0
 	].includes(m.hair) && (m.hair = "crop");
 	let g = m.skin, _ = (e, t) => {
-		let n = new Rl(u);
-		e(n), n.idx.length && c.add(n.mesh(Il(t, .8), o, s));
+		let n = new du(u);
+		e(n), n.idx.length && c.add(n.mesh(lu(t, .8), o, s));
 	}, { SKIN: v } = await Promise.resolve().then(() => zc), y = v[g] || g || v.fair;
-	_((e) => Gl(e, d), f.top), _((e) => Jl(e, d, {
+	_((e) => vu(e, d), f.top), _((e) => xu(e, d, {
 		arms: !0,
 		armTo: .7
-	}), f.sleeves), _((e) => Jl(e, d, { hands: !0 }), f.hands || y), _((e) => Jl(e, d, {
+	}), f.sleeves), _((e) => xu(e, d, { hands: !0 }), f.hands || y), _((e) => xu(e, d, {
 		legs: !0,
 		legTo: .1
-	}), f.legs), _((e) => Jl(e, d, { feet: !0 }), f.boots), _((e) => Hl(e, [
+	}), f.legs), _((e) => xu(e, d, { feet: !0 }), f.boots), _((e) => hu(e, [
 		{
 			p: B(0, 1.18, 0),
 			r: [.09 * d.limb, .085 * d.limb],
@@ -12647,13 +13006,13 @@ async function Xl(e, t, n, { far: r = !1, findNode: i } = {}) {
 		}
 	], B(1, 0, 0), B(0, 0, 1), 8), y);
 	for (let e of f.extras || []) {
-		let t = (e) => (t, n) => (Ul.find(([e]) => e >= n) || Ul[Ul.length - 1])[2] * d.d + e + d.belly * Pl(.55, .7, n) * (1 - Pl(.85, 1, n));
-		if (e === "breastplate" && _((e) => Gl(e, d, {
+		let t = (e) => (t, n) => (gu.find(([e]) => e >= n) || gu[gu.length - 1])[2] * d.d + e + d.belly * su(.55, .7, n) * (1 - su(.85, 1, n));
+		if (e === "breastplate" && _((e) => vu(e, d, {
 			y0: .62,
 			y1: 1.18,
 			grow: .03,
 			capBottom: !1
-		}), p.steel), e === "belt" && _((e) => Gl(e, d, {
+		}), p.steel), e === "belt" && _((e) => vu(e, d, {
 			y0: .46,
 			y1: .62,
 			grow: .035,
@@ -12661,7 +13020,7 @@ async function Xl(e, t, n, { far: r = !1, findNode: i } = {}) {
 			capTop: !1,
 			seg: 14
 		}), p.belt), e === "pauldrons" && _((e) => {
-			for (let t of [1, -1]) Hl(e, [{
+			for (let t of [1, -1]) hu(e, [{
 				p: B(t * .2, 1.12, 0),
 				r: [.16 * d.limb, .16 * d.d],
 				bone: t > 0 ? "upperarml" : "upperarmr"
@@ -12671,7 +13030,7 @@ async function Xl(e, t, n, { far: r = !1, findNode: i } = {}) {
 				bone: t > 0 ? "upperarml" : "upperarmr"
 			}], B(0, 1, 0), B(0, 0, 1), 10);
 		}, p.steel), e === "vambraces" && _((e) => {
-			for (let t of [1, -1]) Hl(e, [{
+			for (let t of [1, -1]) hu(e, [{
 				p: B(t * .5, 1.11, 0),
 				r: [.1 * d.limb, .098 * d.limb],
 				bone: t > 0 ? "lowerarml" : "lowerarmr"
@@ -12681,7 +13040,7 @@ async function Xl(e, t, n, { far: r = !1, findNode: i } = {}) {
 				bone: t > 0 ? "lowerarml" : "lowerarmr"
 			}], B(0, 1, 0), B(0, 0, 1), 8);
 		}, p.steel), e === "greaves" && _((e) => {
-			for (let t of [1, -1]) Hl(e, [{
+			for (let t of [1, -1]) hu(e, [{
 				p: B(t * .17, .31, .01),
 				r: [.115 * d.limb, .117 * d.limb],
 				bone: t > 0 ? "lowerlegl" : "lowerlegr"
@@ -12691,7 +13050,7 @@ async function Xl(e, t, n, { far: r = !1, findNode: i } = {}) {
 				bone: t > 0 ? "lowerlegl" : "lowerlegr"
 			}], B(1, 0, 0), B(0, 0, 1), 8);
 		}, p.steel), e === "pouches" && _((e) => {
-			for (let t of [1, -1]) Hl(e, [{
+			for (let t of [1, -1]) hu(e, [{
 				p: B(t * .27 * d.hip, .5, .12),
 				r: [.06, .05],
 				bone: "hips"
@@ -12702,21 +13061,21 @@ async function Xl(e, t, n, { far: r = !1, findNode: i } = {}) {
 			}], B(1, 0, 0), B(0, 0, 1), 6);
 		}, p.belt), e === "mantle" && _((e) => {
 			let t = B(1, 0, 0), n = B(0, 0, 1);
-			Bl(e, zl(e, B(0, 1.24, 0), t, n, .16 * d.w, .14 * d.d, 14, [["chest", 1]]), zl(e, B(0, 1.02, 0), t, n, .4 * d.w, .3 * d.d, 14, [["chest", 1]]), B(0, 1.24, 0), B(0, 1.02, 0));
-		}, p.cloth), e === "robe" && _((e) => Kl(e, d, {
+			pu(e, fu(e, B(0, 1.24, 0), t, n, .16 * d.w, .14 * d.d, 14, [["chest", 1]]), fu(e, B(0, 1.02, 0), t, n, .4 * d.w, .3 * d.d, 14, [["chest", 1]]), B(0, 1.24, 0), B(0, 1.02, 0));
+		}, p.cloth), e === "robe" && _((e) => yu(e, d, {
 			y1: f.robeTo ?? .08,
 			flare: .13
 		}), p.robe), e === "tabard") {
-			let e = (e, t) => t > .62 ? Wl(t) : [["hips", 1]];
-			_((n) => ql(n, -.15, .15, .28, 1.08, t(.05), e), p.cloth), _((n) => {
-				ql(n, -.17, -.14, .28, 1.08, t(.055), e, 1, 6), ql(n, .14, .17, .28, 1.08, t(.055), e, 1, 6);
+			let e = (e, t) => t > .62 ? _u(t) : [["hips", 1]];
+			_((n) => bu(n, -.15, .15, .28, 1.08, t(.05), e), p.cloth), _((n) => {
+				bu(n, -.17, -.14, .28, 1.08, t(.055), e, 1, 6), bu(n, .14, .17, .28, 1.08, t(.055), e, 1, 6);
 			}, p.trim);
 		}
-		e === "cape" && _((e) => ql(e, -.3 * d.w, .3 * d.w, .18, 1.16, (e, t) => -((Ul.find(([e]) => e >= t) || Ul[Ul.length - 1])[2] * d.d) - .06 - (1.16 - t) * .12, (e, t) => Wl(Math.max(t, .5)), 5, 7), p.cloth);
+		e === "cape" && _((e) => bu(e, -.3 * d.w, .3 * d.w, .18, 1.16, (e, t) => -((gu.find(([e]) => e >= t) || gu[gu.length - 1])[2] * d.d) - .06 - (1.16 - t) * .12, (e, t) => _u(Math.max(t, .5)), 5, 7), p.cloth);
 	}
-	let b = i(t, "head"), x = await Nl(e, "Knight", m, { far: r });
+	let b = i(t, "head"), x = await ou(e, "Knight", m, { far: r });
 	b.add(x.head);
-	let S = new A(), C = x.skull, w = (e, t = .8, n = 0) => Il(e, t, n);
+	let S = new A(), C = x.skull, w = (e, t = .8, n = 0) => lu(e, t, n);
 	C.computeBoundingBox();
 	let T = C.boundingBox, E = (T.max.x - T.min.x) / 2, D = T.max.y;
 	if (h === "helm") {
@@ -12771,12 +13130,12 @@ async function Xl(e, t, n, { far: r = !1, findNode: i } = {}) {
 }
 //#endregion
 //#region ember3d/creatures.js
-var Zl = (e) => {
+var wu = (e) => {
 	let t = e >>> 0 || 1;
 	return () => (t = Math.imul(t, 1664525) + 1013904223 >>> 0, t / 4294967296);
-}, V = (e, t, n) => new P(e, t, n), Ql = V(0, 1, 0), $l = class {
+}, V = (e, t, n) => new P(e, t, n), Tu = V(0, 1, 0), Eu = class {
 	constructor(e) {
-		this.bones = [], this.by = /* @__PURE__ */ new Map(), this.parts = [], this.r = Zl(e), this.crease = tu, this.mottle = .1;
+		this.bones = [], this.by = /* @__PURE__ */ new Map(), this.parts = [], this.r = wu(e), this.crease = Ou, this.mottle = .1;
 	}
 	bone(e, t, n) {
 		let r = new ge();
@@ -12802,7 +13161,7 @@ var Zl = (e) => {
 			for (let t of e) {
 				let e = on(t.geo, t.crease), n = e.attributes.position, f = e.attributes.normal;
 				for (let e = 0; e < n.count; e++) {
-					if (c.fromBufferAttribute(n, e), l.fromBufferAttribute(f, e), typeof t.colour == "function" ? u.copy(t.colour(c, l)) : u.copy(t.colour), !t.glow && this.mottle && u.multiplyScalar(1 - this.mottle + 2 * this.mottle * au(Math.round(c.x * 60), Math.round(c.y * 60), Math.round(c.z * 60), 3)), r.set([
+					if (c.fromBufferAttribute(n, e), l.fromBufferAttribute(f, e), typeof t.colour == "function" ? u.copy(t.colour(c, l)) : u.copy(t.colour), !t.glow && this.mottle && u.multiplyScalar(1 - this.mottle + 2 * this.mottle * Mu(Math.round(c.x * 60), Math.round(c.y * 60), Math.round(c.z * 60), 3)), r.set([
 						c.x,
 						c.y,
 						c.z
@@ -12865,22 +13224,22 @@ var Zl = (e) => {
 			e.isMesh && (e.frustumCulled = !1);
 		}), r;
 	}
-}, eu = 1.6, tu = 50 * Math.PI / 180, nu = (e, t) => Math.max(t, Math.round(e * eu));
+}, Du = 1.6, Ou = 50 * Math.PI / 180, ku = (e, t) => Math.max(t, Math.round(e * Du));
 function H(e, t, n = [10, 8], r = 0) {
-	n = [nu(n[0], 8), nu(n[1], 6)];
+	n = [ku(n[0], 8), ku(n[1], 6)];
 	let i = new j(1, n[0], n[1]);
 	return i.scale(t[0], t[1], t[2]), r && i.rotateX(r), i.translate(e.x, e.y, e.z), i;
 }
 function U(e, t, n, r, i = 6) {
-	i = nu(i, 5);
+	i = ku(i, 5);
 	let a = t.clone().sub(e), o = a.length(), s = new k(r, n, o, i, 1);
-	return s.translate(0, o / 2, 0), s.applyQuaternion(new m().setFromUnitVectors(Ql, a.normalize())), s.translate(e.x, e.y, e.z), s;
+	return s.translate(0, o / 2, 0), s.applyQuaternion(new m().setFromUnitVectors(Tu, a.normalize())), s.translate(e.x, e.y, e.z), s;
 }
-function ru(e, t, n, r = 8, i = 24) {
-	let a = new We(e), o = new Ze(a, i, 1, nu(r, 6), !1), s = o.attributes.position, c = V(0, 0, 0), l = V(0, 0, 0), u = (e) => {
+function Au(e, t, n, r = 8, i = 24) {
+	let a = new We(e), o = new Ze(a, i, 1, ku(r, 6), !1), s = o.attributes.position, c = V(0, 0, 0), l = V(0, 0, 0), u = (e) => {
 		let n = e * (t.length - 1), r = Math.min(t.length - 2, Math.floor(n)), i = n - r;
 		return t[r] + (t[r + 1] - t[r]) * i;
-	}, d = nu(r, 6) + 1, f = [];
+	}, d = ku(r, 6) + 1, f = [];
 	for (let e = 0; e <= i; e++) {
 		let t = e / i;
 		a.getPointAt(t, c), f.push([c.clone(), t]);
@@ -12902,7 +13261,7 @@ function ru(e, t, n, r = 8, i = 24) {
 		}
 	};
 }
-var W = (e, t, n) => new m().setFromEuler(new w(e, t, n)), iu = (e, t) => new m().setFromAxisAngle(e, t);
+var W = (e, t, n) => new m().setFromEuler(new w(e, t, n)), ju = (e, t) => new m().setFromAxisAngle(e, t);
 function G(e, t, n, r, i = 24) {
 	let a = Math.max(2, Math.round(n * i) + 1), o = [], s = /* @__PURE__ */ new Map(), c = /* @__PURE__ */ new Map(), l = /* @__PURE__ */ new Map();
 	for (let e = 0; e < a; e++) {
@@ -12922,11 +13281,11 @@ function G(e, t, n, r, i = 24) {
 	for (let [e, t] of l) u.push(new Ee(`${e}.scale`, o, t.flatMap((e) => (e || V(1, 1, 1)).toArray())));
 	return new ze(t, n, u);
 }
-var au = (e, t, n, r = 0) => {
+var Mu = (e, t, n, r = 0) => {
 	let i = Math.sin(e * 127.1 + t * 311.7 + n * 74.7 + r * 19.19) * 43758.5453;
 	return i - Math.floor(i);
 };
-function ou(e, t, n, r = 1) {
+function Nu(e, t, n, r = 1) {
 	let i = new Ye(e.map(([e, t]) => new Ge(Math.max(1e-4, t), e)), t).rotateX(Math.PI / 2), a = i.attributes.position;
 	for (let e = 0; e < a.count; e++) {
 		let t = a.getZ(e);
@@ -12934,12 +13293,12 @@ function ou(e, t, n, r = 1) {
 	}
 	return i;
 }
-var su = (e, t, n) => e.rotateY(t).translate(n.x, n.y, n.z), cu = (e, t, n) => e.clone().lerp(t, Math.max(0, Math.min(1, n))), lu = Math.PI * 2, K = (e) => Math.sin(lu * e), uu = (e) => Math.cos(lu * e), du = (e, t, n) => {
+var Pu = (e, t, n) => e.rotateY(t).translate(n.x, n.y, n.z), Fu = (e, t, n) => e.clone().lerp(t, Math.max(0, Math.min(1, n))), Iu = Math.PI * 2, K = (e) => Math.sin(Iu * e), Lu = (e) => Math.cos(Iu * e), Ru = (e, t, n) => {
 	let r = Math.max(0, Math.min(1, (n - e) / (t - e)));
 	return r * r * (3 - 2 * r);
-}, q = (e, t, n, r) => r < t ? du(e, t, r) : 1 - du(t, n, r);
-function fu(e = {}) {
-	let t = !!e.king, n = new $l(e.seed || 11), r = new N(e.fur || "#3c3b3a"), i = new N(e.belly || "#4c4a48"), a = new N(e.skin || "#8e7672"), o = new N(e.furTop || "#64625e"), s = (e, t) => t.y < -.35 ? i : t.y > .62 ? cu(r, o, .45) : r, c = new N("#d8cdb4"), l = new N("#e0cf8a"), u = new N("#3a1214"), d = new N(e.tail || "#8e706a"), f = new N("#5a4642"), p = n.bone("root", null, V(0, .2, 0)), m = n.bone("pelvis", p, V(0, .21, -.17)), h = n.bone("chest", p, V(0, .22, .14)), g = n.bone("neck", h, V(0, .235, .25)), _ = n.bone("head", g, V(0, .245, .31));
+}, q = (e, t, n, r) => r < t ? Ru(e, t, r) : 1 - Ru(t, n, r);
+function zu(e = {}) {
+	let t = !!e.king, n = new Eu(e.seed || 11), r = new N(e.fur || "#3c3b3a"), i = new N(e.belly || "#4c4a48"), a = new N(e.skin || "#8e7672"), o = new N(e.furTop || "#64625e"), s = (e, t) => t.y < -.35 ? i : t.y > .62 ? Fu(r, o, .45) : r, c = new N("#d8cdb4"), l = new N("#e0cf8a"), u = new N("#3a1214"), d = new N(e.tail || "#8e706a"), f = new N("#5a4642"), p = n.bone("root", null, V(0, .2, 0)), m = n.bone("pelvis", p, V(0, .21, -.17)), h = n.bone("chest", p, V(0, .22, .14)), g = n.bone("neck", h, V(0, .235, .25)), _ = n.bone("head", g, V(0, .245, .31));
 	n.bone("jaw", _, V(0, .22, .35));
 	let v = m, y = [
 		V(0, .17, -.31),
@@ -12997,7 +13356,7 @@ function fu(e = {}) {
 		}
 		return 0;
 	};
-	n.part(ou(x, 28, b, .92), C, s);
+	n.part(Nu(x, 28, b, .92), C, s);
 	let T = (e, t, i, a, s = .35, c = .9) => {
 		let l = w(e) * .9, u = V(Math.sin(t) * l, b(e) + Math.cos(t) * l * .92, e), d = V(Math.sin(t), Math.cos(t) * .92, 0).normalize(), f = d.clone().multiplyScalar(s).add(V(0, -.1, -c)).normalize(), p = u.clone().add(f.clone().multiplyScalar(i)), m = U(u.clone().add(d.clone().multiplyScalar(-.01)), p, a, .003, 4), h = m.attributes.position, g = d.clone().sub(f.clone().multiplyScalar(d.dot(f))).normalize(), _ = V(0, 0, 0);
 		for (let e = 0; e < h.count; e++) {
@@ -13005,19 +13364,19 @@ function fu(e = {}) {
 			let t = _.clone().sub(u).dot(g);
 			_.addScaledVector(g, -.55 * t), h.setXYZ(e, _.x, _.y, _.z);
 		}
-		n.part(m, C, (e, t) => e.distanceTo(u) > i * .55 ? o : cu(r, o, .15));
+		n.part(m, C, (e, t) => e.distanceTo(u) > i * .55 ? o : Fu(r, o, .15));
 	};
 	for (let e = 0; e < 9; e++) {
-		let t = -.24 + e * .05, n = au(e, 7, 1, 5);
+		let t = -.24 + e * .05, n = Mu(e, 7, 1, 5);
 		T(t, (e % 2 ? .12 : -.12) + (n - .5) * .15, (.048 + .025 * n) * (t > .05 ? .6 : 1), .036, t > .05 ? .12 : .22);
 	}
 	for (let e of [1, -1]) {
 		for (let t = 0; t < 4; t++) {
-			let n = au(t, e, 2, 6);
+			let n = Mu(t, e, 2, 6);
 			T(.1 + t * .03, e * (.8 + .3 * t), .055 + .02 * n, .03, .25, .85);
 		}
 		for (let t = 0; t < 4; t++) {
-			let n = au(t, e, 4, 7);
+			let n = Mu(t, e, 4, 7);
 			T(-.22 + t * .09, e * (.95 + t % 2 * .25), .06 + .03 * n, .03, .3, .9);
 		}
 		T(-.18, e * .6, .075, .034, .4, .95);
@@ -13055,11 +13414,11 @@ function fu(e = {}) {
 		.014,
 		.012,
 		.009
-	], [6, 4]), "head", new N("#ff5530"), !0), n.part(su(H(V(0, 0, 0), [
+	], [6, 4]), "head", new N("#ff5530"), !0), n.part(Pu(H(V(0, 0, 0), [
 		.04,
 		.044,
 		.012
-	], [8, 6]), .5 * e, V(.066 * e, .33, .275)), "head", r), n.part(su(H(V(0, 0, .006), [
+	], [8, 6]), .5 * e, V(.066 * e, .33, .275)), "head", r), n.part(Pu(H(V(0, 0, .006), [
 		.029,
 		.033,
 		.008
@@ -13107,7 +13466,7 @@ function fu(e = {}) {
 		.012,
 		.055
 	], [6, 4]), `foot${e}`, a), ee(V(.11 * e, .01, -.13), V(0, 0, 1), `foot${e}`, e, .04);
-	e.king && pu(n, y);
+	e.king && Bu(n, y);
 	let te = V(0, .045, .015), ne = [n.bones.indexOf(n.by.get("head")), n.bones.indexOf(n.by.get("jaw"))];
 	n.by.get("head").position.add(te), n.by.get("head").userData.at.add(te), n.by.get("jaw").userData.at.add(te);
 	let O = n.by.get("head").userData.at.clone(), re = e.king ? 1.1 : 1.25;
@@ -13125,7 +13484,7 @@ function fu(e = {}) {
 			`legL${r}`,
 			r > 0 ? .5 : 0
 		]]) {
-			let r = K(e + o), s = Math.max(0, uu(e + o));
+			let r = K(e + o), s = Math.max(0, Lu(e + o));
 			n[i] = W(-.55 * t * r, 0, 0), n[a] = W((i.startsWith("arm") ? .9 : -.9) * t * s, 0, 0);
 		}
 		return n;
@@ -13212,7 +13571,7 @@ function fu(e = {}) {
 						root: W(.15 * t - .25 * n, 0, 0),
 						jaw: W(.7 * n, 0, 0)
 					},
-					p: { root: V(0, -.04 * t + .14 * n, .28 * du(.3, .8, e)) }
+					p: { root: V(0, -.04 * t + .14 * n, .28 * Ru(.3, .8, e)) }
 				};
 			}),
 			G(n, "Hit", .4, (e) => {
@@ -13227,7 +13586,7 @@ function fu(e = {}) {
 				};
 			}),
 			G(n, "Death", 1, (e) => {
-				let t = du(0, .6, e);
+				let t = Ru(0, .6, e);
 				return {
 					q: {
 						root: W(0, 0, 1.45 * t),
@@ -13257,7 +13616,7 @@ function fu(e = {}) {
 		]
 	};
 }
-function pu(e, t) {
+function Bu(e, t) {
 	let r = new N("#8a5a24"), i = new N("#9a7a34"), a = new N("#2a1226"), o = new N("#3c1c36"), s = new N("#d8c27a"), c = new N("#b07a72"), l = new N("#8a6460"), u = new N("#3a342e"), d = new N("#5a534a");
 	e.part(new n(.047, .009, 4, 12).rotateX(Math.PI / 2 - .25).translate(0, .315, .3), "head", i);
 	for (let t = 0; t < 7; t++) {
@@ -13295,23 +13654,23 @@ function pu(e, t) {
 	e.part(new Se(.045, .012, 40, 5, 2, 3).translate(f.x, f.y + .01, f.z), "tail4", l);
 	for (let t = 0; t < 6; t++) {
 		let n = t / 6 * Math.PI * 2 + .3, r = V(Math.sin(n), 0, Math.cos(n)), i = f.clone().add(r.clone().multiplyScalar(.085)).add(V(0, t % 2 * .02, 0)), a = t < 3 ? "tail4" : "tail3", o = .85 + t % 3 * .12, s = (e, t) => t.y > .5 ? d : u;
-		e.part(su(H(V(0, .035 * o, 0), [
+		e.part(Pu(H(V(0, .035 * o, 0), [
 			.04 * o,
 			.036 * o,
 			.065 * o
-		], [8, 6]), n, i), a, s), e.part(su(U(V(0, .04 * o, .05 * o), V(0, .03 * o, .115 * o), .026 * o, .007, 5), n, i), a, s);
-		for (let t of [1, -1]) e.part(su(H(V(.02 * t * o, .06 * o, .055 * o), [
+		], [8, 6]), n, i), a, s), e.part(Pu(U(V(0, .04 * o, .05 * o), V(0, .03 * o, .115 * o), .026 * o, .007, 5), n, i), a, s);
+		for (let t of [1, -1]) e.part(Pu(H(V(.02 * t * o, .06 * o, .055 * o), [
 			.016 * o,
 			.017 * o,
 			.005
-		], [6, 4]), n, i), a, c), e.part(su(H(V(.014 * t * o, .05 * o, .085 * o), [
+		], [6, 4]), n, i), a, c), e.part(Pu(H(V(.014 * t * o, .05 * o, .085 * o), [
 			.006,
 			.006,
 			.005
-		], [5, 3]), n, i), a, new N("#ff5530"), !0), e.part(su(U(V(.03 * t * o, .02, .03 * o), V(.05 * t * o, 0, .05 * o), .008, .005, 4), n, i), a, u);
+		], [5, 3]), n, i), a, new N("#ff5530"), !0), e.part(Pu(U(V(.03 * t * o, .02, .03 * o), V(.05 * t * o, 0, .05 * o), .008, .005, 4), n, i), a, u);
 	}
 }
-function mu(e, { dark: t, band: n, mark: r }) {
+function Vu(e, { dark: t, band: n, mark: r }) {
 	let i = new N("#d6ccb2"), a = new N("#9ccc5a");
 	e.part(H(V(0, .4, -.4), [
 		.25,
@@ -13335,8 +13694,8 @@ function mu(e, { dark: t, band: n, mark: r }) {
 	}
 	for (let t of [1, -1]) e.part(U(V(.03 * t, .24, .3), V(.045 * t, .13, .31), .012, .002, 4), `fang${t}`, i);
 }
-function hu(e = {}) {
-	let t = new $l(e.seed || 23), n = new N(e.body || "#241d1a"), r = new N(e.band || "#5e4b3a"), i = new N(e.mark || "#b8ab8e"), a = n.clone().lerp(r, .4), o = t.bone("root", null, V(0, .28, 0)), s = t.bone("ceph", o, V(0, .29, .1));
+function Hu(e = {}) {
+	let t = new Eu(e.seed || 23), n = new N(e.body || "#241d1a"), r = new N(e.band || "#5e4b3a"), i = new N(e.mark || "#b8ab8e"), a = n.clone().lerp(r, .4), o = t.bone("root", null, V(0, .28, 0)), s = t.bone("ceph", o, V(0, .29, .1));
 	t.bone("abdomen", o, V(0, .31, -.08));
 	for (let e of [1, -1]) t.bone(`fang${e}`, s, V(.035 * e, .25, .27)), t.bone(`palp${e}`, s, V(.06 * e, .27, .24));
 	let c = !!e.queen, l = [
@@ -13353,7 +13712,7 @@ function hu(e = {}) {
 			s: e,
 			i: o,
 			d: l,
-			k: l.clone().cross(Ql).normalize(),
+			k: l.clone().cross(Tu).normalize(),
 			name: `leg${e}${o}`
 		}), t.part(U(d, f, .03 * i, .025 * i), `leg${e}${o}a`, a), t.part(H(f, [
 			.03 * i,
@@ -13373,7 +13732,7 @@ function hu(e = {}) {
 		.07,
 		.055,
 		.055
-	]), "ceph", n), c ? mu(t, {
+	]), "ceph", n), c ? Vu(t, {
 		dark: n,
 		band: r,
 		mark: i
@@ -13416,13 +13775,13 @@ function hu(e = {}) {
 		], [6, 4]), "ceph", new N("#e8ff90"), !0);
 	}
 	let d = t.mesh(e.eyes || "#b8e060", e.queen ? 1.25 : 1.6), f = (e, t, n, r = 0) => ({
-		[`${e.name}a`]: iu(Ql, -e.s * t).multiply(iu(e.k, n)),
-		[`${e.name}b`]: iu(e.k, -r),
-		[`${e.name}c`]: iu(e.k, -r * .6)
+		[`${e.name}a`]: ju(Tu, -e.s * t).multiply(ju(e.k, n)),
+		[`${e.name}b`]: ju(e.k, -r),
+		[`${e.name}c`]: ju(e.k, -r * .6)
 	}), p = (e, t = 1) => {
 		let n = {};
 		for (let r of u) {
-			let i = (r.i + (r.s > 0 ? 0 : 1)) % 2 * .5, a = K(e + i), o = Math.max(0, uu(e + i));
+			let i = (r.i + (r.s > 0 ? 0 : 1)) % 2 * .5, a = K(e + i), o = Math.max(0, Lu(e + i));
 			n = {
 				...n,
 				...f(r, .28 * t * a, .32 * t * o, .25 * t * o)
@@ -13543,7 +13902,7 @@ function hu(e = {}) {
 						...m(n),
 						root: W(-.3 * n, 0, 0)
 					},
-					p: { root: V(0, -.06 * t + .18 * n, .4 * du(.3, .85, e)) }
+					p: { root: V(0, -.06 * t + .18 * n, .4 * Ru(.3, .85, e)) }
 				};
 			}),
 			G(t, "Hit", .45, (e) => {
@@ -13558,7 +13917,7 @@ function hu(e = {}) {
 				};
 			}),
 			G(t, "Death", 1.2, (e) => {
-				let t = du(0, .7, e);
+				let t = Ru(0, .7, e);
 				return {
 					q: {
 						...Object.assign({}, ...u.map((e) => f(e, 0, .7 * t, 1.9 * t))),
@@ -13584,8 +13943,8 @@ function hu(e = {}) {
 		]
 	};
 }
-function gu(e = {}) {
-	let t = new $l(e.seed || 31), n = new N(e.shell || "#5e0e10"), r = new N(e.shellHi || "#8c1e1c"), i = new N("#3a0b07"), a = new N("#160a08"), o = new N(e.body || "#2a1510"), s = new N("#5a2a1c"), c = new N("#1b110d"), l = new N("#4e2c1e"), u = new N("#ffb050"), d = (e, t) => e.z < -.27 ? a : t.y > .8 ? r : t.y > .45 ? n : t.y < .05 ? i : cu(i, n, t.y * 2.2), f = (e, t) => t.y > .7 ? s : o;
+function Uu(e = {}) {
+	let t = new Eu(e.seed || 31), n = new N(e.shell || "#5e0e10"), r = new N(e.shellHi || "#8c1e1c"), i = new N("#3a0b07"), a = new N("#160a08"), o = new N(e.body || "#2a1510"), s = new N("#5a2a1c"), c = new N("#1b110d"), l = new N("#4e2c1e"), u = new N("#ffb050"), d = (e, t) => e.z < -.27 ? a : t.y > .8 ? r : t.y > .45 ? n : t.y < .05 ? i : Fu(i, n, t.y * 2.2), f = (e, t) => t.y > .7 ? s : o;
 	t.bone("root", null, V(0, .16, 0));
 	let p = t.by.get("root");
 	t.bone("thorax", p, V(0, .18, .15)), t.bone("head", t.by.get("thorax"), V(0, .16, .27)), t.bone("abdomen", p, V(0, .17, -.04));
@@ -13662,7 +14021,7 @@ function gu(e = {}) {
 			t.bone(`leg${a}${i}c`, g, f), m.push({
 				s: a,
 				i,
-				k: s.clone().cross(Ql).normalize(),
+				k: s.clone().cross(Tu).normalize(),
 				name: `leg${a}${i}`
 			}), t.part(U(u, d, .034, .026), `leg${a}${i}a`, c), t.part(H(d, [
 				.025,
@@ -13677,13 +14036,13 @@ function gu(e = {}) {
 		}
 	});
 	let h = t.mesh(e.glow || "#ff6a14", 1.4), g = (e, t, n, r = 0) => ({
-		[`${e.name}a`]: iu(Ql, -e.s * t).multiply(iu(e.k, n)),
-		[`${e.name}b`]: iu(e.k, -r),
-		[`${e.name}c`]: iu(e.k, -r * .5)
+		[`${e.name}a`]: ju(Tu, -e.s * t).multiply(ju(e.k, n)),
+		[`${e.name}b`]: ju(e.k, -r),
+		[`${e.name}c`]: ju(e.k, -r * .5)
 	}), _ = (e, t = 1) => {
 		let n = {};
 		for (let r of m) {
-			let i = (r.i + (r.s > 0 ? 0 : 1)) % 2 * .5, a = K(e + i), o = Math.max(0, uu(e + i));
+			let i = (r.i + (r.s > 0 ? 0 : 1)) % 2 * .5, a = K(e + i), o = Math.max(0, Lu(e + i));
 			n = {
 				...n,
 				...g(r, .32 * t * a, .35 * t * o, .2 * t * o)
@@ -13801,7 +14160,7 @@ function gu(e = {}) {
 						...v(.8 * n),
 						root: W(.1 * t - .15 * n, 0, 0)
 					},
-					p: { root: V(0, -.03 * t + .05 * n, .32 * du(.3, .8, e)) }
+					p: { root: V(0, -.03 * t + .05 * n, .32 * Ru(.3, .8, e)) }
 				};
 			}),
 			G(t, "Hit", .4, (e) => {
@@ -13817,7 +14176,7 @@ function gu(e = {}) {
 				};
 			}),
 			G(t, "Death", 1.2, (e) => {
-				let t = du(.05, .55, e), n = du(.3, .9, e);
+				let t = Ru(.05, .55, e), n = Ru(.3, .9, e);
 				return {
 					q: {
 						root: W(0, 0, Math.PI * t),
@@ -13844,8 +14203,8 @@ function gu(e = {}) {
 		]
 	};
 }
-function _u(e = {}) {
-	let t = new $l(e.seed || 41), r = new N(e.skin || "#3a5022"), i = new N(e.skinHi || "#56702e"), a = new N("#203012"), o = (e, t) => t.y > .55 ? cu(r, i, (t.y - .55) * 2.2) : t.y < -.4 ? a : r, s = new N(e.rag || "#7e1c14"), c = new N("#a8321e"), l = new N("#4a100c"), u = (e, t) => t.y > .6 ? c : t.y < -.3 ? l : s, d = new N(e.leather || "#3a2618"), f = new N("#5c3e26"), p = (e, t) => t.y > .5 ? f : d, m = new N("#6a4a30"), g = new N("#4a3220"), _ = new N("#e2d6a8"), v = new N("#cfc29a"), y = new N("#1c0806"), b = new N("#141a0c"), x = new N("#6e3a2c"), S = new N("#b08a3a");
+function Wu(e = {}) {
+	let t = new Eu(e.seed || 41), r = new N(e.skin || "#3a5022"), i = new N(e.skinHi || "#56702e"), a = new N("#203012"), o = (e, t) => t.y > .55 ? Fu(r, i, (t.y - .55) * 2.2) : t.y < -.4 ? a : r, s = new N(e.rag || "#7e1c14"), c = new N("#a8321e"), l = new N("#4a100c"), u = (e, t) => t.y > .6 ? c : t.y < -.3 ? l : s, d = new N(e.leather || "#3a2618"), f = new N("#5c3e26"), p = (e, t) => t.y > .5 ? f : d, m = new N("#6a4a30"), g = new N("#4a3220"), _ = new N("#e2d6a8"), v = new N("#cfc29a"), y = new N("#1c0806"), b = new N("#141a0c"), x = new N("#6e3a2c"), S = new N("#b08a3a");
 	t.bone("root", null, V(0, .3, 0)), t.bone("spine", t.by.get("root"), V(0, .37, .01)), t.bone("chest", t.by.get("spine"), V(0, .45, .03)), t.bone("neck", t.by.get("chest"), V(0, .5, .06)), t.bone("head", t.by.get("neck"), V(0, .56, .08)), t.bone("jaw", t.by.get("head"), V(0, .545, .13));
 	for (let e of [1, -1]) {
 		let n = t.bone(`armU${e}`, t.by.get("chest"), V(.1 * e, .475, .03)), r = t.bone(`armL${e}`, n, V(.15 * e, .36, .05));
@@ -14100,7 +14459,7 @@ function _u(e = {}) {
 	}, re = (e, t = 1) => {
 		let n = {};
 		for (let r of [1, -1]) {
-			let i = r > 0 ? 0 : .5, a = K(e + i), o = Math.max(0, -uu(e + i));
+			let i = r > 0 ? 0 : .5, a = K(e + i), o = Math.max(0, -Lu(e + i));
 			n[`legU${r}`] = W(-.35 - .6 * t * a, 0, .05 * r), n[`legL${r}`] = W(.55 + 1 * t * o, 0, 0), n[`foot${r}`] = W(-.3 * t * o, 0, 0), n[`armU${r}`] = W(-.35 + .6 * t * a, 0, .15 * r), n[`armL${r}`] = W(-.7, 0, 0);
 		}
 		return n;
@@ -14176,7 +14535,7 @@ function _u(e = {}) {
 						jaw: W(.5 * n, 0, 0),
 						head: W(-.3 * n + .2 * r, 0, 0)
 					},
-					p: { root: V(0, -.035 - .05 * t + .16 * n - .03 * r, .3 * du(.25, .65, e)) }
+					p: { root: V(0, -.035 - .05 * t + .16 * n - .03 * r, .3 * Ru(.25, .65, e)) }
 				};
 			}),
 			G(t, "Hit", .4, (e) => {
@@ -14193,7 +14552,7 @@ function _u(e = {}) {
 				};
 			}),
 			G(t, "Death", 1.1, (e) => {
-				let t = du(0, .65, e);
+				let t = Ru(0, .65, e);
 				return {
 					q: {
 						...ne(1 - .5 * t),
@@ -14229,8 +14588,8 @@ function _u(e = {}) {
 		]
 	};
 }
-function vu(e = {}) {
-	let t = new $l(e.seed || 53), n = new N(e.robe || "#2b2f30"), r = new N(e.robeHi || "#38483f"), i = new N("#141617"), a = (e, t) => t.y > .8 ? r : t.y < -.35 ? i : n, o = new N("#b9b4a0"), s = new N("#7d796a"), c = new N("#3f4744"), l = new N("#c8c6b0"), u = new N("#050706"), d = new N("#2a2c2c"), f = new N("#bfffe0"), p = (e, t) => t.y < -.3 ? s : o;
+function Gu(e = {}) {
+	let t = new Eu(e.seed || 53), n = new N(e.robe || "#2b2f30"), r = new N(e.robeHi || "#38483f"), i = new N("#141617"), a = (e, t) => t.y > .8 ? r : t.y < -.35 ? i : n, o = new N("#b9b4a0"), s = new N("#7d796a"), c = new N("#3f4744"), l = new N("#c8c6b0"), u = new N("#050706"), d = new N("#2a2c2c"), f = new N("#bfffe0"), p = (e, t) => t.y < -.3 ? s : o;
 	t.bone("root", null, V(0, .85, 0)), t.bone("spine", t.by.get("root"), V(0, 1, 0)), t.bone("chest", t.by.get("spine"), V(0, 1.2, .03)), t.bone("neck", t.by.get("chest"), V(0, 1.32, .07)), t.bone("head", t.by.get("neck"), V(0, 1.4, .1)), t.bone("jaw", t.by.get("head"), V(0, 1.375, .15));
 	let m = {};
 	for (let e of [1, -1]) {
@@ -14262,7 +14621,7 @@ function vu(e = {}) {
 	t.part(U(h[3], V(0, .04, .04), .04, .003, 6), "shroud2", a);
 	let v = [];
 	for (let e = 0; e < 6; e++) {
-		let n = e / 6 * lu + .3, r = .9, i = au(e, 2, 5, 13), o = .08 + .12 * i, s = (e, t, i) => V(t * Math.cos(n + r * e), i, t * Math.sin(n + r * e)), c = [
+		let n = e / 6 * Iu + .3, r = .9, i = Mu(e, 2, 5, 13), o = .08 + .12 * i, s = (e, t, i) => V(t * Math.cos(n + r * e), i, t * Math.sin(n + r * e)), c = [
 			s(0, .08, .5 - e % 2 * .12),
 			s(.5, .18, .24 + o * .3),
 			s(.9, .27 + .05 * i, .26 + o * .5),
@@ -14270,7 +14629,7 @@ function vu(e = {}) {
 			s(1.45, .3 + .06 * i, .62 + o * 1.2)
 		], l = t.by.get("root"), u = [];
 		for (let n = 0; n < 3; n++) l = t.bone(`tend${e}${n}`, l, c[n]), u.push(`tend${e}${n}`);
-		let d = ru(c, [
+		let d = Au(c, [
 			.09,
 			.08,
 			.06,
@@ -14363,7 +14722,7 @@ function vu(e = {}) {
 			.075
 		]), d, a), t.part(U(n.Sh, n.El.clone().add(n.up.clone().multiplyScalar(.03)), .065, .12, 9), d, (e, t) => t.dot(n.up) > .7 ? u : a(e, t));
 		for (let i = 0; i < 7; i++) {
-			let o = i / 7 * lu + .4, s = .105, c = n.El.clone().add(n.up.clone().multiplyScalar(.03)), l = V(e, 0, 0), u = V(0, 0, 1), d = c.clone().add(l.clone().multiplyScalar(Math.cos(o) * s)).add(u.clone().multiplyScalar(Math.sin(o) * s * .9)), f = .1 + .09 * au(i, e, 6, 3) + (Math.sin(o) < 0 ? .06 : 0);
+			let o = i / 7 * Iu + .4, s = .105, c = n.El.clone().add(n.up.clone().multiplyScalar(.03)), l = V(e, 0, 0), u = V(0, 0, 1), d = c.clone().add(l.clone().multiplyScalar(Math.cos(o) * s)).add(u.clone().multiplyScalar(Math.sin(o) * s * .9)), f = .1 + .09 * Mu(i, e, 6, 3) + (Math.sin(o) < 0 ? .06 : 0);
 			t.part(U(d, d.clone().add(V(.01 * e * Math.cos(o), -f, -.02)), .032, .003, 3), r, a);
 		}
 		t.part(U(n.El.clone().add(n.up.clone().multiplyScalar(-.02)), n.Wr, .034, .025, 7), f, c), t.part(H(n.El, [
@@ -14393,15 +14752,15 @@ function vu(e = {}) {
 			0,
 			1,
 			2
-		].map((r) => [`shroud${r}`, W(n * (.12 + .08 * r) + .05 * t * K(e - r * .2), .15 * t * K(e * .5 - r * .25), .05 * t * uu(e - r * .2))])),
-		...Object.fromEntries(v.flatMap((r, i) => r.map((r, a) => [r, W(n * .3 + .16 * t * K(e + i / 6 + a * .15), .1 * t * uu(e * .5 + i / 6), .14 * t * K(e * 1.3 + i / 6 - a * .2))])))
+		].map((r) => [`shroud${r}`, W(n * (.12 + .08 * r) + .05 * t * K(e - r * .2), .15 * t * K(e * .5 - r * .25), .05 * t * Lu(e - r * .2))])),
+		...Object.fromEntries(v.flatMap((r, i) => r.map((r, a) => [r, W(n * .3 + .16 * t * K(e + i / 6 + a * .15), .1 * t * Lu(e * .5 + i / 6), .14 * t * K(e * 1.3 + i / 6 - a * .2))])))
 	}), x = V(1, 0, 0), S = V(0, 0, 1), C = (e, { fwd: t = 0, out: n = 0, bend: r = 0, curl: i = 0, wrist: a = 0, twist: o = 0 } = {}) => {
 		let s = m[e];
 		return {
-			[`armU${e}`]: iu(Ql, -o * e).multiply(iu(S, n * e)).multiply(iu(x, -t)),
-			[`armL${e}`]: iu(s.hinge, -r),
-			[`hand${e}`]: iu(s.hinge, -a),
-			[`claw${e}`]: iu(s.spread, i * e)
+			[`armU${e}`]: ju(Tu, -o * e).multiply(ju(S, n * e)).multiply(ju(x, -t)),
+			[`armL${e}`]: ju(s.hinge, -r),
+			[`hand${e}`]: ju(s.hinge, -a),
+			[`claw${e}`]: ju(s.spread, i * e)
 		};
 	}, w = (e, t) => ({
 		...C(1, e),
@@ -14510,7 +14869,7 @@ function vu(e = {}) {
 						head: W(-.5 * t + .3 * n, 0, 0),
 						jaw: W(.3 + .6 * t, 0, 0)
 					},
-					p: { root: V(0, .18 * t - .08 * n, .38 * du(.5, .8, e)) }
+					p: { root: V(0, .18 * t - .08 * n, .38 * Ru(.5, .8, e)) }
 				};
 			}),
 			G(t, "Hit", .45, (e) => {
@@ -14532,7 +14891,7 @@ function vu(e = {}) {
 				};
 			}),
 			G(t, "Death", 1.6, (e) => {
-				let t = q(0, .18, .42, e), n = du(.2, .9, e), r = 1 - .72 * n, i = (e) => ({
+				let t = q(0, .18, .42, e), n = Ru(.2, .9, e), r = 1 - .72 * n, i = (e) => ({
 					fwd: 2.3 * t + .35 * n,
 					out: .4 * t - .3 * n + e,
 					bend: .1 - .35 * t + .6 * n,
@@ -14572,7 +14931,7 @@ function vu(e = {}) {
 		]
 	};
 }
-function yu(e, t, n = 0, r = .22, i = [
+function Ku(e, t, n = 0, r = .22, i = [
 	0,
 	0,
 	0
@@ -14587,15 +14946,15 @@ function yu(e, t, n = 0, r = .22, i = [
 	].map(([e, t]) => new Ge(Math.max(1e-4, e), t)), o = new Ye(a, 8).rotateY(Math.PI / 8), s = o.attributes.position, c = new P(), l = 1 / Math.cos(Math.PI / 8);
 	for (let e = 0; e < s.count; e++) {
 		c.fromBufferAttribute(s, e);
-		let r = 1 + (au(Math.round(c.x * 1e3), Math.round(c.y * 1e3), Math.round(c.z * 1e3), n) - .5) * .12;
+		let r = 1 + (Mu(Math.round(c.x * 1e3), Math.round(c.y * 1e3), Math.round(c.z * 1e3), n) - .5) * .12;
 		s.setXYZ(e, c.x * t[0] * l * r, c.y * t[1] * r, c.z * t[2] * l * r);
 	}
 	return o.rotateX(i[0]).rotateY(i[1]).rotateZ(i[2]), o.translate(e.x, e.y, e.z), o;
 }
-function bu(e = {}) {
-	let t = new $l(e.seed || 67), r = e.seed || 67;
+function qu(e = {}) {
+	let t = new Eu(e.seed || 67), r = e.seed || 67;
 	t.crease = 28 * Math.PI / 180;
-	let i = new N(e.stone || "#46525e"), a = new N(e.stoneHi || "#5a6774"), o = new N("#2c343e"), s = new N(e.moss || "#5e6c1e"), c = new N("#7e8c2a"), l = new N("#68761a"), u = new N("#5e3a20"), d = new N("#84552c"), f = new N("#121416"), p = new N("#ffb24a"), h = (e, t) => t.y > .8 && au(Math.round(e.x * 18), Math.round(e.y * 18), Math.round(e.z * 18), r) > .72 ? s : t.y > .35 ? cu(i, a, (t.y - .35) * 2) : t.y < -.35 ? o : i;
+	let i = new N(e.stone || "#46525e"), a = new N(e.stoneHi || "#5a6774"), o = new N("#2c343e"), s = new N(e.moss || "#5e6c1e"), c = new N("#7e8c2a"), l = new N("#68761a"), u = new N("#5e3a20"), d = new N("#84552c"), f = new N("#121416"), p = new N("#ffb24a"), h = (e, t) => t.y > .8 && Mu(Math.round(e.x * 18), Math.round(e.y * 18), Math.round(e.z * 18), r) > .72 ? s : t.y > .35 ? Fu(i, a, (t.y - .35) * 2) : t.y < -.35 ? o : i;
 	t.bone("root", null, V(0, .62, 0)), t.bone("spine", t.by.get("root"), V(0, .84, 0)), t.bone("chest", t.by.get("spine"), V(0, 1.22, .02)), t.bone("head", t.by.get("chest"), V(0, 1.5, .12));
 	for (let e of [1, -1]) {
 		let n = t.bone(`armU${e}`, t.by.get("chest"), V(.48 * e, 1.48, 0)), r = t.bone(`armL${e}`, n, V(.6 * e, 1.08, .05));
@@ -14607,7 +14966,7 @@ function bu(e = {}) {
 		0,
 		0,
 		0
-	]) => t.part(yu(e, n, r + ++g, a, o), i, h);
+	]) => t.part(Ku(e, n, r + ++g, a, o), i, h);
 	_(V(0, .62, 0), [
 		.25,
 		.08,
@@ -14726,7 +15085,7 @@ function bu(e = {}) {
 			let o = r[a], s = r[a + 1], c = o.distanceTo(s), l = Math.max(2, Math.round(c / .055));
 			for (let r = 0; r < l; r++) {
 				let a = o.clone().lerp(s, (r + .5) / l), c = s.clone().sub(o).normalize(), f = new n(.03, .01, 3, 6).scale(1, 1.5, 1);
-				i++ % 2 && f.rotateY(Math.PI / 2), f.applyQuaternion(new m().setFromUnitVectors(Ql, c)).translate(a.x, a.y, a.z), t.part(f, `armL${e}`, (e, t) => t.y > .3 ? d : u);
+				i++ % 2 && f.rotateY(Math.PI / 2), f.applyQuaternion(new m().setFromUnitVectors(Tu, c)).translate(a.x, a.y, a.z), t.part(f, `armL${e}`, (e, t) => t.y > .3 ? d : u);
 			}
 		}
 		_(V(.19 * e, .47, .02), [
@@ -14816,7 +15175,7 @@ function bu(e = {}) {
 			.03 * r
 		], [6, 4]), n, s);
 		for (let i = 0; i < 12; i++) {
-			let a = i / 12 * lu + i % 2 * .3, o = .35 + .5 * (i * 7 % 5) / 5, l = V(Math.cos(a) * Math.cos(o), Math.sin(o) + .3, Math.sin(a) * Math.cos(o)).normalize();
+			let a = i / 12 * Iu + i % 2 * .3, o = .35 + .5 * (i * 7 % 5) / 5, l = V(Math.cos(a) * Math.cos(o), Math.sin(o) + .3, Math.sin(a) * Math.cos(o)).normalize();
 			t.part(U(e.clone().add(V(0, .012 * r, 0)), e.clone().add(l.clone().multiplyScalar((.045 + i % 3 * .015) * r)), .016 * r, .002, 3), n, i % 3 ? c : s);
 		}
 	};
@@ -14844,7 +15203,7 @@ function bu(e = {}) {
 			G(t, "Walk", 1.1, (e) => {
 				let t = {};
 				for (let n of [1, -1]) {
-					let r = n > 0 ? 0 : .5, i = K(e + r), a = Math.max(0, -uu(e + r));
+					let r = n > 0 ? 0 : .5, i = K(e + r), a = Math.max(0, -Lu(e + r));
 					t[`legU${n}`] = W(-.38 * i - .15 * a, 0, 0), t[`legL${n}`] = W(.65 * a, 0, 0), t[`armU${n}`] = W(-.1 + .3 * K(e + r + .5), 0, .12 * n), t[`armL${n}`] = W(-.3, 0, 0);
 				}
 				return {
@@ -14853,7 +15212,7 @@ function bu(e = {}) {
 						root: W(0, .08 * K(e), .06 * K(e)),
 						chest: W(.12, -.1 * K(e), -.04 * K(e))
 					},
-					p: { root: V(.03 * K(e), -.035 * Math.abs(uu(e)), 0) }
+					p: { root: V(.03 * K(e), -.035 * Math.abs(Lu(e)), 0) }
 				};
 			}),
 			G(t, "Attack", .9, (e) => {
@@ -14913,7 +15272,7 @@ function bu(e = {}) {
 				};
 			}),
 			G(t, "Death", 1.8, (e) => {
-				let t = du(0, .5, e), n = du(.3, .85, e), r = du(.15, .6, e);
+				let t = Ru(0, .5, e), n = Ru(.3, .85, e), r = Ru(.15, .6, e);
 				return {
 					q: {
 						legU1: W(-.9 * t, 0, .3 * t),
@@ -14953,14 +15312,14 @@ function bu(e = {}) {
 		]
 	};
 }
-var xu = {
-	rat: fu,
-	spider: hu,
-	beetle: gu,
-	goblin: _u,
-	wraith: vu,
-	golem: bu,
-	ratking: (e = {}) => fu({
+var Ju = {
+	rat: zu,
+	spider: Hu,
+	beetle: Uu,
+	goblin: Wu,
+	wraith: Gu,
+	golem: qu,
+	ratking: (e = {}) => zu({
 		fur: "#3a342e",
 		belly: "#5a5048",
 		furTop: "#544c44",
@@ -14969,7 +15328,7 @@ var xu = {
 		...e,
 		king: !0
 	}),
-	spiderqueen: (e = {}) => hu({
+	spiderqueen: (e = {}) => Hu({
 		body: "#1e1622",
 		band: "#6a4864",
 		mark: "#e2d8c2",
@@ -14979,8 +15338,8 @@ var xu = {
 		queen: !0
 	})
 };
-Object.keys(xu);
-var Su = {
+Object.keys(Ju);
+var Yu = {
 	armU: "upperarm",
 	armL: "lowerarm",
 	hand: "hand",
@@ -14988,17 +15347,17 @@ var Su = {
 	legU: "upperleg",
 	legL: "lowerleg",
 	foot: "foot"
-}, Cu = {
+}, Xu = {
 	root: "hips",
 	spine: "spine",
 	chest: "chest",
 	neck: "chest",
 	head: "head"
-}, wu = (e) => {
+}, Zu = (e) => {
 	let t = /^(armU|armL|hand|fist|legU|legL|foot)(-?1)$/.exec(e);
-	return t ? Su[t[1]] + (t[2] === "1" ? "l" : "r") : Cu[e] || null;
+	return t ? Yu[t[1]] + (t[2] === "1" ? "l" : "r") : Xu[e] || null;
 };
-async function Tu(e, t, n) {
+async function Qu(e, t, n) {
 	let r = await n(`./models/${t.model}.glb`), i = r.scene, a = null;
 	i.traverse((e) => {
 		e.isSkinnedMesh && !a && (a = e);
@@ -15023,7 +15382,7 @@ async function Tu(e, t, n) {
 	});
 	let d = s.get("hips"), f = d.position.clone(), p = /* @__PURE__ */ new Map();
 	for (let e of u) {
-		let t = wu(e.name);
+		let t = Zu(e.name);
 		t && e.name !== "neck" && (p.set(t, e.userData.at), t.startsWith("hand") && p.set("wrist" + t.slice(-1), e.userData.at));
 	}
 	i.traverse((e) => {
@@ -15036,7 +15395,7 @@ async function Tu(e, t, n) {
 	};
 	let h = /* @__PURE__ */ new Map(), g = /* @__PURE__ */ new Map(), _ = new m();
 	for (let e of u) {
-		let t = wu(e.name);
+		let t = Zu(e.name);
 		if (t) {
 			h.set(e.name, s.get(t));
 			continue;
@@ -15076,9 +15435,9 @@ async function Tu(e, t, n) {
 		rig: t.model
 	};
 }
-async function Eu(e, t) {
-	let { root: n, clips: r } = xu[e.kind](e);
-	return e.rig && t ? Tu({
+async function $u(e, t) {
+	let { root: n, clips: r } = Ju[e.kind](e);
+	return e.rig && t ? Qu({
 		root: n,
 		clips: r,
 		kind: e.kind
@@ -15090,7 +15449,7 @@ async function Eu(e, t) {
 		creature: e.kind
 	};
 }
-function Du(e) {
+function ed(e) {
 	e.traverse((e) => {
 		if (!e.isBone) return;
 		let t = e.userData.fitHips, n = e.userData.fit;
@@ -15102,7 +15461,7 @@ function Du(e) {
 }
 //#endregion
 //#region ember3d/gear.js
-var Ou = (e, t) => Rc(e, t), ku = {
+var td = (e, t) => Rc(e, t), nd = {
 	sword: { mesh: ["Knight", "1H_Sword"] },
 	axe: { mesh: ["Barbarian", "1H_Axe"] },
 	greatsword: { mesh: ["Knight", "2H_Sword"] },
@@ -15181,11 +15540,11 @@ var Ou = (e, t) => Rc(e, t), ku = {
 		prop: "charm",
 		bone: "hips"
 	}
-}, Au = {
+}, rd = {
 	weapon: "handslot.r",
 	off: "handslot.l",
 	helm: "head"
-}, ju = [
+}, id = [
 	{
 		tile: [0, 1],
 		to: ["#f2ecdd", "#a39883"]
@@ -15206,7 +15565,7 @@ var Ou = (e, t) => Rc(e, t), ku = {
 		tile: [1, 2],
 		to: ["#8a5a3a", "#3a2016"]
 	}
-], Mu = [
+], ad = [
 	{
 		tile: [0, 1],
 		to: ["#8a7a5e", "#2e2618"]
@@ -15231,18 +15590,18 @@ var Ou = (e, t) => Rc(e, t), ku = {
 		tile: [2, 2],
 		to: ["#4a5a3a", "#16200e"]
 	}
-], Nu = {
+], od = {
 	plate: { kit: "Knight" },
 	furmail: { kit: "Barbarian" },
 	leathers: { kit: "Rogue" },
 	robes: { kit: "Mage" },
 	vestments: {
 		kit: "Mage",
-		swatches: ju
+		swatches: id
 	},
 	hiderobes: {
 		kit: "Mage",
-		swatches: Mu
+		swatches: ad
 	},
 	sabatons: { kit: "Knight" },
 	furboots: { kit: "Barbarian" },
@@ -15250,51 +15609,51 @@ var Ou = (e, t) => Rc(e, t), ku = {
 	slippers: { kit: "Mage" },
 	pilgrimboots: {
 		kit: "Mage",
-		swatches: ju
+		swatches: id
 	},
 	wrapboots: {
 		kit: "Mage",
-		swatches: Mu
+		swatches: ad
 	}
-}, Pu = {
+}, sd = {
 	armor: [
 		"Body",
 		"ArmLeft",
 		"ArmRight"
 	],
 	boots: ["LegLeft", "LegRight"]
-}, Fu = (e) => e.replace(/_Hooded$/, ""), Iu = {
+}, cd = (e) => e.replace(/_Hooded$/, ""), ld = {
 	common: 0,
 	fine: .07,
 	rare: .13,
 	heirloom: .21
-}, Lu = { heirloom: !0 }, Ru = .02, zu = /* @__PURE__ */ new Map();
-async function Bu(e, t) {
+}, ud = { heirloom: !0 }, dd = .02, fd = /* @__PURE__ */ new Map();
+async function pd(e, t) {
 	if (e.prop) {
 		let t = Nc[e.prop]();
 		return !e.bone && !e.head && (t.position.y = .033, t.userData.held = !0), t;
 	}
 	if (e.file) return (await t(`./models/${e.file}`)).scene;
-	let n = e.mesh.join("/"), r = zu.get(n);
-	r || (r = t(`./models/${e.mesh[0]}.glb`).then((t) => t.scene.getObjectByName(e.mesh[1]) || null), zu.set(n, r));
+	let n = e.mesh.join("/"), r = fd.get(n);
+	r || (r = t(`./models/${e.mesh[0]}.glb`).then((t) => t.scene.getObjectByName(e.mesh[1]) || null), fd.set(n, r));
 	let i = await r;
 	if (!i) return null;
 	let a = i.clone();
 	return a.visible = !0, a.position.copy(i.position), a.quaternion.copy(i.quaternion), a.scale.copy(i.scale), a;
 }
-function Vu(e, t) {
-	let n = Math.max(0, Math.min(5, t.up || 0)), r = (Iu[t.r] || 0) + n * Ru;
+function md(e, t) {
+	let n = Math.max(0, Math.min(5, t.up || 0)), r = (ld[t.r] || 0) + n * dd;
 	r && e.traverse((e) => {
 		if (!e.isMesh || !e.material || !e.material.emissive) return;
 		let n = e.material = e.material.clone();
-		n.map ? (n.emissive = new N(1, 1, 1), n.emissiveMap = n.map) : n.emissive = (n.color || new N(1, 1, 1)).clone(), n.emissiveIntensity = r, n.userData.rarity = r, Lu[t.r] && (n.userData.shine = r), e.userData.glow = !0;
+		n.map ? (n.emissive = new N(1, 1, 1), n.emissiveMap = n.map) : n.emissive = (n.color || new N(1, 1, 1)).clone(), n.emissiveIntensity = r, n.userData.rarity = r, ud[t.r] && (n.userData.shine = r), e.userData.glow = !0;
 	});
 }
-async function Hu(e, t, n, r, i = {}) {
-	for (let r of ["armor", "boots"]) r in t && await Uu(e, r, t[r], n, i);
-	for (let [a, o] of Object.entries(Au)) {
+async function hd(e, t, n, r, i = {}) {
+	for (let r of ["armor", "boots"]) r in t && await gd(e, r, t[r], n, i);
+	for (let [a, o] of Object.entries(rd)) {
 		if (!(a in t)) continue;
-		let s = t[a], c = s && ku[s.base];
+		let s = t[a], c = s && nd[s.base];
 		if (c && (c.keep || c.keepOn && i.model === c.keepOn)) continue;
 		let l = r(e, o);
 		if (!l) continue;
@@ -15304,7 +15663,7 @@ async function Hu(e, t, n, r, i = {}) {
 			t && c && (t.visible = !1);
 		}
 		if (!c) continue;
-		let u = await Bu(a === "helm" ? {
+		let u = await pd(a === "helm" ? {
 			...c,
 			head: !0
 		} : c, n);
@@ -15313,12 +15672,12 @@ async function Hu(e, t, n, r, i = {}) {
 				let e = new A();
 				e.position.copy(u.position), u.position.set(0, c.lift || 0, 0), e.add(u), e.userData.hang = c.hang, u = e;
 			}
-			Vu(u, s), l.add(u);
+			md(u, s), l.add(u);
 		}
 	}
 	let a = [];
-	"trinket" in t && t.trinket && ku[t.trinket.base] && ku[t.trinket.base].bone && a.push([ku[t.trinket.base], t.trinket]);
-	let o = t.weapon && ku[t.weapon.base];
+	"trinket" in t && t.trinket && nd[t.trinket.base] && nd[t.trinket.base].bone && a.push([nd[t.trinket.base], t.trinket]);
+	let o = t.weapon && nd[t.weapon.base];
 	o && o.quiver && a.push([{
 		prop: o.quiver,
 		bone: o.quiver === "quiver" ? "chest" : "hips"
@@ -15326,14 +15685,14 @@ async function Hu(e, t, n, r, i = {}) {
 	for (let [t, i] of a) {
 		let a = r(e, t.bone);
 		if (!a) continue;
-		let o = await Bu(t, n);
-		o && (Vu(o, i), a.add(o));
+		let o = await pd(t, n);
+		o && (md(o, i), a.add(o));
 	}
 }
-async function Uu(e, t, n, r, i) {
-	let a = n && Nu[n.base];
+async function gd(e, t, n, r, i) {
+	let a = n && od[n.base];
 	if (!a || !i.model) return;
-	let o = Fu(i.model);
+	let o = cd(i.model);
 	if (a.kit === o && JSON.stringify(a.swatches || null) === JSON.stringify(i.swatches || null)) return;
 	let s = /* @__PURE__ */ new Map();
 	e.traverse((e) => {
@@ -15342,16 +15701,16 @@ async function Uu(e, t, n, r, i) {
 	let c = [...s.values()][0];
 	if (!c) return;
 	let l = (await r(`./models/${a.kit}.glb`)).scene;
-	for (let e of Pu[t]) {
+	for (let e of sd[t]) {
 		let t = l.getObjectByName(`${a.kit}_${e}`), n = s.get(`${o}_${e}`);
 		if (!t || !t.isSkinnedMesh || !n) continue;
 		let r = new qe(t.geometry, t.material);
-		r.name = t.name, r.position.copy(t.position), r.quaternion.copy(t.quaternion), r.scale.copy(t.scale), r.castShadow = n.castShadow, r.frustumCulled = !1, r.userData.foreign = !0, n.parent.add(r), r.bind(new y(c.skeleton.bones, t.skeleton.boneInverses), t.bindMatrix.clone()), n.visible = !1, a.swatches && (r.userData.foreign = !1, Ou(r, a.swatches), r.userData.foreign = !0);
+		r.name = t.name, r.position.copy(t.position), r.quaternion.copy(t.quaternion), r.scale.copy(t.scale), r.castShadow = n.castShadow, r.frustumCulled = !1, r.userData.foreign = !0, n.parent.add(r), r.bind(new y(c.skeleton.bones, t.skeleton.boneInverses), t.bindMatrix.clone()), n.visible = !1, a.swatches && (r.userData.foreign = !1, td(r, a.swatches), r.userData.foreign = !0);
 	}
 }
 //#endregion
 //#region ember3d/figure.js
-var Wu = {
+var _d = {
 	Knight: [
 		"1H_Sword_Offhand",
 		"Badge_Shield",
@@ -15396,7 +15755,7 @@ var Wu = {
 		"Mage_Hat",
 		"Mage_Cape"
 	]
-}, Gu = {
+}, vd = {
 	scale: { head: .62 },
 	reach: {
 		spine: 1.2,
@@ -15408,15 +15767,15 @@ var Wu = {
 		wrist: 1.3
 	}
 };
-function Ku(e) {
+function yd(e) {
 	e.traverse((e) => {
 		if (!e.isBone) return;
 		let t = e.name.replace(/\.?(l|r)$/, "");
-		Gu.scale[t] && e.scale.multiplyScalar(Gu.scale[t]), Gu.reach[t] && e.position.multiplyScalar(Gu.reach[t]);
+		vd.scale[t] && e.scale.multiplyScalar(vd.scale[t]), vd.reach[t] && e.position.multiplyScalar(vd.reach[t]);
 	});
 }
-var qu = /Sword|Axe|Shield|Crossbow|Knife|Throwable|Spellbook|Wand|Staff|Mug/;
-function Ju(e, t, n) {
+var bd = /Sword|Axe|Shield|Crossbow|Knife|Throwable|Spellbook|Wand|Staff|Mug/;
+function xd(e, t, n) {
 	if (!t.height) {
 		let t = new He().setFromObject(e);
 		return {
@@ -15425,7 +15784,7 @@ function Ju(e, t, n) {
 		};
 	}
 	let r = new He(), i = (e) => {
-		for (let t = e; t; t = t.parent) if (t.userData.held || t !== e && qu.test(t.name) || qu.test(e.name)) return !0;
+		for (let t = e; t; t = t.parent) if (t.userData.held || t !== e && bd.test(t.name) || bd.test(e.name)) return !0;
 		return !1;
 	};
 	return e.updateMatrixWorld(!0), e.traverse((e) => {
@@ -15435,8 +15794,8 @@ function Ju(e, t, n) {
 		ppu: n * t.height / (r.max.y - r.min.y)
 	};
 }
-var Yu = (e, t) => e.getObjectByName(t) || e.getObjectByName(t.replace(/\./g, ""));
-function Xu(e, t) {
+var Sd = (e, t) => e.getObjectByName(t) || e.getObjectByName(t.replace(/\./g, ""));
+function Cd(e, t) {
 	let n = /* @__PURE__ */ new Map();
 	e.traverse((e) => {
 		if (!e.isMesh || /Eyes/.test(e.name) || !e.material.map) return;
@@ -15452,7 +15811,7 @@ function Xu(e, t) {
 		e.material = r;
 	});
 }
-var Zu = {
+var wd = {
 	thin: {
 		w: .9,
 		arm: .97
@@ -15469,11 +15828,11 @@ var Zu = {
 		w: 1.17,
 		arm: 1.07
 	}
-}, Qu = {
+}, Td = {
 	short: .94,
 	average: 1,
 	tall: 1.06
-}, $u = [
+}, Ed = [
 	"shape",
 	"skin",
 	"eyes",
@@ -15487,78 +15846,78 @@ var Zu = {
 	"beard",
 	"marks"
 ];
-function ed(e) {
-	let t = e && Zu[e.build] || Zu.normal;
+function Dd(e) {
+	let t = e && wd[e.build] || wd.normal;
 	return {
 		w: t.w,
-		h: e && Qu[e.height] || 1,
+		h: e && Td[e.height] || 1,
 		arm: t.arm
 	};
 }
-function td(e, t) {
+function Od(e, t) {
 	(t.w !== 1 || t.arm !== 1) && e.traverse((e) => {
 		if (!e.isBone) return;
 		let n = e.name.replace(/\.?(l|r)$/, "");
 		n === "head" ? (e.scale.x /= t.w, e.scale.z /= t.w) : n === "upperarm" && (e.position.x *= t.arm);
 	});
 }
-async function nd(e, t) {
+async function kd(e, t) {
 	if (typeof e != "string") return e;
 	let n = await t();
 	if (!n[e]) throw Error(`no face preset "${e}"`);
 	return n[e];
 }
-async function rd(e, t) {
-	if (e.creature) return Eu(e.creature, t.load);
-	let { far: n = !1, load: r } = t, i = await r(`./models/${e.model}.glb`), a = i.scene, o = Wu[e.model] || [];
+async function Ad(e, t) {
+	if (e.creature) return $u(e.creature, t.load);
+	let { far: n = !1, load: r } = t, i = await r(`./models/${e.model}.glb`), a = i.scene, o = _d[e.model] || [];
 	if (a.traverse((t) => {
 		t.isMesh && (t.frustumCulled = !1, o.includes(t.name) && !(e.show || []).includes(t.name) && (t.visible = !1));
 	}), e.body) {
 		let i = {
 			...e.body,
-			face: await nd(e.body.face, t.faces)
+			face: await kd(e.body.face, t.faces)
 		};
 		e.body.shape && (i.face = {
 			...i.face,
 			shape: e.body.shape
-		}), await Xl(r, a, i, {
+		}), await Cu(r, a, i, {
 			far: n,
-			findNode: Yu
+			findNode: Sd
 		});
 	} else if (e.face || e.appearance) {
-		let i = e.face ? await nd(e.face, t.faces) : {}, o = e.appearance ? {
+		let i = e.face ? await kd(e.face, t.faces) : {}, o = e.appearance ? {
 			...i,
-			...Object.fromEntries($u.map((t) => [t, e.appearance[t]]))
-		} : i, { head: s, replaces: c } = await Nl(r, e.model, o, { far: n });
+			...Object.fromEntries(Ed.map((t) => [t, e.appearance[t]]))
+		} : i, { head: s, replaces: c } = await ou(r, e.model, o, { far: n });
 		a.traverse((e) => {
 			e.isMesh && c.includes(e.name) && (e.visible = !1);
-		}), Yu(a, "head").add(s);
+		}), Sd(a, "head").add(s);
 	}
 	for (let [t, n] of Object.entries(e.attach || {})) {
 		let e = await r(`./models/${n}`);
-		Yu(a, t)?.add(e.scene);
+		Sd(a, t)?.add(e.scene);
 	}
 	for (let [t, n] of Object.entries(e.hold || {})) {
 		let e = Nc[n]();
-		e.position.y = .033, e.userData.held = !0, Yu(a, t)?.add(e);
+		e.position.y = .033, e.userData.held = !0, Sd(a, t)?.add(e);
 	}
-	for (let [t, n] of Object.entries(e.wear || {})) Yu(a, t)?.add(Nc[n]());
+	for (let [t, n] of Object.entries(e.wear || {})) Sd(a, t)?.add(Nc[n]());
 	for (let t of e.hide || []) a.traverse((e) => {
 		e.name === t && (e.visible = !1);
 	});
 	return e.skull && a.traverse((e) => {
 		e.isMesh && (/_Eyes$/.test(e.name) ? e.userData.part = "eye" : /_Head$/.test(e.name) ? e.userData.part = "skin" : /_Jaw$/.test(e.name) && (e.userData.part = "hair"));
-	}), e.gear && await Hu(a, e.gear, r, Yu, e), e.swatches && Rc(a, e.swatches), e.recolor && Xu(a, e.recolor), e.eyes && a.traverse((t) => {
+	}), e.gear && await hd(a, e.gear, r, Sd, e), e.swatches && Rc(a, e.swatches), e.recolor && Cd(a, e.recolor), e.eyes && a.traverse((t) => {
 		t.isMesh && /Eyes/.test(t.name) && (t.material = t.material.clone(), t.material.emissive = new N(e.eyes), t.material.emissiveIntensity = 3);
 	}), {
 		root: a,
 		mixer: new Je(a),
 		clips: i.animations,
 		frame: e.frame || null,
-		look: e.appearance ? ed(e.appearance) : null
+		look: e.appearance ? Dd(e.appearance) : null
 	};
 }
-function id(e, t) {
+function jd(e, t) {
 	e.traverse((e) => {
 		if (!e.isBone) return;
 		let n = e.name.replace(/\.?(l|r)$/, "");
@@ -15568,23 +15927,23 @@ function id(e, t) {
 		}
 	});
 }
-function ad(e, t, n, r) {
+function Md(e, t, n, r) {
 	e.mixer.stopAllAction();
 	let i = e.clips.find((e) => e.name === t) || e.clips.find((e) => e.name === "Idle");
-	e.mixer.clipAction(i).play(), e.mixer.setTime(n * i.duration), e.creature && Du(e.root), r && !e.creature && Ku(e.root), r && e.frame && id(e.root, e.frame), r && e.look && !e.creature && td(e.root, e.look), e.root.updateMatrixWorld(!0), ud(e.root);
+	e.mixer.clipAction(i).play(), e.mixer.setTime(n * i.duration), e.creature && ed(e.root), r && !e.creature && yd(e.root), r && e.frame && jd(e.root, e.frame), r && e.look && !e.creature && Od(e.root, e.look), e.root.updateMatrixWorld(!0), Ld(e.root);
 }
-var od = new m(), sd = new m(), cd = new m().setFromAxisAngle(new P(1, 0, 0), Math.PI), ld = new P(0, 1, 0);
-function ud(e) {
+var Nd = new m(), Pd = new m(), Fd = new m().setFromAxisAngle(new P(1, 0, 0), Math.PI), Id = new P(0, 1, 0);
+function Ld(e) {
 	let t = [];
 	if (e.traverse((e) => {
 		e.userData.hang && t.push(e);
 	}), !t.length) return;
-	let n = new m().setFromAxisAngle(ld, e.rotation.y);
-	for (let e of t) e.parent.getWorldQuaternion(sd), od.copy(n), e.userData.hang !== "up" && od.multiply(cd), e.quaternion.copy(sd.invert().multiply(od));
+	let n = new m().setFromAxisAngle(Id, e.rotation.y);
+	for (let e of t) e.parent.getWorldQuaternion(Pd), Nd.copy(n), e.userData.hang !== "up" && Nd.multiply(Fd), e.quaternion.copy(Pd.invert().multiply(Nd));
 	e.updateMatrixWorld(!0);
 }
-var dd = new rt();
-function fd(e, t, n, r) {
+var Rd = new rt();
+function zd(e, t, n, r) {
 	let i = e.geometry.index ? e.geometry.toNonIndexed() : e.geometry.clone();
 	for (let e of Object.keys(i.attributes)) [
 		"position",
@@ -15599,7 +15958,7 @@ function fd(e, t, n, r) {
 	}
 	return i;
 }
-function pd(e, t) {
+function Bd(e, t) {
 	e.updateMatrixWorld(!0);
 	let n = (e) => {
 		for (let t = e; t; t = t.parent) if (!t.visible) return !1;
@@ -15653,7 +16012,7 @@ function pd(e, t) {
 	}
 	for (let { bone: n, kind: r, list: i } of s.values()) {
 		if (i.length < 2 && r.startsWith("map")) continue;
-		let a = dd.copy(n.matrixWorld).invert(), o = r.startsWith("map"), s = i.map((e) => fd(e, new rt().multiplyMatrices(a, e.matrixWorld), o, !o));
+		let a = Rd.copy(n.matrixWorld).invert(), o = r.startsWith("map"), s = i.map((e) => zd(e, new rt().multiplyMatrices(a, e.matrixWorld), o, !o));
 		if (s.some((e) => !e)) continue;
 		let c = t(s);
 		if (!c) continue;
@@ -15679,49 +16038,49 @@ function pd(e, t) {
 }
 //#endregion
 //#region ember3d/ground.js
-var md = .25, hd = /* @__PURE__ */ new Set([
+var Vd = .25, Hd = /* @__PURE__ */ new Set([
 	"dust",
 	"fireflies",
 	"sparkle"
 ]);
+//#endregion
+//#region ember3d/world.js
 Object.assign(globalThis, { __emberGround: {
 	foliage(e) {
 		return this.scaled += e.length, e.map((e) => ({
 			...e,
-			scale: (e.scale ?? 1) * md
+			scale: (e.scale ?? 1) * Vd
 		}));
 	},
 	scaled: 0,
-	size: md,
-	keeps: (e) => e?.emberExhibit === !0 || !hd.has(e?.preset),
+	size: Vd,
+	keeps: (e) => e?.emberExhibit === !0 || !Hd.has(e?.preset),
 	dust: !1
-} });
-//#endregion
-//#region ember3d/world.js
-var gd = "", _d = 1, vd = 3, yd = 16 * Math.SQRT2, bd = {
+} }), typeof location < "u" && new URLSearchParams(location.search).get("faces") === "painted" && Pl("painted");
+var Ud = "", Wd = 1, Gd = 3, Kd = 16 * Math.SQRT2, qd = {
 	billboard: "spherical",
 	normalUp: .6,
 	wrap: .6,
 	roundness: .35,
 	emissive: "#ffe9d2",
 	emissiveIntensity: .2
-}, xd = "en", Sd = null, Cd = null, wd = null, Td = null, J = null, Ed = null, Dd = 0, Od = "soft", kd = 45, Ad = 30, jd = /* @__PURE__ */ new Map(), Md = 2, Nd = .12, Pd = "", Fd = "", Id = !1, Ld = "", Rd = null, zd = 5, Bd = 10;
-function Vd() {
-	Rd && !Rd.done && (Ud(zd), setTimeout(Vd, Rd?.wait || Id ? 60 : Bd));
+}, Jd = "en", Yd = null, Xd = null, Zd = null, Qd = null, J = null, $d = null, ef = 0, tf = "soft", nf = 45, rf = 30, af = /* @__PURE__ */ new Map(), of = 2, sf = .12, cf = "", lf = "", uf = !1, df = "", ff = null, pf = 5, mf = 10;
+function hf() {
+	ff && !ff.done && (_f(pf), setTimeout(hf, ff?.wait || uf ? 60 : mf));
 }
-function Hd() {
-	if (Rd) {
+function gf() {
+	if (ff) {
 		try {
-			Rd.world.dispose();
+			ff.world.dispose();
 		} catch (e) {
 			console.warn("[luminati] a level built ahead:", e);
 		}
-		Rd = null;
+		ff = null;
 	}
 }
-function Ud(e) {
-	let t = Rd;
-	if (!t || t.done || t.wait || Id) return;
+function _f(e) {
+	let t = ff;
+	if (!t || t.done || t.wait || uf) return;
 	let n = performance.now() + e;
 	try {
 		for (;;) {
@@ -15741,10 +16100,10 @@ function Ud(e) {
 			if (performance.now() >= n) return;
 		}
 	} catch (e) {
-		console.warn("[luminati] building a level ahead:", e), Rd === t && (Rd = null);
+		console.warn("[luminati] building a level ahead:", e), ff === t && (ff = null);
 	}
 }
-var Wd = (e) => ({
+var vf = (e) => ({
 	world: e.world,
 	level: e.level,
 	async finish() {
@@ -15758,39 +16117,39 @@ var Wd = (e) => ({
 			t.value && "wait" in t.value && await t.value.wait;
 		}
 	}
-}), Gd = /* @__PURE__ */ new Map(), Kd = /* @__PURE__ */ new Map(), qd = (e) => {
-	let t = Gd.get(e);
+}), yf = /* @__PURE__ */ new Map(), bf = /* @__PURE__ */ new Map(), xf = (e) => {
+	let t = yf.get(e);
 	return t || (t = new Promise((t, n) => {
 		let r = new Image();
 		r.decoding = "async", r.onload = () => t(r), r.onerror = n, r.src = e;
-	}), Gd.set(e, t)), t;
-}, Jd = (e) => {
+	}), yf.set(e, t)), t;
+}, Sf = (e) => {
 	let t = 2166136261;
 	for (let n = 0; n < e.length; n++) t = Math.imul(t ^ e.charCodeAt(n), 16777619);
 	return (t >>> 0).toString(36);
-}, Yd = (e) => {
-	let t = Kd.get(e);
+}, Cf = (e) => {
+	let t = bf.get(e);
 	return t || (t = fetch(e, { cache: "no-cache" }).then((e) => e.ok ? e.text() : null).then((e) => {
 		if (!e) return null;
 		let t = JSON.parse(e);
-		return Object.defineProperty(t, "_v", { value: Jd(e) }), t;
-	}).catch(() => null), Kd.set(e, t)), t;
-}, Xd = /* @__PURE__ */ new Map();
-function Zd(e) {
-	return Xd.has(e) ? Xd.get(e) : (Xd.set(e, null), Yd(`${gd}actors/${e}.json`).then((t) => t ? qd(`${gd}actors/${e}.alb.png?v=${t._v}`).then((e) => [t, e]) : [null, null]).then(([t, n]) => {
+		return Object.defineProperty(t, "_v", { value: Sf(e) }), t;
+	}).catch(() => null), bf.set(e, t)), t;
+}, wf = /* @__PURE__ */ new Map();
+function Tf(e) {
+	return wf.has(e) ? wf.get(e) : (wf.set(e, null), Cf(`${Ud}actors/${e}.json`).then((t) => t ? xf(`${Ud}actors/${e}.alb.png?v=${t._v}`).then((e) => [t, e]) : [null, null]).then(([t, n]) => {
 		if (!t) {
-			Xd.set(e, !1);
+			wf.set(e, !1);
 			return;
 		}
 		let r = new pe(n);
-		r.magFilter = r.minFilter = D, r.generateMipmaps = !1, r.colorSpace = o, r.wrapS = r.wrapT = Oe, r.needsUpdate = !0, r.name = `ember-actor:${e}`, Xd.set(e, {
+		r.magFilter = r.minFilter = D, r.generateMipmaps = !1, r.colorSpace = o, r.wrapS = r.wrapT = Oe, r.needsUpdate = !0, r.name = `ember-actor:${e}`, wf.set(e, {
 			meta: t,
 			tex: r,
 			sheets: /* @__PURE__ */ new Map()
 		});
-	}).catch(() => Xd.set(e, !1)), null);
+	}).catch(() => wf.set(e, !1)), null);
 }
-function Qd(e, t) {
+function Ef(e, t) {
 	let n = t.toFixed(3), r = e.sheets.get(n);
 	if (!r) {
 		let i = e.meta;
@@ -15800,7 +16159,7 @@ function Qd(e, t) {
 			frameHeight: i.ch,
 			columns: i.frames,
 			rows: i.dirs,
-			pixelsPerUnit: yd / t,
+			pixelsPerUnit: Kd / t,
 			anchor: [i.ax / i.cw, 0],
 			animations: { idle_down: {
 				frames: [{
@@ -15815,38 +16174,38 @@ function Qd(e, t) {
 	}
 	return r;
 }
-var $d = /* @__PURE__ */ new Map();
-function ef(e, t) {
-	let n = $d.get(e);
-	for (n || $d.set(e, n = []); n.length <= t;) {
-		let t = new Ht(e, { ...bd });
+var Df = /* @__PURE__ */ new Map();
+function Of(e, t) {
+	let n = Df.get(e);
+	for (n || Df.set(e, n = []); n.length <= t;) {
+		let t = new Ht(e, { ...qd });
 		t.visible = !1, J.engine.scene.add(t), n.push(t);
 	}
 	return n[t];
 }
-function tf(e, t, n, r, i) {
+function kf(e, t, n, r, i) {
 	let a = 2 * r / i / Math.SQRT2, o = J.tileMap, s = t + a, c = n + a;
 	e.position.set(s, o.getHeight(t, n), c);
 }
-var nf = "models", rf = new P(), af = .4, of = null, sf = !1, cf = "", lf = (e) => (sf || (sf = !0, Yd(`${gd}models/cast.json`).then((e) => {
-	of = e || !1, e || (cf ||= "models/cast.json unreadable");
-})), of ? of.actors[e] || !1 : of !== !1 && null), uf = new So(), df = /* @__PURE__ */ new Map(), ff = (e) => {
-	let t = `${gd}models/${e.replace("./models/", "")}${of && of._v ? `?v=${of._v}` : ""}`, n = df.get(t);
-	return n || (n = uf.loadAsync(t), df.set(t, n)), n.then((e) => ({
+var Af = "models", jf = new P(), Mf = .4, Nf = null, Pf = !1, Ff = "", If = (e) => (Pf || (Pf = !0, Cf(`${Ud}models/cast.json`).then((e) => {
+	Nf = e || !1, e || (Ff ||= "models/cast.json unreadable");
+})), Nf ? Nf.actors[e] || !1 : Nf !== !1 && null), Lf = new So(), Rf = /* @__PURE__ */ new Map(), zf = (e) => {
+	let t = `${Ud}models/${e.replace("./models/", "")}${Nf && Nf._v ? `?v=${Nf._v}` : ""}`, n = Rf.get(t);
+	return n || (n = Lf.loadAsync(t), Rf.set(t, n)), n.then((e) => ({
 		scene: bo(e.scene),
 		animations: e.animations
 	}));
-}, pf = /* @__PURE__ */ new Map(), mf = /* @__PURE__ */ new Map(), hf = (e, t) => t ? {
+}, Bf = /* @__PURE__ */ new Map(), Vf = /* @__PURE__ */ new Map(), Hf = (e, t) => t ? {
 	...e,
 	...t.appearance ? { appearance: t.appearance } : {},
 	...t.gear ? { gear: t.gear } : {}
 } : e;
-function gf(e, t, n = null, r = "") {
-	let i = r ? `${e}#${r}` : e, a = mf.get(i);
-	return a === void 0 ? (mf.set(i, null), pf.has(e) || Yd(`${gd}actors/${e}.json`).then((t) => pf.set(e, t)), rd(hf(t.v, n), {
+function Uf(e, t, n = null, r = "") {
+	let i = r ? `${e}#${r}` : e, a = Vf.get(i);
+	return a === void 0 ? (Vf.set(i, null), Bf.has(e) || Cf(`${Ud}actors/${e}.json`).then((t) => Bf.set(e, t)), Ad(Hf(t.v, n), {
 		far: !1,
-		load: ff,
-		faces: async () => of.faces
+		load: zf,
+		faces: async () => Nf.faces
 	}).then((e) => {
 		let n = [];
 		e.root.traverse((e) => {
@@ -15856,11 +16215,11 @@ function gf(e, t, n = null, r = "") {
 				e.quaternion.clone(),
 				e.scale.clone()
 			]);
-		}), ad(e, "Idle", 0, !0);
-		let { box: r, ppu: a } = Ju(e.root, t.v, t.px);
+		}), Md(e, "Idle", 0, !0);
+		let { box: r, ppu: a } = xd(e.root, t.v, t.px);
 		for (let [e, t, r, i] of n) e.position.copy(t), e.quaternion.copy(r), e.scale.copy(i);
-		let o = pd(e.root, an);
-		mf.set(i, {
+		let o = Bd(e.root, an);
+		Vf.set(i, {
 			root: e.root,
 			clips: e.clips,
 			frame: e.frame,
@@ -15871,13 +16230,13 @@ function gf(e, t, n = null, r = "") {
 			meshes: o
 		});
 	}).catch((e) => {
-		console.warn("[luminati] figure", i, e), cf ||= `${i}: ${e?.message || e}`, mf.set(i, !1);
+		console.warn("[luminati] figure", i, e), Ff ||= `${i}: ${e?.message || e}`, Vf.set(i, !1);
 	}), null) : a;
 }
-var _f = /* @__PURE__ */ new Map(), vf = 0;
-function yf(e, t, n) {
-	let r = _f.get(e);
-	if (r && r.name !== t && (J.engine.scene.remove(r.root), _f.delete(e), r = null), r) return r;
+var Wf = /* @__PURE__ */ new Map(), Gf = 0;
+function Kf(e, t, n) {
+	let r = Wf.get(e);
+	if (r && r.name !== t && (J.engine.scene.remove(r.root), Wf.delete(e), r = null), r) return r;
 	let i = bo(n.root), a = [];
 	i.traverse((e) => {
 		if (!e.isMesh) return;
@@ -15917,16 +16276,16 @@ function yf(e, t, n) {
 		fpos: 0,
 		seen: 0,
 		lit: ""
-	}, J.engine.scene.add(i), _f.set(e, r), r;
+	}, J.engine.scene.add(i), Wf.set(e, r), r;
 }
-var bf = new N(1, .45, .15);
-function xf(e, t, n, r) {
-	if (nf !== "models") return !1;
-	let i = lf(e.name);
+var qf = new N(1, .45, .15);
+function Jf(e, t, n, r) {
+	if (Af !== "models") return !1;
+	let i = If(e.name);
 	if (!i) return !1;
-	let a = gf(e.name, i, e.look || null, e.lk || ""), o = pf.get(e.name);
+	let a = Uf(e.name, i, e.look || null, e.lk || ""), o = Bf.get(e.name);
 	if (!a || !o) return !1;
-	a.used = vf;
+	a.used = Gf;
 	let s = null;
 	for (let t in o.clips) {
 		let n = o.clips[t];
@@ -15937,7 +16296,7 @@ function xf(e, t, n, r) {
 	}
 	let c = s && i.clips[s];
 	if (!c) return !1;
-	let l = yf(t, e.lk ? `${e.name}#${e.lk}` : e.name, a), u = o.clips[s], d = c.frames, f = e.col - u.start;
+	let l = Kf(t, e.lk ? `${e.name}#${e.lk}` : e.name, a), u = o.clips[s], d = c.frames, f = e.col - u.start;
 	if (l.key !== s) l.key = s, l.fpos = f;
 	else if (c.once) l.fpos = Math.min(Math.max(l.fpos + n * u.fps, f), Math.min(f + .999, d - 1));
 	else {
@@ -15947,61 +16306,61 @@ function xf(e, t, n, r) {
 	let p = c.from ?? 0, m = c.to ?? 1, h = c.once ? p + (m - p) * (l.fpos / Math.max(1, d - 1)) : p + (m - p) * (l.fpos / d);
 	for (let [e, t, n, r] of l.bones) e.position.copy(t), e.quaternion.copy(n), e.scale.copy(r);
 	let g = (135 - 45 * e.row) * Math.PI / 180 + r - Math.PI / 4;
-	if (l.yaw === null || l.seen < vf - 1) l.yaw = g;
+	if (l.yaw === null || l.seen < Gf - 1) l.yaw = g;
 	else {
 		let e = g - l.yaw;
 		e -= 2 * Math.PI * Math.round(e / (2 * Math.PI)), l.yaw += e * (1 - Math.exp(-n * 16));
 	}
-	l.root.rotation.y = l.yaw, ad(l, c.clip, Math.min(.999, h), !0);
-	let _ = (e.cw && o.cw ? e.cw / o.cw : 1) * a.ppu / yd, v = a.look;
+	l.root.rotation.y = l.yaw, Md(l, c.clip, Math.min(.999, h), !0);
+	let _ = (e.cw && o.cw ? e.cw / o.cw : 1) * a.ppu / Kd, v = a.look;
 	v ? l.root.scale.set(_ * v.w, _ * v.h, _ * v.w) : l.root.scale.setScalar(_), l.root.position.set(e.x, J.tileMap.getHeight(e.x, e.z) - a.minY * _ * (v ? v.h : 1), e.z), l.root.updateMatrixWorld(!0);
-	let y = e.flash || 0, b = y ? 0 : Math.round((e.warn || 0) * 20) / 20, x = 1 - (e.fade || 0), S = `${Gf}|${y}|${b}|${x.toFixed(2)}`;
+	let y = e.flash || 0, b = y ? 0 : Math.round((e.warn || 0) * 20) / 20, x = 1 - (e.fade || 0), S = `${vp}|${y}|${b}|${x.toFixed(2)}`;
 	if (l.lit !== S) {
 		l.lit = S;
 		for (let e of l.mats) {
-			e.own || (b ? e.m.emissive.copy(e.base).lerp(bf, Math.min(1, b)) : e.m.emissive.copy(e.base), e.m.emissiveIntensity = Gf * af + e.add + y * 2.6 + b * .9);
+			e.own || (b ? e.m.emissive.copy(e.base).lerp(qf, Math.min(1, b)) : e.m.emissive.copy(e.base), e.m.emissiveIntensity = vp * Mf + e.add + y * 2.6 + b * .9);
 			let t = x < .999;
 			e.m.transparent !== t && (e.m.transparent = t, e.m.needsUpdate = !0), e.m.opacity = x;
 		}
 	}
 	if (l.shines) {
 		let e = .75 + .25 * Math.sin(performance.now() * .0026 + l.root.id);
-		for (let t of l.mats) t.shine && (t.m.emissiveIntensity = Gf * af + t.add * e + y * 2.6 + b * .9);
+		for (let t of l.mats) t.shine && (t.m.emissiveIntensity = vp * Mf + t.add * e + y * 2.6 + b * .9);
 	}
-	return l.root.visible = !0, l.seen = vf, !0;
+	return l.root.visible = !0, l.seen = Gf, !0;
 }
-function Sf() {
-	for (let [e, t] of _f) t.seen !== vf && (t.root.visible && (t.root.visible = !1), vf - t.seen > 3600 && (J.engine.scene.remove(t.root), _f.delete(e)));
-	if (vf % 120 == 0) for (let [e, t] of mf) {
-		if (!t || !e.includes("#") || vf - (t.used || 0) < 7200) continue;
+function Yf() {
+	for (let [e, t] of Wf) t.seen !== Gf && (t.root.visible && (t.root.visible = !1), Gf - t.seen > 3600 && (J.engine.scene.remove(t.root), Wf.delete(e)));
+	if (Gf % 120 == 0) for (let [e, t] of Vf) {
+		if (!t || !e.includes("#") || Gf - (t.used || 0) < 7200) continue;
 		let n = !1;
-		for (let t of _f.values()) if (t.name === e) {
+		for (let t of Wf.values()) if (t.name === e) {
 			n = !0;
 			break;
 		}
 		if (!n) {
 			for (let e of t.root.userData.ownGeos || []) e.dispose();
-			mf.delete(e);
+			Vf.delete(e);
 		}
 	}
 }
-var Cf = [], wf = "chosen", Tf = 5, Ef = 1.3, Df = /* @__PURE__ */ new Map(), Of = /* @__PURE__ */ new Map();
-for (let e of jc) e.build && Df.set(e.id, e);
-for (let e of Object.values(Mc)) for (let t of e) t.build && Df.set(t.id, t);
-var kf = /* @__PURE__ */ new Set([
+var Xf = [], Zf = "chosen", Qf = 5, $f = 1.3, ep = /* @__PURE__ */ new Map(), tp = /* @__PURE__ */ new Map();
+for (let e of jc) e.build && ep.set(e.id, e);
+for (let e of Object.values(Mc)) for (let t of e) t.build && ep.set(t.id, t);
+var np = /* @__PURE__ */ new Set([
 	"vale_keep_1",
 	"ruin",
 	"chapelruin_0"
 ]);
-function Af(e, t, n, r) {
-	let i = Of.get(e.id);
+function rp(e, t, n, r) {
+	let i = tp.get(e.id);
 	if (i) {
 		let e = i.clone();
 		return e.position.set(t, n, r), e;
 	}
 	let a = Ac(e.build, e.style, e.seed || 1, !!e.faceX);
 	e.rotY && (a.rotation.y = e.rotY * Math.PI / 180), e.scale && a.scale.multiplyScalar(e.scale), a.updateMatrixWorld(!0);
-	let o = J.world?.glassMaterial || null, s = /* @__PURE__ */ new Map(), c = new A(), l = e.desat ?? .3, u = Ef, d = e.tint || [
+	let o = J.world?.glassMaterial || null, s = /* @__PURE__ */ new Map(), c = new A(), l = e.desat ?? .3, u = $f, d = e.tint || [
 		.95,
 		.92,
 		1
@@ -16034,12 +16393,12 @@ function Af(e, t, n, r) {
 		let r = new M(n, e === o ? e : p(e));
 		r.castShadow = r.receiveShadow = !0, c.add(r);
 	}
-	c.name = `ember:kit:${e.id}`, c.scale.setScalar(Tf), Of.set(e.id, c);
+	c.name = `ember:kit:${e.id}`, c.scale.setScalar(Qf), tp.set(e.id, c);
 	let m = c.clone();
 	return m.position.set(t, n, r), m;
 }
-var jf = 1.7;
-function Mf(e) {
+var ip = 1.7;
+function ap(e) {
 	let t = J.world.factory, r = t.builder(), i = e.span, a = e.kind === "up" ? 1.55 : 1.35, o = .42, s = .5, c = i / 2 + o / 2, l = e.stone || "stone_brick", u = [
 		.05,
 		.045,
@@ -16098,7 +16457,7 @@ function Mf(e) {
 		(a + c * .92) / 2,
 		-.2
 	] }));
-	let d = t.finish(r, `ember:arch:${e.kind}`, e.x, e.level * .5, e.z + (e.kind === "up" ? .25 : 0), e.rot || 0), f = new N(e.glow).multiplyScalar(jf), p = new nt({
+	let d = t.finish(r, `ember:arch:${e.kind}`, e.x, e.level * .5, e.z + (e.kind === "up" ? .25 : 0), e.rot || 0), f = new N(e.glow).multiplyScalar(ip), p = new nt({
 		color: f,
 		fog: !1
 	}), m = c - o / 2 - .02, h = new M(new n(m, .045, 5, 28, Math.PI), p);
@@ -16113,41 +16472,41 @@ function Mf(e) {
 		e.isMesh && e.material === p && e.geometry.dispose();
 	}), d;
 }
-function Nf(e, t) {
+function op(e, t) {
 	for (let t of e) J.engine.scene.remove(t), t.dispose?.(), t.userData?.sheet?.dispose?.();
 	for (let e of t.values()) e.traverse((e) => {
 		e.isMesh && e.geometry.dispose();
 	});
 }
-async function Pf(e, t) {
-	if (Nf(Cf, Of), Cf = [], Of = /* @__PURE__ */ new Map(), !e?.length) return;
-	let n = ["env", `town-${t || "vale"}`], r = await Promise.all(n.map((e) => Yd(`${gd}env/${e}.json`))), i = (e) => {
+async function sp(e, t) {
+	if (op(Xf, tp), Xf = [], tp = /* @__PURE__ */ new Map(), !e?.length) return;
+	let n = ["env", `town-${t || "vale"}`], r = await Promise.all(n.map((e) => Cf(`${Ud}env/${e}.json`))), i = (e) => {
 		for (let t = 0; t < n.length; t++) {
 			let i = r[t]?.sprites?.[e];
 			if (i) return [n[t], i];
 		}
 		return null;
-	}, a = Dd;
+	}, a = ef;
 	for (let s of e) {
 		if (s.canvas) {
-			$f(s);
+			Ep(s);
 			continue;
 		}
 		if (s.arch) {
-			let e = Mf(s.arch);
-			J.engine.scene.add(e), Cf.push(e);
+			let e = ap(s.arch);
+			J.engine.scene.add(e), Xf.push(e);
 			continue;
 		}
-		let e = Df.get(s.id);
-		if (e && (t || "vale") === "vale" && (wf === "all" || wf === "chosen" && !s.card || wf === "doors" && kf.has(s.id))) {
-			let t = (e, t) => J.tileMap.getHeight(s.x + e, s.z + t), n = Math.max(t(0, 0), t(0, 3), t(0, -3), t(3, 0), t(-3, 0)), r = Af(e, s.x, n, s.z);
-			J.engine.scene.add(r), Cf.push(r);
+		let e = ep.get(s.id);
+		if (e && (t || "vale") === "vale" && (Zf === "all" || Zf === "chosen" && !s.card || Zf === "doors" && np.has(s.id))) {
+			let t = (e, t) => J.tileMap.getHeight(s.x + e, s.z + t), n = Math.max(t(0, 0), t(0, 3), t(0, -3), t(3, 0), t(-3, 0)), r = rp(e, s.x, n, s.z);
+			J.engine.scene.add(r), Xf.push(r);
 			continue;
 		}
 		let c = i(s.id);
 		if (!c) continue;
-		let [l, u] = c, d = await qd(`${gd}env/${l}.alb.png?v=${r[n.indexOf(l)]._v}`).catch(() => null);
-		if (!d || a !== Dd) return;
+		let [l, u] = c, d = await xf(`${Ud}env/${l}.alb.png?v=${r[n.indexOf(l)]._v}`).catch(() => null);
+		if (!d || a !== ef) return;
 		let f = document.createElement("canvas");
 		f.width = u.w, f.height = u.h, f.getContext("2d").drawImage(d, u.x, u.y, u.w, u.h, 0, 0, u.w, u.h);
 		let p = new we(f);
@@ -16158,7 +16517,7 @@ async function Pf(e, t) {
 			frameHeight: u.h,
 			columns: 1,
 			rows: 1,
-			pixelsPerUnit: yd,
+			pixelsPerUnit: Kd,
 			anchor: [u.ax / u.w, 0],
 			animations: { idle_down: {
 				frames: [{
@@ -16173,61 +16532,61 @@ async function Pf(e, t) {
 				p.dispose();
 			}
 		}, h = new Ht(m, {
-			...bd,
+			...qd,
 			castShadow: !1,
 			blobShadow: !1
 		});
-		h.name = `ember:${l}:${s.id}`, h.userData.sheet = m, tf(h, s.x, s.z, u.h - u.ay, yd), J.engine.scene.add(h), Cf.push(h), h.update(0, J.engine.camera);
+		h.name = `ember:${l}:${s.id}`, h.userData.sheet = m, kf(h, s.x, s.z, u.h - u.ay, Kd), J.engine.scene.add(h), Xf.push(h), h.update(0, J.engine.camera);
 	}
 }
-var Ff = (e, t) => {
+var cp = (e, t) => {
 	let n = new N(e), r = n.r * .299 + n.g * .587 + n.b * .114;
 	return n.r += (r - n.r) * t, n.g += (r - n.g) * t, n.b += (r - n.b) * t, "#" + n.getHexString();
-}, If = (e, t) => {
+}, lp = (e, t) => {
 	let n = new N(e);
 	return n.multiplyScalar(t), "#" + n.getHexString();
-}, Lf = Nt.map((e) => {
+}, up = Nt.map((e) => {
 	let t = e.night ?? 0;
 	return {
 		...e,
-		top: If(Ff(e.top, .3), .8),
-		horizon: If(Ff(e.horizon, .3), .6),
-		bottom: If(Ff(e.bottom, .3), .75),
-		sun: Ff(e.sun, .3),
-		hemiSky: Ff(e.hemiSky, .45),
-		hemiGround: Ff(e.hemiGround, .3),
+		top: lp(cp(e.top, .3), .8),
+		horizon: lp(cp(e.horizon, .3), .6),
+		bottom: lp(cp(e.bottom, .3), .75),
+		sun: cp(e.sun, .3),
+		hemiSky: cp(e.hemiSky, .45),
+		hemiGround: cp(e.hemiGround, .3),
 		sunI: e.sunI * .72,
 		hemiI: e.hemiI * (.86 - .08 * t) * (e.t >= 18 && e.t <= 20.5 ? 1.4 : 1),
 		exp: e.exp * .97,
 		fog: e.fog * (.5 + .3 * t)
 	};
-}), Rf = {
+}), dp = {
 	saturation: .92,
 	exposure: .9,
 	contrast: 1.06,
 	vignette: .78
-}, zf = !1;
-function Bf() {
+}, fp = !1;
+function pp() {
 	let e = J?.postfx?.settings?.grade, t = J?.lighting?.state?.night ?? 1;
-	zf && e && (e.saturation = .74 + .18 * t, e.exposure = (.84 + .06 * t) * Vf * Hf);
+	fp && e && (e.saturation = .74 + .18 * t, e.exposure = (.84 + .06 * t) * mp * hp);
 }
-var Vf = 1, Hf = 1, Uf = 1.6, Wf = 1, Gf = bd.emissiveIntensity, Kf = 0, qf = (e) => .2126 * e.r + .7152 * e.g + .0722 * e.b;
-function Jf() {
+var mp = 1, hp = 1, gp = 1.6, _p = 1, vp = qd.emissiveIntensity, yp = 0, bp = (e) => .2126 * e.r + .7152 * e.g + .0722 * e.b;
+function xp() {
 	let e = J?.lighting, t = e?.hemi, n = e?.sun;
-	return Kf = (t ? qf(t.color) * t.intensity : 0) + (n ? qf(n.color) * n.intensity * .5 : 0), Math.round(Math.min(Wf, Math.max(bd.emissiveIntensity, Uf - Kf)) * 100) / 100;
+	return yp = (t ? bp(t.color) * t.intensity : 0) + (n ? bp(n.color) * n.intensity * .5 : 0), Math.round(Math.min(_p, Math.max(qd.emissiveIntensity, gp - yp)) * 100) / 100;
 }
-var Yf = null, Xf = "default";
-function Zf(e, t) {
+var Sp = null, Cp = "default";
+function wp(e, t) {
 	let n = J?.lighting;
 	if (!n) return;
 	let r = e.environment || {}, i = J.postfx?.settings?.grade;
-	if (i && (Yf ||= { ...i }, Object.assign(i, Yf, t === "vale" ? Rf : {})), zf = t === "vale" && !r.interior, r.interior || r.climate || r.season) return;
+	if (i && (Sp ||= { ...i }, Object.assign(i, Sp, t === "vale" ? dp : {})), fp = t === "vale" && !r.interior, r.interior || r.climate || r.season) return;
 	let a = t === "vale" ? "dusky" : "default";
-	n.setKeyframes(a === "dusky" ? Lf : Nt), Xf = a;
+	n.setKeyframes(a === "dusky" ? up : Nt), Cp = a;
 }
-var Qf = /* @__PURE__ */ new Map();
-function $f(e) {
-	let t = Qf.get(e.canvas);
+var Tp = /* @__PURE__ */ new Map();
+function Ep(e) {
+	let t = Tp.get(e.canvas);
 	if (!t) {
 		let n = new we(e.canvas);
 		n.magFilter = n.minFilter = D, n.generateMipmaps = !1, n.colorSpace = o, t = {
@@ -16236,7 +16595,7 @@ function $f(e) {
 			frameHeight: e.canvas.height,
 			columns: 1,
 			rows: 1,
-			pixelsPerUnit: yd,
+			pixelsPerUnit: Kd,
 			anchor: [e.ax / e.canvas.width, 0],
 			animations: { idle_down: {
 				frames: [{
@@ -16247,37 +16606,37 @@ function $f(e) {
 				loop: !1
 			} },
 			name: `ember-prop:${e.id}`
-		}, Qf.set(e.canvas, t);
+		}, Tp.set(e.canvas, t);
 	}
 	let n = new Ht(t, {
-		...bd,
+		...qd,
 		emissiveIntensity: .3,
 		castShadow: !1,
 		blobShadow: !e.flat
 	});
-	n.name = `ember:prop:${e.id}`, tf(n, e.x, e.z, e.canvas.height - e.ay, yd), e.flat && n.traverse((e) => {
+	n.name = `ember:prop:${e.id}`, kf(n, e.x, e.z, e.canvas.height - e.ay, Kd), e.flat && n.traverse((e) => {
 		e.renderOrder = -1, e.material && (e.material.depthWrite = !1);
-	}), J.engine.scene.add(n), Cf.push(n), n.update(0, J.engine.camera);
+	}), J.engine.scene.add(n), Xf.push(n), n.update(0, J.engine.camera);
 }
-var ep = /* @__PURE__ */ new Map(), tp = "vale";
-function np(e) {
-	if (ep.has(e)) return ep.get(e);
-	ep.set(e, null);
-	let t = ["env", `town-${tp}`];
-	return Promise.all(t.map((e) => Yd(`${gd}env/${e}.json`))).then(async (n) => {
+var Dp = /* @__PURE__ */ new Map(), Op = "vale";
+function kp(e) {
+	if (Dp.has(e)) return Dp.get(e);
+	Dp.set(e, null);
+	let t = ["env", `town-${Op}`];
+	return Promise.all(t.map((e) => Cf(`${Ud}env/${e}.json`))).then(async (n) => {
 		for (let r = 0; r < t.length; r++) {
 			let i = n[r]?.sprites?.[e];
 			if (!i) continue;
-			let a = await qd(`${gd}env/${t[r]}.alb.png?v=${n[r]._v}`), s = document.createElement("canvas");
+			let a = await xf(`${Ud}env/${t[r]}.alb.png?v=${n[r]._v}`), s = document.createElement("canvas");
 			s.width = i.w, s.height = i.h, s.getContext("2d").drawImage(a, i.x, i.y, i.w, i.h, 0, 0, i.w, i.h);
 			let c = new we(s);
-			c.magFilter = c.minFilter = D, c.generateMipmaps = !1, c.colorSpace = o, ep.set(e, {
+			c.magFilter = c.minFilter = D, c.generateMipmaps = !1, c.colorSpace = o, Dp.set(e, {
 				texture: c,
 				frameWidth: i.w,
 				frameHeight: i.h,
 				columns: 1,
 				rows: 1,
-				pixelsPerUnit: yd,
+				pixelsPerUnit: Kd,
 				anchor: [i.ax / i.w, 0],
 				below: i.h - i.ay,
 				animations: { idle_down: {
@@ -16292,12 +16651,12 @@ function np(e) {
 			});
 			return;
 		}
-		ep.set(e, !1);
-	}).catch(() => ep.set(e, !1)), null;
+		Dp.set(e, !1);
+	}).catch(() => Dp.set(e, !1)), null;
 }
-var rp = /* @__PURE__ */ new WeakMap();
-function ip(e) {
-	let t = rp.get(e.canvas);
+var Ap = /* @__PURE__ */ new WeakMap();
+function jp(e) {
+	let t = Ap.get(e.canvas);
 	if (!t) {
 		let n = new we(e.canvas);
 		n.magFilter = n.minFilter = D, n.generateMipmaps = !1, n.colorSpace = o, t = {
@@ -16306,7 +16665,7 @@ function ip(e) {
 			frameHeight: e.canvas.height,
 			columns: 1,
 			rows: 1,
-			pixelsPerUnit: yd,
+			pixelsPerUnit: Kd,
 			anchor: [e.ax / e.canvas.width, 0],
 			animations: { idle_down: {
 				frames: [{
@@ -16317,15 +16676,15 @@ function ip(e) {
 				loop: !1
 			} },
 			name: "ember-bit"
-		}, rp.set(e.canvas, t);
+		}, Ap.set(e.canvas, t);
 	}
 	return t;
 }
-function ap(e, t) {
-	let n = $d.get(e);
-	for (n || $d.set(e, n = []); n.length <= t;) {
+function Mp(e, t) {
+	let n = Df.get(e);
+	for (n || Df.set(e, n = []); n.length <= t;) {
 		let t = new Ht(e, {
-			...bd,
+			...qd,
 			castShadow: !1,
 			blobShadow: !1
 		});
@@ -16333,25 +16692,25 @@ function ap(e, t) {
 	}
 	return n[t];
 }
-var op = {
+var Np = {
 	mesh: null,
 	id: "",
 	cap: 0
-}, sp = 2.3, cp = .07, lp = null, up = "", dp = new F(1, 1, 1);
-function fp(e) {
+}, Pp = 2.3, Fp = .07, Ip = null, Lp = "", Rp = new F(1, 1, 1);
+function zp(e) {
 	if (!e || !J) {
-		lp && (lp.visible = !1);
+		Ip && (Ip.visible = !1);
 		return;
 	}
-	if (e.id !== up || !lp || !lp.parent) {
-		lp && (lp.removeFromParent(), lp.material.dispose(), lp.dispose?.());
+	if (e.id !== Lp || !Ip || !Ip.parent) {
+		Ip && (Ip.removeFromParent(), Ip.material.dispose(), Ip.dispose?.());
 		let t = e.cells.length * 5, n = new l({
 			color: 2894383,
 			roughness: .48,
 			metalness: .65,
 			emissive: 1182984
 		});
-		lp = new ue(dp, n, t), lp.name = "ember:gate", lp.castShadow = !0, lp.frustumCulled = !1;
+		Ip = new ue(Rp, n, t), Ip.name = "ember:gate", Ip.castShadow = !0, Ip.frustumCulled = !1;
 		let r = new rt(), i = new m(), a = new P(), o = new P(), s = new P(0, 1, 0), c = 0;
 		for (let [t, n, l, u] of e.cells) {
 			let e = J.tileMap.getHeight(t, n), d = t + l * .22, f = n + u * .22, p = l ? Math.PI / 2 : 0;
@@ -16360,26 +16719,26 @@ function fp(e) {
 				-.17,
 				0,
 				.17
-			]) a.set(d + (l ? 0 : t), e + sp / 2, f + (l ? t : 0)), o.set(cp, sp, cp), r.compose(a, i, o), lp.setMatrixAt(c++, r);
-			for (let t of [.55, 1.75]) a.set(d, e + t, f), o.set(.52, cp * 1.4, cp * 1.2), r.compose(a, i, o), lp.setMatrixAt(c++, r);
+			]) a.set(d + (l ? 0 : t), e + Pp / 2, f + (l ? t : 0)), o.set(Fp, Pp, Fp), r.compose(a, i, o), Ip.setMatrixAt(c++, r);
+			for (let t of [.55, 1.75]) a.set(d, e + t, f), o.set(.52, Fp * 1.4, Fp * 1.2), r.compose(a, i, o), Ip.setMatrixAt(c++, r);
 		}
-		lp.instanceMatrix.needsUpdate = !0, J.engine.scene.add(lp), up = e.id;
+		Ip.instanceMatrix.needsUpdate = !0, J.engine.scene.add(Ip), Lp = e.id;
 	}
 	let t = Math.max(0, Math.min(1, e.drop));
-	lp.visible = t < 1, lp.position.y = -2.4 * t * t;
+	Ip.visible = t < 1, Ip.position.y = -2.4 * t * t;
 }
-function pp(e) {
+function Bp(e) {
 	if (!e || !e.cells.length) {
-		op.mesh && (op.mesh.visible = !1), op.id = "";
+		Np.mesh && (Np.mesh.visible = !1), Np.id = "";
 		return;
 	}
-	if (e.id === op.id && op.mesh) {
-		op.mesh.visible = !0;
+	if (e.id === Np.id && Np.mesh) {
+		Np.mesh.visible = !0;
 		return;
 	}
 	let t = e.cells.length / 3;
-	if (!op.mesh || op.cap < t) {
-		op.mesh && (J.engine.scene.remove(op.mesh), op.mesh.geometry.dispose(), op.mesh.material.dispose());
+	if (!Np.mesh || Np.cap < t) {
+		Np.mesh && (J.engine.scene.remove(Np.mesh), Np.mesh.geometry.dispose(), Np.mesh.material.dispose());
 		let e = new x(.5, .5);
 		e.rotateX(-Math.PI / 2);
 		let n = new nt({
@@ -16391,21 +16750,21 @@ function pp(e) {
 			polygonOffsetUnits: -2,
 			toneMapped: !1
 		});
-		op.cap = Math.max(256, Math.ceil(t * 1.5)), op.mesh = new ue(e, n, op.cap), op.mesh.renderOrder = 2, op.mesh.frustumCulled = !1, J.engine.scene.add(op.mesh);
+		Np.cap = Math.max(256, Math.ceil(t * 1.5)), Np.mesh = new ue(e, n, Np.cap), Np.mesh.renderOrder = 2, Np.mesh.frustumCulled = !1, J.engine.scene.add(Np.mesh);
 	}
 	let n = new rt(), r = new N().setRGB(16 / 255, 54 / 255, 64 / 255, o), i = new N().setRGB(40 / 255, 92 / 255, 104 / 255, o);
 	for (let a = 0; a < t; a++) {
 		let t = e.cells[a * 3], o = e.cells[a * 3 + 1];
-		n.makeTranslation(t, J.tileMap.getHeight(t, o) + .035, o), op.mesh.setMatrixAt(a, n), op.mesh.setColorAt(a, e.cells[a * 3 + 2] ? i : r);
+		n.makeTranslation(t, J.tileMap.getHeight(t, o) + .035, o), Np.mesh.setMatrixAt(a, n), Np.mesh.setColorAt(a, e.cells[a * 3 + 2] ? i : r);
 	}
-	op.mesh.count = t, op.mesh.instanceMatrix.needsUpdate = !0, op.mesh.instanceColor && (op.mesh.instanceColor.needsUpdate = !0), op.mesh.visible = !0, op.id = e.id;
+	Np.mesh.count = t, Np.mesh.instanceMatrix.needsUpdate = !0, Np.mesh.instanceColor && (Np.mesh.instanceColor.needsUpdate = !0), Np.mesh.visible = !0, Np.id = e.id;
 }
-var mp = [];
-function hp(e, t) {
-	let n = mp[e];
-	return n && n.sheet !== t && (J.engine.scene.remove(n), n.dispose?.(), n = null), n || (n = new Ht(t, { ...bd }), J.engine.scene.add(n), mp[e] = n), n.material.emissiveIntensity !== Gf && (n.material.emissiveIntensity = Gf), n;
+var Vp = [];
+function Hp(e, t) {
+	let n = Vp[e];
+	return n && n.sheet !== t && (J.engine.scene.remove(n), n.dispose?.(), n = null), n || (n = new Ht(t, { ...qd }), J.engine.scene.add(n), Vp[e] = n), n.material.emissiveIntensity !== vp && (n.material.emissiveIntensity = vp), n;
 }
-var gp = "uniform vec4 uRect; uniform vec2 uView; varying vec2 vUv;\nvoid main() { vUv = position.xy; vec2 p = uRect.xy + position.xy * uRect.zw; gl_Position = vec4(p.x / uView.x * 2.0 - 1.0, 1.0 - p.y / uView.y * 2.0, 0.0, 1.0); }", _p = "uniform sampler2D tEmi, tDepth; uniform vec2 uTexel, uBuf; uniform mat4 uInvVP; uniform vec4 uKey; uniform float uFloor; varying vec2 vUv;\nvoid main() {\n  vec4 e = texture2D(tEmi, vUv); vec3 c = e.rgb * 2.4, g = vec3(0.0); float own = e.a;\n  for (int i = 0; i < 8; i++) { float a = float(i) * 0.785398; vec2 d = vec2(cos(a), sin(a)) * uTexel;\n    vec4 n = texture2D(tEmi, vUv + d * 2.0), f = texture2D(tEmi, vUv + d * 4.5); g += n.rgb + f.rgb * 0.6; own = max(own, max(n.a, f.a)); }\n  float k = 1.0;\n  if (uKey.w > 0.5 && own > 0.002) {\n    vec2 suv = gl_FragCoord.xy / uBuf; float z = texture2D(tDepth, suv).x;\n    if (z < 1.0) {\n      vec4 w = uInvVP * vec4(suv * 2.0 - 1.0, z * 2.0 - 1.0, 1.0); w.xyz /= w.w;\n      float scene = 2.0 * (w.x + w.z) + uKey.z, eff = uKey.x + own * 255.0 * uKey.y;\n      if (w.y > uFloor && scene > eff + 1.5) k = 0.22;\n    }\n  }\n  gl_FragColor = vec4((c + g * 0.12) * k, 1.0);\n}", vp = {
+var Up = "uniform vec4 uRect; uniform vec2 uView; varying vec2 vUv;\nvoid main() { vUv = position.xy; vec2 p = uRect.xy + position.xy * uRect.zw; gl_Position = vec4(p.x / uView.x * 2.0 - 1.0, 1.0 - p.y / uView.y * 2.0, 0.0, 1.0); }", Wp = "uniform sampler2D tEmi, tDepth; uniform vec2 uTexel, uBuf; uniform mat4 uInvVP; uniform vec4 uKey; uniform float uFloor; varying vec2 vUv;\nvoid main() {\n  vec4 e = texture2D(tEmi, vUv); vec3 c = e.rgb * 2.4, g = vec3(0.0); float own = e.a;\n  for (int i = 0; i < 8; i++) { float a = float(i) * 0.785398; vec2 d = vec2(cos(a), sin(a)) * uTexel;\n    vec4 n = texture2D(tEmi, vUv + d * 2.0), f = texture2D(tEmi, vUv + d * 4.5); g += n.rgb + f.rgb * 0.6; own = max(own, max(n.a, f.a)); }\n  float k = 1.0;\n  if (uKey.w > 0.5 && own > 0.002) {\n    vec2 suv = gl_FragCoord.xy / uBuf; float z = texture2D(tDepth, suv).x;\n    if (z < 1.0) {\n      vec4 w = uInvVP * vec4(suv * 2.0 - 1.0, z * 2.0 - 1.0, 1.0); w.xyz /= w.w;\n      float scene = 2.0 * (w.x + w.z) + uKey.z, eff = uKey.x + own * 255.0 * uKey.y;\n      if (w.y > uFloor && scene > eff + 1.5) k = 0.22;\n    }\n  }\n  gl_FragColor = vec4((c + g * 0.12) * k, 1.0);\n}", Gp = {
 	scene: null,
 	cam: null,
 	mat: null,
@@ -16413,14 +16772,14 @@ var gp = "uniform vec4 uRect; uniform vec2 uView; varying vec2 vUv;\nvoid main()
 	on: !1,
 	keyed: !1
 };
-function yp() {
-	if (!vp.on || !J) return;
-	let e = J.engine.renderer, t = e.autoClear, n = vp.mat.uniforms, r = J.engine.camera;
-	n.tDepth.value = J.postfx?.depthTexture || null, n.uKey.value.w = vp.keyed && n.tDepth.value ? 1 : 0, e.getDrawingBufferSize(n.uBuf.value), n.uInvVP.value.multiplyMatrices(r.matrixWorld, r.projectionMatrixInverse), e.autoClear = !1, e.setRenderTarget(null), e.render(vp.scene, vp.cam), e.autoClear = t;
+function Kp() {
+	if (!Gp.on || !J) return;
+	let e = J.engine.renderer, t = e.autoClear, n = Gp.mat.uniforms, r = J.engine.camera;
+	n.tDepth.value = J.postfx?.depthTexture || null, n.uKey.value.w = Gp.keyed && n.tDepth.value ? 1 : 0, e.getDrawingBufferSize(n.uBuf.value), n.uInvVP.value.multiplyMatrices(r.matrixWorld, r.projectionMatrixInverse), e.autoClear = !1, e.setRenderTarget(null), e.render(Gp.scene, Gp.cam), e.autoClear = t;
 }
-function bp(e) {
+function qp(e) {
 	if (!e || !e.emi) {
-		vp.on = !1;
+		Gp.on = !1;
 		return;
 	}
 	let t = new Uint32Array(e.emi.buffer, e.emi.byteOffset, e.emi.byteLength >> 2), n = !1;
@@ -16428,11 +16787,11 @@ function bp(e) {
 		n = !0;
 		break;
 	}
-	if (vp.on = n, n) {
-		if (!vp.scene) {
-			vp.scene = new p(), vp.cam = new be(), vp.mat = new oe({
-				vertexShader: gp,
-				fragmentShader: _p,
+	if (Gp.on = n, n) {
+		if (!Gp.scene) {
+			Gp.scene = new p(), Gp.cam = new be(), Gp.mat = new oe({
+				vertexShader: Up,
+				fragmentShader: Wp,
 				transparent: !0,
 				depthTest: !1,
 				depthWrite: !1,
@@ -16471,38 +16830,38 @@ function bp(e) {
 				2,
 				3
 			]);
-			let t = new M(e, vp.mat);
-			t.frustumCulled = !1, vp.scene.add(t), J.engine.events.on("afterRender", yp);
+			let t = new M(e, Gp.mat);
+			t.frustumCulled = !1, Gp.scene.add(t), J.engine.events.on("afterRender", Kp);
 		}
-		(!vp.tex || vp.tex.image.width !== e.w || vp.tex.image.height !== e.h || vp.tex.image.data !== e.emi) && (vp.tex?.dispose(), vp.tex = new ie(e.emi, e.w, e.h, fe), vp.tex.flipY = !1, vp.tex.magFilter = vp.tex.minFilter = Ie, vp.tex.generateMipmaps = !1, vp.mat.uniforms.tEmi.value = vp.tex, vp.mat.uniforms.uTexel.value.set(1 / e.w, 1 / e.h)), vp.tex.needsUpdate = !0, vp.mat.uniforms.uRect.value.set(e.x, e.y, e.w * e.px, e.h * e.px), vp.mat.uniforms.uView.value.set(innerWidth, innerHeight), vp.keyed = !!e.key, e.key && vp.mat.uniforms.uKey.value.set(e.key.base, e.key.step, e.key.origin, 1);
+		(!Gp.tex || Gp.tex.image.width !== e.w || Gp.tex.image.height !== e.h || Gp.tex.image.data !== e.emi) && (Gp.tex?.dispose(), Gp.tex = new ie(e.emi, e.w, e.h, fe), Gp.tex.flipY = !1, Gp.tex.magFilter = Gp.tex.minFilter = Ie, Gp.tex.generateMipmaps = !1, Gp.mat.uniforms.tEmi.value = Gp.tex, Gp.mat.uniforms.uTexel.value.set(1 / e.w, 1 / e.h)), Gp.tex.needsUpdate = !0, Gp.mat.uniforms.uRect.value.set(e.x, e.y, e.w * e.px, e.h * e.px), Gp.mat.uniforms.uView.value.set(innerWidth, innerHeight), Gp.keyed = !!e.key, e.key && Gp.mat.uniforms.uKey.value.set(e.key.base, e.key.step, e.key.origin, 1);
 	}
 }
-var xp = {
+var Jp = {
 	x: 0,
 	y: 1,
 	z: 0,
 	ppu: 22,
 	ready: !1
 };
-function Sp() {
-	let e = J.rig, t = J.engine.camera, n = innerHeight / (2 * xp.ppu * Math.tan(_d / 2 * Math.PI / 180));
-	e.target = null, e.bounds = null, e.lift = 0, e.minDistance = 1, e.maxDistance = 1e6, e.minPitch = 0, e.maxPitch = Math.PI / 2, e.freeYaw = !0, e.yaw = e.yawTarget = kd * Math.PI / 180, e.pitch = e.pitchTarget = Ad * Math.PI / 180, e.distance = e.distanceTarget = n, e.focusPoint.set(xp.x, xp.y, xp.z), (Math.abs(t.fov - _d) > 1e-6 || Math.abs(t.far - (n + 600)) > 1) && (t.fov = _d, t.near = Math.max(1, n - 300), t.far = n + 600, t.updateProjectionMatrix()), e._apply(0), La(n - 7);
+function Yp() {
+	let e = J.rig, t = J.engine.camera, n = innerHeight / (2 * Jp.ppu * Math.tan(Wd / 2 * Math.PI / 180));
+	e.target = null, e.bounds = null, e.lift = 0, e.minDistance = 1, e.maxDistance = 1e6, e.minPitch = 0, e.maxPitch = Math.PI / 2, e.freeYaw = !0, e.yaw = e.yawTarget = nf * Math.PI / 180, e.pitch = e.pitchTarget = rf * Math.PI / 180, e.distance = e.distanceTarget = n, e.focusPoint.set(Jp.x, Jp.y, Jp.z), (Math.abs(t.fov - Wd) > 1e-6 || Math.abs(t.far - (n + 600)) > 1) && (t.fov = Wd, t.near = Math.max(1, n - 300), t.far = n + 600, t.updateProjectionMatrix()), e._apply(0), La(n - 7);
 	let r = J.postfx?.settings?.dof;
 	r && (r.autoFocus = !1, r.focusDistance = n);
 }
-async function Cp(e) {
-	await Cd, Object.assign(globalThis, {
-		__emberUiRoot: Td,
+async function Xp(e) {
+	await Xd, Object.assign(globalThis, {
+		__emberUiRoot: Qd,
 		__emberInputTarget: new EventTarget(),
 		__emberSilent: !0,
-		__emberPixelRatio: vd
+		__emberPixelRatio: Gd
 	}), J = new yo({
-		container: wd,
+		container: Zd,
 		level: e,
 		source: "emberfall",
 		autostart: !0,
-		lang: xd,
-		fonts: Sd,
+		lang: Jd,
+		fonts: Yd,
 		look: "diorama"
 	});
 	let t = null;
@@ -16525,22 +16884,22 @@ async function Cp(e) {
 		}
 		return Promise.resolve(void 0);
 	}, J.engine.events.on("lateUpdate", () => {
-		J && Sp();
-	}), J.engine.events.on("update", Bf), J.engine.events.on("update", () => {
-		let e = Xp, t = J?.lighting;
+		J && Yp();
+	}), J.engine.events.on("update", pp), J.engine.events.on("update", () => {
+		let e = Cm, t = J?.lighting;
 		e && t?.hemi && (t.hemi.color.setRGB(e.sky[0], e.sky[1], e.sky[2]), t.hemi.groundColor.setRGB(e.ground[0], e.ground[1], e.ground[2]), t.hemi.intensity = e.i, t.sun && (t.sun.intensity *= e.sun));
 	}), J.lighting && (J.lighting._shadowExtent = Math.max(J.lighting._shadowExtent || 22, 34));
 }
-function wp() {
+function Zp() {
 	let e = J.player;
 	e && (e.sprite && (e.sprite.visible = !1), e.visible = !1);
 }
-var Tp = new u(.46, .6, 40), Ep = new Le(1, 40), Dp = new u(.8, 1, 40), Op = (() => {
+var Qp = new u(.46, .6, 40), $p = new Le(1, 40), em = new u(.8, 1, 40), tm = (() => {
 	let e = [];
 	for (let t = 0; t < 4; t++) e.push(new u(.7, .8, 10, 1, t * Math.PI / 2 + .25, Math.PI / 2 - .5));
-	return kp(e);
+	return nm(e);
 })();
-function kp(e) {
+function nm(e) {
 	let t = [], n = [], r = 0;
 	for (let i of e) {
 		let e = i.getAttribute("position"), a = i.getIndex();
@@ -16551,14 +16910,14 @@ function kp(e) {
 	let i = new Fe();
 	return i.setAttribute("position", new O(t, 3)), i.setIndex(n), i;
 }
-var Ap = new u(.88, 1, 40), jp = new x(1, 1).translate(.5, 0, 0), Mp = () => new nt({
+var rm = new u(.88, 1, 40), im = new x(1, 1).translate(.5, 0, 0), am = () => new nt({
 	transparent: !0,
 	depthWrite: !1,
 	polygonOffset: !0,
 	polygonOffsetFactor: -2,
 	polygonOffsetUnits: -2,
 	toneMapped: !1
-}), Np = {
+}), om = {
 	ring: [],
 	disc: [],
 	rim: [],
@@ -16566,47 +16925,47 @@ var Ap = new u(.88, 1, 40), jp = new x(1, 1).translate(.5, 0, 0), Mp = () => new
 	wfill: [],
 	wrim: [],
 	lane: []
-}, Pp = {
-	ring: Tp,
-	disc: Ep,
-	rim: Dp,
-	focus: Op,
-	wfill: Ep,
-	wrim: Ap,
-	lane: jp
+}, sm = {
+	ring: Qp,
+	disc: $p,
+	rim: em,
+	focus: tm,
+	wfill: $p,
+	wrim: rm,
+	lane: im
 };
-function Fp(e, t) {
-	let n = Np[e];
+function cm(e, t) {
+	let n = om[e];
 	for (; n.length <= t;) {
-		let t = new M(Pp[e], Mp());
+		let t = new M(sm[e], am());
 		t.rotation.x = -Math.PI / 2, t.renderOrder = 2, t.visible = !1, J.engine.scene.add(t), n.push(t);
 	}
 	return n[t];
 }
-function Ip(e, t, n, r, i, a) {
+function lm(e, t, n, r, i, a) {
 	e.visible = a > .01, e.visible && (e.position.set(t, J.tileMap.getHeight(t, n) + .03, n), e.scale.setScalar(r), e.material.color.setRGB(i[0] / 255, i[1] / 255, i[2] / 255, o), e.material.opacity = a);
 }
-function Lp(e, t, n, r, i, a, s, c, l) {
+function um(e, t, n, r, i, a, s, c, l) {
 	let u = r - t, d = i - n, f = Math.hypot(u, d) * a;
 	e.visible = l > .01 && f > .02, e.visible && (e.position.set(t, Math.max(J.tileMap.getHeight(t, n), J.tileMap.getHeight(r, i)) + .05, n), e.rotation.z = Math.atan2(-d, u), e.scale.set(f, s, 1), e.material.color.setRGB(c[0] / 255, c[1] / 255, c[2] / 255, o), e.material.opacity = l);
 }
-var Rp = [
+var dm = [
 	255,
 	86,
 	30
-], zp = [
+], fm = [
 	255,
 	238,
 	220
-], Bp = [
+], pm = [
 	24,
 	6,
 	4
-], Vp = new i(), Hp = /* @__PURE__ */ new WeakMap();
-function Up(e, t) {
+], mm = new i(), hm = /* @__PURE__ */ new WeakMap();
+function gm(e, t) {
 	let n = e && e.map, r = n && n.image;
 	if (!t || !r || !r.width) return null;
-	let i = Hp.get(r);
+	let i = hm.get(r);
 	if (!i) {
 		try {
 			let e = document.createElement("canvas");
@@ -16620,14 +16979,14 @@ function Up(e, t) {
 		} catch {
 			return null;
 		}
-		Hp.set(r, i);
+		hm.set(r, i);
 	}
 	let a = n.offset.x + t.x * n.repeat.x, o = n.offset.y + t.y * n.repeat.y;
 	a -= Math.floor(a), o -= Math.floor(o);
 	let s = Math.min(i.w - 1, Math.floor(a * i.w)), c = Math.min(i.h - 1, Math.floor((n.flipY ? 1 - o : o) * i.h));
 	return i.px[(c * i.w + s) * 4 + 3];
 }
-var Wp = 6, Gp = 1.6, Kp = null, qp = null, Jp = -1, Yp = 0, Xp = null, Zp = !1, Y = {
+var _m = 6, vm = 1.6, ym = null, bm = null, xm = -1, Sm = 0, Cm = null, wm = !1, Y = {
 	body: [
 		1.15,
 		.8,
@@ -16653,7 +17012,7 @@ var Wp = 6, Gp = 1.6, Kp = null, qp = null, Jp = -1, Yp = 0, Xp = null, Zp = !1,
 		.56,
 		.1
 	]
-}, Qp = {
+}, Tm = {
 	body: [
 		.32,
 		.85,
@@ -16664,21 +17023,21 @@ var Wp = 6, Gp = 1.6, Kp = null, qp = null, Jp = -1, Yp = 0, Xp = null, Zp = !1,
 		1.65,
 		.25
 	]
-}, $p = [
+}, Em = [
 	.45,
 	.75,
 	1.4
-], em = [
+], Dm = [
 	1.6,
 	.85,
 	.25
-], tm = [
+], Om = [
 	1.6,
 	.8,
 	.3
-], X = (e) => e <= 0 ? 0 : e >= 1 ? 1 : e * e * (3 - 2 * e), nm = (e) => e < 0 ? 0 : e > 1 ? 1 : e, rm = (e) => e <= 0 ? 0 : e < .55 ? 1.15 * (1 - (1 - e / .55) ** 3) : e < 1 ? 1.15 - .15 * X((e - .55) / .45) : 1, im = null, am = null, om = /* @__PURE__ */ new Map(), sm = {}, cm = new P();
-function lm() {
-	if (im || !J?.engine) return im;
+], X = (e) => e <= 0 ? 0 : e >= 1 ? 1 : e * e * (3 - 2 * e), km = (e) => e < 0 ? 0 : e > 1 ? 1 : e, Am = (e) => e <= 0 ? 0 : e < .55 ? 1.15 * (1 - (1 - e / .55) ** 3) : e < 1 ? 1.15 - .15 * X((e - .55) / .45) : 1, jm = null, Mm = null, Nm = /* @__PURE__ */ new Map(), Pm = {}, Fm = new P();
+function Im() {
+	if (jm || !J?.engine) return jm;
 	let e = J.engine.scene, t = new Xr({ capacity: 48 }), n = new Zr({
 		capacity: 4,
 		heightField: {
@@ -16708,7 +17067,7 @@ function lm() {
 		mode: "billboard",
 		a: 1,
 		halo: 1
-	}), im = {
+	}), jm = {
 		crystals: t,
 		frost: n,
 		quads: r,
@@ -16719,39 +17078,39 @@ function lm() {
 		warmQuad: c,
 		warmN: 4,
 		domeOf: null
-	}, im;
+	}, jm;
 }
 function Z(e, t) {
-	for (let e in sm) delete sm[e];
-	Object.assign(sm, t), im.quads.set(e, sm);
+	for (let e in Pm) delete Pm[e];
+	Object.assign(Pm, t), jm.quads.set(e, Pm);
 }
-function um(e) {
-	for (let t of e.blades || []) im.blades.free(t);
-	for (let t of e.rocks || []) im.rocks.free(t);
-	for (let t of e.bells || []) im.bells.free(t);
-	e.dome && im.domeOf === e && (im.dome.hide(), im.domeOf = null);
-	for (let t of e.crystals) im.crystals.free(t);
-	for (let t of e.quads) im.quads.free(t);
-	e.gf >= 0 && im.frost.free(e.gf);
+function Lm(e) {
+	for (let t of e.blades || []) jm.blades.free(t);
+	for (let t of e.rocks || []) jm.rocks.free(t);
+	for (let t of e.bells || []) jm.bells.free(t);
+	e.dome && jm.domeOf === e && (jm.dome.hide(), jm.domeOf = null);
+	for (let t of e.crystals) jm.crystals.free(t);
+	for (let t of e.quads) jm.quads.free(t);
+	e.gf >= 0 && jm.frost.free(e.gf);
 }
-function dm(e, t, n, r) {
-	if (!im && !r && !e.length) return;
-	let i = lm();
+function Rm(e, t, n, r) {
+	if (!jm && !r && !e.length) return;
+	let i = Im();
 	if (!i) return;
 	i.warmN > 0 && --i.warmN === 0 && (i.crystals.unwarm(), i.frost.unwarm(), i.dome.unwarm(), i.blades.unwarm(), i.rocks.unwarm(), i.bells.unwarm(), i.quads.free(i.warmQuad));
 	let a = /* @__PURE__ */ new Set(), o = (e, t) => J.tileMap.getHeight(e, t);
-	J.engine.camera.getWorldDirection(cm);
-	let s = Math.hypot(cm.x, cm.z) || 1, c = -cm.x / s, l = -cm.z / s, u = null;
+	J.engine.camera.getWorldDirection(Fm);
+	let s = Math.hypot(Fm.x, Fm.z) || 1, c = -Fm.x / s, l = -Fm.z / s, u = null;
 	for (let n of e) {
 		a.add(n.key);
-		let e = om.get(n.key);
+		let e = Nm.get(n.key);
 		e || (e = {
 			crystals: [],
 			quads: [],
 			gf: -1,
 			landed: !1,
 			seed: (n.seed >>> 0) % 8192
-		}, om.set(n.key, e));
+		}, Nm.set(n.key, e));
 		let r = n.land;
 		if (n.id === "frost_nova") {
 			if (e.gf < 0 && (e.gf = i.frost.add({
@@ -16806,7 +17165,7 @@ function dm(e, t, n, r) {
 				if (n.h < 0) continue;
 				let e = (r - n.start) / .13, a = X((r - .55) / .3), o = X((r - .88) / .3);
 				i.crystals.set(n.h, {
-					rise: rm(e) * (1 - o),
+					rise: Am(e) * (1 - o),
 					crack: a,
 					glint: X((r - .08 - n.start) / .38),
 					glow: 1 + .35 * Math.exp(-Math.max(0, r - n.start - .07) / .1) + .2 * t + .5 * a
@@ -16953,7 +17312,7 @@ function dm(e, t, n, r) {
 			].map(() => i.quads.alloc()), e.body = i.quads.alloc(), e.core = i.quads.alloc(), e.foot = i.quads.alloc(), e.quads.push(...e.orbs, e.body, e.core, e.foot));
 			let t = o(n.x, n.z) + 1.2, a = o(n.tx, n.tz) + .9;
 			e.orbs.forEach((e, i) => {
-				let o = nm((r - i * .05) / .3), s = Math.sin(o * Math.PI) * .6;
+				let o = km((r - i * .05) / .3), s = Math.sin(o * Math.PI) * .6;
 				Z(e, {
 					frame: "partyHolyOrb",
 					index: Math.floor(r * 12) % 2,
@@ -16962,9 +17321,9 @@ function dm(e, t, n, r) {
 					z: n.z + (n.tz - n.z) * o + l * .2,
 					mode: "billboard",
 					scale: 1.2,
-					r: Qp.core[0],
-					g: Qp.core[1],
-					b: Qp.core[2],
+					r: Tm.core[0],
+					g: Tm.core[1],
+					b: Tm.core[2],
 					a: +(o > 0 && o < 1),
 					halo: 1
 				});
@@ -16978,10 +17337,10 @@ function dm(e, t, n, r) {
 				z: n.tz + l * .3,
 				mode: "billboard",
 				scale: f,
-				r: Qp.body[0],
-				g: Qp.body[1],
-				b: Qp.body[2],
-				a: s > 0 ? .85 * nm((.45 - s) / .18) : 0
+				r: Tm.body[0],
+				g: Tm.body[1],
+				b: Tm.body[2],
+				a: s > 0 ? .85 * km((.45 - s) / .18) : 0
 			}), Z(e.core, {
 				frame: "partyPillar",
 				index: 0,
@@ -16990,10 +17349,10 @@ function dm(e, t, n, r) {
 				z: n.tz + l * .32,
 				mode: "billboard",
 				scale: f,
-				r: Qp.core[0],
-				g: Qp.core[1],
-				b: Qp.core[2],
-				a: s > 0 ? nm((.28 - s) / .1) : 0,
+				r: Tm.core[0],
+				g: Tm.core[1],
+				b: Tm.core[2],
+				a: s > 0 ? km((.28 - s) / .1) : 0,
 				halo: 1
 			}), Z(e.foot, {
 				frame: "partySunburst",
@@ -17004,9 +17363,9 @@ function dm(e, t, n, r) {
 				mode: "flat",
 				scale: 1,
 				rot: s * 2,
-				r: Qp.core[0],
-				g: Qp.core[1],
-				b: Qp.core[2],
+				r: Tm.core[0],
+				g: Tm.core[1],
+				b: Tm.core[2],
 				a: s > 0 ? Math.max(0, 1 - s / .5) : 0,
 				halo: 1
 			});
@@ -17100,7 +17459,7 @@ function dm(e, t, n, r) {
 				});
 			});
 		} else if (n.id === "shield_wall" && r != null) e.snaps || (e.snaps = n.reached.slice(0, 8).map(() => i.quads.alloc()), e.quads.push(...e.snaps)), e.snaps.forEach((e, t) => {
-			let i = n.reached[t], a = nm(r / .35);
+			let i = n.reached[t], a = km(r / .35);
 			Z(e, {
 				frame: "partyRing",
 				index: a < .5 ? 0 : 1,
@@ -17109,14 +17468,14 @@ function dm(e, t, n, r) {
 				z: i.z,
 				mode: "flat",
 				scale: .25 + .2 * a,
-				r: em[0],
-				g: em[1],
-				b: em[2],
+				r: Dm[0],
+				g: Dm[1],
+				b: Dm[2],
 				a: 1 - a
 			});
 		});
 		else if (n.id === "aura_wall") {
-			if ((!i.domeOf || !om.has(i.domeOf.key)) && (i.dome.show({
+			if ((!i.domeOf || !Nm.has(i.domeOf.key)) && (i.dome.show({
 				x: n.x,
 				y: o(n.x, n.z),
 				z: n.z,
@@ -17126,7 +17485,7 @@ function dm(e, t, n, r) {
 				let r = e.t * .6 % 1;
 				i.dome.set({
 					rise: X(e.t / .35),
-					dissolve: 1 - nm(n.k / .8),
+					dissolve: 1 - km(n.k / .8),
 					sweepA: r,
 					sweepB: (r + .5) % 1
 				});
@@ -17139,9 +17498,9 @@ function dm(e, t, n, r) {
 			mode: "flat",
 			scale: .85 + .05 * Math.sin(e.t * 4),
 			rot: e.t * .5,
-			r: $p[0],
-			g: $p[1],
-			b: $p[2],
+			r: Em[0],
+			g: Em[1],
+			b: Em[2],
 			a: .9 * X(e.t / .25),
 			halo: 1
 		});
@@ -17153,9 +17512,9 @@ function dm(e, t, n, r) {
 			z: n.z + l * .2,
 			mode: "billboard",
 			scale: 1.5,
-			r: tm[0],
-			g: tm[1],
-			b: tm[2],
+			r: Om[0],
+			g: Om[1],
+			b: Om[2],
 			a: 1,
 			halo: 1
 		});
@@ -17179,9 +17538,9 @@ function dm(e, t, n, r) {
 					z: n.tz + Math.sin(s) * c,
 					mode: "billboard",
 					scale: .9 + .3 * t,
-					r: tm[0],
-					g: tm[1],
-					b: tm[2],
+					r: Om[0],
+					g: Om[1],
+					b: Om[2],
 					a: t,
 					halo: 1
 				});
@@ -17199,61 +17558,61 @@ function dm(e, t, n, r) {
 				a: +(r < .3),
 				halo: 1
 			});
-		} else if (wm[n.id]) {
-			let a = wm[n.id](n, e, r, i, o, c, l, t);
+		} else if (Zm[n.id]) {
+			let a = Zm[n.id](n, e, r, i, o, c, l, t);
 			a && (!u || a.k > u.k) && (u = a);
 		}
 	}
-	for (let [e, t] of om) a.has(e) || (um(t), om.delete(e));
-	am && (u && u.k > .02 ? am.set(u.x, o(u.x, u.z) + 1.4, u.z, {
+	for (let [e, t] of Nm) a.has(e) || (Lm(t), Nm.delete(e));
+	Mm && (u && u.k > .02 ? Mm.set(u.x, o(u.x, u.z) + 1.4, u.z, {
 		color: u.color,
 		intensity: 2.6 * u.k / (n ?? 1),
 		distance: 6.5,
 		decay: 1.5,
 		flicker: .08
-	}) : am.off()), i.domeOf && !om.has(i.domeOf.key) && (i.dome.hide(), i.domeOf = null), i.crystals.update(t), i.frost.update(t), i.blades.update(t), i.rocks.update(t), i.bells.update(t), i.quads.update();
+	}) : Mm.off()), i.domeOf && !Nm.has(i.domeOf.key) && (i.dome.hide(), i.domeOf = null), i.crystals.update(t), i.frost.update(t), i.blades.update(t), i.rocks.update(t), i.bells.update(t), i.quads.update();
 }
-var fm = [
+var zm = [
 	1.6,
 	1.3,
 	.85
-], pm = [
+], Bm = [
 	2,
 	1.85,
 	1.45
-], mm = [
+], Vm = [
 	1.7,
 	.22,
 	.32
-], hm = [
+], Hm = [
 	.45,
 	1.5,
 	.6
-], gm = [
+], Um = [
 	.75,
 	.72,
 	.8
-], _m = [
+], Wm = [
 	.55,
 	.75,
 	1.7
-], vm = [
+], Gm = [
 	.55,
 	.95,
 	1.9
-], ym = [
+], Km = [
 	.35,
 	1.45,
 	1.25
-], bm = [
+], qm = [
 	.75,
 	1.55,
 	.3
-], xm = [
+], Jm = [
 	1.15,
 	.45,
 	1.65
-], Sm = [
+], Ym = [
 	.7,
 	.58,
 	.42
@@ -17266,22 +17625,22 @@ function $(e, t, n) {
 	if (!e[t]) {
 		e[t] = [];
 		for (let r = 0; r < n; r++) {
-			let n = im.quads.alloc();
+			let n = jm.quads.alloc();
 			n >= 0 && (e[t].push(n), e.quads.push(n));
 		}
 	}
 	return e[t];
 }
-var Cm = (e, t) => {
+var Xm = (e, t) => {
 	let n = Math.hypot(e, t) || 1;
 	return {
 		dirX: t / n,
 		dirZ: -e / n
 	};
-}, wm = {
+}, Zm = {
 	vault(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let [s, c, l, u, ...d] = $(t, "q", 9), f = i(e.tx, e.tz), p = nm((n - .12) / .18);
+		let [s, c, l, u, ...d] = $(t, "q", 9), f = i(e.tx, e.tz), p = km((n - .12) / .18);
 		return Z(s, {
 			frame: "heroSigil",
 			x: e.tx,
@@ -17290,7 +17649,7 @@ var Cm = (e, t) => {
 			mode: "flat",
 			scale: .12 + .1 * X(n / .3),
 			rot: n * 1.5,
-			...Q(fm, .8),
+			...Q(zm, .8),
 			a: .9 * (1 - X((n - .5) / .4))
 		}), Z(c, {
 			frame: "heroSword",
@@ -17300,7 +17659,7 @@ var Cm = (e, t) => {
 			z: e.tz + o * .25,
 			mode: "billboard",
 			scale: .4,
-			...Q(pm),
+			...Q(Bm),
 			a: n < .12 ? 0 : 1 - X((n - .45) / .25),
 			halo: 1
 		}), Z(l, {
@@ -17310,7 +17669,7 @@ var Cm = (e, t) => {
 			z: e.tz,
 			mode: "flat",
 			scale: .55 * X((n - .3) / .12),
-			...Q(fm, .9),
+			...Q(zm, .9),
 			a: n > .3 ? 1 - X((n - .6) / .35) : 0
 		}), Z(u, {
 			frame: "impact",
@@ -17320,7 +17679,7 @@ var Cm = (e, t) => {
 			z: e.tz + o * .3,
 			mode: "billboard",
 			scale: 3.2,
-			...Q(pm),
+			...Q(Bm),
 			a: +(n > .3 && n < .6),
 			halo: 1
 		}), d.forEach((r, i) => {
@@ -17333,7 +17692,7 @@ var Cm = (e, t) => {
 				z: e.tz + Math.sin(a) * s,
 				mode: "billboard",
 				scale: 2,
-				...Q(Sm),
+				...Q(Ym),
 				a: o > 0 ? 1 - X(o / .5) : 0
 			});
 		}), n > .28 ? {
@@ -17349,7 +17708,7 @@ var Cm = (e, t) => {
 	},
 	cutting_wave(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let [s, c, l] = $(t, "q", 3), u = e.tx - e.fx, d = e.tz - e.fz, f = Math.hypot(u, d) || 1, p = u / f, m = d / f, h = 3 * X(n / .35), g = 1 - X((n - .45) / .35), _ = e.fx + p * h, v = e.fz + m * h, y = i(_, v), b = Cm(u, d);
+		let [s, c, l] = $(t, "q", 3), u = e.tx - e.fx, d = e.tz - e.fz, f = Math.hypot(u, d) || 1, p = u / f, m = d / f, h = 3 * X(n / .35), g = 1 - X((n - .45) / .35), _ = e.fx + p * h, v = e.fz + m * h, y = i(_, v), b = Xm(u, d);
 		return Z(s, {
 			frame: "heroWaveLit",
 			index: Math.floor(n * 24) % 4,
@@ -17359,7 +17718,7 @@ var Cm = (e, t) => {
 			mode: "flat",
 			...b,
 			scale: .75,
-			...Q(pm),
+			...Q(Bm),
 			a: g,
 			halo: 1
 		}), Z(c, {
@@ -17371,7 +17730,7 @@ var Cm = (e, t) => {
 			mode: "flat",
 			...b,
 			scale: .6,
-			...Q(fm),
+			...Q(zm),
 			a: .8 * g
 		}), Z(l, {
 			frame: "heroFangCrestLit",
@@ -17381,7 +17740,7 @@ var Cm = (e, t) => {
 			z: v + o * .2,
 			mode: "billboard",
 			scale: .85,
-			...Q(pm),
+			...Q(Bm),
 			a: g,
 			halo: 1
 		}), {
@@ -17420,7 +17779,7 @@ var Cm = (e, t) => {
 			}
 		}
 		for (let e of t.spec) r.rocks.set(e.h, {
-			rise: rm((n - e.start) / .14) * (1 - X((n - 1) / .35)),
+			rise: Am((n - e.start) / .14) * (1 - X((n - 1) / .35)),
 			crack: X((n - .65) / .3)
 		});
 		return Z(c, {
@@ -17431,7 +17790,7 @@ var Cm = (e, t) => {
 			mode: "flat",
 			scale: .35 * X(n / .15),
 			rot: t.seed % 7 * .4,
-			...Q(Sm, 1.1),
+			...Q(Ym, 1.1),
 			a: 1 - X((n - 1) / .35)
 		}), Z(l, {
 			frame: "partyRing",
@@ -17441,7 +17800,7 @@ var Cm = (e, t) => {
 			z: e.z,
 			mode: "flat",
 			scale: .2 + .4 * X(n / .3),
-			...Q(fm, .9),
+			...Q(zm, .9),
 			a: 1 - X((n - .1) / .3)
 		}), u.forEach((t, r) => {
 			let i = r * 1.047 + .3, a = n - .12, o = .6 + .8 * X(a / .5);
@@ -17453,7 +17812,7 @@ var Cm = (e, t) => {
 				z: e.z + Math.sin(i) * o,
 				mode: "billboard",
 				scale: 2.4,
-				...Q(Sm),
+				...Q(Ym),
 				a: a > 0 ? 1 - X(a / .7) : 0
 			});
 		}), {
@@ -17511,7 +17870,7 @@ var Cm = (e, t) => {
 			mode: "flat",
 			scale: .32,
 			rot: -n * 6,
-			...Q(fm, .75),
+			...Q(zm, .75),
 			a: .75 * l * (1 - u)
 		}), {
 			x: e.x,
@@ -17535,7 +17894,7 @@ var Cm = (e, t) => {
 			z: e.tz + o * .3,
 			mode: "billboard",
 			scale: 2.4,
-			...Q(mm, 1.2),
+			...Q(Vm, 1.2),
 			a: +(n < .35),
 			halo: 1
 		}), Z(c, {
@@ -17574,9 +17933,9 @@ var Cm = (e, t) => {
 				y: d,
 				z: e.z + o * (.3 + u),
 				mode: "flat",
-				...Cm(a, o),
+				...Xm(a, o),
 				scale: .6,
-				...Q(hm, 1.2),
+				...Q(Hm, 1.2),
 				a: +(n < .3),
 				halo: 1
 			});
@@ -17590,7 +17949,7 @@ var Cm = (e, t) => {
 				z: s.z + o * .3,
 				mode: "billboard",
 				scale: 2,
-				...Q(hm, 1.3),
+				...Q(Hm, 1.3),
 				a: +(c > 0 && c < .28),
 				halo: 1
 			});
@@ -17631,7 +17990,7 @@ var Cm = (e, t) => {
 			mode: "billboard",
 			scale: 1.1,
 			rot: .6,
-			...Q(mm, 1.3),
+			...Q(Vm, 1.3),
 			a: +(n > .12 && n < .4),
 			halo: 1
 		}), Z(l, {
@@ -17642,7 +18001,7 @@ var Cm = (e, t) => {
 			z: e.tz + o * .32,
 			mode: "billboard",
 			scale: 2.4,
-			...Q(mm, 1.4),
+			...Q(Vm, 1.4),
 			a: +(n > .14 && n < .5),
 			halo: 1
 		}), n > .12 ? {
@@ -17660,7 +18019,7 @@ var Cm = (e, t) => {
 		if (n == null) return null;
 		let s = $(t, "q", 14), [c] = $(t, "r", 1), l = 1 - X((n - 5.4) / .6), u = Math.max(.6, e.r);
 		return s.forEach((r, a) => {
-			let o = (a * 137.5 + t.seed) % 360 * Math.PI / 180, s = u * .85 * Math.sqrt((a * 61 + t.seed) % 97 / 97), c = e.tx + Math.cos(o) * s, d = e.tz + Math.sin(o) * s, f = nm((n - a * .015) / .25), p = .6 + .4 * Math.sin(n * 6 + a * 1.7);
+			let o = (a * 137.5 + t.seed) % 360 * Math.PI / 180, s = u * .85 * Math.sqrt((a * 61 + t.seed) % 97 / 97), c = e.tx + Math.cos(o) * s, d = e.tz + Math.sin(o) * s, f = km((n - a * .015) / .25), p = .6 + .4 * Math.sin(n * 6 + a * 1.7);
 			Z(r, {
 				frame: "partyIceShard",
 				index: a % 4,
@@ -17669,7 +18028,7 @@ var Cm = (e, t) => {
 				z: d,
 				mode: "billboard",
 				scale: .55,
-				...Q(gm, .8 + .6 * p),
+				...Q(Um, .8 + .6 * p),
 				a: f > 0 ? l : 0
 			});
 		}), Z(c, {
@@ -17680,7 +18039,7 @@ var Cm = (e, t) => {
 			z: e.tz,
 			mode: "flat",
 			scale: 2 * u / 6,
-			...Q(mm, .5),
+			...Q(Vm, .5),
 			a: .7 * X(n / .3) * l
 		}), null;
 	},
@@ -17695,7 +18054,7 @@ var Cm = (e, t) => {
 			mode: "flat",
 			scale: .1 + .12 * X(n / .7),
 			rot: n * 2.2,
-			...Q(tm, .9),
+			...Q(Om, .9),
 			a: n < .7 ? .8 + .2 * Math.sin(n * 30) : 1 - X(p / .3)
 		}), Z(c, {
 			frame: "pillar",
@@ -17705,7 +18064,7 @@ var Cm = (e, t) => {
 			z: e.tz + o * .2,
 			mode: "billboard",
 			scale: 1.4,
-			...Q(tm, 1.1),
+			...Q(Om, 1.1),
 			a: p > 0 ? 1 - X((p - .25) / .3) : 0,
 			halo: 1
 		}), Z(l, {
@@ -17719,7 +18078,7 @@ var Cm = (e, t) => {
 			r: 2,
 			g: 1.5,
 			b: .7,
-			a: p > 0 ? nm((.25 - p) / .1) : 0,
+			a: p > 0 ? km((.25 - p) / .1) : 0,
 			halo: 1
 		}), Z(u, {
 			frame: "impact",
@@ -17744,7 +18103,7 @@ var Cm = (e, t) => {
 				z: e.tz + Math.sin(i) * a,
 				mode: "billboard",
 				scale: 1,
-				...Q(tm),
+				...Q(Om),
 				a: p > 0 ? 1 - X((p - .25) / .35) : 0,
 				halo: 1
 			});
@@ -17771,7 +18130,7 @@ var Cm = (e, t) => {
 			mode: "flat",
 			scale: e.r * 2 / 5 * (1 - .6 * X(n / .5)),
 			rot: n * 7,
-			...Q(_m, 1.1),
+			...Q(Wm, 1.1),
 			a: d
 		}), Z(c, {
 			frame: "partySwirl",
@@ -17782,7 +18141,7 @@ var Cm = (e, t) => {
 			mode: "flat",
 			scale: e.r * 2 / 7 * (1 - .6 * X(n / .5)),
 			rot: -n * 9,
-			...Q(_m, 1.4),
+			...Q(Wm, 1.4),
 			a: .8 * d,
 			halo: 1
 		}), l.forEach((t, r) => {
@@ -17794,9 +18153,9 @@ var Cm = (e, t) => {
 				y: i(s, c) + .4,
 				z: c,
 				mode: "flat",
-				...Cm(e.tx - a.x, e.tz - a.z),
+				...Xm(e.tx - a.x, e.tz - a.z),
 				scale: .45,
-				...Q(_m, 1.3),
+				...Q(Wm, 1.3),
 				a: +(n < .45)
 			});
 		}), {
@@ -17850,7 +18209,7 @@ var Cm = (e, t) => {
 			}
 		}
 		return t.spikes.forEach((e) => r.crystals.set(e, {
-			rise: rm(n / .13) * (1 - c),
+			rise: Am(n / .13) * (1 - c),
 			crack: X((n - 2.1) / .3),
 			glint: X(n / .4),
 			glow: 1.1
@@ -17869,7 +18228,7 @@ var Cm = (e, t) => {
 				z: s.z + o * .12,
 				mode: "billboard",
 				scale: 1.15 - .1 * X(n / .1),
-				...Q(vm, .85),
+				...Q(Gm, .85),
 				a: +(n > .05) * (1 - c),
 				halo: 1
 			});
@@ -17895,7 +18254,7 @@ var Cm = (e, t) => {
 			mode: "flat",
 			scale: 2 * p / 4,
 			rot: .3,
-			...Q(vm, .55),
+			...Q(Gm, .55),
 			a: .8 * f
 		}), Z(s, {
 			frame: "partySwirl",
@@ -17906,7 +18265,7 @@ var Cm = (e, t) => {
 			mode: "flat",
 			scale: 2 * p / 5 * 1.1,
 			rot: n * 2.4,
-			...Q(vm, .9),
+			...Q(Gm, .9),
 			a: .85 * f
 		}), Z(c, {
 			frame: "partySwirl",
@@ -17917,7 +18276,7 @@ var Cm = (e, t) => {
 			mode: "flat",
 			scale: 2 * p / 5 * .75,
 			rot: -n * 3.6,
-			...Q(vm, 1.1),
+			...Q(Gm, 1.1),
 			a: .85 * f,
 			halo: 1
 		}), u.forEach((t, r) => {
@@ -17930,7 +18289,7 @@ var Cm = (e, t) => {
 				z: c,
 				mode: "billboard",
 				scale: 1.4,
-				...Q(vm, 1.3),
+				...Q(Gm, 1.3),
 				a: f * +(i < .95)
 			});
 		}), {
@@ -17955,7 +18314,7 @@ var Cm = (e, t) => {
 			mode: "flat",
 			scale: 2 * f / 8,
 			rot: n * .6,
-			...Q(Qp.core, .8),
+			...Q(Tm.core, .8),
 			a: .9 * d,
 			halo: 1
 		}), c.forEach((t, r) => {
@@ -17968,7 +18327,7 @@ var Cm = (e, t) => {
 				z: e.tz + Math.sin(a) * o,
 				mode: "billboard",
 				scale: .9,
-				...Q(Qp.core),
+				...Q(Tm.core),
 				a: d * (1 - i),
 				halo: 1
 			});
@@ -17982,7 +18341,7 @@ var Cm = (e, t) => {
 				mode: "flat",
 				scale: .9,
 				rot: n,
-				...Q(Qp.core, .9),
+				...Q(Tm.core, .9),
 				a: d,
 				halo: 1
 			});
@@ -18057,7 +18416,7 @@ var Cm = (e, t) => {
 			mode: "billboard",
 			scale: p,
 			...Q(Y.body),
-			a: .95 * nm((1 - n) / .4)
+			a: .95 * km((1 - n) / .4)
 		}), Z(c, {
 			frame: "partyPillar",
 			index: 0,
@@ -18067,7 +18426,7 @@ var Cm = (e, t) => {
 			mode: "billboard",
 			scale: p,
 			...Q(Y.core),
-			a: nm((.5 - n) / .2),
+			a: km((.5 - n) / .2),
 			halo: 1
 		}), Z(l, {
 			frame: "partySunburst",
@@ -18093,7 +18452,7 @@ var Cm = (e, t) => {
 			a: n > .3 ? 1 - X((n - .45) / .25) : 0,
 			halo: 1
 		}), d.forEach((t, r) => {
-			let i = nm((n - r * .08) / 1.1), a = r * 1.047;
+			let i = km((n - r * .08) / 1.1), a = r * 1.047;
 			Z(t, {
 				frame: "partyHolyOrb",
 				index: r % 2,
@@ -18142,7 +18501,7 @@ var Cm = (e, t) => {
 				mode: "billboard",
 				scale: .5,
 				...Q(Y.body),
-				a: c > 0 ? nm((.35 - c) / .12) : 0,
+				a: c > 0 ? km((.35 - c) / .12) : 0,
 				halo: 1
 			});
 		});
@@ -18156,7 +18515,7 @@ var Cm = (e, t) => {
 			mode: "billboard",
 			scale: h,
 			...Q(Y.body, 1.2),
-			a: m > 0 ? nm((.45 - m) / .15) : 0
+			a: m > 0 ? km((.45 - m) / .15) : 0
 		}), Z(l, {
 			frame: "partyPillar",
 			index: 0,
@@ -18166,7 +18525,7 @@ var Cm = (e, t) => {
 			mode: "billboard",
 			scale: h,
 			...Q(Y.core, 1.2),
-			a: m > 0 ? nm((.3 - m) / .1) : 0,
+			a: m > 0 ? km((.3 - m) / .1) : 0,
 			halo: 1
 		}), Z(u, {
 			frame: "partySunburst",
@@ -18202,7 +18561,7 @@ var Cm = (e, t) => {
 			z: e.tz,
 			mode: "flat",
 			scale: 2 * Math.max(.6, e.r) / 6 * (.4 + .6 * X(n / .25)),
-			...Q(bm, .9),
+			...Q(qm, .9),
 			a: 1 - X((n - .3) / .4)
 		}), c.forEach((t, r) => {
 			let s = e.reached[Math.floor(r / 3)], c = r % 3 * 2.094 + .5, l = s.x + Math.cos(c) * .22, d = s.z + Math.sin(c) * .22;
@@ -18241,7 +18600,7 @@ var Cm = (e, t) => {
 			z: e.tz + o * .3,
 			mode: "billboard",
 			scale: .7 + .15 * d,
-			...Q(d >= 3 ? xm : ym, 1.1 + .2 * d),
+			...Q(d >= 3 ? Jm : Km, 1.1 + .2 * d),
 			a: 1 - X((n - .45) / .3),
 			halo: 1
 		}), Z(c, {
@@ -18252,7 +18611,7 @@ var Cm = (e, t) => {
 			z: e.tz + o * .32,
 			mode: "billboard",
 			scale: 2.6,
-			...Q(xm, 1.3),
+			...Q(Jm, 1.3),
 			a: +(d >= 3 && n < .35),
 			halo: 1
 		}), Z(l, {
@@ -18263,7 +18622,7 @@ var Cm = (e, t) => {
 			z: e.tz + o * .3,
 			mode: "billboard",
 			scale: 1.3,
-			...Q(xm, 1.2),
+			...Q(Jm, 1.2),
 			a: d >= 3 ? Math.max(0, 1 - n / .4) : 0,
 			halo: 1
 		}), d >= 3 ? {
@@ -18310,7 +18669,7 @@ var Cm = (e, t) => {
 			mode: "flat",
 			scale: 2.2,
 			rot: n * .4,
-			...Q(ym, .8),
+			...Q(Km, .8),
 			a: .85 * c * (1 - l),
 			halo: 1
 		}), Z(f, {
@@ -18321,7 +18680,7 @@ var Cm = (e, t) => {
 			z: e.tz,
 			mode: "flat",
 			scale: .3 + .7 * (1 - u),
-			...Q(ym, 1.2),
+			...Q(Km, 1.2),
 			a: c * (1 - l) * (1 - X(u / .8))
 		}), {
 			x: e.tx,
@@ -18345,7 +18704,7 @@ var Cm = (e, t) => {
 			z: e.tz,
 			mode: "flat",
 			scale: 2 * p / 6 * (.15 + .95 * f),
-			...Q(ym, 1.4),
+			...Q(Km, 1.4),
 			a: 1 - X((n - .25) / .3),
 			halo: 1
 		}), Z(c, {
@@ -18370,7 +18729,7 @@ var Cm = (e, t) => {
 			z: e.tz + o * .3,
 			mode: "billboard",
 			scale: 1.5,
-			...Q(ym, 1.3),
+			...Q(Km, 1.3),
 			a: Math.max(0, 1 - n / .3),
 			halo: 1
 		}), u.forEach((t, r) => {
@@ -18382,9 +18741,9 @@ var Cm = (e, t) => {
 				y: i(a.x, a.z) + .4,
 				z: a.z,
 				mode: "flat",
-				...Cm(a.x - e.tx, a.z - e.tz),
+				...Xm(a.x - e.tx, a.z - e.tz),
 				scale: .55,
-				...Q(ym, 1.2),
+				...Q(Km, 1.2),
 				a: +(o > 0 && o < .4)
 			});
 		}), {
@@ -18425,7 +18784,7 @@ var Cm = (e, t) => {
 			z: e.z + o * .12,
 			mode: "billboard",
 			scale: 1.1,
-			...Q(vm, .85),
+			...Q(Gm, .85),
 			a: X(t.t / .1),
 			halo: 1
 		}), null;
@@ -18450,7 +18809,7 @@ var Cm = (e, t) => {
 		}), null;
 	}
 };
-function Tm(e) {
+function Qm(e) {
 	let t = JSON.stringify(e), n = 2166136261, r = 16777619;
 	for (let e = 0; e < t.length; e++) {
 		let i = t.charCodeAt(e);
@@ -18458,22 +18817,22 @@ function Tm(e) {
 	}
 	return `${t.length}.${(n >>> 0).toString(36)}.${(r >>> 0).toString(36)}`;
 }
-var Em = (e) => Tm(e.map((e) => [
+var $m = (e) => Qm(e.map((e) => [
 	e.id,
 	e.x,
 	e.z,
 	e.prop || "",
 	+!!e.arch
-])), Dm = {
+])), eh = {
 	ready: !1,
 	prepare(e, t = "vale") {
-		if (!J || Id) return !1;
-		let n = Vn(e).level, r = `${t}|${Tm(n)}`;
-		if (r === Pd || jd.has(r) || Rd?.key === r) return !1;
-		Hd();
+		if (!J || uf) return !1;
+		let n = Vn(e).level, r = `${t}|${Qm(n)}`;
+		if (r === cf || af.has(r) || ff?.key === r) return !1;
+		gf();
 		try {
 			let e = J.prepareWorld(n, () => !0);
-			Rd = {
+			ff = {
 				key: r,
 				level: n,
 				world: e,
@@ -18481,9 +18840,9 @@ var Em = (e) => Tm(e.map((e) => [
 				wait: null,
 				done: !1,
 				t0: performance.now()
-			}, setTimeout(Vd, Bd);
+			}, setTimeout(hf, mf);
 		} catch (e) {
-			return console.warn("[luminati] building a level ahead:", e), Rd = null, !1;
+			return console.warn("[luminati] building a level ahead:", e), ff = null, !1;
 		}
 		return !0;
 	},
@@ -18497,68 +18856,68 @@ var Em = (e) => Tm(e.map((e) => [
 			programs: e?.info?.programs?.length ?? 0,
 			geometries: e?.info?.memory?.geometries ?? 0,
 			textures: e?.info?.memory?.textures ?? 0,
-			kept: jd.size,
-			ahead: Rd ? Rd.done ? "ready" : "building" : "",
-			last: Ld
+			kept: af.size,
+			ahead: ff ? ff.done ? "ready" : "building" : "",
+			last: df
 		};
 	},
 	async load(e, t = [], n = "vale") {
-		let r = ++Dd;
-		n !== tp && (tp = n, ep.clear());
-		let i = Vn(e).level, a = `${n}|${Tm(i)}`, o = Em(t);
-		Id = !0, Ed = (async () => {
+		let r = ++ef;
+		n !== Op && (Op = n, Dp.clear());
+		let i = Vn(e).level, a = `${n}|${Qm(i)}`, o = $m(t);
+		uf = !0, $d = (async () => {
 			let e = null;
-			if (!J) await Cp(i), Ld = "built";
+			if (!J) await Xp(i), df = "built";
 			else {
-				e = jd.get(a) || null, e && jd.delete(a);
-				let t = !e && Rd && Rd.key === a ? Rd : null;
-				t && (Rd = null);
+				e = af.get(a) || null, e && af.delete(a);
+				let t = !e && ff && ff.key === a ? ff : null;
+				t && (ff = null);
 				let n = e ? e.kept.level : t ? t.level : i;
-				Ld = e ? "kept" : t ? "ahead" : "built";
+				df = e ? "kept" : t ? "ahead" : "built";
 				let { aside: r } = await J.swapLevel(n, {
 					spawn: i.spawn,
 					keep: !0,
 					kept: e ? e.kept : null,
-					prepared: t ? Wd(t) : null
+					prepared: t ? vf(t) : null
 				});
-				if (r && Pd) {
-					for (let e of Cf) J.engine.scene.remove(e);
-					for (jd.set(Pd, {
+				if (r && cf) {
+					for (let e of Xf) J.engine.scene.remove(e);
+					for (af.set(cf, {
 						kept: r,
-						env: Cf,
-						made: Of,
-						envKey: Fd
-					}), Cf = [], Of = /* @__PURE__ */ new Map(); jd.size > Md;) {
-						let [e, t] = jd.entries().next().value;
-						jd.delete(e), J.disposeKept(t.kept), Nf(t.env, t.made);
+						env: Xf,
+						made: tp,
+						envKey: lf
+					}), Xf = [], tp = /* @__PURE__ */ new Map(); af.size > of;) {
+						let [e, t] = af.entries().next().value;
+						af.delete(e), J.disposeKept(t.kept), op(t.env, t.made);
 					}
 				}
 			}
-			if (Pd = a, r === Dd) {
-				if (wp(), Zp = !!i.environment?.interior, Dm.settings({ dof: Od }), Zf(i, n), e && e.envKey === o) {
-					Nf(Cf, Of), Cf = e.env, Of = e.made;
-					for (let e of Cf) J.engine.scene.add(e), e.update?.(0, J.engine.camera);
-				} else e && Nf(e.env, e.made), await Pf(t, n);
-				Fd = o;
+			if (cf = a, r === ef) {
+				if (Zp(), wm = !!i.environment?.interior, eh.settings({ dof: tf }), wp(i, n), e && e.envKey === o) {
+					op(Xf, tp), Xf = e.env, tp = e.made;
+					for (let e of Xf) J.engine.scene.add(e), e.update?.(0, J.engine.camera);
+				} else e && op(e.env, e.made), await sp(t, n);
+				lf = o;
 			}
 		})();
 		try {
-			await Ed;
+			await $d;
 		} finally {
-			Id = !1;
+			uf = !1;
 		}
-		return r === Dd;
+		return r === ef;
 	},
 	settings(e = {}) {
-		e.dof && (Od = e.dof), e.bright > 0 && (Vf = e.bright), e.figLit > 0 && (Uf = e.figLit), e.carryUp > 0 && (Wp = e.carryUp), e.carryGain > 0 && (Gp = e.carryGain), e.figMax > 0 && (Wf = e.figMax), (e.figures === "models" || e.figures === "sprites") && (nf = e.figures), [
+		e.dof && (tf = e.dof), e.bright > 0 && (mp = e.bright), e.figLit > 0 && (gp = e.figLit), e.carryUp > 0 && (_m = e.carryUp), e.carryGain > 0 && (vm = e.carryGain), e.figMax > 0 && (_p = e.figMax), (e.figures === "models" || e.figures === "sprites") && (Af = e.figures), [
 			"chosen",
 			"doors",
 			"all",
 			"sprites"
-		].includes(e.landmarks) && (wf = e.landmarks);
+		].includes(e.landmarks) && (Zf = e.landmarks);
 		let t = J?.postfx?.settings;
 		t?.dof && Object.assign(t.dof, {
-			enabled: Od !== "off" && !Zp,
+			enabled: tf !== "off" && !wm,
 			focusRange: 16,
 			tiltShift: .14,
 			tiltWidth: .62
@@ -18566,19 +18925,19 @@ var Em = (e) => Tm(e.map((e) => [
 	},
 	frame(e) {
 		if (!J || !J.engine) return;
-		Hf = e.bright > 0 ? e.bright : 1, xp.x = e.focus[0], xp.y = e.focus[1], xp.z = e.focus[2], xp.ppu = e.ppu, Number.isFinite(e.hour) && Math.abs((J.lighting?.timeOfDay ?? -1) - e.hour) > .004 && J.setTime(e.hour), e.weather && J.weather?.weather !== e.weather && J.setWeather(e.weather), J.lighting?.settings && (J.lighting.settings.fogMul = 1 + .6 * (e.fog || 0), J.lighting.settings.pointLightMul = e.ambient?.lamps ?? 1), e.hero && J.player && (wp(), J.player.position.set(e.hero[0], J.tileMap.getHeight(e.hero[0], e.hero[1]), e.hero[1])), Gf = Jf();
+		hp = e.bright > 0 ? e.bright : 1, Jp.x = e.focus[0], Jp.y = e.focus[1], Jp.z = e.focus[2], Jp.ppu = e.ppu, Number.isFinite(e.hour) && Math.abs((J.lighting?.timeOfDay ?? -1) - e.hour) > .004 && J.setTime(e.hour), e.weather && J.weather?.weather !== e.weather && J.setWeather(e.weather), J.lighting?.settings && (J.lighting.settings.fogMul = 1 + .6 * (e.fog || 0), J.lighting.settings.pointLightMul = e.ambient?.lamps ?? 1), e.hero && J.player && (Zp(), J.player.position.set(e.hero[0], J.tileMap.getHeight(e.hero[0], e.hero[1]), e.hero[1])), vp = xp();
 		let t = /* @__PURE__ */ new Map(), n = J.engine.camera, r = /* @__PURE__ */ new Map();
-		vf++, n.getWorldDirection(rf);
-		let i = Math.atan2(-rf.x, -rf.z);
+		Gf++, n.getWorldDirection(jf);
+		let i = Math.atan2(-jf.x, -jf.z);
 		for (let a of e.actors) {
 			let o = r.get(a.name) || 0;
-			if (r.set(a.name, o + 1), xf(a, a.key ?? `${a.name}#${o}`, Math.max(0, Math.min(.1, e.dt || 0)), i)) continue;
-			let s = Zd(a.name);
+			if (r.set(a.name, o + 1), Jf(a, a.key ?? `${a.name}#${o}`, Math.max(0, Math.min(.1, e.dt || 0)), i)) continue;
+			let s = Tf(a.name);
 			if (!s) continue;
-			let c = a.cw ? a.cw / s.meta.cw : 1, l = Qd(s, c), u = t.get(l) || 0;
+			let c = a.cw ? a.cw / s.meta.cw : 1, l = Ef(s, c), u = t.get(l) || 0;
 			t.set(l, u + 1);
-			let d = ef(l, u);
-			d.visible = !0, d.material.emissiveIntensity !== Gf && (d.material.emissiveIntensity = Gf), (d._col !== a.col || d._row !== a.row) && d.setFrame(a.col, a.row), tf(d, a.x, a.z, (s.meta.ch - s.meta.ay) * c, l.pixelsPerUnit * c);
+			let d = Of(l, u);
+			d.visible = !0, d.material.emissiveIntensity !== vp && (d.material.emissiveIntensity = vp), (d._col !== a.col || d._row !== a.row) && d.setFrame(a.col, a.row), kf(d, a.x, a.z, (s.meta.ch - s.meta.ay) * c, l.pixelsPerUnit * c);
 			let f = a.flash || 0, p = f ? 0 : Math.round((a.warn || 0) * 20) / 20;
 			if (d._emberFlash !== f || d._emberWarn !== p) {
 				d._emberFlash = f, d._emberWarn = p;
@@ -18589,10 +18948,10 @@ var Em = (e) => Tm(e.map((e) => [
 			Math.abs(d.opacity - m) > .01 && (d.opacity = m), d.update(0, n);
 		}
 		for (let r of e.bits || []) {
-			let e = ip(r), i = t.get(e) || 0;
+			let e = jp(r), i = t.get(e) || 0;
 			t.set(e, i + 1);
-			let a = ap(e, i), o = r.glow ? 1.6 : .3;
-			a.visible = !0, a.material.emissiveIntensity !== o && (a.material.emissiveIntensity = o), tf(a, r.x, r.z, r.canvas.height - r.ay - r.lift, yd);
+			let a = Mp(e, i), o = r.glow ? 1.6 : .3;
+			a.visible = !0, a.material.emissiveIntensity !== o && (a.material.emissiveIntensity = o), kf(a, r.x, r.z, r.canvas.height - r.ay - r.lift, Kd);
 			let s = r.flash || 0;
 			if (a._emberFlash !== s) {
 				a._emberFlash = s;
@@ -18601,11 +18960,11 @@ var Em = (e) => Tm(e.map((e) => [
 			}
 			a.update(0, n);
 		}
-		for (let [e, n] of $d) {
+		for (let [e, n] of Df) {
 			let r = t.get(e) || 0;
 			for (let e = r; e < n.length; e++) n[e].visible && (n[e].visible = !1);
 		}
-		Sf();
+		Yf();
 		let a = {
 			ring: 0,
 			disc: 0,
@@ -18615,44 +18974,44 @@ var Em = (e) => Tm(e.map((e) => [
 			wrim: 0,
 			lane: 0
 		};
-		for (let t of e.rings || []) Ip(Fp("ring", a.ring++), t.x, t.z, 1, t.col, t.a);
+		for (let t of e.rings || []) lm(cm("ring", a.ring++), t.x, t.z, 1, t.col, t.a);
 		if (e.mark) {
-			let t = Fp("focus", a.focus++);
-			Ip(t, e.mark.x, e.mark.z, 1, [
+			let t = cm("focus", a.focus++);
+			lm(t, e.mark.x, e.mark.z, 1, [
 				255,
 				226,
 				150
-			], .7 + .2 * Math.sin(Yp * 4)), t.rotation.z = Yp, Yp += (e.dt || 0) * .9;
+			], .7 + .2 * Math.sin(Sm * 4)), t.rotation.z = Sm, Sm += (e.dt || 0) * .9;
 		}
-		for (let t of e.hazards || []) Ip(Fp("disc", a.disc++), t.x, t.z, t.r, t.col, .82 * t.a), Ip(Fp("rim", a.rim++), t.x, t.z, t.r, t.rim, .42 * t.a);
+		for (let t of e.hazards || []) lm(cm("disc", a.disc++), t.x, t.z, t.r, t.col, .82 * t.a), lm(cm("rim", a.rim++), t.x, t.z, t.r, t.rim, .42 * t.a);
 		for (let t of e.warns || []) {
 			let e = t.heavy ? 1 : .62, n = t.hit > 0 ? t.hit : 1, r = 1 - (1 - t.p) * (1 - t.p);
-			t.lane ? (Lp(Fp("lane", a.lane++), t.x, t.z, t.tx, t.tz, 1, t.w * 1.25, Bp, .3 * e * n), Lp(Fp("lane", a.lane++), t.x, t.z, t.tx, t.tz, 1, t.w, Rp, .16 * e * n), Lp(Fp("lane", a.lane++), t.x, t.z, t.tx, t.tz, t.p, t.w * .7, t.hit > 0 ? zp : Rp, (.22 + .28 * t.p) * e * n), Ip(Fp("wrim", a.wrim++), t.tx, t.tz, t.heavy ? .42 : .3, t.hit > 0 ? zp : Rp, (.35 + .4 * t.p) * e * n)) : (Ip(Fp("wrim", a.wrim++), t.tx, t.tz, t.r * 1.1, Bp, .5 * n), Ip(Fp("wfill", a.wfill++), t.tx, t.tz, t.r * r, t.hit > 0 ? zp : Rp, (.26 + .3 * t.p) * n), Ip(Fp("wrim", a.wrim++), t.tx, t.tz, t.r, t.hit > 0 ? zp : Rp, (.7 + .3 * t.p) * n));
+			t.lane ? (um(cm("lane", a.lane++), t.x, t.z, t.tx, t.tz, 1, t.w * 1.25, pm, .3 * e * n), um(cm("lane", a.lane++), t.x, t.z, t.tx, t.tz, 1, t.w, dm, .16 * e * n), um(cm("lane", a.lane++), t.x, t.z, t.tx, t.tz, t.p, t.w * .7, t.hit > 0 ? fm : dm, (.22 + .28 * t.p) * e * n), lm(cm("wrim", a.wrim++), t.tx, t.tz, t.heavy ? .42 : .3, t.hit > 0 ? fm : dm, (.35 + .4 * t.p) * e * n)) : (lm(cm("wrim", a.wrim++), t.tx, t.tz, t.r * 1.1, pm, .5 * n), lm(cm("wfill", a.wfill++), t.tx, t.tz, t.r * r, t.hit > 0 ? fm : dm, (.26 + .3 * t.p) * n), lm(cm("wrim", a.wrim++), t.tx, t.tz, t.r, t.hit > 0 ? fm : dm, (.7 + .3 * t.p) * n));
 		}
-		pp(e.water), fp(e.gate);
-		for (let e of Object.keys(Np)) for (let t = a[e]; t < Np[e].length; t++) Np[e][t].visible = !1;
-		if (Jp !== Dd) {
-			Jp = Dd, qp = J.world?.acquireSpellLight?.({ minor: !1 }) ?? null, Kp = J.world?.acquireSpellLight?.({ minor: !1 }) ?? null, am = J.world?.acquireSpellLight?.({ minor: !1 }) ?? null;
-			for (let e of om.values()) im && um(e);
-			om.clear();
+		Bp(e.water), zp(e.gate);
+		for (let e of Object.keys(om)) for (let t = a[e]; t < om[e].length; t++) om[e][t].visible = !1;
+		if (xm !== ef) {
+			xm = ef, bm = J.world?.acquireSpellLight?.({ minor: !1 }) ?? null, ym = J.world?.acquireSpellLight?.({ minor: !1 }) ?? null, Mm = J.world?.acquireSpellLight?.({ minor: !1 }) ?? null;
+			for (let e of Nm.values()) jm && Lm(e);
+			Nm.clear();
 		}
-		if (qp && e.hero) {
-			let t = Math.max(0, Math.min(1, e.carry ?? 0)), n = e.hero[0] + .35, r = e.hero[1] + .35, i = nf === "models" ? Wp : 2.4, a = nf === "models" ? Gp : 1;
-			qp.set(n, J.tileMap.getHeight(e.hero[0], e.hero[1]) + i, r, {
+		if (bm && e.hero) {
+			let t = Math.max(0, Math.min(1, e.carry ?? 0)), n = e.hero[0] + .35, r = e.hero[1] + .35, i = Af === "models" ? _m : 2.4, a = Af === "models" ? vm : 1;
+			bm.set(n, J.tileMap.getHeight(e.hero[0], e.hero[1]) + i, r, {
 				color: [
 					1.9,
 					1.15,
 					.42
 				],
 				intensity: 4.5 * a * t / (e.ambient?.lamps ?? 1),
-				distance: nf === "models" ? Math.hypot(6.2, i) : 6 + (i - 2.4),
+				distance: Af === "models" ? Math.hypot(6.2, i) : 6 + (i - 2.4),
 				decay: 1.4,
 				flicker: 0
 			});
 		}
-		if (Kp) {
+		if (ym) {
 			let t = e.blast;
-			t && t.k > .01 ? Kp.set(t.x, J.tileMap.getHeight(t.x, t.z) + 1.6, t.z, {
+			t && t.k > .01 ? ym.set(t.x, J.tileMap.getHeight(t.x, t.z) + 1.6, t.z, {
 				color: [
 					2,
 					.95,
@@ -18662,23 +19021,23 @@ var Em = (e) => Tm(e.map((e) => [
 				distance: 7,
 				decay: 1.6,
 				flicker: .25
-			}) : Kp.off();
+			}) : ym.off();
 		}
-		if (dm(e.spells || [], e.dt || 0, e.ambient?.lamps, !!(e.rings && e.rings.length)), Zp) for (let e of J.lighting?._pointLights || []) e.flicker > Nd && (e.flicker = Nd);
+		if (Rm(e.spells || [], e.dt || 0, e.ambient?.lamps, !!(e.rings && e.rings.length)), wm) for (let e of J.lighting?._pointLights || []) e.flicker > sf && (e.flicker = sf);
 		let o = 0;
 		for (let t of e.beasts || []) {
-			let e = np(t.id);
+			let e = kp(t.id);
 			if (!e) continue;
-			let r = hp(o++, e);
-			r.visible = !0, tf(r, t.x, t.z, e.below, yd), r.update(0, n);
+			let r = Hp(o++, e);
+			r.visible = !0, kf(r, t.x, t.z, e.below, Kd), r.update(0, n);
 		}
-		for (let e = o; e < mp.length; e++) mp[e]?.visible && (mp[e].visible = !1);
-		Xp = e.ambient || null;
-		for (let e of Cf) e.update?.(0, n);
-		bp(e.light), J.engine.step(Math.max(0, Math.min(.1, e.dt)), { render: e.draw !== !1 });
+		for (let e = o; e < Vp.length; e++) Vp[e]?.visible && (Vp[e].visible = !1);
+		Cm = e.ambient || null;
+		for (let e of Xf) e.update?.(0, n);
+		qp(e.light), J.engine.step(Math.max(0, Math.min(.1, e.dt)), { render: e.draw !== !1 });
 	},
 	sprites(e) {
-		J && (Fd = Em(e), Pf(e, tp));
+		J && (lf = $m(e), sp(e, Op));
 	},
 	project(e, t, n) {
 		if (!J) return null;
@@ -18688,10 +19047,10 @@ var Em = (e) => Tm(e.map((e) => [
 	occluded(e) {
 		if (!J) return e.map(() => null);
 		let t = J.engine.camera, n = /* @__PURE__ */ new Set(), r = [];
-		for (let e of _f.values()) n.add(e.root);
-		for (let e of $d.values()) for (let t of e) n.add(t);
-		for (let e of mp) e && n.add(e);
-		for (let e of Object.keys(Np)) for (let t of Np[e]) n.add(t);
+		for (let e of Wf.values()) n.add(e.root);
+		for (let e of Df.values()) for (let t of e) n.add(t);
+		for (let e of Vp) e && n.add(e);
+		for (let e of Object.keys(om)) for (let t of om[e]) n.add(t);
 		let i = (e) => {
 			if (n.has(e) || !e.visible || e.parent && e.parent.shadowProxy === e) return;
 			let t = e.material, a = Array.isArray(t) ? t[0] : t;
@@ -18699,12 +19058,12 @@ var Em = (e) => Tm(e.map((e) => [
 			for (let t of e.children) i(t);
 		};
 		i(J.engine.scene);
-		let a = Vp, o = new P(), s = new P(), c = new P();
+		let a = mm, o = new P(), s = new P(), c = new P();
 		return a.camera = t, e.map(([e, n, i]) => {
 			o.set(e, n, i), t.isOrthographicCamera ? (t.getWorldDirection(c).multiplyScalar(-1), a.far = 400) : (t.getWorldPosition(s), c.copy(s).sub(o), a.far = c.length(), c.normalize()), a.set(o.clone().addScaledVector(c, .05), c);
 			for (let e of a.intersectObjects(r, !1)) {
 				if (e.object.name === "Sprite3D.mesh") {
-					let t = Up(e.object.material, e.uv);
+					let t = gm(e.object.material, e.uv);
 					if (t === null ? e.uv && (e.uv.x < .15 || e.uv.x > .85 || e.uv.y > .92) : t < 128) continue;
 					return e.object.parent?.name || "card";
 				}
@@ -18717,59 +19076,59 @@ var Em = (e) => Tm(e.map((e) => [
 		return J?.tileMap ? J.tileMap.getHeight(e, t) : null;
 	},
 	get stats() {
-		let e = (e) => Np[e].filter((e) => e.visible).length;
+		let e = (e) => om[e].filter((e) => e.visible).length;
 		return {
-			bits: [...$d.entries()].filter(([e]) => e.name === "ember-bit").reduce((e, [, t]) => e + t.filter((e) => e.visible).length, 0),
-			water: op.mesh && op.mesh.visible ? op.mesh.count : 0,
-			fig: Gf,
-			lit: Math.round(Kf * 100) / 100,
-			beasts: mp.filter((e) => e?.visible).length,
-			light: +!!vp.on,
-			lightDepth: vp.on && vp.keyed && J?.postfx?.depthTexture ? 1 : 0,
+			bits: [...Df.entries()].filter(([e]) => e.name === "ember-bit").reduce((e, [, t]) => e + t.filter((e) => e.visible).length, 0),
+			water: Np.mesh && Np.mesh.visible ? Np.mesh.count : 0,
+			fig: vp,
+			lit: Math.round(yp * 100) / 100,
+			beasts: Vp.filter((e) => e?.visible).length,
+			light: +!!Gp.on,
+			lightDepth: Gp.on && Gp.keyed && J?.postfx?.depthTexture ? 1 : 0,
 			rings: e("ring"),
 			hazards: e("disc"),
 			warns: e("wrim"),
 			lanes: e("lane"),
-			spells: om.size,
-			dome: im && im.domeOf ? 1 : 0,
-			blades: im ? im.blades.count - (im.warmN > 0 ? 2 : 0) : 0,
-			crystals: im ? im.crystals.count - +(im.warmN > 0) : 0,
-			frost: im ? im.frost.count - +(im.warmN > 0) : 0,
-			spellLight: am && im ? 1 : 0,
+			spells: Nm.size,
+			dome: jm && jm.domeOf ? 1 : 0,
+			blades: jm ? jm.blades.count - (jm.warmN > 0 ? 2 : 0) : 0,
+			crystals: jm ? jm.crystals.count - +(jm.warmN > 0) : 0,
+			frost: jm ? jm.frost.count - +(jm.warmN > 0) : 0,
+			spellLight: Mm && jm ? 1 : 0,
 			focus: e("focus"),
-			carry: +!!qp,
-			level: Dd,
-			actors: [...$d.values()].reduce((e, t) => e + t.filter((e) => e.visible).length, 0) + [..._f.values()].filter((e) => e.root.visible).length,
-			models: [..._f.values()].filter((e) => e.root.visible).length,
-			modelNames: [...new Set([..._f.values()].filter((e) => e.root.visible).map((e) => e.name))],
-			figErr: cf,
-			figFailed: [...mf.values()].filter((e) => e === !1).length,
+			carry: +!!bm,
+			level: ef,
+			actors: [...Df.values()].reduce((e, t) => e + t.filter((e) => e.visible).length, 0) + [...Wf.values()].filter((e) => e.root.visible).length,
+			models: [...Wf.values()].filter((e) => e.root.visible).length,
+			modelNames: [...new Set([...Wf.values()].filter((e) => e.root.visible).map((e) => e.name))],
+			figErr: Ff,
+			figFailed: [...Vf.values()].filter((e) => e === !1).length,
 			pr: J?.engine?.pixelRatio ?? null,
 			dpr: devicePixelRatio || 1,
-			modelMeshes: [...mf.values()].filter(Boolean).map((e) => e.meshes.after).reduce((e, t) => e + t, 0),
-			modelMeshesBefore: [...mf.values()].filter(Boolean).map((e) => e.meshes.before).reduce((e, t) => e + t, 0),
-			figures: nf,
-			atlases: Xd.size,
-			env: Cf.length,
-			sky: Xf,
-			ours: Cf.filter((e) => e.name.startsWith("ember:prop:")).length,
+			modelMeshes: [...Vf.values()].filter(Boolean).map((e) => e.meshes.after).reduce((e, t) => e + t, 0),
+			modelMeshesBefore: [...Vf.values()].filter(Boolean).map((e) => e.meshes.before).reduce((e, t) => e + t, 0),
+			figures: Af,
+			atlases: wf.size,
+			env: Xf.length,
+			sky: Cp,
+			ours: Xf.filter((e) => e.name.startsWith("ember:prop:")).length,
 			programs: J?.engine?.renderer?.info?.programs?.length ?? null
 		};
 	}
 };
-function Om(e) {
-	if (wd) throw Error("createWorld: one world a page");
-	return wd = e.container, Td = e.uiRoot, gd = e.assets, xd = Fn("en"), It(), Sd = Mn({
-		lang: xd,
+function th(e) {
+	if (Zd) throw Error("createWorld: one world a page");
+	return Zd = e.container, Qd = e.uiRoot, Ud = e.assets, Jd = Fn("en"), It(), Yd = Mn({
+		lang: Jd,
 		px: Nn({
 			w: innerWidth,
 			h: innerHeight,
 			dpr: devicePixelRatio || 1
 		}).px
-	}), Cd = qr(xd, {}), Dm.ready = !0, Dm;
+	}), Xd = qr(Jd, {}), eh.ready = !0, eh;
 }
-function km(e, t) {
-	gd ||= t.assets;
+function nh(e, t) {
+	Ud ||= t.assets;
 	let n = new ct({
 		canvas: e,
 		alpha: !0,
@@ -18800,11 +19159,11 @@ function km(e, t) {
 		let o = D("idle"), c = u.fig;
 		if (C) {
 			let e = D(C.k) || D("attack"), t = e && c.clips.find((t) => t.name === e.clip);
-			C.t += r, !t || C.t >= t.duration * (e.to || 1) ? (C = null, w = S + 5 + S % 3) : ad(c, e.clip, C.t / t.duration, !0);
+			C.t += r, !t || C.t >= t.duration * (e.to || 1) ? (C = null, w = S + 5 + S % 3) : Md(c, e.clip, C.t / t.duration, !0);
 		}
 		if (!C) {
 			let e = c.clips.find((e) => e.name === (o ? o.clip : "Idle")) || c.clips[0];
-			ad(c, e.name, S % e.duration / e.duration, !0);
+			Md(c, e.name, S % e.duration / e.duration, !0);
 		}
 		for (let e of u.shine) e.emissiveIntensity = e.userData.shine * (.75 + .25 * Math.sin(t * .0026));
 		n.render(i, a), !document.hidden && e.isConnected && (y = requestAnimationFrame(ne));
@@ -18839,13 +19198,13 @@ function km(e, t) {
 			if (i === m && u) return !0;
 			let o = ++h;
 			m = i;
-			let c = await Yd(`${gd}models/cast.json`);
-			c && !of && (of = c);
+			let c = await Cf(`${Ud}models/cast.json`);
+			c && !Nf && (Nf = c);
 			let l = c && c.actors[e];
 			if (!l || b || o !== h) return !1;
 			try {
 				let e = {
-					...hf(l.v, {
+					...Hf(l.v, {
 						appearance: n,
 						gear: r.gear || null
 					}),
@@ -18855,15 +19214,15 @@ function km(e, t) {
 					...e.gear,
 					helm: null
 				});
-				let t = await rd(e, {
+				let t = await Ad(e, {
 					far: !1,
-					load: ff,
-					faces: async () => of.faces
+					load: zf,
+					faces: async () => Nf.faces
 				});
 				if (b || o !== h) return !1;
 				t.root.traverse((e) => {
 					e.isMesh && e.material && e.material.isMeshStandardMaterial && (e.material.metalness = 0, e.material.roughness = Math.max(e.material.roughness ?? 1, .92));
-				}), ad(t, "Idle", 0, !0);
+				}), Md(t, "Idle", 0, !0);
 				let i = new He();
 				t.root.updateMatrixWorld(!0), t.root.traverse((e) => {
 					e.isMesh && e.visible && i.expandByObject(e);
@@ -18904,30 +19263,30 @@ function km(e, t) {
 		e.preventDefault(), b || t.onError?.(/* @__PURE__ */ Error("preview: the WebGL context was lost"));
 	}), ae;
 }
-var Am = 96, jm = 112, Mm = 3, Nm = [
+var rh = 96, ih = 112, ah = 3, oh = [
 	8,
 	5,
 	14
-], Pm = null;
-async function Fm(e, t = null, n = {}) {
-	!gd && n.assets && (gd = n.assets);
-	let i = await Yd(`${gd}models/cast.json`);
-	i && !of && (of = i);
+], sh = null;
+async function ch(e, t = null, n = {}) {
+	!Ud && n.assets && (Ud = n.assets);
+	let i = await Cf(`${Ud}models/cast.json`);
+	i && !Nf && (Nf = i);
 	let a = i && i.actors[e];
 	if (!a) return null;
-	let s = await rd(hf(a.v, t), {
+	let s = await Ad(Hf(a.v, t), {
 		far: !1,
-		load: ff,
-		faces: async () => of.faces
+		load: zf,
+		faces: async () => Nf.faces
 	});
 	s.root.traverse((e) => {
 		e.isMesh && e.material && e.material.isMeshStandardMaterial && (e.material = e.material.clone(), e.material.metalness = 0, e.material.roughness = Math.max(e.material.roughness ?? 1, .92));
-	}), ad(s, "Idle", 0, !0);
+	}), Md(s, "Idle", 0, !0);
 	let c = s.look;
 	c && s.root.scale.set(c.w, c.h, c.w), s.root.rotation.y = he.degToRad(22), s.root.updateMatrixWorld(!0);
-	let l = Yu(s.root, "head");
+	let l = Sd(s.root, "head");
 	if (!l) return null;
-	let u = l.localToWorld(new P(0, 1.08, 0)), d = l.localToWorld(new P(0, 0, .1)), m = u.y - d.y, h = m / .6, g = u.y + m * .1 - h / 2, _ = (u.x + d.x) / 2, v = he.degToRad(8), y = new ee(-(h * Am / jm) / 2, h * Am / jm / 2, h / 2, -h / 2, .1, 100);
+	let u = l.localToWorld(new P(0, 1.08, 0)), d = l.localToWorld(new P(0, 0, .1)), m = u.y - d.y, h = m / .6, g = u.y + m * .1 - h / 2, _ = (u.x + d.x) / 2, v = he.degToRad(8), y = new ee(-(h * rh / ih) / 2, h * rh / ih / 2, h / 2, -h / 2, .1, 100);
 	y.position.set(_, g + 20 * Math.sin(v), 20 * Math.cos(v)), y.lookAt(_, g, 0), y.updateMatrixWorld(!0);
 	let b = new p();
 	b.add(s.root), b.add(new f(12101848, 2760752, 1.25));
@@ -18936,24 +19295,24 @@ async function Fm(e, t = null, n = {}) {
 	let S = new r(9413887, .55);
 	S.position.set(2.2, .4, 1.2), b.add(S);
 	let C = new r(12624127, 1.6);
-	C.position.set(1.5, 2.2, -2.6), b.add(C), Pm || (Pm = new ct({
+	C.position.set(1.5, 2.2, -2.6), b.add(C), sh || (sh = new ct({
 		alpha: !0,
 		antialias: !1,
 		preserveDrawingBuffer: !0
-	}), Pm.outputColorSpace = o, Pm.toneMapping = 4, Pm.toneMappingExposure = 1), Pm.setPixelRatio(1), Pm.setSize(288, 336, !1), Pm.setClearColor(0, 0), Pm.render(b, y);
+	}), sh.outputColorSpace = o, sh.toneMapping = 4, sh.toneMappingExposure = 1), sh.setPixelRatio(1), sh.setSize(288, 336, !1), sh.setClearColor(0, 0), sh.render(b, y);
 	let w = document.createElement("canvas");
 	w.width = 288, w.height = 336;
 	let T = w.getContext("2d", { willReadFrequently: !0 });
-	T.drawImage(Pm.domElement, 0, 0);
-	let E = T.getImageData(0, 0, 288, 336).data, D = /* @__PURE__ */ new Uint8ClampedArray(43008), te = Mm;
-	for (let e = 0; e < jm; e++) for (let t = 0; t < Am; t++) {
+	T.drawImage(sh.domElement, 0, 0);
+	let E = T.getImageData(0, 0, 288, 336).data, D = /* @__PURE__ */ new Uint8ClampedArray(43008), te = ah;
+	for (let e = 0; e < ih; e++) for (let t = 0; t < rh; t++) {
 		let n = 0, r = 0, i = 0, a = 0;
 		for (let o = 0; o < te; o++) for (let s = 0; s < te; s++) {
 			let c = ((e * te + o) * 288 + t * te + s) * 4;
 			E[c + 3] < 128 || (n++, r += E[c] * E[c], i += E[c + 1] * E[c + 1], a += E[c + 2] * E[c + 2]);
 		}
 		if (n * 2 < 9) continue;
-		let o = (e * Am + t) * 4;
+		let o = (e * rh + t) * 4;
 		D[o] = Math.sqrt(r / n), D[o + 1] = Math.sqrt(i / n), D[o + 2] = Math.sqrt(a / n), D[o + 3] = 255;
 	}
 	for (let e = 0; e < D.length; e += 4) {
@@ -18961,13 +19320,13 @@ async function Fm(e, t = null, n = {}) {
 		let t = D[e], n = D[e + 1], r = D[e + 2], i = .3 * t + .59 * n + .11 * r, a = (e) => Math.max(0, Math.min(255, 128 + (e - 128) * 1.08));
 		D[e] = a(t + (i - t) * .14) * .9, D[e + 1] = a(n + (i - n) * .14) * .91, D[e + 2] = a(r + (i - r) * .14) * .98;
 	}
-	let ne = new Uint8ClampedArray(D), O = (e, t) => e >= 0 && t >= 0 && e < Am && t < jm && D[(t * Am + e) * 4 + 3] > 0;
-	for (let e = 0; e < jm; e++) for (let t = 0; t < Am; t++) {
-		let n = (e * Am + t) * 4;
-		!D[n + 3] && e < 111 && (O(t + 1, e) || O(t - 1, e) || O(t, e + 1) || O(t, e - 1)) && (ne[n] = Nm[0], ne[n + 1] = Nm[1], ne[n + 2] = Nm[2], ne[n + 3] = 255);
+	let ne = new Uint8ClampedArray(D), O = (e, t) => e >= 0 && t >= 0 && e < rh && t < ih && D[(t * rh + e) * 4 + 3] > 0;
+	for (let e = 0; e < ih; e++) for (let t = 0; t < rh; t++) {
+		let n = (e * rh + t) * 4;
+		!D[n + 3] && e < 111 && (O(t + 1, e) || O(t - 1, e) || O(t, e + 1) || O(t, e - 1)) && (ne[n] = oh[0], ne[n + 1] = oh[1], ne[n + 2] = oh[2], ne[n + 3] = 255);
 	}
 	let re = document.createElement("canvas");
-	return re.width = Am, re.height = jm, re.getContext("2d").putImageData(new ImageData(ne, Am, jm), 0, 0), re;
+	return re.width = rh, re.height = ih, re.getContext("2d").putImageData(new ImageData(ne, rh, ih), 0, 0), re;
 }
 //#endregion
-export { km as createPreview, Om as createWorld, Fm as renderPortrait };
+export { nh as createPreview, th as createWorld, ch as renderPortrait };

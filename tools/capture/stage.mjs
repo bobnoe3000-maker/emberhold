@@ -124,7 +124,7 @@ if (show === 'fx') {
   // the columns: each clip held at --at, or one clip at --frames moments through it
   const cols = frames ? Array.from({ length: frames }, (_, i) => ({ clip: clips[0], at: frames === 1 ? at : i / (frames - 1) * 0.999, label: `${clips[0]} ${Math.round((i / Math.max(1, frames - 1)) * 100)} %` })) : clips.map((c) => ({ clip: c, at, label: c }));
   const q = new URLSearchParams({ cast: arg('cast', 'vermin,party'), match, per: arg('per', '8'), cols: arg('cols', '4'), gap: arg('gap', '4.5'), dir: arg('dir', '2'), site: arg('site', 'barrows'), floor: arg('floor', '0'), room: arg('room', 'big'), labels: arg('labels', '1') });
-  await page.goto(`${base}/index.html?dev&manual&notitle&scene=stage&show=cast&${q}`);
+  await page.goto(`${base}/index.html?dev&manual&notitle&scene=stage&show=cast&${q}${arg('query', '') ? '&' + arg('query', '') : ''}`);   // (--query: more of the page's flags, e.g. faces=painted)
   await page.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__stage && globalThis.__stage.ready);
   // frames until the floor is built and every figure on the page stands as its model (stepped, not drawn: a software
   // frame takes a second to draw)

@@ -43,6 +43,9 @@ import ENV_LIST from './env.json';
 import TOWN_SETS from './town.json';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
 import { build as buildFigure, fitPpu, pose as poseFigure, compact, findNode } from './figure.js';
+import { setFaceStyle } from './faces.js';
+// (the face spike, 2026-11-12: ?faces=painted puts every face on the painted head, faces.js paintedFace, for a look in play)
+if (typeof location !== 'undefined' && new URLSearchParams(location.search).get('faces') === 'painted') setFaceStyle('painted');
 import './ground.js';
 
 let ASSETS = '';                                              // (the game's assets/: createWorld's `assets`)
