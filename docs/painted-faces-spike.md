@@ -77,6 +77,23 @@ What the pack does (studied from its product images; none of its art is in the r
   What's left is the hair's top (the reference's is chunkier, its peak to the front) and the light (the reference is lit
   from the front; our portraits keep the game's dusky key from the side). The eyes, brows, nose, ears and mouth apply to
   every head, so the twenty were redrawn with them. ![passes](img/faces/ref-head-passes.jpg)
+- **Twenty looks** (the owner, 2026-11-12: *"Using this latest show me 20 variations — hair, eyes, nose, ears, male and
+  female, beard and no beard. With game helms and without. Make sure diff hair styles hug the head and dont float"*;
+  `node tools/actor-lab/faces-spike.cjs --looks` → `out/faces_looks.png`): each bare at three-quarter and side on, then in
+  a game helm (great helm, bear hood, hood, witch hat, coif, hide cowl). Men on the Knight's and Barbarian's bodies, women
+  on the Rogue's (as Maudry), with lashes, coloured lips (`lips`) and the reference head's softer sister (`shieldF`: a
+  narrower jaw and chin, a lighter brow). What it took:
+  - **Hair that hugs:** KayKit's own cuts (long, ponytail, swept) and the Barbarian's full beard are carried from KayKit's
+    skull onto ours (`conform`, `radialMap`): each point kept at its height over the surface under it, read from the
+    two skulls' distances from the head's middle in every direction, and never closer than 0.02 to ours (before, they
+    were pushed out by hand and floated on the narrower head). Our own cuts are shells grown off the skull, cut cleanly.
+  - **Helms that fit:** a helm made for KayKit's head is brought to this one's (`head.userData.fit`, `gear.js`): down to
+    the lower crown and in to the narrower head; a cloth hood, kept off the head by design, only comes down (brought in,
+    its window crowded the face). The hood's look (a round shell with a window) is its own, as on today's faces.
+  - **Noses:** six shapes as meshes (`BUMP`: the ball, a button, long, a hook tipped down, broad, a snub tipped up).
+  - **Pointed ears** where this head's ears sit.
+
+  ![twenty looks](img/faces/looks-board.jpg)
 - **The mask** (`faceMask`): the skull's front from 66° left to 66° right and from just above the chin to the brow line,
   a hair (0.006) proud of it, its picture's u and v across it. The eye line sits at y 0.46, the mouth at 0.18.
 - **The picture** (`facePicture`, 512 px, one per distinct face, cached): drawn on a canvas in the head's own units — the
@@ -108,7 +125,7 @@ What the pack does (studied from its product images; none of its art is in the r
   clean blocks) may read better.
 - **KayKit's long cuts** (long, ponytail, swept) were made for its wider head and sit wide on the narrower reference head;
   they want painted-head cuts of their own, as the short cut has.
-- **Hats and hoods** cover the eye line on some (the mage's brim): the eye line sits lower than KayKit's; the brims
+- **Hats and hoods** cover the eye line on some (the mage's brim: brought down to the lower crown, from the game's camera above it hides the face): the eye line sits lower than KayKit's; the brims
   may want a little lift.
 - **Perf** is to be measured with `tools/capture/figperf.mjs` (one textured mask a head in place of ~20 merged parts;
   a 512² picture a distinct face, shared by every face drawn alike).

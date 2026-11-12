@@ -624,6 +624,52 @@ window.renderHeadShapes = async (o = {}) => {
   }
   return board.toDataURL('image/png');
 };
+// twenty looks on the painted head (faces-spike.cjs --looks, 2026-11-12: the owner, "show me 20 variations — hair, eyes,
+// nose, ears, male and female, beard and no beard. With game helms and without. Make sure diff hair styles hug the head and
+// dont float"): each bare at three-quarter and side on (the hair's hold on the head), and in a game helm
+const LOOKS = [
+  ['m', 'Knight', { skin: 'fair', hair: 'short', hairColor: 'auburn', eyes: 'round', iris: 'brown', brows: 'straight', nose: 'kk', mouth: 'line' }, 'greathelm'],
+  ['m', 'Barbarian', { skin: 'olive', hair: 'crop', hairColor: 'black', eyes: 'narrow', iris: 'grey', brows: 'heavy', nose: 'broad', mouth: 'grim', beard: 'stubble' }, 'furhood'],
+  ['f', 'Rogue', { skin: 'porcelain', hair: 'long', hairColor: 'flax', eyes: 'round', iris: 'blue', brows: 'arched', nose: 'button', mouth: 'smile', lashes: true, lips: true }, 'hood'],
+  ['f', 'Rogue', { skin: 'rose', hair: 'ponytail', hairColor: 'copper', eyes: 'sharp', iris: 'green', brows: 'arched', nose: 'snub', mouth: 'smirk', ears: 'pointed', lashes: true, lips: true }, 'witchhat'],
+  ['m', 'Knight', { skin: 'tan', hair: 'swept', hairColor: 'brown', eyes: 'tired', iris: 'hazel', brows: 'worried', nose: 'long', mouth: 'line', beard: 'full', beardColor: 'brown' }, 'coif'],
+  ['f', 'Rogue', { skin: 'umber', hair: 'bun', hairColor: 'black', eyes: 'round', iris: 'amber', brows: 'thin', nose: 'kk', mouth: 'smile', lashes: true, lips: true, marks: ['earring'] }, 'hidecowl'],
+  ['m', 'Barbarian', { skin: 'fair', hair: 'bald', hairColor: 'brown', eyes: 'sharp', iris: 'amber', brows: 'angry', nose: 'hook', mouth: 'grim', beard: 'goatee', marks: ['scar'] }, 'greathelm'],
+  ['f', 'Rogue', { skin: 'olive', hair: 'braid', hairColor: 'soot', eyes: 'narrow', iris: 'brown', brows: 'straight', nose: 'button', mouth: 'line', lashes: true, lips: true, marks: ['freckles'] }, 'hood'],
+  ['m', 'Knight', { skin: 'rose', hair: 'receding', hairColor: 'grey', eyes: 'tired', iris: 'blue', brows: 'heavy', nose: 'broad', mouth: 'frown', beard: 'mustache', beardColor: 'grey', marks: ['wrinkles'] }, 'furhood'],
+  ['f', 'Rogue', { skin: 'fair', hair: 'topknot', hairColor: 'chestnut', eyes: 'round', iris: 'hazel', brows: 'arched', nose: 'snub', mouth: 'smile', ears: 'pointed', lashes: true, lips: true }, 'witchhat'],
+  ['m', 'Barbarian', { skin: 'deep', hair: 'crest', hairColor: 'copper', eyes: 'sharp', iris: 'green', brows: 'angry', nose: 'kk', mouth: 'grim', beard: 'short', beardColor: 'copper' }, 'greathelm'],
+  ['f', 'Rogue', { skin: 'tan', hair: 'short', hairColor: 'ash', eyes: 'wide', iris: 'grey', brows: 'straight', nose: 'long', mouth: 'line', lashes: true, lips: true, marks: ['blush'] }, 'coif'],
+  ['m', 'Knight', { skin: 'olive', hair: 'long', hairColor: 'brown', eyes: 'round', iris: 'brown', brows: 'straight', nose: 'button', mouth: 'smile', beard: 'stubble' }, 'hood'],
+  ['f', 'Rogue', { skin: 'porcelain', hair: 'swept', hairColor: 'flax', eyes: 'sharp', iris: 'blue', brows: 'thin', nose: 'kk', mouth: 'smirk', lashes: true, lips: true }, 'hidecowl'],
+  ['m', 'Barbarian', { skin: 'umber', hair: 'short', hairColor: 'black', eyes: 'narrow', iris: 'brown', brows: 'heavy', nose: 'broad', mouth: 'grim', beard: 'full', beardColor: 'black' }, 'furhood'],
+  ['f', 'Rogue', { skin: 'rose', hair: 'long', hairColor: 'auburn', eyes: 'tired', iris: 'green', brows: 'worried', nose: 'snub', mouth: 'line', lashes: true, lips: true }, 'witchhat'],
+  ['m', 'Knight', { skin: 'fair', hair: 'crop', hairColor: 'flax', eyes: 'wide', iris: 'blue', brows: 'arched', nose: 'hook', mouth: 'smile', beard: 'goatee', beardColor: 'flax' }, 'coif'],
+  ['f', 'Rogue', { skin: 'deep', hair: 'ponytail', hairColor: 'black', eyes: 'round', iris: 'amber', brows: 'arched', nose: 'button', mouth: 'smile', lashes: true, lips: true, marks: ['earring', 'scar_cheek'] }, 'greathelm'],
+  ['m', 'Knight', { skin: 'tan', hair: 'bun', hairColor: 'grey', eyes: 'narrow', iris: 'grey', brows: 'straight', nose: 'long', mouth: 'line', beard: 'mustache', beardColor: 'grey', ears: 'pointed' }, 'hidecowl'],
+  ['f', 'Rogue', { skin: 'olive', hair: 'crop', hairColor: 'copper', eyes: 'sharp', iris: 'hazel', brows: 'straight', nose: 'kk', mouth: 'smirk', lashes: true, lips: true, marks: ['freckles'] }, 'hood'],
+];
+window.renderLooks = async (o = {}) => {
+  const sc = o.scale || 2, cw = 84, ch = 100, pad = 8, lab = 34, cols = o.cols || 4, views = [[25, null], [80, null], [25, 'helm']];
+  const cellW = views.length * cw * sc + 2 * pad, cellH = lab + ch * sc + pad, rows = Math.ceil(LOOKS.length / cols);
+  const W = pad + cols * (cellW + pad), H = pad + 30 + rows * (cellH + pad);
+  const board = document.createElement('canvas'); board.width = W; board.height = H;
+  const x = board.getContext('2d'); x.fillStyle = '#17131e'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#f0c880'; x.font = '600 18px Georgia, serif'; x.fillText('Twenty looks on the reference head: bare at three-quarter and side on, then in a game helm', pad, pad + 18);
+  for (let i = 0; i < LOOKS.length; i++) {
+    const [sex, model, f, helm] = LOOKS[i], face = { style: 'painted', head: sex === 'f' ? 'shieldF' : 'shield', ...f };
+    const cx0 = pad + (i % cols) * (cellW + pad), cy0 = pad + 30 + Math.floor(i / cols) * (cellH + pad);
+    x.fillStyle = '#221c2c'; x.fillRect(cx0, cy0, cellW, cellH);
+    x.fillStyle = '#f0c880'; x.font = '600 14px Georgia, serif'; x.fillText(`${i + 1}  ${sex === 'f' ? 'woman' : 'man'} · ${f.hair}${f.beard ? ' · ' + f.beard : ''}${f.ears ? ' · pointed ears' : ''}`, cx0 + 6, cy0 + 14);
+    x.fillStyle = '#c8bca8'; x.font = '11px ui-monospace, Menlo, monospace'; x.fillText(`eyes ${f.eyes} · nose ${f.nose} · ${f.skin} · helm: ${helm}`, cx0 + 6, cy0 + 28);
+    for (let v = 0; v < views.length; v++) {
+      const [yaw, g] = views[v], vv = { id: 'look' + i, model, show: [], face, ...(g ? { gear: { helm: { base: helm, r: 'common' } } } : {}) };
+      const img = new Image(); img.src = await window.renderPortrait(vv, { w: cw * sc, h: ch * sc, ss: 2, yaw, head: 0.58 }); await img.decode();
+      x.drawImage(img, cx0 + pad + v * cw * sc, cy0 + lab, cw * sc, ch * sc);
+    }
+  }
+  return board.toDataURL('image/png');
+};
 // dev probe: the head mesh and the head-bone accessories, as boxes in head-bone space (bind pose)
 window.probeHead = async (model) => {
   const g = await load(`./models/${model}.glb`), root = g.scene; root.updateMatrixWorld(true);

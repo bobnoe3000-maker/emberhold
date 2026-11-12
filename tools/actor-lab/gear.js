@@ -114,6 +114,11 @@ export async function dressGear(root, gear, load, findNode, v = {}) {
     if (G.hang) {                                            // carried upright (figure.js plumb): a staff, a wand, a rod
       const w = new THREE.Group(); w.position.copy(p.position); p.position.set(0, G.lift || 0, 0); w.add(p); w.userData.hang = G.hang; p = w;   // (lift: its foot at the soles, not through the floor)
     }
+    if (slot === 'helm') {                                   // (on a painted head, lower and narrower than KayKit's: the helm brought to it)
+      const F = B.children.find((c) => c.name === 'Face' && c.userData.fit)?.userData.fit;
+      const k = F && (p.userData.helm ? new THREE.Vector3(1, F.sy, 1) : new THREE.Vector3(F.sx, F.sy, F.sz));   // (a cloth hood, kept off the head, only comes down: brought in, its window crowds the face)
+      if (k) { p.scale.multiply(k); p.position.multiply(k); }
+    }
     lookOn(p, it); B.add(p);
   }
   // what's worn on the body: a trinket (the amulet at the neck, the charm at the belt), and a quiver for a bow, a bolt

@@ -101,6 +101,29 @@ function clipTris(geo, inside, move = null) {
   for (let i = 0; i < P.length / 3; i++) { const o = sum.get(key(i)), l = Math.hypot(o[0], o[1], o[2]) || 1; nr.setXYZ(i, o[0] / l, o[1] / l, o[2] / l); }
   return g;
 }
+/** the skull's distance from CENTER in every direction, a grid by elevation and azimuth, cached by key: what conform reads */
+const radialCache = new Map();
+function radialMap(geo, key) {
+  if (key && radialCache.has(key)) return radialCache.get(key);
+  const NA = 48, NB = 24, R = new Float32Array((NA + 1) * (NB + 1)).fill(NaN), mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })), rc = new THREE.Raycaster(), d = new THREE.Vector3();
+  for (let b = 0; b <= NB; b++) for (let a = 0; a <= NA; a++) {
+    const el = -Math.PI / 2 + (Math.PI * b) / NB, az = -Math.PI + (2 * Math.PI * a) / NA; d.set(Math.cos(el) * Math.sin(az), Math.sin(el), Math.cos(el) * Math.cos(az));
+    rc.set(CENTER, d); const h = rc.intersectObject(mesh); if (h.length) R[b * (NA + 1) + a] = h[h.length - 1].distance;
+  }
+  for (let b = NB - 1; b >= 0; b--) for (let a = 0; a <= NA; a++) if (Number.isNaN(R[b * (NA + 1) + a])) R[b * (NA + 1) + a] = R[(b + 1) * (NA + 1) + a];   // (open at the neck: the row above)
+  const m = { NA, NB, R }; if (key) radialCache.set(key, m); return m;
+}
+const radialAt = ({ NA, NB, R }, d) => {
+  const el = Math.asin(Math.max(-1, Math.min(1, d.y))), az = Math.atan2(d.x, d.z), fb = ((el + Math.PI / 2) / Math.PI) * NB, fa = ((az + Math.PI) / (2 * Math.PI)) * NA;
+  const b0 = Math.min(NB - 1, Math.floor(fb)), a0 = Math.min(NA - 1, Math.floor(fa)), tb = fb - b0, ta = fa - a0, at = (b, a) => R[b * (NA + 1) + a];
+  return lerp(lerp(at(b0, a0), at(b0, a0 + 1), ta), lerp(at(b0 + 1, a0), at(b0 + 1, a0 + 1), ta), tb);
+};
+/** a piece made for KayKit's head (its long cuts, the Barbarian's beard) carried onto another skull: each point kept at
+ * its height over the surface under it, so it hugs the new head instead of floating where KayKit's was */
+function conform(geo, from, to, lift = 0.01) {
+  const d = new THREE.Vector3();
+  return filterTris(geo, () => true, (v) => { d.subVectors(v, CENTER); const r = d.length(); d.divideScalar(r || 1); const ro = radialAt(to, d), dr = ro - radialAt(from, d); v.copy(CENTER).addScaledVector(d, Math.max(r + (Number.isFinite(dr) ? dr : 0) + lift, ro + 0.02)); });   // (never under the new skull: KayKit's cuts sat on heads a little unlike the skull they're carried from)
+}
 /** one triangle soup from several */
 function merge(...gs) {
   const out = {}; for (const k of ['position', 'normal', 'uv']) { const arrs = gs.map((g) => g.attributes[k]).filter(Boolean); if (arrs.length !== gs.length) continue;
@@ -314,6 +337,12 @@ async function hair(load, skull, f, M, S = null, clean = false) {
   const q = new THREE.Vector3(), st = k === 1 ? st0 : { ...st0, line: (c, n) => st0.line(q.set(c.x, unsquashY(c.y, k), c.z), n) };   // (the line drawn for a full crown, read on a lower one)
   if (st.kk) {
     const h = await kkHead(load, st.kk);
+    if (clean) {                                                   // (the painted head: carried onto its skull, hugging it)
+      const from = radialMap((await bald(load)).whole, 'kk'), to = radialMap(skull, null);
+      g.add(new THREE.Mesh(conform(filterTris(h.parts['1,0'], (c) => !isBrow(c)), from, to, 0.014), M.hair));
+      if (st.tie && h.parts['1,1']) g.add(new THREE.Mesh(conform(h.parts['1,1'], from, to, 0.02), M.tie));
+      return g;
+    }
     g.add(new THREE.Mesh(filterTris(h.parts['1,0'], (c) => !isBrow(c), (v) => { if (S) S(v); grow(0.05)(v); }), M.hair));   // grown to clear the skull's crown (it sits higher than theirs)
     if (st.tie && h.parts['1,1']) g.add(new THREE.Mesh(S ? filterTris(h.parts['1,1'], () => true, S) : h.parts['1,1'], M.tie));
     return g;
@@ -338,11 +367,12 @@ async function hair(load, skull, f, M, S = null, clean = false) {
 }
 // facial hair: stubble and short beards are shells off the jaw; 'full' is the Barbarian's beard
 const jaw = (c) => c.y < 0.3 && c.z > -0.22 && !isEar(c) && !(Math.abs(c.x) < 0.14 && c.y > 0.1 && c.y < 0.26 && c.z > 0.3);
-async function beard(load, skull, on, f, M, S = null) {
+async function beard(load, skull, on, f, M, S = null, clean = false) {
   const g = new THREE.Group(), kind = f.beard; if (!kind) return g;
   if (kind === 'stubble') g.add(new THREE.Mesh(filterTris(skull, jaw, grow(0.008)), M.stubble));
   if (kind === 'short' || kind === 'goatee') g.add(new THREE.Mesh(filterTris(skull, kind === 'goatee' ? (c) => jaw(c) && Math.abs(c.x) < 0.16 && c.y < 0.14 && c.z > 0.2 : jaw, grow((v) => 0.04 + 0.05 * smooth(0.2, -0.05, v.y))), M.beard));
-  if (kind === 'full') { const h = await kkHead(load, 'Barbarian'); g.add(new THREE.Mesh(filterTris(h.parts['1,0'], (c) => !isBrow(c), (v) => { if (S) S(v); grow(0.01)(v); }), M.beard)); }
+  if (kind === 'full') { const h = await kkHead(load, 'Barbarian'), cut = filterTris(h.parts['1,0'], (c) => !isBrow(c));   // (the painted head's: carried onto its skull)
+    g.add(new THREE.Mesh(clean ? conform(cut, radialMap((await bald(load)).whole, 'kk'), radialMap(skull, null), 0.008) : filterTris(h.parts['1,0'], (c) => !isBrow(c), (v) => { if (S) S(v); grow(0.01)(v); }), M.beard)); }
   if (kind === 'short' || kind === 'goatee' || kind === 'mustache') g.add(strokeOn(on, across(0.13, 0.225, (u) => -0.035 * u * u + (kind === 'mustache' ? -0.02 * u * u * u * u : 0), 7), 0.028, M.beard, 0.02));
   return g;
 }
@@ -372,11 +402,11 @@ function marks(on, f, M) {
 // ears: KayKit's are a human's, small nubs at the skull's sides. `pointed` (goblins, the owner 2026-10-03: "bigger
 // pointy ears") grows a long flat leaf from each, out, up and a little back, with a darker hollow on its front face so
 // the shape reads at 56 px; `earSize` scales it (default 1.2: 0.74 head units long, over two-thirds of the head's width; swept back so it shows side-on too).
-function ears(f, M, S) {
+function ears(f, M, S, at = null) {
   const g = new THREE.Group(); if (f.ears !== 'pointed') return g;
-  const k = f.earSize || 1.2, L = 0.62 * k, R = 0.15 * k;
+  const k = (f.earSize || 1.2) * (at ? 0.75 : 1), L = 0.62 * k, R = 0.15 * k;
   for (const sd of [-1, 1]) {
-    const base = new THREE.Vector3(sd * 0.5, 0.33, -0.04); if (S) S(base);
+    const base = at ? at(sd) : new THREE.Vector3(sd * 0.5, 0.33, -0.04); if (S && !at) S(base);   // (at: where the painted head's ear sits)
     const d = new THREE.Vector3(sd, 0.5, -0.6).normalize(), up = new THREE.Vector3(0, 0.35, 1);
     const n = up.addScaledVector(d, -up.dot(d)).normalize(), x = new THREE.Vector3().crossVectors(d, n);
     const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, d, n));
@@ -404,8 +434,9 @@ export const EXPRESSIONS = ['neutral', 'smile', 'happy', 'stern', 'sad', 'smug',
 
 const CHIN = -0.01, CROWN = 1.05, HH = CROWN - CHIN;              // the egg's height, in KayKit's head (chin y 0, crown 1.05)
 const EGG = { cy: (CHIN + CROWN) / 2, cz: -0.03, ax: 0.49, ay: HH / 2, az: 0.55 };   // (KayKit's head fills x ±0.54, z −0.57…0.5: helms fit)
-// the nose, a bump in the skull's front: width (x), height (y), depth (z), its middle's height (s: 0 the chin, 1 the crown)
-const BUMP = { kk: [0.08, 0.064, 0, 0.27, 'ball'], button: [0.075, 0.06, 0.027, 0.28], long: [0.07, 0.095, 0.036, 0.3], hook: [0.075, 0.085, 0.042, 0.31], broad: [0.11, 0.065, 0.027, 0.28], snub: [0.07, 0.056, 0.024, 0.29] };   // (low, just over the mouth: the pack's)
+// the noses, each a shape of its own on the face (a mesh: the skull's grid is too coarse for one): width, height, (unused),
+// its middle's height (s), 'ball', and a tilt (+ the tip down, a hook; − up, a snub)
+const BUMP = { kk: [0.08, 0.064, 0, 0.27, 'ball'], button: [0.058, 0.05, 0, 0.27, 'ball'], long: [0.062, 0.088, 0, 0.29, 'ball'], hook: [0.066, 0.082, 0, 0.29, 'ball', 0.32], broad: [0.104, 0.058, 0, 0.265, 'ball'], snub: [0.06, 0.05, 0, 0.278, 'ball', -0.4] };
 // The head's shape (the owner, 2026-11-12, after the pack's rounded box: "I dont like the shape of the head or the big
 // eyes. Build 20 different head shapes with some depth or detail that i can choose from"): one skull built from numbers,
 // HEADS the twenty to choose from. Its sections are superellipses (sq: 2 an ellipse, more a box), the crown's and the
@@ -425,6 +456,7 @@ export const HEADS = {
   // the owner's reference head (2026-11-12: "Map this closely and critic pass until you get it right"), the default: a flat face
   // plane, the sides turning back from it, the widest at the cheekbones, a broad jaw straight to a rounded chin
   shield:    { w: 0.43, d: 0.52, sq: 2.1, top: 2.1, low: 2.6, lowF: 4.2, cap: 0.85, jaw: 0.76, jawTo: 0.48, front: 1, back: 0.86, nape: 0.36, brow: 0.016, socket: 0.012, bridge: 0.03, cheek: 0.012, cheekF: 0.02, muzzle: 0.035, temple: 0.012, lips: 0.008, chin: 0.018 },
+  shieldF:   { w: 0.42, d: 0.51, sq: 2.05, top: 2.1, low: 2.4, lowF: 3.4, cap: 0.85, jaw: 0.66, jawTo: 0.5, front: 1, back: 0.86, nape: 0.36, brow: 0.006, socket: 0.012, bridge: 0.02, cheek: 0.016, cheekF: 0.024, muzzle: 0.026, temple: 0.01, lips: 0.01, chin: 0.012 },   // (the same, softer: a narrower jaw and chin, a lighter brow)
   oval:      {},
   heart:     { w: 0.48, jaw: 0.52, low: 1.9, cheek: 0.02, temple: -0.006, chin: 0.012 },
   square:    { w: 0.48, sq: 3.1, low: 4, jaw: 0.95, gonion: 0.022, brow: 0.02, chin: 0.006 },
@@ -448,7 +480,7 @@ export const HEADS = {
   pack:      { w: 0.49, sq: 2.9, top: 2.3, low: 3.4, jaw: 0.8, front: 0.95, back: 1.1, brow: 0, socket: 0, bridge: 0, cheek: 0, lips: 0, chin: 0 },
 };
 /** the twenty, in the board's order (the pack's box left out) */
-export const HEAD_SHAPES = Object.keys(HEADS).filter((k) => k !== 'pack');
+export const HEAD_SHAPES = Object.keys(HEADS).filter((k) => k !== 'pack' && k !== 'shieldF');
 const HEADQ = Object.fromEntries(Object.entries(HEADS).map(([k, v]) => [k, { ...HEAD0, ...v }]));
 const spow = (v, e) => Math.sign(v) * Math.pow(Math.abs(v), e), G = (d, w) => Math.exp(-(d / w) * (d / w));
 const DEPTH = 1.6;                                                 // the sculpting's strength over the numbers (the first board's read too faint)
@@ -531,7 +563,7 @@ const PEXPR = {
 const faceCache = new Map();
 /** the face's picture, a canvas texture shared by every face drawn alike */
 function facePicture(f) {
-  const ex = PEXPR[f.expression] || PEXPR.neutral, key = JSON.stringify([f.skin, f.hairColor, f.browColor, f.eyes, f.iris, f.brows, f.mouth, f.marks, f.expression, f.lashes]);
+  const ex = PEXPR[f.expression] || PEXPR.neutral, key = JSON.stringify([f.skin, f.hairColor, f.browColor, f.eyes, f.iris, f.brows, f.mouth, f.marks, f.expression, f.lashes, f.lips]);
   if (faceCache.has(key)) return faceCache.get(key);
   const c = document.createElement('canvas'); c.width = c.height = PX; const g = c.getContext('2d');
   const skin = col(SKIN, f.skin, SKIN.fair), hairC = col(HAIR, f.browColor || f.hairColor, HAIR.brown), dark = lumOf(skin) < 0.28;
@@ -589,7 +621,12 @@ function facePicture(f) {
     g.beginPath(); g.moveTo(...P(-mw, my + curve)); g.quadraticCurveTo(...P(0, my - curve), ...P(mw, my + curve)); g.stroke();
     if (kind === 'fangs') { g.fillStyle = '#f4efe6'; for (const sd of [-1, 1]) { g.beginPath(); g.moveTo(...P(sd * 0.03, my + 0.004)); g.lineTo(...P(sd * 0.045, my + 0.002)); g.lineTo(...P(sd * 0.038, my - 0.03)); g.closePath(); g.fill(); } }
   }
-  if (kind !== 'open' && kind !== 'grin' && !dark) { g.strokeStyle = lipC; g.lineWidth = 0.008 * ky; g.beginPath(); g.moveTo(...P(-0.025, my - 0.026)); g.quadraticCurveTo(...P(0, my - 0.036), ...P(0.025, my - 0.026)); g.globalAlpha = 0.6; g.stroke(); g.globalAlpha = 1; }   // (the lower lip, a hint)
+  if (f.lips && kind !== 'open' && kind !== 'grin') {                     // lips: the lower one full, the upper's bow, rose
+    const rc = hex(toned(skin, '#b04a52', 0.55, 0.9)); g.fillStyle = rc; g.globalAlpha = 0.85;
+    g.beginPath(); g.moveTo(...P(-mw * 0.62, my + curve * 0.6)); g.quadraticCurveTo(...P(0, my - 0.05), ...P(mw * 0.62, my + curve * 0.6)); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(...P(-mw * 0.62, my + curve * 0.6)); g.quadraticCurveTo(...P(-mw * 0.3, my + 0.026), ...P(0, my + 0.014)); g.quadraticCurveTo(...P(mw * 0.3, my + 0.026), ...P(mw * 0.62, my + curve * 0.6)); g.closePath(); g.fill(); g.globalAlpha = 1;
+    g.strokeStyle = mouthC; g.lineWidth = 0.012 * ky; g.beginPath(); g.moveTo(...P(-mw * 0.62, my + curve * 0.6)); g.quadraticCurveTo(...P(0, my - curve), ...P(mw * 0.62, my + curve * 0.6)); g.stroke();
+  } else if (kind !== 'open' && kind !== 'grin' && !dark) { g.strokeStyle = lipC; g.lineWidth = 0.008 * ky; g.beginPath(); g.moveTo(...P(-0.025, my - 0.026)); g.quadraticCurveTo(...P(0, my - 0.036), ...P(0.025, my - 0.026)); g.globalAlpha = 0.6; g.stroke(); g.globalAlpha = 1; }   // (the lower lip, a hint)
   // marks
   for (const m of f.marks || []) {
     if (m === 'scar') { g.strokeStyle = hex(toned(skin, '#d07a70', 0.45, 1.05)); g.lineWidth = 0.014 * ky; g.beginPath(); g.moveTo(...P(0.1, PE.y + 0.2)); g.lineTo(...P(0.27, PE.y - 0.08)); g.stroke();   // across the right brow, the pack's slash
@@ -620,10 +657,10 @@ async function paintedFace(load, model, f) {
   const face = new THREE.Mesh(faceMask(f, S), new THREE.MeshStandardMaterial({ map: facePicture(f), alphaTest: 0.35, roughness: 0.72, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));   // (alphaTest, a cutout: the game's figure fade sets `transparent` by its opacity, world.js, and an opaque mask drew its clear parts black)
   face.name = 'FaceMask'; head.add(tag(face, 'eye'));
   if ((BUMP[f.nose] || BUMP.kk)[4] === 'ball') {                 // the ball nose: a mesh of its own (the skull's grid is too coarse for a round one)
-    const [w, h, , ns] = BUMP[f.nose] || BUMP.kk, p = eggAt(0, ns, f); if (S) S(p);
-    const n = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 18), M.skin); n.scale.set(w * 1.1, h, w * 0.8); n.position.set(p.x, p.y, p.z - w * 0.25); head.add(tag(n, 'skin'));
+    const [w, h, , ns, , tilt = 0] = BUMP[f.nose] || BUMP.kk, p = eggAt(0, ns, f); if (S) S(p);
+    const n = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 18), M.skin); n.scale.set(w * 1.1, h, w * 0.8); n.rotation.x = tilt; n.position.set(p.x, p.y - tilt * 0.012, p.z - w * 0.25); head.add(tag(n, 'skin'));
   }
-  if (f.ears === 'pointed') head.add(tag(ears(f, M, S), 'skin'));
+  if (f.ears === 'pointed') head.add(tag(ears(f, M, S, (sd) => { const p = eggAt(sd * Math.PI / 2, 0.36, f); if (S) S(p); return p.add(new THREE.Vector3(-sd * 0.02, 0, -0.03)); }), 'skin'));
   else for (const sd of [-1, 1]) {                                // the pack's ears: flat, a fair size, set back at the eyes' and nose's height
     const p = eggAt(sd * Math.PI / 2, 0.355, f), ear = new THREE.Group(); if (S) S(p);
     ear.position.set(p.x + sd * 0.012, p.y, p.z - 0.05); ear.rotation.y = -sd * 0.6;   // (big, flared out and forward, standing clear of the hair: the reference's)
@@ -634,10 +671,10 @@ async function paintedFace(load, model, f) {
     head.add(tag(ear, 'skin'));
   }
   const on = surface(skull);
-  head.add(tag(await beard(load, skull, on, f, M, S), 'hair'));
+  head.add(tag(await beard(load, skull, on, f, M, S, true), 'hair'));
   if ((f.marks || []).includes('earring')) head.add(marks(on, { ...f, marks: ['earring'] }, M));
   const hr = await hair(load, skull, f, M, S, true); hr.name = 'Hair'; head.add(tag(hr, 'hair'));
-  if (HAIRS[f.hair]?.kk) hr.traverse((o) => { if (o.isMesh) o.geometry = filterTris(o.geometry, () => true, (v) => { v.x *= 1.06; v.y = squashY(v.y, capOf(f)); grow(0.12)(v); }); });   // (KayKit's own long cuts were made for its smaller crown: out over ours)
+  head.userData.fit = { sx: 0.88, sy: squashY(CROWN, capOf(f)) / CROWN, sz: 0.9 };   // (a helm made for KayKit's head brought to this one's: gear.js)
   head.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.userData.face = true; } });
   return { head, replaces: [mine.headName], skull, on };
 }
