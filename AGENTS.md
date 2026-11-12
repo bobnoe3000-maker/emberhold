@@ -29,7 +29,7 @@ npm run serve                             # open http://localhost:8080 (ES modul
 #   ?figures=sprites (the people as their atlas sprites, as before they were models: docs/dungeon-kit-proposal.md §9.6)
 #   ?faces=mesh (the faces as their 3D parts, as before the painted head: GDD v1.79, docs/painted-faces-spike.md)
 #   ?headshadow=1 (the figures' heads in the shadow pass, as the painted head first shipped: docs/painted-faces-spike.md)
-#   ?chest=gold|lit|glint|ring (the chests' look, options to try, 2026-11-12: gold the honey oak under gold bands; lit with its own warm light; glint a twinkle over a closed one; ring a gold ring on the floor under it: render/gsprite.js CHEST_LOOK)
+#   ?chest=plain|lit|glint|ring (the chests' look: the default since 2026-11-12 the owner's gold, honey oak under gold bands and a gold lock; plain the dark oak and iron as before; the other options shown, to try: lit with its own warm light, glint a twinkle over a closed one, ring a gold ring on the floor under it: render/gsprite.js CHEST_LOOK)
 #   ?notitle (skip the splash, loading screen and title and play at once; tests and captures)
 #   ?region=vale|fens|reach|heights  ?site=barrows|wickham_keep|sunken_chapel|proving_pens|ninth_milestone|toadking_mound|canal_locks|drowned_abbey|… (with ?scene=dungeon; sim/sites.js)
 #   ?dev (localhost only: globalThis.__sim)
