@@ -1,7 +1,7 @@
 // @ts-check
 // partyscreen.js — the Party screen (development plan §2.3): the three hero slots — your main
 // character and two companions — and the bench of everyone else you've recruited, who wait
-// at the inn and earn half XP. Opened from the Title / pause menu and from the inn.
+// at the inn, earning no XP (GDD v1.80: expeditions level them). Opened from the Title / pause menu and from the inn.
 //
 // Slot 1 (you) opens your character window. A companion slot can be Swapped for someone on
 // the bench, or Dismissed to it; a bench member can be Released (asks twice). Swaps and
@@ -90,7 +90,7 @@ function PartyScreen({ sim, onClose, onSheet, note, send }) {
   return html`<div id="pscr">
     <button class="x" onClick=${onClose}>✕</button>
     <h2>Party</h2>
-    <div class="sub">You and two companions take the road. Everyone else waits on the bench at the inn and earns half XP.${inTown ? '' : ' Swaps happen in town.'}</div>
+    <div class="sub">You and two companions take the road. Everyone else waits on the bench at the inn, earning nothing; send them on an expedition to level them.${inTown ? '' : ' Swaps happen in town.'}</div>
     <div class="note">${note}</div>
     <${Member} key=${you.id} m=${you} i=${0} slot=${1} onSheet=${onSheet} send=${send} />
     ${a ? html`<${Member} key=${a.id} m=${a} i=${1} slot=${2} onSheet=${onSheet} send=${send} />` : html`<div class="pslot empty">slot 2 · hire at a tavern, or bring someone from the bench</div>`}

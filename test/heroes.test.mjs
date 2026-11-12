@@ -266,12 +266,12 @@ test('hire to the party, then the bench; dismiss, swap and release, in town only
   run(d, [{ type: 'swap', slot: 1, id: 'b1' }, { type: 'dismiss', id: 'c1' }]);
   assert.equal(d.state.party[1].id, 'c1'); assert.equal(d.state.bench[0].id, 'b1');
 });
-test('the bench earns half XP', () => {
+test('the bench earns no XP (GDD v1.80: it was half; the owner, "they should not be" levelling)', () => {
   const sim = inRoom([hero({ level: 1 })]), b = makeMember('b1', 'B', 'rogue', 1); sim.state.bench.push(b);
-  let gained = 0; const h = sim.state.party[0], x0 = h.xp;
+  let gained = 0; const h = sim.state.party[0], x0 = h.xp, b0 = b.xp;
   sim.bus.on('combat', (c) => { if (c.t === 'xp') gained += c.amount; });
   ticks(sim, 20 * 30, () => gained > 0);
-  assert.ok(gained > 0); assert.equal(h.xp - x0, gained); assert.equal(b.xp, Math.round(gained * 0.5));
+  assert.ok(gained > 0); assert.equal(h.xp - x0, gained); assert.equal(b.xp, b0);
 });
 
 // ── saves and replays ───────────────────────────────────────────────────────

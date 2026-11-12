@@ -87,7 +87,7 @@ const STANCE_AI = { aggressive: { low: 0.3, reserve: 0 }, balanced: { low: 0.5, 
 // of its XP. Live play's pace is untouched. Measured: the right party at 4 in a level-3 room earns 214 XP a minute (at 5,
 // 224), so two hours away now pay ~13,100: level 5 (11,000) and an eighth of the way to 6, where it was 6.
 export const AWAY_XP = 0.5;
-const BENCH_XP = 0.5, WIPE_HP = 0.3, DEF_LEASH = 5, ROGUE_PICK = 8;
+const WIPE_HP = 0.3, DEF_LEASH = 5, ROGUE_PICK = 8;
 // a room holds for as long as you stay, so "downed twice in one visit" is measured over a
 // stretch: stand through WIND waves in a row and a member's downs are forgotten
 const WIND = 1;
@@ -709,7 +709,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const xp = Math.round(e.xp * e.lvl), share = Math.max(1, Math.round(xp * XP_SHARE[Math.min(3, living.length)] * (state.away ? AWAY_XP : 1)));   // (time away: AWAY_XP)
     const lv = (m) => bus.emit('levelUp', { id: m.id, name: m.name, level: m.level });
     for (const m of living) gainXp(m, share, lv);
-    for (const m of state.bench || []) gainXp(m, Math.round(share * BENCH_XP), lv);   // the bench earns half
+    // (the bench earns nothing, GDD v1.80: the owner, 2026-11-12, "companions not in my party (benched) are leveling up -
+    // they should not be"; it took half before. A benched companion levels on the road: expeditions.js)
     state.counters.gold = (state.counters.gold || 0) + Math.round(e.gold * e.lvl * goldMod(state.party) * GOLD_DROP);   // (a Scavenger's or a Greedy sellsword's eye)
     // cinders (✦) from the strong (GDD §8 v1.13): an elite gives ELITE_CINDERS, a boss BOSS_CINDERS, for the smith
     const ci = e.boss ? BOSS_CINDERS : e.elite ? ELITE_CINDERS : 0;

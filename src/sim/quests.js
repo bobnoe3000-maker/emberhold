@@ -244,7 +244,6 @@ export const QUESTS = {
   },
 };
 export const TRIAL_LEVEL = 6;
-const BENCH_XP = 0.5;                                // the bench earns half, as in battle
 const target = (o) => o.count;
 
 /** @param {{ state: any, bus: any, getWorld: () => any, extraDef?: (id: string) => QuestDef | null, reveal?: (site: string) => void, grant?: (item: string) => void, drop?: (src: string) => void }} o
@@ -304,7 +303,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     const r = /** @type {QuestDef} */ (defOf(id)).rewards, lv = (m) => bus.emit('levelUp', { id: m.id, name: m.name, level: m.level });
     const xpOf = (m) => (r.xp !== undefined ? r.xp : questXp(r, m.level)), heroXp = xpOf(state.party[0]);   // (a board job's is a number: board.js)
     for (const m of state.party) if (!m.fallen) gainXp(m, xpOf(m), lv);
-    for (const m of state.bench || []) gainXp(m, Math.round(xpOf(m) * BENCH_XP), lv);
+    // (the bench takes nothing, as in battle: GDD v1.80)
     state.counters.gold = (state.counters.gold || 0) + r.gold;
     if (r.item) grant(r.item);
     if (/** @type {QuestDef} */ (defOf(id)).kind === 'chapter') drop('chapter');                 // (GDD §8: a chapter pays a Fine too)

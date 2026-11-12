@@ -1,6 +1,6 @@
 # Emberfall — Game Design Document
 
-**v1.79 · 2026-11-12 · Plan of record for game design.** v1.79 (§6.1, the owner: "Ok lets incorporate this into the game",
+**v1.80 · 2026-11-12 · Plan of record for game design.** v1.80 (§6.2, §5.1; the owner: "im getting notifications that companions not in my party (benched) are leveling up - they should not be"): **the bench earns no XP.** Only the party in the field gains from fights and quests; a benched companion levels only on the road, by an expedition (§6.3), which is sent for that. The bench still draws half wage. v1.79 (§6.1, the owner: "Ok lets incorporate this into the game",
 after the painted-faces spike, docs/painted-faces-spike.md): every face is the **painted head** (a sculpted skull, the
 whole face one painted picture on it: small dark eyes with a glint, thick brows, a ball nose, big ears, a wider jaw), the
 hero's, the company's and the townsfolk's, in play, in the previews and in the baked portraits; two new parts of a
@@ -805,7 +805,8 @@ Six statuses, sim rules (`src/sim/battle.js`, the CC block), each drawn on the f
   level 4 a new companion means a few rooms below your level first. The balance contract (§7.1)
   still measures a party levelled to yours.
 - **Bench.** Recruited companions wait at the Thornwick inn and can be swapped in any town.
-  Active members share XP equally; the bench earns 50 %. The bench holds six; a hire with the
+  Active members share XP equally; the bench earns none (v1.80: it was 50 %; the owner, 2026-11-12, "they should not
+  be" levelling): a benched companion levels only on the road, by an expedition (§6.3). The bench holds six; a hire with the
   party full goes straight to it.
   - **Dismiss for good** (2026-10-03, the owner): a sellsword on the bench can be let go at a town
     inn (the party screen). Their wage stops (the bench draws half, every dawn), what they're owed is
@@ -1305,7 +1306,7 @@ level, where it had been ~25 %). XP is a **share of a level**, never a fixed num
   chapter's last objective's: *The Diggers* 6, *An Ember in the Fist* 8, *The Standard* 9, *Fog on the Canal* 12,
   *The Locks* 14, *The Sickpools* 15, *The Bells* 16, *The Rolls* 17, *The Last Office* 18 (a test holds every quest
   to it). Since v1.48 they'd kept the old map's levels and paid 40–56 % of their share. An underlevelled companion catches up; a company far past an old errand gets the errand's worth
-  at its own level, not a third of theirs. The bench takes half, as in fights.
+  at its own level, not a third of theirs. The bench takes none, as in fights (v1.80).
 - **A board job** pays 2 % of a level at the posting's level for each unit of effort, more for skulls (`board.js`
   `BOARD_SHARE`): a fair five-effort job is about a tenth of a level.
 - **A Chronicle fragment** pays 5 % of each finder's level (a ward of the Grey Sisters, a fifth more) (`lore.js`).
