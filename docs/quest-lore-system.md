@@ -521,6 +521,8 @@ clicking on each then displays the additional tabs/filters - active, done"):**
   (or what's needed to be given it: `storystatus.js`, content/story.json), the next one locked with the level it
   opens at, *and N more chapters after it*; then, while no chapter's in hand, what's still open where the company
   stands. **Main, Done** lists the chapters told, the last first.
+- **The sheet keeps one height** (82 % of the screen) whatever it holds, and a new tab, filter or chip starts its list at
+  the top: it used to fit its contents, so its top edge jumped 100 px between tabs (the owner: "visually jarring").
 - **The Chronicle**: the lamps and souls count, then each set with *n of m found* and a bar; found fragments in
   full, missing ones by where they were lost.
 - The tracker line sits just above the party cards (and above the town's service bar) and shows

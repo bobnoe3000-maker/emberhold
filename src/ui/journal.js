@@ -35,7 +35,8 @@ const CSS = `
 #questTrack.ready b { color: #8fe07a; }
 #journalWrap { position: fixed; inset: 0; z-index: 12; background: rgba(6,4,10,.62); display: none; }
 #journalWrap.on { display: block; }
-#journal { position: absolute; left: 0; right: 0; bottom: 0; max-width: 480px; min-height: min(70vh, 640px); max-height: 82vh; overflow-y: auto; margin: 0 auto; background: #100c16;
+/* one height whatever it holds (the owner, 2026-11-12: the size and top moving between tabs was jarring) */
+#journal { position: absolute; left: 0; right: 0; bottom: 0; max-width: 480px; height: 82vh; height: 82dvh; overflow-y: auto; scrollbar-gutter: stable; margin: 0 auto; background: #100c16;
   border-top: 1px solid rgba(214,170,98,0.45); border-radius: 16px 16px 0 0; padding: 0 12px calc(env(safe-area-inset-bottom, 0px) + 16px); color: #efe4cf; font-family: ui-monospace, Menlo, monospace; }
 /* the head stays put while the list scrolls: the title, the kinds, the states, the chips */
 #journal .head { position: sticky; top: 0; z-index: 1; background: #100c16; padding-top: 12px; }
@@ -200,7 +201,7 @@ function MainTab({ sim, defOf, npcName, story, view, row, repaint }) {
   const end = cur < 0, upto = end ? CHAPTERS.length - 1 : Math.min(CHAPTERS.length - 1, cur + 1);
   // the chapters told before the last are folded into a line (the Done filter has them all)
   const from = Math.max(0, (end ? CHAPTERS.length : cur) - 1);
-  if (from > 0) out.push(html`<button key="told" class="told" onClick=${() => { view.filter.main = 'done'; view.open = null; repaint(); }}>${from === 1 ? 'Chapter 1 told' : `Chapters 1–${from} told`} · see Done</button>`);
+  if (from > 0) out.push(html`<button key="told" class="told" onClick=${() => { view.filter.main = 'done'; view.open = null; const el = document.getElementById('journal'); if (el) el.scrollTop = 0; repaint(); }}>${from === 1 ? 'Chapter 1 told' : `Chapters 1–${from} told`} · see Done</button>`);
   for (let i = from; i <= upto; i++) {
     const id = CHAPTERS[i], d = defOf(id), region = QUESTS[id].region || 'vale'; if (!d) continue;
     if (region !== act) { act = region; out.push(html`<div key=${'act' + region} class="grp act">${ACT[region] || region}</div>`); }
@@ -252,7 +253,9 @@ function Journal({ sim, defOf, npcName, onClose, lore, story, view, repaint }) {
   const readyN = sideLive.filter(([, q]) => q.st === QS.READY).length;
   const status = (id) => sim.quests.status(id), cur = CHAPTERS.findIndex((id) => status(id) !== QS.DONE);
   const fragN = (sim.state.fragments || []).length, fragOf = Object.values(SETS).reduce((n, s) => n + s.length, 0);
-  const set = (k, v) => { view[k] = v; repaint(); };
+  // a new list starts at its top (the sheet keeps its height: it never moves under the thumb)
+  const top = () => { const el = document.getElementById('journal'); if (el) el.scrollTop = 0; };
+  const set = (k, v) => { view[k] = v; if (k === 'kind') top(); repaint(); };
   const row = (id, o = {}) => { const q = sim.state.quests[id] || { st: QS.DONE, step: 0, n: [] }; return html`<${Quest} key=${id} id=${id} def=${defOf(id)} q=${q} tracked=${tracked === id} open=${view.open === id} meta=${o.meta}
     onOpen=${() => set('open', view.open === id ? null : id)} onTrack=${(t) => push({ type: 'track', id: t })} onAbandon=${(t) => { push({ type: 'questAbandon', id: t }); view.open = null; }} npcName=${npcName} lv=${lv} />`; };
   // side quests: the ones to hand in first, then the tracked one, then by level; done, the last first
@@ -260,8 +263,8 @@ function Journal({ sim, defOf, npcName, onClose, lore, story, view, repaint }) {
   const kinds = SIDE_KINDS.filter((k) => list.some(([id]) => defOf(id).kind === k));
   const chips = view.tab === 'side' && list.length >= KIND_CHIPS_AT && kinds.length > 1;
   if (chips && view.kind !== 'all') list = list.filter(([id]) => defOf(id).kind === view.kind);
-  const tab = (k, label, sub) => html`<button class=${view.tab === k ? 'on' : ''} role="tab" aria-selected=${view.tab === k ? 'true' : 'false'} onClick=${() => { view.tab = k; view.kind = 'all'; repaint(); }}>${label}<small>${sub}</small></button>`;
-  const state = (k, label) => html`<button class=${view.filter[view.tab] === k ? 'on' : ''} role="tab" aria-selected=${view.filter[view.tab] === k ? 'true' : 'false'} onClick=${() => { view.filter[view.tab] = k; view.kind = 'all'; repaint(); }}>${label}</button>`;
+  const tab = (k, label, sub) => html`<button class=${view.tab === k ? 'on' : ''} role="tab" aria-selected=${view.tab === k ? 'true' : 'false'} onClick=${() => { view.tab = k; view.kind = 'all'; top(); repaint(); }}>${label}<small>${sub}</small></button>`;
+  const state = (k, label) => html`<button class=${view.filter[view.tab] === k ? 'on' : ''} role="tab" aria-selected=${view.filter[view.tab] === k ? 'true' : 'false'} onClick=${() => { view.filter[view.tab] = k; view.kind = 'all'; top(); repaint(); }}>${label}</button>`;
   const mainDone = CHAPTERS.filter((id) => status(id) === QS.DONE).length, inHand = CHAPTERS.some((id) => status(id) === QS.ACTIVE || status(id) === QS.READY) ? 1 : 0;
   return html`<div id="journal">
     <div class="head">
