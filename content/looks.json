@@ -1,10 +1,11 @@
 {
-  "$comment": "A character's look (GDD §6.1 v1.65): the word for each choice of each part (src/sim/appearance.js PARTS and MARKS; test/appearance.test.mjs keeps them in step). null choices are keyed \"null\".",
+  "$comment": "A character's look (GDD §6.1 v1.65; the frame and expression v1.79): the word for each choice of each part (src/sim/appearance.js PARTS and MARKS; test/appearance.test.mjs keeps them in step). null choices are keyed \"null\".",
   "order": [
     "build",
     "height",
     "skin",
     "shape",
+    "frame",
     "hair",
     "hairColor",
     "eyes",
@@ -12,6 +13,7 @@
     "brows",
     "nose",
     "mouth",
+    "expression",
     "ears",
     "beard",
     "marks"
@@ -26,6 +28,13 @@
         "round": "Round",
         "oblong": "Long",
         "pear": "Heavy-jawed"
+      }
+    },
+    "frame": {
+      "label": "Frame",
+      "names": {
+        "strong": "Strong",
+        "soft": "Soft"
       }
     },
     "skin": {
@@ -93,6 +102,19 @@
         "smirk": "Smirking",
         "grim": "Grim",
         "open": "Open"
+      }
+    },
+    "expression": {
+      "label": "Expression",
+      "names": {
+        "neutral": "Calm",
+        "smile": "Smiling",
+        "happy": "Glad",
+        "stern": "Stern",
+        "sad": "Sad",
+        "smug": "Smug",
+        "surprised": "Surprised",
+        "fierce": "Fierce"
       }
     },
     "ears": {

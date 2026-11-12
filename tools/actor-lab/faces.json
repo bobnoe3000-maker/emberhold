@@ -11,7 +11,8 @@
    "freckles",
    "wrinkles",
    "blush"
-  ]
+  ],
+  "frame": "soft"
  },
  "sellsword": {
   "skin": "olive",
@@ -68,7 +69,8 @@
   "mouth": "smile",
   "marks": [
    "wrinkles"
-  ]
+  ],
+  "frame": "soft"
  },
  "osric_hale": {
   "skin": "fair",
@@ -94,7 +96,8 @@
   "mouth": "line",
   "marks": [
    "freckles"
-  ]
+  ],
+  "frame": "soft"
  },
  "brannoc": {
   "skin": "tan",
@@ -120,7 +123,8 @@
   "mouth": "smirk",
   "marks": [
    "earring"
-  ]
+  ],
+  "frame": "soft"
  },
  "farmhand": {
   "skin": "rose",
@@ -159,7 +163,8 @@
   "marks": [
    "wrinkles",
    "eyepatch"
-  ]
+  ],
+  "frame": "soft"
  },
  "wendel": {
   "skin": "fair",
@@ -189,7 +194,8 @@
    "scar_cheek",
    "freckles"
   ],
-  "shape": "thick"
+  "shape": "thick",
+  "frame": "soft"
  },
  "col": {
   "skin": "tan",
@@ -227,7 +233,8 @@
    "wrinkles",
    "earring"
   ],
-  "shape": "pear"
+  "shape": "pear",
+  "frame": "soft"
  },
  "hedda": {
   "skin": "porcelain",
@@ -242,7 +249,8 @@
    "blush",
    "freckles"
   ],
-  "shape": "round"
+  "shape": "round",
+  "frame": "soft"
  },
  "cutthroat": {
   "skin": "tan",
@@ -598,7 +606,8 @@
   "mouth": "line",
   "marks": [
    "freckles"
-  ]
+  ],
+  "frame": "soft"
  },
  "agnes": {
   "skin": "porcelain",
@@ -613,7 +622,8 @@
   "marks": [
    "wrinkles"
   ],
-  "shape": "thin"
+  "shape": "thin",
+  "frame": "soft"
  },
  "kindler": {
   "skin": "fair",
@@ -671,6 +681,7 @@
   "marks": [
    "wrinkles",
    "freckles"
-  ]
+  ],
+  "frame": "soft"
  }
 }

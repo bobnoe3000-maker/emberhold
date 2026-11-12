@@ -426,7 +426,7 @@ function ears(f, M, S, at = null) {
 // blush or freckles blend. Big dark eyes with a glint, thick brows in the hair's colour, a short mouth line: what reads at
 // 56 px. An expression is the picture redrawn (brows' tilt, lids, the mouth), a part the player picks at creation.
 // Behind a switch for the spike: setFaceStyle('painted') or a face's own `style: 'painted'`.
-let STYLE = 'mesh';
+let STYLE = 'painted';                                             // (GDD v1.79: the painted head is every face; ?faces=mesh the 3D parts, as before)
 /** the face kit's style for every face without its own: 'mesh' (the parts in 3D, as before) or 'painted' @param {string} s */
 export const setFaceStyle = (s) => { STYLE = s === 'painted' ? 'painted' : 'mesh'; };
 export const faceStyle = () => STYLE;
@@ -521,7 +521,7 @@ function eggAt(th, s, f, out = new THREE.Vector3()) {
 }
 /** the painted skull (a triangle soup, as the kit's shells want), shaped by the face's shape */
 function eggSkull(f, S) {
-  const NT = 72, NS = 52, P = [], I = [], v = new THREE.Vector3(), A = 0.45;   // (the angles packed toward the face: twice the grid there, for the nose and the face's volume)
+  const NT = 56, NS = 40, P = [], I = [], v = new THREE.Vector3(), A = 0.4;   // (the angles packed toward the face: twice the grid there, for the nose and the face's volume)
   for (let j = 0; j <= NS; j++) for (let i = 0; i <= NT; i++) { const t = -1 + (2 * i) / NT; eggAt(Math.PI * (A * t + (1 - A) * t * t * t), j / NS, f, v); if (S) S(v); P.push(v.x, v.y, v.z); }
   for (let j = 0; j < NS; j++) for (let i = 0; i < NT; i++) { const a = j * (NT + 1) + i, b = a + 1, c = a + NT + 1, d = c + 1; I.push(a, b, c, b, d, c); }   // (wound outward: the kit's shells grow off it and keep its facing)
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setIndex(I); g.computeVertexNormals();
@@ -530,7 +530,7 @@ function eggSkull(f, S) {
 // the mask: the front of the skull from TH left to TH right and S0 to S1 up, a little proud of it; its picture's u and v
 const TH = 1.15, S0 = 0.06, S1 = 0.84, LIFT = 0.006;
 function faceMask(f, S) {
-  const NU = 56, NV = 48, P = [], U = [], I = [], v = new THREE.Vector3(), a = new THREE.Vector3(), b = new THREE.Vector3(), n = new THREE.Vector3(), e = 0.004;
+  const NU = 36, NV = 30, P = [], U = [], I = [], v = new THREE.Vector3(), a = new THREE.Vector3(), b = new THREE.Vector3(), n = new THREE.Vector3(), e = 0.004;
   for (let j = 0; j <= NV; j++) for (let i = 0; i <= NU; i++) {
     const th = -TH + (2 * TH * i) / NU, s = S0 + ((S1 - S0) * j) / NV, at = (t, q, o) => { eggAt(t, q, f, o); if (S) S(o); return o; };
     at(th, s, v); n.crossVectors(at(th, s + e, a).sub(at(th, s - e, b)), at(th + e, s, b).sub(at(th - e, s, n.clone()))).normalize();
@@ -660,16 +660,16 @@ async function paintedFace(load, model, f) {
   face.name = 'FaceMask'; head.add(tag(face, 'eye'));
   if ((BUMP[f.nose] || BUMP.kk)[4] === 'ball') {                 // the ball nose: a mesh of its own (the skull's grid is too coarse for a round one)
     const [w, h, , ns, , tilt = 0] = BUMP[f.nose] || BUMP.kk, p = eggAt(0, ns, f); if (S) S(p);
-    const n = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 18), M.skin); n.scale.set(w * 1.1, h, w * 0.8); n.rotation.x = tilt; n.position.set(p.x, p.y - tilt * 0.012, p.z - w * 0.25); head.add(tag(n, 'skin'));
+    const n = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), M.skin); n.scale.set(w * 1.1, h, w * 0.8); n.rotation.x = tilt; n.position.set(p.x, p.y - tilt * 0.012, p.z - w * 0.25); head.add(tag(n, 'skin'));
   }
   if (f.ears === 'pointed') head.add(tag(ears(f, M, S, (sd) => { const p = eggAt(sd * Math.PI / 2, 0.36, f); if (S) S(p); return p.add(new THREE.Vector3(-sd * 0.02, 0, -0.03)); }), 'skin'));
   else for (const sd of [-1, 1]) {                                // the pack's ears: flat, a fair size, set back at the eyes' and nose's height
     const p = eggAt(sd * Math.PI / 2, 0.355, f), ear = new THREE.Group(); if (S) S(p);
     ear.position.set(p.x + sd * 0.012, p.y, p.z - 0.05); ear.rotation.y = -sd * 0.6;   // (big, flared out and forward, standing clear of the hair: the reference's)
-    const plate = new THREE.Mesh(new THREE.SphereGeometry(0.1, 18, 14), M.skin); plate.scale.set(0.32, 1.35, 0.95); ear.add(plate);
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.082, 0.024, 8, 28, Math.PI * 1.55), M.skin);   // the rim, a C open toward the face
+    const plate = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 9), M.skin); plate.scale.set(0.32, 1.35, 0.95); ear.add(plate);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.082, 0.024, 6, 18, Math.PI * 1.55), M.skin);   // the rim, a C open toward the face
     rim.scale.set(0.95, 1.32, 1); rim.position.x = sd * 0.018; rim.rotation.set(0, sd * Math.PI / 2, sd > 0 ? Math.PI * 1.225 : Math.PI * 0.225); ear.add(rim);
-    const inner = new THREE.Mesh(new THREE.SphereGeometry(0.06, 14, 10), M.earIn); inner.scale.set(0.22, 1.1, 0.75); inner.position.set(sd * 0.016, -0.008, 0.008); ear.add(inner);
+    const inner = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), M.earIn); inner.scale.set(0.22, 1.1, 0.75); inner.position.set(sd * 0.016, -0.008, 0.008); ear.add(inner);
     head.add(tag(ear, 'skin'));
   }
   const on = surface(skull);
@@ -686,13 +686,15 @@ export const OPTIONS = {
   hair: Object.keys(HAIRS), eyes: Object.keys(EYES), brows: Object.keys(BROWS), mouth: Object.keys(MOUTHS),
   nose: ['kk', ...Object.keys(NOSES)], beard: [null, 'stubble', 'short', 'goatee', 'mustache', 'full'],
   marks: ['scar', 'scar_cheek', 'freckles', 'blush', 'wrinkles', 'eyepatch', 'earring'], ears: [null, 'pointed'], skin: Object.keys(SKIN), iris: Object.keys(IRIS), shape: Object.keys(SHAPES),
+  frame: ['strong', 'soft'], expression: ['neutral', 'smile', 'happy', 'stern', 'sad', 'smug', 'surprised', 'fierce'],   // (the painted head's, v1.79: EXPRESSIONS)
 };
 
 // ── a face ────────────────────────────────────────────────────────────────────
 /** Build a face for a variant: the head group to put under the head bone, and the names of the
  * KayKit head meshes it replaces. `far` builds the atlas version (dot eyes, no marks, no lip).
  * @param {(url: string) => Promise<any>} load @param {string} model @param {any} f the face */
-export async function buildFace(load, model, f, { far = false } = {}) {
+export async function buildFace(load, model, f0, { far = false } = {}) {
+  const f = f0.frame === 'soft' ? { head: 'shieldF', lashes: true, lips: true, ...f0 } : f0;   // (a soft frame: the softer jaw and chin, lashes, coloured lips)
   if ((f.style || STYLE) === 'painted' && f.skull !== 'own') return paintedFace(load, model, f);   // (the painted head: the face spike, below)
   const own = f.skull === 'own';
   const base = own ? await kkHead(load, model) : null, mine = await kkHead(load, model);

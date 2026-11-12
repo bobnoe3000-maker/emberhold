@@ -1,6 +1,10 @@
 # The painted head — spike (2026-11-12)
 
-**Status: spike, behind a switch.** The game draws as before unless the page has `?faces=painted`.
+**Status: Implemented** (GDD v1.79, 2026-11-12: the owner, *"Ok lets incorporate this into the game"*). Every face is
+the painted head (`tools/actor-lab/faces.js` `STYLE`); `?faces=mesh` draws the 3D parts as before, for a comparison. A
+look's `frame` and `expression` are parts of the appearance (`src/sim/appearance.js`, save v43, `content/looks.json`),
+chosen at creation and at the temple; the townswomen's presets wear the soft frame (`faces.json`); the portraits and the
+character window's figures re-baked (`bake.cjs --portraits`). See *In the game* below.
 
 ## Why
 
@@ -149,6 +153,25 @@ What the pack does (studied from its product images; none of its art is in the r
   may want a little lift.
 - **Perf** is to be measured with `tools/capture/figperf.mjs` (one textured mask a head in place of ~20 merged parts;
   a 512² picture a distinct face, shared by every face drawn alike).
+
+## In the game (GDD v1.79)
+
+- **Every face painted** by default, the hero's, the company's, the townsfolk's, in play, in the creation and temple
+  previews, on the party cards and in the baked portraits and character-window figures (51 re-baked). `?faces=mesh` for
+  the 3D parts.
+- **Two new parts of a look** (`PARTS.frame`, `PARTS.expression`), with their words in `content/looks.json`, so the Look
+  step and the temple's restyle show them as rows like the rest. A sellsword's are drawn last on their stream, so every
+  part drawn before is as it was. **Save v43** (`looksFor43`): every appearance in an older save gains the strong frame
+  and a calm face (restore would otherwise drop it as not a look the choices allow); tested.
+- **The townswomen** (Maudry, the Grey Sisters, Sister Ilse, Wren, Bess Hale, Nell Tolley, Hedda, the market wife, Sister
+  Orla, Mother Agnes, Hester Lowe) wear the soft frame.
+- **What it costs** (`tools/capture/figperf.mjs`, the same box, `?faces=mesh` before): the town square's 17 figures 463
+  draws either way; triangles 740,000 → 1,000,000 a frame (+35 %: the first cut was 1,330,000, then the skull's grid
+  72 × 52 → 56 × 40, the mask 56 × 48 → 36 × 30, the ears and nose lighter); the median frame (software GL) 1.18–1.27 s
+  → 1.35–1.42 s; the JS heap noisy run to run (150 → 190–228 MB in the square, 104 → 82 in a fight). A Barrows fight
+  209,000 → 224,000 triangles.
+- **Still to do:** a real phone's frame time; dark skin's brows; the mage's brim over the eyes from the game's camera;
+  the KayKit sprite atlases (`?figures=sprites`) not re-baked.
 
 ## Next (not in the spike)
 

@@ -32,6 +32,7 @@ test("the choices are the face kit's own", () => {
   assert.deepEqual(PARTS.brows, keysOf('BROWS')); assert.deepEqual(PARTS.mouth, keysOf('MOUTHS'));
   assert.deepEqual(PARTS.nose, ['kk', ...keysOf('NOSES')]);
   assert.deepEqual(PARTS.beard, listIn('beard')); assert.deepEqual(MARKS, listIn('marks')); assert.deepEqual(PARTS.ears, listIn('ears'));
+  assert.deepEqual(PARTS.frame, listIn('frame')); assert.deepEqual(PARTS.expression, listIn('expression'));   // (v1.79: the painted head's)
 });
 
 const look = (o = {}) => ({ ...drawAppearance(SEED, 'test'), ...o });
@@ -135,4 +136,18 @@ test('the helm hidden (showHelm): cosmetic, anywhere, saved (v40); still worn an
   const snap = JSON.parse(JSON.stringify(sim.snapshot())); const b = createSim(1); b.restore(snap); assert.equal(b.state.party[0].hideHelm, true);
   snap.party[0].hideHelm = 'yes'; const c = createSim(1); c.restore(snap); assert.equal(c.state.party[0].hideHelm, undefined);
   sim.commands.push({ type: 'showHelm', id: 'you', on: true }); sim.tick(); assert.equal(m.hideHelm, undefined); assert.ok(lookOf(m).a.gear.helm);
+});
+
+test('the painted head (v1.79, save v43): a look carries its frame and expression; an older save gains the strong frame and a calm face and keeps its look', async () => {
+  const { looksFor43, migrate, SAVE_VERSION } = await import('../src/persist/save.js');
+  const a = look(); assert.ok(PARTS.frame.includes(a.frame) && PARTS.expression.includes(a.expression), 'drawn with both');
+  const { frame: _f, expression: _e, ...old } = a; assert.equal(validAppearance(old), false, 'without them: not a look the choices allow');
+  const sim = town(); sim.commands.push({ type: 'createHero', cls: 'fighter', look: 'hero_knight', origin: 'thornwick_born', name: 'Tam', appearance: a }); sim.tick();
+  const snap = JSON.parse(JSON.stringify(sim.snapshot())); delete snap.party[0].appearance.frame; delete snap.party[0].appearance.expression;
+  const up = looksFor43({ party: snap.party, bench: [{ id: 'b', appearance: { ...old } }], tavern: [{ appearance: { ...old, frame: 'soft' } }] });
+  assert.equal(up.party[0].appearance.frame, 'strong'); assert.equal(up.party[0].appearance.expression, 'neutral');
+  assert.equal(up.bench[0].appearance.frame, 'strong'); assert.equal(up.tavern[0].appearance.frame, 'soft', 'what a look already has is kept');
+  assert.equal(SAVE_VERSION >= 43, true);
+  const m = migrate({ version: 42, savedAt: 1, data: snap }); const b = createSim(1); b.restore(m.data);
+  assert.ok(validAppearance(b.state.party[0].appearance), 'restored: still a look'); assert.equal(b.state.party[0].appearance.hair, a.hair, 'its parts kept');
 });

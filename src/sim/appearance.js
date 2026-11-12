@@ -29,6 +29,10 @@ export const PARTS = {
   beard: [null, 'stubble', 'short', 'goatee', 'mustache', 'full'],
   build: ['thin', 'normal', 'broad', 'heavy'],
   height: ['short', 'average', 'tall'],
+  // (v43, GDD §6.1 v1.79: the painted head) the face's frame, strong or soft (the softer jaw and chin, lashes, coloured
+  // lips), and the expression it wears
+  frame: ['strong', 'soft'],
+  expression: ['neutral', 'smile', 'happy', 'stern', 'sad', 'smug', 'surprised', 'fierce'],
 };
 /** the marks (a scar, freckles…): up to MARKS_MAX of them, none twice */
 export const MARKS = ['scar', 'scar_cheek', 'freckles', 'blush', 'wrinkles', 'eyepatch', 'earring'], MARKS_MAX = 2;
@@ -46,6 +50,8 @@ export function validAppearance(a) {
   const m = a.marks;
   return Array.isArray(m) && m.length <= MARKS_MAX && m.every((x) => MARKS.includes(x)) && new Set(m).size === m.length;
 }
+/** an appearance from before v43 (no frame, no expression): the strong frame, a neutral face @param {any} a */
+export const withFrame43 = (a) => (!a || typeof a !== 'object' || Array.isArray(a) ? a : { frame: 'strong', expression: 'neutral', ...a });
 /** a copy of a taken appearance (a command's object never kept: its own fields only) @param {any} a */
 export const cleanAppearance = (a) => { const o = {}; for (const k of Object.keys(PARTS)) o[k] = a[k]; o.marks = [...a.marks]; return o; };
 /** two appearances the same? @param {any} a @param {any} b */
@@ -63,5 +69,7 @@ export function drawAppearance(seed, key) {
   a.build = r() < 0.5 ? 'normal' : pick(PARTS.build);
   a.height = r() < 0.5 ? 'average' : pick(PARTS.height);
   a.marks = r() < 0.33 ? [pick(MARKS)] : [];
+  a.frame = r() < 0.5 ? 'strong' : 'soft';                   // (v43: drawn last, so every look drawn before keeps its parts)
+  a.expression = r() < 0.6 ? 'neutral' : pick(PARTS.expression);
   return a;
 }

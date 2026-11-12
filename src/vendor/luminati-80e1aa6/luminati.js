@@ -12396,7 +12396,7 @@ function Ul(e, t, n, r = null) {
 	}
 	return i;
 }
-var Wl = "mesh", Gl = (e) => {
+var Wl = "painted", Gl = (e) => {
 	Wl = e === "painted" ? "painted" : "mesh";
 }, Kl = -.01, ql = 1.05, Jl = 1.06, Yl = {
 	cy: 1.04 / 2,
@@ -12787,12 +12787,12 @@ function su(e, t, n, r = new P()) {
 }
 function cu(e, t) {
 	let n = [], r = [], i = new P();
-	for (let r = 0; r <= 52; r++) for (let a = 0; a <= 72; a++) {
-		let o = -1 + 2 * a / 72;
-		su(Math.PI * (.45 * o + .55 * o * o * o), r / 52, e, i), t && t(i), n.push(i.x, i.y, i.z);
+	for (let r = 0; r <= 40; r++) for (let a = 0; a <= 56; a++) {
+		let o = -1 + 2 * a / 56;
+		su(Math.PI * (.4 * o + .6 * o * o * o), r / 40, e, i), t && t(i), n.push(i.x, i.y, i.z);
 	}
-	for (let e = 0; e < 52; e++) for (let t = 0; t < 72; t++) {
-		let n = e * 73 + t, i = n + 1, a = n + 72 + 1, o = a + 1;
+	for (let e = 0; e < 40; e++) for (let t = 0; t < 56; t++) {
+		let n = e * 57 + t, i = n + 1, a = n + 56 + 1, o = a + 1;
 		r.push(n, i, a, i, o, a);
 	}
 	let a = new Fe();
@@ -12801,12 +12801,12 @@ function cu(e, t) {
 var lu = 1.15, uu = .06, du = .006;
 function fu(e, t) {
 	let n = [], r = [], i = [], a = new P(), o = new P(), s = new P(), c = new P(), l = .004;
-	for (let i = 0; i <= 48; i++) for (let u = 0; u <= 56; u++) {
-		let d = -1.15 + 2 * lu * u / 56, f = uu + .78 * i / 48, p = (n, r, i) => (su(n, r, e, i), t && t(i), i);
+	for (let i = 0; i <= 30; i++) for (let u = 0; u <= 36; u++) {
+		let d = -1.15 + 2 * lu * u / 36, f = uu + .78 * i / 30, p = (n, r, i) => (su(n, r, e, i), t && t(i), i);
 		p(d, f, a), c.crossVectors(p(d, f + l, o).sub(p(d, f - l, s)), p(d + l, f, s).sub(p(d - l, f, c.clone()))).normalize(), c.z < 0 && Math.abs(d) < 1.4 && c.negate(), r.push(mu(a.x), hu(a.y)), a.addScaledVector(c, du), n.push(a.x, a.y, a.z);
 	}
-	for (let e = 0; e < 48; e++) for (let t = 0; t < 56; t++) {
-		let n = e * 57 + t, r = n + 1, a = n + 56 + 1, o = a + 1;
+	for (let e = 0; e < 30; e++) for (let t = 0; t < 36; t++) {
+		let n = e * 37 + t, r = n + 1, a = n + 36 + 1, o = a + 1;
 		i.push(n, r, a, r, o, a);
 	}
 	let u = new Fe();
@@ -13073,7 +13073,7 @@ async function Du(e, t, r) {
 	if (p.name = "FaceMask", u.add(d(p, "eye")), (Xl[r.nose] || Xl.kk)[4] === "ball") {
 		let [e, t, , n, , i = 0] = Xl[r.nose] || Xl.kk, o = su(0, n, r);
 		a && a(o);
-		let s = new M(new j(1, 24, 18), c.skin);
+		let s = new M(new j(1, 14, 10), c.skin);
 		s.scale.set(e * 1.1, t, e * .8), s.rotation.x = i, s.position.set(o.x, o.y - i * .012, o.z - e * .25), u.add(d(s, "skin"));
 	}
 	if (r.ears === "pointed") u.add(d(Ul(r, c, a, (e) => {
@@ -13083,11 +13083,11 @@ async function Du(e, t, r) {
 	else for (let e of [-1, 1]) {
 		let t = su(e * Math.PI / 2, .355, r), i = new A();
 		a && a(t), i.position.set(t.x + e * .012, t.y, t.z - .05), i.rotation.y = -e * .6;
-		let o = new M(new j(.1, 18, 14), c.skin);
+		let o = new M(new j(.1, 12, 9), c.skin);
 		o.scale.set(.32, 1.35, .95), i.add(o);
-		let s = new M(new n(.082, .024, 8, 28, Math.PI * 1.55), c.skin);
+		let s = new M(new n(.082, .024, 6, 18, Math.PI * 1.55), c.skin);
 		s.scale.set(.95, 1.32, 1), s.position.x = e * .018, s.rotation.set(0, e * Math.PI / 2, e > 0 ? Math.PI * 1.225 : Math.PI * .225), i.add(s);
-		let l = new M(new j(.06, 14, 10), c.earIn);
+		let l = new M(new j(.06, 8, 6), c.earIn);
 		l.scale.set(.22, 1.1, .75), l.position.set(e * .016, -.008, .008), i.add(l), u.add(d(i, "skin"));
 	}
 	let m = bl(f);
@@ -13111,55 +13111,61 @@ async function Du(e, t, r) {
 }
 Object.keys(Il), Object.keys(Tl), Object.keys(Dl), Object.keys(kl), [...Object.keys(Nl)], Object.keys(Kc), Object.keys(Jc), Object.keys(vl);
 async function Ou(e, t, n, { far: r = !1 } = {}) {
-	if ((n.style || Wl) === "painted" && n.skull !== "own") return Du(e, t, n);
-	let i = n.skull === "own", a = i ? await $c(e, t) : null, o = await $c(e, t), s = Yc(Kc, n.skin, Kc.fair), c = Yc(qc, n.hairColor, qc.brown), l = {
-		skin: Gc(s, .72),
-		hair: Gc(c, .85),
-		brow: Gc(Yc(qc, n.browColor, c.clone().multiplyScalar(.72)), .9),
-		beard: Gc(Yc(qc, n.beardColor, c), .9),
-		stubble: Gc(s.clone().multiplyScalar(.7).lerp(Yc(qc, n.beardColor, c), .35), 1),
+	let i = n.frame === "soft" ? {
+		head: "shieldF",
+		lashes: !0,
+		lips: !0,
+		...n
+	} : n;
+	if ((i.style || Wl) === "painted" && i.skull !== "own") return Du(e, t, i);
+	let a = i.skull === "own", o = a ? await $c(e, t) : null, s = await $c(e, t), c = Yc(Kc, i.skin, Kc.fair), l = Yc(qc, i.hairColor, qc.brown), u = {
+		skin: Gc(c, .72),
+		hair: Gc(l, .85),
+		brow: Gc(Yc(qc, i.browColor, l.clone().multiplyScalar(.72)), .9),
+		beard: Gc(Yc(qc, i.beardColor, l), .9),
+		stubble: Gc(c.clone().multiplyScalar(.7).lerp(Yc(qc, i.beardColor, l), .35), 1),
 		white: Gc("#f2ece2", .35),
-		iris: Gc(Yc(Jc, n.iris, Jc.brown), .3),
+		iris: Gc(Yc(Jc, i.iris, Jc.brown), .3),
 		pupil: Gc("#120c0a", .4),
 		glint: new nt({ color: "#ffffff" }),
 		lash: Gc("#1c120e", .8),
-		lid: Gc(s.clone().multiplyScalar(.94), .72),
-		crease: Gc(s.clone().multiplyScalar(.78), .95),
-		mouth: Gc(s.clone().lerp(new N("#3a1210"), .7), .95),
-		lip: Gc(Zc(s, "#a04a40", .3, .86), .95),
-		scar: Gc(Zc(s, "#a04a44", .35, .8), .9),
-		freckle: Gc(Zc(s, "#6a2a10", .5, .74), .9),
-		blush: Gc(Zc(s, "#e05a58", .3, 1.02), .8),
+		lid: Gc(c.clone().multiplyScalar(.94), .72),
+		crease: Gc(c.clone().multiplyScalar(.78), .95),
+		mouth: Gc(c.clone().lerp(new N("#3a1210"), .7), .95),
+		lip: Gc(Zc(c, "#a04a40", .3, .86), .95),
+		scar: Gc(Zc(c, "#a04a44", .35, .8), .9),
+		freckle: Gc(Zc(c, "#6a2a10", .5, .74), .9),
+		blush: Gc(Zc(c, "#e05a58", .3, 1.02), .8),
 		patch: Gc("#1a1414", .7),
 		gold: Gc("#d8a848", .3, .8),
-		tie: Gc(Yc(qc, n.tieColor, "#6a3a22"), .8),
-		earIn: Gc(s.clone().multiplyScalar(.62).lerp(new N("#7a3a34"), .25), .9)
-	}, u = new A();
-	u.name = "Face";
-	let d = vl[n.shape], f = (e) => d && e ? el(e, () => !0, d, !1) : e, p = i ? null : await ul(e), m = p && {
-		skin: f(p.skin),
-		wedge: f(p.wedge),
-		whole: f(p.whole),
-		noNose: f(p.noNose)
-	}, h = i ? f(a.parts["0,0"]) : m.whole, g = i || !Nl[n.nose], _ = g ? null : f(Ml(bl(p.whole))), v = (e, t) => (e.traverse((e) => {
+		tie: Gc(Yc(qc, i.tieColor, "#6a3a22"), .8),
+		earIn: Gc(c.clone().multiplyScalar(.62).lerp(new N("#7a3a34"), .25), .9)
+	}, d = new A();
+	d.name = "Face";
+	let f = vl[i.shape], p = (e) => f && e ? el(e, () => !0, f, !1) : e, m = a ? null : await ul(e), h = m && {
+		skin: p(m.skin),
+		wedge: p(m.wedge),
+		whole: p(m.whole),
+		noNose: p(m.noNose)
+	}, g = a ? p(o.parts["0,0"]) : h.whole, _ = a || !Nl[i.nose], v = _ ? null : p(Ml(bl(m.whole))), y = (e, t) => (e.traverse((e) => {
 		e.isMesh && !e.userData.part && (e.userData.part = t);
 	}), e);
-	if (u.add(v(new M(i ? h : g ? m.skin : m.noNose, l.skin), "skin")), _ && u.add(v(new M(_, l.skin), "skin")), m && u.add(v(new M(m.wedge, r ? l.skin : l.lip), "skin")), i) for (let e of n.keep || ["1,1"]) a.parts[e] && u.add(new M(f(a.parts[e]), a.material));
-	let y = bl(g ? h : ol(m.noNose, m.wedge, _)), b = d ? (e, t, n) => {
+	if (d.add(y(new M(a ? g : _ ? h.skin : h.noNose, u.skin), "skin")), v && d.add(y(new M(v, u.skin), "skin")), h && d.add(y(new M(h.wedge, r ? u.skin : u.lip), "skin")), a) for (let e of i.keep || ["1,1"]) o.parts[e] && d.add(new M(p(o.parts[e]), o.material));
+	let b = bl(_ ? g : ol(h.noNose, h.wedge, v)), x = f ? (e, t, n) => {
 		let r = new P(e, t, .45);
-		return d(r), y(r.x, r.y, n);
-	} : y;
-	if (u.add(v(El(b, n, l, r), "eye"), v(Ol(b, n, l), "brow"), v(jl(b, n, l, r), "mouth"), v(Pl(b, n, l), "skin"), v(await Vl(e, h, b, n, l, d), "hair")), u.add(v(Ul(n, l, d), "skin")), r || u.add(Hl(b, n, l)), !i) {
-		let t = await zl(e, h, n, l, d);
-		t.name = "Hair", u.add(v(t, "hair"));
+		return f(r), b(r.x, r.y, n);
+	} : b;
+	if (d.add(y(El(x, i, u, r), "eye"), y(Ol(x, i, u), "brow"), y(jl(x, i, u, r), "mouth"), y(Pl(x, i, u), "skin"), y(await Vl(e, g, x, i, u, f), "hair")), d.add(y(Ul(i, u, f), "skin")), r || d.add(Hl(x, i, u)), !a) {
+		let t = await zl(e, g, i, u, f);
+		t.name = "Hair", d.add(y(t, "hair"));
 	}
-	return u.traverse((e) => {
+	return d.traverse((e) => {
 		e.isMesh && (e.frustumCulled = !1, e.userData.face = !0);
 	}), {
-		head: u,
-		replaces: [o.headName],
-		skull: h,
-		on: b
+		head: d,
+		replaces: [s.headName],
+		skull: g,
+		on: x
 	};
 }
 //#endregion
@@ -16404,7 +16410,9 @@ var Kd = {
 	"hair",
 	"hairColor",
 	"beard",
-	"marks"
+	"marks",
+	"frame",
+	"expression"
 ];
 function Yd(e) {
 	let t = e && Kd[e.build] || Kd.normal;
@@ -16616,7 +16624,7 @@ Object.assign(globalThis, { __emberGround: {
 	size: uf,
 	keeps: (e) => e?.emberExhibit === !0 || !df.has(e?.preset),
 	dust: !1
-} }), typeof location < "u" && new URLSearchParams(location.search).get("faces") === "painted" && Gl("painted");
+} }), typeof location < "u" && new URLSearchParams(location.search).get("faces") === "mesh" && Gl("mesh");
 var ff = "", pf = 1, mf = 3, hf = 16 * Math.SQRT2, gf = {
 	billboard: "spherical",
 	normalUp: .6,

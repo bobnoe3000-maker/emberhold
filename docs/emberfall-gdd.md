@@ -1,6 +1,12 @@
 # Emberfall — Game Design Document
 
-**v1.78 · 2026-11-12 · Plan of record for game design.** v1.78 (the owner: "Thin the Fens trees by 25% too"): the Greywater
+**v1.79 · 2026-11-12 · Plan of record for game design.** v1.79 (§6.1, the owner: "Ok lets incorporate this into the game",
+after the painted-faces spike, docs/painted-faces-spike.md): every face is the **painted head** (a sculpted skull, the
+whole face one painted picture on it: small dark eyes with a glint, thick brows, a ball nose, big ears, a wider jaw), the
+hero's, the company's and the townsfolk's, in play, in the previews and in the baked portraits; two new parts of a
+look, the **frame** (strong, or soft: the softer jaw and chin, lashes, coloured lips) and the **expression** (calm,
+smiling, glad, stern, sad, smug, surprised, fierce), chosen at creation and at the temple like the rest. Save v43: an
+older look gains the strong frame and a calm face. v1.78 (the owner: "Thin the Fens trees by 25% too"): the Greywater
 Fens' trees on the land a quarter fewer by crown cover (10,083 → 7,548 tiles of its 240²; 71 → 48 trees), the fen's scatter
 and the willows at the water's edge alike, each on a draw of its own stream (sim/outdoor.js FENS_KEEP); the ring past its edge
 kept whole. v1.77 (§8, the owner: "In this balance pass increase embers
@@ -824,7 +830,9 @@ Six statuses, sim rules (`src/sim/battle.js`, the CC block), each drawn on the f
   - **look** (v1.65: the owner, 2026-11-10, "Let me customize the face and body type more - player choice and allows for
     NPC variability"): the class's model, and the face and build on it, each part a choice from a list, nothing typed:
     face shape, skin, eyes and their colour, brows, nose, mouth, ears, hair and its colour, a beard, up to two marks (a
-    scar, freckles, an earring…), a build (thin, normal, broad, heavy) and a height (short, average, tall). Seen live on
+    scar, freckles, an earring…), a build (thin, normal, broad, heavy) and a height (short, average, tall); and (v1.79,
+    the painted head) its **frame** (strong, or soft: a softer jaw and chin, lashes, coloured lips) and its
+    **expression** (calm, smiling, glad, stern, sad, smug, surprised, fierce). Seen live on
     the model as it's chosen. Cosmetic only: no stat reads it, and a height changes how tall the figure stands, not the
     sim's footprint. The choices are the face kit's (`src/sim/appearance.js`, kept in step with
     `tools/actor-lab/faces.js`); the sim refuses any other;

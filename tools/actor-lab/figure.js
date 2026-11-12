@@ -66,7 +66,7 @@ function recolor(root, filter) {
 // every clip and every model's kit still fits.
 export const BUILDS = { thin: { w: 0.9, arm: 0.97 }, normal: { w: 1, arm: 1 }, broad: { w: 1.08, arm: 1.12 }, heavy: { w: 1.17, arm: 1.07 } };
 export const HEIGHTS = { short: 0.94, average: 1, tall: 1.06 };
-const FACE_PARTS = ['shape', 'skin', 'eyes', 'iris', 'brows', 'nose', 'mouth', 'ears', 'hair', 'hairColor', 'beard', 'marks'];
+const FACE_PARTS = ['shape', 'skin', 'eyes', 'iris', 'brows', 'nose', 'mouth', 'ears', 'hair', 'hairColor', 'beard', 'marks', 'frame', 'expression'];
 /** the figure's girth and stature for an appearance (none: as built) @param {any} a */
 export function lookScale(a) { const b = (a && BUILDS[a.build]) || BUILDS.normal; return { w: b.w, h: (a && HEIGHTS[a.height]) || 1, arm: b.arm }; }
 /** the build on the bones, after each pose: the head back to its own width, the shoulders out @param {THREE.Object3D} root @param {{ w: number, arm: number }} L */
