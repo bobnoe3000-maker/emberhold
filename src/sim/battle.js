@@ -82,6 +82,11 @@ export const behind = (att, tgt) => ((tgt.fx || 0) * (att.x - tgt.x) + (tgt.fy |
 export const clustered = (tgt, foes) => foes.filter((o) => o !== tgt && !o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < CLUSTER_R).length >= 2;
 // stance: the HP fraction under which heals / guards go up, and whether MP is held back for them
 const STANCE_AI = { aggressive: { low: 0.3, reserve: 0 }, balanced: { low: 0.5, reserve: 0 }, defensive: { low: 0.65, reserve: 0.5 } };
+// Time away (core.js `away`, GDD §12 v1.74; the owner, 2026-11-12: two hours away in a level-3 room took a level-4 party to
+// level 6, "I would like them to only increase 1 level"): a foe slain while the time away is played through pays this share
+// of its XP. Live play's pace is untouched. Measured: the right party at 4 in a level-3 room earns 214 XP a minute (at 5,
+// 224), so two hours away now pay ~13,100: level 5 (11,000) and an eighth of the way to 6, where it was 6.
+export const AWAY_XP = 0.5;
 const BENCH_XP = 0.5, WIPE_HP = 0.3, DEF_LEASH = 5, ROGUE_PICK = 8;
 // a room holds for as long as you stay, so "downed twice in one visit" is measured over a
 // stretch: stand through WIND waves in a row and a member's downs are forgotten
@@ -701,7 +706,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (e.issued) { if (battle) battle.lastSlain = { x: e.x, y: e.y }; return; }
     if (battle && battle.tower) { towerReward(e); return; }
     const living = state.party.filter(alive);
-    const xp = Math.round(e.xp * e.lvl), share = Math.max(1, Math.round(xp * XP_SHARE[Math.min(3, living.length)]));
+    const xp = Math.round(e.xp * e.lvl), share = Math.max(1, Math.round(xp * XP_SHARE[Math.min(3, living.length)] * (state.away ? AWAY_XP : 1)));   // (time away: AWAY_XP)
     const lv = (m) => bus.emit('levelUp', { id: m.id, name: m.name, level: m.level });
     for (const m of living) gainXp(m, share, lv);
     for (const m of state.bench || []) gainXp(m, Math.round(share * BENCH_XP), lv);   // the bench earns half

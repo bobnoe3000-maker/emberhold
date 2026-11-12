@@ -1,6 +1,10 @@
 # Emberfall — Game Design Document
 
-**v1.73 · 2026-11-11 · Plan of record for game design.** v1.73 (bosses, the owner: "after the boss is defeated.. regular
+**v1.74 · 2026-11-12 · Plan of record for game design.** v1.74 (§12, the owner: "Offline progress on a lvl 3 room..
+characters went from level 4 to 6 in 2 hours. I would like them to only increase 1 level"; asked, the owner chose half XP
+offline over a slower curve for all play): while the time away is played through, a foe slain pays half its XP
+(sim/battle.js AWAY_XP 0.5); the level curve and live play are as they were. Measured, the right party at 4 in a level-3
+room for two hours: live, level 5 and 94 % on to 6; away, level 5 and 15 % on. v1.73 (bosses, the owner: "after the boss is defeated.. regular
 npcs can still spawn. Show the timer for when the boss will reappear"; 30 minutes, story bosses too): a boss put down is away
 for 30 minutes of game time (sim/battle.js BOSS_BACK, state.bossBack, save v42) and his hall stands empty meanwhile: no
 waves (it had fought ordinary waves after a story boss fell, and a boss was back the moment you stepped in again). Then he
