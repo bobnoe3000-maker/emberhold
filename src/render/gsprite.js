@@ -37,7 +37,7 @@ export function spOutline(sp) {
 }
 
 // ---- voxel bake with per-face normals (vox: 0 empty · 1 solid · 2 emissive · 3 trim, in ramp2) ----
-function bakeVox(vox, SX, SY, SZ, ramp, emiId, ramp2 = ramp) {
+function bakeVox(vox, SX, SY, SZ, ramp, emiId, ramp2 = ramp, ramp3 = ramp) {
   const V = (x, y, z) => (x < 0 || y < 0 || z < 0 || x >= SX || y >= SY || z >= SZ) ? 0 : vox[(z * SY + y) * SX + x];
   const w = SX + SY + 4, h = ((SX + SY) >> 1) + SZ + 4;
   const sp = newSprite(w, h), offX = SY + 1, offY = SZ + 1;
@@ -50,7 +50,7 @@ function bakeVox(vox, SX, SY, SZ, ramp, emiId, ramp2 = ramp) {
       if (!topE && !leftE && !rightE) continue;                 // enclosed
       const n = topE ? NT : leftE ? NL : NR;
       const nz = fbm(x * 0.5 + z * 0.3, y * 0.5, 4242);
-      const r = m === 3 ? ramp2 : ramp, idx = clampi(Math.floor(nz * 3 + (topE ? 2.2 : leftE ? 1.4 : 0.8)) - 1, 0, r.length - 1);
+      const r = m === 3 ? ramp2 : m === 2 ? ramp3 : ramp, idx = clampi(Math.floor(nz * 3 + (topE ? 2.2 : leftE ? 1.4 : 0.8)) - 1, 0, r.length - 1);
       const X = (x - y) + offX, Y = ((x + y) >> 1) - z + offY;
       for (let a = 0; a < 2; a++) for (let b = 0; b < 2; b++) spSet(sp, X + a, Y + b, r[idx], n, m === 2 ? emiId : 0);
     }
@@ -117,6 +117,13 @@ export function voxPortal() {
 // at CHEST_K× (2026-10-01: a find should look like one). Once opened it stays where it was, lid thrown
 // back, hollow and dark (voxChestOpen): you can see a room's chest has been had.
 const CHEST_K = 2;
+// The chests' look (the owner, 2026-11-12: "Chests, the color and texture makes them hard to see. Show me options to make
+// these more obvious"): ?chest=gold|lit|glint|ring to try; every one but none recolours them, honey oak under gold bands
+// and a bright gold lock (the dark oak and iron sank into a dungeon's floor). lit adds a warm light of its own
+// (render3d/convert.js), glint a twinkle over a closed one and ring a gold ring on the floor under it (render/renderer.js).
+export const CHEST_LOOK = (() => { try { const v = new URLSearchParams(globalThis.location?.search || '').get('chest'); return ['gold', 'lit', 'glint', 'ring'].includes(v) ? v : 'none'; } catch { return 'none'; } })();
+const HONEY = ['#4a2a12', '#6e4220', '#93592c', '#b8743a', '#d9944e'].map((h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
+const GOLD = ['#5a3a10', '#8a5e1a', '#b8862a', '#e0b44a', '#f6dc8a'].map((h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
 function chestVox(open) {
   const SX = 13, SY = 9, SZ = open ? 14 : 10, vox = new Uint8Array(SX * SY * SZ), BODY = 6, cy = (SY - 1) / 2;
   for (let z = 0; z < SZ; z++) for (let y = 0; y < SY; y++) for (let x = 0; x < SX; x++) {
@@ -139,7 +146,7 @@ function chestVox(open) {
   // up to CHEST_K×: each voxel a K×K×K block, the same chest twice the size
   const K = CHEST_K, X = SX * K, Y = SY * K, Z = SZ * K, big = new Uint8Array(X * Y * Z);
   for (let z = 0; z < Z; z++) for (let y = 0; y < Y; y++) for (let x = 0; x < X; x++) big[(z * Y + y) * X + x] = vox[(((z / K) | 0) * SY + ((y / K) | 0)) * SX + ((x / K) | 0)];
-  return bakeVox(big, X, Y, Z, ELIT.wood, 3, ELIT.stone);
+  return CHEST_LOOK === 'none' || open ? bakeVox(big, X, Y, Z, ELIT.wood, 3, ELIT.stone) : bakeVox(big, X, Y, Z, HONEY, 3, GOLD, GOLD);   // (an opened one dull as before: had)
 }
 export const voxChest = () => chestVox(false);
 export const voxChestOpen = () => chestVox(true);

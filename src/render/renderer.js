@@ -19,7 +19,7 @@ import { skyAt, makeSky, mixSky, holdT } from './daylight.js';
 import { weatherNow, weatherLight, drawWeather, lightOf } from './weatherfx.js';
 import { beastOf, beastFrame } from './beasts.js';
 import { TW, HW, HH, ZH, project, resolveTap } from './iso.js';
-import { buildProps } from './gsprite.js';
+import { buildProps, CHEST_LOOK } from './gsprite.js';
 import { createAnimator } from './anim.js';
 import { createFX, styleOfSrc, raisedLook, BOLT_RGB } from './fx.js';
 import { createSkillFX, LUM_LOOKS, LUM_HOLDS } from './skillfx.js';
@@ -702,7 +702,7 @@ export function createRenderer(canvas, sim, input) {
     // (under the minimap and labels; with another painter, its own rain and snow fall in its world, so ours don't: they
     // doubled up, and fell over the top bar's words, this canvas being above it)
     if (wx.k && !(wx.kind === 'rain' || wx.kind === 'snow')) drawWeather(octx, wx, { vw, vh, S, camX: -lastCam.rx, camY: -lastCam.ry, now, light: wLight });
-    if (sim.world.kind === 'dungeon') { drawShrines(lastCam.rx, lastCam.ry, ix, iy); drawStairs(lastCam.rx, lastCam.ry, ix, iy); drawNames(lastCam.rx, lastCam.ry, ix, iy); drawMinimap(ix, iy); } else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); if (sim.world.kind === 'overland') drawCampRings(lastCam.rx, lastCam.ry, ix, iy, now); }   // no minimap on the town's home screen
+    if (sim.world.kind === 'dungeon') { drawShrines(lastCam.rx, lastCam.ry, ix, iy); drawStairs(lastCam.rx, lastCam.ry, ix, iy); drawChestMarks(lastCam.rx, lastCam.ry, ix, iy); drawNames(lastCam.rx, lastCam.ry, ix, iy); drawMinimap(ix, iy); } else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); if (sim.world.kind === 'overland') drawCampRings(lastCam.rx, lastCam.ry, ix, iy, now); }   // no minimap on the town's home screen
     drawGoal(lastCam.rx, lastCam.ry, now);                 // overlays use the exact camera: glued to the gliding world
     drawBattle(lastCam.rx, lastCam.ry, ix, iy, pz, now);
     if (!sim.battle) drawHallAway();
@@ -797,6 +797,32 @@ export function createRenderer(canvas, sim, input) {
       octx.fillStyle = `rgba(236,214,170,${0.92 * a})`; octx.fillText(L.text, sx, sy);
     }
     drawNames(ox, oy, ix, iy);
+  }
+  // a closed chest marked (?chest=glint | ring: the owner, 2026-11-12, "Chests, the color and texture makes them hard to
+  // see. Show me options": gsprite.js CHEST_LOOK): glint, a gold four-pointed star over it that twinkles every couple of
+  // seconds (each on its own beat), seen from across a room; ring, a soft gold ring on the floor round it, breathing
+  function drawChestMarks(ox, oy, ix, iy) {
+    if (CHEST_LOOK !== 'glint' && CHEST_LOOK !== 'ring') return;
+    const w = sim.world, k = vw / window.innerWidth, t = clock();
+    for (const [key, kind] of w.props || []) {
+      if (kind !== 'chest') continue;
+      const [tx, ty] = key.split(',').map(Number); if (propAt(w, tx, ty) !== 'chest' || Math.hypot(tx + 0.5 - ix, ty + 0.5 - iy) > 22) continue;
+      const P = project(tx + 0.5, ty + 0.5, heightAt(w, tx, ty)), sx = (ox + P.sx) * S, sy = (oy + P.sy) * S;
+      if (sx < -40 * k || sx > vw + 40 * k || sy < (hudB + 10) * k || sy > vh + 40 * k) continue;
+      const beat = ((t / 2400) + ((tx * 7 + ty * 13) % 10) / 10) % 1;   // (0..1 a cycle, each chest its own phase)
+      if (CHEST_LOOK === 'glint') {
+        const tw = beat < 0.22 ? Math.sin((beat / 0.22) * Math.PI) : 0, r = (5 + 9 * tw) * k, cx = sx + 6 * k, cy = sy - 30 * k;
+        octx.save(); octx.globalAlpha = 0.35 + 0.65 * tw; octx.translate(cx, cy); octx.rotate(beat * 0.6);
+        octx.fillStyle = 'rgba(255,214,120,0.35)'; octx.beginPath(); octx.arc(0, 0, r * 0.9, 0, Math.PI * 2); octx.fill();
+        octx.fillStyle = '#fff4cc'; octx.beginPath();
+        for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4, rr = i % 2 ? r * 0.22 : r; octx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+        octx.closePath(); octx.fill(); octx.restore();
+      } else {
+        const b = 0.55 + 0.45 * Math.sin(beat * Math.PI * 2), rx = 26 * k, ry = 13 * k;
+        octx.save(); octx.strokeStyle = `rgba(255,200,90,${0.35 * b})`; octx.lineWidth = 6 * k; octx.beginPath(); octx.ellipse(sx, sy - 2 * k, rx, ry, 0, 0, Math.PI * 2); octx.stroke();
+        octx.strokeStyle = `rgba(255,226,150,${0.85 * b})`; octx.lineWidth = 2 * k; octx.beginPath(); octx.ellipse(sx, sy - 2 * k, rx, ry, 0, 0, Math.PI * 2); octx.stroke(); octx.restore();
+      }
+    }
   }
   // named people: their name over their head as you come near (tap them to talk); in a dungeon too (the owner, 2026-11-12,
   // of Brannoc chained in Wickham Keep's hall: "seems to be a stuck NPC in the wall. I cant attack and he isnt attacking":

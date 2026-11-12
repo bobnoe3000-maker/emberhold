@@ -18,7 +18,7 @@
 // presets: vale-rooms (every space of the Vale's authored dungeon floors, at: "part:<id>"), vale (the Hollow Vale for art critic pass 19: Thornwick and the Vale at each hour, a fighting room on six
 // dungeon floors), vale-hours, vale-dungeons, smoke (one of each). A shots file is a JSON array of
 //   { "name": "barrows-f1", "scene": "dungeon", "site": "barrows", "floor": 1, "region": "vale",
-//     "tod": "dusk", "at": "room" | "medium" | "entrance" | "spawn" | "part:<plan space id>" | [x, y], "hud": false, "bright": 1.2 }
+//     "tod": "dusk", "crop": [w, h] (CSS px round what "at" stood by: a chest), "at": "room" | "medium" | "entrance" | "spawn" | "chest" | "part:<plan space id>" | [x, y], "hud": false, "bright": 1.2 }
 // (bright: Luminati's brightness on top of the Vale's grade, world.js settings({ bright }); 1 when left out. set: any
 // other world.js settings for the shot, e.g. { "figLit": 1.2 }. --stats: each shot's world.js stats in the log)
 // Out: <out>/<renderer>/<name>.png, and with --sheet <out>/sheet.jpg (a row a shot, a column a renderer). With no
@@ -94,7 +94,12 @@ const PAGE = {
     if (Array.isArray(at)) [x, y] = at;
     else if (w.kind === 'dungeon' && at === 'stairsup' && w.stairArrive) [x, y] = [w.stairArrive.x, w.stairArrive.y - 1];   // (where you arrive, at the way up's foot)
     else if (w.kind === 'dungeon' && at === 'stairsdown' && w.stairsAt) [x, y] = [w.stairsAt.x - 4.5, w.stairsAt.y + 3.5];   // (before the stairwell's open edge, off to its side: the hero and the sign over him hide it otherwise)
-    else if (w.kind === 'dungeon' && at !== 'spawn') {
+    else if (w.kind === 'dungeon' && at === 'chest') {             // (a closed chest, the hero a few tiles below and left of it: the chests' look, 2026-11-12)
+      const c = [...w.props].filter(([k, v]) => v === 'chest' && !w.mods.get(k)?.opened).map(([k]) => k.split(',').map(Number))
+        .sort((a, b) => Math.hypot(a[0] - P.x, a[1] - P.y) - Math.hypot(b[0] - P.x, b[1] - P.y))[0];
+      globalThis.__rigAt = c ? [c[0] + 0.5, c[1] + 0.5] : null;   // (what a "crop" shot is cut round: take)
+      if (c) [x, y] = [c[0] + 0.5 - 2, c[1] + 0.5 + 2.5];
+    } else if (w.kind === 'dungeon' && at !== 'spawn') {
       const L = w.level, lv = w.roomLevels;
       const pick = typeof at === 'string' && at.startsWith('part:') ? L.rooms.find((r) => r.part === at.slice(5)) : at === 'entrance' ? L.entrance : at === 'medium' ? L.rooms.find((r) => r.size === 'medium' && r !== L.entrance && r !== L.descentRoom)
         : L.rooms.filter((r) => r !== L.entrance).sort((a, b) => (lv.get(a.id) - lv.get(b.id)) || (Math.hypot(a.cx - L.entrance.cx, a.cy - L.entrance.cy) - Math.hypot(b.cx - L.entrance.cx, b.cy - L.entrance.cy)))[0];
@@ -108,7 +113,7 @@ const PAGE = {
     return [x, y];
   },
   /** the frame drawn and taken in one task: every canvas on the page, in the page's order, onto one */
-  take() {
+  take(crop) {
     globalThis.__frame(33);
     const c = document.createElement('canvas'); c.width = innerWidth * devicePixelRatio; c.height = innerHeight * devicePixelRatio;
     const g = c.getContext('2d');
@@ -118,6 +123,12 @@ const PAGE = {
       // (the world's and the overlay's: full-screen; the party cards' small figures are the HUD's, left to `hud` shots)
       if (cv === c || st.display === 'none' || st.visibility === 'hidden' || +st.opacity === 0 || r.width * r.height < innerWidth * innerHeight * 0.5) continue;
       g.drawImage(cv, r.left * devicePixelRatio, r.top * devicePixelRatio, r.width * devicePixelRatio, r.height * devicePixelRatio);
+    }
+    const at = crop && globalThis.__rigAt && globalThis.__world3d?.probe(...globalThis.__rigAt);   // (cut round the thing stood by: "crop": [w, h] in CSS px)
+    if (at) {
+      const d = devicePixelRatio, [w, h] = crop, o = document.createElement('canvas'); o.width = w * d; o.height = h * d;
+      o.getContext('2d').drawImage(c, (at.luminati[0] - w / 2) * d, (at.luminati[1] - h * 0.6) * d, w * d, h * d, 0, 0, w * d, h * d);
+      return o.toDataURL('image/png');
     }
     return c.toDataURL('image/png');
   },
@@ -142,7 +153,7 @@ async function run(renderer) {
     await p.evaluate(PAGE.prep, [s.tod || null, s.at || 'spawn', SETTLE, s.bright || 1, s.set || {}]);
     const file = join(OUT, renderer, `${s.name}.png`);
     if (s.hud) await p.screenshot({ path: file, timeout: 300000 });
-    else await writeFile(file, Buffer.from((await p.evaluate(PAGE.take)).split(',')[1], 'base64'));
+    else await writeFile(file, Buffer.from((await p.evaluate(PAGE.take, s.crop || null)).split(',')[1], 'base64'));
     const st = flag('--stats') ? await p.evaluate(() => globalThis.__world3d?.world?.stats ?? null) : null;
     log(renderer, `${s.name}${ok ? '' : ' (not built in 2 min)'}${st ? ' ' + JSON.stringify(st) : ''}`);
   }
