@@ -99,6 +99,11 @@ What the pack does (studied from its product images; none of its art is in the r
   fullest (s 0.25, between the mouth and the nose), easing out above and below and toward the back. Measured bald from the
   front: the outline up to 8 % wider where it shows below the ears (0.644 → 0.694 of the head's height at 0.2 up); the
   ears cover its fullest. Off by default, awaiting the owner's choice. ![as now and 15 % fuller](img/faces/cheeks-compare.jpg)
+- **A wider jaw** (`jawWide`, as `cheekFat`; the owner, 2026-11-12: *"Don't change.. but show me 15% wider jaw, the
+  parts on the side of the mouth"*): the face beside the mouth and down along the jaw widened, at most 15 % at the mouth's
+  height (s 0.13), easing out above and below, the back of the head left. Measured bald from the front: the outline
+  13–14 % wider at and just below the mouth (0.574 → 0.653 of the head's height at 0.15 up, 0.487 → 0.548 at 0.1), the
+  same from the ears up. Off by default. ![as now and the jaw 15 % wider](img/faces/jaw-compare.jpg)
 - **The mask** (`faceMask`): the skull's front from 66° left to 66° right and from just above the chin to the brow line,
   a hair (0.006) proud of it, its picture's u and v across it. The eye line sits at y 0.46, the mouth at 0.18.
 - **The picture** (`facePicture`, 512 px, one per distinct face, cached): drawn on a canvas in the head's own units — the
