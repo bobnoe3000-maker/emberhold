@@ -32,7 +32,7 @@ import { campsFrom } from './camps.js';
 import { restoreCount, credit } from './lamps.js';
 import { SHRINES, shrineKind, boonsOf, restoreBoons } from './shrines.js';
 import { towerOf, restoreTower, inTower, bracketOf, BRACKETS } from './tower.js';
-import { bowlOf, settleBout, enterTourney, tourneyFoe, restoreBowl, freshBowl, companyOn, refreshPicks, teamOf, BOWL } from './bowl.js';
+import { bowlOf, settleBout, restoreBowl, freshBowl, companyOn, refreshPicks, modeOf, BOWL } from './bowl.js';
 import { makeCompany } from './rivals.js';
 import { createExpeditions } from './expeditions.js';
 import { createCoach, reachedOf, townOf, COACH } from './coach.js';
@@ -120,7 +120,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     away: null,                       // the time away being played through (offline progress, above): runtime only
     boons: { atk: 0, def: 0, hpr: 0 },   // a shrine's boon: until when on the sim's clock (shrines.js; hpr the green's, v1.84)
     tower: { wave: 0, best: 0, landing: 0, atLanding: false, satchel: { gold: 0, cinders: 0 }, won: {} },   // the Mere Tower's climb and the heirlooms won (tower.js)
-    bowl: freshBowl(),                // (v45) the Bowl: rating, marks, the day's bouts and tourney (bowl.js)
+    bowl: freshBowl(),                // (v45, v47) the Bowl: marks, the day's bouts, a ladder each for Team and Individual (bowl.js)
     trials: {},                       // class trials the company has done: { [cls]: 1 } for the 6s, { [cls + '12']: 1 } for the 12s (quests.js; skills.js unlocks)
     reached: new Set(['thornwick']),  // the towns you've stood in (coach.js): where the Guild's coach will take you
   };
@@ -353,7 +353,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   // ── the Bowl (bowl.js): a pocket trip. The world you were in is kept as it stood (its floor, its mods, where you
   // stood) while the company is on the Sand, and given back as it was; a save made there is the world you came from.
   /** @type {any} */ let away = null;                          // in the Bowl: { world, scene, site, region, depth, floors, x, y }
-  /** @type {any} */ let boutOn = null;                        // the bout as started: { kind, id, grade, rating, alone }
+  /** @type {any} */ let boutOn = null;                        // the bout as started: { mode, id, grade, rating, rd, alone }
   function boutIn(on) {
     const p = state.player;
     if (!away) {
@@ -465,39 +465,29 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     }
     if (cmd.type === 'awayStop') { if (state.away) { const done = state.away.secs - state.away.left / TICK_HZ; state.away = null; bus.emit('awayEnded', { secs: Math.round(done), stopped: true }); } return; }
     // the Mere Tower (tower.js): at a landing, climb on, or go home with Wenna and keep everything (the punt: out at the jetty)
-    // the Bowl (bowl.js, GDD §17 v1.85): a bout with one of the day's picks (the company, or the hero alone), the day's
-    // tourney entered and its next bout, and back to where you were. From the menu, from level 6, never mid-fight.
-    if (cmd.type === 'bowlOpen') { bowlOf(state); return; }                   // the board looked at: the day rolled over, its five drawn
-    if (cmd.type === 'bowlRefresh') {                                          // five new faces, three times a day
-      if (state.party[0].level < BOWL.minLevel) return;
-      if (!refreshPicks(state)) bus.emit('refused', { reason: `No more new faces today (${BOWL.refreshes} a day)` });
+    // the Bowl (bowl.js, GDD §17 v1.85, v1.88): a bout with one of the day's picks on a ladder (Team: the company;
+    // Individual: the hero alone), five new faces for gold, and back to where you were. From the menu, from level 6,
+    // never mid-fight. A bout enters you in that ladder's tourney for the day (bowl.js tourneyOf).
+    if (cmd.type === 'bowlOpen') { bowlOf(state); return; }                   // the board looked at: the day rolled over, its fives drawn
+    if (cmd.type === 'bowlRefresh') {                                          // five new faces, for 100, 250, 500 gold
+      if (!state.created || state.party[0].level < BOWL.minLevel || (cmd.mode !== 'team' && cmd.mode !== 'solo')) return;
+      const paid = refreshPicks(state, cmd.mode);
+      if (paid === 'none') bus.emit('refused', { reason: `No more new faces today (${BOWL.refreshes} a day)` });
+      else if (paid === 'gold') bus.emit('refused', { reason: 'Not enough gold for new faces' });
+      else bus.emit('countersChanged', { ...state.counters });
       return;
     }
-    if (cmd.type === 'bowlBout' || cmd.type === 'tourneyEnter' || cmd.type === 'tourneyBout') {
+    if (cmd.type === 'bowlBout') {
       const H = state.party[0], no = (reason) => bus.emit('refused', { reason });
       if (!state.created || H.level < BOWL.minLevel) { no(`The Bowl takes companies from level ${BOWL.minLevel}`); return; }
       if (battle.battle) { no('Not in the middle of a fight'); return; }
       if (H.down || H.fallen) return;
-      const b = bowlOf(state), standing = state.party.filter((m) => !m.fallen).map((m) => m.id);
-      if (cmd.type === 'bowlBout') {
-        if (!b.picks.includes(cmd.id)) { no('That company isn’t on the board'); return; }
-        if (b.paid >= BOWL.fights) { no(`That’s your ${BOWL.fights} bouts for today. The Bowl opens again tomorrow`); return; }
-        const c = companyOn(cmd.id, b.day);
-        b.paid++; b.picks = b.picks.filter((id) => id !== cmd.id);           // (one try a pairing a day; a bout walked out on is lost)
-        boutIn({ kind: 'ladder', id: c.id, grade: c.grade, rating: c.rating, rd: c.rd, alone: !!cmd.alone });
-        return;
-      }
-      if (cmd.type === 'tourneyEnter') {
-        if (b.tourney) { no('You’re in today’s tourney already'); return; }
-        const T = enterTourney(state, standing);
-        if (!T) { no('One tourney a day. The next is tomorrow'); return; }
-        bus.emit('tourney', { t: 'entered', slots: [...T.slots] });
-        return;
-      }
-      const T = b.tourney, foe = tourneyFoe(T);
-      if (!T || !foe) return;
-      if ([...standing].sort().join() !== [...T.company].sort().join()) { no('Your company is locked for the tourney: field the company you entered with'); return; }
-      boutIn({ kind: 'tourney', id: foe, grade: teamOf(foe).grade, rating: T.ratings[foe] ?? companyOn(foe, T.day).rating, rd: companyOn(foe, T.day).rd, alone: false });
+      const b = bowlOf(state), mode = modeOf(cmd.mode === undefined && cmd.alone ? 'solo' : cmd.mode), L = b[mode];   // (`alone`: v1.85's word for the hero alone)
+      if (!L.picks.includes(cmd.id)) { no(mode === 'solo' ? 'That hero isn’t on the board' : 'That company isn’t on the board'); return; }
+      if (b.paid >= BOWL.fights) { no(`That’s your ${BOWL.fights} bouts for today. The Bowl opens again tomorrow`); return; }
+      const c = companyOn(cmd.id, b.day, mode);
+      b.paid++; L.picks = L.picks.filter((id) => id !== cmd.id);           // (one try a player a day on a ladder; a bout walked out on is lost)
+      boutIn({ mode, id: c.id, grade: c.grade, rating: c.rating, rd: c.rd, alone: mode === 'solo' });
       return;
     }
     if (cmd.type === 'bowlLeave') { leaveBowl(); return; }

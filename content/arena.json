@@ -1,5 +1,5 @@
 {
-  "_note": "The Bowl's hundred companies (GDD §17 v1.85, world doc v1.44 §3.9, docs/bowl-arena-proposal.md §4). Authored text only: names, homes, banners, manners, members and the Crier's lines. Their strength (level, kit, build) is rolled by src/sim/rivals.js from a seed; their grade and rating by src/sim/bowl.js. Ids are API (saves keep them).",
+  "_note": "The Bowl's hundred companies (GDD §17 v1.85, world doc v1.44 §3.9, docs/bowl-arena-proposal.md §4). Authored text only: names, the player each company stands for (made up until other players' companies take their places; the board shows the player, GDD v1.88), homes, banners, manners, members and the Crier's lines. Their strength (level, kit, build) is rolled by src/sim/rivals.js from a seed; their grade and rating by src/sim/bowl.js. Ids are API (saves keep them).",
   "crier": {
     "call": "Sand's raked. Steel's out. Fight!",
     "won": "Your bout. The sun saw it.",
@@ -34,6 +34,7 @@
     {
       "id": "widow_brack",
       "name": "The Widow Brack's Three",
+      "player": "Tamsin Tallis",
       "home": "Saltmere",
       "manner": "wall",
       "banner": [
@@ -61,6 +62,7 @@
     {
       "id": "coalbrook_boys",
       "name": "The Coalbrook Boys",
+      "player": "Kestrel Bellweather",
       "home": "Ashgate",
       "manner": "brawlers",
       "banner": [
@@ -89,6 +91,7 @@
     {
       "id": "hesks_cousins",
       "name": "Hesk's Cousins",
+      "player": "Mabon Tallis",
       "home": "Tollhaven",
       "manner": "stalkers",
       "banner": [
@@ -116,6 +119,7 @@
     {
       "id": "lantern_lads",
       "name": "The Lantern Lads",
+      "player": "Garrick Crane",
       "home": "the Lamphall",
       "manner": "balanced",
       "banner": [
@@ -143,6 +147,7 @@
     {
       "id": "mabrys_mudlarks",
       "name": "Mabry's Mudlarks",
+      "player": "Aldous Ingram",
       "home": "Saltmere",
       "manner": "stalkers",
       "banner": [
@@ -170,6 +175,7 @@
     {
       "id": "ninth_irregulars",
       "name": "The Ninth Milestone Irregulars",
+      "player": "Fenn Coldharbour",
       "home": "Thornwick",
       "manner": "balanced",
       "banner": [
@@ -197,6 +203,7 @@
     {
       "id": "orlas_penitents",
       "name": "Sister Orla's Penitents",
+      "player": "Gideon Gorse",
       "home": "Thornwick",
       "manner": "wall",
       "banner": [
@@ -224,6 +231,7 @@
     {
       "id": "ember_choir",
       "name": "The Ember Choir",
+      "player": "Hesper",
       "home": "Ashgate",
       "manner": "spellbinders",
       "banner": [
@@ -251,6 +259,7 @@
     {
       "id": "reedcutters",
       "name": "The Reed-Cutters' Lot",
+      "player": "Silas Gorse",
       "home": "Saltmere",
       "manner": "brawlers",
       "banner": [
@@ -279,6 +288,7 @@
     {
       "id": "pellams_men",
       "name": "Lord Pellam's Men",
+      "player": "Bram Gorse",
       "home": "Thornwick",
       "manner": "balanced",
       "banner": [
@@ -307,6 +317,7 @@
     {
       "id": "slagg_hammers",
       "name": "Slagg's Hammers",
+      "player": "Cato Holt",
       "home": "Ashgate",
       "manner": "brawlers",
       "banner": [
@@ -334,6 +345,7 @@
     {
       "id": "quiet_company",
       "name": "The Quiet Company",
+      "player": "Lark Elm",
       "home": "Tollhaven",
       "manner": "stalkers",
       "banner": [
@@ -362,6 +374,7 @@
     {
       "id": "archive_wardens",
       "name": "The Archive Wardens",
+      "player": "Della Morrow",
       "home": "the Lamphall",
       "manner": "spellbinders",
       "banner": [
@@ -389,6 +402,7 @@
     {
       "id": "greywater_hedge",
       "name": "The Greywater Hedge",
+      "player": "ironwren",
       "home": "Saltmere",
       "manner": "wall",
       "banner": [
@@ -416,6 +430,7 @@
     {
       "id": "drovers",
       "name": "The Drovers",
+      "player": "Tamsin Vane",
       "home": "Thornwick",
       "manner": "brawlers",
       "banner": [
@@ -444,6 +459,7 @@
     {
       "id": "candlemakers",
       "name": "The Candlemakers' Guild",
+      "player": "Nell Brook",
       "home": "the Lamphall",
       "manner": "balanced",
       "banner": [
@@ -471,6 +487,7 @@
     {
       "id": "breakwater",
       "name": "The Breakwater",
+      "player": "Gideon Marsh",
       "home": "Tollhaven",
       "manner": "wall",
       "banner": [
@@ -498,6 +515,7 @@
     {
       "id": "kilnfolk",
       "name": "The Kilnfolk",
+      "player": "Rook Lowe",
       "home": "Ashgate",
       "manner": "spellbinders",
       "banner": [
@@ -525,6 +543,7 @@
     {
       "id": "foxes",
       "name": "The Rookstead Foxes",
+      "player": "Jessamy Reed",
       "home": "Rookstead",
       "manner": "stalkers",
       "banner": [
@@ -553,6 +572,7 @@
     {
       "id": "lucky_seven",
       "name": "The Lucky Seven",
+      "player": "Wren Kettle",
       "home": "Tollhaven",
       "manner": "balanced",
       "banner": [
@@ -580,6 +600,7 @@
     {
       "id": "frost_wardens",
       "name": "The Frost Wardens",
+      "player": "Gwen Fetch",
       "home": "Frosthold",
       "manner": "spellbinders",
       "banner": [
@@ -607,6 +628,7 @@
     {
       "id": "gravediggers",
       "name": "The Gravediggers' Union",
+      "player": "Brannoc Stoat",
       "home": "Thornwick",
       "manner": "wall",
       "banner": [
@@ -634,6 +656,7 @@
     {
       "id": "sun_dogs",
       "name": "The Sun Dogs",
+      "player": "Hollis",
       "home": "the Lamphall",
       "manner": "brawlers",
       "banner": [
@@ -662,6 +685,7 @@
     {
       "id": "greenwood_kith",
       "name": "The Greenwood Kith",
+      "player": "Brisa",
       "home": "Rookstead",
       "manner": "balanced",
       "banner": [
@@ -690,6 +714,7 @@
     {
       "id": "tallow_twelve",
       "name": "The Tallow Twelve",
+      "player": "Osric Dunmore",
       "home": "the Lamphall",
       "manner": "balanced",
       "banner": [
@@ -715,6 +740,7 @@
     {
       "id": "brackwater_eels",
       "name": "The Brackwater Eels",
+      "player": "Hesper Gorse",
       "home": "Saltmere",
       "manner": "stalkers",
       "banner": [
@@ -741,6 +767,7 @@
     {
       "id": "cinder_wives",
       "name": "The Cinder Wives",
+      "player": "Tamsin",
       "home": "Ashgate",
       "manner": "spellbinders",
       "banner": [
@@ -766,6 +793,7 @@
     {
       "id": "tollgate_toughs",
       "name": "The Tollgate Toughs",
+      "player": "Ivo Underhill",
       "home": "Tollhaven",
       "manner": "brawlers",
       "banner": [
@@ -792,6 +820,7 @@
     {
       "id": "rookstead_rooks",
       "name": "The Rookstead Rooks",
+      "player": "Kestrel Hale",
       "home": "Rookstead",
       "manner": "balanced",
       "banner": [
@@ -817,6 +846,7 @@
     {
       "id": "vale_hands",
       "name": "The Hollow Vale Hands",
+      "player": "Silas Brook",
       "home": "Thornwick",
       "manner": "balanced",
       "banner": [
@@ -842,6 +872,7 @@
     {
       "id": "lock_keepers",
       "name": "The Lock-Keepers",
+      "player": "Ivo Coldharbour",
       "home": "Saltmere",
       "manner": "wall",
       "banner": [
@@ -867,6 +898,7 @@
     {
       "id": "slagside_sisters",
       "name": "The Slagside Sisters",
+      "player": "Cato",
       "home": "Ashgate",
       "manner": "wall",
       "banner": [
@@ -892,6 +924,7 @@
     {
       "id": "harbour_watch",
       "name": "The Harbour Watch",
+      "player": "Aldous",
       "home": "Tollhaven",
       "manner": "wall",
       "banner": [
@@ -917,6 +950,7 @@
     {
       "id": "white_wolves",
       "name": "The White Wolves",
+      "player": "Orrin Bellweather",
       "home": "Frosthold",
       "manner": "brawlers",
       "banner": [
@@ -943,6 +977,7 @@
     {
       "id": "snowblind",
       "name": "The Snowblind",
+      "player": "Odo Vane",
       "home": "Frosthold",
       "manner": "stalkers",
       "banner": [
@@ -968,6 +1003,7 @@
     {
       "id": "cairn_keepers",
       "name": "The Cairn-Keepers",
+      "player": "Wren Elm",
       "home": "Frosthold",
       "manner": "wall",
       "banner": [
@@ -993,6 +1029,7 @@
     {
       "id": "lamplighters",
       "name": "The Lamplighters",
+      "player": "Ottilie Gorse",
       "home": "the Lamphall",
       "manner": "spellbinders",
       "banner": [
@@ -1018,6 +1055,7 @@
     {
       "id": "breach_menders",
       "name": "The Breach-Menders",
+      "player": "Orrin Yarrow",
       "home": "the Lamphall",
       "manner": "wall",
       "banner": [
@@ -1043,6 +1081,7 @@
     {
       "id": "exchange_men",
       "name": "The Exchange Men",
+      "player": "Wenna Kettle",
       "home": "the Lamphall",
       "manner": "stalkers",
       "banner": [
@@ -1069,6 +1108,7 @@
     {
       "id": "crossed_keys",
       "name": "The Crossed Keys Regulars",
+      "player": "Thea",
       "home": "Thornwick",
       "manner": "brawlers",
       "banner": [
@@ -1094,6 +1134,7 @@
     {
       "id": "mule_back_room",
       "name": "The Tired Mule's Back Room",
+      "player": "Thea Holt",
       "home": "Thornwick",
       "manner": "balanced",
       "banner": [
@@ -1119,6 +1160,7 @@
     {
       "id": "thornwick_millers",
       "name": "The Thornwick Millers",
+      "player": "Wren Lindqvist",
       "home": "Thornwick",
       "manner": "brawlers",
       "banner": [
@@ -1145,6 +1187,7 @@
     {
       "id": "hill_shepherds",
       "name": "The Hill Shepherds",
+      "player": "old_maddox",
       "home": "Thornwick",
       "manner": "stalkers",
       "banner": [
@@ -1171,6 +1214,7 @@
     {
       "id": "barrow_wardens",
       "name": "The Barrow Wardens",
+      "player": "Emrys Ingram",
       "home": "Thornwick",
       "manner": "wall",
       "banner": [
@@ -1196,6 +1240,7 @@
     {
       "id": "hen_thieves",
       "name": "The Hen-Thieves",
+      "player": "Kit Stoat",
       "home": "Thornwick",
       "manner": "stalkers",
       "banner": [
@@ -1221,6 +1266,7 @@
     {
       "id": "fen_lanterns",
       "name": "The Fen Lanterns",
+      "player": "Tobin Lindqvist",
       "home": "Saltmere",
       "manner": "spellbinders",
       "banner": [
@@ -1246,6 +1292,7 @@
     {
       "id": "punt_poles",
       "name": "The Punt-Poles",
+      "player": "Bram",
       "home": "Saltmere",
       "manner": "brawlers",
       "banner": [
@@ -1272,6 +1319,7 @@
     {
       "id": "salt_rakers",
       "name": "The Salt-Rakers",
+      "player": "Fable Pell",
       "home": "Saltmere",
       "manner": "brawlers",
       "banner": [
@@ -1297,6 +1345,7 @@
     {
       "id": "reed_choir",
       "name": "The Reed Choir",
+      "player": "Liesl Bellweather",
       "home": "Saltmere",
       "manner": "spellbinders",
       "banner": [
@@ -1322,6 +1371,7 @@
     {
       "id": "eel_wives",
       "name": "The Eel-Wives",
+      "player": "Rook Quarrender",
       "home": "Saltmere",
       "manner": "balanced",
       "banner": [
@@ -1347,6 +1397,7 @@
     {
       "id": "forgeborn",
       "name": "The Forgeborn",
+      "player": "Della Jessop",
       "home": "Ashgate",
       "manner": "brawlers",
       "banner": [
@@ -1373,6 +1424,7 @@
     {
       "id": "bellows_gang",
       "name": "The Bellows Gang",
+      "player": "Ruthven Yarrow",
       "home": "Ashgate",
       "manner": "brawlers",
       "banner": [
@@ -1399,6 +1451,7 @@
     {
       "id": "assayers",
       "name": "The Assayers",
+      "player": "Orrin Elm",
       "home": "Ashgate",
       "manner": "balanced",
       "banner": [
@@ -1424,6 +1477,7 @@
     {
       "id": "cold_seam",
       "name": "The Cold Seam Company",
+      "player": "Saffie Wick",
       "home": "Ashgate",
       "manner": "stalkers",
       "banner": [
@@ -1450,6 +1504,7 @@
     {
       "id": "the_crucible",
       "name": "The Crucible",
+      "player": "Isabeau Underhill",
       "home": "Ashgate",
       "manner": "spellbinders",
       "banner": [
@@ -1475,6 +1530,7 @@
     {
       "id": "ore_cart_boys",
       "name": "The Ore-Cart Boys",
+      "player": "rakehell",
       "home": "Ashgate",
       "manner": "brawlers",
       "banner": [
@@ -1500,6 +1556,7 @@
     {
       "id": "tide_clerks",
       "name": "The Tide-Clerks",
+      "player": "quietpike",
       "home": "Tollhaven",
       "manner": "spellbinders",
       "banner": [
@@ -1525,6 +1582,7 @@
     {
       "id": "admiralty_reserve",
       "name": "The Admiralty Reserve",
+      "player": "Garrick Fairweather",
       "home": "Tollhaven",
       "manner": "balanced",
       "banner": [
@@ -1550,6 +1608,7 @@
     {
       "id": "quay_rats",
       "name": "The Quay Rats",
+      "player": "the_ninth",
       "home": "Tollhaven",
       "manner": "stalkers",
       "banner": [
@@ -1576,6 +1635,7 @@
     {
       "id": "customs_house",
       "name": "The Customs House",
+      "player": "Osric Morrow",
       "home": "Tollhaven",
       "manner": "wall",
       "banner": [
@@ -1601,6 +1661,7 @@
     {
       "id": "net_menders",
       "name": "The Net-Menders",
+      "player": "Osric Quarrender",
       "home": "Tollhaven",
       "manner": "balanced",
       "banner": [
@@ -1626,6 +1687,7 @@
     {
       "id": "harbour_bells",
       "name": "The Harbour Bells",
+      "player": "bellringer",
       "home": "Tollhaven",
       "manner": "spellbinders",
       "banner": [
@@ -1651,6 +1713,7 @@
     {
       "id": "green_men",
       "name": "The Green Men",
+      "player": "Brannoc",
       "home": "Rookstead",
       "manner": "wall",
       "banner": [
@@ -1676,6 +1739,7 @@
     {
       "id": "the_blackthorn",
       "name": "The Blackthorn",
+      "player": "Nan Crane",
       "home": "Rookstead",
       "manner": "stalkers",
       "banner": [
@@ -1701,6 +1765,7 @@
     {
       "id": "charcoal_burners",
       "name": "The Charcoal Burners",
+      "player": "Elspeth",
       "home": "Rookstead",
       "manner": "brawlers",
       "banner": [
@@ -1727,6 +1792,7 @@
     {
       "id": "mistletoe_sisters",
       "name": "The Mistletoe Sisters",
+      "player": "Garrick Underhill",
       "home": "Rookstead",
       "manner": "spellbinders",
       "banner": [
@@ -1752,6 +1818,7 @@
     {
       "id": "woodwards",
       "name": "The Woodwards",
+      "player": "Fenn Yarrow",
       "home": "Rookstead",
       "manner": "balanced",
       "banner": [
@@ -1777,6 +1844,7 @@
     {
       "id": "acorn_lot",
       "name": "The Acorn Lot",
+      "player": "mudlark77",
       "home": "Rookstead",
       "manner": "brawlers",
       "banner": [
@@ -1803,6 +1871,7 @@
     {
       "id": "ice_choir",
       "name": "The Ice Choir",
+      "player": "sandfox",
       "home": "Frosthold",
       "manner": "spellbinders",
       "banner": [
@@ -1828,6 +1897,7 @@
     {
       "id": "high_pass",
       "name": "The High Pass Company",
+      "player": "Brannoc Coldharbour",
       "home": "Frosthold",
       "manner": "balanced",
       "banner": [
@@ -1853,6 +1923,7 @@
     {
       "id": "the_avalanche",
       "name": "The Avalanche",
+      "player": "Marrow Stoat",
       "home": "Frosthold",
       "manner": "brawlers",
       "banner": [
@@ -1878,6 +1949,7 @@
     {
       "id": "hearth_guard",
       "name": "The Hearth Guard",
+      "player": "Cato Pell",
       "home": "Frosthold",
       "manner": "wall",
       "banner": [
@@ -1903,6 +1975,7 @@
     {
       "id": "sledge_drivers",
       "name": "The Sledge-Drivers",
+      "player": "Gideon Ashdown",
       "home": "Frosthold",
       "manner": "balanced",
       "banner": [
@@ -1928,6 +2001,7 @@
     {
       "id": "throne_watchers",
       "name": "The Throne-Watchers",
+      "player": "Ruthven Reed",
       "home": "Frosthold",
       "manner": "stalkers",
       "banner": [
@@ -1954,6 +2028,7 @@
     {
       "id": "the_copyists",
       "name": "The Copyists",
+      "player": "Aldous Blackwood",
       "home": "the Lamphall",
       "manner": "spellbinders",
       "banner": [
@@ -1979,6 +2054,7 @@
     {
       "id": "tenement_lads",
       "name": "The Tenement Lads",
+      "player": "Nan Underhill",
       "home": "the Lamphall",
       "manner": "brawlers",
       "banner": [
@@ -2005,6 +2081,7 @@
     {
       "id": "aqueduct_rats",
       "name": "The Aqueduct Rats",
+      "player": "Jessamy Wick",
       "home": "the Lamphall",
       "manner": "stalkers",
       "banner": [
@@ -2031,6 +2108,7 @@
     {
       "id": "beacon_keepers",
       "name": "The Beacon-Keepers",
+      "player": "Liesl Marsh",
       "home": "the Lamphall",
       "manner": "wall",
       "banner": [
@@ -2056,6 +2134,7 @@
     {
       "id": "mere_fishers",
       "name": "The Mere Fishers",
+      "player": "Mabon Fetch",
       "home": "the Lamphall",
       "manner": "balanced",
       "banner": [
@@ -2081,6 +2160,7 @@
     {
       "id": "temple_bells",
       "name": "The Temple Bells",
+      "player": "Bram Brook",
       "home": "Thornwick",
       "manner": "wall",
       "banner": [
@@ -2106,6 +2186,7 @@
     {
       "id": "thornwick_watch",
       "name": "The Thornwick Watch",
+      "player": "Lark Blackwood",
       "home": "Thornwick",
       "manner": "balanced",
       "banner": [
@@ -2131,6 +2212,7 @@
     {
       "id": "brewers_lot",
       "name": "The Brewers' Lot",
+      "player": "Tamsin Coldharbour",
       "home": "Thornwick",
       "manner": "brawlers",
       "banner": [
@@ -2157,6 +2239,7 @@
     {
       "id": "saltmere_tanners",
       "name": "The Saltmere Tanners",
+      "player": "Rook",
       "home": "Saltmere",
       "manner": "brawlers",
       "banner": [
@@ -2182,6 +2265,7 @@
     {
       "id": "ferry_folk",
       "name": "The Ferry Folk",
+      "player": "Ottilie",
       "home": "Saltmere",
       "manner": "balanced",
       "banner": [
@@ -2207,6 +2291,7 @@
     {
       "id": "pickling_sisters",
       "name": "The Pickling Sisters",
+      "player": "Ivo Stoat",
       "home": "Saltmere",
       "manner": "wall",
       "banner": [
@@ -2232,6 +2317,7 @@
     {
       "id": "smelters_union",
       "name": "The Smelters' Union",
+      "player": "Fable Ashdown",
       "home": "Ashgate",
       "manner": "wall",
       "banner": [
@@ -2257,6 +2343,7 @@
     {
       "id": "furnace_hounds",
       "name": "The Furnace Hounds",
+      "player": "Fenn Pell",
       "home": "Ashgate",
       "manner": "stalkers",
       "banner": [
@@ -2282,6 +2369,7 @@
     {
       "id": "cartwrights",
       "name": "The Cartwrights",
+      "player": "Ivo Vane",
       "home": "Tollhaven",
       "manner": "brawlers",
       "banner": [
@@ -2308,6 +2396,7 @@
     {
       "id": "lighthouse_three",
       "name": "The Lighthouse Three",
+      "player": "Gwen Reed",
       "home": "Tollhaven",
       "manner": "spellbinders",
       "banner": [
@@ -2333,6 +2422,7 @@
     {
       "id": "the_bargemen",
       "name": "The Bargemen",
+      "player": "Orrin Fetch",
       "home": "Tollhaven",
       "manner": "brawlers",
       "banner": [
@@ -2359,6 +2449,7 @@
     {
       "id": "owl_wives",
       "name": "The Owl-Wives",
+      "player": "Lark Reed",
       "home": "Rookstead",
       "manner": "spellbinders",
       "banner": [
@@ -2384,6 +2475,7 @@
     {
       "id": "the_poachers",
       "name": "The Poachers",
+      "player": "Juno",
       "home": "Rookstead",
       "manner": "stalkers",
       "banner": [
@@ -2410,6 +2502,7 @@
     {
       "id": "the_verderers",
       "name": "The Verderers",
+      "player": "Fable",
       "home": "Rookstead",
       "manner": "balanced",
       "banner": [
@@ -2435,6 +2528,7 @@
     {
       "id": "the_goatherds",
       "name": "The Goatherds",
+      "player": "grimble",
       "home": "Frosthold",
       "manner": "brawlers",
       "banner": [
@@ -2460,6 +2554,7 @@
     {
       "id": "the_rime",
       "name": "The Rime",
+      "player": "saltbeard",
       "home": "Frosthold",
       "manner": "spellbinders",
       "banner": [
@@ -2485,6 +2580,7 @@
     {
       "id": "old_soldiers",
       "name": "The Old Soldiers",
+      "player": "Ottilie Brook",
       "home": "Thornwick",
       "manner": "wall",
       "banner": [
@@ -2510,6 +2606,7 @@
     {
       "id": "last_orders",
       "name": "Last Orders",
+      "player": "emberkid",
       "home": "Thornwick",
       "manner": "balanced",
       "banner": [
@@ -2535,6 +2632,7 @@
     {
       "id": "the_ninepins",
       "name": "The Ninepins",
+      "player": "Maud Fetch",
       "home": "the Lamphall",
       "manner": "balanced",
       "banner": [
@@ -2560,6 +2658,7 @@
     {
       "id": "ash_sparrows",
       "name": "The Ash Sparrows",
+      "player": "Maud Ingram",
       "home": "Ashgate",
       "manner": "stalkers",
       "banner": [
@@ -2586,6 +2685,7 @@
     {
       "id": "the_damp",
       "name": "The Damp",
+      "player": "Thea Hale",
       "home": "Saltmere",
       "manner": "wall",
       "banner": [

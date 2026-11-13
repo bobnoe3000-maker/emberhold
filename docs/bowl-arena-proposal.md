@@ -290,7 +290,7 @@ Whichever is chosen, building it means: the Sand as one outdoor room (the plan's
 in by a gate in the wall), daylight and a sky in place of the dungeon's dark (an outdoor scene, as the overland is lit), the
 kit pieces in `tools/actor-lab/buildkit.js` or Luminati's world layer, and the crowd as a cheap instanced layer.
 
-## 13. The board cleaned up: a mockup (2026-11-13, for the owner to approve)
+## 13. The board cleaned up: a mockup (2026-11-13; approved, implemented: GDD v1.88)
 
 The owner: *"Arena/tournament - let's clean up and improve the UI. At the top - first tab choices - are Team vs
 Individual. Sub tabs are 'challenge' - was the board and 'rankings' - was standings. Entering a fight automatically
@@ -316,7 +316,16 @@ Source: `tools/arena-spike/board-mockup.html` (open it in a browser; not the gam
 - **Individual:** the same board, your hero alone against theirs, one class and level a card.
 - **Rankings:** the top five and the players round you, you highlighted; Overall, Today's tourney, your level bracket.
 
-To settle before it's built (the mockup shows the first choice in each):
+**Implemented** (the owner: *"mockup looks good - implement"*), with the first choice in each of the three below:
+`src/sim/bowl.js` (MODES, the two leagues, refreshPicks for gold, tourneyOf / tourneyTable / purseFor, restoreBowl's
+v46 read), `src/sim/core.js` (bowlRefresh and bowlBout by `mode`; tourneyEnter and tourneyBout gone), `src/ui/bowl.js`,
+`content/arena.json` (`player`), save v47, `test/bowl.test.mjs`. Two differences from the picture: the Rankings' third
+filter, *Bracket*, is left out while every rival is made at your level (it would list the same players), and a fought
+card stays on the board greyed only until new faces are drawn.
+
+![The board in the game](./img/ui/bowl-board-2026-11-13b.jpg)
+
+Settled (the first choice in each, as the mockup showed):
 
 1. **One rating or two?** Team and Individual each with their own rating and rank (shown: 1214 and 1176), or one.
 2. **The tourney without its rounds:** everyone who fights that day is in it, placed by the day's wins (then the

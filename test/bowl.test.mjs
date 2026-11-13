@@ -11,7 +11,7 @@ import { statsFor } from '../src/sim/party.js';
 import { DAY_S } from '../src/sim/heroes.js';
 import { BOUT, ccTime } from '../src/sim/battle.js';
 import { ROSTER, ROSTER_IDS, makeCompany, GRADES } from '../src/sim/rivals.js';
-import { BOWL, picksOf, bracketOf, rate, expected, restoreBowl, companyOn, fieldOn, teamOf } from '../src/sim/bowl.js';
+import { BOWL, picksOf, bracketOf, rate, expected, restoreBowl, companyOn, fieldOn, teamOf, tourneyOf, purseFor } from '../src/sim/bowl.js';
 import { PLANS, checkPlan } from '../src/sim/plans.js';
 
 const SEED = 20260807;
@@ -38,7 +38,7 @@ test('the roster: its words (content) and its make-up (rivals.js) in step, every
     assert.deepEqual(row.slice(1).map((t) => t.split(':')[0]), c.members.map((m) => m.cls), c.id);
   }
   assert.ok(ROSTER_IDS.includes('widow_brack') && ROSTER_IDS.includes('coalbrook_boys') && ROSTER_IDS.includes('hesks_cousins'), 'canon\'s three');
-  assert.ok(ROSTER_IDS.length >= BOWL.field, 'enough for a tourney');
+  assert.equal(new Set(arena.companies.map((c) => c.player)).size, arena.companies.length, 'each company a player of its own name (made up for now, v1.88)');
 });
 
 test('the Sand (v1.88, the Quarry Ring): one space, to the plan rules, open from wall to wall; no chest, no shrine; the gate in its north face', () => {
@@ -76,7 +76,7 @@ test('a bout through the commands: from level 6, the day\'s picks only, never mi
   assert.equal(ev.result.length, 1); const r = ev.result[0];
   assert.ok(['won', 'lost', 'draw'].includes(r.how));
   assert.equal(r.marks, r.how === 'won' ? GRADES[pick.grade].marks : 1);
-  assert.equal(s.state.bowl.marks, r.marks); assert.equal(s.state.bowl.paid, 1); assert.deepEqual(s.state.bowl.fought, [pick.id]);
+  assert.equal(s.state.bowl.marks, r.marks); assert.equal(s.state.bowl.paid, 1); assert.deepEqual(s.state.bowl.team.fought, [pick.id]); assert.equal(r.mode, 'team');
   assert.deepEqual(hpOut, cameIn, 'leaves with the HP it came in with');
   assert.ok(s.state.party.every((m) => !m.down && !m.fallen), 'nobody Fallen in the Bowl');
   assert.equal(s.state.counters.gold, gold0); assert.deepEqual(s.state.party.map((m) => m.xp), xp0); assert.equal(s.state.bag.length, bag0, 'no gold, XP or loot');
@@ -95,38 +95,41 @@ test('walking out through the gate after a bout gives the world back, never the 
   assert.equal(s.world.site, at.site); assert.equal(s.state.scene, at.scene);
 });
 
-test('the hero alone: one against one, the companions watch; a save in the Bowl is the world you came from', () => {
+test('Individual: the hero alone against a player\'s hero, on a ladder of its own; the companions watch; a save in the Bowl is the world you came from', () => {
   const s = company(8), ev = events(s);
-  const pick = picksOf(s.state)[0];
-  s.commands.push({ type: 'bowlBout', id: pick.id, alone: true }); s.tick();
+  const solo = picksOf(s.state, 'solo'), team = picksOf(s.state, 'team');
+  assert.equal(solo.length, BOWL.picks); assert.notDeepEqual(solo.map((c) => c.rating), team.map((c) => c.rating), 'a board and a league of its own');
+  s.commands.push({ type: 'bowlBout', id: team.find((c) => !solo.some((o) => o.id === c.id)).id, mode: 'solo' }); s.tick();
+  assert.ok(!s.battle && ev.refused.length === 1, 'only from its own board');
+  const pick = solo[0];
+  s.commands.push({ type: 'bowlBout', id: pick.id, mode: 'solo' }); s.tick();
   const B = s.battle.bout;
   assert.ok(B.alone && B.ours.length === 1 && B.ours[0] === s.state.party[0] && B.rivals.length === 1);
   for (let i = 0; i < 20 * 10; i++) s.tick();
   assert.ok(s.state.party.slice(1).every((m) => m.hp === statsFor(m).maxHp), 'the companions take no part');
   const snap = s.snapshot();
   assert.equal(snap.scene, 'town'); assert.notEqual(snap.site, 'bowl');
-  run(s); assert.equal(ev.result.length, 1); assert.ok(ev.result[0].alone);
+  run(s); assert.equal(ev.result.length, 1); assert.ok(ev.result[0].alone && ev.result[0].mode === 'solo');
+  const b = s.state.bowl; assert.notEqual(b.solo.r, BOWL.start, 'its rating moved'); assert.equal(b.team.r, BOWL.start, 'the company\'s not');
+  assert.deepEqual(b.solo.fought, [pick.id]); assert.equal(b.paid, 1, 'the ten a day shared');
 });
 
-test('the day\'s tourney: once a day, eight companies, the company locked, the purse by the round reached', () => {
-  const s = company(9), ev = events(s);
-  s.commands.push({ type: 'tourneyEnter' }); s.tick();
-  const T = s.state.bowl.tourney;
-  assert.equal(T.slots.length, 8); assert.ok(T.slots.includes('you'));
-  s.commands.push({ type: 'tourneyEnter' }); s.tick();
-  assert.ok(ev.refused.length === 1, 'once a day');
-  const hire = s.state.party.pop();                              // (a member left behind: the company isn't the one entered)
-  s.commands.push({ type: 'tourneyBout' }); s.tick();
-  assert.ok(!s.battle && ev.refused.at(-1).includes('locked'));
-  s.state.party.push(hire);
-  let rounds = 0;
-  while (s.state.bowl.tourney && rounds < 4) { s.commands.push({ type: 'tourneyBout' }); s.tick(); assert.ok(s.battle && s.battle.bout); run(s); rounds++; }
-  const last = ev.result.at(-1), purse = last.champion ? 16 : BOWL.purse[last.round];
-  assert.equal(last.purse, purse); assert.equal(s.state.bowl.lastTourney.purse, purse);
-  assert.equal(s.state.bowl.marks, ev.result.reduce((a, r) => a + r.marks, 0) + purse, 'tourney bouts pay only the purse');
-  s.state.t += DAY_S;                                           // a new day: a new tourney
-  s.commands.push({ type: 'tourneyEnter' }); s.tick();
-  assert.ok(s.state.bowl.tourney && s.state.bowl.tourney.day === Math.floor(s.state.t / DAY_S));
+// (v1.88, the owner: "Entering a fight automatically registers you for the Tourney")
+test('the day\'s tourney: a bout enters you, placed among the hundred by the day\'s wins; paid by place at the day\'s end', () => {
+  const s = company(9), ev = events(s), b = s.state.bowl;
+  assert.ok(!tourneyOf(b, 'team').in, 'not before a bout');
+  for (let n = 0; n < 2; n++) { s.commands.push({ type: 'bowlBout', id: picksOf(s.state)[0].id }); s.tick(); run(s); }
+  const T = tourneyOf(b, 'team');
+  assert.ok(T.in && T.w + T.l + T.d === 2 && T.of === 101 && T.place >= 1 && T.place <= 101);
+  assert.equal(ev.result.at(-1).place, T.place);
+  assert.ok(!tourneyOf(b, 'solo').in, 'a ladder\'s own');
+  const marks = b.marks, day = b.day;
+  s.state.t += DAY_S; s.commands.push({ type: 'bowlOpen' }); s.tick();
+  assert.equal(b.lastTourney.day, day); assert.equal(b.lastTourney.team.place, T.place); assert.equal(b.lastTourney.solo, null);
+  assert.equal(b.marks, marks + purseFor(T.place), 'the purse by place');
+  assert.ok(!tourneyOf(b, 'team').in, 'a new day, a new tourney');
+  assert.equal(purseFor(1), 16); assert.equal(purseFor(3), 10); assert.equal(purseFor(8), 6); assert.equal(purseFor(16), 3); assert.equal(purseFor(17), 0);
+  for (const cmd of ['tourneyEnter', 'tourneyBout']) { s.commands.push({ type: cmd }); s.tick(); assert.ok(!s.battle, `${cmd}: gone`); }
 });
 
 test('the bout\'s rules: crowd control halved and healing at 0.75 on a company\'s member; blows at 0.5; ordinary fights untouched', () => {
@@ -144,43 +147,53 @@ test('the rating: Glicko, a win up and a loss down, more for an upset; companies
   assert.ok(c.every((m) => m.level === 9 && m.gear.weapon.r === GRADES.champion.rarity && m.gear.weapon.up === GRADES.champion.up && m.rival === undefined), 'a champion\'s kit at the hero\'s level');
 });
 
-test('the record saved (v45) and cleaned on load', () => {
+test('the record saved (v47) and cleaned on load; a v46 record is the Team ladder\'s', () => {
   const s = company(7); const pick = picksOf(s.state)[0];
   s.commands.push({ type: 'bowlBout', id: pick.id }); s.tick(); run(s);
   const snap = JSON.parse(JSON.stringify(s.snapshot()));
   const t = createSim(SEED); t.restore(snap);
   assert.deepEqual(t.state.bowl, s.state.bowl);
-  assert.deepEqual(restoreBowl({ r: 'x', fought: ['widow_brack', 'nobody'], marks: -4 }).fought, ['widow_brack']);
-  assert.equal(restoreBowl({ marks: -4 }).marks, 0); assert.equal(restoreBowl(null).r, BOWL.start);
+  assert.deepEqual(restoreBowl({ team: { r: 'x', fought: ['widow_brack', 'nobody'] }, marks: -4 }).team.fought, ['widow_brack']);
+  assert.equal(restoreBowl({ marks: -4 }).marks, 0); assert.equal(restoreBowl(null).team.r, BOWL.start);
+  const v46 = restoreBowl({ r: 1320, rd: 90, won: 5, lost: 2, drawn: 1, marks: 20, day: 3, paid: 4, fought: ['widow_brack'], picks: ['widow_brack'], refresh: 1, tourney: { day: 3, round: 2, slots: [], company: [], ratings: {} } });
+  assert.deepEqual([v46.team.r, v46.team.rd, v46.team.won, v46.team.lost, v46.team.drawn], [1320, 90, 5, 2, 1]);
+  assert.equal(v46.solo.r, BOWL.start); assert.equal(v46.marks, 30, 'the open tourney paid as it stood (the semi-final: 10)'); assert.equal(v46.day, -1, 'the boards drawn afresh');
 });
 
-test('the board: five near your rating, easiest first; three new draws a day, then no more; a new day, a new five', () => {
+// (v1.88, the owner: "New faces - cost is gold to refresh - 100, 250 and 500 for refresh 1-3")
+test('the board: five near your rating, easiest first; new faces for 100, 250 and 500 gold, three a day across both ladders', () => {
   const s = company(8), ev = events(s), b = s.state.bowl;
   const five = picksOf(s.state);
   assert.equal(five.length, BOWL.picks);
   assert.deepEqual(five.map((c) => c.rating), [...five.map((c) => c.rating)].sort((x, y) => x - y));
-  const seen = new Set(five.map((c) => c.id));
-  for (let i = 0; i < BOWL.refreshes; i++) {
-    s.commands.push({ type: 'bowlRefresh' }); s.tick();
-    const now = picksOf(s.state); assert.equal(now.length, BOWL.picks);
-    for (const c of now) { assert.ok(!seen.has(c.id), `${c.id}: new faces each time`); seen.add(c.id); }
+  s.state.counters.gold = 99; s.commands.push({ type: 'bowlRefresh', mode: 'team' }); s.tick();
+  assert.ok(ev.refused.at(-1).includes('gold') && b.refresh === 0 && s.state.counters.gold === 99, 'not without the gold');
+  s.state.counters.gold = 1000;
+  const seen = new Set(five.map((c) => c.id)), paid = [];
+  for (const mode of ['team', 'solo', 'team']) {
+    const g = s.state.counters.gold; s.commands.push({ type: 'bowlRefresh', mode }); s.tick(); paid.push(g - s.state.counters.gold);
+    const now = picksOf(s.state, mode); assert.equal(now.length, BOWL.picks);
+    if (mode === 'team') for (const c of now) { assert.ok(!seen.has(c.id), `${c.id}: new faces each time`); seen.add(c.id); }
   }
-  s.commands.push({ type: 'bowlRefresh' }); s.tick();
-  assert.equal(ev.refused.length, 1, 'three a day'); assert.equal(b.refresh, BOWL.refreshes);
+  assert.deepEqual(paid, [100, 250, 500]);
+  s.commands.push({ type: 'bowlRefresh', mode: 'solo' }); s.tick();
+  assert.ok(ev.refused.at(-1).includes('No more') && s.state.counters.gold === 150, 'three a day');
+  s.commands.push({ type: 'bowlRefresh', mode: 'both' }); s.tick(); assert.equal(s.state.counters.gold, 150, 'a ladder by name');
   s.state.t += DAY_S; s.commands.push({ type: 'bowlOpen' }); s.tick();
-  assert.equal(b.refresh, 0); assert.equal(picksOf(s.state).length, BOWL.picks);
+  assert.equal(b.refresh, 0); assert.equal(picksOf(s.state).length, BOWL.picks); assert.equal(picksOf(s.state, 'solo').length, BOWL.picks);
 });
 
 test('ten bouts a day, every one paid; the eleventh refused', () => {
-  const s = company(7), ev = events(s);
+  const s = company(7), ev = events(s); s.state.counters.gold = 1e4;
   for (let n = 0; n < BOWL.fights; n++) {
-    if (!picksOf(s.state).length) { s.commands.push({ type: 'bowlRefresh' }); s.tick(); }
-    s.commands.push({ type: 'bowlBout', id: picksOf(s.state)[0].id, alone: true }); s.tick();
+    const mode = n % 2 ? 'solo' : 'team';                         // (the ten shared between the ladders)
+    if (!picksOf(s.state, mode).length) { s.commands.push({ type: 'bowlRefresh', mode }); s.tick(); }
+    s.commands.push({ type: 'bowlBout', id: picksOf(s.state, mode)[0].id, mode }); s.tick();
     assert.ok(s.battle && s.battle.bout, `bout ${n + 1}`); run(s);
   }
   assert.equal(ev.result.length, BOWL.fights); assert.ok(ev.result.every((r) => r.marks >= 1), 'each paid');
   assert.equal(s.state.bowl.marks, ev.result.reduce((a, r) => a + r.marks, 0));
-  if (!picksOf(s.state).length) { s.commands.push({ type: 'bowlRefresh' }); s.tick(); }
+  s.commands.push({ type: 'bowlRefresh', mode: 'team' }); s.tick();
   s.commands.push({ type: 'bowlBout', id: picksOf(s.state)[0].id }); s.tick();
   assert.ok(!s.battle && ev.refused.at(-1).includes(String(BOWL.fights)), 'the eleventh');
 });
@@ -195,4 +208,6 @@ test('the hundred: a league of their own, ten bouts a day each on the same rules
   assert.ok(avg('champion') > avg('hardened') && avg('hardened') > avg('seasoned') && avg('seasoned') > avg('green'), 'ratings find the grades out');
   assert.deepEqual(d0.map((c) => c.rank), d0.map((_, i) => i + 1));
   assert.equal(teamOf('widow_brack').manner, 'wall');
+  const s0 = fieldOn(0, 'solo'); assert.equal(games(fieldOn(1, 'solo')) - games(s0), 100 * BOWL.fights, 'and on the Individual ladder');
+  assert.notDeepEqual(s0.map((c) => c.id), d0.map((c) => c.id), 'its own order');
 });

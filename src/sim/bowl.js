@@ -17,6 +17,15 @@
 //   - the board shows five teams near your rating; three times a day you may draw five new; ten bouts a day, each paid;
 //   - the hundred teams play a league of their own on the same rules (leagueDay), from a fixed seed: the same for every
 //     player, as a server's would be once other players' companies are in it.
+// (v1.88; the owner, on the board's mockup, docs/bowl-arena-proposal.md §13: "At the top - first tab choices - are Team vs
+// Individual … Entering a fight automatically registers you for the Tourney … New faces - cost is gold to refresh - 100,
+// 250 and 500 for refresh 1-3", then "mockup looks good - implement"):
+//   - two ladders, MODES: Team (the company) and Individual (the hero alone against a player's hero), each its own rating,
+//     record, board and league; the day's ten bouts and three new draws are shared between them;
+//   - new faces cost gold: 100, 250, 500 (BOWL.refreshCost); the day's first five are free;
+//   - the tourney is the day's, one a ladder: your first bout of the day on a ladder enters you, and you're placed among
+//     the hundred by the day's wins, then the rating gained; at the day's end the places are paid marks (BOWL.purse). The
+//     eight-company bracket and the locked company are gone.
 
 import { mulberry32, streamSeed } from './rng.js';
 import { exp } from './detmath.js';
@@ -24,12 +33,18 @@ import { DAY_S } from './heroes.js';
 import { GRADES, GRADE_IDS, ROSTER, ROSTER_IDS } from './rivals.js';
 
 export const BOWL = {
-  minLevel: 6, picks: 5, refreshes: 3, fights: 10, loss: 1, draw: 1,  // five to choose from, three new draws, ten bouts a day (all paid); a loss or a draw pays 1
+  minLevel: 6, picks: 5, fights: 10, loss: 1, draw: 1,                 // five to choose from, ten bouts a day (both ladders, all paid); a loss or a draw pays 1
+  refreshCost: [100, 250, 500], refreshes: 3,                         // five new faces: gold, by the day's draw (the first five free)
   start: 1200, rd0: 250, rdMin: 60, rdRival: 80, near: 15, band: 60, // the rating (Glicko): where everyone starts, how sure; picks from the 15 nearest; within 60 is "even"
-  spread: 80, field: 8, purse: [3, 6, 10, 16],                        // a team's talent either side of its grade; the tourney's field; its purse by round reached
+  spread: 80,                                                         // a team's talent either side of its grade
+  purse: [[1, 16], [3, 10], [8, 6], [16, 3]],                         // the day's tourney: [down to place, marks]; past 16th, nothing
   preseason: 20, drawP: 0.04,                                         // the league's days before the first (so day 0's ratings mean something); a draw's chance
   seed: 0xb0e1b0e1,                                                   // (the league's draws: the same for everyone)
 };
+/** the two ladders: the company, and the hero alone */
+export const MODES = /** @type {const} */ (['team', 'solo']);
+/** @typedef {'team' | 'solo'} Mode */
+const STREAM = { team: 0x1ea9, solo: 0x5010 };
 /** the Bowl's brackets, by the hero's level (the Mere Tower's from 15 on, tower.js) */
 export const BRACKETS = [[6, 11], [12, 14], [15, 29], [30, 44], [45, 59], [60, 75]];
 export const bracketOf = (level) => { const i = BRACKETS.findIndex(([a, b]) => level >= a && level <= b); return i >= 0 ? i : level < 6 ? 0 : BRACKETS.length - 1; };
@@ -44,50 +59,63 @@ const GRADE_W = { green: 2, steady: 3, seasoned: 3, hardened: 2, champion: 1 };
 
 export const dayOf = (state) => Math.floor(state.t / DAY_S);
 
+/** a ladder's record: its rating, its record, the day's board and the day's tourney (tw tl td: its bouts today; tg: the
+ *  rating gained today) @returns {any} */
+export const freshLadder = () => ({ r: BOWL.start, rd: BOWL.rd0, won: 0, lost: 0, drawn: 0, fought: [], picks: [], shown: [], tw: 0, tl: 0, td: 0, tg: 0 });
 /** a fresh record @returns {any} */
-export const freshBowl = () => ({ r: BOWL.start, rd: BOWL.rd0, won: 0, lost: 0, drawn: 0, marks: 0, day: -1, fought: [], paid: 0, picks: [], shown: [], refresh: 0, tday: -1, tourney: null, champion: -1 });
-/** the record as of today (sim only: it rolls the day over, and draws the day's first five) @param {any} state */
+export const freshBowl = () => ({ marks: 0, day: -1, paid: 0, refresh: 0, team: freshLadder(), solo: freshLadder(), champion: -1, lastTourney: null });
+/** the mode a command or a bout names (anything else is the company's) @returns {Mode} */
+export const modeOf = (m) => (m === 'solo' ? 'solo' : 'team');
+/** the record as of today (sim only: it pays yesterday's tourneys, rolls the day over, and draws each board's first five)
+ *  @param {any} state */
 export function bowlOf(state) {
   if (!state.bowl) state.bowl = freshBowl();
   const b = state.bowl, d = dayOf(state);
-  if (b.day !== d) { b.day = d; b.fought = []; b.paid = 0; b.refresh = 0; b.shown = []; b.picks = drawPicks(b, d); }   // a new day: five new faces, ten bouts again
-  if (b.tourney && b.tourney.day !== d) settleTourney(state, null);   // yesterday's tourney closes as it stood
+  if (b.day !== d) {
+    if (b.day >= 0) payTourneys(b);
+    b.day = d; b.paid = 0; b.refresh = 0;
+    for (const m of MODES) { const L = b[m]; L.fought = []; L.shown = []; L.picks = []; L.tw = L.tl = L.td = 0; L.tg = 0; L.picks = drawPicks(L, d, m, 0); }   // a new day: five new faces each, ten bouts again
+  }
   return b;
 }
 
 const idHash = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193); return h >>> 0; };
 
 // ── the hundred: each team's own strength, and the league they play every day ────────────────────────────────────
-/** @type {Map<string, { id: string, manner: string, grade: string, strength: number }>} */
+/** @type {Map<string, { id: string, manner: string, grade: string, strength: number, solo: number }>} */
 const TEAMS = new Map();
 /** a team as it is for good: its grade (how it's built, rivals.js), and its strength in the league (its grade's
- *  rating, its manner's edge and a talent of its own), hidden: what its rating finds out */
+ *  rating, its manner's edge and a talent of its own), hidden: what its rating finds out; `solo` its hero's alone (the
+ *  grade's rating and a talent of the hero's own: no manner, one fighter) */
 export function teamOf(id) {
   let t = TEAMS.get(id); if (t) return t;
   const r = mulberry32(streamSeed(BOWL.seed, idHash(id)));
   let n = r() * GRADE_IDS.reduce((a, g) => a + GRADE_W[g], 0), grade = GRADE_IDS[0];
   for (const g of GRADE_IDS) { n -= GRADE_W[g]; if (n < 0) { grade = g; break; } }
   const manner = ROSTER[id][0];
-  t = { id, manner, grade, strength: GRADES[grade].rating + (MANNER_EDGE[manner] || 0) + (r() * 2 - 1) * BOWL.spread };
+  t = { id, manner, grade, strength: GRADES[grade].rating + (MANNER_EDGE[manner] || 0) + (r() * 2 - 1) * BOWL.spread, solo: 0 };
+  t.solo = GRADES[grade].rating + (mulberry32(streamSeed(BOWL.seed, idHash(id) ^ STREAM.solo))() * 2 - 1) * BOWL.spread;
   TEAMS.set(id, t); return t;
 }
 /**
  * The league (the owner, 2026-11-13: "The game simulates similar rules for ai opponents. Lets assume 100 teams for now"):
- * every team fights BOWL.fights bouts a day, each against a team near its rating (the hundred ordered by rating with a
- * draw of jitter, paired off: what picking from the five nearest comes to), the result drawn on the two strengths'
- * expected score, a few drawn, and both ratings moved as the player's is. Its days run from BOWL.preseason before the
- * first, so day 0's ratings already tell the teams apart. The same for every player and every replay; the player's own
- * bouts don't move it (a shared league, as the server's will be). Kept as each day's start, built on as days are asked.
- * @type {{ r: Float64Array, rd: Float64Array, w: Int32Array, l: Int32Array, d: Int32Array }[]}
+ * every team fights BOWL.fights bouts a day on each ladder, each against a team near its rating (the hundred ordered by
+ * rating with a draw of jitter, paired off: what picking from the five nearest comes to), the result drawn on the two
+ * strengths' expected score, a few drawn, and both ratings moved as the player's is. Its days run from BOWL.preseason
+ * before the first, so day 0's ratings already tell the teams apart. The same for every player and every replay; the
+ * player's own bouts don't move it (a shared league, as the server's will be). Kept as each day's start, built on as days
+ * are asked, a list a ladder.
+ * @type {Record<string, { r: Float64Array, rd: Float64Array, w: Int32Array, l: Int32Array, d: Int32Array }[]>}
  */
-const DAYS = [];
-function leagueDay(day) {
-  const N = ROSTER_IDS.length, k = Math.max(0, Math.floor(day) + BOWL.preseason);
-  if (!DAYS.length) DAYS.push({ r: new Float64Array(N).fill(BOWL.start), rd: new Float64Array(N).fill(BOWL.rd0), w: new Int32Array(N), l: new Int32Array(N), d: new Int32Array(N) });
-  const S = ROSTER_IDS.map((id) => teamOf(id).strength), order = ROSTER_IDS.map((_, i) => i), jit = new Float64Array(N);
-  while (DAYS.length <= k) {
-    const p = DAYS[DAYS.length - 1], q = { r: p.r.slice(), rd: p.rd.slice(), w: p.w.slice(), l: p.l.slice(), d: p.d.slice() };
-    const rng = mulberry32(streamSeed((BOWL.seed ^ Math.imul(DAYS.length, 0x2545f491)) >>> 0, 0x1ea9));
+const DAYS = { team: [], solo: [] };
+/** @param {number} day @param {Mode} [mode] */
+function leagueDay(day, mode = 'team') {
+  const N = ROSTER_IDS.length, k = Math.max(0, Math.floor(day) + BOWL.preseason), D = DAYS[mode];
+  if (!D.length) D.push({ r: new Float64Array(N).fill(BOWL.start), rd: new Float64Array(N).fill(BOWL.rd0), w: new Int32Array(N), l: new Int32Array(N), d: new Int32Array(N) });
+  const S = ROSTER_IDS.map((id) => (mode === 'solo' ? teamOf(id).solo : teamOf(id).strength)), order = ROSTER_IDS.map((_, i) => i), jit = new Float64Array(N);
+  while (D.length <= k) {
+    const p = D[D.length - 1], q = { r: p.r.slice(), rd: p.rd.slice(), w: p.w.slice(), l: p.l.slice(), d: p.d.slice() };
+    const rng = mulberry32(streamSeed((BOWL.seed ^ Math.imul(D.length, 0x2545f491)) >>> 0, STREAM[mode]));
     for (let round = 0; round < BOWL.fights; round++) {
       for (let i = 0; i < N; i++) jit[i] = q.r[i] + (rng() * 2 - 1) * BOWL.band * 2;
       order.sort((a, b) => jit[a] - jit[b] || a - b);
@@ -99,44 +127,87 @@ function leagueDay(day) {
         if (sa === 1) { q.w[a]++; q.l[b]++; } else if (sa === 0) { q.w[b]++; q.l[a]++; } else { q.d[a]++; q.d[b]++; }
       }
     }
-    DAYS.push(q);
+    D.push(q);
   }
-  return DAYS[k];
+  return D[k];
 }
-/** a team on a day (its league standing at the day's start) @returns {{ id: string, manner: string, grade: string, rating: number, rd: number, rank: number, won: number, lost: number, drawn: number }} */
-export function companyOn(id, day) {
-  const L = leagueDay(day), i = ROSTER_IDS.indexOf(id), t = teamOf(id), r = L.r[i];
+/** a team on a day on a ladder (its standing at the day's start) @param {string} id @param {number} day @param {Mode} [mode]
+ *  @returns {{ id: string, manner: string, grade: string, rating: number, rd: number, rank: number, won: number, lost: number, drawn: number }} */
+export function companyOn(id, day, mode = 'team') {
+  const L = leagueDay(day, mode), i = ROSTER_IDS.indexOf(id), t = teamOf(id), r = L.r[i];
   let rank = 1; for (let j = 0; j < L.r.length; j++) if (L.r[j] > r || (L.r[j] === r && j < i)) rank++;
   return { id, manner: t.manner, grade: t.grade, rating: Math.round(r), rd: Math.round(L.rd[i]), rank, won: L.w[i], lost: L.l[i], drawn: L.d[i] };
 }
-/** the hundred on a day, best first */
-export const fieldOn = (day) => ROSTER_IDS.map((id) => companyOn(id, day)).sort((a, b) => a.rank - b.rank);
+/** the hundred on a day, best first @param {number} day @param {Mode} [mode] */
+export const fieldOn = (day, mode = 'team') => ROSTER_IDS.map((id) => companyOn(id, day, mode)).sort((a, b) => a.rank - b.rank);
 
-/** five to choose from: the BOWL.near nearest your rating today that haven't been on the board today, five of them
- *  drawn (its own draw a refresh), easiest first; they're added to the day's shown @param {any} b the record @param {number} d the day @returns {string[]} */
-function drawPicks(b, d) {
-  const not = new Set([...(b.fought || []), ...(b.picks || []), ...(b.shown || [])]);
-  const near = fieldOn(d).filter((c) => !not.has(c.id)).sort((x, y) => Math.abs(x.rating - b.r) - Math.abs(y.rating - b.r) || x.rank - y.rank).slice(0, BOWL.near);
-  const rng = mulberry32(streamSeed((BOWL.seed ^ Math.imul(d + 1, 0x9e3779b1)) >>> 0, 0x91c + (b.refresh || 0)));
+/** five to choose from: the BOWL.near nearest the ladder's rating today that haven't been on its board today, five of
+ *  them drawn (its own draw a refresh), easiest first; they're added to the day's shown
+ *  @param {any} L the ladder's record @param {number} d the day @param {Mode} mode @param {number} n the day's draw @returns {string[]} */
+function drawPicks(L, d, mode, n) {
+  const not = new Set([...(L.fought || []), ...(L.picks || []), ...(L.shown || [])]);
+  const near = fieldOn(d, mode).filter((c) => !not.has(c.id)).sort((x, y) => Math.abs(x.rating - L.r) - Math.abs(y.rating - L.r) || x.rank - y.rank).slice(0, BOWL.near);
+  const rng = mulberry32(streamSeed((BOWL.seed ^ Math.imul(d + 1, 0x9e3779b1)) >>> 0, 0x91c + n + (mode === 'solo' ? 0x100 : 0)));
   for (let i = near.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [near[i], near[j]] = [near[j], near[i]]; }
   const five = near.slice(0, BOWL.picks).sort((x, y) => x.rating - y.rating || x.rank - y.rank).map((c) => c.id);
-  b.shown = [...(b.shown || []), ...five];
+  L.shown = [...(L.shown || []), ...five];
   return five;
 }
-/** a new five (sim only: the `bowlRefresh` command): three a day @param {any} state @returns {boolean} */
-export function refreshPicks(state) {
-  const b = bowlOf(state); if (b.refresh >= BOWL.refreshes) return false;
-  b.refresh++; b.picks = drawPicks(b, b.day); return true;
+/** the next new five's price, or null when the day's draws are spent @param {any} b the record */
+export const refreshCostOf = (b) => (b && (b.refresh || 0) < BOWL.refreshCost.length ? BOWL.refreshCost[b.refresh || 0] : null);
+/** five new faces on a ladder's board (sim only: the `bowlRefresh` command), for gold: 'none' when the day's three are
+ *  spent, 'gold' when it can't be paid, else the gold paid @param {any} state @param {Mode} mode @returns {number | 'none' | 'gold'} */
+export function refreshPicks(state, mode) {
+  const b = bowlOf(state), cost = refreshCostOf(b);
+  if (cost === null) return 'none';
+  if ((state.counters.gold || 0) < cost) return 'gold';
+  state.counters.gold -= cost; b.refresh++;
+  const L = b[modeOf(mode)]; L.picks = drawPicks(L, b.day, modeOf(mode), b.refresh);
+  return cost;
 }
-/** the board as it stands (read only: the UI's): the five still to fight today, each as the league has it today, and
- *  whether it's an easier, an even or a harder bout by your rating
- *  @param {any} state @returns {any[]} */
-export function picksOf(state) {
-  const b = state.bowl, d = dayOf(state); if (!b || b.day !== d) return [];
-  return (b.picks || []).map((id) => { const c = companyOn(id, d); return { ...c, pick: c.rating < b.r - BOWL.band ? 'easier' : c.rating > b.r + BOWL.band ? 'harder' : 'even' }; });
+/** a ladder's board as it stands (read only: the UI's): the five still to fight today, each as the league has it today
+ *  @param {any} state @param {Mode} [mode] @returns {any[]} */
+export function picksOf(state, mode = 'team') {
+  const b = state.bowl, d = dayOf(state); if (!b || b.day !== d || !b[mode]) return [];
+  return (b[mode].picks || []).map((id) => companyOn(id, d, mode));
 }
-/** your place among the hundred today (the rank you'd hold) @param {any} state */
-export function rankOf(state) { const r = (state.bowl || freshBowl()).r, L = leagueDay(dayOf(state)); let n = 1; for (const x of L.r) if (x > r) n++; return n; }
+/** your place among the hundred today on a ladder (the rank you'd hold) @param {any} state @param {Mode} [mode] */
+export function rankOf(state, mode = 'team') { const r = ((state.bowl || freshBowl())[mode] || freshLadder()).r, L = leagueDay(dayOf(state), mode); let n = 1; for (const x of L.r) if (x > r) n++; return n; }
+
+// ── the day's tourney: everyone who fights that day, by the day's wins, then the rating gained ─────────────────────
+/** the hundred's day on a ladder: each one's wins and rating gained that day (the league's day, played out) */
+function dayTable(day, mode) {
+  const a = leagueDay(day, mode), z = leagueDay(day + 1, mode);
+  return ROSTER_IDS.map((_, i) => ({ w: z.w[i] - a.w[i], g: z.r[i] - a.r[i] }));
+}
+/** a ladder's tourney today: entered (a bout fought today), its record, and your place among the 101 (the hundred's day
+ *  as it finishes, yours as it stands) @param {any} b the record @param {Mode} mode @param {number} [day] */
+export function tourneyOf(b, mode, day = b ? b.day : 0) {
+  const L = (b && b[mode]) || freshLadder(), n = L.tw + L.tl + L.td;
+  let place = 1; for (const t of dayTable(day, mode)) if (t.w > L.tw || (t.w === L.tw && t.g > L.tg)) place++;
+  return { in: n > 0, w: L.tw, l: L.tl, d: L.td, place, of: ROSTER_IDS.length + 1 };
+}
+/** the day's tourney as a table (the UI's Rankings): the hundred by the day's wins and rating gained, you among them
+ *  @param {any} b the record @param {Mode} mode @param {number} [day] @returns {{ id: string, w: number, g: number }[]} */
+export function tourneyTable(b, mode, day = b ? b.day : 0) {
+  const L = (b && b[mode]) || freshLadder(), rows = dayTable(day, mode).map((t, i) => ({ id: ROSTER_IDS[i], w: t.w, g: t.g }));
+  rows.sort((x, y) => y.w - x.w || y.g - x.g || (x.id < y.id ? -1 : 1));
+  const me = { id: 'you', w: L.tw, g: L.tg }, at = rows.findIndex((t) => t.w < me.w || (t.w === me.w && t.g <= me.g));   // (ties yours: tourneyOf's place)
+  rows.splice(at < 0 ? rows.length : at, 0, me);
+  return rows.map((t) => ({ ...t, g: Math.round(t.g) }));
+}
+/** the marks a place is paid */
+export const purseFor = (place) => { const p = BOWL.purse.find(([at]) => place <= at); return p ? p[1] : 0; };
+/** the day's tourneys close (the day rolled over): each ladder you fought on paid by its place */
+function payTourneys(b) {
+  const out = { day: b.day };
+  for (const m of MODES) {
+    const T = tourneyOf(b, m); if (!T.in) { out[m] = null; continue; }
+    const purse = purseFor(T.place); b.marks += purse; if (T.place === 1) b.champion = b.day;
+    out[m] = { place: T.place, w: T.w, l: T.l, d: T.d, purse };
+  }
+  b.lastTourney = out;
+}
 
 // ── the rating: Glicko (one bout a period, the rival's own deviation fixed), tables of exp only (detmath) ─────────
 const Q = 0.0057565, PI2 = 9.8696044;                                    // ln 10 / 400; π²
@@ -154,85 +225,47 @@ export function rate(r, rd, rj, s, rdj = BOWL.rdRival) {
 const marksFor = (b, how, grade) => (b.paid > BOWL.fights ? 0 : how === 'won' ? GRADES[grade].marks : how === 'draw' ? BOWL.draw : BOWL.loss);
 
 /**
- * the bout's result settled (core.js, on battle.js's boutEnd): rating, marks, the day's tally; a tourney's round on
- * @param {any} state @param {{ kind: 'ladder' | 'tourney', id: string, grade: string, rating: number, rd?: number, alone?: boolean }} on the bout as it was started
+ * the bout's result settled (core.js, on battle.js's boutEnd): the ladder's rating and record, marks, the day's tourney
+ * @param {any} state @param {{ mode: Mode, id: string, grade: string, rating: number, rd?: number }} on the bout as it was started
  * @param {{ how: string, why: string }} res @returns {any} what the result card shows
  */
 export function settleBout(state, on, res) {
-  const b = bowlOf(state), how = res.how === 'won' || res.how === 'draw' ? res.how : 'lost', s = how === 'won' ? 1 : how === 'draw' ? 0.5 : 0;
-  const before = b.r, nr = rate(b.r, b.rd, on.rating, s, on.rd ?? BOWL.rdRival); b.r = nr.r; b.rd = nr.rd;
-  if (how === 'won') b.won++; else if (how === 'draw') b.drawn++; else b.lost++;
-  let marks = 0;
-  if (on.kind === 'ladder') { marks = marksFor(b, how, on.grade); if (!b.fought.includes(on.id)) b.fought.push(on.id); }
-  const out = { kind: on.kind, id: on.id, how, why: res.why, marks, r: b.r, dr: Math.round((b.r - before) * 10) / 10, tier: tierOf(b.r).id, alone: !!on.alone, round: 0, purse: 0, champion: false };
-  if (on.kind === 'tourney' && b.tourney) {
-    const T = b.tourney; out.round = T.round;
-    if (how === 'won') { advance(T); if (T.round >= 3) { out.champion = true; out.purse = settleTourney(state, 'champion'); } }
-    else out.purse = settleTourney(state, 'out');
-  }
-  b.marks += marks;
-  return out;
+  const b = bowlOf(state), mode = modeOf(on.mode), L = b[mode], how = res.how === 'won' || res.how === 'draw' ? res.how : 'lost', s = how === 'won' ? 1 : how === 'draw' ? 0.5 : 0;
+  const before = L.r, nr = rate(L.r, L.rd, on.rating, s, on.rd ?? BOWL.rdRival); L.r = nr.r; L.rd = nr.rd;
+  if (how === 'won') { L.won++; L.tw++; } else if (how === 'draw') { L.drawn++; L.td++; } else { L.lost++; L.tl++; }
+  L.tg = Math.round((L.tg + L.r - before) * 10) / 10;
+  if (!L.fought.includes(on.id)) L.fought.push(on.id);
+  const marks = marksFor(b, how, on.grade); b.marks += marks;
+  const T = tourneyOf(b, mode);
+  return { mode, id: on.id, how, why: res.why, marks, r: L.r, dr: Math.round((L.r - before) * 10) / 10, tier: tierOf(L.r).id, alone: mode === 'solo', place: T.place, of: T.of };
 }
 
-// ── the tourney: eight companies, single elimination, three rounds, a day's ───────────────────────────────────────
-/** the bracket's pairings by seed (1 v 8, 4 v 5, 2 v 7, 3 v 6): the favourite meets the outsider first */
-const SEEDING = [0, 7, 3, 4, 1, 6, 2, 5];
-/** enter today's tourney: you and the seven companies nearest your rating, the company you field locked
- *  @param {any} state @param {string[]} company the member ids entered @returns {any} the tourney, or null if not today */
-export function enterTourney(state, company) {
-  const b = bowlOf(state), d = dayOf(state);
-  if (b.tday === d || b.tourney) return null;
-  const field = fieldOn(d).sort((x, y) => Math.abs(x.rating - b.r) - Math.abs(y.rating - b.r) || (x.id < y.id ? -1 : 1)).slice(0, BOWL.field - 1);
-  const all = [...field, { id: 'you', rating: b.r }].sort((x, y) => y.rating - x.rating || (x.id < y.id ? -1 : 1));
-  b.tday = d;
-  b.tourney = { day: d, round: 0, company: [...company], slots: SEEDING.map((k) => all[k].id), ratings: Object.fromEntries(all.map((c) => [c.id, Math.round(c.rating)])), done: false };
-  return b.tourney;
+/** a saved ladder, cleaned @param {any} v */
+function restoreLadder(v) {
+  const o = freshLadder(); if (!v || typeof v !== 'object') return o;
+  const num = (x, d, lo = -1e9, hi = 1e9) => (Number.isFinite(x) ? Math.max(lo, Math.min(hi, x)) : d);
+  o.r = num(v.r, o.r, 100, 4000); o.rd = num(v.rd, o.rd, BOWL.rdMin, 350);
+  for (const k of ['won', 'lost', 'drawn', 'tw', 'tl', 'td']) o[k] = Math.floor(num(v[k], 0, 0));
+  o.tg = num(v.tg, 0, -4000, 4000);
+  const ids = (a, n = 1e9) => (Array.isArray(a) ? a.filter((id) => ROSTER[id]).slice(0, n) : []);
+  o.fought = ids(v.fought); o.picks = ids(v.picks, BOWL.picks); o.shown = ids(v.shown);
+  return o;
 }
-/** the company you meet in the tourney's round now, or null when you're out */
-export function tourneyFoe(T) {
-  if (!T || T.done) return null;
-  const i = T.slots.indexOf('you'); if (i < 0) return null;
-  return T.slots[i ^ 1] || null;
-}
-/** you won your bout: every other pairing of the round is decided by the ratings, on a draw of its own (the bouts you
- *  don't fight aren't fought for now: watching one waits), and the field halves */
-function advance(T) {
-  const r = mulberry32(streamSeed((BOWL.seed ^ Math.imul(T.day + 1, 0x27d4eb2d)) >>> 0, 0x70 + T.round)), next = [];
-  for (let i = 0; i < T.slots.length; i += 2) {
-    const a = T.slots[i], c = T.slots[i + 1];
-    if (a === 'you' || c === 'you') { next.push('you'); continue; }
-    const pa = expected(T.ratings[a], T.ratings[c], BOWL.rdRival);
-    next.push(r() < pa ? a : c);
-  }
-  (T.past ||= []).push([...T.slots]);
-  T.slots = next; T.round++;
-}
-/** the tourney closes: its purse for the round reached (Quarter-final 3 … Champion 16), banner for a champion; 'out' or
- *  'champion', or null for one left unfinished at the day's end (paid as it stood) @returns {number} the purse */
-function settleTourney(state, how) {
-  const b = state.bowl, T = b.tourney; if (!T) return 0;
-  const purse = BOWL.purse[Math.min(3, how === 'champion' ? 3 : T.round)];
-  b.marks += purse; if (how === 'champion') b.champion = T.day;
-  T.done = true; T.how = how || 'closed'; T.purse = purse;
-  b.tourney = null; b.lastTourney = { day: T.day, round: T.round, how: T.how, purse };
-  return purse;
-}
-
-/** a saved record, cleaned: numbers in range, ids kept only if they're the roster's (or 'you') @param {any} v */
+/** a saved record, cleaned: numbers in range, ids kept only if they're the roster's. v46 and older (one ladder, the
+ *  bracket tourney): its rating and record are the Team ladder's, Individual starts fresh, the day redrawn; a tourney left
+ *  open is paid as it stood (its old purse by round reached) @param {any} v */
 export function restoreBowl(v) {
   const o = freshBowl(); if (!v || typeof v !== 'object') return o;
   const num = (x, d, lo = -1e9, hi = 1e9) => (Number.isFinite(x) ? Math.max(lo, Math.min(hi, x)) : d);
-  o.r = num(v.r, o.r, 100, 4000); o.rd = num(v.rd, o.rd, BOWL.rdMin, 350);
-  for (const k of ['won', 'lost', 'drawn', 'marks', 'paid']) o[k] = Math.floor(num(v[k], 0, 0));
-  o.day = Math.floor(num(v.day, -1)); o.tday = Math.floor(num(v.tday, -1)); o.champion = Math.floor(num(v.champion, -1));
-  o.fought = Array.isArray(v.fought) ? v.fought.filter((id) => ROSTER[id]) : [];
-  o.picks = Array.isArray(v.picks) ? v.picks.filter((id) => ROSTER[id]).slice(0, BOWL.picks) : [];   // (v45 and older: none, so the day's are drawn at the next look)
-  o.shown = Array.isArray(v.shown) ? v.shown.filter((id) => ROSTER[id]) : [];
-  o.refresh = Math.floor(num(v.refresh, 0, 0, BOWL.refreshes));
-  if (!Array.isArray(v.picks)) o.day = -1;
-  const T = v.tourney;
-  if (T && Array.isArray(T.slots) && T.slots.every((id) => id === 'you' || ROSTER[id]) && Array.isArray(T.company) && T.ratings && typeof T.ratings === 'object')
-    o.tourney = { day: Math.floor(num(T.day, -1)), round: Math.floor(num(T.round, 0, 0, 3)), company: T.company.filter((x) => typeof x === 'string'), slots: [...T.slots], ratings: { ...T.ratings }, done: false, past: Array.isArray(T.past) ? T.past : [] };
-  if (v.lastTourney && typeof v.lastTourney === 'object') o.lastTourney = { ...v.lastTourney };
+  o.marks = Math.floor(num(v.marks, 0, 0)); o.paid = Math.floor(num(v.paid, 0, 0, BOWL.fights));
+  o.day = Math.floor(num(v.day, -1)); o.champion = Math.floor(num(v.champion, -1));
+  o.refresh = Math.floor(num(v.refresh, 0, 0, BOWL.refreshCost.length));
+  if (v.team && typeof v.team === 'object') { o.team = restoreLadder(v.team); o.solo = restoreLadder(v.solo); }
+  else {                                                     // (v46 and older)
+    o.team = restoreLadder({ r: v.r, rd: v.rd, won: v.won, lost: v.lost, drawn: v.drawn });
+    if (v.tourney && typeof v.tourney === 'object') o.marks += [3, 6, 10, 16][Math.floor(num(v.tourney.round, 0, 0, 3))];
+    o.day = -1;                                              // (the day's boards drawn afresh at the next look)
+  }
+  if (v.lastTourney && typeof v.lastTourney === 'object' && 'team' in v.lastTourney) o.lastTourney = JSON.parse(JSON.stringify(v.lastTourney));
   return o;
 }

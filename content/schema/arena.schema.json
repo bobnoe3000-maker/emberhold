@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "The Bowl's hundred companies and the Crier's lines (GDD §17 v1.86, world doc §3.9): authored text; their strength is rolled by src/sim/rivals.js and their league by src/sim/bowl.js. A company without its own in/out lines is called in by its manner's",
+  "title": "The Bowl's hundred companies and the Crier's lines (GDD \u00a717 v1.86, world doc \u00a73.9): authored text; their strength is rolled by src/sim/rivals.js and their league by src/sim/bowl.js. A company without its own in/out lines is called in by its manner's",
   "type": "object",
   "required": [
     "crier",
@@ -145,6 +145,7 @@
         "required": [
           "id",
           "name",
+          "player",
           "home",
           "manner",
           "banner",
@@ -245,6 +246,11 @@
           },
           "out": {
             "$ref": "#/definitions/line"
+          },
+          "player": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 24
           }
         }
       }

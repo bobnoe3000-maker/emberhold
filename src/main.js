@@ -218,7 +218,7 @@ else document.getElementById('bootSplash')?.remove();
 let awaySecs = saved && !PREVIEW ? Math.max(0, (Date.now() - (saved.savedAt || Date.now())) / 1000) : 0, hiddenAt = 0;
 function catchUp(secs = awaySecs) { awaySecs = 0; if (secs >= AWAY_MIN && sim.state.created && !PREVIEW) away.run(secs); }
 if (!BOOT) renderer.ready.then(() => catchUp());
-if (DEV) globalThis.__ui = { title, brightness, creation, partyScreen, slots, cinema, dialogue, journal, worldMap, firstSteps };
+if (DEV) globalThis.__ui = { title, brightness, creation, partyScreen, slots, cinema, dialogue, journal, worldMap, firstSteps, bowl };
 
 
 // tap: a named person → talk; a service → its menu; an enemy → focus; anything else → walk there (and use a chest /
