@@ -207,18 +207,15 @@ export const PLANS = {
     ] },
   ] },
 
-  // ── The Bowl (GDD §17 v1.85; world doc v1.44 §3.9; docs/bowl-arena-proposal.md §2): the imperial Circus of the Sun in
-  //    Solmere, half its tiers fallen in. Not on any land: the menu takes a company to it from level 6 and back. One sand,
-  //    oval, open from wall to wall (a floor's last hall stands no obstacle), and the Dust Gate's tunnel where you wait.
+  // ── The Bowl (GDD §17 v1.85, v1.88; world doc v1.46 §3.9; docs/bowl-arena-proposal.md §12, the owner's "B"): the
+  //    Quarry Ring in Solmere, the arena cut down into the old sandstone quarry. Not on any land: the menu takes a company
+  //    to it from level 6 and back. One space, open to the sky: the sand, oval, open from wall to wall, the company's gate
+  //    in its north face (the stair up is the way back out). An arena's plan is its one sand (checkPlan).
   bowl: { site: 'bowl', name: 'The Bowl', kind: 'arena', base: 6, flat: true, floors: [
     { name: 'The Sand', spaces: [
-      { id: 'dust_gate', name: 'The Dust Gate', role: 'entrance', x: 0, y: 4, w: 30, h: 28, shape: 'rect', lv: 0, kit: 'bailey',
-        dress: ['stair_up', 'benches', 'racks'], note: 'The fighters\' tunnel under the tiers: benches, a rack of practice blades, the Gate\'s bars up. The stair is the way back out.' },
-      { id: 'the_sand', name: 'The Sand', role: 'end', x: 40, y: 0, w: 52, h: 40, shape: 'round', lv: 0, kit: 'bailey',
-        dress: ['banners', 'braziers'], note: 'The sand of the Circus of the Sun, raked between bouts; the tiers above it, half fallen in; the Sun\'s Box at the far side.' },
-    ], halls: [
-      { from: 'dust_gate', to: 'the_sand', x: 30, y: 13, w: 10, h: 10 },
-    ] },
+      { id: 'the_sand', name: 'The Sand', role: 'end', x: 0, y: 0, w: 52, h: 40, shape: 'round', lv: 0, kit: 'bailey',
+        dress: [], note: 'The Quarry Ring\'s sand, raked between bouts, under three ledges of banded rock where the crowd sits; the Sun\'s Box on the far ledge, the fighters\' gate in the north face.' },
+    ], halls: [] },
   ] },
 };
 
@@ -243,7 +240,9 @@ export function checkPlan(p) {
     const at = `${p.site} floor ${fi + 1}`, byId = new Map(f.spaces.map((s) => [s.id, s]));
     if (f.spaces.length > R.maxSpaces) out.push(`${at}: ${f.spaces.length} spaces (at most ${R.maxSpaces})`);
     const roles = f.spaces.map((s) => s.role), last = fi === p.floors.length - 1;
-    if (roles.filter((r) => r === 'entrance').length !== 1) out.push(`${at}: one entrance`);
+    const arena = p.kind === 'arena';                  // (an arena is its one sand: the way in a gate in its wall)
+    if (arena && (f.spaces.length !== 1 || f.halls.length)) out.push(`${at}: an arena is one space`);
+    if (!arena && roles.filter((r) => r === 'entrance').length !== 1) out.push(`${at}: one entrance`);
     if (roles.filter((r) => r === (last ? 'end' : 'descent')).length !== 1) out.push(`${at}: one ${last ? 'end hall' : 'descent room'}`);
     for (const s of f.spaces) {
       const k = sizeOf(s), lo = Math.min(s.w, s.h), hi = Math.max(s.w, s.h);
@@ -274,7 +273,7 @@ export function checkPlan(p) {
       adj.get(a.id)?.push(b.id); adj.get(b.id)?.push(a.id);
     }
     // every space reached from the entrance; an offshoot a dead end; the way on runs entrance → rooms → the last hall
-    const start = f.spaces.find((s) => s.role === 'entrance'), seen = new Set(start ? [start.id] : []), q = start ? [start.id] : [];
+    const start = f.spaces.find((s) => s.role === 'entrance') || (arena ? f.spaces[0] : undefined), seen = new Set(start ? [start.id] : []), q = start ? [start.id] : [];
     while (q.length) for (const n of adj.get(/** @type {string} */ (q.shift())) || []) if (!seen.has(n)) { seen.add(n); q.push(n); }
     for (const s of f.spaces) if (!seen.has(s.id)) out.push(`${at}: ${s.id} can't be reached`);
     for (const s of f.spaces) if (s.role === 'offshoot' && (adj.get(s.id) || []).length !== 1) out.push(`${at}: the offshoot ${s.id} is a dead end off one room`);

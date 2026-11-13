@@ -160,7 +160,7 @@ export function createBowl({ sim, onOpen = () => {}, onClose = () => {} }) {
   function Board() {
     const S = sim.state, h = S.party[0], b = S.bowl, inBowl = sim.world.site === 'bowl', [lo, hi] = BRACKETS[bracketOf(h.level)];
     return html`<div id="bowl">
-      <div class="kind">Solmere · the Circus of the Sun</div>
+      <div class="kind">Solmere · the Quarry Ring</div>
       <h2>The Bowl</h2>
       <div class="who">Rating <b>${Math.round(b.r)}</b> · ${TIER_NAME[tierOf(b.r).id]} · #${rankOf(S)} of 101 · bracket ${lo}–${hi}<br />Marks <b>${b.marks}</b> · won ${b.won}, lost ${b.lost}, drawn ${b.drawn}</div>
       ${result ? html`<${Result} />` : html`

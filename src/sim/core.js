@@ -648,7 +648,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       else if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive, ex.site, ex.region);
       if (!ex) shut = null;
     }
-    else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) { if (state.depth > 0) ascend(); else travel('overland', curSite); }   // walk up the stair: a floor up, or out
+    else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) { if (away) leaveBowl(); else if (state.depth > 0) ascend(); else travel('overland', curSite); }   // (the Bowl's gate: back where you were, never the land)   // walk up the stair: a floor up, or out
     if (p.journey && !p.path && !p.resume) p.journey = null;   // arrived (a leg that changed scenes has already walked on), or stopped
     state.t += TICK_DT; state.tick += 1;
     if (state.away && --state.away.left <= 0) { const secs = state.away.secs; state.away = null; bus.emit('awayEnded', { secs, stopped: false }); }

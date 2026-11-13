@@ -41,12 +41,15 @@ test('the roster: its words (content) and its make-up (rivals.js) in step, every
   assert.ok(ROSTER_IDS.length >= BOWL.field, 'enough for a tourney');
 });
 
-test('the Sand: an authored floor, to the plan rules, open from wall to wall; no chest, no shrine', () => {
+test('the Sand (v1.88, the Quarry Ring): one space, to the plan rules, open from wall to wall; no chest, no shrine; the gate in its north face', () => {
   assert.deepEqual(checkPlan(PLANS.bowl), []);
+  assert.ok(checkPlan({ ...PLANS.bowl, floors: [{ ...PLANS.bowl.floors[0], spaces: [...PLANS.bowl.floors[0].spaces, { ...PLANS.bowl.floors[0].spaces[0], id: 'x', x: 60 }] }] }).some((e) => /one space/.test(e)), 'an arena is its one sand');
   const s = company();
   s.commands.push({ type: 'bowlBout', id: picksOf(s.state)[0].id }); s.tick();
   const w = s.world, L = w.level, sand = L.descentRoom;
   assert.equal(w.site, 'bowl'); assert.ok(w.arena && sand.part === 'the_sand');
+  assert.equal(L.rooms.length, 1); assert.equal(L.entrance, sand, 'the sand is the way in too');
+  assert.ok(w.exitAt && w.exitAt.y < sand.cy - sand.rh * 0.6, 'the gate (the stair up) in the north face');
   for (const [k, p] of w.props) { assert.ok(p !== 'chest' && p !== 'shrine', `${p} at ${k}`); const c = L.cells.get(k); if (c && c.room === sand.id) assert.ok(Math.abs(+k.split(',')[0] - sand.cx) > sand.rw * 0.6 || Math.abs(+k.split(',')[1] - sand.cy) > sand.rh * 0.6, `${p} out on the sand at ${k}`); }
 });
 
@@ -80,6 +83,16 @@ test('a bout through the commands: from level 6, the day\'s picks only, never mi
   assert.ok(!picksOf(s.state).some((c) => c.id === pick.id), 'one try a pairing a day');
   s.commands.push({ type: 'bowlLeave' }); s.tick();
   assert.deepEqual({ site: s.world.site, scene: s.state.scene, x: s.state.player.x, y: s.state.player.y }, before, 'back exactly where it was');
+});
+
+// walked onto (not tapped), the Bowl's gate is the way back where you were, as the menu's Leave: it took you to the land
+// the Bowl stands on before (a bug fix: core.js tick)
+test('walking out through the gate after a bout gives the world back, never the land', () => {
+  const s = company(), at = { site: s.world.site, scene: s.state.scene };
+  s.commands.push({ type: 'bowlBout', id: picksOf(s.state)[0].id }); s.tick(); run(s);
+  assert.ok(!s.battle && s.world.site === 'bowl');
+  const ex = s.world.exitAt; s.state.player.x = ex.x; s.state.player.y = ex.y + 0.5; s.tick(); s.tick();
+  assert.equal(s.world.site, at.site); assert.equal(s.state.scene, at.scene);
 });
 
 test('the hero alone: one against one, the companions watch; a save in the Bowl is the world you came from', () => {

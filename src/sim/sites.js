@@ -59,7 +59,7 @@ export const SITES = {
   reedholm_undercroft: { name: 'The Reedholm Undercroft', region: 'fens', theme: 'chasm', base: 18, perFloor: 0, floors: 1, family: 'ashbound', rooms: [4, 4], layout: 'halls', flat: true, hidden: true, secret: true, vault: 'the_fair_copy', mix: 0x4e3d },
   // the Bowl (GDD §17 v1.85; bowl.js): the arena in Solmere, reached from the menu for now (from level 6), never from a
   // land, so parked: on no map, in no band, no foes of its own (a bout's rivals are bowl.js's)
-  bowl: { name: 'The Bowl', region: 'fens', theme: 'desert', base: 6, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [2, 2], layout: 'halls', flat: true, parked: true, arena: true, mix: 0xb0e1 },
+  bowl: { name: 'The Bowl', region: 'fens', theme: 'desert', base: 6, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [1, 1], layout: 'halls', flat: true, parked: true, arena: true, mix: 0xb0e1 },
   // parked for the Cinder Reach (world doc v1.32 §3.3): its Assay Yards and its Cold Seam, as they were in the Vale
   tithe_mill: { name: 'The Tithe Mill', region: 'reach', theme: 'desert', base: 1, perFloor: 0, floors: 1, family: 'redhand', rooms: [6, 6], layout: 'halls', parked: true, mix: 0x3117 },
   scrag_warren: { name: 'The Scrag Warren', region: 'reach', theme: 'warren', base: 2, perFloor: 1, floors: 2, family: 'goblin', rooms: [6, 6], parked: true, mix: 0x6b1d },
