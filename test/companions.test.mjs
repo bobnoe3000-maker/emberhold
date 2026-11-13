@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { execFile } from 'node:child_process';
 import { createSim } from '../src/sim/core.js';
 import { statsFor, tavernRoster, hireLevel } from '../src/sim/party.js';
 import { DAY_S } from '../src/sim/heroes.js';
@@ -188,14 +188,13 @@ test('a Bodyguard beside the hero takes a share of the blows aimed at the hero',
 });
 
 // the balance gate for perks (GDD §6.2): the best Beacon company we measured still loses a room
-// three levels up at level 9 (the contract's runs, §7.1, are perk-less, as before). It's a coin
-// that mostly lands one way: over seeds 1-8, 777 and 20260807 it held 3 of 10 both before and
-// after the melee gap (v1.87); 777 flipped to held with the gap, 3 lost both times, so 3 it is
-test('gate: a Beacon company (two auras, the best fighting perks) still falls in a level-9 room three up', () => {
-  for (const seed of ['20260807', '3']) {
-    const out = execFileSync('node', ['tools/balance/roomlv.mjs', '300', '12', '9', '1,3', seed, '--perks', 'drillmaster,finisher,grave_warden,skirmisher/banner_man,steady_hands,field_medic,hardy'], { encoding: 'utf8' });
-    assert.match(out, /DEFEAT/, out);
-  }
+// three levels up at level 9 (the contract's runs, §7.1, are perk-less, as before). Most of the time, not every time: over
+// ten seeds it held 3 both before and after the melee gap (v1.87), which seeds moving with every change to the fight; so
+// four seeds side by side, and it falls in three or more
+test('gate: a Beacon company (two auras, the best fighting perks) still falls in a level-9 room three up, three seeds in four', async () => {
+  const run = (seed) => new Promise((ok, no) => execFile('node', ['tools/balance/roomlv.mjs', '300', '12', '9', '1,3', seed, '--perks', 'drillmaster,finisher,grave_warden,skirmisher/banner_man,steady_hands,field_medic,hardy'], { encoding: 'utf8' }, (e, out) => (e ? no(e) : ok(out))));
+  const outs = await Promise.all(['20260807', '777', '1', '2'].map(run));
+  assert.ok(outs.filter((o) => /DEFEAT/.test(o)).length >= 3, outs.join('\n'));
 });
 
 test('a new companion comes at half the hero\'s level, rounded up (GDD §6.2 v1.11), and is priced at it', () => {

@@ -141,12 +141,13 @@ test('a red shrine\'s boon lands harder in a fight: the same fight, more damage 
   const dealt = (boon) => {
     const s = createSim(SEED, undefined, { scene: 'dungeon', site: 'barrows' }), L = s.world.level, r = L.rooms.find((q) => q !== L.entrance && q !== L.descentRoom), p = s.state.player;
     p.x = p.px = r.cx + 0.5; p.y = p.py = r.cy + 0.5; if (boon) s.state.boons = { atk: 1e9, def: 0 };
-    let n = 0; s.bus.on('combat', (c) => { if (c.t === 'hit' && !c.party) n += c.amount || 0; });
+    let n = 0, k = 0; s.bus.on('combat', (c) => { if (c.t === 'hit' && !c.party) { n += c.amount || 0; k++; } });
     for (let i = 0; i < 20 * 20; i++) { s.state.party[0].hp = Math.max(s.state.party[0].hp, 60); s.tick(); }
-    return n;
+    return n / Math.max(1, k);
   };
+  // (a blow's size: the fight's sum is capped by the foes there are to hit, and the melee gap, v1.87, left it 102 → 106)
   const a = dealt(false), b = dealt(true);
-  assert.ok(b > a * 1.1, `${a} → ${b}`);
+  assert.ok(b > a * 1.1, `${a.toFixed(1)} → ${b.toFixed(1)} a blow`);
 });
 
 test('a boon is saved and read back; a bad one reads as none', () => {

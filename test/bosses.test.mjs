@@ -117,11 +117,13 @@ test('the Quartermaster stands his fallen ranks up again, the last to fall first
   const ev = []; for (const k of ['bossIssue', 'bossDown', 'slain']) sim.bus.on(k, (e) => ev.push([k, e, sim.state.tick]));
   const paid = []; sim.bus.on('combat', (c) => { if (c.t === 'xp') paid.push([sim.state.tick, c.x, c.y]); });
   intoHall(sim);
-  let watched = null, fellAt = -1;
+  // (every rank he stands up watched, the first to fall again the one checked: watching only the first, a spacing change,
+  // v1.87, left it standing when he fell)
+  let watched = null, fellAt = -1; const up = new Set();
   fight(sim, () => {
-    if (!watched) watched = (sim.world.enemies || []).find((e) => e.issued && e.hp > 0 && !(e.spawn > 0)) || null;
-    else if (fellAt < 0 && watched.hp <= 0) fellAt = sim.state.tick;
-    return ev.some(([k]) => k === 'bossDown');
+    for (const e of sim.world.enemies || []) if (e.issued && e.hp > 0 && !(e.spawn > 0)) up.add(e);
+    if (fellAt < 0) for (const e of up) if (e.hp <= 0) { watched = e; fellAt = sim.state.tick; break; }
+    return ev.some(([k]) => k === 'bossDown') && (fellAt >= 0 || ![...up].some((e) => e.hp > 0 && (sim.world.enemies || []).includes(e)));   // (on past his fall till one of them does)
   }, 300);
   const issues = ev.filter(([k]) => k === 'bossIssue').map(([, e]) => e);
   assert.ok(issues.length >= 2, `he issued in his own hall: ${issues.length}`);

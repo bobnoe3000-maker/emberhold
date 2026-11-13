@@ -199,7 +199,7 @@ export const ENEMY_KINDS = Object.keys(ENEMIES);
 /** (v1.87) the room a melee blow is struck across: every melee reach, the party's and every foe's, is this much longer than
  *  its table says, with the personal space widened to match (SEP_XB), so fighters stand a step apart rather than in each
  *  other. Ranged reaches are as they were. */
-export const MELEE_GAP = 0.7;
+export const MELEE_GAP = 0.5;
 for (const t of [CLASS_FIGHT, ENEMIES]) for (const e of Object.values(t)) if (!e.bolt) e.range = Math.round((e.range + MELEE_GAP) * 100) / 100;
 // Who fills a site's waves (sites.js `family`): the melee pair and the ranged pair a wave draws from
 // (the same draws for every family, so the Old Barrows' waves are as they were), the elite's kind,
@@ -340,7 +340,7 @@ const MAX_SHOVE = 0.3;   // tiles per tick a personal-space push may move a unit
 // broader than the sprites were; 32 × 16 held a blow's two ends 2.8 tiles apart, and they stood in each other. 40 × 20, and
 // every melee reach MELEE_GAP longer below, so a blow still lands from where they stand. Between two of a side the space is as
 // it was: a pack still bunches, and the skills that wait for a knot of foes still find one)
-const SEP_XB = 32, SEP_YB = 16, SEP_X = SEP_XB, SEP_Y = SEP_YB, SEP_FOE = 1.25;
+const SEP_XB = 32, SEP_YB = 16, SEP_X = SEP_XB, SEP_Y = SEP_YB, SEP_FOE = 1.2;
 // Melee stations around a target, as SCREEN directions (x right, y down): a 56 px figure is
 // far taller than a tile is deep, so fighters stacked along the screen's vertical overlap
 // badly while side-by-side ones don't. Attackers take the left/right stations first, then
