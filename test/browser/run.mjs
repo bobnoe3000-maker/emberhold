@@ -764,6 +764,31 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 13c. The Bowl's bout speed (the owner, 2026-11-13: "Add a 2 and 4x speed up button option to the arena"): 1×, 2×, 4×
+// under a bout only, the sim's ticks that much faster (a hit-stop takes a little back), the choice remembered, and the
+// game at its own pace again when the bout is over.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&notitle&scene=town&world=off`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__ui, null, { timeout: 60000 });
+    await p.waitForTimeout(1200);
+    await p.evaluate(() => { const s = globalThis.__sim; if (!s.state.created) { s.commands.push({ type: 'createHero', cls: 'fighter', look: 'hero_knight', origin: 'thornwick_born', name: 'Ada' }); s.tick(); }
+      for (const i of [1, 3]) { s.state.counters.gold = 1e9; s.commands.push({ type: 'hire', idx: i }); s.tick(); } for (const m of s.state.party) m.level = 9; });
+    const rate = async () => { const t0 = await p.evaluate(() => globalThis.__sim.state.tick); await p.waitForTimeout(2000); return ((await p.evaluate(() => globalThis.__sim.state.tick)) - t0) / 2; };
+    await p.evaluate(() => globalThis.__ui.bowl.open()); await p.waitForTimeout(300);
+    await p.tap('#bowl .card button.fight'); await p.waitForFunction(() => globalThis.__sim.battle && globalThis.__sim.battle.bout, null, { timeout: 10000 });
+    await p.tap('#boutSpeed button:nth-child(1)'); const x1 = await rate();
+    await p.tap('#boutSpeed button:nth-child(3)'); const x4 = await rate();
+    await p.evaluate(() => { const s = globalThis.__sim; for (let i = 0; i < 20 * 200 && s.battle; i++) s.tick(); }); await p.waitForTimeout(500);
+    const after = await rate(), hidden = await p.evaluate(() => getComputedStyle(document.getElementById('boutSpeed')).display === 'none');
+    const kept = await p.evaluate(() => localStorage.getItem('emberfall.boutSpeed'));
+    check('bowl: a bout at 4× runs the sim three times faster or more than at 1×, the speed kept, the game at its pace once the bout is over',
+      x4 >= 3 * x1 && after < x1 * 1.3 && hidden && kept === '4' && errs.length === 0, JSON.stringify({ x1, x4, after, hidden, kept }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 // 14. A skill learned from someone you talk to says so, the way a quest's reward does: hand Nell her trial
 // and the conversation window shows "New skill learned: Smoke Step", who knows it now and what it does.
 {

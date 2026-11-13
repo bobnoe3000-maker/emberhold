@@ -6,7 +6,10 @@
 //     name, rank, rating and company as classes and levels, one Fight button; five new faces for 100, 250, 500 gold) or
 //     Rankings (the top five and the players round you, overall or in today's tourney). A bout enters you in the day's
 //     tourney: the strip over the board shows your place;
-//   · on the sand: a bar at the top, the Crier's call, the clock and each side's share of HP standing;
+//   · on the sand: a bar at the top, the Crier's call, the clock and each side's share of HP standing; and the bout's
+//     speed, 1×, 2× or 4× (the owner, 2026-11-13: "Add a 2 and 4x speed up button option to the arena"): main.js runs
+//     the sim's ticks and the render's clock that much faster while a bout is on, nothing else. The sim is the same
+//     tick for tick at any speed (a replay doesn't know), so it's the viewer's to choose; remembered on this device;
 //   · the result: won, lost or drawn, the Crier's line, the marks, the rating and the tourney place; Challenge, or Back.
 // Every word is content/arena.json's or written here (a rival is shown by its player's name, made up for now). It pushes
 // commands (bowlOpen, bowlRefresh, bowlBout, bowlLeave) and reads state; the sim checks every one. Preact + htm.
@@ -91,6 +94,11 @@ const CSS = `
 #boutBar .meter { width: 90px; height: 6px; background: rgba(255,255,255,.12); border-radius: 3px; overflow: hidden; }
 #boutBar .meter i { display: block; height: 100%; }
 #boutBar .crier { font: italic 13px Georgia, serif; color: #e8d8b8; margin-top: 3px; }
+#boutSpeed { position: fixed; left: calc(12px + env(safe-area-inset-left, 0px)); bottom: 140px; z-index: 5; display: none; gap: 4px; padding: 3px;
+  background: rgba(14,10,8,.88); border: 1px solid rgba(216,176,96,.5); border-radius: 12px; }
+#boutSpeed.on { display: flex; }
+#boutSpeed button { min-width: 44px; min-height: 44px; border-radius: 9px; border: 0; background: none; color: #cbbfae; font: 600 14px Georgia, serif; }
+#boutSpeed button.on { background: linear-gradient(#e6c47a, #a07a2e); color: #1a1208; }
 `;
 
 /** @param {{ sim: any, onOpen?: () => void, onClose?: () => void }} o */
@@ -99,6 +107,18 @@ export function createBowl({ sim, onOpen = () => {}, onClose = () => {} }) {
   const wrap = document.createElement('div'); wrap.id = 'bowlWrap'; wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-label', 'The Bowl');
   document.body.appendChild(wrap); swallow(wrap);
   const bar = document.createElement('div'); bar.id = 'boutBar'; bar.setAttribute('aria-live', 'polite'); document.body.appendChild(bar);
+  // the bout's speed: buttons of their own (the bar above is rebuilt as the clock runs, and would lose a tap)
+  const SPEEDS = [1, 2, 4], KEY = 'emberfall.boutSpeed';
+  let speed = 1; try { const v = +localStorage.getItem(KEY); if (SPEEDS.includes(v)) speed = v; } catch { /* (no storage: 1×) */ }
+  const pace = document.createElement('div'); pace.id = 'boutSpeed'; pace.setAttribute('role', 'group'); pace.setAttribute('aria-label', 'Bout speed');
+  document.body.appendChild(pace); swallow(pace);
+  const paceBtns = SPEEDS.map((v) => {
+    const b = document.createElement('button'); b.textContent = `${v}×`; b.setAttribute('aria-label', `Speed ${v} times`);
+    b.addEventListener('click', () => { speed = v; try { localStorage.setItem(KEY, String(v)); } catch { /* (kept for the session) */ } showPace(); });
+    pace.append(b); return b;
+  });
+  const showPace = () => paceBtns.forEach((b, i) => { const on = SPEEDS[i] === speed; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+  showPace();
   /** @type {any} */ let words = null;
   fetch('./content/arena.json').then((r) => r.json()).then((d) => { words = { crier: d.crier, by: Object.fromEntries(d.companies.map((c) => [c.id, c])) }; if (wrap.classList.contains('on')) draw(); }).catch(() => {});
   /** @type {'team' | 'solo'} */ let mode = 'team';
@@ -216,7 +236,8 @@ export function createBowl({ sim, onOpen = () => {}, onClose = () => {} }) {
   let lastKey = '';
   function tick() {
     const B = sim.battle && sim.battle.bout;
-    if (!B) { if (bar.classList.contains('on')) bar.classList.remove('on'); lastKey = ''; return; }
+    if (!B) { if (bar.classList.contains('on')) { bar.classList.remove('on'); pace.classList.remove('on'); } lastKey = ''; return; }
+    if (!pace.classList.contains('on')) pace.classList.add('on');
     const left = Math.max(0, Math.ceil(B.call > 0 ? B.call : B.secs - B.t)), a = share(B.ours), r = share(B.rivals);
     const key = `${left}|${Math.round(a * 50)}|${Math.round(r * 50)}|${crier}|${B.call > 0}`; if (key === lastKey) return; lastKey = key;
     bar.classList.add('on');
@@ -229,5 +250,7 @@ export function createBowl({ sim, onOpen = () => {}, onClose = () => {} }) {
     if (crier) { const c = document.createElement('div'); c.className = 'crier'; c.textContent = crier; bar.append(c); }
   }
   setInterval(tick, 200);
-  return { open, close, get isOpen() { return wrap.classList.contains('on'); } };
+  return { open, close, get isOpen() { return wrap.classList.contains('on'); },
+    /** how many times faster the game runs now: the chosen speed while a bout is on, else 1 (main.js frame) */
+    get speed() { return sim.battle && sim.battle.bout ? speed : 1; } };
 }

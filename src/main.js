@@ -269,13 +269,14 @@ function frame(now) {
   fpsMeter.frame(now);
   if (world3d && world3d.state.failed && !worldFail.shown) worldFail.show(world3d.state.failed);   // (a level Luminati couldn't build)
   if (away.running) { last = now; return; }   // the time away is being played through (ui/away.js): no ticks, no drawing
-  const SLOW = DEV ? Math.max(1, globalThis.__slow || 1) : 1, real = now;
-  let dt = (now - last) / 1000 / SLOW;
-  const held = Math.max(0, Math.min(real, holdTo) - Math.max(last, holdFrom)) / 1000 / SLOW;   // (the part of this frame the world held)
+  // FAST: a bout in the Bowl at 2× or 4× (ui/bowl.js speed): the ticks and the render's clock run that much faster
+  const SLOW = DEV ? Math.max(1, globalThis.__slow || 1) : 1, FAST = bowl.speed, real = now;
+  let dt = ((now - last) / 1000 / SLOW) * FAST;
+  const held = (Math.max(0, Math.min(real, holdTo) - Math.max(last, holdFrom)) / 1000 / SLOW) * FAST;   // (the part of this frame the world held)
   last = now;
   dt = Math.max(0, dt - held);
-  if (SLOW !== 1 || slowed || held) { vnow += Math.min(dt, MAX_FRAME) * 1000; now = vnow; slowed = true; } else vnow = now;
-  if (dt > MAX_FRAME) dt = MAX_FRAME;
+  if (SLOW !== 1 || FAST !== 1 || slowed || held) { vnow += Math.min(dt, MAX_FRAME * FAST) * 1000; now = vnow; slowed = true; } else vnow = now;
+  if (dt > MAX_FRAME * FAST) dt = MAX_FRAME * FAST;
   acc += dt;
 
   while (acc >= TICK_DT) {
