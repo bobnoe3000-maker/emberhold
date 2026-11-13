@@ -4,7 +4,8 @@
 // single menu … Does party make sense here?"; the proposal agreed: "go with it"). Each screen answers one question:
 //   · the launch (after the boot's loading screen, src/cutscene/player.js; it holds the world still): Continue (or Begin,
 //     for a slot with no hero yet: the intro, then creation), Game slots, Settings, The Chronicle (the intro again);
-//   · ☰ in play ('pause': a fight goes on under it): Resume, Settings, How to play (the first steps again), Game slots;
+//   · ☰ in play ('pause': a fight goes on under it): Resume, Settings, The Bowl (from level 6: ui/bowl.js; the owner,
+//     2026-11-13: "Menu fine at min level 6"), How to play (the first steps again), Game slots;
 //   · Settings: two tabs, Sound (a slider a kind of sound, audio/settings.js) and Graphics (render3d/settings.js), a row a
 //     setting, its control on the right: Quality, Resolution, Depth of field, Hit feel, Zoom, Brightness;
 //   · Account (net/account.js; the owner, 2026-11-13: "Lets do the account setup including guest"): the guest's handle
@@ -25,6 +26,7 @@ import { swallow } from './actorart.js';
 import { debugReport } from './debugreport.js';
 import { ZOOM_PCT_MIN, ZOOM_PCT_MAX } from '../render3d/settings.js';
 import { PROVIDER_LABEL } from '../net/account.js';
+import { BOWL } from '../sim/bowl.js';
 
 const CSS = `
 #titleWrap { position: fixed; inset: 0; z-index: 11; display: none; background: linear-gradient(rgba(8,6,12,.35), rgba(8,6,12,.55) 40%, rgba(8,6,12,.94) 72%); }
@@ -98,11 +100,11 @@ const CSS = `
  * @param {{ sim: any, slot: number, audio?: any, setPaused: (on: boolean) => void, openSlots: () => void, openParty: () => void, openCreate: () => void,
  *   openChronicle: (mode: string) => void, onOpen?: () => void, onPlay?: () => void,
  *   graphics?: { read: () => any, set: (patch: any) => Promise<any>, status?: () => any, frameTest?: () => Promise<boolean> } | null, tune?: (() => void) | null,
- *   devApply?: ((cmds: any[]) => void) | null, openSteps?: (() => void) | null, account?: any }} o  account: net/account.js  onPlay: the title closes into play; openSteps: the first steps again (ui/firststeps.js);
+ *   devApply?: ((cmds: any[]) => void) | null, openSteps?: (() => void) | null, account?: any, openBowl?: (() => void) | null }} o  openBowl: the Bowl's board (ui/bowl.js), from level 6;  account: net/account.js  onPlay: the title closes into play; openSteps: the first steps again (ui/firststeps.js);
  *   graphics: the Graphics panel (src/render3d/settings.js); tune: the
  *   Brightness tray (ui/brightness.js), opened over play with the menu closed
  */
-export function createTitle({ sim, slot, audio = null, setPaused, openSlots, openParty, openCreate, openChronicle, onOpen = () => {}, onPlay = () => {}, graphics = null, tune = null, devApply = null, openSteps = null, account = null }) {
+export function createTitle({ sim, slot, audio = null, setPaused, openSlots, openParty, openCreate, openChronicle, onOpen = () => {}, onPlay = () => {}, graphics = null, tune = null, devApply = null, openSteps = null, account = null, openBowl = null }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const wrap = document.createElement('div'); wrap.id = 'titleWrap'; document.body.appendChild(wrap);
   swallow(wrap);
@@ -261,6 +263,7 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
       ${paused ? html`
         ${settings}
         ${acct}
+        ${openBowl && made && h.level >= BOWL.minLevel && html`<button onClick=${() => { close(); openBowl(); }}>The Bowl<small>the arena · ${S.bowl ? `${S.bowl.marks} marks` : 'company against company'}</small></button>`}
         ${openSteps && made && html`<button onClick=${() => { close(); openSteps(); }}>How to play<small>the first steps again</small></button>`}
         <button onClick=${() => openSlots()}>Game slots<small>saved as you go</small></button>`
       : html`

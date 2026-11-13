@@ -178,7 +178,7 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   const th = theme || themeAt(site, depth) || THEME_KEYS[(seed >>> 0) % THEME_KEYS.length];
   const level = generateLevel(seed, th, { rooms: S.rooms, layout: S.layout, plan: planFloor(site, depth) });   // (an authored floor: plans.js)
   const world = {
-    kind: 'dungeon', seed, theme: th, depth, level, site, siteName: S.name, kit,
+    kind: 'dungeon', seed, theme: th, depth, level, site, siteName: S.name, kit, ...(S.arena ? { arena: true } : {}),
     ss: streamSeed(seed, 131),            // floor-material selector
     hs: streamSeed(seed, 7919),           // cliff-face strata / detail
     cs: streamSeed(seed, 577),            // hazard field
@@ -435,13 +435,14 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   }
   const reach = keepTheWaysOpen(world, level);
   pruneUnreachable(world, reach);
-  if (![...world.props.values()].includes('chest')) placeOneChest(world, level, keep, reach);
+  if (S.arena) { for (const [k, p] of world.props) if (p === 'chest' || p === 'shrine') world.props.delete(k); }   // (the Bowl pays marks, not loot: bowl.js)
+  else if (![...world.props.values()].includes('chest')) placeOneChest(world, level, keep, reach);
   seeChests(world, level, reach);
 
   // Enemies arrive in waves when the party enters a room (battle.js). Each room has a
   // fixed level: the further you walk from the entrance, the harder it is.
   world.roomLevels = rankRooms(level, depth, site);
-  world.gate = gateOf(level, world.roomLevels, site, depth);
+  world.gate = S.arena ? null : gateOf(level, world.roomLevels, site, depth);   // (the Bowl's sand: no gate, its bouts are bowl.js's)
   world.enemies = []; world.projectiles = [];
   return world;
 }

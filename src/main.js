@@ -22,6 +22,7 @@ import { createWorldMap } from './ui/worldmap.js';
 import { createStepOut } from './ui/stepout.js';
 import { createShrineCard } from './ui/shrine.js';
 import { createTowerCard } from './ui/tower.js';
+import { createBowl } from './ui/bowl.js';
 import { createAway } from './ui/away.js';
 import { createDefeat } from './ui/defeat.js';
 import { createGuildTerms } from './ui/guildterms.js';
@@ -130,6 +131,7 @@ const worldMap = createWorldMap({ sim, toast: (m, ms) => hud.show(m, ms), inSqua
 createStepOut({ sim, partyPanel });   // the way out of a fight (GDD §7.1)
 createShrineCard({ sim });             // a shrine's blessing, offered: Use or Close (GDD §3.6)
 createTowerCard({ sim });              // the Mere Tower's landings: Climb on or Home with Wenna (GDD §17)
+const bowl = createBowl({ sim });      // the Bowl (GDD §17 v1.85): its board from ☰, the bout's bar, the result
 createDefeat({ sim });                // a wipe: what happened, before you wake at the Shrine (ui/defeat.js)
 createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare(), questTitle: (id) => journal.title(id) });   // compass travel (docs/compass-mockup.html)
 const gearSheet = createGearSheet(sim, { partyPanel, openTerms: () => guildTerms.open(), models: !WORLD_OFF && !/sprites/.test(params.get('figures') || '') });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)
@@ -204,7 +206,7 @@ const title = createTitle({ sim, slot: SLOT, audio, setPaused: (on) => { paused 
   openParty: () => partyScreen.open(), openCreate: () => cinema.intro(() => { paused = false; creation.open(); }),
   openChronicle: (mode) => { paused = true; cinema.intro(() => title.open(mode)); }, /* (the film holds the game; the menu it goes back to doesn't) */ onPlay: () => { cinema.stopMusic(); catchUp(); },
   onOpen: () => { townMenu.close(); gearSheet.close(); partyScreen.close(); worldMap.close(); if (brightness.isOpen) brightness.close(); },   // the menu comes up over a clear screen
-  graphics, tune: () => brightness.open(), openSteps: () => firstSteps.open(true),
+  graphics, tune: () => brightness.open(), openSteps: () => firstSteps.open(true), openBowl: () => bowl.open(),
   // the menu's Developer tools (sim/dev.js: commands that mark the slot a dev game): applied at once, a tick of the sim
   // (the game runs on under the menu in play), and the slot saved with them
   account,

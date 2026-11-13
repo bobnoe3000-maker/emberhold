@@ -12,6 +12,7 @@ test('plans: every Vale plan keeps the owner\'s rules (≤ 2 floors, ≤ 5 space
 
 test('plans: each floor runs entrance → rooms → its last hall, with one offshoot, and levels climb the band', () => {
   for (const p of Object.values(PLANS)) {
+    if (SITES[p.site] && SITES[p.site].arena) continue;          // (the Bowl's sand: a way in and the sand, test/bowl.test.mjs)
     assert.ok(SITES[p.site] && SITES[p.site].region === 'vale', `${p.site} is a Vale site`);
     assert.equal(p.base, SITES[p.site].base, `${p.site}: the band's base as sites.js has it`);
     p.floors.forEach((f, fi) => {

@@ -206,6 +206,20 @@ export const PLANS = {
       { from: 'long_vault', to: 'strongroom_vault', x: 140, y: 8, w: 10, h: 10 },
     ] },
   ] },
+
+  // ── The Bowl (GDD §17 v1.85; world doc v1.44 §3.9; docs/bowl-arena-proposal.md §2): the imperial Circus of the Sun in
+  //    Solmere, half its tiers fallen in. Not on any land: the menu takes a company to it from level 6 and back. One sand,
+  //    oval, open from wall to wall (a floor's last hall stands no obstacle), and the Dust Gate's tunnel where you wait.
+  bowl: { site: 'bowl', name: 'The Bowl', kind: 'arena', base: 6, flat: true, floors: [
+    { name: 'The Sand', spaces: [
+      { id: 'dust_gate', name: 'The Dust Gate', role: 'entrance', x: 0, y: 4, w: 30, h: 28, shape: 'rect', lv: 0, kit: 'bailey',
+        dress: ['stair_up', 'benches', 'racks'], note: 'The fighters\' tunnel under the tiers: benches, a rack of practice blades, the Gate\'s bars up. The stair is the way back out.' },
+      { id: 'the_sand', name: 'The Sand', role: 'end', x: 40, y: 0, w: 52, h: 40, shape: 'round', lv: 0, kit: 'bailey',
+        dress: ['banners', 'braziers'], note: 'The sand of the Circus of the Sun, raked between bouts; the tiers above it, half fallen in; the Sun\'s Box at the far side.' },
+    ], halls: [
+      { from: 'dust_gate', to: 'the_sand', x: 30, y: 13, w: 10, h: 10 },
+    ] },
+  ] },
 };
 
 /** a space's size class by its sides (PLAN_RULES) @param {{ w: number, h: number }} s */

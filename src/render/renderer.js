@@ -628,6 +628,13 @@ export function createRenderer(canvas, sim, input) {
         draws.push({ d: lx + ly + 0.05, sp, fx: ox + lp.sx, fy: oy + lp.sy - 12, h: lz * ZH + 12, k: lx + ly + 0.05, look: { flash: e.flash > 0 ? 0.36 : 0 }, uid: e.id, u: e, foe: true, lift: 12 });   // (lift: another painter stands it at his side, held up: hybrid.js)
         continue;
       }
+      if (e.rival) {                                                              // a rival company's member (the Bowl, battle.js startBout): a person, its own look and kit
+        const atl = memberAtlas(e, e.actor || MEMBER_LOOK[e.cls]); if (!atl) continue;
+        const rx = lerp(e, 'x'), ry = lerp(e, 'y'), rz = heightAt(sim.world, Math.floor(rx), Math.floor(ry)), rp = project(rx, ry, rz);
+        const a = pickAnim(e, atl, { now, x: rx, y: ry, moving: e.moving, faceX: e.fx, faceY: e.fy, facing: e.act > 0 || !e.moving, dead: e.down, stride: STRIDE.hero, seed: (e.id * 0.37) % 1 });
+        draws.push({ d: rx + ry, fx: ox + rp.sx, fy: oy + rp.sy, h: rz * ZH, k: rx + ry, look: lookOf(e, e.down ? 0.35 : 0), team: e.down ? 0 : 2, atl, a, uid: e.id, u: e, foe: true });
+        continue;
+      }
       const skelAtlas = enemyAtlas(e.kind);
       if (!skelAtlas) continue;
       const undead = UNDEAD_LOOK.has(skelAtlas.name);
@@ -1068,7 +1075,7 @@ export function createRenderer(canvas, sim, input) {
       octx.fillStyle = col; octx.fillRect(sx - bw / 2, sy, bw * Math.max(0, Math.min(1, frac)), bh);
     };
     if (b) {
-      for (const e of w.enemies || []) if (e.hp > 0 && !(e.spawn > 0)) bar(e.x, e.y, e.hp / e.maxHp, e.elite ? '#ff9a3a' : '#d24a3c', e.elite ? 24 : 18);
+      for (const e of w.enemies || []) if (e.hp > 0 && !(e.spawn > 0)) bar(e.x, e.y, e.hp / e.maxHp, e.elite ? '#ff9a3a' : '#d24a3c', e.elite || e.rival ? 24 : 18);   // (a rival's as long as a party member's)
       party.forEach((m, i) => { if (m.down || m.fallen) return; const x = i ? (fol[i - 1] || m).x : ix, y = i ? (fol[i - 1] || m).y : iy; const s = sim.state.party[i]; const mx = maxHpOf(s); bar(x, y, s.hp / mx, '#5aa35c', 16); });
       // the room-level · wave pill under the HUD, tinted by how far the room is above you
       // …and, from the second wave, how far the tide has lifted the foes (GDD §7.1: each wave of a visit is tougher)
@@ -1080,9 +1087,11 @@ export function createRenderer(canvas, sim, input) {
       // under the HUD row (hudB: the phone's safe area included), centred, but never under the minimap
       const tw = octx.measureText(txt).width + 18 * k, mmL = vw - (MM_CSS + 2 * MM_PAD + MM_RIGHT + safeR + 8) * k;
       const px = Math.max(tw / 2 + 10 * k, Math.min(vw / 2, mmL - tw / 2)), py = (hudB + 16) * k;
+      if (!b.bout) {                                     // (a bout's clock and shares are its own bar: ui/bowl.js)
       octx.fillStyle = 'rgba(14,10,18,0.82)'; octx.strokeStyle = dc; octx.lineWidth = Math.max(1, k);
       octx.beginPath(); octx.roundRect(px - tw / 2, py - 13 * k, tw, 19 * k, 9 * k); octx.fill(); octx.stroke();
       octx.fillStyle = dc; octx.fillText(txt, px, py + 1 * k);
+      }
       // a boss's bar under the pill: its name, its health, and a shield while it's guarded (battle.js BOSSES)
       const boss = (w.enemies || []).find((e) => e.boss && e.hp > 0 && !e.dead);
       if (boss) {

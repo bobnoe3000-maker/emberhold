@@ -29,14 +29,14 @@ function holdWaves(sim, n) {
   return { held, opened };
 }
 
-test('every floor of every site has its gate across the ways into its last hall (but the Mere Tower, whose landings are its waves); shut, the hall can\'t be walked to', () => {
+test('every floor of every site has its gate across the ways into its last hall (but the Mere Tower, whose landings are its waves, and the Bowl); shut, the hall can\'t be walked to', () => {
   let n = 0;
   for (const site of Object.keys(SITES)) for (const seed of [1, 20260807]) {
     const sim = createSim(seed, undefined, { scene: 'dungeon', site });
     for (let d = 0; d < 3; d++) {
       if (d) { sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), depth: d, floors: [] }); if (sim.state.depth !== d) break; }
       const w = sim.world;
-      if (site === 'mere_tower') { assert.equal(w.gate, null, 'the tower: no gate'); continue; }
+      if (site === 'mere_tower' || site === 'bowl') { assert.equal(w.gate, null, `${site}: no gate (the tower's landings are its waves, the Bowl's sand its bouts)`); continue; }
       assert.ok(w.gate && w.gate.cells.length && w.gate.rooms.length, `${site} floor ${d + 1}: a gate`);
       assert.equal(w.gate.id, `${site}:${d}`); assert.equal(w.gate.waves, GATE_WAVES); assert.equal(GATE_WAVES, 20);
       assert.ok(w.gateShut && w.gateShut.size === w.gate.cells.length, 'shut in a new slot');

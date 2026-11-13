@@ -32,6 +32,8 @@ import { campsFrom } from './camps.js';
 import { restoreCount, credit } from './lamps.js';
 import { SHRINES, shrineKind, boonsOf, restoreBoons } from './shrines.js';
 import { towerOf, restoreTower, inTower, bracketOf, BRACKETS } from './tower.js';
+import { bowlOf, picksOf, settleBout, enterTourney, tourneyFoe, restoreBowl, freshBowl, companyOn, bracketOf as bowlBracket, BOWL } from './bowl.js';
+import { makeCompany } from './rivals.js';
 import { createExpeditions } from './expeditions.js';
 import { createCoach, reachedOf, townOf, COACH } from './coach.js';
 import { createBus, createCommandQueue } from './bus.js';
@@ -118,6 +120,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     away: null,                       // the time away being played through (offline progress, above): runtime only
     boons: { atk: 0, def: 0, hpr: 0 },   // a shrine's boon: until when on the sim's clock (shrines.js; hpr the green's, v1.84)
     tower: { wave: 0, best: 0, landing: 0, atLanding: false, satchel: { gold: 0, cinders: 0 }, won: {} },   // the Mere Tower's climb and the heirlooms won (tower.js)
+    bowl: freshBowl(),                // (v45) the Bowl: rating, marks, the day's bouts and tourney (bowl.js)
     trials: {},                       // class trials the company has done: { [cls]: 1 } for the 6s, { [cls + '12']: 1 } for the 12s (quests.js; skills.js unlocks)
     reached: new Set(['thornwick']),  // the towns you've stood in (coach.js): where the Guild's coach will take you
   };
@@ -331,6 +334,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   // to another land's overland: which land (regions.js).
   function travel(to, arrive, site = 'barrows', region = null) {
     stopWalk(); state.player.resume = null;
+    if (away) { battle.reset(); away = null; boutOn = null; }              // (out of the Bowl by any other road: a bout walked out on is lost)
     if (region && LANDS[region]) curRegion = landId(region);
     floors = new Map();                                    // a new visit: the site's floors are fresh
     if (to === 'dungeon') { curSite = SITES[site] ? site : 'barrows'; curRegion = SITES[curSite].region; state.sitesEntered.add(curSite); }
@@ -345,6 +349,36 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     bus.emit('levelChanged', { depth: 0, theme: world.theme, scene: curScene });
     journeyOn();
   }
+
+  // ── the Bowl (bowl.js): a pocket trip. The world you were in is kept as it stood (its floor, its mods, where you
+  // stood) while the company is on the Sand, and given back as it was; a save made there is the world you came from.
+  /** @type {any} */ let away = null;                          // in the Bowl: { world, scene, site, region, depth, floors, x, y }
+  /** @type {any} */ let boutOn = null;                        // the bout as started: { kind, id, grade, rating, alone }
+  function boutIn(on) {
+    const p = state.player;
+    if (!away) {
+      stopWalk(); p.resume = null; p.journey = null;
+      away = { world, scene: curScene, site: curSite, region: curRegion, depth: state.depth, floors, x: p.x, y: p.y };
+      curScene = 'dungeon'; curSite = 'bowl'; state.depth = 0; floors = new Map();
+      world = buildWorld(0);
+      const a = world.stairArrive || findSpawn(world); p.x = p.px = a.x; p.y = p.py = a.y; p.moving = false; p.vx = p.vy = 0;
+      battle.reset();
+      bus.emit('levelChanged', { depth: 0, theme: world.theme, scene: curScene, bowl: true });
+    }
+    boutOn = on;
+    const H = state.party[0], rivals = makeCompany(on.id, H.level, on.grade);
+    battle.startBout(world, world.level.descentRoom.id, on.alone ? rivals.slice(0, 1) : rivals, { id: on.id, salt: state.tick, alone: on.alone });
+  }
+  function leaveBowl() {
+    if (!away || battle.battle) return;                        // (not mid-bout)
+    const p = state.player, a = away;
+    world = a.world; curScene = a.scene; curSite = a.site; curRegion = a.region; state.depth = a.depth; floors = a.floors;
+    p.x = p.px = a.x; p.y = p.py = a.y; p.moving = false; p.vx = p.vy = 0;
+    away = null; boutOn = null;
+    battle.reset();
+    bus.emit('levelChanged', { depth: state.depth, theme: world.theme, scene: curScene });
+  }
+  bus.on('boutEnd', (res) => { if (!boutOn) return; const on = boutOn; boutOn = null; bus.emit('bowlResult', settleBout(state, on, res)); });
 
   // A journey (a compass pick whose row carries `journey`) outlasts the scene change it walks
   // into: out of town, into the barrows, down a floor, it picks its next leg where it arrives and
@@ -431,6 +465,35 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     }
     if (cmd.type === 'awayStop') { if (state.away) { const done = state.away.secs - state.away.left / TICK_HZ; state.away = null; bus.emit('awayEnded', { secs: Math.round(done), stopped: true }); } return; }
     // the Mere Tower (tower.js): at a landing, climb on, or go home with Wenna and keep everything (the punt: out at the jetty)
+    // the Bowl (bowl.js, GDD §17 v1.85): a bout with one of the day's picks (the company, or the hero alone), the day's
+    // tourney entered and its next bout, and back to where you were. From the menu, from level 6, never mid-fight.
+    if (cmd.type === 'bowlBout' || cmd.type === 'tourneyEnter' || cmd.type === 'tourneyBout') {
+      const H = state.party[0], no = (reason) => bus.emit('refused', { reason });
+      if (!state.created || H.level < BOWL.minLevel) { no(`The Bowl takes companies from level ${BOWL.minLevel}`); return; }
+      if (battle.battle) { no('Not in the middle of a fight'); return; }
+      if (H.down || H.fallen) return;
+      const b = bowlOf(state), standing = state.party.filter((m) => !m.fallen).map((m) => m.id);
+      if (cmd.type === 'bowlBout') {
+        const pick = picksOf(state).find((c) => c.id === cmd.id);
+        if (!pick) { no('That company isn’t on today’s board'); return; }
+        boutIn({ kind: 'ladder', id: pick.id, grade: pick.grade, rating: pick.rating, alone: !!cmd.alone });
+        return;
+      }
+      if (cmd.type === 'tourneyEnter') {
+        if (b.tourney) { no('You’re in today’s tourney already'); return; }
+        const T = enterTourney(state, standing);
+        if (!T) { no('One tourney a day. The next is tomorrow'); return; }
+        bus.emit('tourney', { t: 'entered', slots: [...T.slots] });
+        return;
+      }
+      const T = b.tourney, foe = tourneyFoe(T);
+      if (!T || !foe) return;
+      if ([...standing].sort().join() !== [...T.company].sort().join()) { no('Your company is locked for the tourney: field the company you entered with'); return; }
+      const c = companyOn(foe, bowlBracket(H.level), T.day);
+      boutIn({ kind: 'tourney', id: foe, grade: c.grade, rating: T.ratings[foe] ?? c.rating, alone: false });
+      return;
+    }
+    if (cmd.type === 'bowlLeave') { leaveBowl(); return; }
     if (cmd.type === 'towerClimb') { if (inTower(world)) battle.towerClimb(); return; }
     if (cmd.type === 'towerLeave') { if (inTower(world) && towerOf(state).atLanding && battle.battle && battle.battle.tower) travel('overland', curSite); return; }
     if (cmd.type === 'useShrine') {                        // the shrine popup's Use (ui/shrine.js): unspent, in reach, and needed
@@ -454,6 +517,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
         if (!inReach) { bus.emit('outOfReach', { tx: cmd.tx, ty: cmd.ty }); return; }
         face(p, dx, dy);
         if (prop === 'stairs' && world.kind === 'overland') { travel('dungeon', undefined, 'barrows'); return; }   // into the Old Barrows
+        if (prop === 'exit' && away) { leaveBowl(); return; }                                         // the Dust Gate's stair: back to where you were
         if (prop === 'exit') { travel('overland', curSite); return; }                                  // back up to the surface
         if (prop === 'stairs' || prop === 'stairwell') { bus.emit('descend', { depth: state.depth + 1 }); descend(); return; }   // any tile of the stairwell
         if (prop === 'shrine') {                           // a touch reads it and offers its blessing; using it is its own command (useShrine)
@@ -595,7 +659,16 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     'attrs', 'autoAttrs', 'origin', 'skills', 'off', 'prio', 'stance', 'fallen', 'weakUntil', 'respecs',
     'rank', 'perks', 'hidden', 'bond', 'owed', 'retrains', 'exp', 'loadout', 'born', 'appearance', 'hideHelm'];   // (exp: out on an expedition, v22; loadout: the abilities taken into a fight, v36; born: the hero's roll, v38)
   const persistMember = (m) => { const o = {}; for (const k of MEMBER_KEYS) if (m[k] !== undefined) o[k] = m[k]; return o; };
+  // a save made in the Bowl is the world you came from, and the company as it came in (a bout's HP isn't carried)
   function snapshot() {
+    if (!away) return snap();
+    const p = state.player, here = { world, scene: curScene, site: curSite, region: curRegion, depth: state.depth, floors, x: p.x, y: p.y };
+    const kept = battle.battle && battle.battle.bout ? battle.battle.bout.kept.map(({ m, hp, mp }) => ({ m, hp, mp, now: [m.hp, m.mp, m.down] })) : [];
+    const put = (o) => { world = o.world; curScene = o.scene; curSite = o.site; curRegion = o.region; state.depth = o.depth; floors = o.floors; p.x = o.x; p.y = o.y; };
+    put(away); for (const k of kept) { k.m.hp = k.hp; k.m.mp = k.mp; k.m.down = false; }
+    try { return snap(); } finally { put(here); for (const k of kept) [k.m.hp, k.m.mp, k.m.down] = k.now; }
+  }
+  function snap() {
     const p = state.player;
     return {
       seed: baseSeed, scene: curScene, site: curSite, region: curRegion, depth: state.depth, t: state.t, tick: state.tick, dayS: DAY_S,
@@ -622,6 +695,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       count: { ...state.count }, lampsBroken: [...state.lampsBroken],   // (v19)
       boons: { ...boonsOf(state) },     // (v20)
       tower: JSON.parse(JSON.stringify(towerOf(state))),   // (v21)
+      bowl: JSON.parse(JSON.stringify(state.bowl || freshBowl())),   // (v45) bowl.js
       trials: Object.keys(state.trials),
       reached: [...state.reached],       // (v28)
       floors: [...floors.entries()],     // the other floors of this visit: [depth, { mods, hp, discovered, visited }]
@@ -696,6 +770,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     { const r = restoreCount(data); state.count = r.count; state.lampsBroken = r.lampsBroken; }   // v18 and older: migrated (persist/save.js)
     state.boons = restoreBoons(data);   // v19 and older: none
     state.tower = restoreTower(data);   // v20 and older: no climb
+    state.bowl = restoreBowl(data.bowl);  // v44 and older: a fresh record (bowl.js)
+    away = null; boutOn = null;
     state.away = null;                  // (a catch-up is never saved: ui/away.js holds the autosave while one runs)
     // v12 and older, from before the trials: a class anyone in the company had at level 6 keeps its level-6 ability
     state.trials = {};
