@@ -58,8 +58,8 @@ export const SKILLS = {
     { id: 'shield_wall', name: 'Shield Wall', lv: 6, trial: true, mp: 20, kind: 'guard', dur: 6, def: 0.5, taunt: true, text: '+50 % DEF for 6 s; foes turn on you' },
     { id: 'second_wind', name: 'Second Wind', lv: 12, trial: true, mp: 25, kind: 'heal', heal: 0.25, text: 'heal 25 % of max HP' },
     { id: 'vault', name: 'Vault', lv: 15, mp: 14, kind: 'leap', power: 1.5, splash: 0.6, sr: 1.8, knock: 0.8, min: 3, max: 8, text: 'leap to a foe 3–8 tiles off that is striking an ally (or any, with none in reach; never off a boss): 1.5× on it, 0.6× round it, knocked down 0.8 s' },
-    { id: 'earthshatter', name: 'Earthshatter', lv: 21, mp: 22, kind: 'slam', power: 1.2, radius: 3, knock: 1.2, spikes: 0.5, min: 2, text: 'two or more foes round you: 1.2× to every foe within 3 tiles, knocked down 1.2 s; then spikes of rock, 0.5×' },
-    { id: 'whirling_blades', name: 'Whirling Blades', lv: 24, mp: 24, kind: 'blades', power: 0.45, radius: 3, every: 0.6, dur: 5, text: 'three swords circle you for 5 s: 0.45× to every foe within 3 tiles every 0.6 s' },
+    { id: 'earthshatter', name: 'Earthshatter', lv: 21, mp: 22, kind: 'slam', power: 1.2, radius: 3.75, knock: 1.2, spikes: 0.5, min: 2, text: 'two or more foes round you: 1.2× to every foe within 3¾ tiles, knocked down 1.2 s; then spikes of rock, 0.5×' },
+    { id: 'whirling_blades', name: 'Whirling Blades', lv: 24, mp: 24, kind: 'blades', power: 0.45, radius: 3.75, every: 0.6, dur: 5, text: 'three swords circle you for 5 s: 0.45× to every foe within 3¾ tiles every 0.6 s' },
   ],
   rogue: [
     { id: 'backstab', name: 'Backstab', lv: 1, mp: 10, kind: 'strike', power: 1.6, crit: 25, text: '1.6×, +25 % crit chance' },
@@ -83,7 +83,7 @@ export const SKILLS = {
     { id: 'mend', name: 'Mend', lv: 1, mp: 12, kind: 'mend', heal: 0.22, text: 'heal the most hurt ally for 22 % of their max HP' },
     { id: 'consecrate', name: 'Consecrate', lv: 3, mp: 20, kind: 'field', field: 'consecrate', radius: 2.5, dur: 8, power: 0.2, undeadK: 0.4, defK: 0.15, reach: 8, min: 2, text: 'holy ground on a knot of foes for 8 s: the Ashbound in it take 0.4× a second, the living 0.2×; allies in it +15 % DEF' },
     { id: 'bless', name: 'Bless', lv: 6, trial: true, mp: 25, kind: 'bless', buff: 0.15, dur: 8, text: 'the whole party: +15 % ATK and DEF for 8 s' },
-    { id: 'turn_undead', name: 'Turn Undead', lv: 12, trial: true, mp: 30, kind: 'nova', power: 1.6, radius: 3, slow: 0, undead: true, text: '1.6× to every Ashbound within 3 tiles (not the living)' },
+    { id: 'turn_undead', name: 'Turn Undead', lv: 12, trial: true, mp: 30, kind: 'nova', power: 1.6, radius: 3.75, slow: 0, undead: true, text: '1.6× to every Ashbound within 3¾ tiles (not the living)' },
     { id: 'sanctuary', name: 'Sanctuary', lv: 15, mp: 22, kind: 'field', field: 'sanctuary', radius: 3, dur: 4, heal: 0.04, every: 0.5, ward: 0.1, text: 'a circle under the hurt for 4 s: 4 % of max HP back every 0.5 s, and a ward of 10 % as they step in' },
     { id: 'judgement', name: 'Judgement', lv: 21, mp: 28, kind: 'judge', ring: 0.5, power: 2.2, radius: 3, delay: 0.8, undeadK: 1.5, reach: 8, text: 'six pillars round a foe, 0.5× within 3 tiles, then the great pillar on it: 2.2×; the Ashbound ×1.5' },
     { id: 'revive', name: 'Revive', lv: 24, mp: 30, kind: 'revive', kneel: 1.2, hp: 0.4, text: 'kneels 1.2 s and raises a Downed member at 40 % HP; once a room visit (never the Slain)' },
@@ -94,7 +94,7 @@ export const SKILLS = {
     { id: 'ancestors_breath', name: "Ancestors' Breath", lv: 6, trial: true, mp: 22, kind: 'breath', hot: 0.05, buff: 0.1, dur: 6, text: 'the whole party: 5 % of max HP back a second and +10 % ATK for 6 s' },
     { id: 'hex', name: 'Hex', lv: 12, trial: true, mp: 22, kind: 'hex', debuff: 0.2, radius: 3.5, dur: 8, text: 'the foes in a knot (or a boss or elite alone): −20 % ATK and DEF for 8 s' },
     { id: 'binding_roots', name: 'Binding Roots', lv: 15, mp: 14, kind: 'roots', power: 0.4, radius: 3, root: 2.5, pair: true, text: 'a knot of foes on foot closing on the party: rooted 2.5 s, 0.4×' },
-    { id: 'thunder_drum', name: 'Thunder Drum', lv: 21, mp: 18, kind: 'drum', power: 0.6, radius: 3, push: 2, stun: 1, text: 'round an ally under half HP: foes within 3 tiles knocked back 2 tiles, 0.6×, dazed 1 s' },
+    { id: 'thunder_drum', name: 'Thunder Drum', lv: 21, mp: 18, kind: 'drum', power: 0.6, radius: 3.75, push: 2, stun: 1, text: 'round an ally under half HP: foes within 3¾ tiles knocked back 2 tiles, 0.6×, dazed 1 s' },
     { id: 'spirit_totem', name: 'Spirit Totem', lv: 24, mp: 22, kind: 'field', field: 'totem', radius: 4, dur: 8, every: 1.5, pull: 1, guard: 2.5, guardK: 0.2, text: 'a spirit post by the party for 8 s: every 1.5 s it draws the foes within 4 tiles a tile in; the party within 2.5 take 20 % less' },
   ],
 };

@@ -9,7 +9,7 @@ import { makeMember, statsFor } from '../src/sim/party.js';
 import { autoAllocate } from '../src/sim/attributes.js';
 import { SKILLS, PASSIVES, ladderOf, passiveVal, inPlay, priorityOf, unlocked, pendingSkillPoints, skillDef, LOADOUT } from '../src/sim/skills.js';
 import { migrate, SAVE_VERSION } from '../src/persist/save.js';
-import { ccTime, BOSS_CC, CC_IMMUNE } from '../src/sim/battle.js';
+import { ccTime, BOSS_CC, CC_IMMUNE, MELEE_GAP } from '../src/sim/battle.js';
 
 const SEED = 20261108, TRIALS = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };
 const D = (o, a) => Math.hypot(o.x - a.x, o.y - a.y);
@@ -106,7 +106,7 @@ test('crowd control: a boss takes half of a hold, the rest the full time', () =>
 test('Vault: to a foe that\'s striking an ally or shooting, 3–8 tiles off; he lands by it and knocks it down', () => {
   const { land, sim, P, foe } = fight('fighter', 'vault', { more: 0.4 });
   const t = foe(land.tid), from = { x: land.x, y: land.y }; assert.ok(D(from, { x: land.tx, y: land.ty }) >= 3 - 0.3, 'from 3 tiles off or more');
-  assert.ok(t && D(P.m, t) < 2.2, `he lands beside it (${t && D(P.m, t).toFixed(2)})`); assert.ok(!t || t.knocked > 0 || t.ccImm > 0 || t.hp <= 0, 'knocked down');
+  assert.ok(t && D(P.m, t) < 3 + MELEE_GAP, `he lands in reach of it (${t && D(P.m, t).toFixed(2)})`); assert.ok(!t || t.knocked > 0 || t.ccImm > 0 || t.hp <= 0, 'knocked down');
   assert.equal(P.m.x, sim.state.player.x, 'the hero moves the player');
 });
 test('Cutting Wave: cast on two or more in its lane (re-aimed as it lands: they move in the wind-up), every one struck', () => {
@@ -124,8 +124,12 @@ test('Whirling Blades: they circle him for 5 s, cutting every 0.6 s', () => {
   const ts = new Set(after(3).filter((c) => c.t === 'hit' && !c.party).map((c) => Math.round(c.time * 10))); assert.ok(ts.size >= 4, `cuts at ${ts.size} moments`);
 });
 test('Kidney Shot: on a foe winding up a blow or a shot; the blow is cut, the foe stunned', () => {
-  const { land, log, foe } = fight('rogue', 'kidney_shot', { more: 0.05, secs: 200 });
-  const f = foe(land.tid); assert.ok(log.interrupt.some((e) => e.by === land.tid), 'a wind-up cut'); assert.ok(!f || f.stun > 0 || f.hp <= 0, 'stunned');
+  // (her first may be the stun on an elite in her turn: v1.87's wider gap brought one into reach sooner. The first that cut a wind-up)
+  const P = party('rogue', 'kidney_shot'), sim = inRoom(P.list, P.m.level - 1), cuts = [], lands = [];
+  sim.bus.on('interrupt', (e) => cuts.push({ ...e, t: sim.state.t })); sim.bus.on('skill', (e) => { if (e.id === 'kidney_shot' && e.at === 'land') lands.push({ ...e, t: sim.state.t }); });
+  let hit = null;
+  for (let i = 0; i < 300 * 20 && !hit; i++) { sim.tick(); hit = lands.find((l) => cuts.some((c) => c.by === l.tid && Math.abs(c.t - l.t) < 0.06)) || null; }
+  assert.ok(hit, 'a wind-up cut'); const f = (sim.world.enemies || []).find((o) => o.id === hit.tid); assert.ok(!f || f.stun > 0 || f.hp <= 0, 'stunned');
 });
 test('Fan of Knives: cast on two or more in its fan (never one: `pair`), re-aimed as it lands', () => {
   const { land, log } = fight('rogue', 'fan_of_knives', { secs: 240 }); /* (240: the rooms' dressing capped, v1.62, moved the foes; it waits for two in its fan) */ assert.ok(land.reached.length >= 1); assert.ok(log.skill.some((e) => e.id === 'fan_of_knives' && e.at === 'cast'));

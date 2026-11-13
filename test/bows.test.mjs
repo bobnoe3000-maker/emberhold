@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
 import { isWalkable } from '../src/sim/world.js';
 import { makeItem, BASES, shotOf } from '../src/sim/items.js';
-import { fightOf } from '../src/sim/battle.js';
+import { fightOf, MELEE_GAP } from '../src/sim/battle.js';
 import { existsSync } from 'node:fs';
 import { hire } from './fixtures/hire.mjs';
 
@@ -51,7 +51,7 @@ test('crossbows shoot bolts; the dagger rogue still closes in and shoots nothing
   const a = party(); arm(a, a.state.party.find((m) => m.cls === 'rogue'), 'heavybow');
   const s = shots(a); assert.ok(s.length >= 5 && s.every((q) => q.kind === 'bolt'), `${s.length} bolts`);
   const b = party(), rogue = b.state.party.find((m) => m.cls === 'rogue');
-  assert.equal(shotOf(rogue), null); assert.equal(fightOf(rogue).range, 2.8);
+  assert.equal(shotOf(rogue), null); assert.equal(fightOf(rogue).range, 2.8 + MELEE_GAP);
   assert.equal(shots(b).length, 0);
 });
 

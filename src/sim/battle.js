@@ -196,6 +196,11 @@ Object.assign(ENEMIES, {
   gulper:  { hp: 58, atk: 9.8, def: 6, crit: 6, dodge: 1, interval: 1.8, range: 4.6, speed: 2.4, xp: 15, gold: 3 },
 });
 export const ENEMY_KINDS = Object.keys(ENEMIES);
+/** (v1.87) the room a melee blow is struck across: every melee reach, the party's and every foe's, is this much longer than
+ *  its table says, with the personal space widened to match (SEP_XB), so fighters stand a step apart rather than in each
+ *  other. Ranged reaches are as they were. */
+export const MELEE_GAP = 0.7;
+for (const t of [CLASS_FIGHT, ENEMIES]) for (const e of Object.values(t)) if (!e.bolt) e.range = Math.round((e.range + MELEE_GAP) * 100) / 100;
 // Who fills a site's waves (sites.js `family`): the melee pair and the ranged pair a wave draws from
 // (the same draws for every family, so the Old Barrows' waves are as they were), the elite's kind,
 // and whether they're Ashbound (Turn Undead reaches only those). Wickham Keep's second floor is the
@@ -330,7 +335,12 @@ export const WINDUP = 0.18, WINDUP_HEAVY = 0.38, DEATH_T = 1.1;
 // Firebolt) and every elite blow are HEAVY — a bigger clip whose impact frame comes later,
 // so the blow lands WINDUP_HEAVY into it. atkKind tells the renderer which clip to play.
 const MAX_SHOVE = 0.3;   // tiles per tick a personal-space push may move a unit
-const SEP_XB = 32, SEP_YB = 16, SEP_X = SEP_XB, SEP_Y = SEP_YB;   // personal space on screen (px): a 56 px figure with shield and blade spans ~32 px
+// personal space on screen (px): a 56 px figure with shield and blade spans ~32 px. (v1.87, the owner: "melee players/npc are
+// too close when fighting - put a little bit of distance so they aren't on top of each other": the figures are models now,
+// broader than the sprites were; 32 × 16 held a blow's two ends 2.8 tiles apart, and they stood in each other. 40 × 20, and
+// every melee reach MELEE_GAP longer below, so a blow still lands from where they stand. Between two of a side the space is as
+// it was: a pack still bunches, and the skills that wait for a knot of foes still find one)
+const SEP_XB = 32, SEP_YB = 16, SEP_X = SEP_XB, SEP_Y = SEP_YB, SEP_FOE = 1.25;
 // Melee stations around a target, as SCREEN directions (x right, y down): a 56 px figure is
 // far taller than a tile is deep, so fighters stacked along the screen's vertical overlap
 // badly while side-by-side ones don't. Attackers take the left/right stations first, then
@@ -1075,7 +1085,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         m.act = Math.max(m.act, 0.4);
         pending.push({ t: 0.3, fn: () => {
           if (!alive(m) || !battle) return;
-          const d = hypot(m.x - tgt.x, m.y - tgt.y) || 1; placeAt(m, tgt.x + ((m.x - tgt.x) / d) * 1.1, tgt.y + ((m.y - tgt.y) / d) * 1.1, w);
+          const d = hypot(m.x - tgt.x, m.y - tgt.y) || 1, at = 1.1 + MELEE_GAP; placeAt(m, tgt.x + ((m.x - tgt.x) / d) * at, tgt.y + ((m.y - tgt.y) / d) * at, w);   // (a melee gap off it, v1.87)
           const aS = skillStats(m); strikeAt(aS, tgt, A.power * mult, w); hold(tgt, 'knocked', A.knock, m);
           for (const o of within(foesOf(m, w), tgt.x, tgt.y, A.sr)) if (o !== tgt) strikeAt(aS, o, A.splash * mult, w, false);
           bus.emit('combat', { t: 'heavy', x: tgt.x, y: tgt.y, party: false });
@@ -1464,13 +1474,16 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // Personal space, measured ON SCREEN: an ellipse SEP_X px wide × SEP_Y px deep (half
   // extents). World-round spacing leaves figures stacked on the screen's vertical (a tile
   // front-to-back is only 4 px), so the push runs in screen space and maps back to the world.
-  function separate(units, w, SEP_X = SEP_XB, SEP_Y = SEP_YB, stiff = 1) {   // stiff < 1: a gentle nudge per tick (walking), not a shove
+  /** which side a unit is on: the party's (the hero's copy, a member) or the other (a foe, a rival) */
+  const sideOf = (u) => (u.rival ? 1 : u.isHero || u.cls !== undefined ? 0 : 1);
+  function separate(units, w, SEP_X = SEP_XB, SEP_Y = SEP_YB, stiff = 1, foe = false) {   // stiff < 1: a gentle nudge per tick (walking), not a shove; foe: the fight's (opposing sides kept SEP_FOE further apart)
     for (let i = 0; i < units.length; i++) for (let j = i + 1; j < units.length; j++) {
       const a = units[i], b = units[j], dx = b.x - a.x, dy = b.y - a.y;
-      let u = ((dx - dy) * 8) / SEP_X, v = ((dx + dy) * 4) / SEP_Y, e = hypot(u, v);
+      const k0 = foe && sideOf(a) !== sideOf(b) ? SEP_FOE : 1, SX = SEP_X * k0, SY = SEP_Y * k0;   // (two of a side: as close as ever; across the line, a step apart)
+      let u = ((dx - dy) * 8) / SX, v = ((dx + dy) * 4) / SY, e = hypot(u, v);
       if (e >= 1) continue;
       if (e < 1e-3) { u = (a.id || i) < (b.id || j) ? -1 : 1; v = 0; e = 1; }       // coincident: part sideways
-      const k = ((1 - Math.min(1, e)) * (a.isHero || b.isHero ? 1 : 0.5) * stiff) / e, pu = u * k * SEP_X, pv = v * k * SEP_Y;   // half the gap each, in px
+      const k = ((1 - Math.min(1, e)) * (a.isHero || b.isHero ? 1 : 0.5) * stiff) / e, pu = u * k * SX, pv = v * k * SY;   // half the gap each, in px
       let px = (pu / 8 + pv / 4) / 2, py = (pv / 4 - pu / 8) / 2;                     // screen px → world tiles
       // ease it: a screen px of height is a quarter tile of depth, so a small overlap on screen
       // shoved a unit ~1.2 tiles in one tick (a visible pop); overlaps now part over a few ticks
@@ -1943,7 +1956,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         else if (e.bolt) { if (d > (e.swarm ? e.range / 2 : e.range)) walk(t.x, t.y); else { e.moving = false; if (e.cd <= 0) attack(e, t, false, w, e); } }
         else melee(e, t, e, dt, w, false, walk);
       }
-      separate([...(alive(H) ? [{ ...H, x: p.x, y: p.y, isHero: true }] : []), ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => !e.dead && e.spawn <= 0 && !e.inert && !e.down)], w);   // (a Downed hero shoves nobody: it had held a boss and the last companion apart for good; Teague's cage is carried, not shoved)
+      separate([...(alive(H) ? [{ ...H, x: p.x, y: p.y, isHero: true }] : []), ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => !e.dead && e.spawn <= 0 && !e.inert && !e.down)], w, SEP_X, SEP_Y, 1, true);   // (a Downed hero shoves nobody: it had held a boss and the last companion apart for good; Teague's cage is carried, not shoved)
     }
     // wind-ups: blows land and bolts leave on the attack clip's impact frame
     if (pending.length) { const due = []; pending = pending.filter((q) => ((q.t -= dt) > 0 ? true : (due.push(q), false))); if (battle) for (const q of due) q.fn(); }
