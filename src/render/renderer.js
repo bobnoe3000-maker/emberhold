@@ -863,7 +863,7 @@ export function createRenderer(canvas, sim, input) {
   // its orb's colour, never the colour alone (v1.30: the name says which of the three, sim shrines.js). A used one
   // goes dark and unlabelled.
   const SHRINE_LABEL = {
-    mend: { name: 'Shrine of Mending', rgb: '150,236,170', does: 'mends everyone, or raises one of the slain · once' },
+    mend: { name: 'Shrine of Mending', rgb: '150,236,170', does: '+100 % HP regen for 2 min, and raises one of the slain · once' },
     might: { name: 'Shrine of Might', rgb: '255,150,130', does: 'the party strikes harder: +25 % ATK for 2 minutes · once' },
     ward: { name: 'Shrine of Warding', rgb: '150,214,244', does: 'the party stands firmer: +25 % DEF for 2 minutes · once' },
   };

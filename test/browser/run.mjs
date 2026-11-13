@@ -843,7 +843,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
   }
 }
 // 15b. A dungeon shrine offers its blessing (GDD §3.6 v1.14): a touch opens the card, Close keeps its light,
-// Use spends it and mends the party.
+// Use spends it; a green one (v1.84) lights the party's HP regen, +100 % for 2 minutes, where it had filled their HP.
 {
   const b = await launch(chromium, 'chromium');
   if (b) {
@@ -870,10 +870,10 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const on2 = await p.locator('#shrineCard.on').count();
     await p.evaluate((a) => globalThis.__sim.commands.push({ type: 'harvest', tx: a.x, ty: a.y }), at); await run(4);
     await p.locator('#shrineCard .use').tap(); await run(4);
-    const used = await p.evaluate((a) => { const s = globalThis.__sim; return { spent: !!s.world.mods.get(a.x + ',' + a.y), hp: Math.round(s.state.party[0].hp) }; }, at);
+    const used = await p.evaluate((a) => { const s = globalThis.__sim; return { spent: !!s.world.mods.get(a.x + ',' + a.y), regen: Math.round(((s.state.boons || {}).hpr || 0) - s.state.t), chip: document.querySelector('#hudLine3 .chip.hpr')?.textContent || '' }; }, at);
     const on3 = await p.locator('#shrineCard.on').count();
-    check('shrine: a touch opens its card (what it does, Use · Close); Close keeps its light; Use spends it and mends',
-      !!at && on1 === 1 && /mends everyone standing/.test(text) && /One use/.test(text) && useOn === 1 && kept && on2 === 0 && used.spent && used.hp > 20 && on3 === 0 && errs.length === 0,
+    check('shrine: a touch opens its card (what it does, Use · Close); Close keeps its light; Use spends it and lights the party\'s HP regen for 2 minutes, a chip on the top bar (v1.84)',
+      !!at && on1 === 1 && /mends twice as fast/.test(text) && /One use/.test(text) && useOn === 1 && kept && on2 === 0 && used.spent && used.regen > 100 && /HP regen \+100%/.test(used.chip) && on3 === 0 && errs.length === 0,
       JSON.stringify({ at, on1, useOn, kept, on2, used, on3, text: text.split('\n').slice(0, 3).join(' · ') }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }

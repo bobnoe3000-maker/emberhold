@@ -123,6 +123,9 @@
 //   v43: the painted head (GDD §6.1 v1.79): a look's `frame` (strong, soft) and `expression`. Older data (looksFor43): every
 //       appearance in the save (the party's, the bench's, the tavern's) gains the strong frame and a neutral face, so it stays a
 //       look the choices allow (restore drops one that isn't).
+//   v44: the green shrine is a boon like the red and the blue (GDD §3.6 v1.84: +100 % HP regen for 2 minutes): boons gain
+//       `hpr` (until when). Older data has none running: sim/shrines.js restoreBoons reads a missing one as none, so the
+//       data needs nothing done to it, only the version moved on.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -134,7 +137,7 @@ import { reachedOf } from '../sim/coach.js';
 import { SITES, bossAt } from '../sim/sites.js';
 import { withFrame43 } from '../sim/appearance.js';
 
-export const SAVE_VERSION = 43;   // (v43: a look's frame and expression; v42: the bosses away, `bossBack`)
+export const SAVE_VERSION = 44;   // (v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
 /** v40 and older (v41: the floors' gates): an old save comes back with the gates it has been through open, as far as the save
  * tells: every floor whose hall's boss is down (sites.js bossAt; state.bosses), and every floor above the one it was made
  * on. A generated hall with no boss, passed and left: its gate stands (its twenty waves again). @param {any} data */

@@ -1640,7 +1640,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (m.down || m.fallen) continue;
       const s = statsFor(m), k = calm ? OUT_OF_BATTLE_REGEN : lull ? LULL_REGEN : 1;
       const iron = m.hp < s.maxHp * 0.3 && passiveVal(m, 'iron_hide') ? 2 : 1;                      // Iron Hide
-      m.hp = Math.min(s.maxHp, m.hp + s.hpr * k * iron * (battle ? company(m).hpr : 1) * dt);       // (an Old Campaigner's regen, in a fight)
+      m.hp = Math.min(s.maxHp, m.hp + s.hpr * k * iron * (battle ? company(m).hpr : 1) * boonK(state, 'hpr') * dt);   // (an Old Campaigner's regen, in a fight; a green shrine's, v1.84)
       if (battle && has(m, 'field_medic') && (m.medicT = (m.medicT || 0) + dt) >= FIGHT.medicEvery) {   // a Field Medic sees to the most hurt
         m.medicT = 0; let low = null, lo = 1;
         for (const q of state.party) if (alive(q)) { const f = q.hp / statsFor(q).maxHp; if (f < lo) { lo = f; low = q; } }

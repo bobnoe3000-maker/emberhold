@@ -9,7 +9,7 @@ import { createWorld, isWalkable, hitResource, heightAt, propAt, resourceAt, CON
 import { findPath } from './path.js';
 import { listDestinations, walkSpot } from './travel.js';
 import { createOutdoor, oExitAt, oBlock } from './outdoor.js';
-import { makeHero, statsFor } from './party.js';
+import { makeHero } from './party.js';
 import { starterKit, refreshItem, isUsable, BASES } from './items.js';
 import { autoAllocate, validBorn } from './attributes.js';
 import { validAppearance } from './appearance.js';
@@ -116,7 +116,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     count: { lamps: 0, souls: 0 },    // lamps broken and souls freed (lamps.js; only its rules add to it)
     lampsBroken: [],                  // the lamps broken, once each (lamps.js LAMPS)
     away: null,                       // the time away being played through (offline progress, above): runtime only
-    boons: { atk: 0, def: 0 },        // a red / blue shrine's boon: until when on the sim's clock (shrines.js)
+    boons: { atk: 0, def: 0, hpr: 0 },   // a shrine's boon: until when on the sim's clock (shrines.js; hpr the green's, v1.84)
     tower: { wave: 0, best: 0, landing: 0, atLanding: false, satchel: { gold: 0, cinders: 0 }, won: {} },   // the Mere Tower's climb and the heirlooms won (tower.js)
     trials: {},                       // class trials the company has done: { [cls]: 1 } for the 6s, { [cls + '12']: 1 } for the 12s (quests.js; skills.js unlocks)
     reached: new Set(['thornwick']),  // the towns you've stood in (coach.js): where the Guild's coach will take you
@@ -499,28 +499,25 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   }
 
   // A site shrine (one use each, GDD §3.6), of three kinds (v1.30, shrines.js: its tile's, by the floor's seed). A
-  // green one (mend) raises the first Fallen member at 50 % HP, or with nobody Fallen restores the party; a red one
-  // (might) and a blue one (ward) give the whole party +25 % ATK / DEF for 2 minutes. A touch (harvest) only offers
+  // green one (mend) gives the whole party +100 % HP regen for 2 minutes and raises the first Fallen member at 50 % HP
+  // (v1.84: it had filled HP and MP at once); a red one (might) and a blue one (ward) give the whole party +25 % ATK /
+  // DEF for 2 minutes. A touch (harvest) only offers
   // it: 'shrineOffer' { tx, ty, kind, will: 'raise' | 'mend' | 'might' | 'ward' | 'none', name?, secs?, k? } and the
   // popup (ui/shrine.js) shows the blessing with Use or Close. `useShrine { tx, ty }` uses it, and only when it would
-  // do something: a green one with nobody Fallen and everyone whole, or any one with nobody standing, stays lit for
-  // later. Events: 'shrine' { tx, ty, kind, did: 'raised' | 'mended' | 'might' | 'ward' | 'none', name?, secs?, k? }.
-  const hurt = (m) => { if (m.down || m.fallen) return false; const s = statsFor(m); return m.hp < s.maxHp || (m.mp ?? s.maxMp) < s.maxMp; };
+  // do something: any one with nobody standing (and, a green one, nobody Fallen) stays lit for later. Events: 'shrine' { tx, ty, kind, did: 'raised' | 'mended' | 'might' | 'ward' | 'none', name?, secs?, k? }.
   const standing = () => state.party.some((m) => !m.down && !m.fallen);
-  const shrineNeeded = (kind) => (kind === 'mend' ? state.party.some((m) => m.fallen || hurt(m)) : standing());
+  const shrineNeeded = (kind) => (kind === 'mend' ? state.party.some((m) => m.fallen) || standing() : standing());
   const shrineWould = (kind) => {
-    if (kind !== 'mend') { const S = SHRINES[kind]; return { kind, will: standing() ? kind : 'none', secs: S.secs, k: S.k }; }
-    const f = state.party.find((m) => m.fallen); return f ? { kind, will: 'raise', name: f.name } : { kind, will: shrineNeeded(kind) ? 'mend' : 'none' };
+    const S = SHRINES[kind];
+    if (kind !== 'mend') return { kind, will: standing() ? kind : 'none', secs: S.secs, k: S.k };
+    const f = state.party.find((m) => m.fallen); return f ? { kind, will: 'raise', name: f.name, secs: S.secs, k: S.k } : { kind, will: shrineNeeded(kind) ? 'mend' : 'none', secs: S.secs, k: S.k };
   };
   function shrine(tx, ty, kind) {
-    if (kind !== 'mend') {
-      const S = SHRINES[kind]; boonsOf(state)[S.stat] = state.t + S.secs;
-      bus.emit('shrine', { tx, ty, kind, did: kind, secs: S.secs, k: S.k }); bus.emit('boonsChanged', { ...state.boons });
-    } else {
-      const f = state.party.find((m) => m.fallen);
-      if (f) { heroes.raise(f, 0.5); bus.emit('resurrected', { id: f.id, name: f.name, how: 'shrine', cost: 0 }); bus.emit('shrine', { tx, ty, kind, did: 'raised', name: f.name }); }
-      else { for (const m of state.party) if (!m.down) { const s = statsFor(m); m.hp = s.maxHp; m.mp = s.maxMp; } bus.emit('shrine', { tx, ty, kind, did: 'mended' }); }
-    }
+    const S = SHRINES[kind], f = kind === 'mend' ? state.party.find((m) => m.fallen) : null;
+    if (f) { heroes.raise(f, 0.5); bus.emit('resurrected', { id: f.id, name: f.name, how: 'shrine', cost: 0 }); }
+    boonsOf(state)[S.stat] = state.t + S.secs;
+    bus.emit('shrine', { tx, ty, kind, did: f ? 'raised' : kind === 'mend' ? 'mended' : kind, ...(f ? { name: f.name } : {}), secs: S.secs, k: S.k });
+    bus.emit('boonsChanged', { ...state.boons });
     bus.emit('partyChanged', state.party);
   }
 

@@ -40,13 +40,13 @@ export function createHud(sim) {
   const paintCounters = (c) => { wood.textContent = c.wood; stone.textContent = c.stone; if (gold) gold.textContent = c.gold || 0; if (embers) embers.textContent = c.embers || 0; };
   sim.bus.on('countersChanged', paintCounters); paintCounters(sim.state.counters);
   sim.bus.on('harvested', ({ kind }) => show(kind === 'tree' ? '+3 wood' : '+2 stone'));
-  // a shrine says what it did (GDD §3.6): raised one of the slain, mended everyone, lit a boon (v1.30), or kept its light
+  // a shrine says what it did (GDD §3.6): raised one of the slain, lit a boon (v1.30; the green's, HP regen, v1.84), or
+  // kept its light
   sim.bus.on('shrine', (e) => show(e.did === 'might' ? 'Shrine of Might · the whole party strikes harder, +25 % ATK for 2 minutes · its light is spent'
     : e.did === 'ward' ? 'Shrine of Warding · the whole party stands firmer, +25 % DEF for 2 minutes · its light is spent'
-    : e.did === 'none' && e.kind && e.kind !== 'mend' ? 'Shrine · nobody is standing to take it · it keeps its light'
-    : e.did === 'raised' ? `Shrine · ${e.name} rises, at half health · its light is spent`
-    : e.did === 'mended' ? 'Shrine · everyone standing is mended, HP and MP · its light is spent'
-      : 'Shrine · nobody needs mending · it keeps its light for when someone is hurt or slain', e.did === 'none' ? 3200 : 2800));
+    : e.did === 'raised' ? `Shrine of Mending · ${e.name} rises, at half health, and the whole party mends twice as fast for 2 minutes · its light is spent`
+    : e.did === 'mended' ? 'Shrine of Mending · the whole party mends twice as fast, +100 % HP regeneration for 2 minutes · its light is spent'
+      : 'Shrine · nobody is standing to take it · it keeps its light', e.did === 'none' ? 3200 : 2800));
   // a chest says what it held, every time, and says so when that was no gear (GDD §8, 2026-10-01); the
   // item's own card (sheet.js) follows a find
   const RW = { common: 'Common', fine: 'Fine', rare: 'Rare', heirloom: 'Heirloom' };
@@ -128,7 +128,7 @@ export function createHud(sim) {
     #hudSky svg { flex: none; overflow: visible; }
     #hudLine3 .chip { font: 11px/16px ui-monospace, Menlo, monospace; padding: 1px 6px; border-radius: 6px; background: rgba(16,12,22,.78); border: 1px solid; white-space: nowrap; text-shadow: none; pointer-events: auto; cursor: pointer; position: relative; }
     #hudLine3 .chip::after { content: ''; position: absolute; left: -3px; right: -3px; top: -12px; bottom: -12px; }
-    #hudLine3 .chip.atk { color: #ff9a84; border-color: rgba(255,154,132,.45); } #hudLine3 .chip.def { color: #9fd4f4; border-color: rgba(159,212,244,.45); }
+    #hudLine3 .chip.atk { color: #ff9a84; border-color: rgba(255,154,132,.45); } #hudLine3 .chip.def { color: #9fd4f4; border-color: rgba(159,212,244,.45); } #hudLine3 .chip.hpr { color: #9fe8ae; border-color: rgba(159,232,174,.45); }
     #hudLine3 .chip.weak { color: #e0a060; border-color: rgba(224,160,96,.45); }`;
   let skyKey = '';
   /** the sky's icon state, or null underground (a dev hold of the weather wins, as it does on screen) */
@@ -180,16 +180,19 @@ export function createHud(sim) {
   const weak = chip('weak', () => `Weakened · ${Math.max(1, Math.ceil(weakLeft() / 60))} min more · it wears off after 10 minutes of play, or at the inn`);
   const atk = chip('atk', () => `Shrine of Might · the whole party strikes harder, +${pct('atk')} % ATK · ${clock(boonLeft('atk'))} left`);
   const def = chip('def', () => `Shrine of Warding · the whole party stands firmer, +${pct('def')} % DEF · ${clock(boonLeft('def'))} left`);
+  const hpr = chip('hpr', () => `Shrine of Mending · the whole party mends twice as fast, +${pct('hpr')} % HP regeneration · ${clock(boonLeft('hpr'))} left`);
   let line3Text = '';
   const set = (el, t, label) => { el.textContent = t; el.style.display = t ? '' : 'none'; el.setAttribute('aria-label', t ? label : ''); };
   const paintLine3 = () => {
-    const w = weakLeft(), a = boonLeft('atk'), d = boonLeft('def');
+    const w = weakLeft(), a = boonLeft('atk'), d = boonLeft('def'), r = boonLeft('hpr');
     const tw = w > 0 ? `weakened · ${Math.max(1, Math.ceil(w / 60))} min` : '', ta = a > 0 ? `ATK +${pct('atk')}% ${clock(a)}` : '', td = d > 0 ? `DEF +${pct('def')}% ${clock(d)}` : '';
-    const key = `${tw}|${ta}|${td}`; if (key === line3Text) return; line3Text = key;
+    const tr = r > 0 ? `HP regen +${pct('hpr')}% ${clock(r)}` : '';
+    const key = `${tw}|${ta}|${td}|${tr}`; if (key === line3Text) return; line3Text = key;
     set(atk, ta, `Shrine of Might: plus ${pct('atk')} percent attack, ${Math.ceil(a)} seconds left`);
     set(def, td, `Shrine of Warding: plus ${pct('def')} percent defence, ${Math.ceil(d)} seconds left`);
+    set(hpr, tr, `Shrine of Mending: plus ${pct('hpr')} percent health regeneration, ${Math.ceil(r)} seconds left`);
     set(weak, tw, `Weakened for ${Math.ceil(w / 60)} more minutes`);
-    if (line3) line3.style.display = tw || ta || td ? '' : 'none';
+    if (line3) line3.style.display = tw || ta || td || tr ? '' : 'none';
     syncTop();
   };
   for (const ev of ['weakened', 'partyChanged', 'boonsChanged']) sim.bus.on(ev, paintLine3);

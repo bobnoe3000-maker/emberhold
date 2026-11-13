@@ -55,24 +55,27 @@ export function createShrineCard({ sim }) {
     const P = sim.state.party, f = P.find((m) => m.fallen);
     const line = (m) => { const s = statsFor(m); return `<b>${esc(m.name)}</b> HP ${Math.max(0, Math.round(m.hp))}/${s.maxHp}${s.maxMp ? ` · MP ${Math.round(m.mp ?? s.maxMp)}/${s.maxMp}` : ''}`; };
     const hurt = P.filter((m) => !m.fallen && !m.down && (m.hp < statsFor(m).maxHp || (m.mp ?? statsFor(m).maxMp) < statsFor(m).maxMp));
-    let b, w, ok = true;
+    let b, w, ok;
     const up = P.filter((m) => !m.fallen && !m.down);
     if (at.kind === 'might' || at.kind === 'ward') {
       const stat = at.kind === 'might' ? 'atk' : 'def', left = Math.max(0, ((sim.state.boons || {})[stat] || 0) - sim.state.t);
       b = at.kind === 'might' ? 'The whole party strikes harder: <b>+25 % ATK</b> for 2 minutes.' : 'The whole party stands firmer: <b>+25 % DEF</b> for 2 minutes.';
       w = left > 0 ? `Already lit on you: ${Math.ceil(left)} s left. Using it sets it to 2 minutes again.` : '';
       ok = up.length > 0; if (!ok) b = 'Nobody is standing to take it.';
-    } else if (f) {
-      const more = P.filter((m) => m.fallen && m !== f);
-      b = `It raises <b>${esc(f.name)}</b> from the slain, at half health.`;
-      w = more.length ? `Only the first of the slain: ${more.map((m) => esc(m.name)).join(', ')} ${more.length > 1 ? 'stay' : 'stays'} slain until a temple or another shrine.` : '';
-    } else if (hurt.length) {
-      b = 'It mends everyone standing to full HP and MP.';
-      w = P.filter((m) => !m.fallen && !m.down).map(line).join('<br>');
-    } else { b = 'Everyone is whole: there’s nothing for it to mend. Keep it for when someone is hurt or slain.'; w = ''; ok = false; }
+    } else {
+      // (v1.84, the owner: "Shrine of mending should buff hp regen rate for 2 min": a boon like the red and the blue, and the
+      // first of the slain raised with it)
+      const left = Math.max(0, ((sim.state.boons || {}).hpr || 0) - sim.state.t), more = f ? P.filter((m) => m.fallen && m !== f) : [];
+      const regen = 'The whole party mends twice as fast: <b>+100 % HP regeneration</b> for 2 minutes.';
+      b = f ? `It raises <b>${esc(f.name)}</b> from the slain, at half health. ${regen}` : regen;
+      w = [more.length ? `Only the first of the slain: ${more.map((m) => esc(m.name)).join(', ')} ${more.length > 1 ? 'stay' : 'stays'} slain until a temple or another shrine.` : '',
+        left > 0 ? `Already lit on you: ${Math.ceil(left)} s left. Using it sets it to 2 minutes again.` : '',
+        !f && hurt.length ? hurt.map(line).join('<br>') : ''].filter(Boolean).join('<br>');
+      ok = !!f || up.length > 0; if (!ok) b = 'Nobody is standing to take it.';
+    }
     if (bless.innerHTML !== b) bless.innerHTML = b;
     if (who.innerHTML !== w) who.innerHTML = w;
-    if (use.disabled === ok) { use.disabled = !ok; use.textContent = ok ? 'Use the shrine' : at.kind === 'mend' ? 'Nobody needs it' : 'Nobody standing'; }
+    if (use.disabled === ok) { use.disabled = !ok; use.textContent = ok ? 'Use the shrine' : 'Nobody standing'; }
     const p = sim.state.player;
     if (Math.max(Math.abs(at.tx + 0.5 - p.x), Math.abs(at.ty + 0.5 - p.y)) > FAR) close();   // walked away
   }

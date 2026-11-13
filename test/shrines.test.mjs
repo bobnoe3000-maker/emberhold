@@ -1,6 +1,7 @@
-// Shrines (GDD §3.6, 2026-10-01): one use each. A shrine raises the first of the Fallen at half health,
-// or mends everyone standing (HP and MP), and says which. With nobody Fallen and everyone whole it isn't
-// spent: it keeps its light for later and says so (a tap at full health used to spend it for nothing).
+// Shrines (GDD §3.6, 2026-10-01): one use each. A green shrine raises the first of the Fallen at half health and
+// (v1.84; the owner: "Shrine of mending should buff hp regen rate for 2 min") gives the whole party +100 % HP regen
+// for 2 minutes; it no longer fills HP and MP at once. With nobody standing and nobody Fallen it isn't spent: it keeps
+// its light for later and says so.
 // (v1.14) A touch only offers it ('shrineOffer': what it would do); the popup's Use sends `useShrine`,
 // which the sim checks: unspent, in reach, needed.
 // A fragment written on a shrine is read at the first touch either way. A spent shrine stays on the
@@ -30,27 +31,41 @@ function nearShrine(kind = 'mend') {
   return { s, key, x, y, ev, offers, touch, whole };
 }
 
-test('everyone whole: the shrine keeps its light, and says so', () => {
-  const { s, key, x, y, ev, touch, whole } = nearShrine();
-  whole(); touch();
+test('nobody standing and nobody Fallen: the green shrine keeps its light, and says so', () => {
+  const { s, key, x, y, ev, whole } = nearShrine();
+  whole(); for (const m of s.state.party) m.down = true;
+  s.commands.push({ type: 'useShrine', tx: x, ty: y }); s.tick();
   assert.deepEqual(ev.map((e) => e.did), ['none']);
   assert.equal(propAt(s.world, x, y), 'shrine', 'still there to use'); assert.ok(!s.world.mods.get(key));
 });
 
-test('someone hurt: it mends everyone standing, HP and MP, and is spent (drawn, out of the way)', () => {
+test('a green shrine (v1.84): the whole party\'s HP regen +100 % for 2 minutes, no instant fill; spent, once', () => {
   const { s, key, x, y, ev, touch, whole } = nearShrine();
-  whole(); const h = s.state.party[0]; h.hp = 5; touch();
-  assert.deepEqual(ev.map((e) => e.did), ['mended']);
-  assert.equal(h.hp, statsFor(h).maxHp);
+  whole(); const h = s.state.party[0], max = statsFor(h).maxHp; h.hp = 5; touch();
+  assert.deepEqual(ev.map((e) => [e.did, e.secs, e.k]), [['mended', 120, 1]]);
+  assert.ok(h.hp < max / 2, `not filled at once: ${h.hp} of ${max}`);
+  assert.ok(Math.abs(s.state.boons.hpr - (s.state.t + 120)) < 0.2); assert.equal(boonK(s.state, 'hpr'), 2); assert.equal(boonK(s.state, 'atk'), 1, 'only its own');
   assert.equal(propAt(s.world, x, y), null); assert.equal(s.world.props.get(key), 'shrine', 'spent, still on the floor');
   touch(); assert.equal(ev.length, 1, 'once');
+  for (let i = 0; i < 20 * 121; i++) s.tick();
+  assert.equal(boonK(s.state, 'hpr'), 1, 'over after 2 minutes');
+});
+
+test('the green shrine\'s boon doubles HP regen: the same second, twice the HP back', () => {
+  const gain = (boon) => {
+    const s = createSim(SEED, undefined, { scene: 'dungeon', site: 'barrows' }), h = s.state.party[0]; s.tick();
+    if (boon) s.state.boons = { atk: 0, def: 0, hpr: 1e9 };
+    h.hp = 10; for (let i = 0; i < 20; i++) s.tick(); return h.hp - 10;
+  };
+  const a = gain(false), b = gain(true);
+  assert.ok(a > 0 && Math.abs(b / a - 2) < 0.02, `${a.toFixed(2)} → ${b.toFixed(2)} HP in a second`);
 });
 
 test('one of the Fallen: it raises them at half health, by name', () => {
   const { s, ev, touch, whole } = nearShrine();
   s.state.party.push({ ...JSON.parse(JSON.stringify(s.state.party[0])), id: 'tam', name: 'Tam', main: false }); whole();   // (no tavern down here)
   const m = s.state.party[1]; m.fallen = true; m.hp = 0; touch();
-  assert.equal(ev[0].did, 'raised'); assert.equal(ev[0].name, m.name);
+  assert.equal(ev[0].did, 'raised'); assert.equal(ev[0].name, m.name); assert.equal(boonK(s.state, 'hpr'), 2, 'and the regen lit (v1.84)');
   assert.ok(!m.fallen && Math.abs(m.hp - Math.round(statsFor(m).maxHp * 0.5)) <= 1, `${m.hp} of ${statsFor(m).maxHp}`);
 });
 
@@ -71,31 +86,32 @@ test('a touch only offers the blessing (what it would do), and spends nothing; U
   assert.deepEqual(offers.map((o) => o.will), ['mend']); assert.equal(ev.length, 0, 'not used on the touch');
   assert.ok(h.hp < 6, 'still hurt (only a breath of regen)'); assert.equal(propAt(s.world, x, y), 'shrine'); assert.ok(!s.world.mods.get(key));
   s.commands.push({ type: 'useShrine', tx: x, ty: y }); s.tick();
-  assert.deepEqual(ev.map((e) => e.did), ['mended']); assert.equal(h.hp, statsFor(h).maxHp); assert.equal(propAt(s.world, x, y), null);
+  assert.deepEqual(ev.map((e) => e.did), ['mended']); assert.ok(h.hp < 6 + 1, 'no fill at once (v1.84)'); assert.equal(boonK(s.state, 'hpr'), 2); assert.equal(propAt(s.world, x, y), null);
 });
 
-test('the offer names who it would raise; whole, it offers nothing to do', () => {
+test('the offer names who it would raise; whole, it offers the regen (v1.84: still worth using)', () => {
   const { s, x, y, offers, whole } = nearShrine();
   s.state.party.push({ ...JSON.parse(JSON.stringify(s.state.party[0])), id: 'tam', name: 'Tam', main: false }); whole();
   s.commands.push({ type: 'harvest', tx: x, ty: y }); s.tick();
   s.state.party[1].fallen = true; s.state.party[1].hp = 0;
   s.commands.push({ type: 'harvest', tx: x, ty: y }); s.tick();
-  assert.deepEqual(offers.map((o) => [o.kind, o.will, o.name || null]), [['mend', 'none', null], ['mend', 'raise', 'Tam']]);
+  assert.deepEqual(offers.map((o) => [o.kind, o.will, o.name || null]), [['mend', 'mend', null], ['mend', 'raise', 'Tam']]);
 });
 
-test('useShrine is checked: out of reach, nobody in need, not a shrine, already spent: nothing happens', () => {
+test('useShrine is checked: out of reach, nobody standing, not a shrine, already spent: nothing happens', () => {
   const { s, key, x, y, ev, whole } = nearShrine(), p = s.state.player, h = s.state.party[0], far = [];
   s.bus.on('outOfReach', () => far.push(1));
   whole(); h.hp = 5; p.x = p.px = x + 6.5;
   s.commands.push({ type: 'useShrine', tx: x, ty: y }); s.tick();
   assert.equal(far.length, 1); assert.equal(ev.length, 0); assert.ok(!s.world.mods.get(key));
-  p.x = p.px = x + 1.5; whole();
+  p.x = p.px = x + 1.5; whole(); for (const m of s.state.party) m.down = true;
   s.commands.push({ type: 'useShrine', tx: x, ty: y }); s.tick();
-  assert.deepEqual(ev.map((e) => e.did), ['none'], 'whole: kept'); assert.equal(propAt(s.world, x, y), 'shrine');
-  h.hp = 5; s.commands.push({ type: 'useShrine', tx: x + 3, ty: y + 3 }); s.tick(); assert.ok(h.hp < 6, 'not a shrine there');
-  s.commands.push({ type: 'useShrine', tx: x, ty: y }); s.tick(); h.hp = 5;
+  assert.deepEqual(ev.map((e) => e.did), ['none'], 'nobody standing: kept'); assert.equal(propAt(s.world, x, y), 'shrine');
+  for (const m of s.state.party) m.down = false;
+  s.commands.push({ type: 'useShrine', tx: x + 3, ty: y + 3 }); s.tick(); assert.equal(boonK(s.state, 'hpr'), 1, 'not a shrine there');
+  s.commands.push({ type: 'useShrine', tx: x, ty: y }); s.tick(); const until = s.state.boons.hpr;
   s.commands.push({ type: 'useShrine', tx: x, ty: y }); s.tick();
-  assert.deepEqual(ev.map((e) => e.did), ['none', 'mended'], 'once'); assert.ok(h.hp < 6);
+  assert.deepEqual(ev.map((e) => e.did), ['none', 'mended'], 'once'); assert.equal(s.state.boons.hpr, until, 'spent: not lit again');
 });
 
 // ── v1.30: three kinds (the owner, 2026-10-04: "Green is current HP and MP replaced. Red gives a 2 min attack boost and
@@ -134,9 +150,10 @@ test('a red shrine\'s boon lands harder in a fight: the same fight, more damage 
 });
 
 test('a boon is saved and read back; a bad one reads as none', () => {
-  const s = createSim(SEED, undefined, { scene: 'dungeon' }); s.state.boons = { atk: s.state.t + 90, def: 0 };
+  const s = createSim(SEED, undefined, { scene: 'dungeon' }); s.state.boons = { atk: s.state.t + 90, def: 0, hpr: s.state.t + 60 };
   const snap = JSON.parse(JSON.stringify(s.snapshot())), t = createSim(SEED); t.restore(snap);
   assert.deepEqual(t.state.boons, s.state.boons);
-  t.restore({ ...snap, boons: { atk: 'x', def: -4 } }); assert.deepEqual(t.state.boons, { atk: 0, def: 0 });
-  t.restore({ ...snap, boons: undefined }); assert.deepEqual(t.state.boons, { atk: 0, def: 0 });
+  t.restore({ ...snap, boons: { atk: 'x', def: -4, hpr: 'y' } }); assert.deepEqual(t.state.boons, { atk: 0, def: 0, hpr: 0 });
+  t.restore({ ...snap, boons: undefined }); assert.deepEqual(t.state.boons, { atk: 0, def: 0, hpr: 0 });
+  t.restore({ ...snap, boons: { atk: 5, def: 0 } }); assert.deepEqual(t.state.boons, { atk: 5, def: 0, hpr: 0 }, 'a v43 save (no green boon): none');
 });
