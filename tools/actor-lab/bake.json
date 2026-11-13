@@ -5327,6 +5327,132 @@
       "tall": 2.1
     },
     {
+      "out": "creature_toad",
+      "variant": "CR7",
+      "glow": 3,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 12,
+          "fps": 2.4
+        },
+        {
+          "key": "walk",
+          "clip": "Walk",
+          "frames": 10,
+          "fps": 18
+        },
+        {
+          "key": "attack",
+          "clip": "Attack",
+          "frames": 8,
+          "fps": 13,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "Attack2",
+          "frames": 7,
+          "fps": 13,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "Heavy",
+          "frames": 10,
+          "fps": 11,
+          "once": true,
+          "impact": 7
+        },
+        {
+          "key": "hit",
+          "clip": "Hit",
+          "frames": 4,
+          "fps": 12,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death",
+          "frames": 8,
+          "fps": 7,
+          "once": true
+        }
+      ],
+      "gain": 1.0,
+      "grade": {
+        "desat": 0.1,
+        "contrast": 1.15
+      }
+    },
+    {
+      "out": "creature_gulper",
+      "variant": "CR8",
+      "glow": 3,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 12,
+          "fps": 2.4
+        },
+        {
+          "key": "walk",
+          "clip": "Walk",
+          "frames": 10,
+          "fps": 18
+        },
+        {
+          "key": "attack",
+          "clip": "Attack",
+          "frames": 8,
+          "fps": 10,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "Attack2",
+          "frames": 7,
+          "fps": 13,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "Heavy",
+          "frames": 10,
+          "fps": 9,
+          "once": true,
+          "impact": 7
+        },
+        {
+          "key": "hit",
+          "clip": "Hit",
+          "frames": 4,
+          "fps": 12,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death",
+          "frames": 8,
+          "fps": 7,
+          "once": true
+        }
+      ],
+      "gain": 1.0,
+      "grade": {
+        "desat": 0.1,
+        "contrast": 1.15
+      }
+    },
+    {
       "out": "boss_ratking",
       "variant": "CR5",
       "glow": 3,

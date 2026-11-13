@@ -4937,6 +4937,24 @@
   "height": 2.0
  },
  {
+  "id": "CR7",
+  "cls": "Creature",
+  "label": "Mire toad \u00b7 the Toadking's, as broad as a barrel and hip-high to a man: warted brown, a ridge of blunt spines, a cream throat that swells, gold slit eyes (creatures.js toad; GDD v1.83)",
+  "creature": {
+   "kind": "toad"
+  },
+  "height": 0.55
+ },
+ {
+  "id": "CR8",
+  "cls": "Creature",
+  "label": "Gulper \u00b7 a mire toad grown on the burying-ground: chest-high, grey-green, horned, fanged, a barbed tongue as long as itself (creatures.js gulper; GDD v1.83)",
+  "creature": {
+   "kind": "gulper"
+  },
+  "height": 0.9
+ },
+ {
   "id": "CR5",
   "cls": "Boss",
   "label": "The Rat King \u00b7 crowned, caped, dragging the knot (creatures.js ratking; a boss: drawn 1.3\u00d7)",

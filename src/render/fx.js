@@ -72,6 +72,10 @@ export const FX_STYLES = {
   creature_goblin:   { col: [235, 215, 180], attack: 'arc', attack2: 'stab', heavy: 'arc', spark: [245, 225, 195], thin: true },
   creature_wraith:   { col: [140, 240, 210], attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [175, 250, 225], heavySpark: [120, 240, 200], wide: 1.3 },
   creature_golem:    { col: [205, 195, 175], attack: 'arc', attack2: 'arc', heavy: 'arc', heavyCol: EMBER, spark: [215, 205, 185], heavySpark: [255, 160, 70], wide: 1.6, quake: true },
+  // (v1.83) the toads: a mire toad's tongue flicked and its bite, its leap a splash of the mound's mud; the gulper's barbed
+  // tongue thrown at its mark (a thrust), its fangs, its whole weight come down (the room shakes)
+  creature_toad:     { col: [214, 196, 140], attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [224, 206, 160], heavySpark: [150, 120, 70], wide: 1.15 },
+  creature_gulper:   { col: [226, 150, 140], attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [236, 190, 170], heavySpark: [150, 120, 70], wide: 1.45, quake: true },
   boss_ratking:      { col: [230, 205, 180], attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [240, 220, 200], wide: 1.3 },
   boss_spiderqueen:  { col: [180, 230, 120], attack: 'stab', attack2: 'stab', heavy: 'arc', spark: [210, 240, 160], wide: 1.35 },
   boss_skarn:        { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 200, 130], wide: 1.25 },

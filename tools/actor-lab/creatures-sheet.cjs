@@ -24,6 +24,10 @@ const ROWS = [
   { name: 'Goblin', key: 'goblin', spec: VAR.goblin, height: 0.72, cy: 0.38, half: 0.5, yaw: -0.5, shots: SHOTS },
   { name: 'Graveyard wraith', key: 'wraith', spec: VAR.wraith, height: 1.5, cy: 0.8, half: 0.95, yaw: -0.5, shots: SHOTS },
   { name: 'Stone golem', key: 'golem', spec: VAR.golem, height: 2.0, cy: 1.0, half: 1.2, yaw: -0.5, shots: SHOTS },
+  { name: 'Mire toad · front', key: 'toadf', spec: { kind: 'toad' }, height: 0.55, cy: 0.25, half: 0.36, yaw: 0.45, shots: [['Idle', [0.65]], ['Attack', [0.33]], ['Cast', [0.4]]] },
+  { name: 'Gulper · front', key: 'gulperf', spec: { kind: 'gulper' }, height: 0.9, cy: 0.42, half: 0.55, yaw: 0.45, shots: [['Idle', [0.3]], ['Attack', [0.45]], ['Cast', [0.4]]] },
+  { name: 'Mire toad', key: 'toad', spec: { kind: 'toad' }, height: 0.55, cy: 0.25, half: 0.48, yaw: -0.6, shots: SHOTS },
+  { name: 'Gulper', key: 'gulper', spec: { kind: 'gulper' }, height: 0.9, cy: 0.4, half: 0.8, yaw: -0.6, shots: SHOTS },
   { name: 'The Rat King (boss)', key: 'ratking', spec: { kind: 'ratking' }, height: 0.75 * 1.3, cy: 0.42, half: 1.05, yaw: -1.0, shots: SHOTS },
   { name: 'The Spider Queen (boss)', key: 'spiderqueen', spec: { kind: 'spiderqueen' }, height: 0.8 * 1.3, cy: 0.45, half: 1.15, yaw: -0.6, shots: SHOTS },
 ].filter((r) => !arg('only') || arg('only').split(',').includes(r.key));

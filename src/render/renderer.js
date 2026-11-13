@@ -47,6 +47,7 @@ const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', ro
   toadking: 'boss_toadking', teague: 'boss_teague', drowned_choir: 'boss_choir', abbess_below: 'boss_abbess',   // (M8.6: the Fens' four)
   quartermaster: 'boss_quartermaster', vatwarden: 'boss_vatwarden',   // (v1.48)
   firebeetle: 'creature_firebeetle', gob: 'creature_goblin', wraith: 'creature_wraith', golem: 'creature_golem',   // (v1.59) the bestiary, built in code
+  mudtoad: 'creature_toad', gulper: 'creature_gulper',   // (v1.83) the Toadking's toads, built in code
   rat_king: 'boss_ratking', spider_queen: 'boss_spiderqueen' };
 // the Mere Tower's wardens (sim tower.js): baked tall as the bosses are (tools/actor-lab variants W1–W10), named on the boss bar
 for (const id of Object.keys(WARDENS)) ENEMY_ACTOR[id] = 'boss_' + id.slice('warden_'.length);

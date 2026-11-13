@@ -1,6 +1,6 @@
 # New creatures: giant rats and giant spiders (a proposal)
 
-**Status: Implemented (2026-11-10)** (GDD v1.58–v1.59, world doc v1.36–v1.37; the bestiary below). The owner: *"Design the best way to model and create
+**Status: Implemented (2026-11-10)** (GDD v1.58–v1.59, world doc v1.36–v1.37; the bestiary below; the toads, 2026-11-13, GDD v1.83). The owner: *"Design the best way to model and create
 new NPC types - giant spiders and giant rats."* Then: *"Go with your recommendations, spiders in Wickham Keep's cellars..
 rats should be 20% bigger."*
 
@@ -307,6 +307,72 @@ waves at the level, as the Keep's rooms do.
 - **Balance:** `tools/balance/boss.mjs wickham_keep 5 --floor 1 --boss rat_king` and `… 6 --floor 2 --boss spider_queen`
   (GDD v1.59's numbers). `test/bestiary.test.mjs`: the mirrors, the bosses' stats against their mirrors', every actor
   cast as a creature.
+
+## The toads (2026-11-13)
+
+The owner: *"Like before we created new nPCs, take a strong pass at creating toad NPCs for the toad king dungeon"*, with
+two references: a big warted brown toad sat up on its forelegs, and a horned monster toad with a mouth of fangs and a
+barbed tongue thrown out of it. GDD v1.83, world doc v1.43 (the Boat Hall's *"something living in each"* hull is a toad;
+the Toadking got his name from them).
+
+![The mire toad and the gulper: beside a man, front, and through their clips](img/creatures/toads-sheet.jpg)
+
+**One body plan, two creatures** (`creatures.js` `toad`, `gulper`), the kit's fifth plan after the quadruped, the
+arachnid, the hexapod and the bipeds:
+- one lathed hull, wider than tall and pitched up toward the head, the rump low;
+- a broad flat head over a jaw and a throat sac on their own bones (the jaw opens, the sac swells: the croak);
+- forelegs straight and splayed, hind legs folded along the flanks on long webbed feet;
+- warts and a ridge of spines laid on the hull's surface, the back blotched by a coarse hash of where a vertex is;
+- gold eyes in bulging sockets under a lid, the pupil a slit;
+- **the tongue**: a chain of four bones out of the jaw, built laid out straight, kept in the mouth by scaling its root to
+  nothing in every clip but a lash.
+
+The mire toad, hip-high to a man (0.55), is brown and warted with a cream belly, and has a short pink tongue. The gulper,
+chest-high (0.9), is grey-green, with two great horns, a lesser pair, bone spikes down its back, fangs, and a tongue as
+long as itself with a bone spear-head and barbs. Clips: an idle of five seconds (breathing, a look round, a forefoot
+shifted, the tongue flicked once); a hop for a walk; the lunge and bite (the gulper's the lash: back, mouth wide,
+thrown, held, hauled in); a bite and a slap; the leap and belly-flop for the heavy; a flinch; rolled belly-up for death;
+the croak.
+
+**Critic rounds** (`creatures-sheet.cjs --only toadf,gulperf,toad,gulper`):
+- **T1:**
+  - The mouth's seam lay out in front of the face like a strap: it now sits on the head's widest edge, thinner.
+  - The lids stood up as knobs: smaller, down on the eye.
+  - At the rat's glow the gold eyes burned out white: 0.6.
+  - The browns read orange in the warm light: muted.
+  - The gulper's bright gums read as a red rubber ring: dark.
+  - Its fangs were too small to read: twice the size, a long pair at the corners.
+  - Its spines were too many: six a row, the crown of little spikes gone.
+- **T2:**
+  - Seen side on, the far eye's socket stood over the head: lower, further out.
+  - The hop didn't read from the camera: half again higher, the legs thrown further.
+  - At the lash the barb was a dark speck: a bone spear-head with six raked barbs.
+  - The tongue's red read as paint: muted.
+- **In the game** (`stage.mjs --show cast` in the Mound's second floor; `--show fx --foes gulper`): beside a reed-cutter
+  and the knight they read at their sizes; the gulper's horns and fangs and the toad's gold eyes carry; both fall
+  belly-up. The gulper's heavy comes down on the party with the mound's mud and the room shakes (fx.js `quake`).
+
+![In the game: the toads beside a reed-cutter and the knight; the gulper's leap in a real fight](img/creatures/toads-in-game.jpg)
+
+**A kit fix on the way:**
+- **What happened:** `clip()` keys only the bones a frame names. The tongue's turn was named only while it was out, so
+  its track had holes, and three's mixer hung on the first pose.
+- **The fix:** every frame keys the tongue now. A bone a frame doesn't name rests there (the arrays are filled, not
+  sparse).
+- **The test:** `test/toads.test.mjs` checks every creature's tracks are whole. It runs where the lab is installed.
+
+**Triangles:** 13,260 and 15,466, two draws each (the Rat King's 13,114). The first build was 15,840 and 17,870: forty
+warts and toe-knobs at the kit's sphere density were half the toad, and are now low-count bumps.
+
+**In the sim** (`battle.js`):
+- `mudtoad`: a minion's strength, HP 40, ATK 7.6, dodge 2.
+- `gulper`: a warrior's strength, HP 58, ATK 9.8, reach 4.6.
+- The families: `toadmen` (the Mound's first floor: toads and reed-cutters, the reeve its elite) and `boathall` (the
+  second and third: a gulper the elite).
+- The Toadking's escort: `gulper` and `fowler`.
+- Names, actors, sparks (`fx.js`: the tongue a thrust, the gulper's heavy a `quake`), voices (croaks pitched low).
+- Measured (GDD v1.83): the right party holds the Mound's rooms as before (2 of 9 defeats either way), and the Toadking
+  falls in 49–51 s against 49–53 s.
 
 ## As built
 

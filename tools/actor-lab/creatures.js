@@ -112,9 +112,12 @@ function clip(rig, name, dur, fn, fps = 24) {
   for (let i = 0; i < n; i++) {
     const t = i / (n - 1); times.push(t * dur);
     const f = fn(t);
-    for (const [b, q] of Object.entries(f.q || {})) { if (!rot.has(b)) rot.set(b, new Array(n)); rot.get(b)[i] = q; }
-    for (const [b, p] of Object.entries(f.p || {})) { if (!pos.has(b)) pos.set(b, new Array(n)); pos.get(b)[i] = p; }
-    for (const [b, s] of Object.entries(f.s || {})) { if (!scl.has(b)) scl.set(b, new Array(n)); scl.get(b)[i] = s; }   // (a scale: a wraith fading into its shroud)
+    // (filled, not sparse: a bone a frame doesn't name rests there. flatMap below skips a sparse array's holes, and a track
+    // shorter than its times hung three's mixer: the toad's tongue, 2026-11-13)
+    const at = () => Array.from({ length: n });
+    for (const [b, q] of Object.entries(f.q || {})) { if (!rot.has(b)) rot.set(b, at()); rot.get(b)[i] = q; }
+    for (const [b, p] of Object.entries(f.p || {})) { if (!pos.has(b)) pos.set(b, at()); pos.get(b)[i] = p; }
+    for (const [b, s] of Object.entries(f.s || {})) { if (!scl.has(b)) scl.set(b, at()); scl.get(b)[i] = s; }   // (a scale: a wraith fading into its shroud)
   }
   const tracks = [];
   for (const [b, qs] of rot) tracks.push(new THREE.QuaternionKeyframeTrack(`${b}.quaternion`, times, qs.flatMap((q) => (q || new THREE.Quaternion()).toArray())));
@@ -903,10 +906,194 @@ function golem(o = {}) {
   return { root: root3, clips };
 }
 
+// ── the toads (the anuran): Toadking's Mound's mire toad and its gulper ────────────────────────────────────────────────
+// (the owner's references, 2026-11-13.) The mire toad: squat and heavy, as broad as a barrel and hip-high to a man, sat up
+// on straight forelegs; brown and warted, darker blotches over the back, a ridge of blunt spines down it, a cream throat
+// and belly that bulge and pulse, gold eyes high on the head with a slit for a pupil, a wide mouth turned down at its
+// corners; long-fingered forefeet splayed on the ground, the hind legs folded at its sides on long webbed feet. Its
+// tongue, short and pink, flicks out to catch and is gone. The gulper is what a mire toad grows into on the burying
+// ground: bigger and grey-green, horned at the brow and the back of the skull, a row of bone spikes down its back, a
+// mouth of fangs that never quite shuts, and a tongue as long as itself, barbed at its end like a fish-spear, that it
+// throws across a room. Both on one rig: the tongue a chain of bones out of the jaw, laid out in the bind and kept in
+// its mouth (its root bone scaled to nothing) by every clip but a lash.
+function toad(o = {}) {
+  const G = !!o.gulper, R = new Rig(o.seed || (G ? 53 : 51));
+  const skin = new THREE.Color(o.skin || (G ? '#4a4e38' : '#5c4430')), skinHi = new THREE.Color(o.skinHi || (G ? '#686c4e' : '#7e6446')), blot = new THREE.Color(o.blot || (G ? '#2c3020' : '#352416'));   // (round T1: the warm light made the first browns orange)
+  const belly = new THREE.Color(o.belly || (G ? '#a89a74' : '#d2b886')), bellyLo = new THREE.Color(G ? '#7e7254' : '#a48a5e');
+  const bone = new THREE.Color('#d6cab0'), boneLo = new THREE.Color('#8e826a'), maw = new THREE.Color('#2a0a0c'), gum = new THREE.Color('#3e1618'), dark = new THREE.Color('#140c08');   // (T1: a bright gum read as a red rubber ring)
+  const tongueC = new THREE.Color(G ? '#8a4c48' : '#b06c64'), tongueHi = new THREE.Color(G ? '#b07068' : '#d08e84');   // (T2: a fresh red read as a bar of paint)
+  const eyeC = new THREE.Color(o.eyes || (G ? '#b0a028' : '#c89430'));
+  // the skin: the back blotched in patches (a coarse hash of where a vertex is: the same patch on every face it's on), lit
+  // on top, the throat, chest and belly cream
+  const under = (p, n) => n.y < -0.3 || (n.z > 0.25 && p.z > 0.1 && p.y < 0.25 && Math.abs(p.x) < 0.13);
+  const skinC = (p, n) => {
+    if (under(p, n)) return n.y < -0.65 ? bellyLo : belly;
+    const base = n.y > 0.5 ? mixC(skin, skinHi, (n.y - 0.5) * 1.8) : skin;
+    return hash3(Math.round(p.x * 16), Math.round(p.y * 16), Math.round(p.z * 16), 9) > 0.6 ? mixC(base, blot, 0.8) : base;
+  };
+  // (a small bump, a wart or a toe's knob, at a fixed low count: forty of them at the kit's sphere density were half the toad)
+  const bump = (c, r) => new THREE.SphereGeometry(1, 7, 5).scale(r[0], r[1], r[2]).translate(c.x, c.y, c.z);
+  const root = R.bone('root', null, V(0, 0.18, 0)), pelvis = R.bone('pelvis', root, V(0, 0.15, -0.15)), chest = R.bone('chest', root, V(0, 0.2, 0.1));
+  const head = R.bone('head', chest, V(0, 0.28, 0.22)); R.bone('jaw', head, V(0, 0.232, 0.17)); R.bone('throat', chest, V(0, 0.165, 0.2));
+  // the tongue: out of the jaw, laid out straight ahead (its length the gulper's own body, the toad's a third of it)
+  const TL = G ? 0.86 : 0.34, T0 = V(0, 0.228, 0.29);
+  let tb = R.by.get('jaw'); const tpts = [0, 1, 2, 3].map((i) => T0.clone().add(V(0, 0, (TL * i) / 3)));
+  tpts.forEach((p, i) => { tb = R.bone(`tongue${i + 1}`, tb, p); });
+  for (const s of [1, -1]) {
+    const sh = R.bone(`armU${s}`, chest, V(0.12 * s, 0.18, 0.15)), el = R.bone(`armL${s}`, sh, V(0.17 * s, 0.09, 0.2)); R.bone(`hand${s}`, el, V(0.165 * s, 0.025, 0.25));
+    const hip = R.bone(`legU${s}`, pelvis, V(0.11 * s, 0.14, -0.16)), kn = R.bone(`legL${s}`, hip, V(0.23 * s, 0.1, -0.02)); R.bone(`foot${s}`, kn, V(0.17 * s, 0.045, -0.2));
+  }
+  // one body: wider than tall, pitched up toward the head (sat up on its forelegs), the rump low to the ground
+  const prof = [[-0.28, 0], [-0.27, 0.06], [-0.24, 0.115], [-0.19, 0.158], [-0.11, 0.188], [-0.01, 0.198], [0.07, 0.19], [0.14, 0.166], [0.2, 0.126], [0.235, 0.07], [0.25, 0]];
+  const RY = 0.74, cy = (z) => 0.17 + 0.27 * z;
+  const rOf = (z) => { for (let i = 0; i < prof.length - 1; i++) if (z <= prof[i + 1][0]) { const [z0, r0] = prof[i], [z1, r1] = prof[i + 1]; return r0 + (r1 - r0) * (z - z0) / Math.max(1e-6, z1 - z0); } return 0; };
+  const along = (z, pts) => { for (let i = 0; i < pts.length - 1; i++) { const [z0, a] = pts[i], [z1, b] = pts[i + 1]; if (z <= z1) { const k = Math.max(0, Math.min(1, (z - z0) / (z1 - z0))); return k < 0.5 ? [[a, 1 - k], [b, k]] : [[b, k], [a, 1 - k]]; } } return [[pts[pts.length - 1][1], 1]]; };
+  const bodyW = R.skin((p) => along(p.z, [[-0.2, 'pelvis'], [-0.08, 'pelvis'], [0.02, 'root'], [0.08, 'root'], [0.16, 'chest'], [0.3, 'chest']]));
+  R.part(hull(prof, 30, cy, RY), bodyW, skinC);
+  // a point on the back: `a` round from the top (0) toward the flank (±π/2), at z
+  const onBack = (z, a, k = 1) => { const r = rOf(z) * k; return { at: V(Math.sin(a) * r, cy(z) + Math.cos(a) * r * RY, z), out: V(Math.sin(a), Math.cos(a) * RY, 0).normalize() }; };
+  // the warts: raised bumps over the back and flanks, a darker cap on the bigger
+  for (let i = 0; i < (G ? 26 : 30); i++) {
+    const h1 = hash3(i, 3, 1, 11), h2 = hash3(i, 5, 2, 12), h3 = hash3(i, 7, 3, 13), z = -0.22 + 0.38 * h1, a = (h2 - 0.5) * 2.6;
+    const { at, out } = onBack(z, a, 0.97), r = (G ? 0.012 : 0.011) + 0.012 * h3;
+    R.part(bump(at.clone().addScaledVector(out, r * 0.25), [r, r * 0.7, r]), bodyW, h3 > 0.55 ? blot : mixC(skin, skinHi, 0.4));
+  }
+  // the ridge: two rows of blunt spines down the back (the gulper's long and bone-white, raked back)
+  for (let i = 0; i < (G ? 6 : 7); i++) for (const s of [1, -1]) {
+    const z = -0.2 + i * (G ? 0.064 : 0.055), h = hash3(i, s, 4, 14), { at, out } = onBack(z, s * (0.3 + 0.05 * h), 0.96);
+    const len = (G ? 0.07 : 0.036) * (1 - Math.abs(i - 3) * 0.1) * (0.85 + 0.3 * h), dir = out.clone().add(V(0, 0.35, -0.9)).normalize();
+    R.part(limb(at.clone().addScaledVector(out, -0.01), at.clone().addScaledVector(dir, len), G ? 0.02 : 0.016, 0.002, 5), bodyW, G ? (p) => (p.distanceTo(at) > len * 0.5 ? bone : boneLo) : mixC(blot, skin, 0.3));
+  }
+  // the head: broad and flat, the snout blunt, the mouth a seam all round, turned down at its corners
+  R.part(blob(V(0, 0.288, 0.235), [0.152, 0.076, 0.132], [14, 9]), 'head', skinC);
+  R.part(blob(V(0, 0.278, 0.315), [0.112, 0.056, 0.07], [12, 8]), 'head', skinC);
+  for (const s of [1, -1]) R.part(blob(V(0.032 * s, 0.312, 0.372), [0.008, 0.005, 0.006], [5, 3]), 'head', dark);   // the nostrils
+  // (the seam where the head's widest edge meets the jaw: T1's lay out at the head's half-height, in front of it)
+  const lip = []; for (let i = 0; i <= 14; i++) { const a = -1.5 + (3.0 * i) / 14, c = Math.abs(a) / 1.5; lip.push(V(0.137 * Math.sin(a), 0.256 - 0.02 * c * c, 0.236 + 0.141 * Math.cos(a))); }
+  R.part(tube(lip, [0.004, 0.0048, 0.0048, 0.004], ['head']).g, 'head', G ? gum : dark);
+  // the lower jaw and the throat under it: cream, the throat a sac that swells
+  R.part(blob(V(0, 0.232, 0.262), [0.136, 0.044, 0.118], [12, 7]), 'jaw', (p, n) => (n.y > 0.5 ? maw : belly));
+  R.part(blob(V(0, 0.165, 0.2), [0.128, 0.098, 0.1], [12, 9]), 'throat', (p, n) => (n.y < -0.5 ? bellyLo : belly));
+  for (let i = 0; i < 4; i++) R.part(tube([V(-0.1, 0.13 + i * 0.022, 0.25 + i * 0.012), V(0, 0.122 + i * 0.022, 0.29 + i * 0.008), V(0.1, 0.13 + i * 0.022, 0.25 + i * 0.012)], [0.004, 0.004], ['throat'], 5, 8).g, 'throat', bellyLo);   // (its folds)
+  // the eyes: high on the head in bulging sockets under a heavy lid, gold, the pupil a dark slit
+  for (const s of [1, -1]) {
+    // (T2: lower and further out on the head's edge: seen side on, the far eye's socket and lid stood over the head as a knob)
+    const E = V(0.104 * s, (G ? 0.336 : 0.34), 0.24), er = G ? 0.03 : 0.038, d = V(0.66 * s, 0.22, 0.72).normalize();
+    R.part(blob(E.clone().add(V(-0.01 * s, -0.014, -0.008)), [er * 1.25, er * 1.05, er * 1.25], [10, 7]), 'head', skinC);
+    R.part(blob(E.clone().addScaledVector(d, er * 0.35), [er, er, er], [9, 7]), 'head', eyeC, true);
+    const pu = blob(V(0, 0, 0), [er * 0.16, er * 0.74, er * 0.12], [6, 6]); pu.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(V(0, 0, 1), d)); const pc = E.clone().addScaledVector(d, er * 1.3); pu.translate(pc.x, pc.y, pc.z);
+    R.part(pu, 'head', dark);
+    R.part(placed(blob(V(0, 0, 0), [er * 1.08, er * 0.34, er * 0.95], [10, 5]), 0.6 * s, E.clone().add(V(0.004 * s, er * 0.66, -er * 0.05))), 'head', skinC);   // the lid (T1: smaller, down on the eye: it stood up as a knob)
+    if (G) R.part(placed(blob(V(0, 0, 0), [0.05, 0.022, 0.035], [8, 5]), 0.4 * s, V(0.08 * s, 0.37, 0.27)), 'head', skinC);   // the brow, heavy
+  }
+  if (G) {
+    // the gulper's horns: a great pair from the brow, swept up and back; a lesser pair behind; a crown of short ones
+    for (const s of [1, -1]) {
+      const big = [V(0.1 * s, 0.33, 0.22), V(0.15 * s, 0.42, 0.19), V(0.17 * s, 0.51, 0.12), V(0.13 * s, 0.57, 0.04)];
+      R.part(tube(big, [0.034, 0.026, 0.014, 0.002], ['head'], 8, 16).g, 'head', (p) => (p.y > 0.47 ? bone : mixC(boneLo, bone, (p.y - 0.33) * 7)));
+      const less = [V(0.06 * s, 0.34, 0.14), V(0.08 * s, 0.4, 0.1), V(0.07 * s, 0.45, 0.04)];
+      R.part(tube(less, [0.02, 0.012, 0.002], ['head'], 7, 10).g, 'head', bone);
+    }
+    // the maw: open on its fangs, an upper row down from the lip and a lower up from the jaw
+    R.part(blob(V(0, 0.246, 0.27), [0.124, 0.03, 0.104], [10, 6]), 'head', maw);
+    for (let i = 0; i <= 10; i++) {
+      // (T1: twice the size; the seam's line, just inside it)
+      const a = -1.25 + (2.5 * i) / 10, at = V(0.128 * Math.sin(a), 0.258, 0.236 + 0.132 * Math.cos(a)), long = i === 2 || i === 8, len = long ? 0.075 : 0.04 + 0.012 * hash3(i, 1, 1, 15);
+      R.part(limb(at, at.clone().add(V(-0.08 * Math.sin(a) * len, -len, -0.04 * len)), long ? 0.015 : 0.011, 0.001, 5), 'head', bone);
+      const bt = V(0.122 * Math.sin(a), 0.246, 0.248 + 0.124 * Math.cos(a));
+      if (i % 2 === 0) R.part(limb(bt, bt.clone().add(V(0, 0.04 + 0.012 * hash3(i, 2, 2, 16), 0.006)), 0.011, 0.001, 5), 'jaw', bone);
+    }
+  }
+  // the tongue (inside the mouth but for a lash): thick at its root, the gulper's barbed at its end like a fish-spear
+  const tgPts = [T0.clone().add(V(0, 0, -0.03)), ...tpts.slice(1), tpts[3].clone().add(V(0, 0, 0.02))];
+  const tg = tube(tgPts, G ? [0.03, 0.026, 0.021, 0.018] : [0.022, 0.018, 0.016], ['tongue1', 'tongue2', 'tongue3', 'tongue4'], 8, 20);
+  R.part(tg.g, R.skin(tg.skin), (p, n) => (n.y > 0.4 ? tongueHi : tongueC));
+  const tip = tpts[3].clone().add(V(0, 0, 0.02));
+  if (G) {
+    // the spear-head and its barbs, raked back (T2: bigger and bone-pale: at the lash it was a dark speck)
+    R.part(blob(tip.clone().add(V(0, 0, 0.01)), [0.036, 0.03, 0.03], [8, 6]), 'tongue4', tongueC);
+    R.part(limb(tip.clone().add(V(0, 0, 0.02)), tip.clone().add(V(0, 0, 0.13)), 0.04, 0.002, 6), 'tongue4', bone);
+    for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU + 0.3, at = tip.clone().add(V(0.03 * Math.cos(a), 0.03 * Math.sin(a), 0.02 + (i % 2) * 0.035)); R.part(limb(at, at.clone().add(V(0.045 * Math.cos(a), 0.045 * Math.sin(a), -0.04)), 0.011, 0.001, 4), 'tongue4', bone); }
+  } else R.part(blob(tip.clone().add(V(0, 0.004, 0.012)), [0.03, 0.014, 0.026], [8, 5]), 'tongue4', tongueHi);   // the toad's sticky pad
+  // the forelegs: long and straight, the fingers splayed on the ground, knobbed at their tips
+  const fingers = (at, bone, s, n, len, r, out = 0.25) => {
+    for (let f = 0; f < n; f++) {
+      const a = (f - (n - 1) / 2) * 0.42 + out * s, d = V(Math.sin(a), 0, Math.cos(a)), b = at.clone().addScaledVector(d, 0.012), e = at.clone().addScaledVector(d, len * (f === 1 || f === 2 ? 1 : 0.8)); e.y = 0.008;
+      R.part(limb(b, e, r, r * 0.7, 4), bone, skinC); R.part(bump(e, [r * 1.25, r * 0.85, r * 1.25]), bone, mixC(skin, skinHi, 0.5));
+    }
+  };
+  for (const s of [1, -1]) {
+    R.part(limb(V(0.12 * s, 0.19, 0.15), V(0.17 * s, 0.09, 0.2), 0.05, 0.038, 9), `armU${s}`, skinC);
+    R.part(blob(V(0.17 * s, 0.09, 0.2), [0.04, 0.04, 0.04], [8, 6]), `armL${s}`, skinC);
+    R.part(limb(V(0.17 * s, 0.09, 0.2), V(0.165 * s, 0.025, 0.25), 0.036, 0.026, 8), `armL${s}`, skinC);
+    R.part(blob(V(0.165 * s, 0.022, 0.255), [0.032, 0.016, 0.03], [8, 5]), `hand${s}`, skinC);
+    fingers(V(0.165 * s, 0.014, 0.26), `hand${s}`, s, 4, G ? 0.075 : 0.068, 0.011);
+    // the hind legs, folded: the thigh forward along the flank to the knee, the shin back to the heel, the foot long
+    R.part(blob(V(0.16 * s, 0.13, -0.11), [0.085, 0.095, 0.13], [12, 9]).rotateY(0), `legU${s}`, skinC);
+    R.part(limb(V(0.12 * s, 0.14, -0.16), V(0.23 * s, 0.1, -0.02), 0.075, 0.05, 9), `legU${s}`, skinC);
+    R.part(blob(V(0.23 * s, 0.1, -0.02), [0.05, 0.05, 0.05], [8, 6]), `legL${s}`, skinC);
+    R.part(limb(V(0.23 * s, 0.1, -0.02), V(0.17 * s, 0.045, -0.2), 0.046, 0.03, 8), `legL${s}`, skinC);
+    R.part(blob(V(0.17 * s, 0.03, -0.18), [0.035, 0.022, 0.045], [8, 5]), `foot${s}`, skinC);
+    // (the toes forward and out from the heel, webbed between)
+    fingers(V(0.18 * s, 0.014, -0.15), `foot${s}`, s, 4, G ? 0.13 : 0.12, 0.012, 0.55);
+    R.part(blob(V(0.22 * s, 0.008, -0.08), [0.05, 0.004, 0.05], [8, 3]).rotateY(0), `foot${s}`, mixC(skin, blot, 0.4));
+  }
+  const root3 = R.mesh(eyeC.getStyle(), G ? 0.8 : 0.6);   // (T1: at the rat's coal-bright they burned out white; a toad's eye is gold, lit)
+  // the tongue out (k 0 → 1), its root turned against the jaw's drop so it flies straight. (Every frame keys it, in or
+  // out: clip() keys only what a frame names, and a frame without it left a hole in the track that hung three's mixer)
+  const tongue = (k, jaw = 0) => (k <= 0.001 ? { s: { tongue1: V(0.3, 0.3, 0.02) }, q: { tongue1: qe(0, 0, 0) } } : { s: { tongue1: V(0.55 + 0.45 * k, 0.55 + 0.45 * k, Math.max(0.02, k)) }, q: { tongue1: qe(-jaw, 0, 0) } });
+  const merge = (a, b) => ({ q: { ...(a.q || {}), ...(b.q || {}) }, p: { ...(a.p || {}), ...(b.p || {}) }, s: { ...(a.s || {}), ...(b.s || {}) } });
+  const sac = (k) => ({ s: { throat: V(1 + 0.25 * k, 1 + 0.32 * k, 1 + 0.28 * k) } });
+  // a hop: the hind legs thrown back and straight, the forelegs reaching, the body up and pitched
+  const hop = (t, A = 1) => {
+    const push = bell(0.0, 0.18, 0.45, t), air = bell(0.12, 0.35, 0.6, t), land = bell(0.5, 0.62, 0.85, t), q = {};
+    for (const s of [1, -1]) {
+      q[`legU${s}`] = qe(0.35 * push * A, s * 0.95 * push * A, 0); q[`legL${s}`] = qe(-0.25 * push * A, s * 1.15 * push * A, 0); q[`foot${s}`] = qe(0.8 * push * A, 0, 0);
+      q[`armU${s}`] = qe(-0.85 * air * A + 0.25 * land * A, 0, 0); q[`armL${s}`] = qe(0.45 * air * A, 0, 0);
+    }
+    // (T2: a hop the camera can see: half again higher, pitched further, the forelegs flung forward and the hind legs thrown back)
+    return { q: { ...q, root: qe(-0.32 * air * A + 0.1 * land * A, 0, 0), head: qe(0.14 * air * A, 0, 0) }, p: { root: V(0, (0.11 * air - 0.025 * land) * A, 0.05 * air * A) } };
+  };
+  const jawOpen = G ? 0.22 : 0.02;   // (the gulper's never quite shuts)
+  const clips = [
+    // (idle, five seconds: the throat pulsing as it breathes, a slow look round, a shift of a forefoot, and once a loop the
+    // tongue out at something and back; the gulper's jaw working on its teeth, the croak swelling the sac)
+    clip(R, 'Idle', 5.0, (t) => {
+      const br = Math.max(0, S(t * 9)), lk = bell(0.2, 0.3, 0.52, t), turn = S((t - 0.2) / 0.32 * 0.5 + 0.25) * lk, fl = bell(0.62, 0.645, 0.7, t), sh = bell(0.8, 0.84, 0.92, t), cr = bell(0.06, 0.12, 0.18, t);
+      const jaw = jawOpen + 0.05 * S(t * 3) * (G ? 1 : 0) + 0.25 * fl;
+      return merge(merge(tongue(fl, jaw), sac(0.35 * br + 0.9 * cr)), { q: { head: qe(-0.05 * cr - 0.06 * fl, 0.35 * turn, 0.06 * turn), chest: qe(0, 0.08 * turn, 0), jaw: qe(jaw, 0, 0), armU1: qe(-0.3 * sh, 0, 0.1 * sh), armL1: qe(0.35 * sh, 0, 0) }, p: { root: V(0, 0.003 * br, 0), armU1: V(0, 0.015 * sh, 0) } });
+    }),
+    clip(R, 'Walk', 0.55, (t) => merge(merge(hop(t), tongue(0)), { q: { jaw: qe(jawOpen, 0, 0) } })),
+    // a lunge and a bite (the toad's tongue flicks out ahead of it); the gulper's is the lash: back, the mouth wide, the
+    // tongue thrown its whole length, held a beat, hauled back
+    clip(R, 'Attack', G ? 0.85 : 0.6, (t) => {
+      if (G) { const w = bell(0, 0.25, 0.38, t), k = ease(0.3, 0.42, t) * (1 - ease(0.58, 0.85, t)), j = 0.8 * bell(0.15, 0.32, 0.7, t);
+        return merge(tongue(k, jawOpen + j), { q: { root: qe(-0.12 * w + 0.06 * k, 0, 0), head: qe(-0.35 * w + 0.2 * k, 0, 0), jaw: qe(jawOpen + j, 0, 0), armU1: qe(0.15 * w, 0, 0), 'armU-1': qe(0.15 * w, 0, 0) }, p: { root: V(0, 0.01 * w, -0.03 * w + 0.05 * k) } }); }
+      const w = bell(0, 0.18, 0.3, t), k = bell(0.22, 0.4, 0.75, t), f = bell(0.2, 0.3, 0.45, t), j = 0.7 * bell(0.15, 0.32, 0.55, t);
+      return merge(tongue(f, j), { q: { root: qe(-0.1 * w + 0.12 * k, 0, 0), head: qe(-0.2 * w + 0.15 * k, 0, 0), jaw: qe(j, 0, 0), armU1: qe(-0.4 * k, 0, 0), 'armU-1': qe(-0.4 * k, 0, 0) }, p: { root: V(0, 0.03 * k, 0.12 * k - 0.03 * w) } });
+    }),
+    clip(R, 'Attack2', 0.6, (t) => { const k = bell(0.15, 0.38, 0.8, t), j = (G ? 0.7 : 0.6) * bell(0.2, 0.36, 0.6, t);   // (a bite from where it sits, a forefoot slapped down)
+      return merge(tongue(0), { q: { root: qe(0.14 * k, 0.1 * k, 0), head: qe(0.2 * k, 0, 0), jaw: qe(jawOpen + j, 0, 0), armU1: qe(-0.9 * bell(0.1, 0.3, 0.5, t), 0, 0.2), armL1: qe(0.6 * bell(0.1, 0.3, 0.5, t), 0, 0) }, p: { root: V(0, -0.015 * k, 0.05 * k) } }); }),
+    // the heavy: a leap on the party and down on them with its whole weight, the mouth open
+    clip(R, 'Heavy', G ? 1.1 : 0.95, (t) => { const c = bell(0, 0.22, 0.34, t), a = bell(0.28, 0.48, 0.72, t), l = bell(0.66, 0.74, 0.95, t), j = 0.7 * bell(0.3, 0.5, 0.8, t);
+      return merge(merge(hop(Math.min(1, ease(0.28, 0.72, t) * 0.6), 1.3 * a), tongue(0)), { q: { root: qe(0.12 * c - 0.3 * a + 0.12 * l, 0, 0), jaw: qe(jawOpen + j, 0, 0) }, p: { root: V(0, -0.035 * c + 0.2 * a - 0.03 * l, 0.36 * ease(0.28, 0.74, t)) }, s: { throat: V(1 + 0.15 * l, 1 - 0.2 * l, 1 + 0.15 * l) } }); }),
+    clip(R, 'Hit', 0.42, (t) => { const k = bell(0, 0.22, 1, t); return merge(merge(tongue(0), sac(-0.2 * k)), { q: { root: qe(-0.16 * k, 0.12 * k, 0.06 * k), head: qe(-0.25 * k, -0.2 * k, 0), jaw: qe(jawOpen + 0.3 * k, 0, 0) }, p: { root: V(0, 0.025 * k, -0.06 * k) } }); }),
+    // death: rolled over onto its back, the legs up and kicking, then still, the belly to the sky
+    clip(R, 'Death', 1.3, (t) => { const f = ease(0.05, 0.55, t), k = ease(0.4, 1, t), kick = 0.3 * S(t * 7) * (1 - k) * f, q = {};
+      for (const s of [1, -1]) { q[`legU${s}`] = qe(-0.5 * f + kick, s * 0.6 * f, 0); q[`legL${s}`] = qe(0, s * 0.8 * f, 0); q[`armU${s}`] = qe(-0.8 * f - kick, 0, s * 0.3 * f); }
+      return merge(tongue(0.25 * f, 0.6 * f), { q: { ...q, root: qe(0, 0, 2.9 * f), head: qe(0.4 * f, 0, 0), jaw: qe(jawOpen + 0.6 * f, 0, 0) }, p: { root: V(0, 0.16 * bell(0.05, 0.3, 0.55, t) + 0.17 * f, 0) } }); }),
+    // the croak: the sac swollen out round, the head up (the gulper's a roar, its jaws wide on its teeth)
+    clip(R, 'Cast', 1.0, (t) => { const k = bell(0.05, 0.35, 0.9, t), p = Math.max(0, S(t * 4)) * k;
+      return merge(merge(tongue(0), sac(1.6 * k + 0.3 * p)), { q: { head: qe(-0.3 * k, 0, 0), root: qe(-0.1 * k, 0, 0), jaw: qe(jawOpen + (G ? 0.8 : 0.15) * k, 0, 0) }, p: { root: V(0, 0.02 * k, 0) } }); }),
+  ];
+  return { root: root3, clips };
+}
+const gulper = (o = {}) => toad({ ...o, gulper: true });
+
 // the bosses: the rat and the spider grown into kings and queens (their own colours, their own parts: king(), queen())
 const ratking = (o = {}) => rat({ fur: '#3a342e', belly: '#5a5048', furTop: '#544c44', eyes: '#ff3818', seed: 17, ...o, king: true });
 const spiderqueen = (o = {}) => spider({ body: '#1e1622', band: '#6a4864', mark: '#e2d8c2', eyes: '#78c038', seed: 37, ...o, queen: true });
-const KINDS = { rat, spider, beetle, goblin, wraith, golem, ratking, spiderqueen };
+const KINDS = { rat, spider, beetle, goblin, wraith, golem, toad, gulper, ratking, spiderqueen };
 export const CREATURE_KINDS = Object.keys(KINDS);
 
 // ── the humanoids on KayKit's rig (the owner, 2026-11-10: "goblin and other humanoids NPCs should use the same rigging,

@@ -18,6 +18,7 @@ const VOICE = {
   cutthroat: { fam: 'man', rate: 1.06 }, brute: { fam: 'man', rate: 0.86 }, crossbow: { fam: 'man', rate: 1 }, redhand_captain: { fam: 'man', rate: 0.8 },
   acolyte: { fam: 'cult', rate: 1.1 }, robed_stranger: { fam: 'cult', rate: 0.8 },
   fenghoul: { fam: 'gob', rate: 0.7 }, reedcutter: { fam: 'man', rate: 0.9 }, fowler: { fam: 'man', rate: 1.04 }, bogwitch: { fam: 'cult', rate: 1.3 },   // (M8) the Fens'
+  mudtoad: { fam: 'gob', rate: 0.5 }, gulper: { fam: 'man', rate: 0.42 },   // (v1.83) the toads: a croak, low; the gulper's lower
   rat: { fam: 'gob', rate: 1.6 }, gutter: { fam: 'gob', rate: 1.3 }, spider: { fam: 'cult', rate: 0.62 }, spinner: { fam: 'cult', rate: 0.78 },
   firebeetle: { fam: 'cult', rate: 1.35 }, gob: { fam: 'gob', rate: 1.12 }, wraith: { fam: 'cult', rate: 0.5 }, golem: { fam: 'man', rate: 0.5 }, rat_king: { fam: 'gob', rate: 1.0 }, spider_queen: { fam: 'cult', rate: 0.5 },   // (v1.59) the bestiary's, pitched off the same families   // (v1.58) the vermin: a rat's squeal, a spider's rasp, pitched off the goblins' and the Cult's
   harvester: { fam: 'cult', rate: 0.92 }, drowned: { fam: 'bone', rate: 0.96 }, cantor: { fam: 'bone', rate: 1.02, cry: 'cult_cry' },

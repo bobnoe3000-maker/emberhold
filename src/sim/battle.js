@@ -186,6 +186,15 @@ Object.assign(ENEMIES, {
   wraith:     { hp: 50, atk: 10,  def: 4, crit: 6, dodge: 10, interval: 1.5, range: 3.4, speed: 3.1, xp: 15, gold: 2 },
   golem:      { hp: 62, atk: 10.5, def: 9, crit: 3, dodge: 0, interval: 1.9, range: 3.6, speed: 2.3, xp: 16, gold: 3 },
 });
+// The Toadking's toads (GDD v1.83, world doc v1.43; the owner: "take a strong pass at creating toad NPCs for the toad king
+// dungeon"): built in code (tools/actor-lab/creatures.js toad). The same mirror: the mire toad takes the fen ghoul's
+// place on the Mound and a minion's strength (more body, less dodge: a toad doesn't get out of the way; slower to bite),
+// the gulper the elite's, a warrior's (its tongue thrown across the room: the longest reach of any melee foe, slow to
+// throw it again).
+Object.assign(ENEMIES, {
+  mudtoad: { hp: 40, atk: 7.6, def: 4, crit: 5, dodge: 2, interval: 1.3, range: 2.8, speed: 3.0, xp: 10, gold: 1 },
+  gulper:  { hp: 58, atk: 9.8, def: 6, crit: 6, dodge: 1, interval: 1.8, range: 4.6, speed: 2.4, xp: 15, gold: 3 },
+});
 export const ENEMY_KINDS = Object.keys(ENEMIES);
 // Who fills a site's waves (sites.js `family`): the melee pair and the ranged pair a wave draws from
 // (the same draws for every family, so the Old Barrows' waves are as they were), the elite's kind,
@@ -213,6 +222,10 @@ export const FAMILIES = {
   // the Fens (M8, sites.js): the Toadking's men and the ghouls they keep off; the Cult's harvest with the bound lock-men
   // under it, at the Sickpools with the ghouls and the witches, and among the drowned clergy at the Abbey
   reedmen: { melee: ['fenghoul', 'reedcutter'], ranged: ['fowler', 'bogwitch'], elite: 'reedcutter', undead: () => false },
+  // (v1.83) the Mound's own: the Toadking's men with his toads, the mire toad where the ghoul was; on the burying-ground
+  // floors below, the reeve gives way to a gulper
+  toadmen: { melee: ['mudtoad', 'reedcutter'], ranged: ['fowler', 'bogwitch'], elite: 'reedcutter', undead: () => false },
+  boathall: { melee: ['mudtoad', 'reedcutter'], ranged: ['fowler', 'bogwitch'], elite: 'gulper', undead: () => false },
   lockcult: { melee: ['minion', 'harvester'], ranged: ['rogue', 'acolyte'], elite: 'harvester', undead: (k) => k === 'minion' || k === 'rogue' },
   harvest: { melee: ['fenghoul', 'harvester'], ranged: ['rogue', 'bogwitch'], elite: 'harvester', undead: (k) => k === 'rogue' },
   drowned: { melee: ['drowned', 'harvester'], ranged: ['rogue', 'cantor'], elite: 'harvester', undead: (k) => k === 'drowned' || k === 'cantor' || k === 'rogue' },
@@ -253,7 +266,7 @@ export const BOSSES = {
   robed_stranger: { name: 'The Robed Stranger', like: 'acolyte', hp: 38, atk: 2.8, def: 2.5, xp: 12, gold: 25, mech: 'kindle', escort: ['minion', 'minion'], once: true },
   goblin_chief: { name: 'Old Skarn', like: 'bruiser', hp: 26, atk: 2.1, def: 1.5, speed: 2.8, xp: 12, gold: 28, mech: 'swarm', escort: ['goblin', 'archer'], heirloom: 'skarns_drum' },
   standard: { name: 'The Standard of the Third Legion', like: 'warrior', hp: 34, atk: 2.2, def: 1.8, speed: 2.3, xp: 14, gold: 30, mech: 'line', escort: ['warrior', 'minion', 'rogue'], undead: true, heirloom: 'the_relief' },
-  toadking: { name: 'The Toadking', like: 'reedcutter', hp: 18, atk: 2.1, def: 1.6, speed: 2.6, xp: 12, gold: 30, mech: 'mud', escort: ['reedcutter', 'fowler'], heirloom: 'the_last_tooth' },
+  toadking: { name: 'The Toadking', like: 'reedcutter', hp: 18, atk: 2.1, def: 1.6, speed: 2.6, xp: 12, gold: 30, mech: 'mud', escort: ['gulper', 'fowler'], heirloom: 'the_last_tooth' },   // (v1.83: his gulper, Dumpling, at his side where a reed-cutter stood)
   teague: { name: 'Brother Teague', like: 'harvester', hp: 16, atk: 2.1, def: 1.5, speed: 2.8, xp: 12, gold: 28, mech: 'cage', escort: ['drowned', 'rogue'], once: true, heirloom: 'teagues_name' },
   drowned_choir: { name: 'The Drowned Choir', like: 'cantor', hp: 26, atk: 2.0, def: 1.8, xp: 14, gold: 30, mech: 'vespers', escort: ['cantor', 'cantor', 'drowned'], undead: true, heirloom: 'vespers' },
   abbess_below: { name: 'The Abbess Below', like: 'drowned', hp: 36, atk: 2.5, def: 1.9, speed: 2.5, xp: 14, gold: 32, mech: 'bells', escort: ['drowned', 'cantor'], undead: true, heirloom: 'the_last_office' },

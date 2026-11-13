@@ -16,7 +16,7 @@ const read = (f) => readFileSync(new URL(f, import.meta.url), 'utf8');
 
 test('the Fens\' families: every kind is the sim\'s and named for the defeat screen; only the drowned clergy and the Ashbound are undead', () => {
   const foes = JSON.parse(read('../content/foes.json')).foes;
-  for (const id of ['reedmen', 'lockcult', 'harvest', 'drowned']) {
+  for (const id of ['reedmen', 'toadmen', 'boathall', 'lockcult', 'harvest', 'drowned']) {
     const F = FAMILIES[id];
     for (const k of [...F.melee, ...F.ranged, F.elite]) {
       assert.ok(ENEMY_KINDS.includes(k), `${id}: ${k}`); assert.ok(foes[k] && foes[k].a, `the defeat screen names ${k}`);
@@ -32,7 +32,7 @@ test('the Fens\' families: every kind is the sim\'s and named for the defeat scr
 test('each of the Fens\' own mirrors a role (HP and ATK within 15 % of it), so the contract holds whoever fills a wave', async () => {
   const src = read('../src/sim/battle.js');
   const stat = (k) => { const m = src.match(new RegExp(`\\n  ${k}:\\s*\\{ hp: ([\\d.]+), atk: ([\\d.]+)`)); assert.ok(m, k); return [+m[1], +m[2]]; };
-  const MIRROR = { fenghoul: 'minion', reedcutter: 'warrior', fowler: 'crossbow', bogwitch: 'mage', harvester: 'warrior', drowned: 'minion', cantor: 'mage' };
+  const MIRROR = { fenghoul: 'minion', reedcutter: 'warrior', fowler: 'crossbow', bogwitch: 'mage', harvester: 'warrior', drowned: 'minion', cantor: 'mage', mudtoad: 'minion', gulper: 'warrior' };   // (v1.83: the toads)
   for (const [k, role] of Object.entries(MIRROR)) {
     const [h, a] = stat(k), [H, A] = stat(role);
     assert.ok(Math.abs(h / H - 1) <= 0.15 && Math.abs(a / A - 1) <= 0.15, `${k} (${h}/${a}) against ${role} (${H}/${A})`);
@@ -53,8 +53,9 @@ test('every foe kind has a baked look: the renderer names its atlas and the atla
 });
 
 // a room in each site fills with its own family and nothing else (fought with a party kept on its feet); (v1.48) the
-// Sickpools' harvest fills Vat Seven, the Canal Locks' third floor
-for (const [site, depth, kinds] of [['toadking_mound', 0, ['fenghoul', 'reedcutter', 'fowler', 'bogwitch']], ['drowned_abbey', 0, ['drowned', 'harvester', 'rogue', 'cantor']], ['canal_locks', 2, ['fenghoul', 'harvester', 'rogue', 'bogwitch']]])
+// Sickpools' harvest fills Vat Seven, the Canal Locks' third floor; (v1.83) the Mound's toads, mire toads where the ghouls
+// were, and a gulper the elite on the floors below
+for (const [site, depth, kinds] of [['toadking_mound', 0, ['mudtoad', 'reedcutter', 'fowler', 'bogwitch']], ['toadking_mound', 1, ['mudtoad', 'reedcutter', 'fowler', 'bogwitch', 'gulper']], ['drowned_abbey', 0, ['drowned', 'harvester', 'rogue', 'cantor']], ['canal_locks', 2, ['fenghoul', 'harvester', 'rogue', 'bogwitch']]])
   test(`a room in ${site}${depth ? ` (floor ${depth + 1})` : ''} fills with its own: ${kinds.join(', ')}`, () => {
     const sim = createSim(SEED, undefined, { scene: 'dungeon', site }); sim.tick();
     if (depth) { sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), depth, floors: [] }); assert.equal(sim.world.depth, depth); }

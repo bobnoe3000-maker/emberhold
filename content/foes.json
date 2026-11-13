@@ -92,6 +92,14 @@
     "golem": {
       "a": "a stone golem",
       "elite": "a golem with the moss burnt off it"
+    },
+    "mudtoad": {
+      "a": "a mire toad",
+      "elite": "a mire toad as broad as a punt"
+    },
+    "gulper": {
+      "a": "a gulper",
+      "elite": "a gulper with a boat-hook in its hide"
     }
   }
 }
