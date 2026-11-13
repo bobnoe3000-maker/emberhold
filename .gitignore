@@ -7,6 +7,7 @@ dist/
 tools/actor-lab/models/
 tools/actor-lab/out/
 tools/capture/out/
+tools/arena-spike/out/
 
 # Luminati's checkout at its pin and its node_modules (tools/render3d/build.mjs)
 tools/render3d/.work/

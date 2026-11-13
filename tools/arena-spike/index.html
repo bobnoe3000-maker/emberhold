@@ -1,0 +1,14 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>The Bowl: three outdoor looks (spike)</title>
+<script type="importmap">{ "imports": { "three": "../actor-lab/node_modules/three/build/three.module.js" } }</script>
+<body style="margin:0;background:#cfe2ee">
+<canvas id="c"></canvas>
+<script type="module">
+  import { render } from './arena.js';
+  const q = new URLSearchParams(location.search), c = document.getElementById('c');
+  c.width = +(q.get('w') || 1200); c.height = +(q.get('h') || 800);
+  render(c, q.get('opt') || 'a', q.get('view') || 'wide');
+  document.title = 'done';
+</script>
+</body>

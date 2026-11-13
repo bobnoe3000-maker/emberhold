@@ -265,3 +265,27 @@ the fights i choose play out live. This will eventually be to include other play
 
 On day 0 the league already sorts the grades apart: champions average 1612, hardened 1433, seasoned 1219, steady 1113,
 green 967 (test/bowl.test.mjs checks the order).
+
+## 12. The Sand outdoors: three looks (2026-11-13, for the owner to choose)
+
+The owner: *"Redesign the pvp arena.. outdoor, single room, like a gladiator arena, lighter, sandstone colors... give me 3
+options."* Each is one room, open to the sky, the sand the sim's own (26 × 20 m, 52 × 40 tiles), the gates in its wall
+(no tunnel, no second room), lit as a bright day. Drawn from the game's camera (yaw 45°, pitch 30°, near orthographic) in
+a three.js spike (`tools/arena-spike/arena.js`, `node tools/arena-spike/shoot.mjs`), with six stand-ins at people's height
+and the team rings. As the level-design rules ask (§1.1), the half between the camera and the sand is cut low in all
+three, so nothing stands in front of a fight. Left: the whole ring; right: a phone's frame at the game's zoom (22 px a metre).
+
+![Three outdoor looks for the Bowl](./img/arena/bowl-outdoor-options.jpg)
+
+| | A · The Sun Bowl | B · The Quarry Ring | C · The Broken Circus |
+|---|---|---|---|
+| **What it is** | A classical amphitheatre: a honey-sandstone podium wall, five stepped tiers of crowd, an outer wall with pilasters, striped sails on masts, the Sun's Box under a canopy | The arena cut down into a sandstone quarry: three ledges of banded rock (ochre, rose, cream) with the crowd on them, a timber fence round the sand, olive scrub and an old crane on the rim | A two-storey arcade of cream limestone round the far half, columns and arches, seating banked behind; the near half fallen to stumps, drums and blocks (canon: half its tiers fallen in); a gilded sun over the Sun's Box, palms outside |
+| **Palette** | Honey and pale sandstone, red-and-cream canvas | Banded rose and ochre rock, sandy rim, weathered timber | Cream and pale gold, a little blue and red in the banners |
+| **Feel** | Grand, busy, the most "gladiator" | Rough, local, earthier | Faded imperial grandeur, the lightest of the three |
+| **Canon fit** | The Circus of the Sun as it was built | Not the imperial circus: a new story (Solmere's quarries) | The Circus as canon has it now, half fallen |
+| **Cost to build** | Medium: rings of blocks, sails, a crowd of instanced figures | Lowest: banded rock rings, a fence, trees from the nature kit | Highest: columns and arches in two storeys, rubble |
+| **Reads in play** | The tiers and sails fill the top of a phone's frame; the gates read clearly | The rock's bands are busy behind the fighters | The arcade is the clearest backdrop; the fallen near side frames the sand |
+
+Whichever is chosen, building it means: the Sand as one outdoor room (the plan's Dust Gate and hall go; the company comes
+in by a gate in the wall), daylight and a sky in place of the dungeon's dark (an outdoor scene, as the overland is lit), the
+kit pieces in `tools/actor-lab/buildkit.js` or Luminati's world layer, and the crowd as a cheap instanced layer.
