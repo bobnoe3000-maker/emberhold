@@ -308,8 +308,8 @@ function outdoor(w, region) {
 const FLOOR = 2;
 // The ways up and down, seen across the room (the owner, 2026-11-04: "The stairs arent obvious enough"): besides the
 // torches, a glow of their own, the way up's at its head (daylight on a first floor, where it leads out; a warm lamp
-// deeper) and the well's violet light rising out of it (the arch below lit violet, GDD §3.1). Emberlit's overlay hangs a
-// sign over each as well (renderer.js drawStairs).
+// deeper) and the well's violet light rising out of it (the arch below lit violet, GDD §3.1). (Their signs, Emberlit's
+// overlay's, are gone: the arches and their light are enough, GDD v1.89.)
 const UP_GLOW = { out: { color: '#ffe6b0', intensity: 5, distance: 7 }, up: { color: '#ffc27a', intensity: 4, distance: 6 } };
 const DOWN_GLOW = { color: '#a274ff', intensity: 11, distance: 10 };
 function stairs(w, x0, y0, W, D, tiles, heights, arch = false) {

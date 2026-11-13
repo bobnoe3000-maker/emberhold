@@ -710,7 +710,7 @@ export function createRenderer(canvas, sim, input) {
     // (under the minimap and labels; with another painter, its own rain and snow fall in its world, so ours don't: they
     // doubled up, and fell over the top bar's words, this canvas being above it)
     if (wx.k && !(wx.kind === 'rain' || wx.kind === 'snow')) drawWeather(octx, wx, { vw, vh, S, camX: -lastCam.rx, camY: -lastCam.ry, now, light: wLight });
-    if (sim.world.kind === 'dungeon') { drawShrines(lastCam.rx, lastCam.ry, ix, iy); drawStairs(lastCam.rx, lastCam.ry, ix, iy); drawNames(lastCam.rx, lastCam.ry, ix, iy); drawMinimap(ix, iy); } else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); if (sim.world.kind === 'overland') drawCampRings(lastCam.rx, lastCam.ry, ix, iy, now); }   // no minimap on the town's home screen
+    if (sim.world.kind === 'dungeon') { drawShrines(lastCam.rx, lastCam.ry, ix, iy); doorRects.length = 0; drawNames(lastCam.rx, lastCam.ry, ix, iy); drawMinimap(ix, iy); } else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); if (sim.world.kind === 'overland') drawCampRings(lastCam.rx, lastCam.ry, ix, iy, now); }   // no minimap on the town's home screen
     drawGoal(lastCam.rx, lastCam.ry, now);                 // overlays use the exact camera: glued to the gliding world
     drawBattle(lastCam.rx, lastCam.ry, ix, iy, pz, now);
     if (!sim.battle) drawHallAway();
@@ -895,33 +895,9 @@ export function createRenderer(canvas, sim, input) {
       }
     }
   }
-  // The ways up and down, signed (the owner, 2026-11-04: "The stairs arent obvious enough"): a sign over each, bobbing a
-  // little, read across the room ("▲ Way out" on a first floor, "▲ Stairs up" deeper, "▼ Stairs down"), its edge gold
-  // for up and violet for down (the arch below is lit violet), the arrow saying which as well as the colour. Tapped, it
-  // walks the party there and takes them (a door sign's rect: main.js). In a fight too: the descent room's fight starts as
-  // you come in, and that's when the way on is wanted. On either renderer: this is the overlay.
-  const STAIR_SIGN = { out: ['▲ Way out', '232,190,110'], up: ['▲ Stairs up', '232,190,110'], down: ['▼ Stairs down', '176,140,255'] };
-  function drawStairs(ox, oy, ix, iy) {
-    const w = sim.world; doorRects.length = 0;
-    const up = (w.structs || []).find((q) => /^stairsup/.test(q.id)), wl = w.stairwell, k = vw / window.innerWidth, bob = Math.sin(clock() / 420) * 2 * k;
-    const signs = [];
-    if (up && w.exitAt) signs.push({ kind: (w.depth || 0) === 0 ? 'out' : 'up', x: up.x, y: up.y, lift: 74, tx: Math.floor(w.exitAt.x), ty: Math.floor(w.exitAt.y) });
-    if (w.stairsAt) signs.push({ kind: 'down', x: wl ? (wl.x0 + wl.x1) / 2 : w.stairsAt.x + 0.5, y: wl ? (wl.y0 + wl.y1) / 2 : w.stairsAt.y + 0.5, lift: 34, tx: w.stairsAt.x, ty: w.stairsAt.y });
-    octx.textAlign = 'center'; octx.font = `700 ${Math.round(12 * k)}px Georgia, 'Times New Roman', serif`;
-    for (const g of signs) {
-      const d = Math.hypot(g.x - ix, g.y - iy); if (d > 44) continue;
-      const P = project(g.x, g.y, heightAt(w, Math.floor(g.x), Math.floor(g.y))), sy = (oy + P.sy - g.lift) * S + bob; let sx = (ox + P.sx) * S;
-      if (sx < -80 * k || sx > vw + 80 * k || sy < (hudB + 22) * k || sy > vh) continue;
-      const [text, rgb] = STAIR_SIGN[g.kind], a = Math.max(0, Math.min(1, (44 - d) / 8));
-      const tw = octx.measureText(text).width + 18 * k, th = 21 * k, y0 = sy - th + 6 * k;
-      sx = Math.min(Math.max(sx, tw / 2 + 4 * k), vw - tw / 2 - 4 * k);   // (kept on screen whole, and clear of the right's buttons, as a plaque is)
-      if (sy > (hudL1 + 114) * k && sy - th < (hudL1 + 288) * k) sx = Math.min(sx, vw - tw / 2 - (62 + safeR) * k);
-      octx.fillStyle = `rgba(14,10,20,${0.84 * a})`; octx.strokeStyle = `rgba(${rgb},${0.9 * a})`; octx.lineWidth = Math.max(1.5, 1.6 * k);
-      octx.beginPath(); octx.roundRect(sx - tw / 2, y0, tw, th, 6 * k); octx.fill(); octx.stroke();
-      octx.fillStyle = `rgba(${rgb},${a})`; octx.fillText(text, sx, sy);
-      if (a > 0.3) doorRects.push({ x0: sx - tw / 2, y0, x1: sx + tw / 2, y1: y0 + th, L: { stairs: g.kind, tx: g.tx, ty: g.ty } });
-    }
-  }
+  // (The ways up and down were signed here, "▲ Way out", "▲ Stairs up", "▼ Stairs down": GDD v1.51. The owner,
+  // 2026-11-13: "we can remove the stairs up and stairs down labels - the stairways are clear enough on thier own with the
+  // arches and colors": the arches and their glow say it now, GDD v1.89.)
   // ── battle overlay: HP bars, floating numbers, ability callouts, the room-level · wave pill ──
   const floats = [];
   // numbers fan out: each new float near a recent one steps sideways/up so a melee doesn't stack them into mush
@@ -1294,8 +1270,6 @@ export function createRenderer(canvas, sim, input) {
       const r = window.innerWidth - (MM_RIGHT + safeR), t = mmTop() - MM_PAD;
       return { l: r - MM_CSS - 2 * MM_PAD, t, r, b: t + MM_CSS + 2 * MM_PAD };
     },
-    /** a dungeon floor's stair signs as last drawn (CSS px; drawStairs): which, where they lead, and where they hang (a test) */
-    get stairSigns() { const k = vw / window.innerWidth; return doorRects.filter((r) => r.L.stairs).map((r) => ({ kind: r.L.stairs, tx: r.L.tx, ty: r.L.ty, l: r.x0 / k, t: r.y0 / k, r: r.x1 / k, b: r.y1 / k })); },
     /** the square's service plaques as last drawn (CSS px): the town's menu, the same in every town (a test) */
     get plaques() { const k = vw / window.innerWidth; return plaqueRects.map((r) => ({ kind: r.kind, ax: r.ax / k, l: r.x0 / k, t: r.y0 / k, r: r.x1 / k, b: r.y1 / k })); },
     /** the door label (a plaque with a ›) under a tap, a thumb's reach round it (44 CSS px tall at least), or null */
