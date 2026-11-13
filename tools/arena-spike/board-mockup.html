@@ -1,0 +1,103 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body { margin: 0; background: #2a2018; font-family: Georgia, serif; color: #efe4cf; }
+.row { display: flex; gap: 28px; padding: 26px; align-items: flex-start; }
+.col { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.cap { font: 600 15px Georgia, serif; color: #f5d78a; }
+.sub { font: 12px ui-monospace, Menlo, monospace; color: #b9a98e; max-width: 390px; text-align: center; line-height: 1.5; }
+.phone { width: 390px; height: 844px; background: rgba(10,8,6,.96); border-radius: 26px; border: 1px solid #5a4630; overflow: hidden; position: relative; }
+.in { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.kind { font: 11px ui-monospace, Menlo, monospace; letter-spacing: 2px; color: #d8b060; text-transform: uppercase; }
+.head { display: flex; justify-content: space-between; align-items: flex-end; }
+h2 { font: 600 24px Georgia, serif; color: #f5d78a; margin: 0; }
+.close { width: 40px; height: 40px; border-radius: 10px; border: 1px solid rgba(216,176,96,.4); color: #cbbfae; display: grid; place-items: center; font-size: 18px; }
+.me { display: flex; gap: 8px; }
+.stat { flex: 1; background: rgba(255,255,255,.04); border: 1px solid rgba(216,176,96,.22); border-radius: 10px; padding: 6px 8px; }
+.stat .k { font: 10px ui-monospace, Menlo, monospace; letter-spacing: 1.5px; text-transform: uppercase; color: #b9a27a; }
+.stat .v { font: 600 17px Georgia, serif; color: #efe4cf; }
+.stat .v small { font: 11px ui-monospace, Menlo, monospace; color: #b9a98e; font-weight: 400; }
+.stat .t { font: 10.5px ui-monospace, Menlo, monospace; color: #b9a98e; }
+.seg { display: flex; background: rgba(255,255,255,.04); border: 1px solid rgba(216,176,96,.35); border-radius: 12px; padding: 3px; gap: 3px; }
+.seg div { flex: 1; min-height: 42px; border-radius: 9px; display: grid; place-items: center; font: 600 15px Georgia, serif; color: #cbbfae; }
+.seg .on { background: linear-gradient(#e6c47a, #a07a2e); color: #1a1208; }
+.subt { display: flex; gap: 22px; border-bottom: 1px solid rgba(216,176,96,.2); padding: 0 4px; }
+.subt div { padding: 10px 0 9px; font: 600 14px Georgia, serif; color: #a8987e; border-bottom: 2px solid transparent; margin-bottom: -1px; min-width: 44px; }
+.subt .on { color: #f5d78a; border-color: #e6c47a; }
+.tour { display: flex; align-items: center; gap: 10px; background: rgba(216,176,96,.1); border: 1px solid rgba(216,176,96,.4); border-radius: 10px; padding: 8px 10px; font-size: 13px; color: #e8d8b8; }
+.tour .dot { width: 9px; height: 9px; border-radius: 50%; background: #8fc06a; flex: none; }
+.tour b { color: #f5d78a; font-weight: 600; }
+.tour .r { margin-left: auto; font: 11px ui-monospace, Menlo, monospace; color: #b9a98e; white-space: nowrap; }
+.bar { display: flex; justify-content: space-between; align-items: center; font: 12px ui-monospace, Menlo, monospace; color: #cbbfae; }
+.bar .btn { min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid rgba(216,176,96,.55); color: #e6c47a; display: flex; flex-direction: column; justify-content: center; align-items: center; font: 600 13px Georgia, serif; }
+.bar .btn small { font: 10.5px ui-monospace, Menlo, monospace; color: #c8b896; font-weight: 400; }
+.card { display: flex; align-items: center; gap: 8px; background: rgba(26,20,14,.92); border: 1px solid rgba(216,176,96,.3); border-radius: 12px; padding: 10px 10px 10px 12px; }
+.card .who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.card .top { display: flex; align-items: baseline; gap: 8px; }
+.card .rk { font: 600 12px ui-monospace, Menlo, monospace; color: #d8b060; min-width: 30px; }
+.card .nm { font: 600 16px Georgia, serif; color: #efe4cf; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .rt { margin-left: auto; font: 12px ui-monospace, Menlo, monospace; color: #cbbfae; white-space: nowrap; }
+.chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.chip { font: 11px ui-monospace, Menlo, monospace; padding: 2px 5px; white-space: nowrap; border-radius: 6px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); color: #dccfb8; display: flex; align-items: center; gap: 4px; }
+.chip i { width: 7px; height: 7px; border-radius: 2px; display: inline-block; }
+.chip b { color: #f0e6d2; font-weight: 600; }
+.fight { min-width: 66px; min-height: 46px; border-radius: 10px; display: grid; place-items: center; font: 600 14px Georgia, serif; background: linear-gradient(#e6c47a, #a07a2e); color: #1a1208; border: 1px solid #f5d78a; }
+.fight.done { background: none; color: #8a7a62; border-color: rgba(216,176,96,.25); font-weight: 400; font-size: 13px; }
+table { width: 100%; border-collapse: collapse; font: 12.5px ui-monospace, Menlo, monospace; color: #dccfb8; }
+th { text-align: left; font-weight: 400; color: #b9a27a; font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase; padding: 4px; }
+td { padding: 8px 4px; border-bottom: 1px solid rgba(216,176,96,.12); }
+td.n { font-family: Georgia, serif; font-size: 14px; color: #efe4cf; }
+td.r, th.r { text-align: right; }
+tr.you td { color: #f5d78a; font-weight: 600; background: rgba(216,176,96,.08); }
+tr.gap td { text-align: center; color: #7a6c58; padding: 3px; border: 0; }
+.filters { display: flex; gap: 6px; }
+.filters div { font: 12px ui-monospace, Menlo, monospace; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(216,176,96,.3); color: #cbbfae; }
+.filters .on { background: rgba(216,176,96,.18); color: #f5d78a; border-color: rgba(216,176,96,.7); }
+.note { font-size: 12px; color: #a8987e; line-height: 1.45; }
+.ann { position: absolute; right: 8px; font: 600 11px ui-monospace, Menlo, monospace; background: #c0563f; color: #fff; border-radius: 50%; width: 20px; height: 20px; display: grid; place-items: center; box-shadow: 0 0 0 2px rgba(0,0,0,.5); }
+</style></head><body><div class="row" id="row"></div>
+<script>
+const C = { Fighter: '#b8463a', Rogue: '#6a8a4a', Cleric: '#e6d6a0', Mage: '#5a7ab8', Shaman: '#8a5a8a' };
+const chip = (c, lv) => `<span class="chip" style="border-left: 3px solid ${C[c]}">${c} <b>${lv}</b></span>`;
+const head = (rating, rank, tier) => `
+  <div class="kind">Solmere · the Quarry Ring</div>
+  <div class="head"><h2>The Bowl</h2><div class="close">✕</div></div>
+  <div class="me">
+    <div class="stat"><div class="k">Rating</div><div class="v">${rating}</div><div class="t">${tier}</div></div>
+    <div class="stat"><div class="k">Rank</div><div class="v">#${rank}</div><div class="t">of 101</div></div>
+    <div class="stat"><div class="k">Marks</div><div class="v">14</div><div class="t">spend later</div></div>
+  </div>`;
+const seg = (team) => `<div class="seg"><div class="${team ? 'on' : ''}">Team</div><div class="${team ? '' : 'on'}">Individual</div></div>`;
+const subt = (ch) => `<div class="subt"><div class="${ch ? 'on' : ''}">Challenge</div><div class="${ch ? '' : 'on'}">Rankings</div></div>`;
+const tour = (n) => `<div class="tour"><span class="dot"></span><span>Today's tourney: <b>entered</b> · ${n}</span><span class="r">ends in 41 m</span></div>`;
+const card = (rk, nm, rt, chips, done) => `<div class="card"><div class="who"><div class="top"><span class="rk">#${rk}</span><span class="nm">${nm}</span><span class="rt">${rt}</span></div><div class="chips">${chips}</div></div><div class="fight${done ? ' done' : ''}">${done ? 'Fought' : 'Fight'}</div></div>`;
+
+const team = `${head(1214, 41, 'Lower Tiers')}${seg(true)}${subt(true)}${tour('3–1 · place #12')}
+  <div class="bar"><span>Bouts today <b style="color:#efe4cf">4</b>/10</span><div class="btn">New faces · 100 gold<small>3 left today</small></div></div>
+  ${card(54, 'Kestrel Vane', 1152, chip('Fighter', 12) + chip('Rogue', 12) + chip('Cleric', 11))}
+  ${card(47, 'Brannoc', 1189, chip('Fighter', 12) + chip('Fighter', 12) + chip('Shaman', 10))}
+  ${card(44, 'Tamsin Holt', 1208, chip('Fighter', 13) + chip('Mage', 12) + chip('Cleric', 12))}
+  ${card(39, 'old_maddox', 1231, chip('Rogue', 12) + chip('Rogue', 12) + chip('Cleric', 12))}
+  ${card(33, 'Isolde Marsh', 1262, chip('Fighter', 13) + chip('Mage', 13) + chip('Shaman', 12))}
+  <div class="note">Easiest first. A win 2–6 marks, a loss or draw 1. One try a player a day.</div>`;
+
+const solo = `${head(1176, 58, 'Lower Tiers')}${seg(false)}${subt(true)}${tour('1–0 · place #20')}
+  <div class="bar"><span>Bouts today <b style="color:#efe4cf">4</b>/10</span><div class="btn">New faces · 250 gold<small>2 left today</small></div></div>
+  ${card(66, 'Orrin Blackwood', 1131, chip('Rogue', 12))}
+  ${card(61, 'Wenlock', 1158, chip('Fighter', 13))}
+  ${card(55, 'Hesper Lowe', 1170, chip('Shaman', 12))}
+  ${card(52, 'Kestrel Vane', 1194, chip('Fighter', 12), true)}
+  ${card(49, 'Pell', 1209, chip('Mage', 13))}
+  <div class="note">Your hero alone against theirs; your companions watch from the fence. The ten bouts a day are shared with Team.</div>`;
+
+const rows = [[1, 'Isabeau Crane', 1688, '41–9'], [2, 'Ashgate Jory', 1652, '38–11'], [3, 'Ruthven', 1640, '36–12'], [4, 'Wren Tallis', 1611, '33–15'], [5, 'Marrow', 1597, '30–14']];
+const near = [[39, 'old_maddox', 1231, '12–9'], [40, 'Sefa Brook', 1222, '11–11'], [41, 'You (Ada)', 1214, '9–6', 1], [42, 'Gideon Pell', 1210, '10–10'], [43, 'Nan Hurst', 1209, '8–8'], [44, 'Tamsin Holt', 1208, '9–10']];
+const tr = (r) => `<tr class="${r[4] ? 'you' : ''}"><td>#${r[0]}</td><td class="n">${r[1]}</td><td class="r">${r[2]}</td><td class="r">${r[3]}</td></tr>`;
+const ranks = `${head(1214, 41, 'Lower Tiers')}${seg(true)}${subt(false)}
+  <div class="filters"><div class="on">Overall</div><div>Today's tourney</div><div>Bracket 12–14</div></div>
+  <table><tr><th>Rank</th><th>Player</th><th class="r">Rating</th><th class="r">W–L</th></tr>${rows.map(tr).join('')}<tr class="gap"><td colspan="4">⋯</td></tr>${near.map(tr).join('')}</table>
+  <div class="note">Today's tourney: everyone who fights today is in it. At the day's end the top places are paid marks from the purse.</div>`;
+
+const P = [['1 · Team · Challenge', 'Five players near your rating, easiest first: their place, rating and company by class and level. One button.', team],
+  ['2 · Individual · Challenge', 'The same board for your hero alone: their hero, one class and level. A player already fought today shows Fought.', solo],
+  ['3 · Team · Rankings', 'The top five and the players round you, you highlighted. Overall, today\'s tourney, or your level bracket.', ranks]];
+document.getElementById('row').innerHTML = P.map(([c, s, b]) => `<div class="col"><div class="cap">${c}</div><div class="phone"><div class="in">${b}</div></div><div class="sub">${s}</div></div>`).join('');
+</script></body></html>

@@ -289,3 +289,37 @@ three, so nothing stands in front of a fight. Left: the whole ring; right: a pho
 Whichever is chosen, building it means: the Sand as one outdoor room (the plan's Dust Gate and hall go; the company comes
 in by a gate in the wall), daylight and a sky in place of the dungeon's dark (an outdoor scene, as the overland is lit), the
 kit pieces in `tools/actor-lab/buildkit.js` or Luminati's world layer, and the crowd as a cheap instanced layer.
+
+## 13. The board cleaned up: a mockup (2026-11-13, for the owner to approve)
+
+The owner: *"Arena/tournament - let's clean up and improve the UI. At the top - first tab choices - are Team vs
+Individual. Sub tabs are 'challenge' - was the board and 'rankings' - was standings. Entering a fight automatically
+registers you for the Tourney - so no need to have a tab for 'the tourney'. The board - Instead of the current naming
+(the tallow twelve) - it will just be the player name. This can be made up for now. Just show ranking and rating, and
+the company classes (no names) including level. Drop the dressing text, like 'a sword, a stab and a prayer, the old
+way'. And just the button for fight. New faces - cost is gold to refresh - 100, 250 and 500 for refresh 1-3."*
+
+![The Bowl's board, cleaned up: Team and Individual, Challenge and Rankings](./img/ui/bowl-ui-mockup-2026-11-13.jpg)
+
+Source: `tools/arena-spike/board-mockup.html` (open it in a browser; not the game).
+
+- **Top:** your rating (with its tier), your rank of the 101 and your marks, three boxes; then **Team | Individual**.
+- **Under it:** **Challenge** (was the board) and **Rankings** (was Standings). No tourney tab.
+- **The tourney strip:** your first bout of the day enters you; it shows your record in it, your place and the time
+  left in the day.
+- **A card:** the player's rank, their name, their rating, then their company as classes and levels (Fighter 12,
+  Rogue 12, Cleric 11), each class with its own colour on the chip's edge and its name written; one **Fight** button
+  (Fought, greyed, once you've had your try that day). No company names, no manner, grade, record, home town or
+  saying. The names are made up for now: plain names and a few handles, as players would pick them.
+- **New faces:** 100 gold, then 250, then 500; the button shows the next price and how many are left. The first five
+  of the day stay free.
+- **Individual:** the same board, your hero alone against theirs, one class and level a card.
+- **Rankings:** the top five and the players round you, you highlighted; Overall, Today's tourney, your level bracket.
+
+To settle before it's built (the mockup shows the first choice in each):
+
+1. **One rating or two?** Team and Individual each with their own rating and rank (shown: 1214 and 1176), or one.
+2. **The tourney without its rounds:** everyone who fights that day is in it, placed by the day's wins (then the
+   rating gained), and the top places paid marks from the purse at the day's end. (The eight-company bracket and the
+   locked company go.)
+3. **Ten bouts a day:** shared between Team and Individual (shown), or ten each.
