@@ -48,3 +48,10 @@ test('the rules themselves: a light by a wall passes, one in the open and one in
   assert.equal(tryAt([...M][0], 'barrels'), [...M][0] && L.cells.get([...M][0])?.kind === 'floor', 'barrels in a doorway');
   assert.ok(LIGHT.has('torch') && LIGHT.has('candles'));
 });
+
+test("the Fens' halls over eight seeds: nothing on the stairs, a shrine included (the Mound's first floor, seed 3, had one on the way up)", () => {
+  for (const site of ['toadking_mound', 'canal_locks']) for (let d = 0; d < 3; d++) for (let s = 0; s < 8; s++) {
+    const seed = (20260807 + s * 1013 ^ d * 7919) >>> 0, w = createWorld(seed, undefined, d, site), f = dressingFaults(w);
+    assert.deepEqual(f, [], `${site} floor ${d + 1} seed ${seed}: ${f.map((q) => `${q.kind}@${q.key} (${q.why})`).join(', ')}`);
+  }
+});

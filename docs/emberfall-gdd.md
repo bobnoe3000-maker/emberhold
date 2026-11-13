@@ -1,6 +1,6 @@
 # Emberfall — Game Design Document
 
-**v1.81 · 2026-11-12 · Plan of record for game design.** v1.81 (§7.1; the owner: "The ~10% attack and defence penalty per level you're under a foe - we are dropping this entirely"): **no penalty for a foe above the hero's level**; v1.69's 10 % a level of ATK and DEF is gone (battle.js), and a room three up still defeats the right party, in 7½ minutes rather than 5. v1.80 (§6.2, §5.1; the owner: "im getting notifications that companions not in my party (benched) are leveling up - they should not be"): **the bench earns no XP.** Only the party in the field gains from fights and quests; a benched companion levels only on the road, by an expedition (§6.3), which is sent for that. The bench still draws half wage. v1.79 (§6.1, the owner: "Ok lets incorporate this into the game",
+**v1.82 · 2026-11-13 · Plan of record for game design.** v1.82 (§3.1; the owner, on the party walking off the drawn floor to fight in Toadking's Mound: "update toadking mound to the latest rules"): **Toadking's Mound is built in halls**, as the rest of the Fens. Its caverns ran past the 256 tiles a side Luminati draws (12 of 15 floors over five seeds), so a room you could walk to stood outside the drawn level, black (docs/level-design-rules.md §5, the first survey's bug). Its three floors keep their six rooms, levels, Wren on the second, the Toadking on the third and the mire's dressing (reeds, boats hauled up, the mud). v1.81 (§7.1; the owner: "The ~10% attack and defence penalty per level you're under a foe - we are dropping this entirely"): **no penalty for a foe above the hero's level**; v1.69's 10 % a level of ATK and DEF is gone (battle.js), and a room three up still defeats the right party, in 7½ minutes rather than 5. v1.80 (§6.2, §5.1; the owner: "im getting notifications that companions not in my party (benched) are leveling up - they should not be"): **the bench earns no XP.** Only the party in the field gains from fights and quests; a benched companion levels only on the road, by an expedition (§6.3), which is sent for that. The bench still draws half wage. v1.79 (§6.1, the owner: "Ok lets incorporate this into the game",
 after the painted-faces spike, docs/painted-faces-spike.md): every face is the **painted head** (a sculpted skull, the
 whole face one painted picture on it: small dark eyes with a glint, thick brows, a ball nose, big ears, a wider jaw), the
 hero's, the company's and the townsfolk's, in play, in the previews and in the baked portraits; two new parts of a
@@ -242,12 +242,14 @@ Cutting is the Redhand's, the Breach the dead's). Dug rooms are caves inside the
   room's axis with a light of its own, never twice in a room, and every count what the room would hold (one light at each doorway of a fighting room), the middle kept open for the fight. A doorway is lit as its place is (the dig's
   lanterns, the crypt's candles, the keep's torches, the chapel's candelabra); a floor's way in, its sanctuary, keeps its
   braziers. The Breach, the balance contract's arena, has its fallen columns authored, the same on every seed.
-- **Halls**, for what was built (the Tithe Mill, Wickham Keep, the Sunken Chapel, the Ninth Milestone, the Canal Locks,
-  the Drowned Abbey, the Mere Tower, the Reedholm Undercroft): one building of rectangular rooms in rows, joined by
+- **Halls**, for what was built (the Tithe Mill, Wickham Keep, the Sunken Chapel, the Ninth Milestone, Toadking's Mound
+  (v1.82), the Canal Locks, the Drowned Abbey, the Mere Tower, the Reedholm Undercroft): one building of rectangular rooms in rows, joined by
   short straight halls (8–12 tiles long, never a bare doorway: the hall is the safe ground out of a fight). Walls
   between the camera and a floor are cut to knee-high stubs, so you see into every room; the back walls stand full.
   Dressed stone: flagstones and ashlar.
-- **Caverns**, for what was dug or grew (the Old Barrows, the Scrag Warren, Toadking's Mound, the Sickpools): rooms of
+- **Caverns**, for what was dug or grew (the Scrag Warren; the Old Barrows' and the Keep's caves are drawn in their plans
+  now, the Sickpools are the Locks' third floor, and Toadking's Mound went to halls in v1.82: its caverns ran past what
+  Luminati draws): rooms of
   open shapes (rect, oval, diamond, L) scattered in the abyss, joined by corridors, the walls weathered. A cavern
   entrance is never small, and its back walls always stand for the stair up.
 

@@ -253,7 +253,7 @@ per map … wider aggro/chase radius (show as a dotted line when encountered)"*.
 | **Room sizes:** small 18–26 tiles, medium 28–38, large 40–62; a gallery (a large corridor) 60–80 long and 18–28 across | *test* layout, plans |
 | **A floor's last hall (the descent room, its boss's hall) is always large; an entrance is never small** | *test* layout, plans |
 | **Authored floors** (the Vale's, plans.js `checkPlan`): at most 2 floors and 5 spaces a floor; halls 10 wide, 8–14 long; one entrance, one last hall; one offshoot, a dead end off one room; every space reached; nothing overlapping; levels within the floor's +0…+1 | *test* plans.test.mjs (built floors too) |
-| **Generated floors:** 6–8 rooms; corridors and halls 6 wide; halls 8–12 long, 14 at most, joined only across 10+ tiles of facing wall | *test* layout.test.mjs |
+| **Generated floors:** 6–8 rooms; corridors and halls 6 wide; halls 8–12 long, 14 at most, joined only across 10+ tiles of facing wall. Every live site is halls or a plan (2026-11-13: the Mound was the last on caverns, which run past what Luminati draws; only the parked Scrag Warren keeps them) | *test* layout.test.mjs |
 | **The walls facing the camera are cut low.** A wall with floor up-screen of it within 8 tiles is a knee-high stub; the north and west walls stand | *test* layout.test.mjs |
 | **The stairs.** The way up stands against the entrance's north or west wall. The way down is a 6×6 well nothing walks over, under its arch; coming back up you stand in the corridor outside the descent room | *test* floors.test.mjs |
 | **A small room holds 4 foes at once at most**; a large room the full wave of 5 | *test* layout.test.mjs |
@@ -387,7 +387,7 @@ floor, authored or generated:
 
 | Rule | What it keeps clear | How |
 |---|---|---|
-| **The stairs** | nothing on a stair or within 2 tiles of it: the way up's flight, its foot and the run out to where you arrive; the way down's well and rim, and three rows in front | the dressing is laid before the stairs are placed, so once they are, the dressing on their ground is taken up (`clearStairs`). The stairs' own pieces stay: the stairwell's two lights, its set piece (the Barrow Door's guardians, the Chancel's altar and candelabras), a chest, a shrine. |
+| **The stairs** | nothing on a stair or within 2 tiles of it: the way up's flight, its foot and the run out to where you arrive; the way down's well and rim, and three rows in front | the dressing is laid before the stairs are placed, so once they are, the dressing on their ground is taken up (`clearStairs`). The stairs' own pieces stay: the stairwell's two lights, its set piece (the Barrow Door's guardians, the Chancel's altar and candelabras), a chest. A shrine on their ground is taken up too (2026-11-13: one stood on the way up in 1 of 24 Fens hall floors; `test/keepclear.test.mjs`, eight seeds of the Mound and the Locks). |
 | **The doorways** | nothing within 1.5 tiles of a doorway (a room's floor where a corridor comes in) | `place()` refuses it. Corridors were already kept clear. |
 | **The lights** | a brazier, torch, lantern, candelabra or candles stands by a wall: at its foot or a step out (a wall within 2 tiles), never in a room's open middle, a hallway's middle or a doorway | `place()` refuses it. A doorway's light now stands against the wall the corridor comes through, just past the opening's edge; it stood two steps inside and out in the floor. |
 
@@ -450,7 +450,7 @@ Barrows, Wickham Keep and the Sunken Chapel, the Pens' second floor, the Drowned
 | Pale Heights | the road down the Sol (closed, to Solmere) | 0 % | Luminati's border pines | **Open.** The border scatter (Luminati's `scatterForest`) avoids hand-placed trees, not roads. It wants a gap where a road leaves the map. |
 | Proving Pens, floor 1 | the Wraith Pen's middle | 33 % | the near wall (basalt) | **Open, minor.** The legs are hidden by the near wall's top; the hero reads. §7: "the near walls' low pieces only". |
 | Canal Locks, floor 1 | room 4's middle | 17 % | the near wall (basalt) | **Open, minor.** The same. |
-| Toadking's Mound, floor 1 | room 5's middle | 0 % | — (never drawn) | **Open, a bug.** The cavern runs past 256 of ours, so the level is cropped round its two stairs (convert.js), and room 5 (x ≈ 294) falls outside: a reachable room drawn black. Fix: hold a generated cavern to 252 a side. |
+| Toadking's Mound, floor 1 | room 5's middle | 0 % | — (never drawn) | **Fixed (2026-11-13, GDD v1.82).** The cavern ran past 256 of ours, so the level was cropped round its two stairs (convert.js), and room 5 (x ≈ 294) fell outside: a reachable room drawn black, where the owner's party walked off the floor to fight. The Mound is built in halls now, as the rest of the Fens: 0 of 15 floors over 252 (12 of 15 before), and all 27 subjects on its three floors at least half in view (`mound-f1`…`f3`). |
 
 Fixed in the same pass: the Frozen Hospice's arrival stood behind its well-house (17 %). It moved six tiles south onto
 the road, in front (100 %).
@@ -478,7 +478,6 @@ the road, in front (100 %).
 ## 7. Not yet enforced, and the next work
 
 **To fix (from the first survey, §5):**
-- The Toadking's Mound's room 5, outside the drawn level.
 - Saltmere's Drowned Eel door step.
 - A gap in the border where a road leaves the map.
 

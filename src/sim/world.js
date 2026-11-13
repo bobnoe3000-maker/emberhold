@@ -732,13 +732,14 @@ function placeStairsDown(world, level) {
 // The stairs' ground cleared (docs/level-design-rules.md §4.4, keepclear.js stairZone): every piece of dressing on a stair,
 // within STAIR_CLEAR of it or on its approach is taken up (the dressing is laid before the stairs are placed, and a heap of
 // barrels stood on the way up). What isn't dressing stays: the stairs themselves, their own lights and set piece, a chest,
-// a shrine, a lamp, the found.
+// a lamp, the found. A shrine there goes too (2026-11-13: one stood on the way up in about one floor in 24 once the
+// Toadking's Mound and the Canal Locks were halls; it's set against a wall, and the entrance's wall is the stair's).
 const DRESSING = (kind) => LIGHT.has(kind) || REPEAT_CAPPED.has(kind) || DRESS_PIECES.has(kind) || STAIR_CLEARS.has(kind);
 const STAIR_CLEARS = new Set(['spire', 'monolith', 'totem', 'crates', 'barrels', 'sacks', 'bedroll', 'pillar', 'brokenpillar', 'sarcophagus', 'bones', 'pew', 'gibbet', 'spoil',
   'urnshelf', 'urns', 'rack', 'standard', 'banner', 'tent', 'bunk', 'scaffold', 'stalagmite', 'boulder', 'saint', 'chains', 'bound', 'font', 'boat', 'reeds', 'windlass', 'vat',
   'scorch', 'cracks', 'puddle', 'straw', 'hay', 'rug', 'coins', 'papers', 'cookfire', 'web', 'cobweb', 'rubble']);
 function clearStairs(world) {
-  for (const k of stairZone(world)) { const p = world.props.get(k); if (p && !STAIR_OWN.has(p) && !world.stairOwn.has(k) && DRESSING(p)) world.props.delete(k); }
+  for (const k of stairZone(world)) { const p = world.props.get(k); if (p && !STAIR_OWN.has(p) && !world.stairOwn.has(k) && (DRESSING(p) || p === 'shrine')) world.props.delete(k); }
 }
 
 // Find a stretch of the entrance room's north (−y) or west (−x) wall with room for the
