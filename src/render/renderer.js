@@ -254,6 +254,18 @@ export function createRenderer(canvas, sim, input) {
       for (let i = 0; i < CROWD_N && spots.length > 2; i++) { const [x, y] = spots[(rnd() * spots.length) | 0];
         c.push({ x, y, tx: x, ty: y, wait: rnd() * 4000, look: 'npc_villager_' + (1 + (i % 4)), fx: 0, fy: 1, moving: false, u: { fidgetN: 0, lookN: 0, h: i * 977, seed: rnd(), next: 1e15, near: false } }); }
       c.spots = spots; c.rnd = rnd; c.last = 0;
+    } else if (world.arena) {
+      // the Bowl's crowd (the Quarry Ring, convert.js arena): on the far ledges, still, facing the sand; on the near side
+      // nobody, the camera's side kept clear (docs/level-design-rules.md §1.1)
+      let s = 0xb0e1; const rnd = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
+      const r = world.level.descentRoom, A = (r.x1 - r.x0 + 1) / 2, B = (r.y1 - r.y0 + 1) / 2, mx = (r.x0 + r.x1 + 1) / 2, my = (r.y0 + r.y1 + 1) / 2;
+      for (const [past, n] of [[5, 7], [11, 6], [17, 5]]) for (let i = 0; i < n; i++) {
+        const t = -Math.PI * 0.97 + ((i + 0.5 + (rnd() - 0.5) * 0.5) / n) * Math.PI * 0.95, k = 1 + past / ((A + B) / 2);   // (the far half, west round to north-east)
+        if (Math.abs(t + Math.PI / 2) < 0.22) continue;                                                                         // (not over the gate)
+        const x = mx + Math.cos(t) * A * k, y = my + Math.sin(t) * B * k;
+        c.push({ x, y, tx: x, ty: y, wait: 1e15, look: 'npc_villager_' + (1 + (c.length % 4)), fx: mx - x, fy: my - y, moving: false, u: { fidgetN: 0, lookN: 0, h: c.length * 977, seed: rnd(), next: 1e15, near: false } });
+      }
+      c.spots = []; c.rnd = rnd; c.last = 0;
     }
     crowds.set(world, c); return c;
   }

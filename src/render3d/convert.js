@@ -126,7 +126,7 @@ const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, d: 2, G: 1, g: 0 };
  * @returns {{ level: any, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps: number }, sprites: { id?: string, prop?: string, tx?: number, ty?: number, flat?: boolean, x: number, z: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
  */
 export function convertWorld(w, o = {}) {
-  return w.kind === 'dungeon' ? dungeon(w, o) : outdoor(w, o.region || w.region || 'vale');
+  return w.arena ? arena(w, o) : w.kind === 'dungeon' ? dungeon(w, o) : outdoor(w, o.region || w.region || 'vale');
 }
 
 /** a crop of ours, its tiles even and at most MAX_TILES a side, round a middle */
@@ -502,4 +502,78 @@ function dungeon(w, o = {}) {
     // (black beyond the walls, as Emberlit's: a backdrop colour, which the fog takes too, so the far rooms fade to it)
     environment: { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: true, backdrop: '#040306' } });
   return { level, sprites, ambient: ambientOf(w.kit), origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D } };
+}
+
+// ── the Bowl: the Quarry Ring (the owner chose B of three, docs/bowl-arena-proposal.md §12; world doc v1.46 §3.9) ──────
+// The sim's one oval of sand (plans.js bowl), drawn as the bottom of an old sandstone quarry open to the sky: three
+// ledges of banded rock stepping back and up behind it (sandstone, red rock, sandstone, where the crowd sits), the rim
+// in dry grass and juniper, a timber fence round the sand, pennants strung over the ledges and the Sun's Box, a striped
+// awning, on the far side. Lit as a bright day (hybrid.js holds the hour). As the level-design rules ask (§1.1), the half
+// between the camera and the sand (the sim's +x +y) is cut low: a lip of scree and a few boulders, nothing that stands in
+// front of a fight. The stair up (world.js placeStairsUp) climbs into the north face under its arch: the haul-ramp, the
+// Dust Gate, the way back out.
+export const ARENA_HOUR = 11.2;
+/** @type {[number, number, string][]} */
+const LEDGES = [[2, 3, 'Y'], [8, 7, 'Y'], [14, 12, 'X'], [20, 17, 'Y']];   // [from this far past the sand's edge (tiles), height (a level half a metre: steps of 2–2.5 m, as the spike's), tile]
+/** @param {any} w @param {{ stairs?: string }} [o] */
+function arena(w, o = {}) {
+  const L = w.level, r = L.descentRoom, cells = L.cells;
+  const A = (r.x1 - r.x0 + 1) / 2, B = (r.y1 - r.y0 + 1) / 2, cx = (r.x0 + r.x1 + 1) / 2, cy = (r.y0 + r.y1 + 1) / 2, avg = (A + B) / 2;
+  const { x0, y0, W, D } = crop(r.x0 - 30, r.y0 - 28, r.x1 + 31, r.y1 + 29, cx, cy);
+  const X = (x) => r2((x - x0) / 2), Z = (y) => r2((y - y0) / 2);
+  // where a point stands: how far past the sand's edge (tiles), and how near the camera's side (0 the far and the
+  // flanks, 1 straight toward the camera)
+  const at = (x, y) => { const u = (x - cx) / A, v = (y - cy) / B, p = Math.hypot(u, v) || 1e-6; return { past: (p - 1) * avg, near: Math.max(0, (u + v) / p / Math.SQRT2), u: u / p, v: v / p }; };
+  const smooth = (a, b, t) => { const k = clamp((t - a) / (b - a), 0, 1); return k * k * (3 - 2 * k); };
+  const tiles = grid(W, D, 'a'), heights = grid(W, D, String(FLOOR));
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    let floor = false;
+    for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const c = cells.get(`${x0 + 2 * i + dx},${y0 + 2 * j + dy}`); if (c && c.kind === 'floor') floor = true; }
+    if (floor) { tiles[j][i] = 's'; heights[j][i] = String(FLOOR); continue; }
+    const P = at(x0 + 2 * i + 1, y0 + 2 * j + 1), h0 = hash('q', i, j), past = P.past + ((h0 % 7) - 3) * 0.35;   // (a rough edge to each ledge: quarried, not turned)
+    let far = 19, ch = h0 % 3 ? 'y' : 'a';                    // the rim: dry grass and bare earth
+    for (const [from, h, t] of LEDGES) if (past >= from) { far = h; ch = t; } else break;
+    if (past < LEDGES[0][0]) { far = 3; ch = 'Y'; }
+    if (past >= LEDGES[3][0] + 6) { far = 19; ch = h0 % 3 ? 'y' : 'a'; }
+    const k = smooth(0.22, 0.5, P.near), nearH = past < 2 ? 3 : 2, h = Math.round(far + (nearH - far) * k);
+    tiles[j][i] = k > 0.5 ? (past < 2 ? 'q' : h0 % 4 ? 'a' : 'y') : ch; heights[j][i] = h.toString(36);
+  }
+  const stairLights = stairs(w, x0, y0, W, D, tiles, heights, o.stairs !== 'plain');
+  const objects = [], count = {}, sprites = [];
+  const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; objects.push({ id: `${ob.type}_${count[ob.type]}`, ...ob }); };
+  for (const a of stairLights.arches || []) sprites.push({ arch: { ...a, stone: 'sandstone_brick' } });
+  for (const l of stairLights) if (l.glow) add({ type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity, distance: l.glow.distance, flicker: 0.08, nightOnly: false });
+  const pt = (t, past) => { const k = 1 + past / avg; return { x: cx + Math.cos(t) * A * k, y: cy + Math.sin(t) * B * k }; };
+  const gate = (t) => Math.abs(Math.atan2(Math.sin(t + Math.PI / 2), Math.cos(t + Math.PI / 2))) < 0.2;   // (the north face's gap: the stair)
+  // the fence: posts and two rails round the sand's edge, a step in from it
+  const N = 36;
+  for (let n = 0; n < N; n++) {
+    const t0 = (n / N) * Math.PI * 2, t1 = ((n + 1) / N) * Math.PI * 2; if (gate((t0 + t1) / 2)) continue;
+    const a = pt(t0, -0.9), b = pt(t1, -0.9);
+    add({ type: 'fence', x0: X(a.x), z0: Z(a.y), x1: X(b.x), z1: Z(b.y), opts: {} });
+  }
+  // the far side, where the eye goes: pennants strung along the ledges, the Sun's Box on the second, juniper on the rim
+  for (const [ta, tb, past] of [[-2.9, -2.2, 9.5], [-2.0, -1.75, 9.5], [-1.4, -0.7, 9.5], [-2.6, -1.9, 15.5], [-1.2, -0.5, 15.5]]) {
+    const a = pt(ta, past), b = pt(tb, past);
+    add({ type: 'garland', x0: X(a.x), z0: Z(a.y), x1: X(b.x), z1: Z(b.y), opts: { kind: 'pennants', sag: 0.5, posts: true, seed: (hash('g', ta) % 97) + 1 } });
+  }
+  { const t = -Math.PI * 0.75, b = pt(t, 11), d = at(b.x, b.y);
+    add({ type: 'marketStall', x: X(b.x), z: Z(b.y), rotation: r2(Math.atan2(-d.u, -d.v)), opts: { cloth: 'cloth_stripe', width: 3, crates: 'none', seed: 4 } }); }
+  for (let n = 0; n < 14; n++) {
+    const t = -Math.PI * 0.98 + (n / 13) * Math.PI * 1.1 + ((hash('j', n) % 10) - 5) * 0.02, b = pt(t, 24 + (hash('jr', n) % 5)), d = at(b.x, b.y);
+    if (d.near > 0.2) continue;
+    add({ type: 'tree', x: X(b.x), z: Z(b.y), collider: false, opts: { kind: n % 4 === 3 ? 'deadwood' : 'juniper', height: r2(2.6 + (hash('jh', n) % 10) * 0.12), seed: hash('js', n) % 997 } });
+  }
+  // the near lip: a few boulders and the quarry's leavings, all low
+  for (let n = 0; n < 9; n++) {
+    const t = Math.PI * 0.25 + ((n - 4) / 4) * 0.9, b = pt(t, 3 + (hash('b', n) % 6)), hh = hash('bh', n);
+    add(n % 3 === 1 ? { type: 'debris', x: X(b.x), z: Z(b.y), rotation: (hh % 11) * 0.5, opts: { kind: 'rubble', size: 0.6, charred: false, seed: hh % 997 } }
+      : { type: 'rock', x: X(b.x), z: Z(b.y), opts: { size: r2(0.6 + (hh % 5) * 0.12), stone: 'sandstone', seed: hh % 97 } });
+  }
+  { const g = pt(-Math.PI / 2, 1.5);                         // crates by the gate, the day's water and the rakes
+    for (const s of [-1, 1]) add({ type: 'crateStack', x: r2(X(g.x) + s * 2.4), z: r2(Z(g.y) + 0.6), rotation: 0.3 * s, opts: { count: 2, size: 0.7, seed: 7 + s } }); }
+  const sp = w.spawn || { x: cx, y: cy };
+  const level = frame({ name: w.siteName || 'The Bowl', W, D, tiles, heights, objects, spawn: { x: X(sp.x), z: Z(sp.y), facing: 'up' },
+    environment: { timeOfDay: ARENA_HOUR, border: 'none', outerScenery: true, godRays: true, interior: false, climate: 'arid' } });
+  return { level, sprites, origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D } };
 }

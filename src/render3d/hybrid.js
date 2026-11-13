@@ -22,7 +22,7 @@
 // When the sim changes world (a town gate, a dungeon's stairs, a load), the new world is converted (convert.js) and built
 // behind Emberlit's black; the sim holds still meanwhile (renderer.transiting), as it does for a bake.
 // Presentation only: reads the sim, writes nothing to it.
-import { convertWorld, GROUND_Y, SIM_FLOOR } from './convert.js';
+import { convertWorld, GROUND_Y, SIM_FLOOR, ARENA_HOUR } from './convert.js';
 import { lookOf } from './looks.js';
 import { HW, HH, ZH, project } from '../render/iso.js';
 import { DAY_S } from '../sim/heroes.js';
@@ -252,7 +252,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         actors.push({ name: d.atl.name, cw: d.atl.meta.cw, col: d.a.frame, row: d.a.dir, x: X, z: Z, fade, flash: (d.look && d.look.flash) || 0, warn: (d.look && d.look.warn) || 0, key: keyOf(d.u || d.who), look: lk && lk.a, lk: lk ? lk.k : '' });   // (cw: as drawn, a boss 1.3×; key: the same figure each frame, its model's)
         // in a fight, a ring at each fighter's feet in its side's colour (Emberlit's footMark), on the ground in 3D
         if (c.rings && d.team !== undefined && TEAM_RGB[d.team] && !(d.look && (d.look.ghost || d.look.dissolve))) {
-          rings.push({ x: X, z: Z, col: TEAM_RGB[d.team], a: 0.55 });
+          rings.push({ x: X, z: Z, col: TEAM_RGB[d.team], a: sim.world.arena ? 0.9 : 0.55 });   // (on the Bowl's sunlit sand a ring at 0.55 all but vanished)
           if (d.uid && d.uid === sim.focusId) mark = { x: X, z: Z };   // the foe a tap set the party on (battle.js focus)
         }
       }
@@ -262,8 +262,10 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         const fade = Math.max(0, Math.min(1, (hz.until - sim.state.t) / 0.8, (sim.state.t - (hz.from ?? -1e9)) / 0.4));
         hazards.push({ x: (hz.x - origin.x) / 2, z: (hz.y - origin.y) / 2, r: (hz.r * Math.SQRT2) / 2, col: hz.kind === 'sluice' ? [24, 40, 14] : [26, 20, 14], rim: hz.kind === 'sluice' ? [104, 132, 52] : [128, 104, 64], a: fade });
       }
+      state.actors = actors.length; state.rings = rings.length;   // (dev: what this frame stood up)
       const p = sim.state.player, wx = sim.world.kind === 'dungeon' ? null : weatherNow(sim);
-      api.frame({ dt, focus: [(mx - origin.x) / 2, GROUND_Y, (my - origin.y) / 2], ppu, hour: hourOf(c.t ?? sim.state.t),
+      const arena = !!sim.world.arena;                       // (the Bowl's Quarry Ring: a bright day, whatever the hour, convert.js arena)
+      api.frame({ dt, focus: [(mx - origin.x) / 2, GROUND_Y, (my - origin.y) / 2], ppu, hour: arena ? ARENA_HOUR : hourOf(c.t ?? sim.state.t),
         weather: wx && wx.k > 0.3 && (wx.kind === 'rain' || wx.kind === 'snow') ? wx.kind : 'clear',
         fog: wx && wx.kind === 'fog' ? wx.k : 0,                    // (Luminati has no fog weather: its air thickened; Emberlit's overlay drifts the banks)
         hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards, beasts, mark, ambient, bits, water: waterOf(c.battle, origin), gate: gateOf(sim.world, origin, now),
@@ -275,7 +277,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         warns: (c.warns || []).map((w) => ({ x: (w.x - origin.x) / 2, z: (w.y - origin.y) / 2, tx: (w.tx - origin.x) / 2, tz: (w.ty - origin.y) / 2,
           r: ((w.boss ? WARN_R.boss : WARN_R.heavy) * Math.SQRT2) / 2, w: ((w.heavy ? 0.6 : 0.4) * Math.SQRT2) / 2, p: w.p, hit: w.hit, heavy: w.heavy, lane: w.lane })),
         blast: c.blast ? { x: (c.blast.x - origin.x) / 2, z: (c.blast.y - origin.y) / 2, k: c.blast.k } : null,   // (a fire landing's light: renderer.js blasts)
-        bright: sim.world.kind === 'dungeon' ? 1 : brightAt(brightFor(sim.world.region || 'vale', sim.state.scene, dial), c.t ?? sim.state.t),   // (bright.js: the shipped look × the player's dial)
+        bright: sim.world.kind === 'dungeon' || arena ? 1 : brightAt(brightFor(sim.world.region || 'vale', sim.state.scene, dial), c.t ?? sim.state.t),   // (bright.js: the shipped look × the player's dial)
         draw: globalThis.__lumDraw !== false,                   // (dev, tools/capture/rig.mjs: frames stepped and not drawn while a shot settles)
         // the fights' light: Emberlit's fx.js drawn on black into its emissive plane (native px), for Luminati to lay over its
         // picture as light, placed as Emberlit composites its window (CSS px: the plane's origin and a native px's size).
@@ -286,7 +288,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         light: c.emi ? { emi: c.emi, w: c.nvw, h: c.nvh, x: (c.rx - c.ox) * (c.S / c.k), y: (c.ry - c.oy) * (c.S / c.k), px: c.S / c.k,
           key: c.key ? { base: c.key.base, step: c.key.step, origin: origin.x + origin.y } : null } : null,
         // the hero's ember-wisp (Emberlit's carry light): a light at the shoulder, strong underground and by night, gone by day
-        carry: sim.world.kind === 'dungeon' ? 1 : CARRY[Math.floor((((c.t ?? sim.state.t) % DAY_S) + DAY_S) % DAY_S / PART_S)] });
+        carry: arena ? 0 : sim.world.kind === 'dungeon' ? 1 : CARRY[Math.floor((((c.t ?? sim.state.t) % DAY_S) + DAY_S) % DAY_S / PART_S)] });
     },
   });
   // (the bundle's entry at its build's version, version.json asked for afresh: a browser that kept an old entry built the

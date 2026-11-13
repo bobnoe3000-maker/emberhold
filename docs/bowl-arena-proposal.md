@@ -266,7 +266,7 @@ the fights i choose play out live. This will eventually be to include other play
 On day 0 the league already sorts the grades apart: champions average 1612, hardened 1433, seasoned 1219, steady 1113,
 green 967 (test/bowl.test.mjs checks the order).
 
-## 12. The Sand outdoors: three looks (2026-11-13, for the owner to choose)
+## 12. The Sand outdoors: three looks (2026-11-13; the owner chose B, built)
 
 The owner: *"Redesign the pvp arena.. outdoor, single room, like a gladiator arena, lighter, sandstone colors... give me 3
 options."* Each is one room, open to the sky, the sand the sim's own (26 × 20 m, 52 × 40 tiles), the gates in its wall
@@ -286,7 +286,18 @@ three, so nothing stands in front of a fight. Left: the whole ring; right: a pho
 | **Cost to build** | Medium: rings of blocks, sails, a crowd of instanced figures | Lowest: banded rock rings, a fence, trees from the nature kit | Highest: columns and arches in two storeys, rubble |
 | **Reads in play** | The tiers and sails fill the top of a phone's frame; the gates read clearly | The rock's bands are busy behind the fighters | The arcade is the clearest backdrop; the fallen near side frames the sand |
 
-Whichever is chosen, building it means: the Sand as one outdoor room (the plan's Dust Gate and hall go; the company comes
+**Chosen and built** (the owner: *"Lets go with B"*): the Quarry Ring (world doc v1.46 §3.9, GDD v1.90). The Sand is one
+space (`src/sim/plans.js` bowl, `checkPlan`'s arena rule), its stair up in the north face (the haul-ramp, the Dust Gate);
+`src/render3d/convert.js` `arena()` draws it: the sand at the floor's height, ledges of 2–2.5 m stepping up behind
+(sandstone, red rock, sandstone) to a rim of dry grass and juniper, the camera's side cut to a low lip of scree and
+boulders, a timber fence round the sand, pennants over the ledges, the Sun's Box a striped awning on the far side; the
+crowd is the renderer's own villagers standing still on the far ledges (`renderer.js` crowdOf); `hybrid.js` holds a
+bright hour (`ARENA_HOUR`) whatever the clock says, no carry light, and the team rings at full strength on the bright sand.
+Before (the Sand as a dungeon hall) and after, mid-bout, from the game:
+
+![The Bowl before and after: the Quarry Ring](./img/arena/quarry-ring-before-after.jpg)
+
+What building it meant (as planned): the Sand as one outdoor room (the plan's Dust Gate and hall go; the company comes
 in by a gate in the wall), daylight and a sky in place of the dungeon's dark (an outdoor scene, as the overland is lit), the
 kit pieces in `tools/actor-lab/buildkit.js` or Luminati's world layer, and the crowd as a cheap instanced layer.
 

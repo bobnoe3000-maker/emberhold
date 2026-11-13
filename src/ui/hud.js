@@ -30,9 +30,9 @@ export function createHud(sim) {
   // dungeon: "depth N"; town / overland: the place's name
   const setDepth = (d) => {
     if (!depth) return;
-    const out = sim.world.kind !== 'dungeon';
+    const out = sim.world.kind !== 'dungeon' || !!sim.world.arena;   // (the Bowl: its name, as a place outdoors)
     depth.parentElement.firstChild.textContent = out ? '' : 'depth ';
-    depth.textContent = out ? sim.world.name : d + 1;
+    depth.textContent = out ? sim.world.name || sim.world.siteName : d + 1;
   };
   setDepth(sim.state.depth);
 

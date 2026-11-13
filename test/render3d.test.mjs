@@ -304,3 +304,27 @@ test('the camera\'s zoom (the owner: "zoom in and out … by at least 33%"): 100
     mem.set('emberfall.graphics', '{"zoom":"x"}'); assert.equal(readGraphics().zoom, 100, 'unreadable: the default');
   } finally { delete globalThis.localStorage; }
 });
+
+// the Bowl as the Quarry Ring (the owner chose B, docs/bowl-arena-proposal.md §12; convert.js arena): its sand at the
+// floor's height under every tile of it, the ledges stepping up behind (the far side), nothing standing on the camera's
+// side (the level-design rules §1.1), the stair up into the north face, lit as a day outdoors
+test('convert: the Bowl is the Quarry Ring: sand at floor height, ledges behind, the near side low, a day outdoors', async () => {
+  const { createWorld } = await import('../src/sim/world.js');
+  const w = createWorld(SEED, undefined, 0, 'bowl'), { level, origin } = convertWorld(w);
+  assert.ok(w.arena && level.width <= MAX_TILES / 2 && level.depth <= MAX_TILES / 2);
+  const r = w.level.descentRoom, A = (r.x1 - r.x0 + 1) / 2, B = (r.y1 - r.y0 + 1) / 2, cx = (r.x0 + r.x1 + 1) / 2, cy = (r.y0 + r.y1 + 1) / 2;
+  let sand = 0, farTop = 0, nearTop = 0;
+  for (let j = 0; j < level.depth; j++) for (let i = 0; i < level.width; i++) {
+    const x = origin.x + 2 * i + 1, y = origin.y + 2 * j + 1, h = parseInt(level.heights[j][i], 36), ch = level.tiles[j][i];
+    const c = w.level.cells.get(`${x},${y}`), u = (x - cx) / A, v = (y - cy) / B, p = Math.hypot(u, v);
+    if (c && c.kind === 'floor' && !level.legend[ch].stairs) { assert.equal(h, 2, `the sand flat at ${x},${y}`); if (ch === 's') sand++; }
+    if (p > 1.15 && (u + v) / p > 0.9) nearTop = Math.max(nearTop, h);        // (straight toward the camera)
+    if (p > 1.15 && (u + v) / p < -0.9) farTop = Math.max(farTop, h);
+  }
+  assert.ok(sand > 300, `the sand drawn (${sand} tiles)`);
+  assert.ok(farTop >= 17, `the ledges rise behind it (${farTop})`); assert.ok(nearTop <= 3, `the camera's side kept low (${nearTop})`);
+  assert.ok(level.tiles.some((row) => [...row].some((ch) => level.legend[ch].stairs === 'N')), 'the stair up into the north face');
+  assert.equal(level.environment.interior, false); assert.equal(level.environment.climate, 'arid');
+  assert.ok(level.environment.timeOfDay > 9 && level.environment.timeOfDay < 14, 'a bright day');
+  for (const t of ['fence', 'garland', 'marketStall', 'tree']) assert.ok(level.objects.some((o) => o.type === t), `${t}s round it`);
+});
