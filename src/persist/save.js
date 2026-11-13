@@ -129,6 +129,8 @@
 //   v45: the Bowl (GDD §17 v1.85, sim/bowl.js): `bowl`, the company's rating, marks of the Bowl, the day's bouts and its
 //       tourney. Older data has none: restore() reads a missing one as a fresh record (bowl.js restoreBowl), so the data
 //       needs nothing done to it.
+//   v46: the Bowl's board (GDD §17 v1.86): `bowl.picks` (the five on the board), `bowl.shown` (every team on it today) and `bowl.refresh` (new draws used today).
+//       Older data has neither: bowl.js restoreBowl draws the day's five again at the next look (the day's bouts kept).
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -140,7 +142,7 @@ import { reachedOf } from '../sim/coach.js';
 import { SITES, bossAt } from '../sim/sites.js';
 import { withFrame43 } from '../sim/appearance.js';
 
-export const SAVE_VERSION = 45;   // (v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
+export const SAVE_VERSION = 46;   // (v46: the Bowl's board, bowl.picks / refresh; v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
 /** v40 and older (v41: the floors' gates): an old save comes back with the gates it has been through open, as far as the save
  * tells: every floor whose hall's boss is down (sites.js bossAt; state.bosses), and every floor above the one it was made
  * on. A generated hall with no boss, passed and left: its gate stands (its twenty waves again). @param {any} data */

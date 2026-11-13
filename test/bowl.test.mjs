@@ -1,7 +1,8 @@
 // The Bowl (GDD §17 v1.85, docs/bowl-arena-proposal.md; the owner, 2026-11-13: "Menu fine at min level 6, in brackets, lets
 // test and simulate healing for the right balance, for marks only, company locked for the tournament, yes a hero only
 // option. Tournament are daily reset for now"): a bout against a rival company through the commands, its pay, the world
-// given back as it was, the day's tourney, and the record saved.
+// given back as it was, the day's tourney, and the record saved. (v1.86; the owner: "choose from 5 opponents, refresh 3x per
+// day. I can have up to 10 fights per day. The game simulates similar rules for ai opponents. Lets assume 100 teams")
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -10,7 +11,7 @@ import { statsFor } from '../src/sim/party.js';
 import { DAY_S } from '../src/sim/heroes.js';
 import { BOUT, ccTime } from '../src/sim/battle.js';
 import { ROSTER, ROSTER_IDS, makeCompany, GRADES } from '../src/sim/rivals.js';
-import { BOWL, picksOf, bracketOf, rate, expected, restoreBowl, companyOn } from '../src/sim/bowl.js';
+import { BOWL, picksOf, bracketOf, rate, expected, restoreBowl, companyOn, fieldOn, teamOf } from '../src/sim/bowl.js';
 import { PLANS, checkPlan } from '../src/sim/plans.js';
 
 const SEED = 20260807;
@@ -23,6 +24,7 @@ function company(level = 7, hires = [1, 3]) {
   for (const i of hires) { s.state.counters.gold = 1e9; s.commands.push({ type: 'hire', idx: i }); s.tick(); }
   s.state.counters.gold = 0;
   for (const m of s.state.party) { m.level = level; m.hp = statsFor(m).maxHp; }
+  s.commands.push({ type: 'bowlOpen' }); s.tick();                 // (the board looked at: the day's five drawn)
   return s;
 }
 const run = (s, n = 20 * 200) => { for (let i = 0; i < n && s.battle; i++) s.tick(); };
@@ -123,7 +125,7 @@ test('the rating: Glicko, a win up and a loss down, more for an upset; companies
   const up = rate(1200, 250, 1200, 1), down = rate(1200, 250, 1200, 0), upset = rate(1200, 250, 1450, 1);
   assert.ok(up.r > 1200 && down.r < 1200 && upset.r - 1200 > up.r - 1200 && up.rd < 250);
   assert.ok(Math.abs(expected(1200, 1200, 80) - 0.5) < 1e-9);
-  assert.deepEqual(companyOn('widow_brack', 0, 3), companyOn('widow_brack', 0, 3));
+  assert.deepEqual(companyOn('widow_brack', 3), companyOn('widow_brack', 3));
   assert.equal(bracketOf(6), 0); assert.equal(bracketOf(11), 0); assert.equal(bracketOf(12), 1); assert.equal(bracketOf(15), 2);
   const c = makeCompany('coalbrook_boys', 9, 'champion');
   assert.ok(c.every((m) => m.level === 9 && m.gear.weapon.r === GRADES.champion.rarity && m.gear.weapon.up === GRADES.champion.up && m.rival === undefined), 'a champion\'s kit at the hero\'s level');
@@ -137,4 +139,47 @@ test('the record saved (v45) and cleaned on load', () => {
   assert.deepEqual(t.state.bowl, s.state.bowl);
   assert.deepEqual(restoreBowl({ r: 'x', fought: ['widow_brack', 'nobody'], marks: -4 }).fought, ['widow_brack']);
   assert.equal(restoreBowl({ marks: -4 }).marks, 0); assert.equal(restoreBowl(null).r, BOWL.start);
+});
+
+test('the board: five near your rating, easiest first; three new draws a day, then no more; a new day, a new five', () => {
+  const s = company(8), ev = events(s), b = s.state.bowl;
+  const five = picksOf(s.state);
+  assert.equal(five.length, BOWL.picks);
+  assert.deepEqual(five.map((c) => c.rating), [...five.map((c) => c.rating)].sort((x, y) => x - y));
+  const seen = new Set(five.map((c) => c.id));
+  for (let i = 0; i < BOWL.refreshes; i++) {
+    s.commands.push({ type: 'bowlRefresh' }); s.tick();
+    const now = picksOf(s.state); assert.equal(now.length, BOWL.picks);
+    for (const c of now) { assert.ok(!seen.has(c.id), `${c.id}: new faces each time`); seen.add(c.id); }
+  }
+  s.commands.push({ type: 'bowlRefresh' }); s.tick();
+  assert.equal(ev.refused.length, 1, 'three a day'); assert.equal(b.refresh, BOWL.refreshes);
+  s.state.t += DAY_S; s.commands.push({ type: 'bowlOpen' }); s.tick();
+  assert.equal(b.refresh, 0); assert.equal(picksOf(s.state).length, BOWL.picks);
+});
+
+test('ten bouts a day, every one paid; the eleventh refused', () => {
+  const s = company(7), ev = events(s);
+  for (let n = 0; n < BOWL.fights; n++) {
+    if (!picksOf(s.state).length) { s.commands.push({ type: 'bowlRefresh' }); s.tick(); }
+    s.commands.push({ type: 'bowlBout', id: picksOf(s.state)[0].id, alone: true }); s.tick();
+    assert.ok(s.battle && s.battle.bout, `bout ${n + 1}`); run(s);
+  }
+  assert.equal(ev.result.length, BOWL.fights); assert.ok(ev.result.every((r) => r.marks >= 1), 'each paid');
+  assert.equal(s.state.bowl.marks, ev.result.reduce((a, r) => a + r.marks, 0));
+  if (!picksOf(s.state).length) { s.commands.push({ type: 'bowlRefresh' }); s.tick(); }
+  s.commands.push({ type: 'bowlBout', id: picksOf(s.state)[0].id }); s.tick();
+  assert.ok(!s.battle && ev.refused.at(-1).includes(String(BOWL.fights)), 'the eleventh');
+});
+
+test('the hundred: a league of their own, ten bouts a day each on the same rules, the same for everyone; the strong rise', () => {
+  assert.equal(ROSTER_IDS.length, 100);
+  const d0 = fieldOn(0), d1 = fieldOn(1);
+  const games = (f) => f.reduce((a, c) => a + c.won + c.lost + c.drawn, 0);
+  assert.equal(games(d1) - games(d0), 100 * BOWL.fights, 'every team, ten bouts a day');
+  assert.deepEqual(fieldOn(5), fieldOn(5));
+  const avg = (g) => { const r = d0.filter((c) => c.grade === g).map((c) => c.rating); return r.reduce((a, x) => a + x, 0) / r.length; };
+  assert.ok(avg('champion') > avg('hardened') && avg('hardened') > avg('seasoned') && avg('seasoned') > avg('green'), 'ratings find the grades out');
+  assert.deepEqual(d0.map((c) => c.rank), d0.map((_, i) => i + 1));
+  assert.equal(teamOf('widow_brack').manner, 'wall');
 });

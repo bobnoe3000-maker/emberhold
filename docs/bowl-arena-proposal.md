@@ -1,6 +1,6 @@
 # The Bowl: an arena and tournaments (a proposal)
 
-**Status: Implemented in part (2026-11-13; GDD v1.85, §10 below).** The owner's decisions are in §9; what's built and
+**Status: Implemented in part (2026-11-13; GDD v1.85–v1.86, §10–§11 below).** The owner's decisions are in §9; what's built and
 how it measured is §10. Built: the bout (one brain for both sides), the Sand, the written roster and its generator, the
 ladder and marks, the day's tourney, the hero alone; not yet: watching a rival bout, the dressing (crowd, bell), online.
 
@@ -245,3 +245,23 @@ bigger step than it looks, so the grades now climb by one smith's + or one rarit
 
 Two things the harness caught: the bout's draws were salted to nothing (every seed the same bout), and the party's turn
 coming first in a tick won every even bout of mages for whoever was the party, which the call's reaction draw fixed.
+
+## 11. Five to choose from, and the hundred (2026-11-13, GDD v1.86)
+
+The owner: *"When i enter the tournament arena i want to be able to choose from 5 opponents, refresh 3x per day. I can have
+up to 10 fights per day. The game simulates similar rules for ai opponents. Lets assume 100 teams for now. I want to watch
+the fights i choose play out live. This will eventually be to include other players when we open up multiplayer."*
+
+| Piece | As built |
+|---|---|
+| The board | Five teams drawn from the fifteen nearest your rating, easiest first, none already shown today (`bowl.js` drawPicks). **New faces** three times a day (`bowlRefresh`). The board is drawn by the sim only (`bowlOpen`, when it's looked at), so a replay sees the same five |
+| Bouts | **Ten a day**, every one paid; one try a team a day (`bowlBout` counts it in at its start, so a bout walked out on is spent and lost) |
+| The hundred | `content/arena.json`: the 24 written first and 76 more (names, homes, banners, members; the Crier calls them in by their manner's line, `crier.manners`) |
+| Their league | `bowl.js` leagueDay: each team has a hidden strength (its grade's rating, its manner's edge, ±80 of its own); every day each fights ten bouts against a team near its rating (the hundred ordered by rating with jitter and paired off), the result drawn on the expected score of the two strengths, 4 % drawn, Glicko for both. Twenty days run before day 0. Fixed seed: the same for everyone. The player's bouts don't move it. 500 days take 134 ms, kept as they're built |
+| Standings | A third tab: the top ten, the teams round your rating, your place among the 101 |
+| Watching | Every bout you choose is fought live on the Sand, as before. The league's own bouts are worked out by rating, not fought; watching one waits for the multiplayer work, when other players' companies take places in the hundred |
+
+![The board: five to choose from, new faces, the standings](./img/ui/bowl-board-2026-11-13.jpg)
+
+On day 0 the league already sorts the grades apart: champions average 1612, hardened 1433, seasoned 1219, steady 1113,
+green 967 (test/bowl.test.mjs checks the order).

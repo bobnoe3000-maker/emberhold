@@ -1,85 +1,2612 @@
 {
-  "_note": "The Bowl's rival companies (GDD §17 v1.85, world doc v1.44 §3.9, docs/bowl-arena-proposal.md §4). Authored text only: names, homes, banners, manners, members and the Crier's lines. Their strength (level, kit, build) is rolled by src/sim/rivals.js from a seed; their grade and rating by src/sim/bowl.js. Ids are API (saves keep them).",
+  "_note": "The Bowl's hundred companies (GDD §17 v1.85, world doc v1.44 §3.9, docs/bowl-arena-proposal.md §4). Authored text only: names, homes, banners, manners, members and the Crier's lines. Their strength (level, kit, build) is rolled by src/sim/rivals.js from a seed; their grade and rating by src/sim/bowl.js. Ids are API (saves keep them).",
   "crier": {
     "call": "Sand's raked. Steel's out. Fight!",
     "won": "Your bout. The sun saw it.",
     "lost": "Their bout. Get up slow, it looks better.",
     "draw": "The sun can't tell you apart. A draw.",
     "time": "That's the glass. I'll call it on what's left standing.",
-    "champion": "Feast-day champions. The sun keeps your name till next feast."
+    "champion": "Feast-day champions. The sun keeps your name till next feast.",
+    "manners": {
+      "balanced": {
+        "in": "A sword, a stab and a prayer. The old way.",
+        "out": "Back to the tiers with them, steady as they came."
+      },
+      "brawlers": {
+        "in": "This lot don't wait for the bell. Mind your teeth.",
+        "out": "Carried off. Loudly."
+      },
+      "stalkers": {
+        "in": "Watch your back. No, further back.",
+        "out": "Gone round the back again. For good this time."
+      },
+      "wall": {
+        "in": "They don't hit hard. They don't fall down either.",
+        "out": "The wall's down. Somebody tell the masons."
+      },
+      "spellbinders": {
+        "in": "Hold still, they'll ask you nicely. Then they'll make you.",
+        "out": "The spells are spent. Sweep up the sparks."
+      }
+    }
   },
   "companies": [
-    { "id": "widow_brack", "name": "The Widow Brack's Three", "home": "Saltmere", "manner": "wall", "banner": ["#2b2b2e", "#b9b3a6", "a closed hand"],
-      "members": [{ "name": "Ada Brack", "cls": "fighter" }, { "name": "Sister Joan", "cls": "cleric" }, { "name": "Old Merrit", "cls": "shaman" }],
-      "in": "Three in black, and nobody's widow yet.", "out": "The widow goes home. She'll be back." },
-    { "id": "coalbrook_boys", "name": "The Coalbrook Boys", "home": "Ashgate", "manner": "brawlers", "banner": ["#3a2a20", "#e08a3c", "a pick"],
-      "members": [{ "name": "Big Denny", "cls": "fighter" }, { "name": "Little Denny", "cls": "fighter", "actor": "hero_barbarian" }, { "name": "Cousin Pell", "cls": "shaman" }],
-      "in": "The Boys from the pits. Mind your shins.", "out": "Back down the pit for the Boys." },
-    { "id": "hesks_cousins", "name": "Hesk's Cousins", "home": "Tollhaven", "manner": "stalkers", "banner": ["#1f3346", "#c9a54a", "an anchor"],
-      "members": [{ "name": "Wil Hesk", "cls": "rogue" }, { "name": "Nan Hesk", "cls": "rogue" }, { "name": "Teo Hesk", "cls": "shaman" }],
-      "in": "Cousins of the Admiral, they tell me. I wouldn't ask.", "out": "The Cousins sail home. Count your purse." },
-    { "id": "lantern_lads", "name": "The Lantern Lads", "home": "the Lamphall", "manner": "balanced", "banner": ["#2c2a1e", "#f2c14e", "a lantern"],
-      "members": [{ "name": "Rafe Lyle", "cls": "fighter" }, { "name": "Kit Sorrel", "cls": "rogue" }, { "name": "Brother Amos", "cls": "cleric" }],
-      "in": "The Guild's own lads. They keep a light; mind it don't keep you.", "out": "The Lads' light is out. For today." },
-    { "id": "mabrys_mudlarks", "name": "Mabry's Mudlarks", "home": "Saltmere", "manner": "stalkers", "banner": ["#3b3a2a", "#8fa37a", "an eel"],
-      "members": [{ "name": "Mabry", "cls": "rogue" }, { "name": "Sprat", "cls": "rogue" }, { "name": "Gull", "cls": "cleric" }],
-      "in": "Up out of the mud, Mabry's Mudlarks. Check your boots after.", "out": "Back to the mud with them." },
-    { "id": "ninth_irregulars", "name": "The Ninth Milestone Irregulars", "home": "Thornwick", "manner": "balanced", "banner": ["#3a3226", "#d8cfb8", "a milestone"],
-      "members": [{ "name": "Corporal Hobb", "cls": "fighter" }, { "name": "Nell Tansy", "cls": "mage" }, { "name": "Absalom Crane", "cls": "cleric" }],
-      "in": "The Irregulars, nine miles from anywhere and proud of it.", "out": "The Irregulars march home. It's a long nine miles." },
-    { "id": "orlas_penitents", "name": "Sister Orla's Penitents", "home": "Thornwick", "manner": "wall", "banner": ["#3d3d3d", "#e8e4da", "a bell"],
-      "members": [{ "name": "Brother Ivo", "cls": "fighter" }, { "name": "Sister Orla", "cls": "cleric" }, { "name": "Sister Fen", "cls": "cleric" }],
-      "in": "Sister Orla's Penitents. They've come to suffer, and they're good at it.", "out": "The Penitents kneel. They seem pleased about it." },
-    { "id": "ember_choir", "name": "The Ember Choir", "home": "Ashgate", "manner": "spellbinders", "banner": ["#3b1d1d", "#ff8a4c", "a flame"],
-      "members": [{ "name": "Ida Vane", "cls": "mage" }, { "name": "Cole Vane", "cls": "mage" }, { "name": "Hedda", "cls": "shaman" }],
-      "in": "The Ember Choir. Stand downwind of nothing.", "out": "The Choir's gone hoarse." },
-    { "id": "reedcutters", "name": "The Reed-Cutters' Lot", "home": "Saltmere", "manner": "brawlers", "banner": ["#2e3a26", "#c2b46a", "a sickle"],
-      "members": [{ "name": "Tam Rush", "cls": "fighter" }, { "name": "Ezra Sedge", "cls": "fighter", "actor": "hero_barbarian" }, { "name": "Wenda Flagg", "cls": "cleric" }],
-      "in": "The Reed-Cutters, up from the Fens with their sickles sharp.", "out": "The reeds stand another day." },
-    { "id": "pellams_men", "name": "Lord Pellam's Men", "home": "Thornwick", "manner": "balanced", "banner": ["#2a3550", "#d9c48a", "a tower"],
-      "members": [{ "name": "Sir Aubrey", "cls": "fighter" }, { "name": "Hal Archer", "cls": "rogue", "bow": true }, { "name": "Father Tobias", "cls": "cleric" }],
-      "in": "Lord Pellam's Men, paid on time, which is the first I've heard of it.", "out": "Lord Pellam will want a word." },
-    { "id": "slagg_hammers", "name": "Slagg's Hammers", "home": "Ashgate", "manner": "brawlers", "banner": ["#2f2f33", "#b7b7c2", "a hammer"],
-      "members": [{ "name": "Gunnar Slagg's nephew", "cls": "fighter" }, { "name": "Bors", "cls": "fighter" }, { "name": "Kettle", "cls": "shaman" }],
-      "in": "Slagg's Hammers. Everything looks like a nail to them.", "out": "The Hammers go back to the anvil." },
-    { "id": "quiet_company", "name": "The Quiet Company", "home": "Tollhaven", "manner": "stalkers", "banner": ["#1e1e24", "#6f6f86", "a closed eye"],
-      "members": [{ "name": "Nobody", "cls": "rogue" }, { "name": "Nobody Else", "cls": "rogue", "bow": true }, { "name": "Hush", "cls": "shaman" }],
-      "in": "The Quiet Company. They don't talk. They don't need to.", "out": "The Quiet Company says nothing about it." },
-    { "id": "archive_wardens", "name": "The Archive Wardens", "home": "the Lamphall", "manner": "spellbinders", "banner": ["#24304a", "#a8c4e8", "a key"],
-      "members": [{ "name": "Clerk Ambrose", "cls": "mage" }, { "name": "Clerk Liesl", "cls": "mage" }, { "name": "Old Fennick", "cls": "shaman" }],
-      "in": "The Archive Wardens, out of the half that isn't burned.", "out": "Back to the stacks with them. Quietly." },
-    { "id": "greywater_hedge", "name": "The Greywater Hedge", "home": "Saltmere", "manner": "wall", "banner": ["#2b3a33", "#9ec4ad", "a willow"],
-      "members": [{ "name": "Morrow Teal", "cls": "fighter" }, { "name": "Granny Wick", "cls": "shaman" }, { "name": "Pip Wick", "cls": "shaman" }],
-      "in": "The Greywater Hedge. Grown thick and slow to clear.", "out": "The Hedge is cut back. It grows." },
-    { "id": "drovers", "name": "The Drovers", "home": "Thornwick", "manner": "brawlers", "banner": ["#3a2e24", "#d6b07a", "a horn"],
-      "members": [{ "name": "Jory Crake", "cls": "fighter", "actor": "hero_barbarian" }, { "name": "Wat Crake", "cls": "fighter" }, { "name": "Sukey", "cls": "cleric" }],
-      "in": "The Drovers, who've driven worse than you to market.", "out": "The Drovers go home with the herd." },
-    { "id": "candlemakers", "name": "The Candlemakers' Guild", "home": "the Lamphall", "manner": "balanced", "banner": ["#3a3226", "#f0e2b0", "three candles"],
-      "members": [{ "name": "Master Wick", "cls": "fighter" }, { "name": "Tallow Jen", "cls": "mage" }, { "name": "Brother Snuff", "cls": "cleric" }],
-      "in": "The Candlemakers, here to see who burns down first.", "out": "Snuffed. They'll make more." },
-    { "id": "breakwater", "name": "The Breakwater", "home": "Tollhaven", "manner": "wall", "banner": ["#1f2f3d", "#7fa6c2", "a wave"],
-      "members": [{ "name": "Harbour-Sergeant Rook", "cls": "fighter" }, { "name": "Sister Maud", "cls": "cleric" }, { "name": "Tidewife Ness", "cls": "shaman" }],
-      "in": "The Breakwater. Waves have tried.", "out": "The tide's in over the Breakwater." },
-    { "id": "kilnfolk", "name": "The Kilnfolk", "home": "Ashgate", "manner": "spellbinders", "banner": ["#3a2418", "#e86a3a", "a kiln"],
-      "members": [{ "name": "Ember Moll", "cls": "mage" }, { "name": "Cinder Tom", "cls": "mage" }, { "name": "Ash-Mother", "cls": "shaman" }],
-      "in": "The Kilnfolk. Hot work, and they like it.", "out": "The kiln's gone cold." },
-    { "id": "foxes", "name": "The Rookstead Foxes", "home": "Rookstead", "manner": "stalkers", "banner": ["#3a2a1c", "#d4793a", "a fox"],
-      "members": [{ "name": "Red Ailsa", "cls": "rogue", "bow": true }, { "name": "Burr", "cls": "rogue" }, { "name": "Mother Thorn", "cls": "cleric" }],
-      "in": "The Rookstead Foxes. Count your hens.", "out": "The Foxes slip off. The hens are safe." },
-    { "id": "lucky_seven", "name": "The Lucky Seven", "home": "Tollhaven", "manner": "balanced", "banner": ["#2a2a3a", "#e0c25a", "a die"],
-      "members": [{ "name": "Dice Annie", "cls": "rogue" }, { "name": "Long Pete", "cls": "fighter" }, { "name": "Brother Odds", "cls": "shaman" }],
-      "in": "The Lucky Seven. There's three of them. Don't ask.", "out": "The Seven's luck ran out at three." },
-    { "id": "frost_wardens", "name": "The Frost Wardens", "home": "Frosthold", "manner": "spellbinders", "banner": ["#22303a", "#cfe6f2", "a snowflake"],
-      "members": [{ "name": "Sigrun", "cls": "mage" }, { "name": "Halla", "cls": "shaman" }, { "name": "Eirik", "cls": "fighter" }],
-      "in": "The Frost Wardens, down from the Heights. They brought the weather.", "out": "The Wardens thaw. Not much." },
-    { "id": "gravediggers", "name": "The Gravediggers' Union", "home": "Thornwick", "manner": "wall", "banner": ["#2a2622", "#a89a84", "a spade"],
-      "members": [{ "name": "Sexton Bede", "cls": "fighter" }, { "name": "Mag Turf", "cls": "cleric" }, { "name": "Young Clod", "cls": "shaman" }],
-      "in": "The Gravediggers' Union. They've met the Ashbound and dug them back in.", "out": "The Union down tools." },
-    { "id": "sun_dogs", "name": "The Sun Dogs", "home": "the Lamphall", "manner": "brawlers", "banner": ["#3a3018", "#f5c542", "a sun"],
-      "members": [{ "name": "Gorrie's Lad", "cls": "fighter" }, { "name": "Brindle", "cls": "rogue" }, { "name": "Bonny", "cls": "fighter", "actor": "hero_barbarian" }],
-      "in": "The Sun Dogs, Ma Gorrie's own kennel. Don't feed them.", "out": "Back in the kennel. Ma won't like it." },
-    { "id": "greenwood_kith", "name": "The Greenwood Kith", "home": "Rookstead", "manner": "balanced", "banner": ["#1f3324", "#8cc48a", "an oak leaf"],
-      "members": [{ "name": "Rowan", "cls": "fighter" }, { "name": "Linnet", "cls": "rogue", "bow": true }, { "name": "Old Bramble", "cls": "shaman" }],
-      "in": "The Greenwood Kith, out of the trees for the day.", "out": "The Kith go back under the leaves." }
+    {
+      "id": "widow_brack",
+      "name": "The Widow Brack's Three",
+      "home": "Saltmere",
+      "manner": "wall",
+      "banner": [
+        "#2b2b2e",
+        "#b9b3a6",
+        "a closed hand"
+      ],
+      "members": [
+        {
+          "name": "Ada Brack",
+          "cls": "fighter"
+        },
+        {
+          "name": "Sister Joan",
+          "cls": "cleric"
+        },
+        {
+          "name": "Old Merrit",
+          "cls": "shaman"
+        }
+      ],
+      "in": "Three in black, and nobody's widow yet.",
+      "out": "The widow goes home. She'll be back."
+    },
+    {
+      "id": "coalbrook_boys",
+      "name": "The Coalbrook Boys",
+      "home": "Ashgate",
+      "manner": "brawlers",
+      "banner": [
+        "#3a2a20",
+        "#e08a3c",
+        "a pick"
+      ],
+      "members": [
+        {
+          "name": "Big Denny",
+          "cls": "fighter"
+        },
+        {
+          "name": "Little Denny",
+          "cls": "fighter",
+          "actor": "hero_barbarian"
+        },
+        {
+          "name": "Cousin Pell",
+          "cls": "shaman"
+        }
+      ],
+      "in": "The Boys from the pits. Mind your shins.",
+      "out": "Back down the pit for the Boys."
+    },
+    {
+      "id": "hesks_cousins",
+      "name": "Hesk's Cousins",
+      "home": "Tollhaven",
+      "manner": "stalkers",
+      "banner": [
+        "#1f3346",
+        "#c9a54a",
+        "an anchor"
+      ],
+      "members": [
+        {
+          "name": "Wil Hesk",
+          "cls": "rogue"
+        },
+        {
+          "name": "Nan Hesk",
+          "cls": "rogue"
+        },
+        {
+          "name": "Teo Hesk",
+          "cls": "shaman"
+        }
+      ],
+      "in": "Cousins of the Admiral, they tell me. I wouldn't ask.",
+      "out": "The Cousins sail home. Count your purse."
+    },
+    {
+      "id": "lantern_lads",
+      "name": "The Lantern Lads",
+      "home": "the Lamphall",
+      "manner": "balanced",
+      "banner": [
+        "#2c2a1e",
+        "#f2c14e",
+        "a lantern"
+      ],
+      "members": [
+        {
+          "name": "Rafe Lyle",
+          "cls": "fighter"
+        },
+        {
+          "name": "Kit Sorrel",
+          "cls": "rogue"
+        },
+        {
+          "name": "Brother Amos",
+          "cls": "cleric"
+        }
+      ],
+      "in": "The Guild's own lads. They keep a light; mind it don't keep you.",
+      "out": "The Lads' light is out. For today."
+    },
+    {
+      "id": "mabrys_mudlarks",
+      "name": "Mabry's Mudlarks",
+      "home": "Saltmere",
+      "manner": "stalkers",
+      "banner": [
+        "#3b3a2a",
+        "#8fa37a",
+        "an eel"
+      ],
+      "members": [
+        {
+          "name": "Mabry",
+          "cls": "rogue"
+        },
+        {
+          "name": "Sprat",
+          "cls": "rogue"
+        },
+        {
+          "name": "Gull",
+          "cls": "cleric"
+        }
+      ],
+      "in": "Up out of the mud, Mabry's Mudlarks. Check your boots after.",
+      "out": "Back to the mud with them."
+    },
+    {
+      "id": "ninth_irregulars",
+      "name": "The Ninth Milestone Irregulars",
+      "home": "Thornwick",
+      "manner": "balanced",
+      "banner": [
+        "#3a3226",
+        "#d8cfb8",
+        "a milestone"
+      ],
+      "members": [
+        {
+          "name": "Corporal Hobb",
+          "cls": "fighter"
+        },
+        {
+          "name": "Nell Tansy",
+          "cls": "mage"
+        },
+        {
+          "name": "Absalom Crane",
+          "cls": "cleric"
+        }
+      ],
+      "in": "The Irregulars, nine miles from anywhere and proud of it.",
+      "out": "The Irregulars march home. It's a long nine miles."
+    },
+    {
+      "id": "orlas_penitents",
+      "name": "Sister Orla's Penitents",
+      "home": "Thornwick",
+      "manner": "wall",
+      "banner": [
+        "#3d3d3d",
+        "#e8e4da",
+        "a bell"
+      ],
+      "members": [
+        {
+          "name": "Brother Ivo",
+          "cls": "fighter"
+        },
+        {
+          "name": "Sister Orla",
+          "cls": "cleric"
+        },
+        {
+          "name": "Sister Fen",
+          "cls": "cleric"
+        }
+      ],
+      "in": "Sister Orla's Penitents. They've come to suffer, and they're good at it.",
+      "out": "The Penitents kneel. They seem pleased about it."
+    },
+    {
+      "id": "ember_choir",
+      "name": "The Ember Choir",
+      "home": "Ashgate",
+      "manner": "spellbinders",
+      "banner": [
+        "#3b1d1d",
+        "#ff8a4c",
+        "a flame"
+      ],
+      "members": [
+        {
+          "name": "Ida Vane",
+          "cls": "mage"
+        },
+        {
+          "name": "Cole Vane",
+          "cls": "mage"
+        },
+        {
+          "name": "Hedda",
+          "cls": "shaman"
+        }
+      ],
+      "in": "The Ember Choir. Stand downwind of nothing.",
+      "out": "The Choir's gone hoarse."
+    },
+    {
+      "id": "reedcutters",
+      "name": "The Reed-Cutters' Lot",
+      "home": "Saltmere",
+      "manner": "brawlers",
+      "banner": [
+        "#2e3a26",
+        "#c2b46a",
+        "a sickle"
+      ],
+      "members": [
+        {
+          "name": "Tam Rush",
+          "cls": "fighter"
+        },
+        {
+          "name": "Ezra Sedge",
+          "cls": "fighter",
+          "actor": "hero_barbarian"
+        },
+        {
+          "name": "Wenda Flagg",
+          "cls": "cleric"
+        }
+      ],
+      "in": "The Reed-Cutters, up from the Fens with their sickles sharp.",
+      "out": "The reeds stand another day."
+    },
+    {
+      "id": "pellams_men",
+      "name": "Lord Pellam's Men",
+      "home": "Thornwick",
+      "manner": "balanced",
+      "banner": [
+        "#2a3550",
+        "#d9c48a",
+        "a tower"
+      ],
+      "members": [
+        {
+          "name": "Sir Aubrey",
+          "cls": "fighter"
+        },
+        {
+          "name": "Hal Archer",
+          "cls": "rogue",
+          "bow": true
+        },
+        {
+          "name": "Father Tobias",
+          "cls": "cleric"
+        }
+      ],
+      "in": "Lord Pellam's Men, paid on time, which is the first I've heard of it.",
+      "out": "Lord Pellam will want a word."
+    },
+    {
+      "id": "slagg_hammers",
+      "name": "Slagg's Hammers",
+      "home": "Ashgate",
+      "manner": "brawlers",
+      "banner": [
+        "#2f2f33",
+        "#b7b7c2",
+        "a hammer"
+      ],
+      "members": [
+        {
+          "name": "Gunnar Slagg's nephew",
+          "cls": "fighter"
+        },
+        {
+          "name": "Bors",
+          "cls": "fighter"
+        },
+        {
+          "name": "Kettle",
+          "cls": "shaman"
+        }
+      ],
+      "in": "Slagg's Hammers. Everything looks like a nail to them.",
+      "out": "The Hammers go back to the anvil."
+    },
+    {
+      "id": "quiet_company",
+      "name": "The Quiet Company",
+      "home": "Tollhaven",
+      "manner": "stalkers",
+      "banner": [
+        "#1e1e24",
+        "#6f6f86",
+        "a closed eye"
+      ],
+      "members": [
+        {
+          "name": "Nobody",
+          "cls": "rogue"
+        },
+        {
+          "name": "Nobody Else",
+          "cls": "rogue",
+          "bow": true
+        },
+        {
+          "name": "Hush",
+          "cls": "shaman"
+        }
+      ],
+      "in": "The Quiet Company. They don't talk. They don't need to.",
+      "out": "The Quiet Company says nothing about it."
+    },
+    {
+      "id": "archive_wardens",
+      "name": "The Archive Wardens",
+      "home": "the Lamphall",
+      "manner": "spellbinders",
+      "banner": [
+        "#24304a",
+        "#a8c4e8",
+        "a key"
+      ],
+      "members": [
+        {
+          "name": "Clerk Ambrose",
+          "cls": "mage"
+        },
+        {
+          "name": "Clerk Liesl",
+          "cls": "mage"
+        },
+        {
+          "name": "Old Fennick",
+          "cls": "shaman"
+        }
+      ],
+      "in": "The Archive Wardens, out of the half that isn't burned.",
+      "out": "Back to the stacks with them. Quietly."
+    },
+    {
+      "id": "greywater_hedge",
+      "name": "The Greywater Hedge",
+      "home": "Saltmere",
+      "manner": "wall",
+      "banner": [
+        "#2b3a33",
+        "#9ec4ad",
+        "a willow"
+      ],
+      "members": [
+        {
+          "name": "Morrow Teal",
+          "cls": "fighter"
+        },
+        {
+          "name": "Granny Wick",
+          "cls": "shaman"
+        },
+        {
+          "name": "Pip Wick",
+          "cls": "shaman"
+        }
+      ],
+      "in": "The Greywater Hedge. Grown thick and slow to clear.",
+      "out": "The Hedge is cut back. It grows."
+    },
+    {
+      "id": "drovers",
+      "name": "The Drovers",
+      "home": "Thornwick",
+      "manner": "brawlers",
+      "banner": [
+        "#3a2e24",
+        "#d6b07a",
+        "a horn"
+      ],
+      "members": [
+        {
+          "name": "Jory Crake",
+          "cls": "fighter",
+          "actor": "hero_barbarian"
+        },
+        {
+          "name": "Wat Crake",
+          "cls": "fighter"
+        },
+        {
+          "name": "Sukey",
+          "cls": "cleric"
+        }
+      ],
+      "in": "The Drovers, who've driven worse than you to market.",
+      "out": "The Drovers go home with the herd."
+    },
+    {
+      "id": "candlemakers",
+      "name": "The Candlemakers' Guild",
+      "home": "the Lamphall",
+      "manner": "balanced",
+      "banner": [
+        "#3a3226",
+        "#f0e2b0",
+        "three candles"
+      ],
+      "members": [
+        {
+          "name": "Master Wick",
+          "cls": "fighter"
+        },
+        {
+          "name": "Tallow Jen",
+          "cls": "mage"
+        },
+        {
+          "name": "Brother Snuff",
+          "cls": "cleric"
+        }
+      ],
+      "in": "The Candlemakers, here to see who burns down first.",
+      "out": "Snuffed. They'll make more."
+    },
+    {
+      "id": "breakwater",
+      "name": "The Breakwater",
+      "home": "Tollhaven",
+      "manner": "wall",
+      "banner": [
+        "#1f2f3d",
+        "#7fa6c2",
+        "a wave"
+      ],
+      "members": [
+        {
+          "name": "Harbour-Sergeant Rook",
+          "cls": "fighter"
+        },
+        {
+          "name": "Sister Maud",
+          "cls": "cleric"
+        },
+        {
+          "name": "Tidewife Ness",
+          "cls": "shaman"
+        }
+      ],
+      "in": "The Breakwater. Waves have tried.",
+      "out": "The tide's in over the Breakwater."
+    },
+    {
+      "id": "kilnfolk",
+      "name": "The Kilnfolk",
+      "home": "Ashgate",
+      "manner": "spellbinders",
+      "banner": [
+        "#3a2418",
+        "#e86a3a",
+        "a kiln"
+      ],
+      "members": [
+        {
+          "name": "Ember Moll",
+          "cls": "mage"
+        },
+        {
+          "name": "Cinder Tom",
+          "cls": "mage"
+        },
+        {
+          "name": "Ash-Mother",
+          "cls": "shaman"
+        }
+      ],
+      "in": "The Kilnfolk. Hot work, and they like it.",
+      "out": "The kiln's gone cold."
+    },
+    {
+      "id": "foxes",
+      "name": "The Rookstead Foxes",
+      "home": "Rookstead",
+      "manner": "stalkers",
+      "banner": [
+        "#3a2a1c",
+        "#d4793a",
+        "a fox"
+      ],
+      "members": [
+        {
+          "name": "Red Ailsa",
+          "cls": "rogue",
+          "bow": true
+        },
+        {
+          "name": "Burr",
+          "cls": "rogue"
+        },
+        {
+          "name": "Mother Thorn",
+          "cls": "cleric"
+        }
+      ],
+      "in": "The Rookstead Foxes. Count your hens.",
+      "out": "The Foxes slip off. The hens are safe."
+    },
+    {
+      "id": "lucky_seven",
+      "name": "The Lucky Seven",
+      "home": "Tollhaven",
+      "manner": "balanced",
+      "banner": [
+        "#2a2a3a",
+        "#e0c25a",
+        "a die"
+      ],
+      "members": [
+        {
+          "name": "Dice Annie",
+          "cls": "rogue"
+        },
+        {
+          "name": "Long Pete",
+          "cls": "fighter"
+        },
+        {
+          "name": "Brother Odds",
+          "cls": "shaman"
+        }
+      ],
+      "in": "The Lucky Seven. There's three of them. Don't ask.",
+      "out": "The Seven's luck ran out at three."
+    },
+    {
+      "id": "frost_wardens",
+      "name": "The Frost Wardens",
+      "home": "Frosthold",
+      "manner": "spellbinders",
+      "banner": [
+        "#22303a",
+        "#cfe6f2",
+        "a snowflake"
+      ],
+      "members": [
+        {
+          "name": "Sigrun",
+          "cls": "mage"
+        },
+        {
+          "name": "Halla",
+          "cls": "shaman"
+        },
+        {
+          "name": "Eirik",
+          "cls": "fighter"
+        }
+      ],
+      "in": "The Frost Wardens, down from the Heights. They brought the weather.",
+      "out": "The Wardens thaw. Not much."
+    },
+    {
+      "id": "gravediggers",
+      "name": "The Gravediggers' Union",
+      "home": "Thornwick",
+      "manner": "wall",
+      "banner": [
+        "#2a2622",
+        "#a89a84",
+        "a spade"
+      ],
+      "members": [
+        {
+          "name": "Sexton Bede",
+          "cls": "fighter"
+        },
+        {
+          "name": "Mag Turf",
+          "cls": "cleric"
+        },
+        {
+          "name": "Young Clod",
+          "cls": "shaman"
+        }
+      ],
+      "in": "The Gravediggers' Union. They've met the Ashbound and dug them back in.",
+      "out": "The Union down tools."
+    },
+    {
+      "id": "sun_dogs",
+      "name": "The Sun Dogs",
+      "home": "the Lamphall",
+      "manner": "brawlers",
+      "banner": [
+        "#3a3018",
+        "#f5c542",
+        "a sun"
+      ],
+      "members": [
+        {
+          "name": "Gorrie's Lad",
+          "cls": "fighter"
+        },
+        {
+          "name": "Brindle",
+          "cls": "rogue"
+        },
+        {
+          "name": "Bonny",
+          "cls": "fighter",
+          "actor": "hero_barbarian"
+        }
+      ],
+      "in": "The Sun Dogs, Ma Gorrie's own kennel. Don't feed them.",
+      "out": "Back in the kennel. Ma won't like it."
+    },
+    {
+      "id": "greenwood_kith",
+      "name": "The Greenwood Kith",
+      "home": "Rookstead",
+      "manner": "balanced",
+      "banner": [
+        "#1f3324",
+        "#8cc48a",
+        "an oak leaf"
+      ],
+      "members": [
+        {
+          "name": "Rowan",
+          "cls": "fighter"
+        },
+        {
+          "name": "Linnet",
+          "cls": "rogue",
+          "bow": true
+        },
+        {
+          "name": "Old Bramble",
+          "cls": "shaman"
+        }
+      ],
+      "in": "The Greenwood Kith, out of the trees for the day.",
+      "out": "The Kith go back under the leaves."
+    },
+    {
+      "id": "tallow_twelve",
+      "name": "The Tallow Twelve",
+      "home": "the Lamphall",
+      "manner": "balanced",
+      "banner": [
+        "#2a2420",
+        "#d8b060",
+        "a candle"
+      ],
+      "members": [
+        {
+          "name": "Aldo Ash",
+          "cls": "fighter"
+        },
+        {
+          "name": "Ned Rush",
+          "cls": "rogue"
+        },
+        {
+          "name": "Cass Ember",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "brackwater_eels",
+      "name": "The Brackwater Eels",
+      "home": "Saltmere",
+      "manner": "stalkers",
+      "banner": [
+        "#1f2f3d",
+        "#a8c4e8",
+        "an eel knot"
+      ],
+      "members": [
+        {
+          "name": "Hob Lowe",
+          "cls": "rogue"
+        },
+        {
+          "name": "Ulf Grist",
+          "cls": "rogue",
+          "bow": true
+        },
+        {
+          "name": "Jen Pike",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "cinder_wives",
+      "name": "The Cinder Wives",
+      "home": "Ashgate",
+      "manner": "spellbinders",
+      "banner": [
+        "#3a1d1d",
+        "#e8a070",
+        "a coal"
+      ],
+      "members": [
+        {
+          "name": "Orrin Wick",
+          "cls": "mage"
+        },
+        {
+          "name": "Dunn Jessop",
+          "cls": "mage"
+        },
+        {
+          "name": "Rook Dagg",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "tollgate_toughs",
+      "name": "The Tollgate Toughs",
+      "home": "Tollhaven",
+      "manner": "brawlers",
+      "banner": [
+        "#22301f",
+        "#b8d090",
+        "a barred gate"
+      ],
+      "members": [
+        {
+          "name": "Vey Ember",
+          "cls": "fighter"
+        },
+        {
+          "name": "Kit Vole",
+          "cls": "fighter",
+          "actor": "hero_barbarian"
+        },
+        {
+          "name": "Bart Inch",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "rookstead_rooks",
+      "name": "The Rookstead Rooks",
+      "home": "Rookstead",
+      "manner": "balanced",
+      "banner": [
+        "#2a2a3a",
+        "#d0c0e8",
+        "a rook"
+      ],
+      "members": [
+        {
+          "name": "Edda Pike",
+          "cls": "fighter"
+        },
+        {
+          "name": "Sorrel Cole",
+          "cls": "mage"
+        },
+        {
+          "name": "Ilse Thatch",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "vale_hands",
+      "name": "The Hollow Vale Hands",
+      "home": "Thornwick",
+      "manner": "balanced",
+      "banner": [
+        "#3a3226",
+        "#efe2c0",
+        "a sheaf"
+      ],
+      "members": [
+        {
+          "name": "Lisle Dagg",
+          "cls": "fighter"
+        },
+        {
+          "name": "Clem Nettle",
+          "cls": "rogue"
+        },
+        {
+          "name": "Bess Ash",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "lock_keepers",
+      "name": "The Lock-Keepers",
+      "home": "Saltmere",
+      "manner": "wall",
+      "banner": [
+        "#2b3a33",
+        "#90c4b0",
+        "a sluice gate"
+      ],
+      "members": [
+        {
+          "name": "Tam Inch",
+          "cls": "fighter"
+        },
+        {
+          "name": "Joss Crane",
+          "cls": "cleric"
+        },
+        {
+          "name": "Isa Marsh",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "slagside_sisters",
+      "name": "The Slagside Sisters",
+      "home": "Ashgate",
+      "manner": "wall",
+      "banner": [
+        "#3b2a18",
+        "#f0b050",
+        "a ladle"
+      ],
+      "members": [
+        {
+          "name": "Del Thatch",
+          "cls": "fighter"
+        },
+        {
+          "name": "Cobb Gorse",
+          "cls": "cleric"
+        },
+        {
+          "name": "Pim Yarrow",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "harbour_watch",
+      "name": "The Harbour Watch",
+      "home": "Tollhaven",
+      "manner": "wall",
+      "banner": [
+        "#1e1e24",
+        "#c0c0cc",
+        "a lantern"
+      ],
+      "members": [
+        {
+          "name": "Kip Ash",
+          "cls": "fighter"
+        },
+        {
+          "name": "Jory Rush",
+          "cls": "shaman"
+        },
+        {
+          "name": "Wat Ember",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "white_wolves",
+      "name": "The White Wolves",
+      "home": "Frosthold",
+      "manner": "brawlers",
+      "banner": [
+        "#33201f",
+        "#d87060",
+        "a wolf's head"
+      ],
+      "members": [
+        {
+          "name": "Dora Marsh",
+          "cls": "fighter",
+          "actor": "hero_barbarian"
+        },
+        {
+          "name": "Quill Hollin",
+          "cls": "fighter"
+        },
+        {
+          "name": "Flint Quarrel",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "snowblind",
+      "name": "The Snowblind",
+      "home": "Frosthold",
+      "manner": "stalkers",
+      "banner": [
+        "#2a2420",
+        "#d8b060",
+        "a white field"
+      ],
+      "members": [
+        {
+          "name": "Kell Yarrow",
+          "cls": "rogue"
+        },
+        {
+          "name": "Yara Kettle",
+          "cls": "rogue"
+        },
+        {
+          "name": "Moll Fell",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "cairn_keepers",
+      "name": "The Cairn-Keepers",
+      "home": "Frosthold",
+      "manner": "wall",
+      "banner": [
+        "#1f2f3d",
+        "#a8c4e8",
+        "a cairn"
+      ],
+      "members": [
+        {
+          "name": "Rosa Ember",
+          "cls": "fighter"
+        },
+        {
+          "name": "Greta Vole",
+          "cls": "cleric"
+        },
+        {
+          "name": "Una Inch",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "lamplighters",
+      "name": "The Lamplighters",
+      "home": "the Lamphall",
+      "manner": "spellbinders",
+      "banner": [
+        "#3a1d1d",
+        "#e8a070",
+        "a taper"
+      ],
+      "members": [
+        {
+          "name": "Abel Quarrel",
+          "cls": "mage"
+        },
+        {
+          "name": "Nye Dyer",
+          "cls": "shaman"
+        },
+        {
+          "name": "Effie Umber",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "breach_menders",
+      "name": "The Breach-Menders",
+      "home": "the Lamphall",
+      "manner": "wall",
+      "banner": [
+        "#22301f",
+        "#b8d090",
+        "a trowel"
+      ],
+      "members": [
+        {
+          "name": "Hal Fell",
+          "cls": "fighter"
+        },
+        {
+          "name": "Vin Oakes",
+          "cls": "cleric"
+        },
+        {
+          "name": "Lottie Brine",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "exchange_men",
+      "name": "The Exchange Men",
+      "home": "the Lamphall",
+      "manner": "stalkers",
+      "banner": [
+        "#2a2a3a",
+        "#d0c0e8",
+        "a shut door"
+      ],
+      "members": [
+        {
+          "name": "Osk Inch",
+          "cls": "rogue",
+          "bow": true
+        },
+        {
+          "name": "Fitch Crane",
+          "cls": "rogue"
+        },
+        {
+          "name": "Elric Marsh",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "crossed_keys",
+      "name": "The Crossed Keys Regulars",
+      "home": "Thornwick",
+      "manner": "brawlers",
+      "banner": [
+        "#3a3226",
+        "#efe2c0",
+        "two keys"
+      ],
+      "members": [
+        {
+          "name": "Wren Umber",
+          "cls": "fighter"
+        },
+        {
+          "name": "Merrow Hale",
+          "cls": "rogue"
+        },
+        {
+          "name": "Lark Bramble",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "mule_back_room",
+      "name": "The Tired Mule's Back Room",
+      "home": "Thornwick",
+      "manner": "balanced",
+      "banner": [
+        "#2b3a33",
+        "#90c4b0",
+        "a mule"
+      ],
+      "members": [
+        {
+          "name": "Gus Brine",
+          "cls": "fighter"
+        },
+        {
+          "name": "Fen Sallow",
+          "cls": "mage"
+        },
+        {
+          "name": "Sim Flagg",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "thornwick_millers",
+      "name": "The Thornwick Millers",
+      "home": "Thornwick",
+      "manner": "brawlers",
+      "banner": [
+        "#3b2a18",
+        "#f0b050",
+        "a millstone"
+      ],
+      "members": [
+        {
+          "name": "Nell Marsh",
+          "cls": "fighter"
+        },
+        {
+          "name": "Mags Hollin",
+          "cls": "fighter",
+          "actor": "hero_barbarian"
+        },
+        {
+          "name": "Bryn Quarrel",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "hill_shepherds",
+      "name": "The Hill Shepherds",
+      "home": "Thornwick",
+      "manner": "stalkers",
+      "banner": [
+        "#1e1e24",
+        "#c0c0cc",
+        "a crook"
+      ],
+      "members": [
+        {
+          "name": "Gilly Bramble",
+          "cls": "rogue"
+        },
+        {
+          "name": "Tilda Lowe",
+          "cls": "rogue",
+          "bow": true
+        },
+        {
+          "name": "Ivo Grist",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "barrow_wardens",
+      "name": "The Barrow Wardens",
+      "home": "Thornwick",
+      "manner": "wall",
+      "banner": [
+        "#33201f",
+        "#d87060",
+        "a barrow"
+      ],
+      "members": [
+        {
+          "name": "Ned Flagg",
+          "cls": "fighter"
+        },
+        {
+          "name": "Cass Wick",
+          "cls": "shaman"
+        },
+        {
+          "name": "Peg Jessop",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "hen_thieves",
+      "name": "The Hen-Thieves",
+      "home": "Thornwick",
+      "manner": "stalkers",
+      "banner": [
+        "#2a2420",
+        "#d8b060",
+        "a hen"
+      ],
+      "members": [
+        {
+          "name": "Ulf Quarrel",
+          "cls": "rogue"
+        },
+        {
+          "name": "Jen Dyer",
+          "cls": "rogue"
+        },
+        {
+          "name": "Ada Umber",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "fen_lanterns",
+      "name": "The Fen Lanterns",
+      "home": "Saltmere",
+      "manner": "spellbinders",
+      "banner": [
+        "#1f2f3d",
+        "#a8c4e8",
+        "a marsh-light"
+      ],
+      "members": [
+        {
+          "name": "Dunn Grist",
+          "cls": "mage"
+        },
+        {
+          "name": "Rook Pike",
+          "cls": "mage"
+        },
+        {
+          "name": "Hester Cole",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "punt_poles",
+      "name": "The Punt-Poles",
+      "home": "Saltmere",
+      "manner": "brawlers",
+      "banner": [
+        "#3a1d1d",
+        "#e8a070",
+        "a punt pole"
+      ],
+      "members": [
+        {
+          "name": "Kit Jessop",
+          "cls": "fighter",
+          "actor": "hero_barbarian"
+        },
+        {
+          "name": "Bart Dagg",
+          "cls": "fighter"
+        },
+        {
+          "name": "Aldo Nettle",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "salt_rakers",
+      "name": "The Salt-Rakers",
+      "home": "Saltmere",
+      "manner": "brawlers",
+      "banner": [
+        "#22301f",
+        "#b8d090",
+        "a rake"
+      ],
+      "members": [
+        {
+          "name": "Sorrel Umber",
+          "cls": "fighter"
+        },
+        {
+          "name": "Ilse Hale",
+          "cls": "rogue"
+        },
+        {
+          "name": "Hob Bramble",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "reed_choir",
+      "name": "The Reed Choir",
+      "home": "Saltmere",
+      "manner": "spellbinders",
+      "banner": [
+        "#2a2a3a",
+        "#d0c0e8",
+        "a reed pipe"
+      ],
+      "members": [
+        {
+          "name": "Clem Cole",
+          "cls": "mage"
+        },
+        {
+          "name": "Bess Thatch",
+          "cls": "mage"
+        },
+        {
+          "name": "Orrin Gorse",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "eel_wives",
+      "name": "The Eel-Wives",
+      "home": "Saltmere",
+      "manner": "balanced",
+      "banner": [
+        "#3a3226",
+        "#efe2c0",
+        "a creel"
+      ],
+      "members": [
+        {
+          "name": "Joss Nettle",
+          "cls": "fighter"
+        },
+        {
+          "name": "Isa Ash",
+          "cls": "rogue"
+        },
+        {
+          "name": "Vey Rush",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "forgeborn",
+      "name": "The Forgeborn",
+      "home": "Ashgate",
+      "manner": "brawlers",
+      "banner": [
+        "#2b3a33",
+        "#90c4b0",
+        "an anvil"
+      ],
+      "members": [
+        {
+          "name": "Cobb Bramble",
+          "cls": "fighter"
+        },
+        {
+          "name": "Pim Lowe",
+          "cls": "fighter",
+          "actor": "hero_barbarian"
+        },
+        {
+          "name": "Edda Grist",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "bellows_gang",
+      "name": "The Bellows Gang",
+      "home": "Ashgate",
+      "manner": "brawlers",
+      "banner": [
+        "#3b2a18",
+        "#f0b050",
+        "a bellows"
+      ],
+      "members": [
+        {
+          "name": "Jory Gorse",
+          "cls": "fighter",
+          "actor": "hero_barbarian"
+        },
+        {
+          "name": "Wat Yarrow",
+          "cls": "fighter"
+        },
+        {
+          "name": "Lisle Kettle",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "assayers",
+      "name": "The Assayers",
+      "home": "Ashgate",
+      "manner": "balanced",
+      "banner": [
+        "#1e1e24",
+        "#c0c0cc",
+        "a balance"
+      ],
+      "members": [
+        {
+          "name": "Quill Rush",
+          "cls": "fighter"
+        },
+        {
+          "name": "Flint Ember",
+          "cls": "mage"
+        },
+        {
+          "name": "Tam Vole",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "cold_seam",
+      "name": "The Cold Seam Company",
+      "home": "Ashgate",
+      "manner": "stalkers",
+      "banner": [
+        "#33201f",
+        "#d87060",
+        "a black seam"
+      ],
+      "members": [
+        {
+          "name": "Yara Grist",
+          "cls": "rogue",
+          "bow": true
+        },
+        {
+          "name": "Moll Pike",
+          "cls": "rogue"
+        },
+        {
+          "name": "Del Cole",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "the_crucible",
+      "name": "The Crucible",
+      "home": "Ashgate",
+      "manner": "spellbinders",
+      "banner": [
+        "#2a2420",
+        "#d8b060",
+        "a crucible"
+      ],
+      "members": [
+        {
+          "name": "Greta Kettle",
+          "cls": "mage"
+        },
+        {
+          "name": "Una Fell",
+          "cls": "shaman"
+        },
+        {
+          "name": "Kip Oakes",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "ore_cart_boys",
+      "name": "The Ore-Cart Boys",
+      "home": "Ashgate",
+      "manner": "brawlers",
+      "banner": [
+        "#1f2f3d",
+        "#a8c4e8",
+        "a cart"
+      ],
+      "members": [
+        {
+          "name": "Nye Vole",
+          "cls": "fighter"
+        },
+        {
+          "name": "Effie Inch",
+          "cls": "rogue"
+        },
+        {
+          "name": "Dora Crane",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "tide_clerks",
+      "name": "The Tide-Clerks",
+      "home": "Tollhaven",
+      "manner": "spellbinders",
+      "banner": [
+        "#3a1d1d",
+        "#e8a070",
+        "a tide table"
+      ],
+      "members": [
+        {
+          "name": "Vin Cole",
+          "cls": "mage"
+        },
+        {
+          "name": "Lottie Thatch",
+          "cls": "mage"
+        },
+        {
+          "name": "Kell Gorse",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "admiralty_reserve",
+      "name": "The Admiralty Reserve",
+      "home": "Tollhaven",
+      "manner": "balanced",
+      "banner": [
+        "#22301f",
+        "#b8d090",
+        "an anchor"
+      ],
+      "members": [
+        {
+          "name": "Fitch Oakes",
+          "cls": "fighter"
+        },
+        {
+          "name": "Elric Brine",
+          "cls": "rogue"
+        },
+        {
+          "name": "Rosa Sallow",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "quay_rats",
+      "name": "The Quay Rats",
+      "home": "Tollhaven",
+      "manner": "stalkers",
+      "banner": [
+        "#2a2a3a",
+        "#d0c0e8",
+        "a rat"
+      ],
+      "members": [
+        {
+          "name": "Merrow Crane",
+          "cls": "rogue"
+        },
+        {
+          "name": "Lark Marsh",
+          "cls": "rogue",
+          "bow": true
+        },
+        {
+          "name": "Abel Hollin",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "customs_house",
+      "name": "The Customs House",
+      "home": "Tollhaven",
+      "manner": "wall",
+      "banner": [
+        "#3a3226",
+        "#efe2c0",
+        "a seal"
+      ],
+      "members": [
+        {
+          "name": "Fen Gorse",
+          "cls": "fighter"
+        },
+        {
+          "name": "Sim Yarrow",
+          "cls": "cleric"
+        },
+        {
+          "name": "Hal Kettle",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "net_menders",
+      "name": "The Net-Menders",
+      "home": "Tollhaven",
+      "manner": "balanced",
+      "banner": [
+        "#2b3a33",
+        "#90c4b0",
+        "a net"
+      ],
+      "members": [
+        {
+          "name": "Mags Sallow",
+          "cls": "fighter"
+        },
+        {
+          "name": "Bryn Flagg",
+          "cls": "mage"
+        },
+        {
+          "name": "Osk Wick",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "harbour_bells",
+      "name": "The Harbour Bells",
+      "home": "Tollhaven",
+      "manner": "spellbinders",
+      "banner": [
+        "#3b2a18",
+        "#f0b050",
+        "a bell"
+      ],
+      "members": [
+        {
+          "name": "Tilda Hollin",
+          "cls": "mage"
+        },
+        {
+          "name": "Ivo Quarrel",
+          "cls": "mage"
+        },
+        {
+          "name": "Wren Dyer",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "green_men",
+      "name": "The Green Men",
+      "home": "Rookstead",
+      "manner": "wall",
+      "banner": [
+        "#1e1e24",
+        "#c0c0cc",
+        "a leaf mask"
+      ],
+      "members": [
+        {
+          "name": "Cass Kettle",
+          "cls": "fighter"
+        },
+        {
+          "name": "Peg Fell",
+          "cls": "cleric"
+        },
+        {
+          "name": "Gus Oakes",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "the_blackthorn",
+      "name": "The Blackthorn",
+      "home": "Rookstead",
+      "manner": "stalkers",
+      "banner": [
+        "#33201f",
+        "#d87060",
+        "a thorn"
+      ],
+      "members": [
+        {
+          "name": "Jen Wick",
+          "cls": "rogue"
+        },
+        {
+          "name": "Ada Jessop",
+          "cls": "rogue"
+        },
+        {
+          "name": "Nell Dagg",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "charcoal_burners",
+      "name": "The Charcoal Burners",
+      "home": "Rookstead",
+      "manner": "brawlers",
+      "banner": [
+        "#2a2420",
+        "#d8b060",
+        "a smoking stack"
+      ],
+      "members": [
+        {
+          "name": "Rook Dyer",
+          "cls": "fighter"
+        },
+        {
+          "name": "Hester Umber",
+          "cls": "fighter",
+          "actor": "hero_barbarian"
+        },
+        {
+          "name": "Gilly Hale",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "mistletoe_sisters",
+      "name": "The Mistletoe Sisters",
+      "home": "Rookstead",
+      "manner": "spellbinders",
+      "banner": [
+        "#1f2f3d",
+        "#a8c4e8",
+        "a sprig"
+      ],
+      "members": [
+        {
+          "name": "Bart Oakes",
+          "cls": "mage"
+        },
+        {
+          "name": "Aldo Brine",
+          "cls": "shaman"
+        },
+        {
+          "name": "Ned Sallow",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "woodwards",
+      "name": "The Woodwards",
+      "home": "Rookstead",
+      "manner": "balanced",
+      "banner": [
+        "#3a1d1d",
+        "#e8a070",
+        "an axe"
+      ],
+      "members": [
+        {
+          "name": "Ilse Dagg",
+          "cls": "fighter"
+        },
+        {
+          "name": "Hob Nettle",
+          "cls": "rogue"
+        },
+        {
+          "name": "Ulf Ash",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "acorn_lot",
+      "name": "The Acorn Lot",
+      "home": "Rookstead",
+      "manner": "brawlers",
+      "banner": [
+        "#22301f",
+        "#b8d090",
+        "an acorn"
+      ],
+      "members": [
+        {
+          "name": "Bess Hale",
+          "cls": "fighter",
+          "actor": "hero_barbarian"
+        },
+        {
+          "name": "Orrin Bramble",
+          "cls": "fighter"
+        },
+        {
+          "name": "Dunn Lowe",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "ice_choir",
+      "name": "The Ice Choir",
+      "home": "Frosthold",
+      "manner": "spellbinders",
+      "banner": [
+        "#2a2a3a",
+        "#d0c0e8",
+        "an icicle"
+      ],
+      "members": [
+        {
+          "name": "Isa Sallow",
+          "cls": "mage"
+        },
+        {
+          "name": "Vey Flagg",
+          "cls": "mage"
+        },
+        {
+          "name": "Kit Wick",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "high_pass",
+      "name": "The High Pass Company",
+      "home": "Frosthold",
+      "manner": "balanced",
+      "banner": [
+        "#3a3226",
+        "#efe2c0",
+        "a pass"
+      ],
+      "members": [
+        {
+          "name": "Pim Ash",
+          "cls": "fighter"
+        },
+        {
+          "name": "Edda Rush",
+          "cls": "mage"
+        },
+        {
+          "name": "Sorrel Ember",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "the_avalanche",
+      "name": "The Avalanche",
+      "home": "Frosthold",
+      "manner": "brawlers",
+      "banner": [
+        "#2b3a33",
+        "#90c4b0",
+        "a falling rock"
+      ],
+      "members": [
+        {
+          "name": "Wat Lowe",
+          "cls": "fighter"
+        },
+        {
+          "name": "Lisle Grist",
+          "cls": "rogue"
+        },
+        {
+          "name": "Clem Pike",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "hearth_guard",
+      "name": "The Hearth Guard",
+      "home": "Frosthold",
+      "manner": "wall",
+      "banner": [
+        "#3b2a18",
+        "#f0b050",
+        "a hearth"
+      ],
+      "members": [
+        {
+          "name": "Flint Wick",
+          "cls": "fighter"
+        },
+        {
+          "name": "Tam Jessop",
+          "cls": "shaman"
+        },
+        {
+          "name": "Joss Dagg",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "sledge_drivers",
+      "name": "The Sledge-Drivers",
+      "home": "Frosthold",
+      "manner": "balanced",
+      "banner": [
+        "#1e1e24",
+        "#c0c0cc",
+        "a sledge"
+      ],
+      "members": [
+        {
+          "name": "Moll Ember",
+          "cls": "fighter"
+        },
+        {
+          "name": "Del Vole",
+          "cls": "rogue"
+        },
+        {
+          "name": "Cobb Inch",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "throne_watchers",
+      "name": "The Throne-Watchers",
+      "home": "Frosthold",
+      "manner": "stalkers",
+      "banner": [
+        "#33201f",
+        "#d87060",
+        "an empty chair"
+      ],
+      "members": [
+        {
+          "name": "Una Pike",
+          "cls": "rogue",
+          "bow": true
+        },
+        {
+          "name": "Kip Cole",
+          "cls": "rogue"
+        },
+        {
+          "name": "Jory Thatch",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "the_copyists",
+      "name": "The Copyists",
+      "home": "the Lamphall",
+      "manner": "spellbinders",
+      "banner": [
+        "#2a2420",
+        "#d8b060",
+        "a quill"
+      ],
+      "members": [
+        {
+          "name": "Effie Dagg",
+          "cls": "mage"
+        },
+        {
+          "name": "Dora Nettle",
+          "cls": "mage"
+        },
+        {
+          "name": "Quill Ash",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "tenement_lads",
+      "name": "The Tenement Lads",
+      "home": "the Lamphall",
+      "manner": "brawlers",
+      "banner": [
+        "#1f2f3d",
+        "#a8c4e8",
+        "a ceiling rose"
+      ],
+      "members": [
+        {
+          "name": "Lottie Inch",
+          "cls": "fighter"
+        },
+        {
+          "name": "Kell Crane",
+          "cls": "fighter",
+          "actor": "hero_barbarian"
+        },
+        {
+          "name": "Yara Marsh",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "aqueduct_rats",
+      "name": "The Aqueduct Rats",
+      "home": "the Lamphall",
+      "manner": "stalkers",
+      "banner": [
+        "#3a1d1d",
+        "#e8a070",
+        "an arch"
+      ],
+      "members": [
+        {
+          "name": "Elric Thatch",
+          "cls": "rogue"
+        },
+        {
+          "name": "Rosa Gorse",
+          "cls": "rogue",
+          "bow": true
+        },
+        {
+          "name": "Greta Yarrow",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "beacon_keepers",
+      "name": "The Beacon-Keepers",
+      "home": "the Lamphall",
+      "manner": "wall",
+      "banner": [
+        "#22301f",
+        "#b8d090",
+        "a beacon"
+      ],
+      "members": [
+        {
+          "name": "Lark Ash",
+          "cls": "fighter"
+        },
+        {
+          "name": "Abel Rush",
+          "cls": "cleric"
+        },
+        {
+          "name": "Nye Ember",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "mere_fishers",
+      "name": "The Mere Fishers",
+      "home": "the Lamphall",
+      "manner": "balanced",
+      "banner": [
+        "#2a2a3a",
+        "#d0c0e8",
+        "a fish"
+      ],
+      "members": [
+        {
+          "name": "Sim Marsh",
+          "cls": "fighter"
+        },
+        {
+          "name": "Hal Hollin",
+          "cls": "mage"
+        },
+        {
+          "name": "Vin Quarrel",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "temple_bells",
+      "name": "The Temple Bells",
+      "home": "Thornwick",
+      "manner": "wall",
+      "banner": [
+        "#3a3226",
+        "#efe2c0",
+        "a bell"
+      ],
+      "members": [
+        {
+          "name": "Bryn Yarrow",
+          "cls": "fighter"
+        },
+        {
+          "name": "Osk Kettle",
+          "cls": "cleric"
+        },
+        {
+          "name": "Fitch Fell",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "thornwick_watch",
+      "name": "The Thornwick Watch",
+      "home": "Thornwick",
+      "manner": "balanced",
+      "banner": [
+        "#2b3a33",
+        "#90c4b0",
+        "a halberd"
+      ],
+      "members": [
+        {
+          "name": "Ivo Ember",
+          "cls": "fighter"
+        },
+        {
+          "name": "Wren Vole",
+          "cls": "rogue"
+        },
+        {
+          "name": "Merrow Inch",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "brewers_lot",
+      "name": "The Brewers' Lot",
+      "home": "Thornwick",
+      "manner": "brawlers",
+      "banner": [
+        "#3b2a18",
+        "#f0b050",
+        "a barrel"
+      ],
+      "members": [
+        {
+          "name": "Peg Quarrel",
+          "cls": "fighter",
+          "actor": "hero_barbarian"
+        },
+        {
+          "name": "Gus Dyer",
+          "cls": "fighter"
+        },
+        {
+          "name": "Fen Umber",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "saltmere_tanners",
+      "name": "The Saltmere Tanners",
+      "home": "Saltmere",
+      "manner": "brawlers",
+      "banner": [
+        "#1e1e24",
+        "#c0c0cc",
+        "a hide"
+      ],
+      "members": [
+        {
+          "name": "Ada Fell",
+          "cls": "fighter"
+        },
+        {
+          "name": "Nell Oakes",
+          "cls": "rogue"
+        },
+        {
+          "name": "Mags Brine",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "ferry_folk",
+      "name": "The Ferry Folk",
+      "home": "Saltmere",
+      "manner": "balanced",
+      "banner": [
+        "#33201f",
+        "#d87060",
+        "a punt"
+      ],
+      "members": [
+        {
+          "name": "Hester Inch",
+          "cls": "fighter"
+        },
+        {
+          "name": "Gilly Crane",
+          "cls": "mage"
+        },
+        {
+          "name": "Tilda Marsh",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "pickling_sisters",
+      "name": "The Pickling Sisters",
+      "home": "Saltmere",
+      "manner": "wall",
+      "banner": [
+        "#2a2420",
+        "#d8b060",
+        "a jar"
+      ],
+      "members": [
+        {
+          "name": "Aldo Umber",
+          "cls": "fighter"
+        },
+        {
+          "name": "Ned Hale",
+          "cls": "shaman"
+        },
+        {
+          "name": "Cass Bramble",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "smelters_union",
+      "name": "The Smelters' Union",
+      "home": "Ashgate",
+      "manner": "wall",
+      "banner": [
+        "#1f2f3d",
+        "#a8c4e8",
+        "an ingot"
+      ],
+      "members": [
+        {
+          "name": "Hob Brine",
+          "cls": "fighter"
+        },
+        {
+          "name": "Ulf Sallow",
+          "cls": "cleric"
+        },
+        {
+          "name": "Jen Flagg",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "furnace_hounds",
+      "name": "The Furnace Hounds",
+      "home": "Ashgate",
+      "manner": "stalkers",
+      "banner": [
+        "#3a1d1d",
+        "#e8a070",
+        "a hound"
+      ],
+      "members": [
+        {
+          "name": "Orrin Marsh",
+          "cls": "rogue"
+        },
+        {
+          "name": "Dunn Hollin",
+          "cls": "rogue"
+        },
+        {
+          "name": "Rook Quarrel",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "cartwrights",
+      "name": "The Cartwrights",
+      "home": "Tollhaven",
+      "manner": "brawlers",
+      "banner": [
+        "#22301f",
+        "#b8d090",
+        "a wheel"
+      ],
+      "members": [
+        {
+          "name": "Vey Bramble",
+          "cls": "fighter"
+        },
+        {
+          "name": "Kit Lowe",
+          "cls": "fighter",
+          "actor": "hero_barbarian"
+        },
+        {
+          "name": "Bart Grist",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "lighthouse_three",
+      "name": "The Lighthouse Three",
+      "home": "Tollhaven",
+      "manner": "spellbinders",
+      "banner": [
+        "#2a2a3a",
+        "#d0c0e8",
+        "a lighthouse"
+      ],
+      "members": [
+        {
+          "name": "Edda Flagg",
+          "cls": "mage"
+        },
+        {
+          "name": "Sorrel Wick",
+          "cls": "shaman"
+        },
+        {
+          "name": "Ilse Jessop",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "the_bargemen",
+      "name": "The Bargemen",
+      "home": "Tollhaven",
+      "manner": "brawlers",
+      "banner": [
+        "#3a3226",
+        "#efe2c0",
+        "a barge"
+      ],
+      "members": [
+        {
+          "name": "Lisle Quarrel",
+          "cls": "fighter",
+          "actor": "hero_barbarian"
+        },
+        {
+          "name": "Clem Dyer",
+          "cls": "fighter"
+        },
+        {
+          "name": "Bess Umber",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "owl_wives",
+      "name": "The Owl-Wives",
+      "home": "Rookstead",
+      "manner": "spellbinders",
+      "banner": [
+        "#2b3a33",
+        "#90c4b0",
+        "an owl"
+      ],
+      "members": [
+        {
+          "name": "Tam Grist",
+          "cls": "mage"
+        },
+        {
+          "name": "Joss Pike",
+          "cls": "mage"
+        },
+        {
+          "name": "Isa Cole",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "the_poachers",
+      "name": "The Poachers",
+      "home": "Rookstead",
+      "manner": "stalkers",
+      "banner": [
+        "#3b2a18",
+        "#f0b050",
+        "a snare"
+      ],
+      "members": [
+        {
+          "name": "Del Jessop",
+          "cls": "rogue",
+          "bow": true
+        },
+        {
+          "name": "Cobb Dagg",
+          "cls": "rogue"
+        },
+        {
+          "name": "Pim Nettle",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "the_verderers",
+      "name": "The Verderers",
+      "home": "Rookstead",
+      "manner": "balanced",
+      "banner": [
+        "#1e1e24",
+        "#c0c0cc",
+        "a hunting horn"
+      ],
+      "members": [
+        {
+          "name": "Kip Umber",
+          "cls": "fighter"
+        },
+        {
+          "name": "Jory Hale",
+          "cls": "rogue"
+        },
+        {
+          "name": "Wat Bramble",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "the_goatherds",
+      "name": "The Goatherds",
+      "home": "Frosthold",
+      "manner": "brawlers",
+      "banner": [
+        "#33201f",
+        "#d87060",
+        "a goat"
+      ],
+      "members": [
+        {
+          "name": "Dora Cole",
+          "cls": "fighter"
+        },
+        {
+          "name": "Quill Thatch",
+          "cls": "rogue"
+        },
+        {
+          "name": "Flint Gorse",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "the_rime",
+      "name": "The Rime",
+      "home": "Frosthold",
+      "manner": "spellbinders",
+      "banner": [
+        "#2a2420",
+        "#d8b060",
+        "a frost star"
+      ],
+      "members": [
+        {
+          "name": "Kell Nettle",
+          "cls": "mage"
+        },
+        {
+          "name": "Yara Ash",
+          "cls": "mage"
+        },
+        {
+          "name": "Moll Rush",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "old_soldiers",
+      "name": "The Old Soldiers",
+      "home": "Thornwick",
+      "manner": "wall",
+      "banner": [
+        "#1f2f3d",
+        "#a8c4e8",
+        "a broken sword"
+      ],
+      "members": [
+        {
+          "name": "Rosa Bramble",
+          "cls": "fighter"
+        },
+        {
+          "name": "Greta Lowe",
+          "cls": "cleric"
+        },
+        {
+          "name": "Una Grist",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "last_orders",
+      "name": "Last Orders",
+      "home": "Thornwick",
+      "manner": "balanced",
+      "banner": [
+        "#3a1d1d",
+        "#e8a070",
+        "a tankard"
+      ],
+      "members": [
+        {
+          "name": "Abel Gorse",
+          "cls": "fighter"
+        },
+        {
+          "name": "Nye Yarrow",
+          "cls": "mage"
+        },
+        {
+          "name": "Effie Kettle",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "the_ninepins",
+      "name": "The Ninepins",
+      "home": "the Lamphall",
+      "manner": "balanced",
+      "banner": [
+        "#22301f",
+        "#b8d090",
+        "nine pins"
+      ],
+      "members": [
+        {
+          "name": "Hal Rush",
+          "cls": "fighter"
+        },
+        {
+          "name": "Vin Ember",
+          "cls": "rogue"
+        },
+        {
+          "name": "Lottie Vole",
+          "cls": "cleric"
+        }
+      ]
+    },
+    {
+      "id": "ash_sparrows",
+      "name": "The Ash Sparrows",
+      "home": "Ashgate",
+      "manner": "stalkers",
+      "banner": [
+        "#2a2a3a",
+        "#d0c0e8",
+        "a sparrow"
+      ],
+      "members": [
+        {
+          "name": "Osk Grist",
+          "cls": "rogue"
+        },
+        {
+          "name": "Fitch Pike",
+          "cls": "rogue",
+          "bow": true
+        },
+        {
+          "name": "Elric Cole",
+          "cls": "shaman"
+        }
+      ]
+    },
+    {
+      "id": "the_damp",
+      "name": "The Damp",
+      "home": "Saltmere",
+      "manner": "wall",
+      "banner": [
+        "#3a3226",
+        "#efe2c0",
+        "a raincloud"
+      ],
+      "members": [
+        {
+          "name": "Wren Kettle",
+          "cls": "fighter"
+        },
+        {
+          "name": "Merrow Fell",
+          "cls": "shaman"
+        },
+        {
+          "name": "Lark Oakes",
+          "cls": "shaman"
+        }
+      ]
+    }
   ]
 }

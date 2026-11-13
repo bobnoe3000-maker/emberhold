@@ -32,7 +32,7 @@ import { campsFrom } from './camps.js';
 import { restoreCount, credit } from './lamps.js';
 import { SHRINES, shrineKind, boonsOf, restoreBoons } from './shrines.js';
 import { towerOf, restoreTower, inTower, bracketOf, BRACKETS } from './tower.js';
-import { bowlOf, picksOf, settleBout, enterTourney, tourneyFoe, restoreBowl, freshBowl, companyOn, bracketOf as bowlBracket, BOWL } from './bowl.js';
+import { bowlOf, settleBout, enterTourney, tourneyFoe, restoreBowl, freshBowl, companyOn, refreshPicks, teamOf, BOWL } from './bowl.js';
 import { makeCompany } from './rivals.js';
 import { createExpeditions } from './expeditions.js';
 import { createCoach, reachedOf, townOf, COACH } from './coach.js';
@@ -467,6 +467,12 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     // the Mere Tower (tower.js): at a landing, climb on, or go home with Wenna and keep everything (the punt: out at the jetty)
     // the Bowl (bowl.js, GDD §17 v1.85): a bout with one of the day's picks (the company, or the hero alone), the day's
     // tourney entered and its next bout, and back to where you were. From the menu, from level 6, never mid-fight.
+    if (cmd.type === 'bowlOpen') { bowlOf(state); return; }                   // the board looked at: the day rolled over, its five drawn
+    if (cmd.type === 'bowlRefresh') {                                          // five new faces, three times a day
+      if (state.party[0].level < BOWL.minLevel) return;
+      if (!refreshPicks(state)) bus.emit('refused', { reason: `No more new faces today (${BOWL.refreshes} a day)` });
+      return;
+    }
     if (cmd.type === 'bowlBout' || cmd.type === 'tourneyEnter' || cmd.type === 'tourneyBout') {
       const H = state.party[0], no = (reason) => bus.emit('refused', { reason });
       if (!state.created || H.level < BOWL.minLevel) { no(`The Bowl takes companies from level ${BOWL.minLevel}`); return; }
@@ -474,9 +480,11 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       if (H.down || H.fallen) return;
       const b = bowlOf(state), standing = state.party.filter((m) => !m.fallen).map((m) => m.id);
       if (cmd.type === 'bowlBout') {
-        const pick = picksOf(state).find((c) => c.id === cmd.id);
-        if (!pick) { no('That company isn’t on today’s board'); return; }
-        boutIn({ kind: 'ladder', id: pick.id, grade: pick.grade, rating: pick.rating, alone: !!cmd.alone });
+        if (!b.picks.includes(cmd.id)) { no('That company isn’t on the board'); return; }
+        if (b.paid >= BOWL.fights) { no(`That’s your ${BOWL.fights} bouts for today. The Bowl opens again tomorrow`); return; }
+        const c = companyOn(cmd.id, b.day);
+        b.paid++; b.picks = b.picks.filter((id) => id !== cmd.id);           // (one try a pairing a day; a bout walked out on is lost)
+        boutIn({ kind: 'ladder', id: c.id, grade: c.grade, rating: c.rating, rd: c.rd, alone: !!cmd.alone });
         return;
       }
       if (cmd.type === 'tourneyEnter') {
@@ -489,8 +497,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       const T = b.tourney, foe = tourneyFoe(T);
       if (!T || !foe) return;
       if ([...standing].sort().join() !== [...T.company].sort().join()) { no('Your company is locked for the tourney: field the company you entered with'); return; }
-      const c = companyOn(foe, bowlBracket(H.level), T.day);
-      boutIn({ kind: 'tourney', id: foe, grade: c.grade, rating: T.ratings[foe] ?? c.rating, alone: false });
+      boutIn({ kind: 'tourney', id: foe, grade: teamOf(foe).grade, rating: T.ratings[foe] ?? companyOn(foe, T.day).rating, rd: companyOn(foe, T.day).rd, alone: false });
       return;
     }
     if (cmd.type === 'bowlLeave') { leaveBowl(); return; }

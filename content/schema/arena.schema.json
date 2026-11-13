@@ -1,58 +1,264 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "The Bowl's rival companies and the Crier's lines (GDD §17 v1.85, world doc §3.9): authored text; their strength is rolled by src/sim/rivals.js",
+  "title": "The Bowl's hundred companies and the Crier's lines (GDD §17 v1.86, world doc §3.9): authored text; their strength is rolled by src/sim/rivals.js and their league by src/sim/bowl.js. A company without its own in/out lines is called in by its manner's",
   "type": "object",
-  "required": ["crier", "companies"],
+  "required": [
+    "crier",
+    "companies"
+  ],
   "additionalProperties": false,
   "properties": {
-    "_note": { "type": "string" },
+    "_note": {
+      "type": "string"
+    },
     "crier": {
       "type": "object",
-      "required": ["call", "won", "lost", "draw", "time", "champion"],
+      "required": [
+        "call",
+        "won",
+        "lost",
+        "draw",
+        "time",
+        "champion",
+        "manners"
+      ],
       "additionalProperties": false,
       "properties": {
-        "call": { "$ref": "#/definitions/line" }, "won": { "$ref": "#/definitions/line" }, "lost": { "$ref": "#/definitions/line" },
-        "draw": { "$ref": "#/definitions/line" }, "time": { "$ref": "#/definitions/line" }, "champion": { "$ref": "#/definitions/line" }
+        "call": {
+          "$ref": "#/definitions/line"
+        },
+        "won": {
+          "$ref": "#/definitions/line"
+        },
+        "lost": {
+          "$ref": "#/definitions/line"
+        },
+        "draw": {
+          "$ref": "#/definitions/line"
+        },
+        "time": {
+          "$ref": "#/definitions/line"
+        },
+        "champion": {
+          "$ref": "#/definitions/line"
+        },
+        "manners": {
+          "type": "object",
+          "required": [
+            "balanced",
+            "brawlers",
+            "stalkers",
+            "wall",
+            "spellbinders"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "balanced": {
+              "type": "object",
+              "required": [
+                "in",
+                "out"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "in": {
+                  "$ref": "#/definitions/line"
+                },
+                "out": {
+                  "$ref": "#/definitions/line"
+                }
+              }
+            },
+            "brawlers": {
+              "type": "object",
+              "required": [
+                "in",
+                "out"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "in": {
+                  "$ref": "#/definitions/line"
+                },
+                "out": {
+                  "$ref": "#/definitions/line"
+                }
+              }
+            },
+            "stalkers": {
+              "type": "object",
+              "required": [
+                "in",
+                "out"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "in": {
+                  "$ref": "#/definitions/line"
+                },
+                "out": {
+                  "$ref": "#/definitions/line"
+                }
+              }
+            },
+            "wall": {
+              "type": "object",
+              "required": [
+                "in",
+                "out"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "in": {
+                  "$ref": "#/definitions/line"
+                },
+                "out": {
+                  "$ref": "#/definitions/line"
+                }
+              }
+            },
+            "spellbinders": {
+              "type": "object",
+              "required": [
+                "in",
+                "out"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "in": {
+                  "$ref": "#/definitions/line"
+                },
+                "out": {
+                  "$ref": "#/definitions/line"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "companies": {
       "type": "array",
-      "minItems": 16,
+      "minItems": 100,
       "items": {
         "type": "object",
-        "required": ["id", "name", "home", "manner", "banner", "members", "in", "out"],
+        "required": [
+          "id",
+          "name",
+          "home",
+          "manner",
+          "banner",
+          "members"
+        ],
         "additionalProperties": false,
         "properties": {
-          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
-          "name": { "type": "string", "minLength": 3, "maxLength": 34 },
-          "home": { "type": "string", "enum": ["Thornwick", "Saltmere", "Ashgate", "Tollhaven", "Rookstead", "Frosthold", "the Lamphall"] },
-          "manner": { "type": "string", "enum": ["balanced", "brawlers", "stalkers", "wall", "spellbinders"] },
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 34
+          },
+          "home": {
+            "type": "string",
+            "enum": [
+              "Thornwick",
+              "Saltmere",
+              "Ashgate",
+              "Tollhaven",
+              "Rookstead",
+              "Frosthold",
+              "the Lamphall"
+            ]
+          },
+          "manner": {
+            "type": "string",
+            "enum": [
+              "balanced",
+              "brawlers",
+              "stalkers",
+              "wall",
+              "spellbinders"
+            ]
+          },
           "banner": {
-            "type": "array", "minItems": 3, "maxItems": 3,
-            "items": [{ "$ref": "#/definitions/colour" }, { "$ref": "#/definitions/colour" }, { "type": "string", "minLength": 2, "maxLength": 24 }]
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": [
+              {
+                "$ref": "#/definitions/colour"
+              },
+              {
+                "$ref": "#/definitions/colour"
+              },
+              {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 24
+              }
+            ]
           },
           "members": {
-            "type": "array", "minItems": 3, "maxItems": 3,
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
             "items": {
               "type": "object",
-              "required": ["name", "cls"],
+              "required": [
+                "name",
+                "cls"
+              ],
               "additionalProperties": false,
               "properties": {
-                "name": { "type": "string", "minLength": 2, "maxLength": 22 },
-                "cls": { "type": "string", "enum": ["fighter", "rogue", "mage", "cleric", "shaman"] },
-                "actor": { "type": "string", "enum": ["hero_barbarian"] },
-                "bow": { "type": "boolean" }
+                "name": {
+                  "type": "string",
+                  "minLength": 2,
+                  "maxLength": 22
+                },
+                "cls": {
+                  "type": "string",
+                  "enum": [
+                    "fighter",
+                    "rogue",
+                    "mage",
+                    "cleric",
+                    "shaman"
+                  ]
+                },
+                "actor": {
+                  "type": "string",
+                  "enum": [
+                    "hero_barbarian"
+                  ]
+                },
+                "bow": {
+                  "type": "boolean"
+                }
               }
             }
           },
-          "in": { "$ref": "#/definitions/line" },
-          "out": { "$ref": "#/definitions/line" }
+          "in": {
+            "$ref": "#/definitions/line"
+          },
+          "out": {
+            "$ref": "#/definitions/line"
+          }
         }
       }
     }
   },
   "definitions": {
-    "line": { "type": "string", "minLength": 4, "maxLength": 90 },
-    "colour": { "type": "string", "pattern": "^#[0-9a-f]{6}$" }
+    "line": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 90
+    },
+    "colour": {
+      "type": "string",
+      "pattern": "^#[0-9a-f]{6}$"
+    }
   }
 }

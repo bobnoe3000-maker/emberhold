@@ -1,7 +1,9 @@
 // @ts-check
 // bowl.js (ui) — the Bowl (GDD §17 v1.85; sim/bowl.js; docs/bowl-arena-proposal.md, its mockup docs/bowl-arena-mockup.html):
-//   · the board, from ☰ → The Bowl (from level 6): your rating and tier, marks, today's paid bouts; two tabs, the Ladder
-//     (today's three picks, each with Fight and Fight alone) and the Tourney (enter today's, its bracket, your next bout);
+//   · the board, from ☰ → The Bowl (from level 6): your rating, tier and place among the hundred, marks, today's bouts (ten
+//     a day); three tabs: the board (five teams near your rating, each with Fight and Fight alone, and five new faces
+//     three times a day: GDD v1.86), the Tourney (enter today's, its bracket, your next bout) and the Standings (the
+//     hundred's league: its top ten and the teams round your rating);
 //   · on the sand: a bar at the top, the Crier's call, the clock and each company's share of HP standing;
 //   · the result: won, lost or drawn, the Crier's line, the marks and the rating; The board, or Back to where you were.
 // Every word is content/arena.json's or written here. It pushes commands (bowlBout, tourneyEnter, tourneyBout, bowlLeave)
@@ -11,12 +13,12 @@ import { html, render } from 'htm/preact';
 import { swallow } from './actorart.js';
 import { CLASSES } from '../sim/party.js';
 import { statsFor } from '../sim/party.js';
-import { BOWL, picksOf, tierOf, bracketOf, BRACKETS, tourneyFoe, companyOn } from '../sim/bowl.js';
+import { BOWL, picksOf, tierOf, bracketOf, BRACKETS, tourneyFoe, companyOn, fieldOn, rankOf, dayOf } from '../sim/bowl.js';
 import { GRADES, MANNERS } from '../sim/rivals.js';
 
 const TIER_NAME = { sweepers: 'Sweepers', sand: 'the Sand', lower: 'the Lower Tiers', upper: 'the Upper Tiers', box: 'the Sun’s Box' };
 const ROUND = ['Quarter-final', 'Semi-final', 'Final'];
-const PICK = { easier: 'An easier bout', even: 'An even bout', harder: 'A harder bout' };
+const PICK = { easier: 'Easier', even: 'Even', harder: 'Harder' };
 
 const CSS = `
 #bowlWrap { position: fixed; inset: 0; z-index: 12; display: none; background: rgba(10,8,6,.9); color: #efe4cf; font-family: Georgia, serif; overflow-y: auto;
@@ -46,6 +48,18 @@ const CSS = `
 #bowl .slots { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; font-size: 13px; }
 #bowl .slots div { padding: 4px 6px; border-radius: 6px; background: rgba(255,255,255,.04); }
 #bowl .slots .you { color: #f5d78a; border: 1px solid rgba(216,176,96,.6); }
+#bowl .card.small { padding: 9px 11px; gap: 4px; }
+#bowl .card.small h3 { font-size: 15.5px; }
+#bowl .card .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+#bowl .card .rank { font: 11px ui-monospace, Menlo, monospace; color: #b9a27a; white-space: nowrap; }
+#bowl .bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; font: 12px ui-monospace, Menlo, monospace; color: #cbbfae; }
+#bowl .bar button { min-height: 44px; padding: 0 12px; border-radius: 10px; background: none; color: #e6c47a; border: 1px solid rgba(216,176,96,.55); font: 600 13px Georgia, serif; }
+#bowl table { width: 100%; border-collapse: collapse; font: 12px ui-monospace, Menlo, monospace; color: #dccfb8; }
+#bowl td { padding: 5px 4px; border-bottom: 1px solid rgba(216,176,96,.12); }
+#bowl td.n { text-align: right; color: #b9a27a; width: 2.5em; }
+#bowl td.r { text-align: right; }
+#bowl tr.you td { color: #f5d78a; font-weight: 600; }
+#bowl tr.gap td { color: #6f6556; text-align: center; }
 #boutBar { position: fixed; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + 54px); z-index: 6; display: none; min-width: 240px; max-width: 92vw;
   background: rgba(14,10,8,.88); border: 1px solid rgba(216,176,96,.5); border-radius: 12px; padding: 6px 12px; color: #efe4cf; font: 12px ui-monospace, Menlo, monospace; text-align: center; pointer-events: none; }
 #boutBar.on { display: block; }
@@ -69,30 +83,44 @@ export function createBowl({ sim, onOpen = () => {}, onClose = () => {} }) {
   const nameOf = (id) => (id === 'you' ? 'Your company' : (W(id) && W(id).name) || id);
   sim.bus.on('refused', (e) => { if (wrap.classList.contains('on')) { said = e.reason; draw(); } });
 
-  function Pick({ c }) {
-    const w = W(c.id), M = MANNERS[c.manner], G = GRADES[c.grade];
-    return html`<div class="card">
-      <div class="pick">${PICK[c.pick] || ''}</div>
+  const lineIn = (id, manner) => { const w = W(id); return (w && w.in) || (words && words.crier.manners ? words.crier.manners[manner].in : ''); };
+  const lineOut = (id, manner) => { const w = W(id); return (w && w.out) || (words && words.crier.manners ? words.crier.manners[manner].out : ''); };
+  function Pick({ c, left }) {
+    const w = W(c.id), M = MANNERS[c.manner], G = GRADES[c.grade], q = lineIn(c.id, c.manner);
+    return html`<div class="card small">
+      <div class="top"><div class="pick">${PICK[c.pick] || ''} · ${M.name}, ${G.name.toLowerCase()}</div><div class="rank">#${c.rank} of 100</div></div>
       <h3>${w && html`<span class="banner" style=${`background: linear-gradient(${w.banner[0]} 55%, ${w.banner[1]} 55%)`} title=${w.banner[2]}></span>`}${nameOf(c.id)}</h3>
-      <div class="line">${M.name}, ${G.name.toLowerCase()} · rating ${c.rating}${w ? ` · from ${w.home}` : ''}</div>
-      ${w && html`<div class="nums">${w.members.map((m) => `${m.name} (${(CLASSES[m.cls] || CLASSES.fighter).label})`).join(' · ')}</div>`}
-      <div class="line">${M.text}</div>
-      ${w && html`<div class="quote">“${w.in}”</div>`}
+      <div class="nums">rating ${c.rating} · ${c.won}–${c.lost}${c.drawn ? `–${c.drawn}` : ''}${w ? ` · ${w.home}` : ''}<br />${w ? w.members.map((m) => `${m.name} (${(CLASSES[m.cls] || CLASSES.fighter).label})`).join(' · ') : ''}</div>
+      ${q && html`<div class="quote">“${q}”</div>`}
       <div class="row">
-        <button class="go" onClick=${() => fight({ type: 'bowlBout', id: c.id })}>Fight</button>
-        <button class="alt" onClick=${() => fight({ type: 'bowlBout', id: c.id, alone: true })}>Fight alone</button>
+        <button class="go" disabled=${!left} onClick=${() => fight({ type: 'bowlBout', id: c.id })}>Fight</button>
+        <button class="alt" disabled=${!left} onClick=${() => fight({ type: 'bowlBout', id: c.id, alone: true })}>Fight alone</button>
       </div>
     </div>`;
   }
   function Ladder() {
-    const picks = picksOf(sim.state), b = sim.state.bowl;
+    const picks = picksOf(sim.state), b = sim.state.bowl, left = Math.max(0, BOWL.fights - b.paid), fresh = Math.max(0, BOWL.refreshes - b.refresh);
     return html`
-      ${picks.map((c) => html`<${Pick} key=${c.id} c=${c} />`)}
-      ${!picks.length && html`<div class="note">You’ve fought every company on today’s board. Ma Gorrie chalks up a new one tomorrow.</div>`}
-      <div class="note">A win pays marks of the Bowl by the company’s grade (2 to 6), a loss or a draw 1, for the first ${BOWL.paid} bouts a day (${Math.max(0, BOWL.paid - b.paid)} left today). No XP, no gold. Nobody is Fallen on the sand: you leave as you came in. Fight alone: your hero against their first.</div>`;
+      <div class="bar"><span>Bouts today ${b.paid}/${BOWL.fights}</span>
+        <button disabled=${!fresh} onClick=${() => { said = ''; sim.commands.push({ type: 'bowlRefresh' }); setTimeout(draw, 120); }}>New faces (${fresh} left)</button></div>
+      ${picks.map((c) => html`<${Pick} key=${c.id} c=${c} left=${left > 0} />`)}
+      ${!picks.length && html`<div class="note">${fresh ? 'You’ve fought everyone on the board. Ask Ma Gorrie for new faces.' : 'You’ve fought everyone on the board. She chalks up five more tomorrow.'}</div>`}
+      <div class="note">Five teams near your rating; three times a day, five new. ${BOWL.fights} bouts a day, each paid in marks of the Bowl: a win 2 to 6 by the team’s grade, a loss or a draw 1. No XP, no gold. Nobody is Fallen on the sand: you leave as you came in. Fight alone: your hero against their first.</div>`;
+  }
+  function Standings() {
+    const d = dayOf(sim.state), all = fieldOn(d), b = sim.state.bowl, me = rankOf(sim.state);
+    const rows = /** @type {any[]} */ (all.map((c) => ({ ...c, you: false }))); rows.splice(me - 1, 0, { id: 'you', rating: Math.round(b.r), won: b.won, lost: b.lost, you: true });   // (you where rankOf puts you: the league's own order)
+    const at = rows.findIndex((r) => r.you), show = new Set([...rows.slice(0, 10).map((r) => r.id), ...rows.slice(Math.max(0, at - 3), at + 4).map((r) => r.id)]);
+    const out = []; let gap = false;
+    rows.forEach((r, i) => { if (show.has(r.id)) { out.push(html`<tr class=${r.you ? 'you' : ''}><td class="n">${i + 1}</td><td>${nameOf(r.id)}</td><td class="r">${r.rating}</td><td class="r">${r.won}–${r.lost}</td></tr>`); gap = false; } else if (!gap) { out.push(html`<tr class="gap"><td colspan="4">⋯</td></tr>`); gap = true; } });
+    return html`<div class="card">
+      <h3>The hundred</h3>
+      <div class="note">The Bowl’s league: a hundred companies, ten bouts a day each, on the rules you fight by. You stand ${me} of ${all.length + 1}.</div>
+      <table>${out}</table>
+    </div>`;
   }
   function Tourney() {
-    const b = sim.state.bowl, T = b.tourney, day = Math.floor(sim.state.t / 3600);
+    const b = sim.state.bowl, T = b.tourney, day = dayOf(sim.state);
     if (!T) {
       const had = b.tday === day, last = b.lastTourney;
       return html`<div class="card">
@@ -103,7 +131,7 @@ export function createBowl({ sim, onOpen = () => {}, onClose = () => {} }) {
         <div class="row"><button class="go" disabled=${had} onClick=${() => { sim.commands.push({ type: 'tourneyEnter' }); said = ''; setTimeout(draw, 80); }}>${had ? 'Entered today' : 'Enter today’s tourney'}</button></div>
       </div>`;
     }
-    const foe = tourneyFoe(T), c = foe ? companyOn(foe, bracketOf(sim.state.party[0].level), T.day) : null;
+    const foe = tourneyFoe(T), c = foe ? companyOn(foe, T.day) : null;
     return html`<div class="card">
       <div class="pick">${ROUND[T.round] || 'Final'}</div>
       <h3>${foe ? `You meet ${nameOf(foe)}` : 'Waiting'}</h3>
@@ -114,15 +142,15 @@ export function createBowl({ sim, onOpen = () => {}, onClose = () => {} }) {
     </div>`;
   }
   function Result() {
-    const r = result, w = W(r.id), C = words ? words.crier : null;
+    const r = result, C = words ? words.crier : null, out = r.how === 'won' ? lineOut(r.id, companyOn(r.id, dayOf(sim.state)).manner) : '';
     const head = r.champion ? 'Champions' : r.how === 'won' ? 'Won' : r.how === 'draw' ? 'A draw' : 'Lost';
     const line = C ? (r.champion ? C.champion : r.why === 'time' ? `${C.time} ${C[r.how === 'won' ? 'won' : r.how === 'draw' ? 'draw' : 'lost']}` : C[r.how === 'won' ? 'won' : r.how === 'draw' ? 'draw' : 'lost']) : '';
     return html`<div class="card">
       <div class="pick">${r.kind === 'tourney' ? `The tourney · ${ROUND[r.round] || 'Final'}` : 'The ladder'}${r.alone ? ' · alone' : ''}</div>
       <h3>${head} · ${nameOf(r.id)}</h3>
       ${line && html`<div class="quote">The Crier: “${line}”</div>`}
-      ${r.how === 'won' && w && html`<div class="quote">“${w.out}”</div>`}
-      <div class="nums">${r.marks ? `+${r.marks} marks` : r.kind === 'ladder' ? 'unpaid (five a day)' : ''}${r.purse ? `${r.marks ? ' · ' : ''}purse +${r.purse} marks` : ''} · rating ${Math.round(r.r)} (${r.dr >= 0 ? '+' : ''}${r.dr}) · ${TIER_NAME[r.tier]}</div>
+      ${out && html`<div class="quote">“${out}”</div>`}
+      <div class="nums">${r.marks ? `+${r.marks} marks` : ''}${r.purse ? `${r.marks ? ' · ' : ''}purse +${r.purse} marks` : ''} · rating ${Math.round(r.r)} (${r.dr >= 0 ? '+' : ''}${r.dr}) · ${TIER_NAME[r.tier]}</div>
       <div class="row">
         <button class="alt" onClick=${() => { result = null; draw(); }}>The board</button>
         <button class="go" onClick=${() => { result = null; sim.commands.push({ type: 'bowlLeave' }); close(); }}>Back to where you were</button>
@@ -134,13 +162,14 @@ export function createBowl({ sim, onOpen = () => {}, onClose = () => {} }) {
     return html`<div id="bowl">
       <div class="kind">Solmere · the Circus of the Sun</div>
       <h2>The Bowl</h2>
-      <div class="who">Rating <b>${Math.round(b.r)}</b> · ${TIER_NAME[tierOf(b.r).id]} · bracket ${lo}–${hi}<br />Marks <b>${b.marks}</b> · won ${b.won}, lost ${b.lost}, drawn ${b.drawn} · paid today ${b.paid}/${BOWL.paid}</div>
+      <div class="who">Rating <b>${Math.round(b.r)}</b> · ${TIER_NAME[tierOf(b.r).id]} · #${rankOf(S)} of 101 · bracket ${lo}–${hi}<br />Marks <b>${b.marks}</b> · won ${b.won}, lost ${b.lost}, drawn ${b.drawn}</div>
       ${result ? html`<${Result} />` : html`
         <div class="tabs">
-          <button class=${tab === 'ladder' ? 'on' : ''} onClick=${() => { tab = 'ladder'; said = ''; draw(); }}>Ma Gorrie’s board</button>
+          <button class=${tab === 'ladder' ? 'on' : ''} onClick=${() => { tab = 'ladder'; said = ''; draw(); }}>The board</button>
           <button class=${tab === 'tourney' ? 'on' : ''} onClick=${() => { tab = 'tourney'; said = ''; draw(); }}>The tourney</button>
+          <button class=${tab === 'table' ? 'on' : ''} onClick=${() => { tab = 'table'; said = ''; draw(); }}>Standings</button>
         </div>
-        ${tab === 'ladder' ? html`<${Ladder} />` : html`<${Tourney} />`}`}
+        ${tab === 'ladder' ? html`<${Ladder} />` : tab === 'tourney' ? html`<${Tourney} />` : html`<${Standings} />`}`}
       <div class="said">${said}</div>
       <div class="row">
         ${inBowl && !result && html`<button class="alt" onClick=${() => { sim.commands.push({ type: 'bowlLeave' }); close(); }}>Back to where you were</button>`}
@@ -150,7 +179,7 @@ export function createBowl({ sim, onOpen = () => {}, onClose = () => {} }) {
   }
   const draw = () => render(html`<${Board} />`, wrap);
   function fight(cmd) { said = ''; sim.commands.push(cmd); setTimeout(() => { if (sim.battle && sim.battle.bout) close(); else draw(); }, 120); }
-  function open() { wrap.classList.add('on'); onOpen(); said = ''; draw(); }
+  function open() { wrap.classList.add('on'); onOpen(); said = ''; sim.commands.push({ type: 'bowlOpen' }); draw(); setTimeout(draw, 150); }   // (the sim rolls the day and draws its five)
   function close() { wrap.classList.remove('on'); render(null, wrap); onClose(); }
 
   // on the sand: the Crier's call, the clock, each side's share of HP
