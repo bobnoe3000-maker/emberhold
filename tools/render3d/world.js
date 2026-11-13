@@ -1347,6 +1347,18 @@ const api = {
       E.renderScale = cap > 0 ? Math.min(1, cap / top) : 1;
       resSet = res;
     }
+    if (o.bright > 0) bright = o.bright;
+    if (o.figLit > 0) FIG_LIT = o.figLit;
+    if (o.carryUp > 0) CARRY_UP = o.carryUp;
+    if (o.carryGain > 0) CARRY_GAIN = o.carryGain;
+    if (o.figMax > 0) FIG_MAX = o.figMax;
+    if (o.figures === 'models' || o.figures === 'sprites') FIGURES = o.figures;
+    if (['chosen', 'doors', 'all', 'sprites'].includes(o.landmarks)) LANDMARKS = o.landmarks;   // (?landmarks=: our kit's pieces in 3D, placeEnv)   // (?figures=sprites: the atlases, as before 4b)
+    const S = game?.postfx?.settings;
+    // 'soft': the prototype's eased lens (its view.js): a band most of the screen tall, 16 units of depth in focus, so the
+    // square is sharp and the far roofs and the near hedges a little soft; 'off': everything sharp
+    // (none underground: the rooms below the one in view held their fires as blurred orbs over the HUD)
+    if (S?.dof) Object.assign(S.dof, { enabled: dof !== 'off' && !inside, focusRange: 16, tiltShift: 0.14, tiltWidth: 0.62 });
     if (o.quality === 'high' || o.quality === 'low') quality = o.quality;
     applyQuality();
   },

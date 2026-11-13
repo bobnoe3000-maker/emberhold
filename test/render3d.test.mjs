@@ -202,6 +202,12 @@ test('the Brightness dial (the owner, 2026-11-04: "a setting for me to dial in b
   } finally { delete globalThis.localStorage; }
 });
 
+test('world.js settings() still applies every Graphics key the game hands it (2026-11-13: an edit for Quality cut its tail, and the depth of field stayed on whatever the menu said)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../tools/render3d/world.js', import.meta.url), 'utf8'), at = src.indexOf('  settings(o = {}) {'), body = src.slice(at, src.indexOf('\n  },', at));
+  for (const k of ['o.dof', 'o.res', 'o.quality', 'o.figures', 'o.landmarks', 'o.bright', 'Object.assign(S.dof']) assert.ok(body.includes(k), `settings() handles ${k}`);
+});
+
 test('the menu\'s Quality (the owner: "a high and low graphics setting"): low by default on a touch screen, high elsewhere; kept per device', async () => {
   const { readGraphics, writeGraphics } = await import('../src/render3d/settings.js');
   const mem = new Map(), mm = globalThis.matchMedia;
