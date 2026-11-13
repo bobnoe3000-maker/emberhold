@@ -34,6 +34,7 @@ import { holdWeather } from './render/weatherfx.js';
 import { readGraphics, writeGraphics, feelK } from './render3d/settings.js';
 import { createFpsMeter } from './ui/fps.js';
 import { createFrameTest } from './ui/frametest.js';
+import { createAccount, loadOnline } from './net/account.js';
 import { createWorldFail } from './ui/worldfail.js';
 import { setPortraitModels } from './ui/portraits.js';
 
@@ -195,6 +196,10 @@ const graphics = { frameTest: () => frameTest.run(), read: readGraphics, status:
 // the Brightness tray (ui/brightness.js; the owner, 2026-11-04): from Graphics, over play; the part being set is held
 let previewPart = /** @type {string|null} */ (null);
 const brightness = createBrightness({ sim, graphics, onHold: (p) => { previewPart = p; } });
+// the player's account (net/account.js): the local guest profile at the first launch, no network needed; online accounts
+// once the site has an online.json (docs/online-setup.md), read in the background
+let account = null; try { account = createAccount(); } catch (err) { console.warn('[account]', err); }
+if (account && !PREVIEW) loadOnline().then((online) => { if (online) account.setOnline(online); });
 const title = createTitle({ sim, slot: SLOT, audio, setPaused: (on) => { paused = on; }, openSlots: () => slots.open(),
   openParty: () => partyScreen.open(), openCreate: () => cinema.intro(() => { paused = false; creation.open(); }),
   openChronicle: (mode) => { paused = true; cinema.intro(() => title.open(mode)); }, /* (the film holds the game; the menu it goes back to doesn't) */ onPlay: () => { cinema.stopMusic(); catchUp(); },
@@ -202,6 +207,7 @@ const title = createTitle({ sim, slot: SLOT, audio, setPaused: (on) => { paused 
   graphics, tune: () => brightness.open(), openSteps: () => firstSteps.open(true),
   // the menu's Developer tools (sim/dev.js: commands that mark the slot a dev game): applied at once, a tick of the sim
   // (the game runs on under the menu in play), and the slot saved with them
+  account,
   devApply: (cmds) => { for (const c of cmds) sim.commands.push(c); sim.tick(); if (!PREVIEW && sim.state.created) writeSlot(SLOT, sim).catch(() => {}); } });
 if (BOOT) cinema.boot(renderer.ready, () => title.open('title'));
 else document.getElementById('bootSplash')?.remove();

@@ -7,12 +7,14 @@
 //   · ☰ in play ('pause': a fight goes on under it): Resume, Settings, How to play (the first steps again), Game slots;
 //   · Settings: two tabs, Sound (a slider a kind of sound, audio/settings.js) and Graphics (render3d/settings.js), a row a
 //     setting, its control on the right: Quality, Resolution, Depth of field, Hit feel, Zoom, Brightness;
+//   · Account (net/account.js; the owner, 2026-11-13: "Lets do the account setup including guest"): the guest's handle
+//     (a name of the player's own, the hero's name rule, and a 4-digit tag), how long they've played on this device,
+//     and the ways to link an online account, which say they aren't set up until the project is (docs/online-setup.md);
 //   · Developer, behind a small link on both (the owner: "leave the developer link always on now - we will remove before
 //     shipping"): Copy debug report (debugreport.js), the frame rate on screen, the Frame test, what Luminati draws the
 //     people as; every skill unlocked and levels with their points (sim/dev.js; architecture A18), which mark the slot a
 //     dev game, never verified.
-// Party left the menu: the Party screen opens at every Tavern (townmenu.js), and changing the party only works in town;
-// Account (cloud saves, M6) comes back when it works. Preact + htm, like every M3 window.
+// Party left the menu: the Party screen opens at every Tavern (townmenu.js), and changing the party only works in town. Preact + htm, like every M3 window.
 
 import { html, render } from 'htm/preact';
 import { CLASSES } from '../sim/party.js';
@@ -22,6 +24,7 @@ import { DEV_LEVEL_MAX } from '../sim/dev.js';
 import { swallow } from './actorart.js';
 import { debugReport } from './debugreport.js';
 import { ZOOM_PCT_MIN, ZOOM_PCT_MAX } from '../render3d/settings.js';
+import { PROVIDER_LABEL } from '../net/account.js';
 
 const CSS = `
 #titleWrap { position: fixed; inset: 0; z-index: 11; display: none; background: linear-gradient(rgba(8,6,12,.35), rgba(8,6,12,.55) 40%, rgba(8,6,12,.94) 72%); }
@@ -74,6 +77,17 @@ const CSS = `
 #title .grp { font: 700 10.5px ui-monospace, Menlo, monospace; letter-spacing: 1.5px; text-transform: uppercase; color: #978c80; text-align: left; margin: 8px 2px 8px; }
 @media (prefers-reduced-motion: reduce) { #title .tog i::after { transition: none; } }
 #title .dev { max-height: calc(100vh - 20px); overflow-y: auto; }
+#title.acct .card { text-align: left; border: 1px solid rgba(214,170,98,0.45); border-radius: 10px; padding: 12px 14px; background: rgba(16,12,22,.85); margin: 0 0 6px; }
+#title.acct .card b { display: block; font: 600 20px Georgia, serif; color: #f0c880; }
+#title.acct .card span { display: block; font: 11px ui-monospace, Menlo, monospace; color: #b8aca0; margin-top: 3px; }
+#title.acct .namer { display: flex; gap: 8px; margin: 0 0 4px; }
+#title.acct .namer input { flex: 1; min-width: 0; min-height: 48px; border-radius: 10px; border: 1px solid rgba(214,170,98,0.45); background: #0d0a12; color: #efe4cf;
+  font: 600 16px Georgia, serif; padding: 0 12px; }
+#title.acct .namer input:focus { outline: 2px solid #d8a040; outline-offset: 1px; }
+#title.acct .namer button { width: auto; margin: 0; padding: 0 16px; }
+#title.acct .said { font: 11px ui-monospace, Menlo, monospace; color: #b8aca0; text-align: left; margin: 0 2px 10px; min-height: 1.4em; }
+#title.acct .said.ok { color: #8fe07a; }
+#title.acct .link-acct { min-height: 44px; }
 #title .devwho { text-align: left; margin: 0 0 6px; font: 600 15px Georgia, serif; color: #efe4cf; }
 #title .devwho small { display: block; font: 11px ui-monospace, Menlo, monospace; color: #b8aca0; margin-top: 2px; }
 #title .devnote { font: 11px ui-monospace, Menlo, monospace; color: #c8baa2; line-height: 1.45; margin: 0 0 12px; text-align: left; }
@@ -84,11 +98,11 @@ const CSS = `
  * @param {{ sim: any, slot: number, audio?: any, setPaused: (on: boolean) => void, openSlots: () => void, openParty: () => void, openCreate: () => void,
  *   openChronicle: (mode: string) => void, onOpen?: () => void, onPlay?: () => void,
  *   graphics?: { read: () => any, set: (patch: any) => Promise<any>, status?: () => any, frameTest?: () => Promise<boolean> } | null, tune?: (() => void) | null,
- *   devApply?: ((cmds: any[]) => void) | null, openSteps?: (() => void) | null }} o  onPlay: the title closes into play; openSteps: the first steps again (ui/firststeps.js);
+ *   devApply?: ((cmds: any[]) => void) | null, openSteps?: (() => void) | null, account?: any }} o  account: net/account.js  onPlay: the title closes into play; openSteps: the first steps again (ui/firststeps.js);
  *   graphics: the Graphics panel (src/render3d/settings.js); tune: the
  *   Brightness tray (ui/brightness.js), opened over play with the menu closed
  */
-export function createTitle({ sim, slot, audio = null, setPaused, openSlots, openParty, openCreate, openChronicle, onOpen = () => {}, onPlay = () => {}, graphics = null, tune = null, devApply = null, openSteps = null }) {
+export function createTitle({ sim, slot, audio = null, setPaused, openSlots, openParty, openCreate, openChronicle, onOpen = () => {}, onPlay = () => {}, graphics = null, tune = null, devApply = null, openSteps = null, account = null }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const wrap = document.createElement('div'); wrap.id = 'titleWrap'; document.body.appendChild(wrap);
   swallow(wrap);
@@ -200,12 +214,41 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
     </div>`;
   }
 
+  // Account (net/account.js): the guest as others will see them, a name of their own (the hero's name rule), and the ways
+  // to link an online account (each says why it can't yet, until the project is set up: docs/online-setup.md)
+  let draft = null, acctSaid = '', acctOk = false;
+  function Account() {
+    const st = account.state, p = st.profile, name = draft ?? p.name;
+    const since = p.createdAt ? new Date(p.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : 'today';
+    const save = () => { const r = account.rename(name); acctOk = r.ok; acctSaid = r.ok ? `Saved: you're ${account.state.handle}` : r.why; if (r.ok) draft = null; draw(); };
+    const link = async (prov) => { const r = await account.linkWith(prov); acctOk = r.ok; acctSaid = r.ok ? 'Linked' : r.why || ''; draw(); };
+    return html`<div id="title" class="panel acct">
+      <div class="mark small">ACCOUNT</div>
+      <div class="card"><b>${st.handle}</b><span>${st.guest ? 'Playing as a guest' : 'Linked'} · on this device since ${since}</span></div>
+      <div class="grp">Your name</div>
+      <form class="namer" onSubmit=${(e) => { e.preventDefault(); save(); }}>
+        <input id="acctName" value=${name} maxlength="16" autocomplete="off" spellcheck="false" aria-label="Your name"
+          onInput=${(e) => { draft = e.currentTarget.value; acctSaid = ''; draw(); }} />
+        <button type="submit" disabled=${name === p.name}>Save</button>
+      </form>
+      <div class=${'said' + (acctOk ? ' ok' : '')} role="status">${acctSaid || 'Others see it with your tag, so two players can share a name.'}</div>
+      <div class="grp">Keep your heroes safe</div>
+      <div class="devnote">Your heroes are saved on this device. Link an account to keep them if you lose it, and to play on another; your guest heroes come with you.</div>
+      ${['apple', 'google', 'email'].map((k) => html`<button key=${k} class="link-acct" disabled=${!st.online || !st.providers.includes(k)}
+        onClick=${() => link(k)}>${PROVIDER_LABEL[k]}</button>`)}
+      ${!st.online && html`<div class="devnote">Online accounts aren’t set up yet. Until then you play as a guest, and nothing leaves this device.</div>`}
+      <button class="pri" onClick=${() => { panel = ''; draft = null; acctSaid = ''; draw(); }}>Back</button>
+    </div>`;
+  }
+
   function Title() {
     if (panel === 'dev' && devApply) return html`<${Developer} />`;
+    if (panel === 'account' && account) return html`<${Account} />`;
     if (panel === 'settings' && (audio || graphics)) return html`<${Settings} />`;
     const S = sim.state, h = S.party[0], made = S.created, paused = mode === 'pause';
     const where = sim.world.kind === 'dungeon' ? `${(sim.world.siteName || 'The Old Barrows').replace(/^The /, 'the ')} · depth ${S.depth + 1}` : sim.world.name || 'Emberfall';
     const settings = (audio || graphics) && html`<button onClick=${() => { panel = 'settings'; draw(); }}>Settings<small>${[audio && 'sound', graphics && 'graphics'].filter(Boolean).join(' · ')}</small></button>`;
+    const acct = account && html`<button onClick=${() => { panel = 'account'; draft = null; acctSaid = ''; draw(); }}>Account<small>${account.state.handle} · ${account.state.guest ? 'a guest' : 'linked'}</small></button>`;
     return html`<div id="title">
       ${paused ? html`<div class="mark small">PAUSED</div>` : html`<div class="mark">EMBER<em>FALL</em></div>
       <div class="tag">The heroes of this age are not available… Looks like it is up to you.</div>`}
@@ -217,11 +260,13 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         : html`<button class="pri" onClick=${() => { hide(); openCreate(); }}>Begin</button>`}
       ${paused ? html`
         ${settings}
+        ${acct}
         ${openSteps && made && html`<button onClick=${() => { close(); openSteps(); }}>How to play<small>the first steps again</small></button>`}
         <button onClick=${() => openSlots()}>Game slots<small>saved as you go</small></button>`
       : html`
         <button onClick=${() => openSlots()}>Game slots<small>new game · switch · delete</small></button>
         ${settings}
+        ${acct}
         <button onClick=${() => { hide(); openChronicle(mode); }}>The Chronicle<small>watch the intro</small></button>`}
       ${devApply && html`<button class="link" onClick=${() => { panel = 'dev'; devSaid = ''; draw(); }}>Developer ›</button>`}
     </div>`;

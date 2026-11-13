@@ -117,6 +117,12 @@ tap.
 
 ### 2.2 Login and player accounts
 
+**Status (2026-11-13):**
+- **Built, local:** the guest profile (`src/net/profile.js`: a uuid, a display name under the hero's name rule, a
+  4-digit tag), the account (`src/net/account.js`) and Menu → Account (`src/ui/title.js`).
+- **Ready:** the tables and their RLS (`supabase/migrations/20261113000000_accounts.sql`).
+- **Waiting on the owner's project:** the online half, [online-setup.md](./online-setup.md).
+
 **Guest-first; accounts are optional and additive:**
 - First launch creates a **local profile** (a uuid) with no sign-up and no network.
 - **Linking an account** is optional. It is offered:

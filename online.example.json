@@ -1,0 +1,5 @@
+{
+  "supabaseUrl": "https://YOUR-PROJECT-REF.supabase.co",
+  "supabaseAnonKey": "YOUR-ANON-PUBLIC-KEY",
+  "providers": ["email", "google"]
+}
