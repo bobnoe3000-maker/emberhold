@@ -299,10 +299,12 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await createStep(p, { pick: 'Thornwick' }); await createStep(p, { name: 'Wick' }); await createStep(p, { begin: true }); await p.waitForTimeout(3000);
     await firstSteps(p, { skip: true });                                              // (let go: Skip)
     check('intro: the music fades out into play', (await C(() => globalThis.__sim.state.created)) && (await C(() => globalThis.__ui.cinema.music)) === null);
-    await p.tap('#menuBtn'); await p.locator('#title button', { hasText: 'The Chronicle' }).tap(); await p.waitForSelector('#cine .skip:not([hidden])');
+    // (the Chronicle is on the title, not the ☰ menu: the owner's menus, 2026-11-13, ui/title.js)
+    const inPause = await (async () => { await p.tap('#menuBtn'); await p.waitForSelector('#titleWrap.on'); const n = await p.locator('#title button', { hasText: 'The Chronicle' }).count(); await p.evaluate(() => globalThis.__ui.title.close()); return n; })();
+    await p.evaluate(() => globalThis.__ui.title.open('title')); await p.locator('#title button', { hasText: 'The Chronicle' }).tap(); await p.waitForSelector('#cine .skip:not([hidden])');
     const replay = await C(() => globalThis.__ui.cinema.card);
     await p.tap('#cine .skip'); await p.waitForSelector('#titleWrap.on');
-    check('the Chronicle replays the intro from the title, and Skip returns to it', replay === 0 && (await p.locator('#title button.pri', { hasText: 'Resume' }).count()) === 1);
+    check('the Chronicle replays the intro from the title (not from the ☰ menu), and Skip returns to it', inPause === 0 && replay === 0 && (await p.locator('#title button.pri', { hasText: 'Continue' }).count()) === 1);
     check('intro: no page errors', errs.length === 0, errs.join(' | '));
     await b.close();
   }
@@ -1219,7 +1221,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.goto(`${base}/index.html?dev&notitle&scene=dungeon&site=wickham_keep`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__audio, null, { timeout: 60000 });
     await p.mouse.click(200, 300);
     const started = await p.waitForFunction(() => globalThis.__audio.running && globalThis.__audio.ready, null, { timeout: 15000 }).then(() => true, () => false);
-    await p.click('#menuBtn'); await p.click('#title button:has-text("Sound")');
+    await p.click('#menuBtn'); await p.click('#title button:has-text("Settings")'); await p.click('#title .tabs button:has-text("Sound")');
     const panel = await p.evaluate(() => ({ sliders: Object.fromEntries([...document.querySelectorAll('#title .snd input[type=range]')].map((i) => [i.getAttribute('aria-label'), +i.value])),
       boxes: document.querySelectorAll('#title .snd input[type=checkbox]').length,
       rowH: Math.min(...[...document.querySelectorAll('#title .snd label')].map((l) => l.getBoundingClientRect().height)),
@@ -1557,10 +1559,17 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     // the menu's Graphics: no choice of renderer any more (Luminati only, docs/luminati-only-cleanup.md step 1), the
     // People line saying what Luminati draws them as, and the depth of field off at once
     await p.evaluate(() => globalThis.__ui.title.open('pause'));
-    await p.locator('#title button', { hasText: 'Graphics' }).click();
-    const pressed = await p.evaluate(() => ({ names: [...document.querySelectorAll('#title button')].map((el) => el.textContent).join(' | '), people: document.getElementById('figStatus')?.textContent || '' }));
-    const noChoice = !/Emberlit|Luminati/.test(pressed.names) && /^People: /.test(pressed.people);
-    await p.locator('#title button', { hasText: 'everything sharp' }).click();   // (the depth of field's Off: the Hit feel has one too)
+    // (the menus of 2026-11-13: the People line in Developer; Graphics a tab of Settings, a row a setting)
+    await p.locator('#title button', { hasText: 'Developer' }).click();
+    const people = await p.evaluate(() => document.getElementById('figStatus')?.textContent || '');
+    await p.locator('#title button', { hasText: 'Back' }).click();
+    await p.locator('#title button', { hasText: 'Settings' }).click(); await p.locator('#title .tabs button', { hasText: 'Graphics' }).click();
+    const pressed = await p.evaluate(() => ({ names: [...document.querySelectorAll('#title button')].map((el) => el.textContent).join(' | '),
+      rows: [...document.querySelectorAll('#title .snd > *')].map((el) => (el.firstElementChild || el).firstChild?.textContent?.trim()), people: '' }));
+    pressed.people = people;
+    const noChoice = !/Emberlit|Luminati/.test(pressed.names) && /^People: /.test(pressed.people) && JSON.stringify(pressed.rows) === JSON.stringify(['Quality', 'Resolution', 'Depth of field', 'Hit feel', 'Zoom', 'Brightness']);
+    if ((await p.locator('#title [data-k="dof"][aria-checked="false"]').count())) await p.locator('#title [data-k="dof"]').click();   // (on first, then off: the switch)
+    await p.locator('#title [data-k="dof"]').click();
     const dofOff = await p.evaluate(() => window.__game?.postfx?.settings?.dof?.enabled === false);
     // the menu's Brightness (the owner, 2026-11-04; ui/brightness.js): the menu closes into play with the tray along the
     // bottom; Dusk holds the dusk light; + raises dusk 5 % and the world's multiply with it at once; Reset all and Done
@@ -1579,7 +1588,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       } finally { W.frame = orig; }
     });
     await p.evaluate(() => globalThis.__ui.title.open('pause'));
-    await p.locator('#title button', { hasText: 'Graphics' }).click();
+    await p.locator('#title button', { hasText: 'Settings' }).click();
     // the menu itself: no prototype and no Frontier (Compare worlds and Another world went with the cleanup's step 2; the Frontier retired, 2026-11-10)
     await p.locator('#title button', { hasText: 'Back' }).click();
     const worlds = await p.evaluate(() => [...document.querySelectorAll('#title button')].map((el) => el.firstChild.textContent.trim()));

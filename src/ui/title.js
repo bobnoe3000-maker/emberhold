@@ -1,17 +1,18 @@
 // @ts-check
-// title.js — the Title screen, which doubles as the pause menu (development plan §2.1–§2.3).
-// On launch (after the boot's loading screen, src/cutscene/player.js) it covers the (paused)
-// world: the wordmark, this slot's hero, and Continue — or Begin, for a slot with no hero yet,
-// which plays the intro and then opens character creation. ☰ in the HUD brings it back
-// mid-game as a pause menu (Resume). From here: Game slots, Party, The Chronicle (the intro
-// again), Sound (the volume, and a slider each for the music, ambience, attacks and spells, footsteps and foes' cries:
-// kept per device, audio/settings.js), Account (cloud saves arrive at M6) and Copy debug report (debugreport.js: the game's
-// state as text on the clipboard, to paste into a bug report; read only).
-// Developer (sim/dev.js; architecture A18): every skill unlocked and levels with their points, for testing; it marks
-// the slot a dev game, never verified.
-//
-// The sim doesn't tick while the title is up (main.js pauses the loop), so a battle behind
-// it waits. Preact + htm, like every M3 window.
+// title.js — the Title screen, which doubles as the pause menu (development plan §2.1–§2.3), laid out after the owner's
+// review (2026-11-13: "there are too many menu items … the graphics sub menu is too busy … move the developer items to a
+// single menu … Does party make sense here?"; the proposal agreed: "go with it"). Each screen answers one question:
+//   · the launch (after the boot's loading screen, src/cutscene/player.js; it holds the world still): Continue (or Begin,
+//     for a slot with no hero yet: the intro, then creation), Game slots, Settings, The Chronicle (the intro again);
+//   · ☰ in play ('pause': a fight goes on under it): Resume, Settings, How to play (the first steps again), Game slots;
+//   · Settings: two tabs, Sound (a slider a kind of sound, audio/settings.js) and Graphics (render3d/settings.js), a row a
+//     setting, its control on the right: Quality, Resolution, Depth of field, Hit feel, Zoom, Brightness;
+//   · Developer, behind a small link on both (the owner: "leave the developer link always on now - we will remove before
+//     shipping"): Copy debug report (debugreport.js), the frame rate on screen, the Frame test, what Luminati draws the
+//     people as; every skill unlocked and levels with their points (sim/dev.js; architecture A18), which mark the slot a
+//     dev game, never verified.
+// Party left the menu: the Party screen opens at every Tavern (townmenu.js), and changing the party only works in town;
+// Account (cloud saves, M6) comes back when it works. Preact + htm, like every M3 window.
 
 import { html, render } from 'htm/preact';
 import { CLASSES } from '../sim/party.js';
@@ -25,6 +26,7 @@ import { ZOOM_PCT_MIN, ZOOM_PCT_MAX } from '../render3d/settings.js';
 const CSS = `
 #titleWrap { position: fixed; inset: 0; z-index: 11; display: none; background: linear-gradient(rgba(8,6,12,.35), rgba(8,6,12,.55) 40%, rgba(8,6,12,.94) 72%); }
 #titleWrap.on { display: block; }
+#titleWrap.deep { background: rgba(8,6,12,.96); }   /* Settings and Developer: the world's labels don't show through their rows */
 #title { position: absolute; left: 0; right: 0; bottom: 0; max-width: 480px; margin: 0 auto; padding: 0 22px calc(env(safe-area-inset-bottom, 0px) + 22px);
   font-family: Georgia, 'Times New Roman', serif; color: #efe4cf; text-align: center; }
 #title .mark { font: 400 46px 'IM Fell English SC', Georgia, serif; letter-spacing: 6px; color: #f0c880; text-shadow: 0 2px 0 #000, 0 0 24px rgba(224,168,90,.45); margin-bottom: 6px; }
@@ -45,7 +47,33 @@ const CSS = `
 #title .snd label > span { min-width: 0; }
 #title .snd small b { font-weight: 600; color: #f0c880; }
 #title .snd input[type=range] { width: 46%; height: 40px; accent-color: #e0a84a; flex: none; }
-#title .dev { max-height: calc(100vh - 120px); overflow-y: auto; }
+#title.panel { max-height: calc(100vh - 20px); overflow-y: auto; }
+#title .mark.small { font-size: 30px; letter-spacing: 4px; margin: 14px 0 12px; }
+#title .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 12px; }
+#title .tabs button { margin: 0; min-height: 44px; font: 700 12px ui-monospace, Menlo, monospace; letter-spacing: 1.5px; text-transform: uppercase; color: #978c80; border-color: #3a3346; }
+#title .tabs button.on { background: linear-gradient(#e0a84a, #b67c2a); color: #1a1208; border-color: #f0c880; }
+/* a setting's row (Graphics, Developer): its name and what it does now on the left, its control on the right, as Sound's sliders */
+#title .snd .set { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; padding: 4px 6px 4px 12px; margin: 0 0 8px;
+  border-radius: 10px; border: 1px solid rgba(214,170,98,0.35); background: rgba(16,12,22,.8); font: 600 15px Georgia, serif; color: #efe4cf; }
+#title .snd .set > span, #title .snd .go > span { min-width: 0; }
+#title .snd .set small, #title .snd .go small { display: block; font: 10.5px ui-monospace, Menlo, monospace; color: #b8aca0; margin-top: 2px; letter-spacing: .3px; font-weight: 400; }
+#title .seg { display: inline-flex; flex: none; border: 1px solid #3a3346; border-radius: 9px; overflow: hidden; }
+#title .seg button { display: block; width: auto; min-height: 44px; margin: 0; padding: 0 9px; border: 0; border-radius: 0; background: none; color: #978c80;
+  font: 700 11px ui-monospace, Menlo, monospace; letter-spacing: .3px; }
+#title .seg button + button { border-left: 1px solid #3a3346; }
+#title .seg button.on { background: rgba(216,160,64,.24); color: #f0c880; }
+#title .tog { flex: none; display: block; width: 58px; min-height: 44px; margin: 0; padding: 0; border: 0; background: none; position: relative; }
+#title .tog i { position: absolute; left: 6px; right: 6px; top: 11px; height: 22px; border-radius: 11px; background: #3a3346; }
+#title .tog i::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 8px; background: #8a8094; transition: left .15s; }
+#title .tog.on i { background: #b67c2a; } #title .tog.on i::after { left: 25px; background: #f6dc8a; }
+#title .snd .go { display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; min-height: 52px; padding: 4px 14px 4px 12px; margin: 0 0 8px;
+  border-color: rgba(214,170,98,0.35); color: #efe4cf; font: 600 15px Georgia, serif; letter-spacing: 0; }
+#title .snd .go i { font: 18px ui-monospace, Menlo, monospace; color: #d8a040; font-style: normal; }
+#title button.link { display: inline-block; width: auto; min-height: 44px; margin: 2px auto 0; padding: 0 14px; border: 0; background: none; color: #8a8094;
+  font: 12px ui-monospace, Menlo, monospace; letter-spacing: .5px; text-decoration: underline; }
+#title .grp { font: 700 10.5px ui-monospace, Menlo, monospace; letter-spacing: 1.5px; text-transform: uppercase; color: #978c80; text-align: left; margin: 8px 2px 8px; }
+@media (prefers-reduced-motion: reduce) { #title .tog i::after { transition: none; } }
+#title .dev { max-height: calc(100vh - 20px); overflow-y: auto; }
 #title .devwho { text-align: left; margin: 0 0 6px; font: 600 15px Georgia, serif; color: #efe4cf; }
 #title .devwho small { display: block; font: 11px ui-monospace, Menlo, monospace; color: #b8aca0; margin-top: 2px; }
 #title .devnote { font: 11px ui-monospace, Menlo, monospace; color: #c8baa2; line-height: 1.45; margin: 0 0 12px; text-align: left; }
@@ -75,30 +103,52 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
     return html`<label key=${k}><span>${label}<small>${what ? html`${what} · ` : ''}<b>${pct === 0 ? 'off' : `${pct} %`}</b></small></span>
       <input type="range" min="0" max="100" step="5" value=${pct} aria-label=${label} aria-valuetext=${pct === 0 ? 'off' : `${pct} percent`}
         onInput=${(e) => { audio.set({ [k]: +e.currentTarget.value / 100 }); draw(); }} /></label>`; };
-  function Sound() {
-    const st = audio.settings;
-    return html`<div id="title">
-      <div class="mark" style="font-size:32px">SOUND</div>
-      <div class="snd">
-        ${slider('volume', 'Volume', '', st.volume)}
-        ${SOUND_ROWS.map(([k, label, what]) => slider(k, label, what, st[k]))}
-      </div>
+  const Sound = () => { const st = audio.settings; return html`<div class="snd">${slider('volume', 'Volume', '', st.volume)}${SOUND_ROWS.map(([k, label, what]) => slider(k, label, what, st[k]))}</div>`; };
+
+  // Graphics (render3d/settings.js, per device), a row a setting, as Sound is: the quality (high, or low: render3d/world.js
+  // quality), the resolution (sharp, balanced, fast: the most of the screen's pixel density it draws at), the depth of field
+  // (Luminati's lens: soft or off), the hit feel, the zoom (a slider; a pinch or the wheel set it too) and the Brightness
+  // tray (ui/brightness.js, opened over play with the menu closed). The testing tools went to Developer.
+  const set = async (patch) => { await graphics.set(patch); draw(); };
+  /** a row of segments: one of `opts` [value, label], the set one pressed @param {string} k @param {any[][]} opts @param {any} cur */
+  const seg = (k, opts, cur) => html`<span class="seg" role="group">${opts.map(([v, label]) => html`<button key=${String(v)} class=${cur === v ? 'on' : ''}
+    aria-pressed=${cur === v ? 'true' : 'false'} data-k=${k} data-v=${String(v)} onClick=${() => set({ [k]: v })}>${label}</button>`)}</span>`;
+  const row = (k, label, hint, control) => html`<div class="set" key=${k}><span>${label}<small>${hint}</small></span>${control}</div>`;
+  const HINT = { quality: { high: 'everything as it was', low: 'quicker: sharp shadows, the nearest lamps' },
+    res: { sharp: 'the screen’s own sharpness', balanced: 'at most 2×: quicker', fast: 'at most 1.5×: quicker, softer' },
+    feel: { full: 'blows hold and jolt', light: 'half as much', off: 'the screen keeps still' } };
+  function Graphics() {
+    const g = graphics.read(), canTune = !!tune && (mode === 'pause' || sim.state.created);
+    return html`<div class="snd">
+      ${row('quality', 'Quality', HINT.quality[g.quality], seg('quality', [['high', 'High'], ['low', 'Low']], g.quality))}
+      ${row('res', 'Resolution', HINT.res[g.res], seg('res', [['sharp', 'Sharp'], ['balanced', 'Balanced'], ['fast', 'Fast']], g.res))}
+      ${row('dof', 'Depth of field', g.dof === 'off' ? 'everything sharp' : 'the top and bottom of the screen soft', html`<button class=${'tog' + (g.dof !== 'off' ? ' on' : '')} role="switch"
+        aria-checked=${g.dof !== 'off' ? 'true' : 'false'} aria-label="Depth of field" data-k="dof" onClick=${() => set({ dof: g.dof === 'off' ? 'soft' : 'off' })}><i></i></button>`)}
+      ${row('feel', 'Hit feel', HINT.feel[g.feel], seg('feel', [['full', 'Full'], ['light', 'Light'], ['off', 'Off']], g.feel))}
+      <label key="zoom"><span>Zoom<small><b>${g.zoom} %</b> · pinch the world, or the wheel</small></span>
+        <input type="range" min=${ZOOM_PCT_MIN} max=${ZOOM_PCT_MAX} step="1" value=${g.zoom} aria-label="Zoom" aria-valuetext=${`${g.zoom} percent`}
+          onInput=${(e) => set({ zoom: +e.currentTarget.value })} /></label>
+      ${tune && html`<button class="go" key="bright" disabled=${!canTune} onClick=${() => { hide(); setPaused(false); onPlay(); tune(); }}><span>Brightness<small>${canTune
+        ? ['dawn', 'day', 'dusk', 'night'].map((p) => `${p} ${g.bright ? g.bright[p] : 100} %`).join(' · ') : 'once your hero is made'}</small></span><i aria-hidden="true">›</i></button>`}
+    </div>`;
+  }
+  let tab = 'sound';
+  function Settings() {
+    const tabs = [audio && ['sound', 'Sound'], graphics && ['graphics', 'Graphics']].filter(Boolean);
+    if (!tabs.some(([k]) => k === tab)) tab = tabs[0][0];
+    return html`<div id="title" class="panel">
+      <div class="mark small">SETTINGS</div>
+      ${tabs.length > 1 && html`<div class="tabs" role="tablist">${tabs.map(([k, label]) => html`<button key=${k} role="tab" class=${tab === k ? 'on' : ''}
+        aria-selected=${tab === k ? 'true' : 'false'} onClick=${() => { tab = k; draw(); }}>${label}</button>`)}</div>`}
+      ${tab === 'sound' ? html`<${Sound} />` : html`<${Graphics} />`}
       <button class="pri" onClick=${() => { panel = ''; draw(); }}>Back</button>
     </div>`;
   }
 
-  // Graphics (render3d/settings.js, per device): the world is drawn by Luminati only (docs/luminati-only-cleanup.md); the
-  // depth of field (the owner: "Depth of field Blur is a new menu setting"), Luminati's lens blur, soft or off; the
-  // resolution (sharp, balanced, fast: the most of the screen's pixel density it draws at); the hit feel, the frame rate on screen and the brightness tray
-  // (the zoom, a step at a time from where it is: render3d/settings.js; a pinch or the wheel set it finer)
-  const zoomStep = (label, what, d, off) => html`<button key=${'zoom' + d} disabled=${off}
-    onClick=${async () => { const z = graphics.read().zoom; await graphics.set({ zoom: Math.min(ZOOM_PCT_MAX, Math.max(ZOOM_PCT_MIN, Math.round((z + d) / 10) * 10)) }); draw(); }}>${label}<small>${what}</small></button>`;
-  const choice = (k, v, label, what, on) => html`<button key=${k + v} class=${on ? 'pri' : ''} aria-pressed=${on ? 'true' : 'false'}
-    onClick=${async () => { await graphics.set({ [k]: v }); draw(); }}>${label}<small>${what}</small></button>`;
   // what Luminati is drawing the people as (docs/dungeon-kit-proposal.md §9.6): models or sprites, how many, and the density
   // it draws at; a model that failed says why (the owner saw sprites on a phone we can't test from here)
   function figStatus() {
-    const s = graphics.status ? graphics.status() : null;
+    const s = graphics && graphics.status ? graphics.status() : null;
     if (!s) return 'People: Luminati is still starting';
     const at = s.pr ? ` · drawn at ${+s.pr.toFixed(2)}× (screen ${+(s.dpr || 1).toFixed(2)}×)` : '';
     if (s.figures === 'sprites') return `People: sprites (?figures=sprites)${at}`;
@@ -106,59 +156,13 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
     if (s.actors > 0 && s.models === s.actors) return `People: 3D models, all ${s.models} in view${at}`;
     return `People: ${s.models || 0} of ${s.actors || 0} in view as models, the rest still loading${at}`;
   }
-  function Graphics() {
-    const g = graphics.read();
-    return html`<div id="title">
-      <div class="mark" style="font-size:32px">GRAPHICS</div>
-      <div class="tag" id="figStatus">${figStatus()}</div>
-      <div class="tag">Depth of field</div>
-      <div class="row">
-        ${choice('dof', 'soft', 'Soft blur', 'far and near a little soft', g.dof === 'soft')}
-        ${choice('dof', 'off', 'Off', 'everything sharp', g.dof === 'off')}
-      </div>
-      <div class="tag">Resolution</div>
-      <div class="row">
-        ${choice('res', 'sharp', 'Sharp', 'as it was', g.res === 'sharp')}
-        ${choice('res', 'balanced', 'Balanced', 'at most 2×: quicker', g.res === 'balanced')}
-        ${choice('res', 'fast', 'Fast', 'at most 1.5×: softer', g.res === 'fast')}
-      </div>
-      <div class="tag">Quality</div>
-      <div class="row">
-        ${choice('quality', 'high', 'High', 'everything as it was', g.quality === 'high')}
-        ${choice('quality', 'low', 'Low', 'quicker: sharp shadows, the nearest lamps', g.quality === 'low')}
-      </div>
-      <div class="tag">Hit feel</div>
-      <div class="row">
-        ${choice('feel', 'full', 'Full', 'blows hold and jolt', g.feel === 'full')}
-        ${choice('feel', 'light', 'Light', 'half as much', g.feel === 'light')}
-        ${choice('feel', 'off', 'Off', 'the screen keeps still', g.feel === 'off')}
-      </div>
-      <div class="tag">Zoom · ${g.zoom} % (pinch the world, or the mouse wheel)</div>
-      <div class="row">
-        ${zoomStep('Further', 'see more around you', -10, g.zoom <= ZOOM_PCT_MIN)}
-        ${choice('zoom', 100, 'Default', 'as it was', g.zoom === 100)}
-        ${zoomStep('Closer', 'see them bigger', 10, g.zoom >= ZOOM_PCT_MAX)}
-      </div>
-      <div class="tag">Frame rate on screen</div>
-      <div class="row">
-        ${choice('fps', 'on', 'Show', 'frames a second, under ☰', g.fps === 'on')}
-        ${choice('fps', 'off', 'Hide', 'for play', g.fps !== 'on')}
-      </div>
-      ${graphics.frameTest && html`<div class="tag">Frame rate test</div>
-      <button onClick=${() => { close(); setTimeout(() => graphics.frameTest(), 600); }}>Frame test<small>about a minute and a half, hands off: each part of the picture timed on this device, a table to copy</small></button>`}
-      ${tune && html`<div class="tag">Brightness by the part of the day</div>
-      <button disabled=${!(mode === 'pause' || sim.state.created)} onClick=${() => { hide(); setPaused(false); onPlay(); tune(); }}>Brightness<small>${mode === 'pause' || sim.state.created
-        ? ['dawn', 'day', 'dusk', 'night'].map((p) => `${p} ${g.bright ? g.bright[p] : 100} %`).join(' · ')
-        : 'once your hero is made'}</small></button>`}
-      <button class="pri" onClick=${() => { panel = ''; draw(); }}>Back</button>
-    </div>`;
-  }
 
   // Developer (the owner, 2026-11-08: "Add a developer option in the menu to unlock skills, and add a level which includes
-  // appropriate skill points and stats"; on the site too, the owner's choice): every skill unlocked for the company, and
-  // a level for anyone in the party, by the sim's own commands (sim/dev.js), so a level brings its stat points, its skill
-  // point and its HP as one fought for does. Applied at once (main.js devApply: the menu holds the game still). Either
-  // marks this slot a dev game: never verified once saves go online.
+  // appropriate skill points and stats"; on the site too, the owner's choice; 2026-11-13: the testing tools gathered here).
+  // Reports: the debug report, the frame rate on screen, the Frame test (render3d/frametest.js), what Luminati draws the
+  // people as. Cheats: every skill unlocked for the company, and a level for anyone in the party, by the sim's own commands
+  // (sim/dev.js), so a level brings its stat points, its skill point and its HP as one fought for does; applied at once
+  // (main.js devApply). Either marks this slot a dev game: never verified once saves go online.
   let devSaid = '';
   function devDo(cmds, say) { if (!devApply) return; devApply(cmds); devSaid = say(); draw(); }
   function Developer() {
@@ -167,9 +171,19 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
     const open = (m) => ladderOf(m.cls).filter((q) => unlocked(m, q, S.trials)).length, carried = (m) => ladderOf(m.cls).length;   // (abilities and passives: the ladder, skills.js)
     const up = (m, n) => devDo(Array.from({ length: Math.min(n, DEV_LEVEL_MAX - m.level) }, () => ({ type: 'devLevel', id: m.id })),
       () => `${m.name} is level ${m.level}: ${pts(m)} · ${open(m)} of ${carried(m)} skills open`);
-    return html`<div id="title" class="dev">
-      <div class="mark" style="font-size:32px">DEVELOPER</div>
-      <div class="devnote">For testing. A level comes as one fought for does: 3 stat points, a skill point at every even level, the HP it brings. Using either marks this slot a <b>dev game</b>${S.dev ? ' (it is one)' : ''}: it will never count as verified progress once saves go online.</div>
+    const g = graphics ? graphics.read() : null;
+    return html`<div id="title" class="panel dev">
+      <div class="mark small">DEVELOPER</div>
+      <div class="grp">Reports</div>
+      <div class="snd">
+        <button class="go" key="report" onClick=${copyReport}><span>${copied || 'Copy debug report'}<small>stats, state and quests, for a bug report</small></span><i aria-hidden="true">›</i></button>
+        ${g && html`<div class="set" key="fps"><span>Frame rate on screen<small>frames a second, under ☰</small></span><button class=${'tog' + (g.fps === 'on' ? ' on' : '')} role="switch"
+          aria-checked=${g.fps === 'on' ? 'true' : 'false'} aria-label="Frame rate on screen" data-k="fps" onClick=${() => set({ fps: g.fps === 'on' ? 'off' : 'on' })}><i></i></button></div>`}
+        ${graphics && graphics.frameTest && html`<button class="go" key="ft" onClick=${() => { close(); setTimeout(() => graphics.frameTest(), 600); }}><span>Frame test<small>about a minute, hands off: each part of the picture timed on this device</small></span><i aria-hidden="true">›</i></button>`}
+      </div>
+      ${graphics && html`<div class="devnote" id="figStatus">${figStatus()}</div>`}
+      <div class="grp">Cheats · mark this slot a dev game${S.dev ? ' (it is one)' : ''}</div>
+      <div class="devnote">A level comes as one fought for does: 3 stat points, a skill point at every even level, the HP it brings. A dev game never counts as verified progress once saves go online.</div>
       <div class="devsaid" role="status">${devSaid}</div>
       <button disabled=${done >= all || !S.created} onClick=${() => devDo([{ type: 'devUnlockSkills' }], () => 'Every skill unlocked: each opens at its level (6, 12)')}>
         Unlock every skill<small>${done >= all ? 'done: every class’s level-6 and level-12 trials' : `every class’s trials, as if done (${done} of ${all} now): each skill opens at its level`}</small></button>
@@ -188,35 +202,31 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
 
   function Title() {
     if (panel === 'dev' && devApply) return html`<${Developer} />`;
-    if (panel === 'sound' && audio) return html`<${Sound} />`;
-    if (panel === 'graphics' && graphics) return html`<${Graphics} />`;
-    const S = sim.state, h = S.party[0], made = S.created;
+    if (panel === 'settings' && (audio || graphics)) return html`<${Settings} />`;
+    const S = sim.state, h = S.party[0], made = S.created, paused = mode === 'pause';
     const where = sim.world.kind === 'dungeon' ? `${(sim.world.siteName || 'The Old Barrows').replace(/^The /, 'the ')} · depth ${S.depth + 1}` : sim.world.name || 'Emberfall';
+    const settings = (audio || graphics) && html`<button onClick=${() => { panel = 'settings'; draw(); }}>Settings<small>${[audio && 'sound', graphics && 'graphics'].filter(Boolean).join(' · ')}</small></button>`;
     return html`<div id="title">
-      <div class="mark">EMBER<em>FALL</em></div>
-      <div class="tag">The heroes of this age are not available… Looks like it is up to you.</div>
+      ${paused ? html`<div class="mark small">PAUSED</div>` : html`<div class="mark">EMBER<em>FALL</em></div>
+      <div class="tag">The heroes of this age are not available… Looks like it is up to you.</div>`}
       <div class="who">${made
         ? html`Slot ${slot} · <b>${h.name}</b><br />${(CLASSES[h.cls] || CLASSES.fighter).label} · level ${h.level} · ${where}${S.dev ? ' · dev game' : ''}`
         : html`Slot ${slot} · <b>no hero yet</b><br />a new party, a fresh Emberfall`}</div>
       ${made
-        ? html`<button class="pri" onClick=${close}>${mode === 'pause' ? 'Resume' : 'Continue'}</button>`
+        ? html`<button class="pri" onClick=${close}>${paused ? 'Resume' : 'Continue'}</button>`
         : html`<button class="pri" onClick=${() => { hide(); openCreate(); }}>Begin</button>`}
-      <div class="row">
-        <button onClick=${() => openSlots()}>Game slots</button>
-        <button disabled=${!made} onClick=${() => { close(); openParty(); }}>Party</button>
-      </div>
-      <div class="row">
-        <button onClick=${() => { hide(); openChronicle(mode); }}>The Chronicle<small>watch the intro</small></button>
-        <button disabled>Account<small>cloud saves with M6</small></button>
-      </div>
-      ${openSteps && made && html`<button onClick=${() => { close(); openSteps(); }}>First steps<small>walking, your hero, the compass, the Journal, the map, the menu</small></button>`}
-      ${audio && html`<button onClick=${() => { panel = 'sound'; draw(); }}>Sound<small>volume · music · ambient · attacks and spells · footsteps · foes</small></button>`}
-      ${graphics && html`<button onClick=${() => { panel = 'graphics'; draw(); }}>Graphics<small>depth of field · hit feel · zoom · brightness · frame rate</small></button>`}
-      <button onClick=${copyReport}>${copied || 'Copy debug report'}<small>stats, state and quests, for a bug report</small></button>
-      ${devApply && made && html`<button onClick=${() => { panel = 'dev'; devSaid = ''; draw(); }}>Developer<small>unlock every skill · levels with their points${S.dev ? ' · a dev game' : ''}</small></button>`}
+      ${paused ? html`
+        ${settings}
+        ${openSteps && made && html`<button onClick=${() => { close(); openSteps(); }}>How to play<small>the first steps again</small></button>`}
+        <button onClick=${() => openSlots()}>Game slots<small>saved as you go</small></button>`
+      : html`
+        <button onClick=${() => openSlots()}>Game slots<small>new game · switch · delete</small></button>
+        ${settings}
+        <button onClick=${() => { hide(); openChronicle(mode); }}>The Chronicle<small>watch the intro</small></button>`}
+      ${devApply && html`<button class="link" onClick=${() => { panel = 'dev'; devSaid = ''; draw(); }}>Developer ›</button>`}
     </div>`;
   }
-  const draw = () => render(html`<${Title} />`, wrap);
+  const draw = () => { wrap.classList.toggle('deep', panel !== ''); render(html`<${Title} />`, wrap); };
   // the report to the clipboard; the label says how it went (a HUD toast would sit under this menu)
   let copied = '';
   async function copyReport() {
