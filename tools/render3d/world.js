@@ -1355,10 +1355,13 @@ const api = {
     if (o.figures === 'models' || o.figures === 'sprites') FIGURES = o.figures;
     if (['chosen', 'doors', 'all', 'sprites'].includes(o.landmarks)) LANDMARKS = o.landmarks;   // (?landmarks=: our kit's pieces in 3D, placeEnv)   // (?figures=sprites: the atlases, as before 4b)
     const S = game?.postfx?.settings;
-    // 'soft': the prototype's eased lens (its view.js): a band most of the screen tall, 16 units of depth in focus, so the
-    // square is sharp and the far roofs and the near hedges a little soft; 'off': everything sharp
-    // (none underground: the rooms below the one in view held their fires as blurred orbs over the HUD)
-    if (S?.dof) Object.assign(S.dof, { enabled: dof !== 'off' && !inside, focusRange: 16, tiltShift: 0.14, tiltWidth: 0.62 });
+    // 'soft': the top and bottom 15 % of the screen soft, the rest sharp (the owner, 2026-11-13: "reduce the blur band to
+    // be only the top 15% and bottom 15% of the screen"): Luminati's screen band alone (tilt-shift: sharp from 0.15 to 0.85
+    // of the height, the blur building from nothing at the band's edge to tiltShift at the screen's), its blur by depth off
+    // (a focus range wider than any view: before, 16 units in focus softened the far roofs and near hedges wherever they
+    // stood on screen); 'off': everything sharp (none underground: the rooms below the one in view held their fires as
+    // blurred orbs over the HUD)
+    if (S?.dof) Object.assign(S.dof, { enabled: dof !== 'off' && !inside, focusRange: 1e4, tiltShift: 0.45, tiltCenter: 0.5, tiltWidth: 0.7, tiltFeather: 0.15 });
     if (o.quality === 'high' || o.quality === 'low') quality = o.quality;
     applyQuality();
   },

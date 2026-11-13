@@ -2,7 +2,7 @@
 // settings.js — the menu's Graphics settings, kept per device (docs/luminati-port-plan.md §12, the owner, 2026-10-31).
 // The world is Luminati's (render3d/hybrid.js): the owner, 2026-11-09, "we are going to stick with the Luminati version"
 // (docs/luminati-only-cleanup.md, step 1). There's no choice of renderer any more; what's left to set:
-//   · the depth of field: Luminati's diorama blur, 'soft' (the prototype's eased blur) or 'off'. The owner: "Depth of
+//   · the depth of field: Luminati's diorama blur, 'soft' (the top and bottom 15 % of the screen, 2026-11-13) or 'off'. The owner: "Depth of
 //     field blur is a new menu setting."
 //   · the brightness outdoors by the part of the day (the owner, 2026-11-04: "In game add a setting for me to dial in
 //     brightness for day, dusk, dawn and night so i can better test and confirm settings"): a percentage a part, 100 the

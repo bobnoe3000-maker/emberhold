@@ -19590,9 +19590,11 @@ var zh = (e) => Rh(e.map((e) => [
 		let t = J?.postfx?.settings;
 		t?.dof && Object.assign(t.dof, {
 			enabled: Of !== "off" && !uh,
-			focusRange: 16,
-			tiltShift: .14,
-			tiltWidth: .62
+			focusRange: 1e4,
+			tiltShift: .45,
+			tiltCenter: .5,
+			tiltWidth: .7,
+			tiltFeather: .15
 		}), (e.quality === "high" || e.quality === "low") && (Nf = e.quality), km();
 	},
 	frame(e) {
