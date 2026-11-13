@@ -68,8 +68,8 @@ export function createFrameTest(o) {
       const line = el('div'); line.id = 'ftLine'; document.body.appendChild(line);
       const where = o.where();
       try {
-        // (?frametest=all: every piece of the picture; else the question open now: render3d/frametest.js variants)
-        const set = new URLSearchParams(location.search).get('frametest') === 'all' ? 'all' : 'focus';
+        // (?frametest=all: every piece of the picture; lamps: the lamps and the shadow's edge; else the question open now: render3d/frametest.js variants)
+        const ft = new URLSearchParams(location.search).get('frametest'), set = ft === 'all' || ft === 'lamps' ? ft : 'focus';
         const r = await runFrameTest(w, o.graphics(), (i, n, label) => { line.textContent = `Frame test ${i + 1}/${n} · ${label} · hands off`; }, set);
         card(r, where);
       } catch (err) {

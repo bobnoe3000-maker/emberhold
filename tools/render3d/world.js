@@ -56,7 +56,17 @@ const SPRITE_OPTS = { billboard: 'spherical', normalUp: 0.6, wrap: 0.6, roundnes
 
 let lang = 'en', fonts = null, tables = null, container = null, uiRoot = null;
 
-let game = null, building = null, levelId = 0, dof = 'soft', res = 'sharp', resSet = 'sharp', shadowEdge = 'soft', yawDeg = 45, pitchDeg = 30;
+let game = null, building = null, levelId = 0, dof = 'soft', res = 'sharp', resSet = 'sharp', yawDeg = 45, pitchDeg = 30;
+// The menu's Quality (render3d/settings.js; the owner, 2026-11-12: "lets package into a high and low graphics setting
+// option. high is current, low is with your recommendations without sacrificing much of the looks"). Low, from the owner's
+// phone's Frame tests in Thornwick's square at dusk (docs/performance-options.md): the sun's shadow sharp-edged (one tap
+// of its map, not PCF's five: 2.4 ms of 27); the lamp pool LOW_LAMPS lights, the nearest (the pool ranks them), and of
+// Luminati's four effect lights only the hero's wisp and the spells' light shown (every point light is in every lit
+// shader: 4 in all saved 2.7 ms of 16's, 8 only 0.8); the grade's sharpen, grain and colour fringe off (unseen at play's
+// size). High: all of it as it was.
+let quality = 'high', lampsSet = 0, gradeKeep = null, wispSlots = [];
+const LOW_LAMPS = 3;
+const lampsFor = () => (quality === 'low' ? LOW_LAMPS : MAX_POINT_LIGHTS);
 // The levels set aside on leaving (Luminati's swapLevel `keep`), by their content (levelKey): going back re-attaches
 // one, its programs compiled and its buffers on the GPU, instead of building it again (the owner, 2026-11-11: "Load
 // times from town to the main map takes up to 5-6 seconds"). Each with our art stood in it (its env sprites and kit
@@ -477,7 +487,7 @@ let skyShown = 'default';
 function skyFor(lv, region) {
   const L = game?.lighting; if (!L) return;
   const env = lv.environment || {}, G = game.postfx?.settings?.grade;
-  if (G) { if (!gradeOwn) gradeOwn = { ...G }; Object.assign(G, gradeOwn, region === 'vale' ? VALE_GRADE : {}); }
+  if (G) { if (!gradeOwn) gradeOwn = { ...G }; Object.assign(G, gradeOwn, region === 'vale' ? VALE_GRADE : {}); gradeKeep = { sharpen: G.sharpen, grain: G.grain, chromaticAberration: G.chromaticAberration }; applyGrade(); }
   graded = region === 'vale' && !env.interior;
   if (env.interior || env.climate || env.season) return;                 // (underground: the ambient's ours; a climate's sky its own)
   const want = region === 'vale' ? 'dusky' : 'default';
@@ -673,6 +683,44 @@ function setLight(L) {
   if (L.key) light.mat.uniforms.uKey.value.set(L.key.base, L.key.step, L.key.origin, 1);
 }
 
+// ── the menu's Quality (above: quality) ───────────────────────────────────────────────────────────────────────────
+// applied at once and at every level built (settings()); a change of shadow type or light count recompiles the lit
+// programs once, three.js seeing the change
+function applyQuality() {
+  const R = game?.engine?.renderer; if (!R) return;
+  const t = quality === 'low' ? THREE.BasicShadowMap : THREE.PCFShadowMap;
+  if (R.shadowMap.type !== t) {
+    R.shadowMap.type = t; R.shadowMap.needsUpdate = true;
+    game.engine.scene.traverse((q) => { if (q.material) for (const m of [].concat(q.material)) m.needsUpdate = true; });
+  }
+  applyGrade(); lampsTo(lampsFor()); showWisps();
+}
+// the grade's fine grain (skyFor sets each level's grade; this lays Low's over it)
+function applyGrade() {
+  const G = game?.postfx?.settings?.grade; if (!G || !gradeKeep) return;
+  Object.assign(G, quality === 'low' ? { sharpen: 0, grain: 0, chromaticAberration: 0 } : gradeKeep);
+}
+// the lamp pool at n lights: a new fixed pool, the level's lamps wired into it again (its story lamps hidden as they
+// were), the old one let go; the levels set aside and one built ahead held the old pool, so they're dropped (built again
+// when visited). At boot the pool is made at its size (boot: game.lightPool)
+function lampsTo(n) {
+  const old = game?.lightPool; if (!old || lampsSet === n || !game.lighting) return;
+  for (const [, v] of aside) { game.disposeKept(v.kept); dropEnv(v.env, v.made); }
+  aside.clear(); dropPrep();
+  const np = new LightPool(game.lighting, [], { size: n, fixed: true });
+  game.lightPool = np; lampsSet = n;
+  const w = game.world;
+  if (w) { w._sharedPool = np; w._wireLights(); }
+  old.dispose();
+}
+// of the effect lights, Low shows the hero's wisp and the spells' light (wispSlots: theirs, found as they're taken); the
+// blast's flash and the spare go dark (each still taken and set: unseen)
+function showWisps() {
+  const S = game?.vfxLights?._slots; if (!S) return;
+  for (const sl of S) sl.handle.light.visible = quality !== 'low' || wispSlots.includes(sl);
+}
+const loaned = () => new Set((game?.vfxLights?._slots || []).filter((sl) => sl.loan));
+
 // ── the camera: Emberlit's ──────────────────────────────────────────────────────────────────────────────────────────
 const cam = { x: 0, y: 1, z: 0, ppu: 22, ready: false };
 function placeCamera() {
@@ -707,7 +755,7 @@ async function boot(level) {
   // last one had; and a level left can be set aside (swapLevel `keep` needs the shared pool). Its init writes null here.
   let pool = null;
   Object.defineProperty(game, 'lightPool', { configurable: true, enumerable: true, get: () => pool,
-    set: (v) => { pool = v || pool || (game.lighting ? new LightPool(game.lighting, [], { size: MAX_POINT_LIGHTS, fixed: true }) : null); } });
+    set: (v) => { pool = v || pool || (game.lighting ? new LightPool(game.lighting, [], { size: (lampsSet = lampsFor()), fixed: true }) : null); } });
   await game.init(() => {});
   if (game.audio) game.audio.muted = true;                    // (the game has its own sound: src/audio/)
   game._updatePlayCamera = () => {};                          // (the camera is the game's: placeCamera)
@@ -1299,30 +1347,8 @@ const api = {
       E.renderScale = cap > 0 ? Math.min(1, cap / top) : 1;
       resSet = res;
     }
-    // the shadows' edges (settings.js; the owner's phone, the Frame test: soft's five taps of the map a pixel were 2.4 ms
-    // of 27 in the square at dusk): sharp, one tap (three.js BasicShadowMap). A change of type recompiles every lit program
-    // once; a level built after it compiles with it
-    if (o.shadow === 'soft' || o.shadow === 'sharp') shadowEdge = o.shadow;
-    const SR = game?.engine?.renderer;
-    if (SR) {
-      const t = shadowEdge === 'sharp' ? THREE.BasicShadowMap : THREE.PCFShadowMap;
-      if (SR.shadowMap.type !== t) {
-        SR.shadowMap.type = t; SR.shadowMap.needsUpdate = true;
-        game.engine.scene.traverse((q) => { if (q.material) for (const m of [].concat(q.material)) m.needsUpdate = true; });
-      }
-    }
-    if (o.bright > 0) bright = o.bright;
-    if (o.figLit > 0) FIG_LIT = o.figLit;
-    if (o.carryUp > 0) CARRY_UP = o.carryUp;
-    if (o.carryGain > 0) CARRY_GAIN = o.carryGain;
-    if (o.figMax > 0) FIG_MAX = o.figMax;
-    if (o.figures === 'models' || o.figures === 'sprites') FIGURES = o.figures;
-    if (['chosen', 'doors', 'all', 'sprites'].includes(o.landmarks)) LANDMARKS = o.landmarks;   // (?landmarks=: our kit's pieces in 3D, placeEnv)   // (?figures=sprites: the atlases, as before 4b)
-    const S = game?.postfx?.settings;
-    // 'soft': the prototype's eased lens (its view.js): a band most of the screen tall, 16 units of depth in focus, so the
-    // square is sharp and the far roofs and the near hedges a little soft; 'off': everything sharp
-    // (none underground: the rooms below the one in view held their fires as blurred orbs over the HUD)
-    if (S?.dof) Object.assign(S.dof, { enabled: dof !== 'off' && !inside, focusRange: 16, tiltShift: 0.14, tiltWidth: 0.62 });
+    if (o.quality === 'high' || o.quality === 'low') quality = o.quality;
+    applyQuality();
   },
   /**
    * one frame: the camera, the hour, the weather, who's where, then a step of Luminati and its picture
@@ -1396,8 +1422,11 @@ const api = {
     for (const kind of Object.keys(groundPools)) for (let i = nk[kind]; i < groundPools[kind].length; i++) groundPools[kind][i].visible = false;
     // the hero's ember-wisp: one of Luminati's spell lights (never a lamp), taken again after each level is built
     if (carryLevel !== levelId) {
-      carryLevel = levelId; carryLight = game.world?.acquireSpellLight?.({ minor: false }) ?? null; blastLight = game.world?.acquireSpellLight?.({ minor: false }) ?? null;
-      spellLight = game.world?.acquireSpellLight?.({ minor: false }) ?? null;
+      const had = loaned();
+      carryLevel = levelId; carryLight = game.world?.acquireSpellLight?.({ minor: false }) ?? null;
+      const withWisp = loaned(); blastLight = game.world?.acquireSpellLight?.({ minor: false }) ?? null;
+      const withBlast = loaned(); spellLight = game.world?.acquireSpellLight?.({ minor: false }) ?? null;
+      wispSlots = [...withWisp].filter((sl) => !had.has(sl)).concat([...loaned()].filter((sl) => !withBlast.has(sl))); showWisps();
       for (const rec of spellLive.values()) if (SK) freeSpell(rec);
       spellLive.clear();
     }

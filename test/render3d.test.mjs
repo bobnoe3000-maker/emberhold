@@ -202,17 +202,18 @@ test('the Brightness dial (the owner, 2026-11-04: "a setting for me to dial in b
   } finally { delete globalThis.localStorage; }
 });
 
-test('the menu\'s Shadow edges (the owner\'s phone, the Frame test): sharp by default on a touch screen, soft elsewhere; kept per device', async () => {
+test('the menu\'s Quality (the owner: "a high and low graphics setting"): low by default on a touch screen, high elsewhere; kept per device', async () => {
   const { readGraphics, writeGraphics } = await import('../src/render3d/settings.js');
   const mem = new Map(), mm = globalThis.matchMedia;
   globalThis.localStorage = /** @type {any} */ ({ getItem: (x) => mem.get(x) ?? null, setItem: (x, v) => mem.set(x, String(v)) });
   try {
-    assert.equal(readGraphics().shadow, 'soft', 'no touch screen: soft');
+    assert.equal(readGraphics().quality, 'high', 'no touch screen: high');
     globalThis.matchMedia = /** @type {any} */ ((q) => ({ matches: q === '(pointer: coarse)' }));
-    assert.equal(readGraphics().shadow, 'sharp', 'a phone: sharp');
-    writeGraphics({ shadow: 'soft' }); assert.equal(readGraphics().shadow, 'soft', 'chosen: kept, phone or not');
-    writeGraphics({ dof: 'off' }); assert.equal(readGraphics().shadow, 'soft', 'another setting leaves it be');
-    mem.set('emberfall.graphics', '{"shadow":"fuzzy"}'); assert.equal(readGraphics().shadow, 'sharp', 'unreadable: the device\'s default');
+    assert.equal(readGraphics().quality, 'low', 'a phone: low');
+    writeGraphics({ quality: 'high' }); assert.equal(readGraphics().quality, 'high', 'chosen: kept, phone or not');
+    writeGraphics({ dof: 'off' }); assert.equal(readGraphics().quality, 'high', 'another setting leaves it be');
+    mem.set('emberfall.graphics', '{"quality":"ultra","shadow":"sharp"}'); assert.equal(readGraphics().quality, 'low', 'unreadable: the device\'s default');
+    writeGraphics({ dof: 'soft' }); assert.ok(!('shadow' in JSON.parse(mem.get('emberfall.graphics'))), 'the old shadow choice dropped at the next write');
   } finally { delete globalThis.localStorage; if (mm) globalThis.matchMedia = mm; else delete globalThis.matchMedia; }
 });
 

@@ -22,7 +22,7 @@ const recompile = (G) => G.engine.scene.traverse((o) => { if (o.material) for (c
 const isFigure = (o) => { if (!o.parent?.isScene) return false; let s = false; o.traverse((c) => { if (c.isSkinnedMesh) s = true; }); return s; };
 
 // each piece by id, its own state kept on it (st), so pieces combine: a combination is its pieces on in order, off in reverse
-/** @param {{ dof: string, res: string }} cur @returns {Record<string, { label: string, on: (w: any, st: any) => void, off: (w: any, st: any) => void }>} */
+/** @param {{ dof: string, res: string, quality?: string }} cur @returns {Record<string, { label: string, on: (w: any, st: any) => void, off: (w: any, st: any) => void }>} */
 function pieces(cur) {
   const hideBy = (label, test) => ({ label, on: (w, st) => { st.hid = []; each(w.game, (o) => o.visible && test(o), (o) => { o.visible = false; st.hid.push(o); }); }, off: (w, st) => { for (const o of st.hid || []) o.visible = true; } });
   // lamp lights hidden past the first n (the shaders loop over every one: a change compiles them again)
@@ -61,13 +61,17 @@ function pieces(cur) {
     // (by their materials: world.js shows a figure's root again every frame it's placed)
     people: { label: 'People hidden', on: (w, st) => { st.m = []; each(w.game, isFigure, (r) => r.traverse((o) => { if (o.isMesh) for (const m of [].concat(o.material)) if (m.visible) { m.visible = false; st.m.push(m); } })); },
       off: (w, st) => { for (const m of st.m || []) m.visible = true; } },
+    // the menu's Quality as built (world.js quality): the whole of it, the lamps the pool's nearest
+    qlow: { label: 'Quality Low (as built)', on: (w) => w.settings({ quality: 'low' }), off: (w) => w.settings({ quality: cur.quality || 'high' }) },
+    qhigh: { label: 'Quality High (as built)', on: (w) => w.settings({ quality: 'high' }), off: (w) => w.settings({ quality: cur.quality || 'high' }) },
     balanced: { label: 'Resolution Balanced', on: (w) => w.settings({ res: 'balanced' }), off: (w) => w.settings({ res: cur.res }) },
     fast: { label: 'Resolution Fast', on: (w) => w.settings({ res: 'fast' }), off: (w) => w.settings({ res: cur.res }) },
   };
 }
 
-/** @param {{ dof: string, res: string }} cur the menu's Graphics as set now (put back after each)
- * @param {'focus' | 'all'} [set] focus: the question open now (the lamps and the shadow, 2026-11-12); all: every piece
+/** @param {{ dof: string, res: string, quality?: string }} cur the menu's Graphics as set now (put back after each)
+ * @param {'focus' | 'lamps' | 'all'} [set] focus: the question open now (Quality High against Low as built, 2026-11-12);
+ *   lamps: the lamps and the shadow's edge (the fourth run); all: every piece
  * @returns {Variant[]} */
 export function variants(cur, set = 'focus') {
   const P = pieces(cur);
@@ -80,7 +84,11 @@ export function variants(cur, set = 'focus') {
   // change the look, 2.7 together; those with shadows and lamps off held 57 fps, but the town lost its dusk. So: how
   // few lamps keep most of it, and whether a sharp-edged shadow is the shadow's cost
   const light = ['grade', 'bloom', 'edges', 'trees'];
-  if (set !== 'all') return [
+  if (set === 'focus') return [
+    one('base'), one('qhigh'), one('qlow'), one('qhigh'), one('qlow'),
+    { id: 'base2', label: 'As it is (again)', on: () => {}, off: () => {} },
+  ];
+  if (set === 'lamps') return [
     one('base'), ...['nolights', 'lights8', 'lights4', 'lights2', 'lights1', 'hardshadow', 'noshadow'].map(one),
     all('l4', 'Together: 4 lamps, no grain/sharpen, bloom, edges, outer trees', ['lights4', ...light]),
     all('l2h', 'Together: 2 lamps, hard shadows, and those', ['lights2', 'hardshadow', ...light]),
@@ -125,10 +133,10 @@ function timeFrames(settle, ms, cpu) {
 
 /**
  * Run the test on the world in view. @param {any} world the world module's api (hybrid.js world3d.world)
- * @param {{ dof: string, res: string }} cur @param {(i: number, n: number, label: string) => void} onStep @param {'focus' | 'all'} [set]
+ * @param {{ dof: string, res: string, quality?: string }} cur @param {(i: number, n: number, label: string) => void} onStep @param {'focus' | 'lamps' | 'all'} [set]
  * @returns {Promise<{ rows: Row[], about: string }>}
  */
-export async function runFrameTest(world, cur, onStep, set = 'focus') {
+export async function runFrameTest(world, cur, onStep, set = /** @type {'focus' | 'lamps' | 'all'} */ ('focus')) {
   const V = variants(cur, set), rows = /** @type {Row[]} */ ([]);
   // the CPU's share: every animation-frame callback's time (the game's loop: the sim, the overlay, the UI; and Luminati's
   // frame within it), Luminati's frame (world.frame: its update, then three.js's draw calls) and the draw calls alone
@@ -150,7 +158,7 @@ export async function runFrameTest(world, cur, onStep, set = 'focus') {
   const gpu = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
   let lights = 0; each(G, (o) => o.isPointLight && o.visible, () => { lights++; });
   const about = `${R.domElement.width}×${R.domElement.height} drawn · screen ${(globalThis.devicePixelRatio || 1).toFixed(2)}× · ${gpu} · ${lights} lamp lights · `
-    + `antialiasing ${G.postfx?.samples ?? '?'}× · shadow ${G.lighting?.sun?.shadow?.mapSize?.x ?? '?'} ${R.shadowMap.type === 0 ? 'sharp' : 'soft'} · DOF ${cur.dof} · resolution ${cur.res}`;
+    + `antialiasing ${G.postfx?.samples ?? '?'}× · shadow ${G.lighting?.sun?.shadow?.mapSize?.x ?? '?'} ${R.shadowMap.type === 0 ? 'sharp' : 'soft'} · DOF ${cur.dof} · resolution ${cur.res} · quality ${cur.quality || 'high'}`;
   return { rows, about };
 }
 

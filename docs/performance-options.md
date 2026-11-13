@@ -114,11 +114,22 @@ Fast and depth of field off: the main view 642 × 1318, antialiasing 2×, shadow
 - **The heads out of the shadow pass** (`world.js`, `figure.js compact` keeps a merged head tagged): −34 draws and
   −70,000 triangles in the square; the body's shadow is the figure's. `?headshadow=1` puts them back.
 
-- **Sharp shadow edges on phones** (the fourth run above): Graphics → *Shadow edges*, Soft (as they were: PCF's five taps
-  of the shadow map a pixel) or Sharp (one tap, three.js BasicShadowMap); Sharp by default on a touch screen
-  (`settings.js` `(pointer: coarse)`), Soft elsewhere (`world.js` settings `shadow`, applied at boot and at each level;
-  a change recompiles the lit programs once). −2.4 ms of 27 in the square at dusk ★, and at play's size it can hardly be
-  told from soft ([town-dusk-options.jpg](img/perf/town-dusk-options.jpg), the second).
+- **Graphics → Quality: High or Low** (the owner, 2026-11-12: *"lets package into a high and low graphics setting option.
+  high is current, low is with your recommendations without sacrificing much of the looks"*; it replaced, the same day,
+  a *Shadow edges* choice of its own). High: everything as it was. Low (`world.js` quality, applied at once and at each
+  level): the sun's shadow sharp-edged (one tap of its map, three.js BasicShadowMap, not PCF's five: −2.4 ms of 27 ★);
+  the lamp pool at the **3 nearest** lamps (Luminati's LightPool ranks them, fading one in as another goes), not 12; of
+  Luminati's 4 effect lights only the hero's wisp and the spells' light shown (the blast's flash and the spare dark): **5
+  point lights in every lit shader, not 16** (4 in all saved 2.7 ms ★, 8 only 0.8: it's the count that costs, every one
+  in every lit pixel); the grade's sharpen, grain and colour fringe off (unseen at play's size). Low by default on a touch
+  screen (`settings.js` `(pointer: coarse)`), High elsewhere. A change rebuilds the lamp pool in place (the level's lamps
+  wired into it again; levels set aside and one built ahead dropped, built again when visited) and recompiles the lit
+  programs once. Checked in the browser: a phone starts Low (shadow sharp, 3 lamps, 5 lights shown, 4 lit at dusk, grain
+  0), a desktop High (soft, 12, 16, 13 lit), each switching both ways, no page errors. The looks
+  ([quality-high-low.jpg](img/perf/quality-high-low.jpg)): the square at dusk can hardly be told apart near the hero (the
+  doors' pools by him kept); in the Old Barrows a torch further along the wall loses its glow on the floor. The Frame
+  test's default run now times High against Low as built (twice each); `?frametest=lamps` the fourth run's rows,
+  `?frametest=all` every piece.
 
 ## Options not taken yet
 
