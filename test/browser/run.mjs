@@ -1099,11 +1099,17 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
   if (b) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
     const errs = []; p.on('pageerror', (e) => errs.push(e.message));
-    const got = {}; p.on('response', (r) => { const m = r.url().match(/assets\/actors\/(hero_\w+)\.json/); if (m) got[m[1]] = Date.now(); });   // (the renderer reads an atlas's JSON only: step 4)
+    // (the renderer reads an atlas's JSON only: step 4. Timed on the page's own clock, its resource timings: the test's
+    // 'response' events reach Node late, and once had the cleric's arrive 1 ms "after" ready)
+    await p.addInitScript(() => performance.setResourceTimingBufferSize(5000));   // (the browser keeps 250 by default; the game loads more)
     await p.goto(`${base}/index.html?dev&manual&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__renderer, null, { timeout: 60000 });
-    const t = await p.evaluate(async () => { const H = globalThis.__sim.state.party[0]; H.actor = 'hero_cleric'; H.cls = 'cleric'; await globalThis.__renderer.ready; return Date.now(); });
+    const r = await p.evaluate(async () => {
+      const H = globalThis.__sim.state.party[0]; H.actor = 'hero_cleric'; H.cls = 'cleric'; await globalThis.__renderer.ready;
+      const t = performance.now(), e = performance.getEntriesByType('resource').find((x) => /assets\/actors\/hero_cleric\.json/.test(x.name));
+      return { loaded: !!e, early: e ? Math.round(t - e.responseEnd) : null };
+    });
     check('ready: the loading screen waits for the hero\'s own look (a cleric), not only the knight; no page errors',
-      !!got.hero_cleric && got.hero_cleric <= t && errs.length === 0, JSON.stringify({ cleric: got.hero_cleric ? got.hero_cleric - t : null }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+      r.loaded && r.early >= 0 && errs.length === 0, JSON.stringify(r) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }
 }
