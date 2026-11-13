@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>The Bowl</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: a long page of plates. The room drawn large first, its plan beside it, then the five phone screens in
+     the order a player meets them. One deliberate look, the game's own: dusk, gold leaf, Georgia and the HUD's mono. */
+  :root {
+    --bg: #0b0910; --panel: #120e19; --panel2: #1a1424; --line: rgba(214,170,98,0.42); --line2: #2c2638;
+    --gold: #f0c880; --gold2: #d8a040; --text: #efe4cf; --dim: #a39684; --faint: #6f6574;
+    --rival: #e2774f; --rival2: #2a1712; --win: #8fe07a; --loss: #ff8a7a; --guide: #6fd0ff;
+    --serif: Georgia, 'Times New Roman', serif; --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--serif); }
+  .wrap { max-width: 1240px; margin: 0 auto; padding-block: 28px 56px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .eyebrow { font: 11px/1.4 var(--mono); letter-spacing: 2.5px; text-transform: uppercase; color: #a08a6a; }
+  h1 { font: 600 34px/1.1 var(--serif); color: var(--gold); margin: 6px 0 8px; text-wrap: balance; }
+  h2 { font: 600 22px/1.2 var(--serif); color: var(--gold); margin: 0 0 6px; text-wrap: balance; }
+  .lede { color: #c2b6a6; font-size: 16px; line-height: 1.5; max-width: 66ch; margin: 0; }
+  .lede em { color: var(--text); }
+  section { margin-top: 40px; display: grid; gap: 14px; }
+  .note { color: var(--dim); font-size: 14px; line-height: 1.5; max-width: 72ch; margin: 0; }
+
+  /* the room */
+  .plate { position: relative; border: 1px solid var(--line2); border-radius: 14px; overflow: hidden; background: #07060b; }
+  .plate canvas { display: block; width: 100%; height: auto; }
+  .room { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .room { grid-template-columns: minmax(0, 1fr); } }
+  .key { display: grid; gap: 12px; }
+  .key svg { width: 100%; height: auto; display: block; border: 1px solid var(--line2); border-radius: 12px; background: #0e0b14; }
+  .legend { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; font-size: 14px; color: #c9bdad; line-height: 1.4; }
+  .legend b { color: var(--text); font-weight: 600; }
+  .legend .n { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 10px; background: var(--gold); color: #1a120a;
+    font: 700 11px var(--mono); margin-right: 6px; vertical-align: 1px; }
+
+  /* the phones */
+  .phones { display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; }
+  .shot { display: grid; gap: 10px; width: 360px; max-width: 100%; }
+  .shot h3 { font: 12px var(--mono); letter-spacing: 2px; text-transform: uppercase; color: #a08a6a; margin: 0; }
+  .shot p { margin: 0; font-size: 14px; color: var(--dim); line-height: 1.45; }
+  .phone { position: relative; width: 360px; max-width: 100%; aspect-ratio: 390 / 780; border-radius: 30px; overflow: hidden;
+    box-shadow: 0 0 0 7px #1c1824, 0 16px 44px rgba(0,0,0,.6); background: #0d0a13; font-family: var(--mono); color: var(--text); }
+  .scr { position: absolute; inset: 0; padding: 22px 14px 16px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+  .scr .top { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; color: var(--dim); }
+  .scr .top b { color: var(--gold); font-weight: 600; }
+  .ttl { font: 600 21px/1.15 var(--serif); color: var(--gold); margin: 0; }
+  .say { font: italic 13px/1.4 var(--serif); color: #cbbfae; margin: 0; }
+  .say::before { content: '“'; } .say::after { content: '”'; }
+  .tabs { display: flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+  .tabs span { flex: 1; text-align: center; padding: 9px 0; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); }
+  .tabs span.on { background: rgba(240,200,128,.14); color: var(--gold); }
+  .rate { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 10px 12px; border: 1px solid var(--line2); border-radius: 10px; background: var(--panel); }
+  .rate .big { font: 600 22px var(--serif); color: var(--text); font-variant-numeric: tabular-nums; }
+  .rate .tier { font-size: 11px; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; align-self: center; text-align: right; }
+  .bar { grid-column: 1 / -1; height: 5px; border-radius: 3px; background: #2a2433; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--gold2), var(--gold)); }
+  .rate .sm { grid-column: 1 / -1; display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .card { display: grid; grid-template-columns: 34px 1fr auto; gap: 4px 10px; align-items: center; padding: 10px 11px; border: 1px solid var(--line2);
+    border-radius: 10px; background: var(--panel); }
+  .card.pick { border-color: var(--line); }
+  .shield { width: 30px; height: 36px; border-radius: 3px 3px 15px 15px; position: relative; overflow: hidden; grid-row: span 2; box-shadow: inset 0 0 0 1px rgba(0,0,0,.4); }
+  .shield i { position: absolute; inset: 0 0 0 50%; }
+  .shield b { position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%); width: 12px; height: 12px; border-radius: 50%; }
+  .cn { font: 600 14px/1.2 var(--serif); color: var(--text); }
+  .cm { font-size: 11px; color: var(--dim); }
+  .chip { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 3px 7px; border-radius: 9px; border: 1px solid; white-space: nowrap; justify-self: end; }
+  .chip.easy { color: var(--win); border-color: rgba(143,224,122,.45); } .chip.even { color: var(--gold); border-color: var(--line); } .chip.hard { color: var(--loss); border-color: rgba(255,138,122,.45); }
+  .roster { grid-column: 2 / -1; display: flex; gap: 6px; flex-wrap: wrap; font-size: 11px; color: #cfc3b2; }
+  .roster span { padding: 2px 6px; border-radius: 5px; background: #221b2c; }
+  .odds { grid-column: 2 / -1; display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .strip { margin-top: auto; display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 10px;
+    border: 1px dashed var(--line); font-size: 11px; color: var(--dim); }
+  .strip span { white-space: nowrap; }
+  .strip b { color: var(--gold); font-weight: 600; }
+  .btn { display: block; text-align: center; padding: 13px 0; border-radius: 10px; font: 600 15px var(--serif); letter-spacing: .5px; }
+  .btn.pri { background: linear-gradient(#e6b663, #b8822f); color: #1c1208; }
+  .btn.sec { border: 1px solid var(--line); color: var(--gold); }
+  .vs { display: grid; gap: 6px; }
+  .row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; padding: 7px 10px; border-radius: 8px; background: var(--panel); font-size: 12px; }
+  .row .k { color: var(--text); font-weight: 600; } .row .d { color: var(--dim); } .row .l { color: var(--gold); font-variant-numeric: tabular-nums; }
+  .row.r { box-shadow: inset 3px 0 0 var(--rival); } .row.y { box-shadow: inset 3px 0 0 var(--gold); }
+  .lab { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #a08a6a; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+  .seg span { flex: 1; text-align: center; padding: 9px 0; font-size: 11px; color: var(--dim); }
+  .seg span.on { background: rgba(240,200,128,.16); color: var(--gold); }
+  .even-note { font-size: 11px; color: var(--dim); line-height: 1.4; }
+  .even-note b { color: var(--gold); font-weight: 600; }
+
+  /* in the bout: the room behind, the HUD over it */
+  .bout canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .hud { position: absolute; inset: 0; padding: 20px 10px 12px; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+  .clock { align-self: center; display: flex; gap: 10px; align-items: baseline; padding: 6px 14px; border-radius: 10px; background: rgba(12,9,18,.82); border: 1px solid var(--line); }
+  .clock b { font: 600 20px var(--mono); color: var(--text); font-variant-numeric: tabular-nums; }
+  .clock span { font-size: 10px; color: var(--dim); letter-spacing: 1px; text-transform: uppercase; }
+  .them, .us { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .mini { padding: 6px 7px; border-radius: 8px; background: rgba(14,10,20,.86); border: 1px solid var(--line2); font-size: 10px; display: grid; gap: 4px; }
+  .them .mini { border-color: rgba(226,119,79,.5); }
+  .mini b { font-weight: 600; color: var(--text); font-size: 11px; }
+  .mini .hp { height: 5px; border-radius: 3px; background: #2a2433; overflow: hidden; }
+  .mini .hp i { display: block; height: 100%; background: #6fbf5a; }
+  .them .mini .hp i { background: var(--rival); }
+  .mini.focus { box-shadow: 0 0 0 2px var(--gold); }
+  .mini.down { opacity: .5; }
+  .crier { align-self: center; max-width: 92%; padding: 7px 12px; border-radius: 10px; background: rgba(12,9,18,.86); border: 1px solid var(--line);
+    font: italic 12px/1.35 var(--serif); color: #e6d8c2; text-align: center; }
+  .crier b { font-style: normal; color: var(--gold); font: 600 10px var(--mono); letter-spacing: 1.5px; text-transform: uppercase; display: block; margin-bottom: 2px; }
+  .us { margin-top: auto; }
+  .us .mini { padding: 8px; }
+  .tag { position: absolute; font: 10px var(--mono); color: var(--guide); background: rgba(6,10,16,.82); padding: 2px 5px; border-radius: 4px; white-space: nowrap; }
+
+  /* the tourney */
+  .bracket { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; align-items: center; font-size: 10px; }
+  .col { display: grid; gap: 6px; }
+  .col h4 { margin: 0; font: 10px var(--mono); letter-spacing: 1.5px; text-transform: uppercase; color: #a08a6a; text-align: center; }
+  .m { border: 1px solid var(--line2); border-radius: 7px; background: var(--panel); overflow: hidden; }
+  .m div { display: flex; justify-content: space-between; gap: 4px; padding: 4px 6px; color: var(--dim); }
+  .m div + div { border-top: 1px solid var(--line2); }
+  .m .w { color: var(--text); }
+  .m .me { color: var(--gold); background: rgba(240,200,128,.1); font-weight: 600; }
+  .m .tbd { color: var(--faint); font-style: italic; }
+  .m .watch { justify-content: center; color: var(--guide); }
+  .col.sf { padding-block: 18px; gap: 46px; } .col.f { gap: 0; }
+  .purse { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; font-size: 10px; color: var(--dim); }
+  .purse div { padding: 6px 2px; border-radius: 7px; background: var(--panel); }
+  .purse b { display: block; color: var(--gold); font: 600 15px var(--serif); }
+
+  /* the result */
+  .verdict { text-align: center; display: grid; gap: 4px; padding: 14px 0 6px; }
+  .verdict .w { font: 600 34px var(--serif); color: var(--win); }
+  .verdict .s { font-size: 12px; color: var(--dim); }
+  .tally { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .tally div { padding: 10px; border-radius: 9px; background: var(--panel); font-size: 11px; color: var(--dim); display: grid; gap: 2px; }
+  .tally b { font: 600 18px var(--serif); color: var(--text); font-variant-numeric: tabular-nums; }
+  .tally b.up { color: var(--win); }
+
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .fact { padding: 12px 14px; border-left: 2px solid var(--line); display: grid; gap: 4px; }
+  .fact b { font: 600 15px var(--serif); color: var(--gold); }
+  .fact span { font-size: 14px; color: #c2b6a6; line-height: 1.45; }
+  footer { margin-top: 44px; font-size: 13px; color: var(--faint); font-family: var(--mono); }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head><body>
+
+<div class="wrap">
+  <div class="eyebrow">Emberfall · arena proposal · mockup</div>
+  <h1>The Bowl</h1>
+  <p class="lede">The imperial <em>Circus of the Sun</em> in Solmere: half its tiers fallen in, Ma Gorrie taking the bets, the Crier still calling the
+    bouts. Your company against another, in one room of sand. For now the rival companies are generated (authored names and manners,
+    strength rolled from a seed), and the Bowl opens from ☰. The rules and the build are in <em>bowl-arena-proposal.md</em>.</p>
+
+  <section>
+    <h2>The Sand</h2>
+    <p class="note">One room, from the game's camera (south-east, looking down). 44 × 34 tiles of raked sand, a large room. The near wall is knee-high
+      so the floor reads; the far wall stands, with four tiers of crowd behind it. Your company comes in at the Dust Gate, theirs at the Sun Gate.</p>
+    <div class="room">
+      <div class="plate"><canvas id="sand" width="1600" height="980" aria-label="The arena room drawn from the game's camera, with labels"></canvas></div>
+      <div class="key">
+        <svg viewBox="0 0 300 250" role="img" aria-label="Top-down plan of the Sand: a 44 by 34 tile oval, the two gates on its long axis, the marks 16 tiles apart">
+          <rect x="0" y="0" width="300" height="250" fill="#0e0b14"/>
+          <ellipse cx="150" cy="128" rx="128" ry="100" fill="#3a2f22" stroke="#6b5a40" stroke-width="2"/>
+          <ellipse cx="150" cy="128" rx="138" ry="110" fill="none" stroke="#4a4038" stroke-width="10" opacity=".9"/>
+          <path d="M 30 70 A 138 110 0 0 1 270 70" fill="none" stroke="#5c5248" stroke-width="16" opacity=".55"/>
+          <line x1="104" y1="96" x2="104" y2="160" stroke="#a89068" stroke-width="2" stroke-dasharray="4 3"/>
+          <line x1="196" y1="96" x2="196" y2="160" stroke="#a89068" stroke-width="2" stroke-dasharray="4 3"/>
+          <line x1="104" y1="176" x2="196" y2="176" stroke="#6fd0ff" stroke-width="1"/>
+          <text x="150" y="190" fill="#6fd0ff" font-family="ui-monospace, Menlo, monospace" font-size="10" text-anchor="middle">16 tiles</text>
+          <line x1="22" y1="240" x2="278" y2="240" stroke="#6fd0ff" stroke-width="1"/>
+          <text x="150" y="236" fill="#6fd0ff" font-family="ui-monospace, Menlo, monospace" font-size="10" text-anchor="middle">44 tiles</text>
+          <line x1="292" y1="28" x2="292" y2="228" stroke="#6fd0ff" stroke-width="1"/>
+          <text x="286" y="130" fill="#6fd0ff" font-family="ui-monospace, Menlo, monospace" font-size="10" text-anchor="end">34</text>
+          <rect x="6" y="114" width="16" height="28" rx="3" fill="#e2774f"/>
+          <rect x="278" y="114" width="16" height="28" rx="3" fill="#f0c880"/>
+          <rect x="128" y="10" width="44" height="16" rx="3" fill="#d8a040"/>
+          <circle cx="104" cy="112" r="5" fill="#e2774f"/><circle cx="104" cy="128" r="5" fill="#e2774f"/><circle cx="104" cy="144" r="5" fill="#e2774f"/>
+          <circle cx="196" cy="112" r="5" fill="#f0c880"/><circle cx="196" cy="128" r="5" fill="#f0c880"/><circle cx="196" cy="144" r="5" fill="#f0c880"/>
+          <text x="150" y="44" fill="#efe4cf" font-family="Georgia, serif" font-size="11" text-anchor="middle">the Sun's Box</text>
+          <text x="30" y="106" fill="#e2774f" font-family="Georgia, serif" font-size="11">Sun Gate</text>
+          <text x="270" y="106" fill="#f0c880" font-family="Georgia, serif" font-size="11" text-anchor="end">Dust Gate</text>
+          <text x="150" y="214" fill="#a39684" font-family="Georgia, serif" font-size="11" text-anchor="middle">near wall, knee-high</text>
+        </svg>
+        <ol class="legend">
+          <li><span class="n">1</span><b>The Sun's Box.</b> Ma Gorrie with her slate; the Crier at the rail with his bell.</li>
+          <li><span class="n">2</span><b>The Sun Gate</b>, theirs: they come in facing the camera, under their banner.</li>
+          <li><span class="n">3</span><b>The Dust Gate</b>, yours: a low arch on the near side.</li>
+          <li><span class="n">4</span><b>The marks</b>, two scuffed lines 16 tiles apart. Nothing else stands in the sand.</li>
+          <li><span class="n">5</span><b>Fallen tiers</b> on the east: rubble and a broken arch, as canon has it.</li>
+          <li><span class="n">6</span><b>Eight braziers</b> on the ring wall. Feast-day bouts are fought at dusk.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The screens</h2>
+    <p class="note">In the order a player meets them. Example companies and numbers throughout: <em>the Widow Brack's Three</em>, <em>the Coalbrook Boys</em>
+      and <em>Hesk's Cousins</em> are canon's written rivals; the rest are drafts for the authored roster.</p>
+    <div class="phones">
+
+      <div class="shot">
+        <h3>1 · ☰ → The Bowl</h3>
+        <div class="phone"><div class="scr">
+          <div class="top"><span>THE BOWL · Solmere</span><span>☉ <b>23</b> marks</span></div>
+          <p class="ttl">Ma Gorrie's board</p>
+          <p class="say">Three on the board today. Pick one you'll walk away from.</p>
+          <div class="tabs"><span class="on">Ladder</span><span>Feast-day</span><span>Record</span></div>
+          <div class="rate">
+            <span class="big">1,284</span><span class="tier">the Lower Tiers</span>
+            <div class="bar"><i style="width:42%"></i></div>
+            <div class="sm"><span>116 to the Upper Tiers</span><span>bracket 15–29 · at 18</span></div>
+          </div>
+          <div class="card pick">
+            <div class="shield" style="background:#3b5a7a"><i style="background:#c9b27a"></i><b style="background:#e8dcc0"></b></div>
+            <span class="cn">the Lantern Lads</span><span class="chip easy">Easier</span>
+            <div class="roster"><span>FTR 18</span><span>ROG 18</span><span>CLR 18</span></div>
+            <div class="odds"><span>Balanced · Steady</span><span>1,190 · 1 to 3</span></div>
+          </div>
+          <div class="card pick">
+            <div class="shield" style="background:#1c1c20"><i style="background:#3a1c22"></i><b style="background:#d8d0c8"></b></div>
+            <span class="cn">the Widow Brack's Three</span><span class="chip even">Even</span>
+            <div class="roster"><span>FTR 18</span><span>CLR 18</span><span>CLR 18</span></div>
+            <div class="odds"><span>Wall · Hardened</span><span>1,301 · evens</span></div>
+          </div>
+          <div class="card pick">
+            <div class="shield" style="background:#2a2420"><i style="background:#c8642c"></i><b style="background:#f0a040"></b></div>
+            <span class="cn">the Coalbrook Boys</span><span class="chip hard">Harder</span>
+            <div class="roster"><span>FTR 18</span><span>FTR 18</span><span>SHM 18</span></div>
+            <div class="odds"><span>Brawlers · Champion</span><span>1,452 · 3 to 1</span></div>
+          </div>
+          <div class="strip"><span>Paid bouts today <b>2 / 5</b></span><span>Feast-day Tourney in <b>2 days</b></span></div>
+        </div></div>
+        <p>A rival a row: their banner, manner and skill, the three they field, their rating and Ma Gorrie's odds. One easier, one even, one harder.</p>
+      </div>
+
+      <div class="shot">
+        <h3>2 · Scout them</h3>
+        <div class="phone"><div class="scr">
+          <div class="top"><span>THE BOWL · bout 3 of 5</span><span>☉ <b>23</b></span></div>
+          <div class="card" style="grid-template-columns:34px 1fr">
+            <div class="shield" style="background:#1c1c20"><i style="background:#3a1c22"></i><b style="background:#d8d0c8"></b></div>
+            <span class="cn">the Widow Brack's Three</span>
+            <span class="cm">Wall · Hardened · 1,301 · from Saltmere</span>
+          </div>
+          <p class="say">Three in black, and nobody's widow yet.</p>
+          <div class="lab">Theirs</div>
+          <div class="vs">
+            <div class="row r"><span class="k">Widow Brack</span><span class="d">Fighter · Rare +3</span><span class="l">18</span></div>
+            <div class="row r"><span class="k">Sorrel</span><span class="d">Cleric · Rare +3</span><span class="l">18</span></div>
+            <div class="row r"><span class="k">Hepzie</span><span class="d">Cleric · Rare +2</span><span class="l">18</span></div>
+          </div>
+          <div class="lab">Yours</div>
+          <div class="vs">
+            <div class="row y"><span class="k">Aldric</span><span class="d">Fighter · 16 → 18</span><span class="l">18</span></div>
+            <div class="row y"><span class="k">Osk</span><span class="d">Rogue · 15 → 18</span><span class="l">18</span></div>
+            <div class="row y"><span class="k">Manic</span><span class="d">Cleric · 15 → 18</span><span class="l">18</span></div>
+          </div>
+          <p class="even-note">Both companies fight at <b>18</b>, the top of the 15–29 bracket. Your gear stays as it is.</p>
+          <div class="lab">Stance</div>
+          <div class="seg"><span>Aggressive</span><span class="on">Balanced</span><span>Defensive</span></div>
+          <span class="btn pri" style="margin-top:auto">Into the Sand</span>
+        </div></div>
+        <p>Who they are and how they fight, against your company at the evened level. The stance and loadout are set here, as before a dungeon.</p>
+      </div>
+
+      <div class="shot">
+        <h3>3 · The bout</h3>
+        <div class="phone bout">
+          <canvas id="boutBg" width="780" height="1560" aria-hidden="true"></canvas>
+          <div class="hud">
+            <div class="clock"><span>The Bowl</span><b>1:12</b><span>to the call</span></div>
+            <div class="them">
+              <div class="mini"><b>Brack</b><div class="hp"><i style="width:64%"></i></div><span>FTR</span></div>
+              <div class="mini focus"><b>Sorrel</b><div class="hp"><i style="width:31%"></i></div><span>CLR · focus</span></div>
+              <div class="mini"><b>Hepzie</b><div class="hp"><i style="width:88%"></i></div><span>CLR</span></div>
+            </div>
+            <div class="crier"><b>The Crier</b>The Widow's girls are mending her as fast as you cut. Mind the one at the back.</div>
+            <div class="us">
+              <div class="mini"><b>Aldric</b><div class="hp"><i style="width:72%"></i></div><span>FTR 18</span></div>
+              <div class="mini"><b>Osk</b><div class="hp"><i style="width:47%"></i></div><span>ROG 18</span></div>
+              <div class="mini"><b>Manic</b><div class="hp"><i style="width:90%"></i></div><span>CLR 18</span></div>
+            </div>
+          </div>
+        </div>
+        <p>The autobattle you know against a company playing by the same rules. Theirs at the top in their colour, yours at the bottom. Tap a rival to focus.</p>
+      </div>
+
+      <div class="shot">
+        <h3>4 · The Feast-day Tourney</h3>
+        <div class="phone"><div class="scr">
+          <div class="top"><span>THE BOWL · Feast-day</span><span>bracket 15–29</span></div>
+          <p class="ttl">The Feast-day Tourney</p>
+          <p class="say">Eight companies, three rounds, one sun-banner. The Crier's been practising your name.</p>
+          <div class="bracket">
+            <div class="col"><h4>Round 1</h4>
+              <div class="m"><div class="me w"><span>You</span><span>1,284</span></div><div><span>Mudlarks</span><span>1,102</span></div></div>
+              <div class="m"><div class="w"><span>Brack's Three</span><span>1,301</span></div><div><span>Lantern Lads</span><span>1,190</span></div></div>
+              <div class="m"><div class="w"><span>Coalbrook</span><span>1,452</span></div><div><span>Irregulars</span><span>1,150</span></div></div>
+              <div class="m"><div><span>Penitents</span><span>1,238</span></div><div class="w"><span>Hesk's Cousins</span><span>1,330</span></div></div>
+            </div>
+            <div class="col sf"><h4>Semis</h4>
+              <div class="m"><div class="me"><span>You</span><span></span></div><div><span>Brack's Three</span><span></span></div></div>
+              <div class="m"><div><span>Coalbrook</span><span></span></div><div><span>Hesk's Cousins</span><span></span></div><div class="watch"><span>▶ Watch</span></div></div>
+            </div>
+            <div class="col f"><h4>Final</h4>
+              <div class="m"><div class="tbd"><span>winner</span></div><div class="tbd"><span>winner</span></div></div>
+            </div>
+          </div>
+          <div class="lab">The purse, in marks</div>
+          <div class="purse"><div><b>3</b>Round 1</div><div><b>6</b>Semis</div><div><b>10</b>Final</div><div><b>16</b>Champion</div></div>
+          <p class="even-note">Your company is locked for the tourney; stance and loadout may change between rounds. Full HP each round. The other bouts are fought by
+            the same sim, and you can watch any of them.</p>
+          <span class="btn pri" style="margin-top:auto">Semi-final: Brack's Three</span>
+        </div></div>
+        <p>Weekly, on the feast-day. Seeded by rating from your bracket. A banner on your company card for the week to the champion.</p>
+      </div>
+
+      <div class="shot">
+        <h3>5 · The Crier calls it</h3>
+        <div class="phone"><div class="scr">
+          <div class="top"><span>THE BOWL · bout 3 of 5</span><span>☉ <b>28</b></span></div>
+          <div class="verdict"><span class="w">Victory</span><span class="s">the Widow Brack's Three are down · 1:24</span></div>
+          <div class="crier" style="position:static"><b>The Crier</b>And the widow's in black for herself today. Bring her a chair.</div>
+          <div class="tally">
+            <div><span>Marks of the Bowl</span><b class="up">+5</b><span>a Hardened rival</span></div>
+            <div><span>Rating</span><b class="up">1,301</b><span>+17 · the Lower Tiers</span></div>
+            <div><span>Paid bouts today</span><b>3 / 5</b><span>two more pay</span></div>
+            <div><span>Down, not Fallen</span><b>0 cost</b><span>no temple, no Weakened</span></div>
+          </div>
+          <p class="say">That's three of yours walking out on their own feet. Come back tomorrow, I'll find you worse. (Ma Gorrie)</p>
+          <span class="btn pri" style="margin-top:auto">Back to the board</span>
+          <span class="btn sec">Back to where you were</span>
+        </div></div>
+        <p>Marks and rating, the Crier's line for a company falling, and a door back to exactly where you left the game.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>The bout's rules, in short</h2>
+    <div class="facts">
+      <div class="fact"><b>Levels evened</b><span>Both companies fight at their bracket's top level. Gear stays as it is.</span></div>
+      <div class="fact"><b>Two minutes</b><span>A company with nobody standing loses. At 2:00 the Crier calls it on the share of HP standing.</span></div>
+      <div class="fact"><b>One brain</b><span>Rivals run your companions' own AI, turned round, their priorities set by their manner.</span></div>
+      <div class="fact"><b>Arena rules</b><span>Crowd control lasts half as long on a company's member; healing received × 0.75; no shrine boons carried in.</span></div>
+      <div class="fact"><b>Safe sport</b><span>Down in the Bowl is never Fallen: no temple, no Weakened, no cost.</span></div>
+      <div class="fact"><b>Marks only</b><span>Five paid bouts a day. No XP or gold, so it never competes with the dungeons.</span></div>
+    </div>
+  </section>
+
+  <footer>Mockup for the owner's review · 2026-11-13 · every company, name and number here is an example</footer>
+</div>
+
+<script>
+// The Sand, drawn in code from the proposal's numbers: the game's 2:1 iso, the camera at the south-east (so +x+y is
+// near, down the screen), a tile half a man. Terrain first in depth order, then everything that stands on the sand.
+(() => {
+  const CX = 32, CY = 30, A = 22, B = 17, W = 66, H = 60;
+  const hash = (x, y, s = 0) => { const h = Math.sin(x * 127.1 + y * 311.7 + s * 74.7) * 43758.5453; return h - Math.floor(h); };
+  const mix = (a, b, k) => a.map((v, i) => v + (b[i] - v) * k);
+  const rgb = (c) => `rgb(${c.map((v) => Math.max(0, Math.min(255, Math.round(v)))).join(',')})`;
+  // where things are, in tiles: the gates on the long axis (theirs up-screen left, yours down-screen right), the box at the top
+  const dirOf = (dx, dy) => { const l = Math.hypot(dx, dy); return [dx / l, dy / l]; };
+  const onRing = (d, r) => [CX + d[0] * A * r, CY + d[1] * B * r];
+  const SUN_GATE = onRing(dirOf(-1, 0.18), 1.02), DUST_GATE = onRing(dirOf(1, -0.18), 1.02), BOX = onRing(dirOf(-1, -1), 1.2);
+  const braziers = [...Array(8)].map((_, i) => { const a = (i / 8) * Math.PI * 2 + 0.39; return onRing([Math.cos(a), Math.sin(a)], 1.04); })
+    .filter(([x, y]) => Math.hypot(x - SUN_GATE[0], y - SUN_GATE[1]) > 4 && Math.hypot(x - DUST_GATE[0], y - DUST_GATE[1]) > 4);
+  // the cells: sand, ring wall, tiers (far side), rubble (the fallen east), open ground
+  const cells = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const ux = (x + 0.5 - CX) / A, uy = (y + 0.5 - CY) / B, r = Math.hypot(ux, uy), side = (ux + uy) / Math.SQRT2, east = (ux - uy) / Math.SQRT2;
+    const gate = Math.hypot(x + 0.5 - SUN_GATE[0], y + 0.5 - SUN_GATE[1]) < 2.4 || Math.hypot(x + 0.5 - DUST_GATE[0], y + 0.5 - DUST_GATE[1]) < 2.4;
+    let kind = null, h = 0;
+    if (r <= 1) { kind = 'sand'; h = 0; }
+    else if (r <= 1.085) { kind = gate ? 'sand' : 'wall'; h = gate ? 0 : side < -0.15 ? 2.6 : side < 0.25 ? 2.6 - (side + 0.15) * 5 : 0.55; }
+    else if (r <= 1.56) {
+      const k = Math.floor((r - 1.085) / 0.118);
+      const fallen = east > 0.35 && side > -0.6;
+      const lane = Math.hypot(x + 0.5 - SUN_GATE[0], y + 0.5 - SUN_GATE[1]) < 3.2 || Math.hypot(x + 0.5 - DUST_GATE[0], y + 0.5 - DUST_GATE[1]) < 3.2;
+      if (lane) { kind = 'ground'; h = 0; }
+      else if (side < 0.2 && !fallen) { kind = 'tier'; h = 2.9 + 0.9 * (k + 1) * Math.min(1, (0.2 - side) * 2.2 + 0.25); }
+      else if (fallen) { const q = hash(x, y, 3); if (q > 0.35) { kind = 'rubble'; h = 0.3 + q * 1.4 * Math.max(0, 1 - (r - 1.1) * 1.8); } else { kind = 'ground'; } }
+      else kind = 'ground';
+    } else if (r <= 1.75) kind = 'ground';
+    if (kind) cells.push({ x, y, kind, h, r, side });
+  }
+  cells.sort((a, b) => a.x + a.y - (b.x + b.y) || a.x - b.x);
+  const BASE = { sand: [138, 112, 74], wall: [96, 86, 76], tier: [80, 72, 66], rubble: [92, 82, 70], ground: [52, 46, 42] };
+  const glowAt = (x, y) => { let g = 0; for (const [bx, by] of braziers) { const d = Math.hypot(x - bx, y - by); g += Math.max(0, 1 - d / 13) ** 2; } return Math.min(1.25, g); };
+  const CROWD = [[107, 59, 46], [62, 79, 98], [92, 90, 58], [122, 106, 78], [74, 58, 82], [138, 90, 58], [96, 64, 52], [58, 72, 64]];
+
+  function draw(cv, view) {
+    const g = cv.getContext('2d'), T = view.tile, ZH = T * 0.5;
+    const P = (x, y, z = 0) => [view.ox + (x - y) * T / 2, view.oy + (x + y) * T / 4 - z * ZH];
+    g.fillStyle = '#07060b'; g.fillRect(0, 0, cv.width, cv.height);
+    const poly = (pts, fill) => { g.beginPath(); pts.forEach(([a, b], i) => (i ? g.lineTo(a, b) : g.moveTo(a, b))); g.closePath(); g.fillStyle = fill; g.fill(); };
+    const shade = (base, x, y, k = 1) => { const gl = glowAt(x + 0.5, y + 0.5), amb = 0.5 + 0.12 * hash(x, y, 9); return rgb(mix(base.map((v) => v * amb * k), [255, 170, 90].map((v, i) => base[i] * 1.25 + v * 0.18), gl * 0.75)); };
+    for (const c of cells) {
+      const { x, y, h } = c, base = BASE[c.kind];
+      if (c.kind === 'sand') {
+        let col = base.map((v) => v + (hash(x, y) - 0.5) * 14);
+        const st = Math.hypot(x - CX + 5, y - CY - 3) < 2.2 || Math.hypot(x - CX - 7, y - CY + 4) < 1.6;   // two old stains
+        if (st) col = mix(col, [70, 40, 32], 0.45);
+        poly([P(x, y), P(x + 1, y), P(x + 1, y + 1), P(x, y + 1)], shade(col, x, y));
+        continue;
+      }
+      if (h > 0.01) {
+        poly([P(x, y + 1, 0), P(x + 1, y + 1, 0), P(x + 1, y + 1, h), P(x, y + 1, h)], shade(base, x, y, 0.62));
+        poly([P(x + 1, y, 0), P(x + 1, y + 1, 0), P(x + 1, y + 1, h), P(x + 1, y, h)], shade(base, x, y, 0.8));
+      }
+      poly([P(x, y, h), P(x + 1, y, h), P(x + 1, y + 1, h), P(x, y + 1, h)], shade(base.map((v) => v * (c.kind === 'wall' ? 1.15 : 1)), x, y));
+      if (c.kind === 'tier' && hash(x, y, 5) < 0.7) {   // the crowd: a head and shoulders on a tier's step
+        const [sx, sy] = P(x + 0.5, y + 0.5, h), cc = CROWD[Math.floor(hash(x, y, 6) * CROWD.length)], dim = 0.55 + 0.2 * glowAt(x, y);
+        g.fillStyle = rgb(cc.map((v) => v * dim)); g.beginPath(); g.ellipse(sx, sy - T * 0.12, T * 0.2, T * 0.14, 0, 0, Math.PI * 2); g.fill();
+        g.fillStyle = rgb([150, 118, 96].map((v) => v * dim)); g.beginPath(); g.arc(sx + (hash(x, y, 7) - 0.5) * T * 0.1, sy - T * 0.34, T * 0.1, 0, Math.PI * 2); g.fill();
+        if (hash(x, y, 8) > 0.88) { g.strokeStyle = rgb(cc.map((v) => v * dim)); g.lineWidth = T * 0.06; g.beginPath(); g.moveTo(sx + T * 0.12, sy - T * 0.2); g.lineTo(sx + T * 0.2, sy - T * 0.52); g.stroke(); }   // a waving arm
+      }
+    }
+    // the marks: two scuffed lines across the axis, 16 tiles apart
+    const ax = dirOf(1, -0.18), px = [-ax[1], ax[0]];
+    for (const s of [-1, 1]) {
+      const mx = CX + ax[0] * 8 * s, my = CY + ax[1] * 8 * s;
+      g.strokeStyle = 'rgba(214,190,140,.55)'; g.lineWidth = T * 0.09; g.setLineDash([T * 0.5, T * 0.22]); g.beginPath();
+      g.moveTo(...P(mx - px[0] * 5, my - px[1] * 5)); g.lineTo(...P(mx + px[0] * 5, my + px[1] * 5)); g.stroke(); g.setLineDash([]);
+    }
+    const things = [];
+    // the gates: an arch, a portcullis half up, the banner of whoever comes through
+    const gate = (at, banner, near) => things.push({ d: at[0] + at[1], f: () => {
+      const [x, y] = at, hh = near ? 2.2 : 3.4, w = 2.0, perp = [-ax[1] * w, ax[0] * w];
+      const L = [x - perp[0], y - perp[1]], R = [x + perp[0], y + perp[1]];
+      for (const p of [L, R]) { const [a, b] = P(p[0], p[1], 0), [, b2] = P(p[0], p[1], hh); g.fillStyle = '#5e554c'; g.fillRect(a - T * 0.3, b2, T * 0.6, b - b2); g.fillStyle = '#7a7064'; g.fillRect(a - T * 0.3, b2, T * 0.6, T * 0.16); }
+      const [l1, l2] = P(L[0], L[1], hh), [r1, r2] = P(R[0], R[1], hh);
+      g.strokeStyle = '#6e655a'; g.lineWidth = T * 0.4; g.beginPath(); g.moveTo(l1, l2); g.quadraticCurveTo((l1 + r1) / 2, Math.min(l2, r2) - T * 0.9, r1, r2); g.stroke();
+      g.strokeStyle = 'rgba(30,26,24,.85)'; g.lineWidth = T * 0.05;
+      for (let i = 1; i < 6; i++) { const k = i / 6, [x1, y1] = P(L[0] + (R[0] - L[0]) * k, L[1] + (R[1] - L[1]) * k, hh * 0.98), [, y0] = P(L[0] + (R[0] - L[0]) * k, L[1] + (R[1] - L[1]) * k, hh * 0.55); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x1, y0); g.stroke(); }
+      const [bx, by] = P(x, y, hh + 0.2); g.fillStyle = banner[0]; g.fillRect(bx - T * 0.38, by - T * 1.1, T * 0.76, T * 1.1); g.fillStyle = banner[1]; g.fillRect(bx - T * 0.38, by - T * 1.1, T * 0.38, T * 1.1);
+      g.fillStyle = banner[2]; g.beginPath(); g.arc(bx, by - T * 0.62, T * 0.17, 0, Math.PI * 2); g.fill();
+    } });
+    gate(SUN_GATE, ['#1c1c20', '#3a1c22', '#d8d0c8'], false);
+    gate(DUST_GATE, ['#8a6a2e', '#f0c880', '#2a1c0c'], true);
+    // the Sun's Box: a canopy on four posts, the gilt disc over it, Ma Gorrie seated, the Crier at the rail with his bell
+    things.push({ d: BOX[0] + BOX[1], f: () => {
+      const [x, y] = BOX, z = 6.2, [sx, sy] = P(x, y, z);
+      g.fillStyle = '#4a4038'; poly([P(x - 2.4, y - 1.2, z), P(x + 1.2, y - 2.4, z), P(x + 2.4, y + 1.2, z), P(x - 1.2, y + 2.4, z)], '#5a4e44');
+      for (const [dx, dy] of [[-2.2, -1], [1, -2.2], [2.2, 1], [-1, 2.2]]) { const [a, b] = P(x + dx, y + dy, z), [, b2] = P(x + dx, y + dy, z + 2.6); g.fillStyle = '#8a7a5a'; g.fillRect(a - T * 0.07, b2, T * 0.14, b - b2); }
+      poly([P(x - 2.6, y - 1.3, z + 2.6), P(x + 1.3, y - 2.6, z + 2.6), P(x + 2.6, y + 1.3, z + 2.6), P(x - 1.3, y + 2.6, z + 2.6)], '#9a5a2a');
+      poly([P(x - 2.6, y - 1.3, z + 2.6), P(x - 1.3, y + 2.6, z + 2.6), P(x - 1.3, y + 2.6, z + 2.2), P(x - 2.6, y - 1.3, z + 2.2)], '#7a3e1c');
+      const [dx, dy] = P(x, y, z + 4.2); g.fillStyle = '#d8a040';
+      for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; g.beginPath(); g.moveTo(dx, dy); g.lineTo(dx + Math.cos(a) * T * 1.0, dy + Math.sin(a) * T * 1.0); g.lineTo(dx + Math.cos(a + 0.2) * T * 0.6, dy + Math.sin(a + 0.2) * T * 0.6); g.fill(); }
+      g.fillStyle = '#f0c880'; g.beginPath(); g.arc(dx, dy, T * 0.55, 0, Math.PI * 2); g.fill(); g.fillStyle = '#b8822f'; g.beginPath(); g.arc(dx, dy, T * 0.35, 0, Math.PI * 2); g.fill();
+      // Ma Gorrie (seated, a shawl) and the Crier (bone-pale, a bell)
+      const fig = (fx, fy, body, head, h2) => { const [a, b] = P(fx, fy, z); g.fillStyle = body; g.beginPath(); g.ellipse(a, b - T * h2, T * 0.32, T * h2, 0, 0, Math.PI * 2); g.fill(); g.fillStyle = head; g.beginPath(); g.arc(a, b - T * (h2 * 2 + 0.18), T * 0.2, 0, Math.PI * 2); g.fill(); };
+      fig(x - 0.4, y + 0.6, '#5a2e3a', '#c8a084', 0.42); fig(x + 0.9, y + 0.9, '#3a3836', '#d8d0bc', 0.6);
+      const [ba, bb] = P(x + 1.3, y + 1.2, z + 1.3); g.fillStyle = '#d8a040'; g.beginPath(); g.moveTo(ba - T * 0.16, bb + T * 0.18); g.lineTo(ba + T * 0.16, bb + T * 0.18); g.lineTo(ba + T * 0.09, bb - T * 0.12); g.lineTo(ba - T * 0.09, bb - T * 0.12); g.fill();
+      void sx; void sy;
+    } });
+    // banners of the sun on the far wall
+    for (const a of [-2.55, -1.85, -1.2]) {
+      const [x, y] = onRing([Math.cos(a), Math.sin(a)], 1.04);
+      things.push({ d: x + y, f: () => { const [bx, by] = P(x, y, 2.5); g.fillStyle = '#6a2a1e'; g.fillRect(bx - T * 0.3, by, T * 0.6, T * 1.3); g.fillStyle = '#d8a040'; g.beginPath(); g.arc(bx, by + T * 0.5, T * 0.18, 0, Math.PI * 2); g.fill(); } });
+    }
+    // braziers, lit
+    for (const [x, y] of braziers) {
+      const far = (x - CX) / A + (y - CY) / B < 0, z = far ? 2.6 : 0.55;
+      things.push({ d: x + y, f: () => {
+        const [bx, by] = P(x, y, z); g.fillStyle = '#3a302a'; g.beginPath(); g.ellipse(bx, by, T * 0.32, T * 0.14, 0, 0, Math.PI * 2); g.fill();
+        const grd = g.createRadialGradient(bx, by - T * 0.4, 0, bx, by - T * 0.4, T * 2.2); grd.addColorStop(0, 'rgba(255,190,100,.55)'); grd.addColorStop(1, 'rgba(255,140,60,0)');
+        g.globalCompositeOperation = 'lighter'; g.fillStyle = grd; g.beginPath(); g.arc(bx, by - T * 0.4, T * 2.2, 0, Math.PI * 2); g.fill(); g.globalCompositeOperation = 'source-over';
+        g.fillStyle = '#ffb050'; g.beginPath(); g.moveTo(bx - T * 0.18, by - T * 0.05); g.quadraticCurveTo(bx, by - T * 0.95, bx + T * 0.18, by - T * 0.05); g.fill();
+        g.fillStyle = '#ffe2a0'; g.beginPath(); g.moveTo(bx - T * 0.08, by - T * 0.05); g.quadraticCurveTo(bx, by - T * 0.55, bx + T * 0.08, by - T * 0.05); g.fill();
+      } });
+    }
+    // the companies: theirs at the Sun Gate's mark facing the camera, yours at the Dust Gate's
+    const FIG = { fighter: ['#9aa4b0', '#8a2a24'], rogue: ['#3e4a44', '#2a2e2a'], cleric: ['#d8ccb0', '#c8a040'], shaman: ['#6a5040', '#a07040'], widow: ['#2a2628', '#4a2228'] };
+    const company = (marks, side) => marks.forEach(([cls, fx, fy, hp, focus, name], i) => things.push({ d: fx + fy, f: () => {
+      const [a, b] = P(fx, fy), c = FIG[cls], ring = side === 'us' ? '#f0c880' : '#e2774f';
+      g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.ellipse(a, b, T * 0.42, T * 0.2, 0, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = ring; g.lineWidth = T * 0.06; g.beginPath(); g.ellipse(a, b, T * 0.5, T * 0.25, 0, 0, Math.PI * 2); g.stroke();
+      if (focus) { g.strokeStyle = 'rgba(240,200,128,.9)'; g.lineWidth = T * 0.05; g.setLineDash([T * 0.18, T * 0.12]); g.beginPath(); g.ellipse(a, b, T * 0.78, T * 0.38, 0, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); }
+      g.fillStyle = c[1]; g.beginPath(); g.ellipse(a + (side === 'us' ? T * 0.12 : -T * 0.12), b - T * 0.62, T * 0.3, T * 0.5, 0, 0, Math.PI * 2); g.fill();   // a cape behind
+      g.fillStyle = c[0]; g.beginPath(); g.ellipse(a, b - T * 0.6, T * 0.27, T * 0.52, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = cls === 'widow' || cls === 'rogue' ? '#3a3236' : '#c8a084'; g.beginPath(); g.arc(a, b - T * 1.28, T * 0.21, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = '#d8d8d8'; g.lineWidth = T * 0.06; g.beginPath(); g.moveTo(a + T * 0.25, b - T * 0.6); g.lineTo(a + T * (side === 'us' ? -0.15 : 0.55), b - T * 1.25); g.stroke();
+      const bw = T * 0.9; g.fillStyle = 'rgba(10,8,14,.85)'; g.fillRect(a - bw / 2, b - T * 1.8, bw, T * 0.12); g.fillStyle = side === 'us' ? '#6fbf5a' : '#e2774f'; g.fillRect(a - bw / 2, b - T * 1.8, bw * hp, T * 0.12);
+      if (view.names) { g.font = `${Math.round(T * 0.36)}px Georgia, serif`; g.textAlign = 'center'; g.fillStyle = side === 'us' ? '#f0c880' : '#f0a888'; g.fillText(name, a, b - T * 1.95); }
+      void i;
+    } }));
+    // (each at its own mark, along the gates' axis: theirs up-screen left, yours down-screen right; the front-liners a few
+    // tiles out from their marks, closing, the healers back)
+    const at = (along, across) => [CX + ax[0] * along + px[0] * across, CY + ax[1] * along + px[1] * across];
+    company([['widow', ...at(-3.5, 0.5), 0.64, false, 'Brack'], ['cleric', ...at(-8.5, -2.6), 0.31, true, 'Sorrel'], ['cleric', ...at(-9, 2.8), 0.88, false, 'Hepzie']], 'them');
+    company([['fighter', ...at(-1.5, -0.6), 0.72, false, 'Aldric'], ['rogue', ...at(-3.8, -4.2), 0.47, false, 'Osk'], ['cleric', ...at(5.5, 1.5), 0.9, false, 'Manic']], 'us');
+    things.sort((a, b) => a.d - b.d).forEach((t) => t.f());
+    // a dusk vignette
+    const vg = g.createRadialGradient(cv.width / 2, cv.height * 0.55, cv.width * 0.2, cv.width / 2, cv.height * 0.55, cv.width * 0.75);
+    vg.addColorStop(0, 'rgba(7,6,11,0)'); vg.addColorStop(1, 'rgba(7,6,11,.7)'); g.fillStyle = vg; g.fillRect(0, 0, cv.width, cv.height);
+    // labels: numbered pins with a backing (the plate's key)
+    if (view.pins) {
+      const pin = (n, x, y, z, dx, dy) => {
+        const [a, b] = P(x, y, z), lx = a + dx * T, ly = b + dy * T;
+        g.strokeStyle = 'rgba(240,200,128,.7)'; g.lineWidth = 2; g.beginPath(); g.moveTo(a, b); g.lineTo(lx, ly); g.stroke();
+        g.fillStyle = '#f0c880'; g.beginPath(); g.arc(lx, ly, 15, 0, Math.PI * 2); g.fill(); g.fillStyle = '#1a120a'; g.font = '700 16px ui-monospace, Menlo, monospace'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(n), lx, ly + 1); g.textBaseline = 'alphabetic';
+      };
+      pin(1, BOX[0], BOX[1], 10.5, 2.2, -1.3); pin(2, SUN_GATE[0], SUN_GATE[1], 3.6, -2.4, -1.4); pin(3, DUST_GATE[0], DUST_GATE[1], 2.6, 2.4, -1.2);
+      pin(4, CX + ax[0] * 8 + px[0] * 4.5, CY + ax[1] * 8 + px[1] * 4.5, 0, 1.6, 1.4);
+      pin(5, CX + 18, CY - 20, 1, 2.0, -1.0); pin(6, braziers[0][0], braziers[0][1], 1.6, 2.0, 0.6);
+    }
+  }
+  const big = document.getElementById('sand');
+  if (big) draw(big, { tile: 26, ox: 820, oy: 22, pins: true, names: true });
+  const bout = document.getElementById('boutBg');
+  if (bout) draw(bout, { tile: 60, ox: 420, oy: -50, pins: false, names: true });   // (centred on the fight: (CX − 3, CY) lands mid-canvas)
+})();
+</script>
+
+</body></html>
