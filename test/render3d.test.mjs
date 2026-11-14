@@ -87,6 +87,26 @@ test('convert: a dungeon floor\'s way up is three tiles wide and each way stands
   }
 });
 
+// the walls' ragged tops (GDD §3.1 v1.98; the owner: "Implement the wall variations but no ribs"): the back walls rise and
+// fall, piers stand taller with candles and an unlit flame, the near walls are broken down low, nothing on the tops is bones,
+// it's the same every build, and ?walls=plain gives the level boxes as before
+test('convert: a dungeon floor\'s walls rise and fall, piers lit by candles, the near walls low, no bones on the tops; walls=plain as before', () => {
+  for (const site of ['barrows', 'wickham_keep', 'sunken_chapel']) {
+    const w = createSim(SEED, undefined, { scene: 'dungeon', site }).world;
+    const a = convertWorld(w, { region: 'vale' }), b = convertWorld(w, { region: 'vale', walls: 'plain' }), c = convertWorld(w, { region: 'vale' });
+    const walls = (L) => { const n = {}; L.heights.forEach((r, j) => [...r].forEach((h, i) => { if (h !== '0' && h !== '2' && L.tiles[j][i] !== ' ') n[h] = (n[h] || 0) + 1; })); return n; };
+    const hp = walls(b.level), hr = walls(a.level);
+    assert.ok((hp['6'] || 0) > 200 && !hp['9'] && !hp['8'], `${site}: plain walls one height`);
+    assert.ok(hr['8'] > 10 && hr['3'] > 10 && hr['9'] > 0, `${site}: ragged walls rise (to 8, piers 9) and the near ones fall (to 3): ${JSON.stringify(hr)}`);
+    const tops = a.level.objects.filter((o) => o.onWall);
+    assert.ok(tops.length > 20 && tops.every((o) => !(o.opts && o.opts.kind === 'bones')), `${site}: dressed tops, no bones`);
+    assert.ok(tops.filter((o) => o.type === 'fire').every((o) => o.opts.light === false), `${site}: a pier's flame takes no light`);
+    assert.ok(a.sprites.some((q) => q.kind === 'candles'), `${site}: candles on the piers`);
+    assert.ok(!b.level.objects.some((o) => o.onWall) && !b.sprites.some((q) => q.kind === 'candles'), `${site}: plain has nothing on the walls`);
+    assert.deepEqual(c.level.heights, a.level.heights, `${site}: the same every build`);
+  }
+});
+
 test('convert: each Vale dungeon floor is dressed in its kit: its stone, its hour, its furniture in 3D or as our props, its lights', () => {
   const seen = new Map();
   for (const [site, floors] of [['barrows', 2], ['wickham_keep', 2], ['sunken_chapel', 2]]) for (let d = 0; d < floors; d++) {   // (2026-11-02: two floors each, authored)
@@ -95,7 +115,7 @@ test('convert: each Vale dungeon floor is dressed in its kit: its stone, its hou
     for (const [, k] of w.props) kinds.set(k, (kinds.get(k) || 0) + 1);
     const types = new Set(level.objects.map((o) => o.type)), ours = new Set(sprites.map((q) => q.prop));
     // every brazier a stone brazier with real fire; no lamppost but an exit's
-    assert.equal(level.objects.filter((o) => o.type === 'fire' && o.opts.kind === 'brazier').length, kinds.get('brazier') || 0, `${w.kit}: braziers`);
+    assert.equal(level.objects.filter((o) => o.type === 'fire' && o.opts.kind === 'brazier' && !o.onWall).length, kinds.get('brazier') || 0, `${w.kit}: braziers`);   // (a pier's flame on a wall's top isn't the room's: convert.js ruinWalls)
     // each piece of its kit stood as one or the other
     for (const [k, n] of kinds) if (!/^stair|^exit$|^brazier$/.test(k)) assert.ok(ours.has(k) || n === 0 || [...types].length > 0, `${w.kit}: ${k}`);
     for (const k of ['standard', 'banner', 'saint', 'bound', 'font', 'sarcophagus', 'urnshelf', 'tent', 'bunk', 'altar']) if (kinds.has(k)) assert.ok(ours.has(k), `${w.kit}: ${k} is our prop`);

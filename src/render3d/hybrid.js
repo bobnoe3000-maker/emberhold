@@ -59,7 +59,7 @@ export { BRIGHT, brightAt } from './bright.js';
 // the world page to stand up facing the camera; lit there by Luminati's lights.
 let propSet = null, propSeed = -1;
 const propCanvases = new Map();
-// (it.kind: a piece the converter stands where the sim has none, the candles on a wall's pier: ?walls=ruin)
+// (it.kind: a piece the converter stands where the sim has none, the candles on a wall's pier: convert.js ruinWalls)
 function propSprite(w, it) {
   if (propSeed !== w.seed) { propSeed = w.seed; propSet = buildProps(w.seed); propCanvases.clear(); }
   const { tx, ty } = it, k = tx + ',' + ty, now = propAt(w, tx, ty), was = !now && w.props.get(k), md = w.mods.get(k);

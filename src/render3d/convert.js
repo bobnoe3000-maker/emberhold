@@ -423,12 +423,13 @@ export function ambientOf(kit) {
   return { sky: c(1.0), ground: c(0.5), i: 1, sun: 0, lamps: 0.85 };
 }
 
-// ── ?walls=ruin: a spike (the owner, 2026-11-14, from a reference: "some height variations in walls, some minor dressing on
-// top of walls"). The ring of wall round a floor stood at one height, a level box. Here the back walls (the room north and
-// west of them: the faces the camera sees) rise and fall in runs of two or three tiles, a pier now and then standing
-// higher with a flame on it, and the near walls (between the camera and the floor) are broken down to a knee-high ruin,
-// so they frame the room rather than hide it. On the tops: rubble, a skull and bones, a fallen block, the odd candle-lit
-// pier. Every choice is a hash of the tile, so a floor looks the same every visit. Nothing here touches the sim.
+// ── the walls' ragged tops (GDD §3.1 v1.98; the owner, 2026-11-14, from a reference: "some height variations in walls, some
+// minor dressing on top of walls", then "Implement the wall variations but no ribs"; docs/walls-ruin-spike.md). The ring of
+// wall round a floor stood at one height, a level box. Here the back walls (the room south and east of them: the faces the
+// camera sees) rise and fall in runs of two or three tiles, a pier now and then standing higher with candles and a small
+// flame on it, and the near walls (between the camera and the floor) are broken down to a knee-high ruin, so they frame the
+// room rather than hide it. On the tops: rubble and the odd fallen block (no bones: the owner). Every choice is a hash of
+// the tile, so a floor looks the same every visit. Nothing here touches the sim. ?walls=plain: the level boxes, as before.
 const WALL = 6;
 /** @returns {{ i: number, j: number, h: string, sprite?: any, ob: (X: (n: number) => number, Z: (n: number) => number) => any }[]} what stands on the tops */
 function ruinWalls(W, D, tiles, heights, open) {
@@ -457,7 +458,6 @@ function ruinWalls(W, D, tiles, heights, open) {
     heights[j][i] = h.toString(36);
     const hs = heights[j][i], d = hash('rt', i, j) % 13, x = r2(i + 0.5), z = r2(j + 0.5);
     if (pier) out.push({ i, j, h: hs, sprite: { prop: 'candles', kind: 'candles', tx: 9000 + i, ty: 9000 + j, x, z }, ob: () => ({ type: 'fire', x, z, opts: { kind: 'brazier', size: 0.34, smoke: false, light: false, seed: hash('rf', i, j) % 997 } }) });
-    else if (d === 1) out.push({ i, j, h: hs, ob: () => ({ type: 'debris', x, z, rotation: (hash('rr', i, j) % 11) * 0.5, opts: { kind: 'bones', size: 0.28, charred: false, seed: hash('rs', i, j) % 997 } }) });
     else if (d === 2 || d === 3) out.push({ i, j, h: hs, ob: () => ({ type: 'debris', x, z, rotation: (hash('rr', i, j) % 11) * 0.5, opts: { kind: 'rubble', size: 0.36, charred: false, seed: hash('rs', i, j) % 997 } }) });
     else if (d === 4) out.push({ i, j, h: hs, ob: () => ({ type: 'rock', x, z, opts: { size: 0.42, seed: hash('rk', i, j) % 97 } }) });
   }
@@ -512,7 +512,7 @@ function dungeon(w, o = {}) {
     const [tx, ty] = k.split(',').map(Number), i = Math.floor((tx - x0) / 2), j = Math.floor((ty - y0) / 2);
     if (i >= 0 && j >= 0 && i < W && j < D && heights[j][i] === '2') { heights[j][i] = '0'; tiles[j][i] = 'U'; }
   }
-  const crown = o.walls === 'ruin' ? ruinWalls(W, D, tiles, heights, open) : null;   // (?walls=ruin: the spike, below)
+  const crown = o.walls === 'plain' ? null : ruinWalls(W, D, tiles, heights, open);   // (the walls' ragged tops, below; ?walls=plain: level boxes, as before)
   const stairLights = stairs(w, x0, y0, W, D, tiles, heights, o.stairs !== 'plain');
   const objects = [], count = {}, sprites = [];
   // (an arch over each way, built by world.js in the floor's own stone: GDD v1.57, docs/dungeon-stairs-proposal.md;
@@ -520,7 +520,7 @@ function dungeon(w, o = {}) {
   const archStone = (LEGEND[look.wall]?.side && !/cliff|dirt/.test(LEGEND[look.wall].side)) ? LEGEND[look.wall].side : 'stone_brick';
   for (const a of stairLights.arches || []) sprites.push({ arch: { ...a, stone: archStone } });
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; objects.push({ id: `${ob.type}_${count[ob.type]}`, ...ob }); };
-  if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h) { add(c.ob(X, Z)); if (c.sprite) sprites.push(c.sprite); }   // (what stands on the walls' tops, where the stairs didn't take the wall)
+  if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h) { add({ ...c.ob(X, Z), onWall: true }); if (c.sprite) sprites.push(c.sprite); }   // (onWall: on a wall's top, not the room's own)   // (what stands on the walls' tops, where the stairs didn't take the wall)
   for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity, distance: l.glow.distance, flicker: 0.08, nightOnly: false }
     : { type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });
   for (const [k, kind] of w.props || []) {
