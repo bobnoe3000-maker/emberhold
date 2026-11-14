@@ -7,10 +7,12 @@
 //     Rankings (the top five and the players round you, overall or in today's tourney). A bout enters you in the day's
 //     tourney: the strip over the board shows your place;
 //   · on the sand: a bar at the top, the Crier's call, the clock and each side's share of HP standing; and the bout's
-//     speed, 1×, 2× or 4× (the owner, 2026-11-13: "Add a 2 and 4x speed up button option to the arena"): main.js runs
+//     speed, 1×, 2× or 4× (the owner, 2026-11-13: "Add a 2 and 4x speed up button option to the arena"), on the right over
+//     the party cards where Step out stands elsewhere (2026-11-14: on the left it covered the quest tracker): main.js runs
 //     the sim's ticks and the render's clock that much faster while a bout is on, nothing else. The sim is the same
 //     tick for tick at any speed (a replay doesn't know), so it's the viewer's to choose; remembered on this device;
-//   · the result: won, lost or drawn, the Crier's line, the marks, the rating and the tourney place; Challenge, or Back.
+//   · the result: won, lost or drawn, the Crier's line, the marks, the rating and the tourney place; Continue, to the board
+//     (the owner, 2026-11-14: one button; the board keeps its own way back to where you were).
 // Every word is content/arena.json's or written here (a rival is shown by its player's name, made up for now). It pushes
 // commands (bowlOpen, bowlRefresh, bowlBout, bowlLeave) and reads state; the sim checks every one. Preact + htm.
 
@@ -94,15 +96,15 @@ const CSS = `
 #boutBar .meter { width: 90px; height: 6px; background: rgba(255,255,255,.12); border-radius: 3px; overflow: hidden; }
 #boutBar .meter i { display: block; height: 100%; }
 #boutBar .crier { font: italic 13px Georgia, serif; color: #e8d8b8; margin-top: 3px; }
-#boutSpeed { position: fixed; left: calc(12px + env(safe-area-inset-left, 0px)); bottom: 140px; z-index: 5; display: none; gap: 4px; padding: 3px;
+#boutSpeed { position: fixed; right: calc(12px + var(--safe-r, env(safe-area-inset-right, 0px))); bottom: 140px; z-index: 5; display: none; gap: 4px; padding: 3px;
   background: rgba(14,10,8,.88); border: 1px solid rgba(216,176,96,.5); border-radius: 12px; }
 #boutSpeed.on { display: flex; }
 #boutSpeed button { min-width: 44px; min-height: 44px; border-radius: 9px; border: 0; background: none; color: #cbbfae; font: 600 14px Georgia, serif; }
 #boutSpeed button.on { background: linear-gradient(#e6c47a, #a07a2e); color: #1a1208; }
 `;
 
-/** @param {{ sim: any, onOpen?: () => void, onClose?: () => void }} o */
-export function createBowl({ sim, onOpen = () => {}, onClose = () => {} }) {
+/** @param {{ sim: any, partyPanel?: { height: () => number, side?: () => number }, onOpen?: () => void, onClose?: () => void }} o */
+export function createBowl({ sim, partyPanel, onOpen = () => {}, onClose = () => {} }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const wrap = document.createElement('div'); wrap.id = 'bowlWrap'; wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-label', 'The Bowl');
   document.body.appendChild(wrap); swallow(wrap);
@@ -195,8 +197,7 @@ export function createBowl({ sim, onOpen = () => {}, onClose = () => {} }) {
       ${line && html`<div class="quote">The Crier: “${line}”</div>`}
       <div class="nums">+${r.marks} marks · rating ${Math.round(r.r)} (${r.dr >= 0 ? '+' : ''}${r.dr}) · ${TIER_NAME[r.tier]}<br />Today’s tourney: place #${r.place} of ${r.of}</div>
       <div class="row">
-        <button class="alt" onClick=${() => { result = null; mode = r.mode === 'solo' ? 'solo' : 'team'; sub = 'challenge'; draw(); }}>Challenge</button>
-        <button class="go" onClick=${() => { result = null; sim.commands.push({ type: 'bowlLeave' }); close(); }}>Back to where you were</button>
+        <button class="go" onClick=${() => { result = null; mode = r.mode === 'solo' ? 'solo' : 'team'; sub = 'challenge'; draw(); }}>Continue</button>
       </div>
     </div>`;
   }
@@ -238,6 +239,7 @@ export function createBowl({ sim, onOpen = () => {}, onClose = () => {} }) {
     const B = sim.battle && sim.battle.bout;
     if (!B) { if (bar.classList.contains('on')) { bar.classList.remove('on'); pace.classList.remove('on'); } lastKey = ''; return; }
     if (!pace.classList.contains('on')) pace.classList.add('on');
+    { const b2 = `${Math.round((partyPanel ? partyPanel.height() : 132) + (partyPanel && partyPanel.side && partyPanel.side() ? 14 : 8))}px`; if (pace.style.bottom !== b2) pace.style.bottom = b2; }   // (over the party cards, as Step out sits)
     const left = Math.max(0, Math.ceil(B.call > 0 ? B.call : B.secs - B.t)), a = share(B.ours), r = share(B.rivals);
     const key = `${left}|${Math.round(a * 50)}|${Math.round(r * 50)}|${crier}|${B.call > 0}`; if (key === lastKey) return; lastKey = key;
     bar.classList.add('on');

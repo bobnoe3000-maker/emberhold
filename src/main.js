@@ -131,7 +131,7 @@ const worldMap = createWorldMap({ sim, toast: (m, ms) => hud.show(m, ms), inSqua
 createStepOut({ sim, partyPanel });   // the way out of a fight (GDD §7.1)
 createShrineCard({ sim });             // a shrine's blessing, offered: Use or Close (GDD §3.6)
 createTowerCard({ sim });              // the Mere Tower's landings: Climb on or Home with Wenna (GDD §17)
-const bowl = createBowl({ sim });      // the Bowl (GDD §17 v1.85): its board from ☰, the bout's bar, the result
+const bowl = createBowl({ sim, partyPanel });      // the Bowl (GDD §17 v1.85): its board from ☰, the bout's bar and speed, the result
 createDefeat({ sim });                // a wipe: what happened, before you wake at the Shrine (ui/defeat.js)
 createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare(), questTitle: (id) => journal.title(id) });   // compass travel (docs/compass-mockup.html)
 const gearSheet = createGearSheet(sim, { partyPanel, openTerms: () => guildTerms.open(), models: !WORLD_OFF && !/sprites/.test(params.get('figures') || '') });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)
