@@ -59,10 +59,11 @@ export { BRIGHT, brightAt } from './bright.js';
 // the world page to stand up facing the camera; lit there by Luminati's lights.
 let propSet = null, propSeed = -1;
 const propCanvases = new Map();
+// (it.kind: a piece the converter stands where the sim has none, the candles on a wall's pier: ?walls=ruin)
 function propSprite(w, it) {
   if (propSeed !== w.seed) { propSeed = w.seed; propSet = buildProps(w.seed); propCanvases.clear(); }
   const { tx, ty } = it, k = tx + ',' + ty, now = propAt(w, tx, ty), was = !now && w.props.get(k), md = w.mods.get(k);
-  const pk = now || (was === 'chest' ? 'chestOpen' : was === 'shrine' ? 'shrineSpent' : md && md.cage ? 'cageOpen' : null);
+  const pk = it.kind || now || (was === 'chest' ? 'chestOpen' : was === 'shrine' ? 'shrineSpent' : md && md.cage ? 'cageOpen' : null);
   if (!pk) return null;
   const key = pk === 'shrine' ? 'shrine_' + shrineKind(w, tx, ty) : pk, arr = propSet[key] || propSet.spire;
   const v = arr.length === 1 ? 0 : (hash2(tx, ty, 5) * arr.length) | 0, id = `${key}#${v}`;
@@ -196,7 +197,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       if (building !== w) {                                   // a new world: convert it and build it behind black
         building = w;
         const t0 = performance.now();
-        const r = convertWorld(w, { region: w.region || region, stairs: new URLSearchParams(location.search).get('stairs') || '' });   // (?stairs=plain: the stairs before their arches, docs/dungeon-stairs-proposal.md)
+        const r = convertWorld(w, { region: w.region || region, stairs: new URLSearchParams(location.search).get('stairs') || '', walls: new URLSearchParams(location.search).get('walls') || '' });   // (?stairs=plain: the stairs before their arches, docs/dungeon-stairs-proposal.md)
         const t1 = performance.now(); state.timing = { convert: Math.round(t1 - t0), load: 0, sprites: 0 };
         origin = r.origin; state.level = `${r.level.width}×${r.level.depth}`; state.sprites = r.sprites.length; state.loads++;
         ours = r.sprites.filter((q) => q.prop); kept = r.sprites.filter((q) => !q.prop); oursState = propState(w, ours); ambient = r.ambient || null;
@@ -216,7 +217,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         const to = w.kind === 'town' ? 'overland' : w.kind === 'overland' ? 'town' : '';
         if (to && w.region && api.prepare) {
           try {
-            const r = convertWorld(createOutdoor(w.seed, to, w.region), { region: w.region, stairs: new URLSearchParams(location.search).get('stairs') || '' });
+            const r = convertWorld(createOutdoor(w.seed, to, w.region), { region: w.region, stairs: new URLSearchParams(location.search).get('stairs') || '', walls: new URLSearchParams(location.search).get('walls') || '' });
             api.prepare(r.level, w.region);
           } catch (err) { console.warn('[luminati] the level next door:', err); }
         }

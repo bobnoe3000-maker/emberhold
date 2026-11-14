@@ -122,7 +122,7 @@ const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, d: 2, G: 1, g: 0 };
 /**
  * The world the sim is in, as a Luminati level, and the pieces of our own art to stand in it.
  * @param {any} w the sim's world (sim.world)
- * @param {{ region?: string, stairs?: string }} [o]
+ * @param {{ region?: string, stairs?: string, walls?: string }} [o]
  * @returns {{ level: any, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps: number }, sprites: { id?: string, prop?: string, tx?: number, ty?: number, flat?: boolean, x: number, z: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
  */
 export function convertWorld(w, o = {}) {
@@ -423,7 +423,48 @@ export function ambientOf(kit) {
   return { sky: c(1.0), ground: c(0.5), i: 1, sun: 0, lamps: 0.85 };
 }
 
-/** @param {any} w @param {{ region?: string, stairs?: string }} [o] */
+// ── ?walls=ruin: a spike (the owner, 2026-11-14, from a reference: "some height variations in walls, some minor dressing on
+// top of walls"). The ring of wall round a floor stood at one height, a level box. Here the back walls (the room north and
+// west of them: the faces the camera sees) rise and fall in runs of two or three tiles, a pier now and then standing
+// higher with a flame on it, and the near walls (between the camera and the floor) are broken down to a knee-high ruin,
+// so they frame the room rather than hide it. On the tops: rubble, a skull and bones, a fallen block, the odd candle-lit
+// pier. Every choice is a hash of the tile, so a floor looks the same every visit. Nothing here touches the sim.
+const WALL = 6;
+/** @returns {{ i: number, j: number, h: string, sprite?: any, ob: (X: (n: number) => number, Z: (n: number) => number) => any }[]} what stands on the tops */
+function ruinWalls(W, D, tiles, heights, open) {
+  const out = [], raise = [];
+  const near = (i, j) => open(i - 1, j) || open(i, j - 1) || (!open(i + 1, j) && !open(i, j + 1) && open(i - 1, j - 1));   // (the floor on its far side: it stands between the camera and the room)
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    if (heights[j][i] !== String(WALL)) continue;
+    const back = open(i + 1, j) || open(i, j + 1) || open(i + 1, j + 1);
+    if (near(i, j) && !(open(i + 1, j) || open(i, j + 1))) {     // a near wall: broken down low, its top ragged
+      const h = hash('rn', i >> 1, j >> 1) % 4;
+      heights[j][i] = String(3 + (h === 3 ? 2 : h === 0 ? 0 : 1));
+      if (hash('rd', i, j) % 9 === 0) out.push({ i, j, h: heights[j][i], ob: (X, Z) => ({ type: 'debris', x: r2(i + 0.5), z: r2(j + 0.5), rotation: (hash('rr', i, j) % 11) * 0.5, opts: { kind: 'rubble', size: 0.38, charred: false, seed: hash('rs', i, j) % 997 } }) });
+      continue;
+    }
+    if (!back) continue;
+    // a back wall: in runs (a run is two or three tiles along it), each a step up or down from the course; one with a floor
+    // on its camera side too (between two rooms) only ever steps down, so it never stands taller in front of a fight
+    const run = (hash('rb', Math.floor((i + j) / 3)) % 7), both = near(i, j);
+    raise.push([i, j, both ? [0, 1, 1, 1, 0, 1, 1][run] : [0, 1, 1, 2, 2, 3, 3][run], both]);
+  }
+  for (const [i, j, k, both] of raise) {
+    // a pier: every so often along a back wall, a block taller, candles on it and a small flame (no light of its own:
+    // Luminati shares twelve among all the lights in view, and the room's own lamps need them)
+    const pier = !both && hash('rp', i, j) % 13 === 0;
+    const h = pier ? WALL + 3 : WALL - 1 + k;
+    heights[j][i] = h.toString(36);
+    const hs = heights[j][i], d = hash('rt', i, j) % 13, x = r2(i + 0.5), z = r2(j + 0.5);
+    if (pier) out.push({ i, j, h: hs, sprite: { prop: 'candles', kind: 'candles', tx: 9000 + i, ty: 9000 + j, x, z }, ob: () => ({ type: 'fire', x, z, opts: { kind: 'brazier', size: 0.34, smoke: false, light: false, seed: hash('rf', i, j) % 997 } }) });
+    else if (d === 1) out.push({ i, j, h: hs, ob: () => ({ type: 'debris', x, z, rotation: (hash('rr', i, j) % 11) * 0.5, opts: { kind: 'bones', size: 0.28, charred: false, seed: hash('rs', i, j) % 997 } }) });
+    else if (d === 2 || d === 3) out.push({ i, j, h: hs, ob: () => ({ type: 'debris', x, z, rotation: (hash('rr', i, j) % 11) * 0.5, opts: { kind: 'rubble', size: 0.36, charred: false, seed: hash('rs', i, j) % 997 } }) });
+    else if (d === 4) out.push({ i, j, h: hs, ob: () => ({ type: 'rock', x, z, opts: { size: 0.42, seed: hash('rk', i, j) % 97 } }) });
+  }
+  return out;
+}
+
+/** @param {any} w @param {{ region?: string, stairs?: string, walls?: string }} [o] */
 function dungeon(w, o = {}) {
   const cells = w.level.cells;
   let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
@@ -471,6 +512,7 @@ function dungeon(w, o = {}) {
     const [tx, ty] = k.split(',').map(Number), i = Math.floor((tx - x0) / 2), j = Math.floor((ty - y0) / 2);
     if (i >= 0 && j >= 0 && i < W && j < D && heights[j][i] === '2') { heights[j][i] = '0'; tiles[j][i] = 'U'; }
   }
+  const crown = o.walls === 'ruin' ? ruinWalls(W, D, tiles, heights, open) : null;   // (?walls=ruin: the spike, below)
   const stairLights = stairs(w, x0, y0, W, D, tiles, heights, o.stairs !== 'plain');
   const objects = [], count = {}, sprites = [];
   // (an arch over each way, built by world.js in the floor's own stone: GDD v1.57, docs/dungeon-stairs-proposal.md;
@@ -478,6 +520,7 @@ function dungeon(w, o = {}) {
   const archStone = (LEGEND[look.wall]?.side && !/cliff|dirt/.test(LEGEND[look.wall].side)) ? LEGEND[look.wall].side : 'stone_brick';
   for (const a of stairLights.arches || []) sprites.push({ arch: { ...a, stone: archStone } });
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; objects.push({ id: `${ob.type}_${count[ob.type]}`, ...ob }); };
+  if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h) { add(c.ob(X, Z)); if (c.sprite) sprites.push(c.sprite); }   // (what stands on the walls' tops, where the stairs didn't take the wall)
   for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity, distance: l.glow.distance, flicker: 0.08, nightOnly: false }
     : { type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });
   for (const [k, kind] of w.props || []) {
