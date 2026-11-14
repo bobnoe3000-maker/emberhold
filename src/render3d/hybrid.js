@@ -47,7 +47,8 @@ export function hourOf(t) {
   return (PART_HOURS[p] + (PART_HOURS[p + 1] - PART_HOURS[p]) * u) % 24;
 }
 const NATIVE_PER_UNIT = 16 * Math.SQRT2;                      // (iso.js: a tile's half-width 8 px; two tiles a unit)
-const TEAM_RGB = [null, [214, 176, 92], [196, 58, 46], [236, 128, 48]];   // (renderer.js: the party's gold, foes' red, the elite's orange)
+const TEAM_RGB = [null, [214, 176, 92], [196, 58, 46], [236, 128, 48]];
+const GUIDE_RGB = [240, 196, 84];                             // (a quest NPC's ring in a dungeon: the party's gold, brighter)   // (renderer.js: the party's gold, foes' red, the elite's orange)
 const CARRY = [0.45, 0, 0.6, 1];                              // the carry light by the part of the day (dawn, day, dusk, night)
 // the brightness outdoors, by the part of the day: the shipped look and the player's dial (render3d/bright.js)
 export { BRIGHT, brightAt } from './bright.js';
@@ -250,6 +251,8 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         const X = (x - origin.x) / 2, Z = (y - origin.y) / 2;
         const lk = d.u ? lookOf(d.u) : null;                   // (GDD v1.65: a member's own face and build)
         actors.push({ name: d.atl.name, cw: d.atl.meta.cw, col: d.a.frame, row: d.a.dir, x: X, z: Z, fade, flash: (d.look && d.look.flash) || 0, warn: (d.look && d.look.warn) || 0, key: keyOf(d.u || d.who), look: lk && lk.a, lk: lk ? lk.k : '' });   // (cw: as drawn, a boss 1.3×; key: the same figure each frame, its model's)
+        // a named person met in a dungeon (Wren in the Toadking's Mound…): a gold ring at their feet, fight or no fight
+        if (d.guide) rings.push({ x: X, z: Z, col: GUIDE_RGB, a: 0.9 });
         // in a fight, a ring at each fighter's feet in its side's colour (Emberlit's footMark), on the ground in 3D
         if (c.rings && d.team !== undefined && TEAM_RGB[d.team] && !(d.look && (d.look.ghost || d.look.dissolve))) {
           rings.push({ x: X, z: Z, col: TEAM_RGB[d.team], a: sim.world.arena ? 0.9 : 0.55 });   // (on the Bowl's sunlit sand a ring at 0.55 all but vanished)

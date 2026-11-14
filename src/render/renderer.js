@@ -609,7 +609,9 @@ export function createRenderer(canvas, sim, input) {
       u.near = near;
       const walking = !!n.moving;
       const a = pickAnim(u, atl, { now, x: qx, y: qy, moving: walking, faceX: walking ? n.fx : near || talking ? ix - qx : -1, faceY: walking ? n.fy : near || talking ? iy - qy : 1, facing: true, dir0: 2, stride: strideOf(atl, STRIDE.walk), seed: u.seed });
-      draws.push({ d: qx + qy, fx: nx, fy: ny, h: nz * ZH, k: qx + qy, look: lookOf(n), team: 0, atl, a, id: n.id, who: u });
+      // (the owner, 2026-11-14: "Wren was hard to see in the toadking dungeon.. put a gold ring on the ground around these
+      // types of quest NPCs if they are in the dungeon"): someone you've come down to meet stands on a gold ring (hybrid.js)
+      draws.push({ d: qx + qy, fx: nx, fy: ny, h: nz * ZH, k: qx + qy, look: lookOf(n), team: 0, atl, a, id: n.id, who: u, guide: sim.world.kind === 'dungeon' });
     }
     // the crowd (pass 11f): no id, so a tap never picks one
     { const crowd = crowdOf(sim.world); if (crowd.length) stepCrowd(sim.world, crowd, now);
