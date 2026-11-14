@@ -36,8 +36,13 @@ export const RAID = {
   coffer: { heirloom: 0.03, rare: 0.27 },   // the rest Fine
   dry: 0.05,            // each coffer without a Rare adds this to the next one's Rare
   grade: 'seasoned',    // the stand-ins' kit and skills (rivals.js GRADES)
+  floors: 2,            // a raid runs two floors at most, as every dungeon should (the owner, 2026-11-14): a three-floor one's last two
   minLevel: 1,
 };
+/** the floors a raid on this dungeon runs (RAID.floors at most: the owner, "Raid dungeon no more than 2 floors like our
+ *  overall dungeon rules"): its last ones, so the run still ends at the dungeon's last boss; top: the depth it sets out on
+ *  (its way up leads out of the raid), n: how many @param {string} site */
+export const raidFloors = (site) => { const all = SITES[site].floors, n = Math.min(RAID.floors, all); return { top: all - n, n }; };
 export const RAID_CLASSES = ['fighter', 'rogue', 'mage', 'cleric', 'shaman'];
 const HEALERS = new Set(['cleric', 'shaman']);
 // made-up players for the stand-ins' seats (stage 1), as the Bowl's board names made-up players (content/arena.json)
@@ -75,7 +80,7 @@ export function raidSites(state, landOpen) {
   return RAID_SITES.map((id) => {
     const s = SITES[id], top = bandTop(s), last = bossAt(id, s.floors - 1);
     const why = !landOpen(s.region) ? 'land' : !siteOpen(id, state.revealed) ? 'shut' : H.level < s.base ? 'level' : '';
-    return { id, name: s.name, region: s.region, base: s.base, top, floors: s.floors, boss: last, bossName: last && BOSSES[last] ? BOSSES[last].name : '', ok: !why, why };
+    return { id, name: s.name, region: s.region, base: s.base, top, floors: raidFloors(id).n, boss: last, bossName: last && BOSSES[last] ? BOSSES[last].name : '', ok: !why, why };
   });
 }
 

@@ -134,8 +134,8 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
 
     if (world.exitAt) {
       const t = standOn(world.exitAt.x, world.exitAt.y, 3), steps = t && pathLenD(t.tx, t.ty);
-      const top = !world.depth;                             // the first floor's stair leads out; deeper ones climb one floor
-      if (steps !== null && steps !== undefined) out.push({ id: 'exit', icon: 'exit', label: top ? `Exit to ${LANDS[landId(state.region)].name.replace(/^The /, 'the ')}` : 'Stairs up', sub: top ? `stair up · ${steps} steps` : `to depth ${world.depth} · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps, sep: true });
+      const top = !world.depth || (world.raid && world.depth === world.raidTop);   // the first floor's stair leads out (a raid's first: RAID.floors); deeper ones climb one floor
+      if (steps !== null && steps !== undefined) out.push({ id: 'exit', icon: 'exit', label: top ? (world.raid ? 'Leave the raid' : `Exit to ${LANDS[landId(state.region)].name.replace(/^The /, 'the ')}`) : 'Stairs up', sub: top ? `stair up · ${steps} steps` : `to depth ${world.depth} · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps, sep: true });
     }
     return out;
   }

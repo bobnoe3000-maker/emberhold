@@ -7,7 +7,10 @@ import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
 import { statsFor } from '../src/sim/party.js';
 import { DAY_S } from '../src/sim/heroes.js';
-import { RAID, RAID_SITES, standIns, cofferOf, restoreRaid, raidOf } from '../src/sim/raid.js';
+import { RAID, RAID_SITES, standIns, cofferOf, restoreRaid, raidOf, raidFloors } from '../src/sim/raid.js';
+import { SITES } from '../src/sim/sites.js';
+import { LANDS } from '../src/sim/regions.js';
+import { QS } from '../src/sim/quests.js';
 import { makeRival } from '../src/sim/rivals.js';
 import { BASES } from '../src/sim/items.js';
 
@@ -194,3 +197,16 @@ test('a raid moves no story count: the Standard\'s lamp breaks in the fight, not
   if (s.raid && s.raid.done) assert.ok(broke >= 1, 'his lamp still broke in the fight');
 });
 
+
+// (the owner, 2026-11-14: "Raid dungeon no more than 2 floors like our overall dungeon rules")
+test('a raid runs two floors at most: a three-floor dungeon\'s last two, its way up out of the raid, its last boss the end', () => {
+  for (const id of RAID_SITES) { const F = raidFloors(id); assert.ok(F.n <= 2, `${id}: ${F.n} floors`); assert.equal(F.top + F.n, SITES[id].floors, `${id} ends on its last floor`); }
+  const s = company(12); for (const L of Object.values(LANDS)) if (L.opens) s.state.quests[L.opens] = { st: QS.DONE, step: 0, n: [] };
+  s.state.revealed = new Set([...(s.state.revealed || []), 'toadking_mound']);
+  go(s, 'toadking_mound'); assert.ok(s.raid, 'set out on the Mound');
+  assert.equal(s.state.depth, 1, 'its second floor'); assert.equal(s.raid.depth, 0, 'the raid\'s first'); assert.equal(s.raid.floors, 2);
+  assert.ok(s.raidSites().find((r) => r.id === 'toadking_mound').floors === 2, 'Party Up says two floors');
+  const out = s.destinations().find((q) => q.id === 'exit'); assert.ok(out && out.label === 'Leave the raid', 'its stair up leaves the raid');
+  const ex = s.world.exitAt, p = s.state.player; p.x = p.px = ex.x; p.y = p.py = ex.y; s.tick();
+  assert.equal(s.raid, null, 'walked up the stair: out of the raid'); assert.equal(s.world.kind, 'town', 'back where it set out');
+});
