@@ -1032,7 +1032,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
 // for each town"): in Thornwick, Ashgate and Frosthold the bar holds the five services in one order, and each service's
 // plaque is drawn in the same place (±1 px), whole on screen, clear of the others and of the right-hand buttons. The
 // plaques hang at set heights (sim outdoor.js SIGN_TOP), so a roof that changes (art critic pass 14) moves none of them.
-// Saltmere's four are on screen and clear too.
+// Saltmere's five (a smith since 2026-11-14: every service in every town) are on screen and clear too.
 {
   const b = await launch(chromium, 'chromium');
   if (b) {
@@ -1053,8 +1053,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const fine = (v, n) => v.plaques.length === n && v.errs.length === 0 && v.plaques.every((q, i) => q.l >= 0 && q.r <= 390 && q.t >= 0 && q.b <= 844 && !v.buttons.some((x) => hit(q, x)) && v.plaques.every((o, j) => j === i || !hit(q, o)));
     const at = (v) => Object.fromEntries(v.plaques.map((q) => [q.kind, [Math.round(q.l), Math.round(q.t)]]));
     const same = ['reach', 'heights'].every((r) => seen[r].plaques.length === seen.vale.plaques.length && seen.vale.plaques.every((q) => { const o = seen[r].plaques.find((x) => x.kind === q.kind); return o && Math.abs(o.t - q.t) <= 1 && Math.abs(o.ax - q.ax) <= 1; }));   // (ax: where it hangs; a long name is then kept on screen and off the buttons)
-    check('town square: the same menu in every town: the bar\'s five services in order, each plaque in the same place in Thornwick, Ashgate and Frosthold, whole, clear of each other and the buttons; Saltmere\'s four too',
-      ['vale', 'reach', 'heights'].every((r) => seen[r].bar.join() === 'shop,smith,tavern,inn,temple' && fine(seen[r], 5)) && same && seen.fens.bar.join() === 'shop,tavern,inn,temple' && fine(seen.fens, 4),
+    check('town square: the same menu in every town: the bar\'s five services in order, each plaque in the same place in Thornwick, Ashgate and Frosthold, whole, clear of each other and the buttons; Saltmere\'s five too',
+      ['vale', 'reach', 'heights'].every((r) => seen[r].bar.join() === 'shop,smith,tavern,inn,temple' && fine(seen[r], 5)) && same && seen.fens.bar.join() === 'shop,smith,tavern,inn,temple' && fine(seen.fens, 5),
       JSON.stringify({ vale: at(seen.vale), reach: at(seen.reach), heights: at(seen.heights), fens: at(seen.fens), bars: Object.fromEntries(Object.entries(seen).map(([k, v]) => [k, v.bar.length])), errs: Object.values(seen).flatMap((v) => v.errs) }));
     await b.close();
   }

@@ -74,7 +74,7 @@ const CSS = `
 #coachCard span { display: block; font: italic 14px/1.5 Georgia, serif; color: #d8ccb8; }
 `;
 // what each coach stop is (sim/coach.js COACH; outdoor.js builds them)
-const STOP = { thornwick: 'a walled town · five services', saltmere: 'a waystation · tavern, shop, inn and chapel' };
+const STOP = { thornwick: 'a walled town · five services', saltmere: 'a waystation · five services' };
 const NUM = ['no', 'one', 'two', 'three', 'four', 'five'];
 const lower = (/** @type {string} */ s) => s.replace(/^The /, 'the ');
 // the wall map is drawn for a wall: at a phone's width its words are too small to read, so it opens larger, scrolled to
