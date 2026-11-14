@@ -267,6 +267,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
 
   // count an event into every active quest's current step, then advance any step that's done
   function count(fn) {
+    if (getWorld().raid) return;                            // (a raid's floors aren't the story: raid.js, GDD §18)
     for (const id of Object.keys(state.quests)) {
       const q = state.quests[id], d = defOf(id); if (q.st !== QS.ACTIVE || !d) continue;
       const objs = d.steps[q.step].objectives; let moved = false;

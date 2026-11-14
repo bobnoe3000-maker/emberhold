@@ -1,7 +1,7 @@
 # Party Up and raids (a proposal)
 
-**Status:** Proposal (2026-11-14). Nothing here is built yet. When the owner decides (§10), the decisions go into the
-GDD (§12) and the canon into the world doc first.
+**Status:** Decided, stage 1 built (2026-11-14; GDD §18 v1.97). The owner's decisions are in §11, what's built and
+measured in §12; stages 2–4 (friends, live raids, polish) wait for accounts and a server.
 
 **The owner, 2026-11-14:** *"Propose a party up and raid system.. higher chance of rewards but limited number per day.
 Just the main character.. looking for groups to party up with 2 others. Can invite random or friends list. Can specify
@@ -259,3 +259,43 @@ So the build is staged (§8), and stage 1 needs none of them.
 8. **Stage 1 first,** offline with AI stand-ins (proposed), before the servers?
 9. **Names:** *Party Up* for the screen and *raid* in the UI. In the world, the Guild could send three of its own on a
    **writ** pinned to its board: *a Lantern writ for Toadking's Mound*. Keep it plain, or use the writ?
+
+## 11. Decided (the owner, 2026-11-14)
+
+*"3 per hero, when set out, dungeon as is, no penalty for loss, start with what we have, use the term Raid"*:
+
+1. **Three raids a hero** a day.
+2. **Spent when the group sets out**, not given back.
+3. **The dungeon as it is**: its own levels, not one over.
+4. **No penalty for a loss**: no gold lost, nobody Weakened.
+5. **Start with what we have**: stage 1, offline with AI stand-ins.
+6. **"Raid"** is the word (no writ).
+
+The rest stays as proposed where stage 1 needs it: anywhere out of a fight, back where you set out; helpers and
+setting out short-handed wait for real players.
+
+## 12. As built: stage 1 (2026-11-14, GDD §18 v1.97)
+
+- **The rules:** `src/sim/raid.js`: three a hero a game day (the Bowl's day: an hour of play, since the sim can't read
+  the calendar; the server's real day comes with stage 3), the band dungeons, the stand-ins (`standIns`: the classes
+  asked for, an Any rounding the three out, at the hero's level and the Seasoned grade, named from made-up players),
+  the coffer (`cofferOf`).
+- **The run:** `core.js` takes the hero and the two stand-ins on a pocket trip as the Bowl does (the world and the
+  company kept as they stood, given back as they were), and `battle.js` runs a raid's rooms: six waves on a +10 % tide
+  (to +50 %), then won and quiet; the gate down for the run when its room is won; the boss always home and not the
+  story's; nobody Fallen; a wipe without cost. Loot at the raid's odds for the hero's class (`loot.js` DROP raid*,
+  `own`). A save made on a raid is the world it set out from. Save v48: `raid`.
+- **The screens:** `src/ui/partyup.js`: ☰ → Party Up: Make a group (the dungeon, each seat's class), the lobby (the
+  two the raid will field, found one by one), Set out; on a raid, Leave; the end's card (the coffer, or lost / left).
+  The wave pill and the room's banner count a raid's waves (`render/renderer.js`). Find a group and Friends aren't on
+  the screen yet: it says they come with online play.
+- **Measured** (`tools/balance/raid.mjs`, six seeds each, a fighter with Any + Any): at the band's top won 5, 3, 5, 6,
+  6 and 6 of 6 (Barrows to the Abbey), in 6.5–22 minutes; at the band's middle 3, 2, 4, 4, 6 and 4. Wickham Keep with a
+  rogue leading a fighter and a cleric: 6 of 6. A run finds 1.0–3.7 Fine and 0–0.5 Rare before its coffer, against the
+  farm's 0.92 Fine and 0.17 Rare an hour (GDD §18 has the table).
+- **On screen** (2026-11-14, in the game: Make a group, the lobby, a raid's first room with its pill, the board on a raid, the coffer's card):
+  ![Party Up in the game](img/ui/raids-2026-11-14.jpg)
+- **Tests:** `test/raid.test.mjs` (who may set out and the day's three, the seats, stand-ins kept out of the company's
+  business, a room's six waves and the gate for the run only, a run played to a win and its coffer, a wipe without cost,
+  a save made on a raid, the coffer's odds); the browser suite's 13d (the screens through to a wipe home).
+

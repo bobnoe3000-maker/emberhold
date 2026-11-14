@@ -789,6 +789,44 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 13d. Party Up and raids (GDD §18 v1.97, ui/partyup.js; the owner, 2026-11-14): ☰'s Party Up opens on Make a group (the
+// band dungeons, the ones not reached yet saying why), each seat's class chosen, Find two fills the lobby with the two the
+// raid then fields, Set out takes the hero and them into the dungeon (the company left behind), the pill counts a raid's
+// waves, and a wipe brings the company back at no cost, saying so.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&notitle&scene=town&world=off`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__ui, null, { timeout: 60000 });
+    await p.waitForTimeout(1200);
+    const home = await p.evaluate(() => { const s = globalThis.__sim; if (!s.state.created) { s.commands.push({ type: 'createHero', cls: 'rogue', look: 'hero_rogue', origin: 'thornwick_born', name: 'Isolde' }); s.tick(); }
+      for (const i of [1, 3]) { s.state.counters.gold = 1e9; s.commands.push({ type: 'hire', idx: i }); s.tick(); } for (const m of s.state.party) m.level = 6; return s.state.party.map((m) => m.id); });
+    await p.evaluate(() => globalThis.__ui.partyUp.open()); await p.waitForTimeout(300);
+    const rows = await p.$$eval('#raid .opt', (b) => b.map((x) => ({ t: x.querySelector('.t1').textContent, off: x.disabled, why: x.querySelector('.t2').textContent })));
+    await p.locator('#raid .opt', { hasText: 'Wickham Keep' }).tap();
+    await p.locator('#raid .filters').nth(0).locator('button', { hasText: 'Fighter' }).tap();
+    await p.locator('#raid .filters').nth(1).locator('button', { hasText: 'Cleric' }).tap();
+    await p.tap('#raid button.go'); await p.waitForFunction(() => document.querySelectorAll('#raid .tag.ok').length === 3, null, { timeout: 10000 });
+    const lobby = await p.$$eval('#raid .seat .n1', (n) => n.map((x) => x.textContent));
+    await p.tap('#raid button.go'); await p.waitForFunction(() => !!globalThis.__sim.raid, null, { timeout: 10000 }); await p.waitForTimeout(400);
+    const out = await p.evaluate(() => { const s = globalThis.__sim; return { kind: s.world.kind, site: s.world.site, party: s.state.party.map((m) => [m.name, m.cls, !!m.standin]), open: globalThis.__ui.partyUp.isOpen }; });
+    // into the first room, the waves counted as a raid's; then a wipe (the foes past bearing), and home at no cost
+    await p.evaluate(() => { const s = globalThis.__sim, q = s.destinations().find((x) => x.id === 'next-room' && !x.off); s.commands.push({ type: 'goto', tx: q.tx, ty: q.ty, near: q.near, room: q.room }); });
+    await p.waitForFunction(() => globalThis.__sim.battle && globalThis.__sim.battle.wave >= 1, null, { timeout: 60000 });
+    const gold = await p.evaluate(() => globalThis.__sim.state.counters.gold);
+    await p.evaluate(() => { const s = globalThis.__sim; for (let i = 0; i < 20 * 120 && s.raid; i++) { for (const e of s.world.enemies || []) e.atk = 9999; s.tick(); } });
+    await p.waitForSelector('#raidWrap.on', { timeout: 10000 });
+    const card = await p.locator('#raid').innerText(), back = await p.evaluate((home) => { const s = globalThis.__sim; return { kind: s.world.kind, same: JSON.stringify(s.state.party.map((m) => m.id)) === JSON.stringify(home), weak: s.state.party.some((m) => m.weakUntil > s.state.t) }; }, home);
+    const goldAfter = await p.evaluate(() => globalThis.__sim.state.counters.gold);
+    check('raids: Party Up lists the band dungeons (those not reached say why), the lobby fills the seats asked for, Set out takes the hero and those two into the dungeon, and a wipe brings the company home at no cost',
+      rows.length === 6 && rows.filter((r) => !r.off).map((r) => r.t).join() === 'The Old Barrows,Wickham Keep' && rows.slice(2).every((r) => /level|open/.test(r.why))
+        && lobby.length === 3 && out.kind === 'dungeon' && out.site === 'wickham_keep' && !out.open && out.party[1][1] === 'fighter' && out.party[2][1] === 'cleric' && out.party.slice(1).every((m) => m[2]) && lobby[1] === out.party[1][0]
+        && /The raid is lost/.test(card) && /costs nothing/.test(card) && back.kind === 'town' && back.same && !back.weak && goldAfter >= gold && errs.length === 0,
+      JSON.stringify({ rows: rows.map((r) => r.t + (r.off ? ` (${r.why})` : '')), lobby, out, card: card.split('\n').slice(0, 3).join(' | '), back, gold: [gold, goldAfter] }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 // 14. A skill learned from someone you talk to says so, the way a quest's reward does: hand Nell her trial
 // and the conversation window shows "New skill learned: Smoke Step", who knows it now and what it does.
 {

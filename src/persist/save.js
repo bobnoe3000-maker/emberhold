@@ -135,6 +135,9 @@
 //       tourney: tw tl td tg), the bracket tourney gone. bowl.js restoreBowl reads a v46 record's rating and record as the
 //       Team ladder's (Individual fresh), pays a tourney left open as it stood and redraws the day's boards; nothing is
 //       done to the data here.
+//   v48: raids (GDD §18 v1.97, sim/raid.js): `raid`, the game day's raids set out, coffers since a Rare, raids won. Older
+//       data has none: restore() reads a missing one as a fresh record (raid.js restoreRaid). A raid in progress is never
+//       saved (a save made on one is the world it set out from), so nothing else changes.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -146,7 +149,7 @@ import { reachedOf } from '../sim/coach.js';
 import { SITES, bossAt } from '../sim/sites.js';
 import { withFrame43 } from '../sim/appearance.js';
 
-export const SAVE_VERSION = 47;   // (v47: the Bowl's two ladders, bowl.team / bowl.solo; v46: the Bowl's board, bowl.picks / refresh; v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
+export const SAVE_VERSION = 48;   // (v48: raids, `raid`; v47: the Bowl's two ladders, bowl.team / bowl.solo; v46: the Bowl's board, bowl.picks / refresh; v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
 /** v40 and older (v41: the floors' gates): an old save comes back with the gates it has been through open, as far as the save
  * tells: every floor whose hall's boss is down (sites.js bossAt; state.bosses), and every floor above the one it was made
  * on. A generated hall with no boss, passed and left: its gate stands (its twenty waves again). @param {any} data */

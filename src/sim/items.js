@@ -152,9 +152,9 @@ export function makeItem(base, ilv, r = 'common', { uid, aff = [], mod = null, n
 }
 
 // roll a drop: classes = the party's classes (80 % of drops are for one of them)
-export function rollItem(rng, { ilv, rarity, classes, uid }) {
+export function rollItem(rng, { ilv, rarity, classes, uid, own = false }) {
   const slot = pick(rng, SLOTS);
-  const cls = slot === 'trinket' ? 'any' : rng() < 0.8 && classes.length ? pick(rng, classes) : pick(rng, CLASS_IDS);
+  const cls = slot === 'trinket' ? 'any' : own && classes.length ? pick(rng, classes) : rng() < 0.8 && classes.length ? pick(rng, classes) : pick(rng, CLASS_IDS);   // (own: always the classes given, a raid's)
   const pool = Object.keys(BASES).filter((k) => BASES[k].slot === slot && (BASES[k].cls === cls || (BASES[k].also || []).includes(cls)));
   const base = pick(rng, pool.length ? pool : Object.keys(BASES).filter((k) => BASES[k].slot === slot));
   const n = rarity === 'rare' ? 2 : rarity === 'fine' ? 1 : 0, aff = [], keys = Object.keys(AFFIX);

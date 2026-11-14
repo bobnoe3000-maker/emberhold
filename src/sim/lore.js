@@ -95,13 +95,13 @@ export function createLore({ state, bus, getWorld, seed }) {
   bus.on('battle', (e) => { if (e.on) hallWaves = 0; });
   bus.on('wave', (e) => {
     if (!e.cleared) return;
-    const w = getWorld(), L = w.level; if (!L || !L.descentRoom || e.room !== L.descentRoom.id) return;
+    const w = getWorld(), L = w.level; if (w.raid || !L || !L.descentRoom || e.room !== L.descentRoom.id) return;
     hallWaves++;
     for (const id of unfound()) { const h = holderOf(seed, id, w, state.bosses); if (h && h.via === 'hall' && hallWaves >= HALL_WAVES) found(id); }
   });
   // a boss down on his floor: what he carried (his count is already up, so this asks the table, not holderOf)
   bus.on('bossDown', (e) => {
-    const w = getWorld();
+    const w = getWorld(); if (e.raid) return;                // (a raid's boss isn't the story's: raid.js)
     for (const id of unfound()) { const f = FRAGMENTS[id]; if (f.via === 'boss' && (w.site || 'barrows') === f.site && (w.depth || 0) + 1 === f.floor && bossAt(f.site, f.floor - 1) === e.id) found(id); }
   });
   /** what Ink may read: frag_<id> (0 / 1) and frag_<set>_count */

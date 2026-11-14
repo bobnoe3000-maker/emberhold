@@ -114,7 +114,7 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
     const G = world.gate, gateUp = !!(G && world.gateShut);
     if (gateUp) {
       const gr = L.rooms.find((r) => r.id === G.rooms[0]), steps = gr ? pathLenD(gr.cx, gr.cy, 2) : null;
-      if (gr && steps !== null && steps !== undefined) out.push({ id: 'gate', icon: 'farm', label: 'The gate', sub: `hold ${G.waves} waves in the room before it · ${steps} steps`, level: lv.get(gr.id), tx: gr.cx, ty: gr.cy, near: 2, room: gr.id, steps });
+      if (gr && steps !== null && steps !== undefined) out.push({ id: 'gate', icon: 'farm', label: 'The gate', sub: `hold ${world.raid ? 'its' : G.waves} waves in the room before it · ${steps} steps`, level: lv.get(gr.id), tx: gr.cx, ty: gr.cy, near: 2, room: gr.id, steps });
     }
     if (dr && !gateUp && world.discovered.has(dr.id)) {
       // the nearest tile beside the stairwell (any side: it's used from anywhere on its rim), then use it

@@ -41,6 +41,13 @@ export const DROP = {
   chapter: { chance: 1, fine: 0.9, rare: 0.1, min: 'fine' },          // a chapter quest's hand-in: a guaranteed Fine (GDD §8), in the bag
   wave: { chance: 0.0095, fine: 0.17, rare: 0.05 },
   elite: { chance: 0.05, fine: 0.35, rare: 0.1 },
+  // a raid's (GDD §18 v1.97, raid.js): about three times the farm's gear on the way, a floor's boss Fine or better every
+  // time with a Rare one in four; rolled for the hero's class alone (drop's `own`)
+  raidWave: { chance: 0.0285, fine: 0.17, rare: 0.05 },
+  raidElite: { chance: 0.15, fine: 0.35, rare: 0.1 },
+  raidChest: { chance: 0.35, fine: 0.33, rare: 0.07 },
+  raidBoss: { chance: 1, fine: 0.75, rare: 0.25, min: 'fine' },
+  raidCoffer: { chance: 1, fine: 1, rare: 0, min: 'fine' },        // (the coffer's piece: its rarity is raid.js cofferOf's)
 };
 
 export function createLoot({ state, bus, seed }) {
@@ -69,15 +76,16 @@ export function createLoot({ state, bus, seed }) {
     toBag(item); bus.emit('loot', { item, x, y, src, best: null, salvaged: 0 });
   }
 
-  function drop(src, { ilv, x, y }) {
+  /** @param {string} src @param {{ ilv: number, x: number, y: number, own?: string, rarity?: string }} o own: for that class alone (a raid's); rarity: that rarity, no chance roll (a raid's coffer) */
+  function drop(src, { ilv, x, y, own, rarity: want }) {
     const odds = DROP[src]; if (!odds) return null;
     C.lootN = (C.lootN || 0) + 1;
     const rng = mulberry32(streamSeed(seed, 91000 + C.lootN)), n = C.lootN;
     if (rng() >= (odds.chance >= 1 ? 1 : Math.min(0.95, odds.chance * (1 + 0.05 * Math.max(0, ilv - 1))))) { scroll(src, n, x, y); return null; }   // (a chance of 1 is a promise: the cap was eating 5 % of them)
-    const q = rng(), rarity = q < odds.rare ? 'rare' : q < odds.rare + odds.fine || odds.min === 'fine' ? 'fine' : 'common';
+    const q = rng(), rarity = want || (q < odds.rare ? 'rare' : q < odds.rare + odds.fine || odds.min === 'fine' ? 'fine' : 'common');
     C.uidN = (C.uidN || 0) + 1;
-    const classes = [...new Set(state.party.map((m) => m.cls))];
-    const item = rollItem(rng, { ilv: Math.max(1, ilv), rarity, classes, uid: 'i' + C.uidN });
+    const classes = own ? [own] : [...new Set(state.party.map((m) => m.cls))];
+    const item = rollItem(rng, { ilv: Math.max(1, ilv), rarity, classes, uid: 'i' + C.uidN, own: !!own });
     let salvaged = 0;
     if (fits([item])) toBag(item);
     else { salvaged = SALVAGE[item.r]; C.embers = (C.embers || 0) + salvaged; }            // bag full: straight to Embers

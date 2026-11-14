@@ -33,6 +33,7 @@ import { restoreCount, credit } from './lamps.js';
 import { SHRINES, shrineKind, boonsOf, restoreBoons } from './shrines.js';
 import { towerOf, restoreTower, inTower, bracketOf, BRACKETS } from './tower.js';
 import { bowlOf, settleBout, restoreBowl, freshBowl, companyOn, refreshPicks, modeOf, BOWL } from './bowl.js';
+import { RAID, freshRaid, restoreRaid, raidOf, raidSites, standIns, cofferOf } from './raid.js';
 import { makeCompany } from './rivals.js';
 import { createExpeditions } from './expeditions.js';
 import { createCoach, reachedOf, townOf, COACH } from './coach.js';
@@ -86,9 +87,13 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   // the floors' gates this slot has opened (world.js gateOf; v41): once open, open for good. A floor's is shut as it's
   // built unless it's here (world.gateShut: isWalkable). The same Set is state.gates, so restore() fills it in place.
   const gatesOpen = new Set();
+  /** @type {any} */ let raidOn = null;   // a raid being run (raid.js; below): { site, rules, party (the company as it was), hp, mp (the hero's at setting out), stand, won: Set 'depth:room', gates: Set depth, t0, rooms, done, n }
   const shutGate = (w) => { w.gateShut = w.gate && !gatesOpen.has(w.gate.id) ? new Set(w.gate.cells) : null; return w; };
-  const buildWorld = (d) => shutGate(placeRoad(placeFound(placeNpcs(curScene === 'dungeon' ? createWorld(levelSeed(d), override, d, curSite) : createOutdoor(baseSeed, curScene, curRegion), isWalkable, oBlock, clock ? partOf(clock.t) : 0),
-    isWalkable, (id) => !!clock && (NPCS[id].visitor ? !(clock.flags || {})[NPCS[id].visitor] : ![...clock.party, ...clock.bench].some((m) => m.id === id))), clock));   // a found companion waits in his hall until he joins, a visitor until he's gone (npcs.js); the dead hold the barrows road (road.js)
+  // a raid's floor (raid.js): nobody met there (the found, the people at the mouth: a run isn't the story), its gate shut
+  // till the run wins the room before it, whatever the slot has opened
+  const raidFloor = (w, d) => { if (!raidOn || curScene !== 'dungeon') return w; w.npcs = []; w.raid = true; w.gateShut = w.gate && !raidOn.gates.has(d) ? new Set(w.gate.cells) : null; return w; };
+  const buildWorld = (d) => raidFloor(shutGate(placeRoad(placeFound(placeNpcs(curScene === 'dungeon' ? createWorld(levelSeed(d), override, d, curSite) : createOutdoor(baseSeed, curScene, curRegion), isWalkable, oBlock, clock ? partOf(clock.t) : 0),
+    isWalkable, (id) => !!clock && (NPCS[id].visitor ? !(clock.flags || {})[NPCS[id].visitor] : ![...clock.party, ...clock.bench].some((m) => m.id === id))), clock)), d);   // a found companion waits in his hall until he joins, a visitor until he's gone (npcs.js); the dead hold the barrows road (road.js)
 
   let world = buildWorld(0);
   const bus = createBus();
@@ -121,6 +126,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     boons: { atk: 0, def: 0, hpr: 0 },   // a shrine's boon: until when on the sim's clock (shrines.js; hpr the green's, v1.84)
     tower: { wave: 0, best: 0, landing: 0, atLanding: false, satchel: { gold: 0, cinders: 0 }, won: {} },   // the Mere Tower's climb and the heirlooms won (tower.js)
     bowl: freshBowl(),                // (v45, v47) the Bowl: marks, the day's bouts, a ladder each for Team and Individual (bowl.js)
+    raid: freshRaid(),                // (v48) raids: the day's count, coffers since a Rare, raids won (raid.js)
     trials: {},                       // class trials the company has done: { [cls]: 1 } for the 6s, { [cls + '12']: 1 } for the 12s (quests.js; skills.js unlocks)
     reached: new Set(['thornwick']),  // the towns you've stood in (coach.js): where the Guild's coach will take you
   };
@@ -129,13 +135,18 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
 
   // gear drops, the bag and the equip commands (loot.js)
   const loot = createLoot({ state, bus, seed: baseSeed });
+  // a drop where you are: in a raid at a raid's odds (loot.js DROP raid*) and for the hero's class alone (raid.js);
+  // a stand-in's class is never rolled for (what it would find isn't the player's)
+  const RAID_SRC = /** @type {Record<string, string>} */ ({ wave: 'raidWave', elite: 'raidElite', chest: 'raidChest', boss: 'raidBoss', bossAgain: 'raidBoss' });
+  const dropHere = (/** @type {string} */ src, /** @type {any} */ o) => (raidOn && RAID_SRC[src] ? loot.drop(RAID_SRC[src], { ...o, own: state.party[0].cls }) : loot.drop(src, o));
   const expeditions = createExpeditions({ state, bus, getWorld: () => world, seed: baseSeed, give: (it, src) => loot.give(it, src) });   // the bench's road work (expeditions.js)
   // creation, points, skills, stance, the bench, the temple and the inn (heroes.js)
   const heroes = createHeroes({ state, bus, getWorld: () => world, seed: baseSeed });
   const dev = createDev({ state, bus });                  // the menu's Developer tools: they mark the game a dev game (dev.js)
   // room battles (battle.js): waves, party AI, damage, XP / gold, defeat → back to town
   const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town', 'temple'), hallWanted: (site, d) => quests.wantsHall(site, d),
-    onDrop: (src, ilv, x, y) => loot.drop(src, { ilv, x, y }),
+    onDrop: (src, ilv, x, y) => dropHere(src, { ilv, x, y }),
+    raidRun: () => raidOn, onRaidLost: () => leaveRaid('wipe'),
     moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; p.vx = p.vy = 0; face(p, dx, dy); } });
 
   // the Guild's coach between the towns (coach.js): from a square, to a town reached, for its fare
@@ -159,7 +170,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     bus.emit('secretSealed', { site: curSite, until: state.secrets[curSite] });
   });
   // a boss down: its heirloom and a Fine-or-better drop the first time (items.js HEIRLOOMS); later falls roll for one (loot.js DROP)
-  bus.on('bossDown', (e) => { const B = BOSSES[e.id]; if (e.tower) wardenHeirloom(e, B); else if (e.first && B.heirloom) loot.grant(B.heirloom, { ilv: e.lvl, x: e.x, y: e.y, src: 'boss' }); loot.drop(e.first ? 'boss' : 'bossAgain', { ilv: e.lvl, x: e.x, y: e.y }); });
+  bus.on('bossDown', (e) => { const B = BOSSES[e.id]; if (e.raid) { raidBoss(e); return; } if (e.tower) wardenHeirloom(e, B); else if (e.first && B.heirloom) loot.grant(B.heirloom, { ilv: e.lvl, x: e.x, y: e.y, src: 'boss' }); loot.drop(e.first ? 'boss' : 'bossAgain', { ilv: e.lvl, x: e.x, y: e.y }); });
   // a Mere Tower warden's heirloom (tower.js): the first fall in each bracket of the hero's level, at the bracket's top
   // item level, made for a class in the party (drawn on its own stream from the warden and the bracket)
   function wardenHeirloom(e, B) {
@@ -334,6 +345,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   // to another land's overland: which land (regions.js).
   function travel(to, arrive, site = 'barrows', region = null) {
     stopWalk(); state.player.resume = null;
+    if (raidOn) leaveRaid('left');                                         // (out of a raid by any other road, a scroll: it ends; the company back)
     if (away) { battle.reset(); away = null; boutOn = null; }              // (out of the Bowl by any other road: a bout walked out on is lost)
     if (region && LANDS[region]) curRegion = landId(region);
     floors = new Map();                                    // a new visit: the site's floors are fresh
@@ -370,7 +382,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     battle.startBout(world, world.level.descentRoom.id, on.alone ? rivals.slice(0, 1) : rivals, { id: on.id, salt: state.tick, alone: on.alone });
   }
   function leaveBowl() {
-    if (!away || battle.battle) return;                        // (not mid-bout)
+    if (!away || raidOn || battle.battle) return;              // (not mid-bout; a raid leaves by leaveRaid)
     const p = state.player, a = away;
     world = a.world; curScene = a.scene; curSite = a.site; curRegion = a.region; state.depth = a.depth; floors = a.floors;
     p.x = p.px = a.x; p.y = p.py = a.y; p.moving = false; p.vx = p.vy = 0;
@@ -379,6 +391,71 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     bus.emit('levelChanged', { depth: state.depth, theme: world.theme, scene: curScene });
   }
   bus.on('boutEnd', (res) => { if (!boutOn) return; const on = boutOn; boutOn = null; bus.emit('bowlResult', settleBout(state, on, res)); });
+
+  // ── Raids (raid.js, GDD §18 v1.97): a pocket trip as the Bowl's is (the world you were in kept as it stood, given back
+  // as it was), into one of the band dungeons with the hero and two stand-ins; the company waits where it was. The run is
+  // runtime only: a save made on one is the world and the company it set out from (snapshot), so a reload ends it.
+  const PARTY_CMDS = new Set(['hire', 'swap', 'dismiss', 'release', 'askAround', 'retrain', 'payWages', 'expeditionSend']);   // (the company's own business: not on a raid)
+  function raidOut(site, seats) {
+    const p = state.player, H = state.party[0], r = raidOf(state);
+    stopWalk(); p.resume = null; p.journey = null;
+    r.used++; r.n++;
+    const stand = standIns(baseSeed, r.n, H, seats);
+    raidOn = { site, rules: RAID, party: state.party, hp: H.hp, mp: H.mp, stand, won: new Set(), gates: new Set(), t0: state.t, rooms: 0, done: false, n: r.n };
+    away = { world, scene: curScene, site: curSite, region: curRegion, depth: state.depth, floors, x: p.x, y: p.y };
+    battle.reset();
+    state.party = [H, ...stand];
+    curScene = 'dungeon'; curSite = site; curRegion = SITES[site].region; state.depth = 0; floors = new Map();
+    world = buildWorld(0);
+    const a = world.stairArrive && isWalkable(world, world.stairArrive.x, world.stairArrive.y) ? world.stairArrive : findSpawn(world);
+    p.x = p.px = a.x; p.y = p.py = a.y; p.moving = false; p.vx = p.vy = 0;
+    battle.reset();
+    bus.emit('raidStarted', { site, name: SITES[site].name, left: RAID.perDay - r.used, stand: stand.map((m) => ({ id: m.id, name: m.name, cls: m.cls, level: m.level })) });
+    bus.emit('levelChanged', { depth: 0, theme: world.theme, scene: curScene, raid: true });
+    bus.emit('partyChanged', state.party);
+  }
+  /** back where the hero set out from, the company as it was; the hero's HP and MP as it set out (a run's wounds aren't
+   *  carried: no penalty, the owner), never Downed. why: 'won' (after the coffer), 'wipe', 'left' (walked out, read a scroll) */
+  function leaveRaid(why) {
+    if (!raidOn) return;
+    const R = raidOn, p = state.player, H = state.party[0], a = away;
+    if (!R.done) bus.emit('raidEnd', { won: false, why, site: R.site, name: SITES[R.site].name, secs: Math.round(state.t - R.t0), rooms: R.rooms });
+    raidOn = null; away = null;
+    battle.reset();
+    state.party = [H, ...R.party.slice(1)];
+    H.hp = R.hp; H.mp = R.mp; H.down = false; H.fallen = false;
+    world = a.world; curScene = a.scene; curSite = a.site; curRegion = a.region; state.depth = a.depth; floors = a.floors;
+    p.x = p.px = a.x; p.y = p.py = a.y; p.moving = false; p.vx = p.vy = 0;
+    battle.reset();
+    bus.emit('raidLeft', { why });
+    bus.emit('levelChanged', { depth: state.depth, theme: world.theme, scene: curScene });
+    bus.emit('partyChanged', state.party);
+  }
+  // a room won (battle.js: its RAID.waves held): quiet for the run; the gate before the hall, if it was the gate's room
+  bus.on('raidRoom', (e) => {
+    if (!raidOn) return;
+    raidOn.won.add(`${state.depth}:${e.room}`); raidOn.rooms++;
+    if (world.gate && world.gateShut && world.gate.rooms.includes(e.room)) {
+      raidOn.gates.add(state.depth); world.gateShut = null; world._openCache = null;
+      bus.emit('gateOpened', { id: world.gate.id, room: e.room, cells: world.gate.cells, raid: true });
+    }
+  });
+  // a boss down on a raid: a raid's drop (Fine or better), and on the last floor the run won and the coffer opened
+  function raidBoss(e) {
+    if (!raidOn) return;
+    dropHere('boss', { ilv: e.lvl, x: e.x, y: e.y });
+    if (state.depth < SITES[raidOn.site].floors - 1 || raidOn.done) return;
+    const R = raidOn, r = raidOf(state), H = state.party[0];
+    const holds = (name) => [...state.bag, ...[...R.party, ...state.bench].flatMap((m) => Object.values(m.gear || {}))].some((it) => it && it.r === 'heirloom' && it.name === name);
+    const c = cofferOf(baseSeed, R.n, R.site, r.dry, holds);
+    state.counters.gold = (state.counters.gold || 0) + c.gold; state.counters.embers = (state.counters.embers || 0) + c.cinders;
+    const item = c.heirloom ? loot.grant(c.heirloom, { ilv: c.ilv, x: e.x, y: e.y, src: 'coffer', cls: H.cls }) : loot.drop('raidCoffer', { ilv: c.ilv, x: e.x, y: e.y, own: H.cls, rarity: c.rarity });
+    r.dry = c.rarity === 'fine' ? r.dry + 1 : 0; r.won++;
+    R.done = true;
+    bus.emit('countersChanged', { ...state.counters });
+    bus.emit('raidEnd', { won: true, site: R.site, name: SITES[R.site].name, secs: Math.round(state.t - R.t0), rooms: R.rooms,
+      coffer: { gold: c.gold, cinders: c.cinders, item: item ? { name: item.name, r: item.r, base: item.base, ilv: item.ilv } : null } });
+  }
 
   // A journey (a compass pick whose row carries `journey`) outlasts the scene change it walks
   // into: out of town, into the barrows, down a floor, it picks its next leg where it arrives and
@@ -400,6 +477,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   function applyCommand(cmd) {
     const p = state.player;
     if (!cmd || typeof cmd !== 'object') return;
+    // a raid's stand-ins (raid.js) aren't the player's: nothing is given them, nothing is taken, nobody is benched on a raid
+    if (raidOn && (raidOn.stand.some((m) => m.id === cmd.member || m.id === cmd.id) || PARTY_CMDS.has(cmd.type))) { bus.emit('refused', { reason: 'Not on a raid' }); return; }
     if (loot.command(cmd)) return;                         // equip / unequip / salvage
     if (smith.command(cmd)) return;                        // upgrade / reforge / salvageCommons / buy / buyScroll / sell / buyBack
     if (cmd.type === 'useItem') {                          // a thing in the bag you read once (items.js `use`)
@@ -480,6 +559,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     if (cmd.type === 'bowlBout') {
       const H = state.party[0], no = (reason) => bus.emit('refused', { reason });
       if (!state.created || H.level < BOWL.minLevel) { no(`The Bowl takes companies from level ${BOWL.minLevel}`); return; }
+      if (raidOn) { no('Not on a raid'); return; }
       if (battle.battle) { no('Not in the middle of a fight'); return; }
       if (H.down || H.fallen) return;
       const b = bowlOf(state), mode = modeOf(cmd.mode === undefined && cmd.alone ? 'solo' : cmd.mode), L = b[mode];   // (`alone`: v1.85's word for the hero alone)
@@ -491,6 +571,22 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       return;
     }
     if (cmd.type === 'bowlLeave') { leaveBowl(); return; }
+    // Raids (raid.js, GDD §18 v1.97): set out on one of the band dungeons with two stand-ins, what each open seat wants
+    // ('any' or a class); anywhere out of a fight, three a day; spent on setting out (the owner). raidLeave: back from one
+    if (cmd.type === 'raidOut') {
+      const H = state.party[0], no = (reason) => bus.emit('refused', { reason });
+      if (!state.created || H.down || H.fallen || state.away) return;
+      if (raidOn || away) { no('Not from here'); return; }
+      if (battle.battle) { no('Not in the middle of a fight'); return; }
+      const row = raidSites(state, landOpen).find((q) => q.id === cmd.site);
+      if (!row) return;
+      if (!row.ok) { no(row.why === 'level' ? `${row.name} wants a hero of level ${row.base}` : row.why === 'land' ? 'That land isn’t open to you yet' : 'You haven’t found the way in yet'); return; }
+      if (raidOf(state).used >= RAID.perDay) { no(`That’s your ${RAID.perDay} raids for today`); return; }
+      const seats = Array.isArray(cmd.seats) ? cmd.seats.slice(0, 2).map(String) : [];
+      raidOut(row.id, [seats[0] || 'any', seats[1] || 'any']);
+      return;
+    }
+    if (cmd.type === 'raidLeave') { if (raidOn && (raidOn.done || !battle.battle || battle.battle.quiet)) leaveRaid(raidOn.done ? 'won' : 'left'); return; }   // (never mid-fight, unless it's won)
     if (cmd.type === 'towerClimb') { if (inTower(world)) battle.towerClimb(); return; }
     if (cmd.type === 'towerLeave') { if (inTower(world) && towerOf(state).atLanding && battle.battle && battle.battle.tower) travel('overland', curSite); return; }
     if (cmd.type === 'useShrine') {                        // the shrine popup's Use (ui/shrine.js): unspent, in reach, and needed
@@ -514,6 +610,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
         if (!inReach) { bus.emit('outOfReach', { tx: cmd.tx, ty: cmd.ty }); return; }
         face(p, dx, dy);
         if (prop === 'stairs' && world.kind === 'overland') { travel('dungeon', undefined, 'barrows'); return; }   // into the Old Barrows
+        if (prop === 'exit' && raidOn) { leaveRaid(raidOn.done ? 'won' : 'left'); return; }            // a raid's way out: back to where you set out from
         if (prop === 'exit' && away) { leaveBowl(); return; }                                         // the Dust Gate's stair: back to where you were
         if (prop === 'exit') { travel('overland', curSite); return; }                                  // back up to the surface
         if (prop === 'stairs' || prop === 'stairwell') { bus.emit('descend', { depth: state.depth + 1 }); descend(); return; }   // any tile of the stairwell
@@ -538,7 +635,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
             const ilv = rl || Math.max(1, world.kind === 'dungeon' ? state.depth + 1 : state.party[0].level);
             const gold = Math.round((CHEST_GOLD[0] + CHEST_GOLD[1] * ilv) * (0.8 + 0.4 * hash2(cmd.tx, cmd.ty, world.seed + 77)) * GOLD_DROP);
             state.counters.gold = (state.counters.gold || 0) + gold;
-            const item = loot.drop('chest', { ilv, x: cmd.tx + 0.5, y: cmd.ty + 0.5 });
+            const item = dropHere('chest', { ilv, x: cmd.tx + 0.5, y: cmd.ty + 0.5 });
             bus.emit('chestOpened', { tx: cmd.tx, ty: cmd.ty, x: cmd.tx + 0.5, y: cmd.ty + 0.5, gold, item: item ? { name: item.name, r: item.r } : null });   // what it held (or that it held no gear): ui/hud.js
           }
           bus.emit('countersChanged', { ...state.counters });
@@ -638,7 +735,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       else if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive, ex.site, ex.region);
       if (!ex) shut = null;
     }
-    else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) { if (away) leaveBowl(); else if (state.depth > 0) ascend(); else travel('overland', curSite); }   // (the Bowl's gate: back where you were, never the land)   // walk up the stair: a floor up, or out
+    else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) { if (away && !raidOn) leaveBowl(); else if (state.depth > 0) ascend(); else if (raidOn) leaveRaid(raidOn.done ? 'won' : 'left'); else travel('overland', curSite); }   // (the Bowl's gate: back where you were, never the land)   // walk up the stair: a floor up, or out
     if (p.journey && !p.path && !p.resume) p.journey = null;   // arrived (a leg that changed scenes has already walked on), or stopped
     state.t += TICK_DT; state.tick += 1;
     if (state.away && --state.away.left <= 0) { const secs = state.away.secs; state.away = null; bus.emit('awayEnded', { secs, stopped: false }); }
@@ -658,6 +755,12 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const persistMember = (m) => { const o = {}; for (const k of MEMBER_KEYS) if (m[k] !== undefined) o[k] = m[k]; return o; };
   // a save made in the Bowl is the world you came from, and the company as it came in (a bout's HP isn't carried)
   function snapshot() {
+    if (raidOn) {                                       // (on a raid: the world and the company it set out from, the hero as it set out)
+      const R = raidOn, p = state.player, here = { world, scene: curScene, site: curSite, region: curRegion, depth: state.depth, floors, x: p.x, y: p.y }, a = away, H = state.party[0], now = [H.hp, H.mp, H.down], party = state.party;
+      world = a.world; curScene = a.scene; curSite = a.site; curRegion = a.region; state.depth = a.depth; floors = a.floors; p.x = a.x; p.y = a.y;
+      state.party = [H, ...R.party.slice(1)]; H.hp = R.hp; H.mp = R.mp; H.down = false;
+      try { return snap(); } finally { world = here.world; curScene = here.scene; curSite = here.site; curRegion = here.region; state.depth = here.depth; floors = here.floors; p.x = here.x; p.y = here.y; state.party = party; [H.hp, H.mp, H.down] = now; }
+    }
     if (!away) return snap();
     const p = state.player, here = { world, scene: curScene, site: curSite, region: curRegion, depth: state.depth, floors, x: p.x, y: p.y };
     const kept = battle.battle && battle.battle.bout ? battle.battle.bout.kept.map(({ m, hp, mp }) => ({ m, hp, mp, now: [m.hp, m.mp, m.down] })) : [];
@@ -693,6 +796,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       boons: { ...boonsOf(state) },     // (v20)
       tower: JSON.parse(JSON.stringify(towerOf(state))),   // (v21)
       bowl: JSON.parse(JSON.stringify(state.bowl || freshBowl())),   // (v45) bowl.js
+      raid: { ...raidOf(state) },        // (v48) raid.js
       trials: Object.keys(state.trials),
       reached: [...state.reached],       // (v28)
       floors: [...floors.entries()],     // the other floors of this visit: [depth, { mods, hp, discovered, visited }]
@@ -768,7 +872,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     state.boons = restoreBoons(data);   // v19 and older: none
     state.tower = restoreTower(data);   // v20 and older: no climb
     state.bowl = restoreBowl(data.bowl);  // v44 and older: a fresh record (bowl.js)
-    away = null; boutOn = null;
+    state.raid = restoreRaid(data.raid);  // v47 and older: a fresh record (raid.js)
+    away = null; boutOn = null; raidOn = null;
     state.away = null;                  // (a catch-up is never saved: ui/away.js holds the autosave while one runs)
     // v12 and older, from before the trials: a class anyone in the company had at level 6 keeps its level-6 ability
     state.trials = {};
@@ -815,5 +920,9 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   function landOpen(id) { const L = LANDS[landId(id)]; return !L.opens || (state.quests && state.quests[L.opens] && state.quests[L.opens].st === QS.DONE) || false; }
   /** a hidden site found (a chapter's reward, the Chronicle): its way in opens on the Vale @param {string} id */
   function reveal(id) { if (SITES[id] && SITES[id].hidden && !state.revealed.has(id)) { state.revealed.add(id); bus.emit('siteRevealed', { site: id, name: SITES[id].name }); } }
-  return { state, bus, commands, tick, snapshot, restore, destinations, spotNear, heroes, quests, board, lore, smith, reveal, landOpen, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; }, get focusId() { return battle.focusId; } };
+  return { state, bus, commands, tick, snapshot, restore, destinations, spotNear, heroes, quests, board, lore, smith, reveal, landOpen, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; }, get focusId() { return battle.focusId; },
+    /** the raid being run (raid.js), for presentation: null, or { site, name, depth, floors, rooms, done, wave, waves, boss, t0, from } */
+    get raid() { if (!raidOn) return null; const b = battle.battle; return { site: raidOn.site, name: SITES[raidOn.site].name, depth: state.depth, floors: SITES[raidOn.site].floors, rooms: raidOn.rooms, done: raidOn.done, wave: b && !b.boss ? b.wave : 0, waves: RAID.waves, boss: !!(b && b.boss), t0: raidOn.t0, from: away ? away.scene : '' }; },   // (from: the scene it set out from)
+    /** the band dungeons and whether the hero can raid each now (raid.js) */
+    raidSites: () => raidSites(state, landOpen) };
 }

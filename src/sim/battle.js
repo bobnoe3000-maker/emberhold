@@ -375,7 +375,11 @@ export const SPARE_MP = 0.7;
 const HOLD_R = 3, GUARD_LOW = 0.3;
 const COS_HALF = { 40: 0.9397, 60: 0.8660 };   // cos of half a fan's arc (detmath has no acos; a table, as XP_TABLE)
 
-export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat, onDrop = () => {}, moveHero, hallWanted = () => false }) {
+// A raid (raid.js, GDD §18 v1.97): core.js hands its run in (raidRun: null, or { won: Set 'depth:room', rules: raid.js
+// RAID }). A room holds rules.waves waves on rules.tide and is then won, quiet for the run (raidRoom); a hall's boss is
+// always home; a kill pays rules.xp and rules.gold (stand-ins earn no XP: theirs isn't the player's); nobody is Fallen,
+// and a wipe is onRaidLost, without a wipe's cost (the owner: "no penalty for loss").
+export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat, onDrop = () => {}, moveHero, hallWanted = () => false, raidRun = () => /** @type {any} */ (null), onRaidLost = () => {} }) {
   let rng = mulberry32(streamSeed(seed, 0xb477));
   let battle = null, nextId = 1, focusId = 0, pending = [], calmT = 0;   // calmT: seconds with no foe standing (pickCages)   // pending: blows and releases waiting on their wind-up
 
@@ -481,7 +485,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const n = Math.max(1, Math.min(SIZE_CAP[b.size] || 99, waveSize(lvl)) - (eliteWave ? 1 : 0));
     // the tide: a step up from the last wave, to the top; after the top, back to the start
     if (b.wave > 0) {
-      const T = tideOf(w, b.room);
+      const R = raidRun(), T = R ? R.rules.tide : tideOf(w, b.room);   // (a raid's rooms climb on its own tide)
       if (b.tide >= T.cap - 1e-9) { b.tide = 0; bus.emit('tideTurned', { room: b.room }); }
       else b.tide = Math.min(T.cap, b.tide + T.step);
     }
@@ -600,7 +604,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     for (const m of state.party) { m.downs = 0; m.stood = 0; m.buff = null; m.ward = 0; }   // a new room visit
     const hall = w.level.descentRoom && w.level.descentRoom.id === room, bid = hall ? bossAt(w.site, w.depth || 0) : null;
     battle = { room, t0: state.t, lastBlow: null, level: (w.roomLevels && w.roomLevels.get(room)) || 1 + (w.depth || 0), wave: 0, lull: 1.2, cells, grid: { x0, y0, gw, gh, walk }, fields: new Map(),
-      tide: 0, boss: bid && !bossAway(state, w.site, w.depth) ? bid : null, bossUp: false, quiet: false, lastSlain: null,
+      tide: 0, boss: bid && (raidRun() || !bossAway(state, w.site, w.depth)) ? bid : null, bossUp: false, quiet: false, lastSlain: null,
       hazards: [], flood: 0, edge: null, size: (w.level.rooms.find((r) => r.id === room) || {}).size || 'large' };       // the ground hazard (hazards.js); the room's size (SIZE_CAP)
     if (w.site === TOWER.site) {                                 // the Mere Tower's stair hall: its own climb, carried on where it was (tower.js)
       const T = towerOf(state); Object.assign(battle, { tower: true, level: TOWER.level, wave: T.wave, boss: null, quiet: T.atLanding, between: T.wave > 0, tide: towerTough(Math.max(1, T.wave)) - 1 });   // (between: the last wave was paid for already)
@@ -746,7 +750,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     for (const m of state.party) {
       m.buff = null; m.ward = 0;
       if (!m.down) continue;
-      if (leftThem && !m.main) fall(m);
+      if (leftThem && !m.main && !raidRun()) fall(m);
       else { m.down = false; m.hp = Math.max(1, Math.round(statsFor(m).maxHp * 0.2)); }
     }
   }
@@ -819,7 +823,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       bus.emit('combat', { t: 'down', x: tgt.x, y: tgt.y, name: tgt.name, rival: !!tgt.rival });
       if (tgt.rival && focusId === tgt.id) focusId = 0;
       const bout = battle && battle.bout;
-      if (tgt.downs >= 2 && !tgt.main && !bout) fall(tgt);      // twice in one room visit (the main character stays Downed; nobody's Fallen in the Bowl)
+      if (tgt.downs >= 2 && !tgt.main && !bout && !raidRun()) fall(tgt);      // twice in one room visit (the main character stays Downed; nobody's Fallen in the Bowl)
       if (!allies(tgt).some(alive)) { if (bout) boutOver(tgt.rival ? 'won' : 'lost', 'down'); else defeat(w); }
     }
     else { tgt.dead = DEATH_T; reward(tgt); if (focusId === tgt.id) focusId = 0; }
@@ -832,20 +836,21 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (battle && !e.boss && battle.boss && BOSSES[battle.boss].mech === 'issue') { (battle.fell ||= []).push({ kind: e.kind, x: e.x, y: e.y, elite: !!e.elite }); if (battle.fell.length > FELL_MAX) battle.fell.shift(); }
     if (e.issued) { if (battle) battle.lastSlain = { x: e.x, y: e.y }; return; }
     if (battle && battle.tower) { towerReward(e); return; }
-    const living = state.party.filter(alive);
-    const xp = Math.round(e.xp * e.lvl), share = Math.max(1, Math.round(xp * XP_SHARE[Math.min(3, living.length)] * (state.away ? AWAY_XP : 1)));   // (time away: AWAY_XP)
+    const living = state.party.filter(alive), R = raidRun();
+    const xp = Math.round(e.xp * e.lvl), share = Math.max(1, Math.round(xp * XP_SHARE[Math.min(3, living.length)] * (state.away ? AWAY_XP : 1) * (R ? R.rules.xp : 1)));   // (time away: AWAY_XP; a raid: its own)
     const lv = (m) => bus.emit('levelUp', { id: m.id, name: m.name, level: m.level });
-    for (const m of living) gainXp(m, share, lv);
+    for (const m of living) if (!m.standin) gainXp(m, share, lv);
     // (the bench earns nothing, GDD v1.80: the owner, 2026-11-12, "companions not in my party (benched) are leveling up -
     // they should not be"; it took half before. A benched companion levels on the road: expeditions.js)
-    state.counters.gold = (state.counters.gold || 0) + Math.round(e.gold * e.lvl * goldMod(state.party) * GOLD_DROP);   // (a Scavenger's or a Greedy sellsword's eye)
+    state.counters.gold = (state.counters.gold || 0) + Math.round(e.gold * e.lvl * goldMod(state.party) * GOLD_DROP * (R ? R.rules.gold : 1));   // (a Scavenger's or a Greedy sellsword's eye)
     // cinders (✦) from the strong (GDD §8 v1.13): an elite gives ELITE_CINDERS, a boss BOSS_CINDERS, for the smith
     const ci = e.boss ? BOSS_CINDERS : e.elite ? ELITE_CINDERS : 0;
     if (ci) { state.counters.embers = (state.counters.embers || 0) + ci; bus.emit('combat', { t: 'cinders', x: e.x, y: e.y, amount: ci }); }
     bus.emit('countersChanged', { ...state.counters });
     bus.emit('combat', { t: 'xp', x: e.x, y: e.y, amount: share });
     if (e.boss) bossGone(e);
-    if (e.boss) { const first = !(state.bosses || {})[e.boss]; (state.bosses ||= {})[e.boss] = ((state.bosses || {})[e.boss] || 0) + 1; if (battle) battle.quiet = true;
+    if (e.boss && R) { if (battle) battle.quiet = true; bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first: false, x: e.x, y: e.y, lvl: e.lvl, raid: true }); }   // (a raid's: not the story's, no time away)
+    else if (e.boss) { const first = !(state.bosses || {})[e.boss]; (state.bosses ||= {})[e.boss] = ((state.bosses || {})[e.boss] || 0) + 1; if (battle) battle.quiet = true;
       (state.bossBack ||= {})[e.boss] = state.t + BOSS_BACK;   // (gone for BOSS_BACK: his hall empty till then)
       bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first, x: e.x, y: e.y, lvl: e.lvl }); }   // (core.js pays its heirloom / loot; the room goes quiet)
     else if (battle) battle.lastSlain = { x: e.x, y: e.y };
@@ -934,6 +939,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // 'defeat' event carries a recap for the defeat screen (ui/defeat.js): where, how far in, who struck
   // the last blow, what's left standing. Presentation reads it; nothing in it feeds back into the sim.
   function defeat(w) {
+    if (raidRun()) {                                               // a raid lost: no cost (the owner); everyone up, the run over (core.js)
+      endBattle(w, 'defeat');
+      for (const m of state.party) { m.down = false; m.fallen = false; m.hp = Math.max(1, m.hp); }
+      onRaidLost(); return;
+    }
     const b = battle, recap = b ? { site: b.camp ? b.camp.id : w.site || 'barrows', siteName: b.camp ? b.camp.name : siteOf(w.site).name, floor: b.camp ? 0 : (w.depth || 0) + 1, camp: !!b.camp, level: b.level, wave: b.wave,
       secs: Math.round(state.t - (b.t0 ?? state.t)), foesLeft: w.enemies.filter((e) => !e.dead && e.hp > 0).length,
       killer: b.lastBlow ? { ...b.lastBlow, bossName: b.lastBlow.boss && BOSSES[b.lastBlow.boss] ? BOSSES[b.lastBlow.boss].name : '' } : null,
@@ -1855,7 +1865,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (battle && room !== battle.room) endBattle(w, 'left');
     // (a hall where a found companion still waits, his captor fallen, is quiet: the Company left him there
     // (npcs.js placeFound); and for the rest of the visit once he's walked out of it with you)
-    const waiting = hallHere(w, room) && (w.freedHall === room || (w.npcs || []).some((n) => n.found && (state.bosses || {})[n.boss]) || (!!bossAway(state, w.site, w.depth) && !hallWanted(w.site || 'barrows', w.depth || 0)));   // (or its boss away: the hall empty till he's back, unless a quest asks you to hold it)
+    const R = raidRun();
+    const waiting = R ? R.won.has(`${w.depth || 0}:${room}`) : hallHere(w, room) && (w.freedHall === room || (w.npcs || []).some((n) => n.found && (state.bosses || {})[n.boss]) || (!!bossAway(state, w.site, w.depth) && !hallWanted(w.site || 'barrows', w.depth || 0)));   // (or its boss away: the hall empty till he's back, unless a quest asks you to hold it)
     if (!battle && inDungeon && !w.arena && room >= 0 && w.level.entrance && room !== w.level.entrance.id && alive(H) && !waiting) startBattle(w, room);   // (the Bowl's sand: only a bout, bowl.js)
     if (!battle && onLand && alive(H)) {                            // a spawn point on the overland: within its reach and full (camps.js)
       const list = campsOf(w.region), h = campNear(list, p.x, p.y, 'reach');
@@ -1902,6 +1913,9 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
           if (!battle.camp && !battle.tower && w.gate && w.gateShut && w.gate.rooms.includes(battle.room) && battle.wave >= w.gate.waves) {
             state.gates.add(w.gate.id); w.gateShut = null; w._openCache = null;   // (the compass's walkable tiles, cached on the floor: travel.js)
             bus.emit('gateOpened', { id: w.gate.id, room: battle.room, cells: w.gate.cells });
+          }
+          if (R && !battle.camp && !battle.tower && !battle.boss && battle.wave >= R.rules.waves) {   // a raid's room held: won, quiet for the run
+            battle.quiet = true; bus.emit('raidRoom', { room: battle.room, wave: battle.wave });
           }
           if (battle.camp) {                                        // a spawn point cleared: empty until its respawn (camps.js)
             clearCamp(state, battle.camp);
