@@ -1,0 +1,208 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Party Up mockup</title>
+<!-- Party Up and raids: the mockup for docs/party-up-raids-proposal.md (2026-11-14). Five phone screens at 390 × 844:
+     find a group, make a group, the lobby, in the raid (on a frame from the game), the run's end. Captured to
+     docs/img/ui/party-up-mockup-2026-11-14.jpg. -->
+<style>
+body { margin: 0; background: #2a2018; font-family: Georgia, serif; color: #efe4cf; }
+.row { display: flex; gap: 28px; padding: 26px; align-items: flex-start; }
+.col { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.cap { font: 600 15px Georgia, serif; color: #f5d78a; }
+.sub { font: 12px ui-monospace, Menlo, monospace; color: #b9a98e; max-width: 390px; text-align: center; line-height: 1.5; }
+.phone { width: 390px; height: 844px; background: rgba(10,8,6,.96); border-radius: 26px; border: 1px solid #5a4630; overflow: hidden; position: relative; }
+.in { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.kind { font: 11px ui-monospace, Menlo, monospace; letter-spacing: 2px; color: #d8b060; text-transform: uppercase; }
+.head { display: flex; justify-content: space-between; align-items: flex-end; }
+h2 { font: 600 24px Georgia, serif; color: #f5d78a; margin: 0; }
+h3 { font: 11px ui-monospace, Menlo, monospace; letter-spacing: 2px; color: #b9a27a; text-transform: uppercase; margin: 4px 0 0; font-weight: 400; }
+.close { width: 40px; height: 40px; border-radius: 10px; border: 1px solid rgba(216,176,96,.4); color: #cbbfae; display: grid; place-items: center; font-size: 18px; }
+.me { display: flex; gap: 8px; }
+.stat { flex: 1; background: rgba(255,255,255,.04); border: 1px solid rgba(216,176,96,.22); border-radius: 10px; padding: 6px 8px; }
+.stat .k { font: 10px ui-monospace, Menlo, monospace; letter-spacing: 1.5px; text-transform: uppercase; color: #b9a27a; }
+.stat .v { font: 600 17px Georgia, serif; color: #efe4cf; }
+.stat .t { font: 10.5px ui-monospace, Menlo, monospace; color: #b9a98e; }
+.seg { display: flex; background: rgba(255,255,255,.04); border: 1px solid rgba(216,176,96,.35); border-radius: 12px; padding: 3px; gap: 3px; }
+.seg div { flex: 1; min-height: 42px; border-radius: 9px; display: grid; place-items: center; font: 600 14px Georgia, serif; color: #cbbfae; }
+.seg .on { background: linear-gradient(#e6c47a, #a07a2e); color: #1a1208; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.filters div { font: 12px ui-monospace, Menlo, monospace; padding: 0 10px; min-height: 34px; display: flex; align-items: center; border-radius: 999px; border: 1px solid rgba(216,176,96,.3); color: #cbbfae; }
+.filters .on { background: rgba(216,176,96,.18); color: #f5d78a; border-color: rgba(216,176,96,.7); }
+.filters .off { opacity: .45; }
+.card { display: flex; align-items: center; gap: 8px; background: rgba(26,20,14,.92); border: 1px solid rgba(216,176,96,.3); border-radius: 12px; padding: 10px 10px 10px 12px; }
+.card.dim { opacity: .55; }
+.card .who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.card .top { display: flex; align-items: baseline; gap: 8px; }
+.card .nm { font: 600 15px Georgia, serif; color: #efe4cf; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .rt { margin-left: auto; font: 11px ui-monospace, Menlo, monospace; color: #cbbfae; white-space: nowrap; }
+.card .dg { font: 12px ui-monospace, Menlo, monospace; color: #d8b060; }
+.chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.chip { font: 11px ui-monospace, Menlo, monospace; padding: 2px 5px; white-space: nowrap; border-radius: 6px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); color: #dccfb8; display: flex; align-items: center; gap: 4px; }
+.chip b { color: #f0e6d2; font-weight: 600; }
+.chip.want { border-style: dashed; border-color: rgba(216,176,96,.6); background: none; color: #e6c47a; }
+.chip.want.fit { background: rgba(143,192,106,.14); border-color: #8fc06a; color: #bfe0a0; }
+.btn { min-width: 66px; min-height: 46px; padding: 0 12px; border-radius: 10px; display: grid; place-items: center; font: 600 14px Georgia, serif; background: linear-gradient(#e6c47a, #a07a2e); color: #1a1208; border: 1px solid #f5d78a; text-align: center; }
+.btn.ghost { background: none; color: #e6c47a; border-color: rgba(216,176,96,.55); }
+.btn.off { background: rgba(255,255,255,.05); color: #8a7a62; border-color: rgba(216,176,96,.25); font-weight: 400; font-size: 13px; }
+.btn.wide { width: 100%; box-sizing: border-box; flex-direction: column; display: flex; justify-content: center; align-items: center; }
+.btn small { font: 10.5px ui-monospace, Menlo, monospace; font-weight: 400; opacity: .85; }
+.note { font-size: 12px; color: #a8987e; line-height: 1.45; }
+.opt { display: flex; align-items: center; gap: 10px; background: rgba(26,20,14,.92); border: 1px solid rgba(216,176,96,.25); border-radius: 12px; padding: 9px 12px; min-height: 44px; box-sizing: border-box; }
+.opt .rad { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(216,176,96,.6); flex: none; box-sizing: border-box; }
+.opt.on { border-color: #e6c47a; background: rgba(216,176,96,.1); }
+.opt.on .rad { background: radial-gradient(#e6c47a 45%, transparent 50%); border-color: #e6c47a; }
+.opt.off { opacity: .5; }
+.opt .t1 { font: 600 15px Georgia, serif; color: #efe4cf; }
+.opt .t2 { font: 11px ui-monospace, Menlo, monospace; color: #b9a98e; }
+.opt .lv { margin-left: auto; font: 12px ui-monospace, Menlo, monospace; color: #d8b060; white-space: nowrap; }
+.seat { display: flex; align-items: center; gap: 10px; background: rgba(26,20,14,.92); border: 1px solid rgba(216,176,96,.3); border-radius: 12px; padding: 10px 12px; min-height: 64px; box-sizing: border-box; }
+.seat.empty { border-style: dashed; background: none; }
+.pt { width: 42px; height: 42px; border-radius: 10px; flex: none; display: grid; place-items: center; font: 600 16px Georgia, serif; color: #1a1208; }
+.seat .who { flex: 1; min-width: 0; }
+.seat .n1 { font: 600 16px Georgia, serif; color: #efe4cf; }
+.seat .n2 { font: 11.5px ui-monospace, Menlo, monospace; color: #b9a98e; }
+.tag { font: 600 11px ui-monospace, Menlo, monospace; padding: 4px 7px; border-radius: 6px; white-space: nowrap; }
+.tag.ok { background: rgba(143,192,106,.18); color: #bfe0a0; border: 1px solid rgba(143,192,106,.6); }
+.tag.wait { background: rgba(216,176,96,.12); color: #e6c47a; border: 1px solid rgba(216,176,96,.5); }
+.fr { display: flex; align-items: center; gap: 8px; padding: 6px 2px; border-bottom: 1px solid rgba(216,176,96,.12); min-height: 46px; box-sizing: border-box; }
+.fr .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.fr .n1 { font: 600 14px Georgia, serif; color: #efe4cf; }
+.fr .n2 { font: 11px ui-monospace, Menlo, monospace; color: #b9a98e; }
+.fr .sp { flex: 1; }
+/* in the raid */
+.game { background: #05060c url(img/ui/party-up-raid-bg.jpg) center top / 390px 844px no-repeat; }
+.tb { position: absolute; left: 0; right: 0; top: 0; padding: 14px 14px 0 8px; display: flex; gap: 10px; align-items: flex-start; }
+.menu { width: 42px; height: 42px; border-radius: 10px; border: 1px solid rgba(216,176,96,.55); background: rgba(10,8,6,.85); display: grid; place-items: center; color: #e6c47a; font-size: 20px; }
+.tb .wh { font: 600 15px ui-monospace, Menlo, monospace; color: #e8dcc8; }
+.tb .tod { font: 12px ui-monospace, Menlo, monospace; color: #e8a080; }
+.tb .gold { margin-left: auto; font: 13px ui-monospace, Menlo, monospace; color: #cbbfae; }
+.raid { position: absolute; left: 12px; right: 12px; top: 84px; background: rgba(12,9,6,.9); border: 1px solid rgba(216,176,96,.55); border-radius: 12px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; }
+.raid .l1 { display: flex; align-items: baseline; gap: 8px; font: 11px ui-monospace, Menlo, monospace; letter-spacing: 1.5px; color: #d8b060; text-transform: uppercase; }
+.raid .l1 b { margin-left: auto; color: #f5d78a; font-weight: 600; letter-spacing: 0; text-transform: none; font-size: 12.5px; }
+.raid .l2 { font: 13px Georgia, serif; color: #e8d8b8; }
+.pips { display: flex; gap: 4px; }
+.pips i { flex: 1; height: 5px; border-radius: 3px; background: rgba(255,255,255,.12); }
+.pips i.d { background: #8fc06a; } .pips i.n { background: #e6c47a; }
+.lab { position: absolute; transform: translateX(-50%); font: 600 11px ui-monospace, Menlo, monospace; padding: 2px 6px; border-radius: 6px; background: rgba(8,6,4,.82); color: #efe4cf; white-space: nowrap; border: 1px solid rgba(216,176,96,.35); }
+.lab small { font-weight: 400; color: #b9a98e; }
+.lab.me { border-color: #8fc06a; }
+.follow { position: absolute; right: 12px; bottom: 182px; display: flex; gap: 8px; }
+.pill { min-height: 46px; padding: 0 14px; border-radius: 23px; display: flex; align-items: center; gap: 8px; font: 600 13px Georgia, serif; background: rgba(10,8,6,.88); border: 1px solid rgba(216,176,96,.55); color: #e6c47a; }
+.pill.on { background: linear-gradient(#e6c47a, #a07a2e); color: #1a1208; border-color: #f5d78a; }
+.pc { position: absolute; left: 8px; right: 8px; bottom: 10px; display: flex; gap: 6px; }
+.pcard { flex: 1; background: rgba(14,11,8,.94); border: 1px solid rgba(216,176,96,.3); border-radius: 10px; padding: 7px; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.pcard.me { border-color: #e6c47a; }
+.pcard .r1 { display: flex; gap: 6px; align-items: center; }
+.pcard .pt { width: 34px; height: 34px; font-size: 14px; border-radius: 8px; }
+.pcard .nm { font: 600 12.5px ui-monospace, Menlo, monospace; color: #efe4cf; letter-spacing: .5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pcard .cl { font: 10.5px ui-monospace, Menlo, monospace; color: #b9a98e; letter-spacing: 1px; }
+.hp { height: 9px; border-radius: 3px; background: rgba(255,255,255,.1); overflow: hidden; } .hp i { display: block; height: 100%; background: #6ca24a; }
+.mp { height: 5px; border-radius: 3px; background: rgba(255,255,255,.1); overflow: hidden; } .mp i { display: block; height: 100%; background: #4a7ab8; }
+.st { font: 600 10px ui-monospace, Menlo, monospace; letter-spacing: 1px; text-align: center; padding: 3px 0; border-radius: 5px; }
+.st.lead { background: rgba(216,176,96,.18); color: #f5d78a; }
+.st.fol { background: rgba(90,122,184,.2); color: #a9c0ea; }
+.st.free { background: rgba(143,192,106,.16); color: #bfe0a0; }
+.stick { position: absolute; left: 40px; bottom: 230px; width: 92px; height: 92px; border-radius: 50%; border: 2px solid rgba(216,176,96,.25); }
+/* the end */
+.loot { display: flex; align-items: center; gap: 10px; background: rgba(26,20,14,.92); border: 1px solid rgba(216,176,96,.3); border-radius: 12px; padding: 10px 12px; }
+.loot .ic { width: 44px; height: 44px; border-radius: 9px; flex: none; display: grid; place-items: center; font-size: 20px; background: rgba(255,255,255,.05); }
+.loot .t1 { font: 600 15px Georgia, serif; color: #efe4cf; }
+.loot .t2 { font: 11.5px ui-monospace, Menlo, monospace; color: #b9a98e; }
+.rare { border-color: #5a8ad8; box-shadow: 0 0 12px rgba(90,138,216,.35) inset; } .rare .ic { border: 1px solid #5a8ad8; }
+.fine { border-color: #6ca24a; } .fine .ic { border: 1px solid #6ca24a; }
+.rw { color: #9cc0ff; font-weight: 600; } .fw { color: #a6d68a; font-weight: 600; }
+</style></head><body><div class="row" id="row"></div>
+<script>
+const C = { Fighter: '#b8463a', Rogue: '#6a8a4a', Cleric: '#e6d6a0', Mage: '#5a7ab8', Shaman: '#8a5a8a' };
+const chip = (c, lv) => `<span class="chip" style="border-left: 3px solid ${C[c]}">${c} <b>${lv}</b></span>`;
+const want = (c, fit) => `<span class="chip want${fit ? ' fit' : ''}">wants ${c}</span>`;
+const head = (sub, tab) => `
+  <div class="kind">${sub}</div>
+  <div class="head"><h2>Party Up</h2><div class="close">✕</div></div>
+  <div class="me">
+    <div class="stat"><div class="k">Raids today</div><div class="v">2 of 3</div><div class="t">new at midnight</div></div>
+    <div class="stat"><div class="k">You</div><div class="v">Isolde</div><div class="t">Rogue 11</div></div>
+    <div class="stat"><div class="k">Friends</div><div class="v">2</div><div class="t">online now</div></div>
+  </div>
+  <div class="seg"><div class="${tab === 0 ? 'on' : ''}">Find a group</div><div class="${tab === 1 ? 'on' : ''}">Make a group</div><div class="${tab === 2 ? 'on' : ''}">Friends</div></div>`;
+const group = (dg, band, lead, members, wants, act, dim) => `<div class="card${dim ? ' dim' : ''}"><div class="who"><div class="top"><span class="nm">${lead}</span><span class="rt">${band}</span></div><div class="dg">${dg}</div><div class="chips">${members}${wants}</div></div>${act}</div>`;
+
+const find = `${head('Saltmere · the Guild\'s board', 0)}
+  <div class="filters"><div class="on">Any I can raid</div><div>Toadking's Mound</div><div>The Sunken Chapel</div><div class="on">Wants a Rogue</div></div>
+  ${group('Toadking\'s Mound', 'lv 10–12', '♛ Kestrel Vane', chip('Cleric', 12), want('Rogue', true) + want('Any', true), '<div class="btn">Join</div>')}
+  ${group('Toadking\'s Mound', 'lv 10–12', '♛ old_maddox', chip('Mage', 12) + chip('Shaman', 11), want('Any', true), '<div class="btn">Join</div>')}
+  ${group('The Sunken Chapel', 'lv 7–9', '♛ Tamsin Holt ★', chip('Fighter', 9), want('Rogue', true) + want('Cleric'), '<div class="btn">Join</div>')}
+  ${group('Toadking\'s Mound', 'lv 10–12', '♛ Brannoc77', chip('Fighter', 12) + chip('Rogue', 11), want('Cleric'), '<div class="btn off">Full for<br>a Rogue</div>', true)}
+  <div class="btn wide">Quick join<small>a seat that wants a Rogue, nearest your level</small></div>`;
+
+const make = `${head('Saltmere · the Guild\'s board', 1)}
+  <h3>The dungeon</h3>
+  <div class="opt on"><span class="rad"></span><div><div class="t1">Toadking's Mound</div><div class="t2">3 floors · the Toadking · about 30 min</div></div><span class="lv">lv 10–12</span></div>
+  <div class="opt"><span class="rad"></span><div><div class="t1">The Sunken Chapel</div><div class="t2">2 floors · the Standard · about 25 min</div></div><span class="lv">lv 7–9</span></div>
+  <div class="opt off"><span class="rad"></span><div><div class="t1">Wickham Keep</div><div class="t2">5 over its top: you'd go as a helper</div></div><span class="lv">lv 4–6</span></div>
+  <h3>Seat 2 wants</h3>
+  <div class="filters"><div>Any</div><div>Fighter</div><div>Rogue</div><div>Mage</div><div class="on">Cleric</div><div>Shaman</div></div>
+  <h3>Seat 3 wants</h3>
+  <div class="filters"><div class="on">Any</div><div>Fighter</div><div>Rogue</div><div>Mage</div><div>Cleric</div><div>Shaman</div></div>
+  <h3>Who can join</h3>
+  <div class="seg"><div class="on">Anyone</div><div>Friends only</div></div>
+  <div class="btn wide">Post the group</div>
+  <div class="note">You lead. Just your hero goes: your companions wait at the inn.</div>`;
+
+const seat = (pt, cls, n1, n2, tag) => `<div class="seat"><div class="pt" style="background:${C[cls]}">${cls[0]}</div><div class="who"><div class="n1">${n1}</div><div class="n2">${n2}</div></div>${tag}</div>`;
+const fr = (col, n1, n2, act) => `<div class="fr"><span class="dot" style="background:${col}"></span><div><div class="n1">${n1}</div><div class="n2">${n2}</div></div><span class="sp"></span>${act}</div>`;
+const lobby = `
+  <div class="kind">Toadking's Mound · lv 10–12 · a raid</div>
+  <div class="head"><h2>Your group</h2><div class="close">✕</div></div>
+  ${seat('', 'Rogue', '♛ Isolde Marsh (you)', 'Rogue · level 11', '<span class="tag ok">Ready ✓</span>')}
+  ${seat('', 'Cleric', 'Kestrel Vane', 'Cleric · level 12 · joined from Quick join', '<span class="tag ok">Ready ✓</span>')}
+  <div class="seat empty"><div class="pt" style="background:rgba(255,255,255,.06);color:#b9a98e">?</div><div class="who"><div class="n1" style="color:#e6c47a">Looking for anyone…</div><div class="n2">0:42 · Ada is invited</div></div><span class="tag wait">open</span></div>
+  <h3>Invite a friend</h3>
+  ${fr('#8fc06a', 'Ada Fenn', 'Fighter 11 · in Ashgate', '<span class="tag wait">Invited</span>')}
+  ${fr('#8fc06a', 'Tamsin Holt', 'Fighter 9 · in Thornwick', '<div class="btn ghost">Invite</div>')}
+  ${fr('#e6c47a', 'old_maddox', 'Mage 12 · in a raid', '<div class="btn off">In a raid</div>')}
+  ${fr('#5a4a3a', 'Wenna Coyle', 'Shaman 10 · last seen 2 d', '<div class="btn off">Offline</div>')}
+  <div class="btn wide off" style="margin-top:6px">Set out<small>when all three are ready</small></div>
+  <div class="note">Setting out spends one of today's raids; it's given back if the first room isn't won. Friends play from wherever they are and come back there after.</div>`;
+
+const card = (cls, nm, lv, hp, mp, st, me) => `<div class="pcard${me ? ' me' : ''}"><div class="r1"><div class="pt" style="background:${C[cls]}">${cls[0]}</div><div style="min-width:0"><div class="nm">${nm}</div><div class="cl">${cls.toUpperCase()} ${lv}</div></div></div><div class="hp"><i style="width:${hp}%"></i></div><div class="mp"><i style="width:${mp}%"></i></div>${st}</div>`;
+const game = `
+  <div class="tb"><div class="menu">☰</div><div><div class="wh">The Mound · floor 1</div><div class="tod">◠ Dusk</div></div><div class="gold">gold 4,210</div></div>
+  <div class="raid"><div class="l1">Raid · room 2 of 5<b>wave 4 of 6</b></div><div class="pips"><i class="d"></i><i class="d"></i><i class="d"></i><i class="n"></i><i></i><i></i></div><div class="l2">Win the room and the gate before the hall drops</div></div>
+  <span class="lab me" style="left:112px;top:356px">Kestrel <small>(you) · following</small></span>
+  <span class="lab" style="left:196px;top:316px">Ada <small>· steering</small></span>
+  <span class="lab" style="left:276px;top:356px">♛ Isolde <small>· leads</small></span>
+  <div class="stick"></div>
+  <div class="follow"><div class="pill">Say…</div><div class="pill on">♛ Follow · on</div></div>
+  <div class="pc">
+    ${card('Rogue', '♛ ISOLDE', 11, 82, 60, '<div class="st lead">LEADS</div>')}
+    ${card('Fighter', 'ADA', 11, 64, 40, '<div class="st free">STEERING</div>')}
+    ${card('Cleric', 'KESTREL', 12, 91, 72, '<div class="st fol">YOU · FOLLOWING</div>', true)}
+  </div>`;
+
+const end = `
+  <div class="kind">Toadking's Mound · raid won · 27 min 40 s</div>
+  <div class="head"><h2>Your coffer</h2><div class="close">✕</div></div>
+  <div class="note" style="font-size:13px;color:#cbbfae">The Toadking is down. Each of you opens your own, rolled for your own class.</div>
+  <div class="loot rare"><div class="ic">⚒</div><div><div class="t1">Fenreeve's Mace</div><div class="t2"><span class="rw">Rare</span> · Cleric · item level 12</div></div></div>
+  <div class="loot"><div class="ic">✦</div><div><div class="t1">10 cinders · 600 gold</div><div class="t2">the coffer's own</div></div></div>
+  <h3>On the way</h3>
+  <div class="loot fine"><div class="ic">⛨</div><div><div class="t1">Reed-Woven Coif</div><div class="t2"><span class="fw">Fine</span> · Cleric · from room 3's chest</div></div></div>
+  <div class="loot fine"><div class="ic">◍</div><div><div class="t1">Toadstone Charm</div><div class="t2"><span class="fw">Fine</span> · any class · wave 5, room 4</div></div></div>
+  <div class="loot"><div class="ic">⛏</div><div><div class="t1">2 Common · 1,340 XP</div><div class="t2">kills and chests, +25 % in a raid</div></div></div>
+  <div class="me" style="margin-top:4px">
+    <div class="stat"><div class="k">Raids today</div><div class="v">1 of 3</div><div class="t">left</div></div>
+    <div class="stat"><div class="k">Next coffer</div><div class="v">Rare 25 %</div><div class="t">+5 % each without</div></div>
+  </div>
+  <h3>Your group</h3>
+  ${fr('#8fc06a', 'Isolde Marsh', 'Rogue 11 · a friend', '<div class="btn off">Friends</div>')}
+  ${fr('#8fc06a', 'Ada Fenn', 'Fighter 11 · a friend', '<div class="btn off">Friends</div>')}
+  <div class="btn wide" style="margin-top:6px">Back to Saltmere</div>`;
+
+const shots = [
+  ['1 · Find a group', 'Open groups for the dungeons your level reaches (★ a friend). Each open seat says the class it wants; Join only where yours fits. Quick join finds one.', find],
+  ['2 · Make a group', 'Pick the dungeon, what each open seat wants (Any or a class), and whether anyone or only friends may join.', make],
+  ['3 · The lobby', 'Random players fill open seats; invite friends from your list. Everyone Ready, then the leader sets out. A raid is spent then.', lobby],
+  ['4 · In the raid (Kestrel\'s screen)', 'Everyone steers their own hero. A hero left alone follows the leader and fights on its own, as a companion does now. Follow keeps it with the leader.', game],
+  ['5 · The end', 'A coffer each, rolled for your own class: nothing shared, nothing to split or trade. The XP and drops on the way come at raid odds.', end],
+];
+document.getElementById('row').innerHTML = shots.map(([cap, sub, html], i) => `<div class="col"><div class="cap">${cap}</div><div class="phone${i === 3 ? ' game' : ''}">${i === 3 ? html : `<div class="in">${html}</div>`}</div><div class="sub">${sub}</div></div>`).join('');
+</script></body></html>
