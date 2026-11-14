@@ -6,12 +6,12 @@
 //     name, rank, rating and company as classes and levels, one Fight button; five new faces for 100, 250, 500 gold) or
 //     Rankings (the top five and the players round you, overall or in today's tourney). A bout enters you in the day's
 //     tourney: the strip over the board shows your place;
-//   · on the sand: a bar at the top, the Crier's call, the clock and each side's share of HP standing; and the bout's
+//   · on the sand: a bar at the top, the clock and each side's share of HP standing (no Crier's lines: 2026-11-14); and the bout's
 //     speed, 1×, 2× or 4× (the owner, 2026-11-13: "Add a 2 and 4x speed up button option to the arena"), on the right over
 //     the party cards where Step out stands elsewhere (2026-11-14: on the left it covered the quest tracker): main.js runs
 //     the sim's ticks and the render's clock that much faster while a bout is on, nothing else. The sim is the same
 //     tick for tick at any speed (a replay doesn't know), so it's the viewer's to choose; remembered on this device;
-//   · the result: won, lost or drawn, the Crier's line, the marks, the rating and the tourney place; Continue, to the board
+//   · the result: won, lost or drawn, the marks, the rating and the tourney place; Continue, to the board
 //     (the owner, 2026-11-14: one button; the board keeps its own way back to where you were).
 // Every word is content/arena.json's or written here (a rival is shown by its player's name, made up for now). It pushes
 // commands (bowlOpen, bowlRefresh, bowlBout, bowlLeave) and reads state; the sim checks every one. Preact + htm.
@@ -76,7 +76,6 @@ const CSS = `
 #bowl .said { font-size: 13px; color: #ff9a7a; min-height: 1em; }
 #bowl .res { background: rgba(26,20,14,.92); border: 1px solid rgba(216,176,96,.35); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
 #bowl .res h3 { margin: 0; font: 600 19px Georgia, serif; color: #f5d78a; }
-#bowl .res .quote { font-style: italic; font-size: 13.5px; color: #c8b896; }
 #bowl .res .nums { font: 12px ui-monospace, Menlo, monospace; color: #dccfb8; line-height: 1.7; }
 #bowl .filters { display: flex; gap: 6px; flex-wrap: wrap; }
 #bowl .filters button { min-height: 36px; font: 12px ui-monospace, Menlo, monospace; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(216,176,96,.3); background: none; color: #cbbfae; }
@@ -95,7 +94,6 @@ const CSS = `
 #boutBar .hp { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 3px; }
 #boutBar .meter { width: 90px; height: 6px; background: rgba(255,255,255,.12); border-radius: 3px; overflow: hidden; }
 #boutBar .meter i { display: block; height: 100%; }
-#boutBar .crier { font: italic 13px Georgia, serif; color: #e8d8b8; margin-top: 3px; }
 #boutSpeed { position: fixed; right: calc(12px + var(--safe-r, env(safe-area-inset-right, 0px))); bottom: 140px; z-index: 5; display: none; gap: 4px; padding: 3px;
   background: rgba(14,10,8,.88); border: 1px solid rgba(216,176,96,.5); border-radius: 12px; }
 #boutSpeed.on { display: flex; }
@@ -124,7 +122,7 @@ export function createBowl({ sim, partyPanel, onOpen = () => {}, onClose = () =>
   /** @type {any} */ let words = null;
   fetch('./content/arena.json').then((r) => r.json()).then((d) => { words = { crier: d.crier, by: Object.fromEntries(d.companies.map((c) => [c.id, c])) }; if (wrap.classList.contains('on')) draw(); }).catch(() => {});
   /** @type {'team' | 'solo'} */ let mode = 'team';
-  let sub = 'challenge', table = 'overall', said = '', result = /** @type {any} */ (null), crier = '';
+  let sub = 'challenge', table = 'overall', said = '', result = /** @type {any} */ (null);
   const playerOf = (id) => (words && words.by[id] && words.by[id].player) || '…';
   sim.bus.on('refused', (e) => { if (wrap.classList.contains('on')) { said = e.reason; draw(); } });
 
@@ -189,12 +187,10 @@ export function createBowl({ sim, partyPanel, onOpen = () => {}, onClose = () =>
       <div class="note">${table === 'overall' ? `The Bowl’s ${mode === 'team' ? 'Team' : 'Individual'} ladder: a hundred players, ten bouts a day each, on the rules you fight by.` : `Today’s tourney: everyone who fights today is in it, by the day’s wins, then the rating gained. At the day’s end the top places are paid: 1st ${purseFor(1)}, to 3rd ${purseFor(3)}, to 8th ${purseFor(8)}, to 16th ${purseFor(16)} marks.`}</div>`;
   }
   function Result() {
-    const r = result, C = words ? words.crier : null, k = r.how === 'won' ? 'won' : r.how === 'draw' ? 'draw' : 'lost';
-    const head = r.how === 'won' ? 'Won' : r.how === 'draw' ? 'A draw' : 'Lost', line = C ? (r.why === 'time' ? `${C.time} ${C[k]}` : C[k]) : '';
+    const r = result, head = r.how === 'won' ? 'Won' : r.how === 'draw' ? 'A draw' : 'Lost';
     return html`<div class="res">
       <div class="kind">${r.mode === 'solo' ? 'Individual' : 'Team'}</div>
       <h3>${head} · ${playerOf(r.id)}</h3>
-      ${line && html`<div class="quote">The Crier: “${line}”</div>`}
       <div class="nums">+${r.marks} marks · rating ${Math.round(r.r)} (${r.dr >= 0 ? '+' : ''}${r.dr}) · ${TIER_NAME[r.tier]}<br />Today’s tourney: place #${r.place} of ${r.of}</div>
       <div class="row">
         <button class="go" onClick=${() => { result = null; mode = r.mode === 'solo' ? 'solo' : 'team'; sub = 'challenge'; draw(); }}>Continue</button>
@@ -225,13 +221,8 @@ export function createBowl({ sim, partyPanel, onOpen = () => {}, onClose = () =>
   function open() { wrap.classList.add('on'); onOpen(); said = ''; sim.commands.push({ type: 'bowlOpen' }); draw(); setTimeout(draw, 150); }   // (the sim rolls the day and draws its fives)
   function close() { wrap.classList.remove('on'); render(null, wrap); onClose(); }
 
-  // on the sand: the Crier's call, the clock, each side's share of HP
-  sim.bus.on('bout', (e) => {
-    const C = words ? words.crier : null;
-    if (e.t === 'call') crier = words && words.by[e.id] ? `${playerOf(e.id)}${sim.battle && sim.battle.bout && sim.battle.bout.alone ? '' : '’s company'}!` : '';
-    if (e.t === 'go') crier = C ? C.call : '';
-    if (e.t === 'over') crier = '';
-  });
+  // on the sand: the clock and each side's share of HP (the Crier's lines are off the screen: the owner, 2026-11-14,
+  // "Remove the tag lines … same with the end of a battle remove the text line from the Crier")
   sim.bus.on('bowlResult', (r) => { result = r; setTimeout(open, 600); });
   const share = (list) => { let a = 0, t = 0; for (const m of list) { const mx = statsFor(m).maxHp; t += mx; a += m.down ? 0 : Math.max(0, m.hp); } return t ? a / t : 0; };
   let lastKey = '';
@@ -241,7 +232,7 @@ export function createBowl({ sim, partyPanel, onOpen = () => {}, onClose = () =>
     if (!pace.classList.contains('on')) pace.classList.add('on');
     { const b2 = `${Math.round((partyPanel ? partyPanel.height() : 132) + (partyPanel && partyPanel.side && partyPanel.side() ? 14 : 8))}px`; if (pace.style.bottom !== b2) pace.style.bottom = b2; }   // (over the party cards, as Step out sits)
     const left = Math.max(0, Math.ceil(B.call > 0 ? B.call : B.secs - B.t)), a = share(B.ours), r = share(B.rivals);
-    const key = `${left}|${Math.round(a * 50)}|${Math.round(r * 50)}|${crier}|${B.call > 0}`; if (key === lastKey) return; lastKey = key;
+    const key = `${left}|${Math.round(a * 50)}|${Math.round(r * 50)}|${B.call > 0}`; if (key === lastKey) return; lastKey = key;
     bar.classList.add('on');
     const t = B.call > 0 ? `${left}…` : `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
     bar.innerHTML = '';
@@ -249,7 +240,6 @@ export function createBowl({ sim, partyPanel, onOpen = () => {}, onClose = () =>
     const hp = document.createElement('div'); hp.className = 'hp';
     const meter = (f, col) => { const m = document.createElement('span'); m.className = 'meter'; const i = document.createElement('i'); i.style.width = `${Math.round(f * 100)}%`; i.style.background = col; m.append(i); return m; };
     hp.append('You', meter(a, '#d6b05c'), meter(r, '#c4483a'), playerOf(B.id)); bar.append(hp);
-    if (crier) { const c = document.createElement('div'); c.className = 'crier'; c.textContent = crier; bar.append(c); }
   }
   setInterval(tick, 200);
   return { open, close, get isOpen() { return wrap.classList.contains('on'); },
