@@ -34,7 +34,7 @@ test('once Act I is done the road takes you to the Fens and back, arriving on th
   // into Saltmere and out again
   standAt(sim, sim.world.exits.find((x) => x.to === 'town')); sim.tick();
   assert.equal(sim.world.kind, 'town'); assert.equal(sim.world.name, 'Saltmere'); assert.equal(sim.state.region, 'fens');
-  assert.deepEqual(sim.world.services.map((s) => s.kind).sort(), ['inn', 'shop', 'tavern', 'temple'], 'a waystation: the tavern, the shop, the inn and the chapel');
+  assert.deepEqual(sim.world.services.map((s) => s.kind).sort(), ['inn', 'shop', 'smith', 'tavern', 'temple'], 'a waystation: the five services a town has (v1.95)');
   standAt(sim, sim.world.exits.find((x) => x.to === 'overland')); sim.tick();
   assert.equal(sim.world.kind, 'overland'); assert.equal(sim.state.region, 'fens');
   // back north to the Vale
@@ -43,11 +43,15 @@ test('once Act I is done the road takes you to the Fens and back, arriving on th
   const b = sim.world.arrivals.fens; assert.ok(Math.hypot(p.x - b.x, p.y - b.y) < 1, 'back on the canal road at the Vale\'s south edge');
 });
 
-test('Saltmere refuses what it has no house for: no forge', () => {
+// (v1.95, the owner: "Add a smith in saltmere.. all services in Every town") the Tidewater Forge upgrades as Thornwick's does
+test('Saltmere has a forge: an upgrade there is done, not refused', () => {
   const sim = createSim(20260807, undefined, { scene: 'town', region: 'fens' }); sim.tick();
+  sim.commands.push({ type: 'createHero', cls: 'fighter', look: 'hero_knight', origin: 'thornwick_born', name: 'Ada' }); sim.tick();
   const why = []; sim.bus.on('refused', (e) => why.push(e.reason));
-  for (const c of [{ type: 'upgrade', uid: 1 }]) { sim.commands.push(c); sim.tick(); }
-  assert.deepEqual(why, ['Saltmere has no forge']);
+  const it = sim.state.party[0].gear.weapon, up0 = it.up || 0; for (const k of Object.keys(sim.state.counters)) if (typeof sim.state.counters[k] === 'number') sim.state.counters[k] = 1e6;
+  sim.commands.push({ type: 'upgrade', uid: it.uid }); sim.tick();
+  assert.ok(!why.some((r) => /no forge/.test(r)), why.join(' | '));
+  assert.equal(sim.state.party[0].gear.weapon.up, up0 + 1, 'the Tidewater Forge did the work');
 });
 
 // (v1.44, the owner: "there should at least be a shop, and small tavern at these way stations… a reason to be there")

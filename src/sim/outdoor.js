@@ -380,7 +380,7 @@ export const REGIONS = {
 // the inn came down a storey) moves no plaque, so the menu reads alike in every town (test/town.test.mjs). These are
 // the heights the plaques were laid out at (the roofs' tops before that pass).
 const SIGN_TOP = { temple: 23.5, tavern: 15.1, shop: 13.4, smith: 11.1, inn: 18.7 };
-const WAY_SIGN_TOP = { temple: 23.5, tavern: 15.25, inn: 14.05, shop: 10.1 };   // a waystation's (its stilt tavern and inn; the chandlery's on its one-storey roof: at 13.4 it hung over the Stilt House, Saltmere's critic pass)
+const WAY_SIGN_TOP = { temple: 23.5, tavern: 15.25, inn: 14.05, shop: 10.1, smith: 11.1 };   // a waystation's (its stilt tavern and inn; the chandlery's on its one-storey roof: at 13.4 it hung over the Stilt House, Saltmere's critic pass)
 function buildTown(seed, region) {
   const R = REGIONS[region] ? region : 'vale', info = REGIONS[R];
   const o = makeWorld(seed, 'town', 140, 120, 90), rng = mulberry32(streamSeed(seed, 4401)), B = (t, n = 1) => `${R}_${t}_${n}`;
@@ -581,7 +581,7 @@ function buildFens(seed) {
 
 // ── SALTMERE, the Fens' waystation (M8; docs/region-towns-proposal.md) ─────────────────────────────────────────
 // No wall: the water is all round it. Stilt houses over the bog, boardwalks for streets, the square a deck on piles
-// in the same place and shape as every town's, and three services: the Drowned Eel (with the Guild's board) and the
+// in the same place and shape as every town's, and (v1.95) the five services a town has: the Drowned Eel (with the Guild's board) and the
 // Grey Sisters' chapel, on its own peat island, where a town's tavern and temple stand, and (2026-10-05, the owner:
 // "Saltmere needs an inn for party mgt") the Stilt House over the square's head, where a company's sellswords wait.
 // The well is a rainwater cistern: nobody drinks the fen.
@@ -599,7 +599,9 @@ function buildWaystation(seed, region) {
   finalizeGround(o);
   // (v1.44, the owner: "there should at least be a shop, and small tavern at these way stations… a reason to be there")
   // Pim Rushlight's chandlery stands on the deck right of the square, its door to the cistern, its own day's stock
-  const svc = [['temple', B('temple'), [28, 24]], ['tavern', B('stilttavern'), [29, 48]], ['inn', B('stiltinn'), [49, 29]], ['shop', B('shop'), [62, 49]]];
+  // (v1.95, the owner: "Add a smith in saltmere.. all services in Every town") Marrit Coyle's Tidewater Forge on the deck where a
+  // town's smithy stands, two tiles down (8 clear of the chandlery), its door to the cistern: the five services, as a town's
+  const svc = [['temple', B('temple'), [28, 24]], ['tavern', B('stilttavern'), [29, 48]], ['inn', B('stiltinn'), [49, 29]], ['shop', B('shop'), [62, 49]], ['smith', B('smith'), [51, 69]]];
   for (const [kind, id, [x, y]] of svc) { put(o, id, x, y); o.services.push({ kind, id, x, y, name: info[kind] }); o.labels.push({ x, y, id, text: info[kind], service: kind, top: WAY_SIGN_TOP[kind] }); }
   put(o, B('cistern'), M[0], M[1]);
   for (const [x, y] of [[41, 57], [52, 54], [80, 64], [61, 80]]) putProp(o, 'brazier', x, y);   // (the second off the chandlery's deck)

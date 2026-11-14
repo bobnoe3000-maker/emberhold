@@ -19,10 +19,10 @@ for (const region of Object.keys(REGIONS)) {
   const o = createOutdoor(1, 'town', region), entry = (id) => TOWN[region].find((e) => e.id === id);
   const well = o.structs.find((s) => s.id === `${region}_well_1` || s.id === `${region}_cistern_1`), gate = o.structs.find((s) => s.id === `${region}_gatehousey_1`);
 
-  const way = !!o.waystation;                                   // (M8: a waystation such as Saltmere: its tavern, shop, inn and temple, no forge, no wall)
+  const way = !!o.waystation;                                   // (M8: a waystation such as Saltmere: the five services, no wall)
   test(`${region}: every entrance faces the well, on a face the camera sees`, () => {
-    assert.equal(o.services.length, way ? 4 : 5);
-    if (way) assert.deepEqual(o.services.map((v) => v.kind).sort(), ['inn', 'shop', 'tavern', 'temple']);   // (Saltmere's inn: 2026-10-05; its shop, v1.44)
+    // every town and waystation has the five (v1.95, the owner: "all services in Every town"; Saltmere's inn 2026-10-05, its shop v1.44, its forge v1.95)
+    assert.deepEqual(o.services.map((v) => v.kind).sort(), ['inn', 'shop', 'smith', 'tavern', 'temple']);
     for (const sv of o.services) {
       const d = door(sv, !!entry(sv.id).faceX), vx = well.x - d.x, vy = well.y - d.y;
       const deg = Math.acos((vx * d.n[0] + vy * d.n[1]) / Math.hypot(vx, vy)) * 180 / Math.PI;
