@@ -1,6 +1,6 @@
 # Shared play: the rules for raids and world events (an analysis)
 
-**Status:** Analysis (2026-11-14), for the owner's decisions (§7). Nothing here is built beyond what §5 says.
+**Status:** Decided (2026-11-14, §8: the owner's answers to §7). Nothing here is built beyond what §5 says and §9 (the rule set, §6).
 
 **The owner, 2026-11-14:** *"Determine what other different logic we need to accommodate multiplayer raids correctly.. eg
 leaving, offline, loot drops, lanterns, .. which would work or not apply vs normal gameplay.. we might need similar rule sets
@@ -238,3 +238,55 @@ worth doing before stage 3, not during it.
 5. **Region event first, or world event?** Proposed: a region boss on one land, in a set-piece arena, as the first event
    (the Bowl's Sand shows the pattern), on the stage 3 server.
 6. **Do the refactor in §6 now** (no behaviour change, tests as they are), before live raids?
+
+## 8. Decided (the owner, 2026-11-14)
+
+The owner: *"Lets go with your recommendation on 1 and 2, except if never return then no chest or loot that happens after
+you leave"*. So:
+
+- **Raid rewards** stay as they are: a run finds 1.0–3.7 Fine and 0–0.5 Rare before its coffer, against the farm's 0.92 Fine
+  and 0.17 Rare an hour; the daily three is what keeps it in bounds, as asked ("higher chance of rewards but limited number
+  per day"). Looked at again with stage 3's real days.
+- **Decision 1, walking out of a live raid:** forfeits the coffer. The seat goes to AI follow for the rest of the run.
+- **Decision 2, a drop-out:** back before the run ends, your hero again and your coffer at the end. **Never back: no coffer,
+  and nothing that drops after you went** (the owner, against the proposal's "coffer if you won a room"). Loot is rolled for
+  each player present when it drops (`who: 'each'`), so a seat on AI follow rolls none: a drop-out who comes back has what
+  dropped while they were there, and the coffer.
+- **Decision 3, lanterns and the count:** never counted in a raid or an event (as built: `battle.js` tally).
+- **Decision 4, events and the board:** no board job asks for an event.
+- **Decision 5, the first event:** a region boss on one land, in a set-piece arena (the Bowl's Sand the pattern), on the
+  stage 3 server.
+- **Decision 6, the refactor in §6:** now, before live raids, with no change in behaviour (§9).
+
+## 9. As built: the rule set (2026-11-14, architecture A22)
+
+§6's table is `src/sim/modes.js`: `MODES` has a row for each kind of play there is now (`slot`, `camp`, `tower`, `bout`,
+`raid`), every row with every field (`story`, `count`, `death`, `fallen`, `boon`, `heal`, `dmg`, `bossHome`, `xp`, `gold`,
+`waves`, `tide`, `loot`). `modeOf(battle, raid)` picks the fight's row (a bout, a raid, between its rooms too, the Tower, a
+spawn point's, else the slot's); `modeOfWorld(w)` the world's, for what sees only the world (quests.js, lore.js).
+
+What reads it, where each had its own check before:
+
+| Rule | Read in | Was |
+|---|---|---|
+| `story` | battle.js a boss's fall (the story's count and his time away, or a raid's own `bossDown`); quests.js `count`; lore.js a hall's find | `raidRun()`, `w.raid` |
+| `count` | battle.js `tally` and a lamp's first breaking; core.js a cage's touch | `!raidRun()`, `!raidOn` |
+| `death` | battle.js `defeat`: `none` (a raid's: home, no cost), `satchel` (the Tower's), `wipe` | `raidRun()`, `b.tower` |
+| `fallen` | battle.js a second down, and the downed when a fight's left | `!bout && !raidRun()` |
+| `boon`, `heal`, `dmg` | battle.js | `battle.bout ? BOUT.… : …` |
+| `bossHome` | battle.js a hall's boss at the start of its fight | `raidRun() ||` |
+| `xp`, `gold` | battle.js a kill's pay | `R.rules.xp` |
+| `waves`, `tide` | battle.js a room won after its waves; a wave's climb | `R.rules.waves`, `R.rules.tide` |
+| `loot` | core.js `dropHere` (a raid's odds, the hero's class) | `raidOn` |
+
+Not in it, because they're each one kind's own machinery rather than a rule another kind would set differently: the Bowl's
+sides, its call and its clock (`BOUT`'s other fields, bowl.js), the Tower's waves, wardens and satchel (tower.js), a spawn
+point's band and respawn (camps.js), a raid's stand-ins, seats, day and coffer (raid.js). §6's `leader`, `follow`, `pause`,
+`speed`, `clock` and `limit` come with the stage 3 server, when there's something that reads them.
+
+**No change in behaviour**, measured: every balance harness run against the commit before and after, the same to the digit
+(`roomlv` at 3, 6 and 15 with Vault; `raid` at Wickham Keep and the Barrows; `boss`; `tower`; `bowl`, a company and alone;
+`camps`; `loot`), the smoke test's replay hash as it was, 639 tests (`test/modes.test.mjs`: every row whole, the right row
+for the fight, the decisions in the raid row). `tools/balance/bowl.mjs` had stopped running since the Bowl moved to the
+Quarry Ring's one room (v1.89: it looked for a room that isn't the entrance); fixed on the way, as the baseline needed it.
+

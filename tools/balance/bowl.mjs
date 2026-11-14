@@ -30,7 +30,7 @@ if (SECS !== null) BOUT.secs = +SECS;
 /** one bout: company a as the party, b as the rivals; → { how, why, t, ours, theirs } */
 function bout(a, ga, b, gb, seed) {
   const sim = createSim(seed, undefined, { scene: 'dungeon', site: SITE }), w = sim.world, st = sim.state, p = st.player;
-  const L = w.level, room = L.rooms.find((q) => q !== L.entrance && q !== L.descentRoom && (!q.size || q.size === 'large')) || L.rooms.find((q) => q !== L.entrance);
+  const L = w.level, room = L.rooms.find((q) => q !== L.entrance && q !== L.descentRoom && (!q.size || q.size === 'large')) || L.rooms.find((q) => q !== L.entrance) || L.rooms[0];   // (the Bowl's Sand, v1.89: one room, its entrance)
   const ours = makeCompany({ id: 'us', manner: a }, LV, ga);
   let theirs = makeCompany({ id: 'them', manner: b }, LV, gb);
   if (ALONE) theirs = theirs.slice(0, 1);

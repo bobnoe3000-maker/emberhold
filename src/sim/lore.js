@@ -20,6 +20,7 @@ import { mulberry32, streamSeed, STREAM } from './rng.js';
 import { gainXp, ORIGIN_EDGE, levelShare } from './party.js';
 import { bossAt } from './sites.js';
 import { BOSSES } from './battle.js';
+import { modeOfWorld } from './modes.js';
 
 /** @type {Record<string, { set: string, order: number, site: string, floor: number, via: 'chest' | 'shrine' | 'hall' | 'boss' }>} */
 export const FRAGMENTS = {
@@ -95,7 +96,7 @@ export function createLore({ state, bus, getWorld, seed }) {
   bus.on('battle', (e) => { if (e.on) hallWaves = 0; });
   bus.on('wave', (e) => {
     if (!e.cleared) return;
-    const w = getWorld(), L = w.level; if (w.raid || !L || !L.descentRoom || e.room !== L.descentRoom.id) return;
+    const w = getWorld(), L = w.level; if (!modeOfWorld(w).story || !L || !L.descentRoom || e.room !== L.descentRoom.id) return;
     hallWaves++;
     for (const id of unfound()) { const h = holderOf(seed, id, w, state.bosses); if (h && h.via === 'hall' && hallWaves >= HALL_WAVES) found(id); }
   });

@@ -24,12 +24,13 @@ import { HEIRLOOMS } from './items.js';
 import { makeRival } from './rivals.js';
 import { drawAppearance } from './appearance.js';
 import { DAY_S } from './heroes.js';
+import { MODES } from './modes.js';
 
 export const RAID = {
   perDay: 3,            // raids a hero sets out on in a game day (the owner: "3 per hero")
-  waves: 6,             // a room is won after this many waves held
-  tide: { step: 0.1, cap: 0.5 },   // a raid room's climb: +10 % a wave, +50 % at the sixth
-  xp: 1.25, gold: 1.25, // a kill's XP and gold in a raid
+  // a room won after this many waves held, its climb (+10 % a wave, +50 % at the sixth), a kill's XP and gold: the
+  // raid's row in modes.js, which the fight reads (kept here too for what reads RAID: the harness, the tests)
+  waves: MODES.raid.waves, tide: MODES.raid.tide, xp: MODES.raid.xp, gold: MODES.raid.gold,
   cofferGold: 50,       // × the band's top level
   cofferCinders: 10,
   coffer: { heirloom: 0.03, rare: 0.27 },   // the rest Fine

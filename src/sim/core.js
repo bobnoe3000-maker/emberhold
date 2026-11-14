@@ -34,6 +34,7 @@ import { SHRINES, shrineKind, boonsOf, restoreBoons } from './shrines.js';
 import { towerOf, restoreTower, inTower, bracketOf, BRACKETS } from './tower.js';
 import { bowlOf, settleBout, restoreBowl, freshBowl, companyOn, refreshPicks, modeOf, BOWL } from './bowl.js';
 import { RAID, freshRaid, restoreRaid, raidOf, raidSites, standIns, cofferOf } from './raid.js';
+import { modeOf as playOf } from './modes.js';
 import { makeCompany } from './rivals.js';
 import { createExpeditions } from './expeditions.js';
 import { createCoach, reachedOf, townOf, COACH } from './coach.js';
@@ -138,7 +139,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   // a drop where you are: in a raid at a raid's odds (loot.js DROP raid*) and for the hero's class alone (raid.js);
   // a stand-in's class is never rolled for (what it would find isn't the player's)
   const RAID_SRC = /** @type {Record<string, string>} */ ({ wave: 'raidWave', elite: 'raidElite', chest: 'raidChest', boss: 'raidBoss', bossAgain: 'raidBoss' });
-  const dropHere = (/** @type {string} */ src, /** @type {any} */ o) => (raidOn && RAID_SRC[src] ? loot.drop(RAID_SRC[src], { ...o, own: state.party[0].cls }) : loot.drop(src, o));
+  const modeNow = () => playOf(battle.battle, raidOn);   // (the rules of what's going on: modes.js)
+  const dropHere = (/** @type {string} */ src, /** @type {any} */ o) => (modeNow().loot === 'raid' && RAID_SRC[src] ? loot.drop(RAID_SRC[src], { ...o, own: state.party[0].cls }) : loot.drop(src, o));
   const expeditions = createExpeditions({ state, bus, getWorld: () => world, seed: baseSeed, give: (it, src) => loot.give(it, src) });   // the bench's road work (expeditions.js)
   // creation, points, skills, stance, the bench, the temple and the inn (heroes.js)
   const heroes = createHeroes({ state, bus, getWorld: () => world, seed: baseSeed, waiting: () => (raidOn ? raidOn.party.slice(1) : []) });   // (a raid: the company waiting is still paid at dawn)
@@ -621,7 +623,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
         }
         if (prop === 'cage') {                              // a harvester's lantern-cage (lamps.js): a touch breaks it, and its soul goes free
           world.mods.set(cmd.tx + ',' + cmd.ty, { opened: true });
-          if (!raidOn) credit(state, bus, { lamps: 1, souls: 1 });   // (counted first: what it says reads the count; a raid's never: the story's)
+          if (modeNow().count) credit(state, bus, { lamps: 1, souls: 1 });   // (counted first: what it says reads the count; a raid's never: the story's)
           bus.emit('cageBroken', { tx: cmd.tx, ty: cmd.ty, x: cmd.tx + 0.5, y: cmd.ty + 0.5 });
           return;
         }

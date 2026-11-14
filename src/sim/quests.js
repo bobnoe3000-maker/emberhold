@@ -40,6 +40,7 @@ import { NPCS } from './npcs.js';
 import { SITES } from './sites.js';
 import { CAMP_BY } from './camps.js';
 import { trialKey } from './skills.js';
+import { modeOfWorld } from './modes.js';
 
 export const QS = { LOCKED: -1, AVAILABLE: 0, ACTIVE: 1, READY: 2, DONE: 3 };
 // What a quest pays in XP (GDD §9 v1.39; the owner, 2026-10-05, with the slower curve): a share of a level, at the level
@@ -267,7 +268,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
 
   // count an event into every active quest's current step, then advance any step that's done
   function count(fn) {
-    if (getWorld().raid) return;                            // (a raid's floors aren't the story: raid.js, GDD §18)
+    if (!modeOfWorld(getWorld()).story) return;             // (a raid's floors aren't the story: modes.js, GDD §18)
     for (const id of Object.keys(state.quests)) {
       const q = state.quests[id], d = defOf(id); if (q.st !== QS.ACTIVE || !d) continue;
       const objs = d.steps[q.step].objectives; let moved = false;
