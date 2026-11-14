@@ -811,6 +811,22 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const lobby = await p.$$eval('#raid .seat .n1', (n) => n.map((x) => x.textContent));
     await p.tap('#raid button.go'); await p.waitForFunction(() => !!globalThis.__sim.raid, null, { timeout: 10000 }); await p.waitForTimeout(400);
     const out = await p.evaluate(() => { const s = globalThis.__sim; return { kind: s.world.kind, site: s.world.site, party: s.state.party.map((m) => [m.name, m.cls, !!m.standin]), open: globalThis.__ui.partyUp.isOpen }; });
+    // a stand-in's sheet (the owner, 2026-11-14: "Raid members should not have access to my inventory, no gear swapping or
+    // indicating gear upgrades possible"): their kit read only, no bag, no skills, no Unequip; no badges on their cards;
+    // the hero's own bag offers them nothing
+    const theirs = await p.evaluate(async () => { const s = globalThis.__sim, U = globalThis.__ui; s.state.bag.push({ ...s.state.party[1].gear.weapon, uid: 'probe1', up: 3 });
+      U.gearSheet.open(1); await new Promise((r) => setTimeout(r, 300));
+      const q = (x) => document.querySelectorAll(x).length, views = [...document.querySelectorAll('#gearSheet .views button')].map((b) => b.textContent.trim());
+      const bag = q('#gearSheet .bag');
+      const slot = document.querySelector('.doll .gslot[data-uid]'); if (slot) slot.click(); await new Promise((r) => setTimeout(r, 200));
+      const acts = [...document.querySelectorAll('[data-act]')].map((b) => b.dataset.act);
+      U.gearSheet.open(0); await new Promise((r) => setTimeout(r, 300));
+      const probe = document.querySelector('.bag .gslot[data-uid="probe1"]'); if (probe) probe.click(); await new Promise((r) => setTimeout(r, 200));
+      const give = [...document.querySelectorAll('[data-act=equip]')].map((b) => b.textContent);
+      const cards = [...document.querySelectorAll('#party .card')].map((c) => ({ up: !!c.querySelector('.upb'), pts: !!c.querySelector('.ptb'), n: c.querySelector('.nm').textContent }));
+      U.gearSheet.close(); s.state.bag = s.state.bag.filter((it) => it.uid !== 'probe1');
+      return { bag, views, acts, give, cards: cards.filter((c) => c.n !== s.state.party[0].name) };
+    });
     // into the first room, the waves counted as a raid's; then a wipe (the foes past bearing), and home at no cost
     await p.evaluate(() => { const s = globalThis.__sim, q = s.destinations().find((x) => x.id === 'next-room' && !x.off); s.commands.push({ type: 'goto', tx: q.tx, ty: q.ty, near: q.near, room: q.room }); });
     await p.waitForFunction(() => globalThis.__sim.battle && globalThis.__sim.battle.wave >= 1, null, { timeout: 60000 });
@@ -822,8 +838,9 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('raids: Party Up lists the band dungeons (those not reached say why), the lobby fills the seats asked for, Set out takes the hero and those two into the dungeon, and a wipe brings the company home at no cost',
       rows.length === 6 && rows.filter((r) => !r.off).map((r) => r.t).join() === 'The Old Barrows,Wickham Keep' && rows.slice(2).every((r) => /level|open/.test(r.why))
         && lobby.length === 3 && out.kind === 'dungeon' && out.site === 'wickham_keep' && !out.open && out.party[1][1] === 'fighter' && out.party[2][1] === 'cleric' && out.party.slice(1).every((m) => m[2]) && lobby[1] === out.party[1][0]
+        && theirs.bag === 0 && theirs.views.join() === 'Gear,Stats' && !theirs.acts.includes('unequip') && theirs.give.every((t) => !t.includes('Give to')) && theirs.cards.every((c) => !c.up && !c.pts)
         && /The raid is lost/.test(card) && /costs nothing/.test(card) && back.kind === 'town' && back.same && !back.weak && goldAfter >= gold && errs.length === 0,
-      JSON.stringify({ rows: rows.map((r) => r.t + (r.off ? ` (${r.why})` : '')), lobby, out, card: card.split('\n').slice(0, 3).join(' | '), back, gold: [gold, goldAfter] }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+      JSON.stringify({ rows: rows.map((r) => r.t + (r.off ? ` (${r.why})` : '')), lobby, out, theirs, card: card.split('\n').slice(0, 3).join(' | '), back, gold: [gold, goldAfter] }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }
 }

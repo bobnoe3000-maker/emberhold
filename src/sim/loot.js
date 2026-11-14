@@ -62,7 +62,7 @@ export function createLoot({ state, bus, seed }) {
   // who this item upgrades most (null if nobody)
   function bestFor(it) {
     let best = null, top = 0.05;
-    for (const m of state.party) { const s = upgradeScore(m, it); if (s > top) { top = s; best = m.id; } }
+    for (const m of state.party) { if (m.standin) continue; const s = upgradeScore(m, it); if (s > top) { top = s; best = m.id; } }   // (a raid's stand-in isn't yours to kit: raid.js)
     return best;
   }
 

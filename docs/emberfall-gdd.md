@@ -2075,6 +2075,12 @@ a list of made-up players. They follow you and fight on their own, as companions
 - **The coffer** at a won raid's end, yours: 50 gold × the band's top level, 10 cinders, and one piece for your class: an
   heirloom of the dungeon's own bosses that you don't already hold 3 % of the time, Rare 27 % (+5 % for each coffer since
   your last Rare), else Fine (`raid.js` cofferOf: its own stream, so a reload can't fish it).
+- **The stand-ins aren't yours** (the owner, 2026-11-14: *"Raid members should not have access to my inventory, no gear
+  swapping or indicating gear upgrades possible"*): a stand-in's tab on the character sheet shows their kit and stats read
+  only (Gear and Stats; no bag, no Skills, no Unequip, no helm toggle, no points to spend); your bag never offers them a
+  piece (no *Give to*), nothing is flagged an upgrade for them (no ▲ on their cards or in the bag, no *Upgrade for …* on a
+  find: `loot.js` bestFor passes them over), and their cards show no unspent points. The sim refuses any command naming
+  one (core.js).
 - **Saves:** a save made on a raid is the world and the company you set out from (a reload ends the run; it's still
   spent). The record, `raid` (the day's count, coffers since a Rare, raids won), is save v48.
 - **On screen:** the wave pill reads *RAID · ROOM LV n · WAVE w/6*, *ROOM WON* or the boss's name; the room's banner says

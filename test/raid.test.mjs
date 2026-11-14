@@ -110,6 +110,7 @@ test('a run played to its end: won, its coffer paid, the boss not the story\'s, 
   const s = company(3), ev = events(s);
   const gold0 = s.state.counters.gold, cin0 = s.state.counters.embers || 0, bosses = { ...s.state.bosses }, H = s.state.party[0];
   const hp0 = H.hp, home = s.state.party.map((m) => m.id);
+  let named = 0; s.bus.on('loot', (l) => { if (s.raid && l.best && s.state.party.some((m) => m.standin && m.id === l.best)) named++; });   // (an upgrade never offered a stand-in)
   let mine = 0, theirs = 0; s.bus.on('loot', (l) => { if (!s.raid) return; const c = BASES[l.item.base].cls; if (c === H.cls || c === 'any' || l.item.r === 'heirloom') mine++; else theirs++; });
   go(s, 'barrows');
   play(s);
@@ -121,6 +122,7 @@ test('a run played to its end: won, its coffer paid, the boss not the story\'s, 
   assert.equal(raidOf(s.state).won, 1);
   assert.deepEqual(s.state.bosses, bosses, 'a raid\'s boss isn\'t the story\'s');
   assert.ok(mine > 0 && theirs === 0, `what the hero finds is for the hero's class (${mine} / ${theirs})`);
+  assert.equal(named, 0, 'no find is called an upgrade for a stand-in (loot.js bestFor)');
   s.commands.push({ type: 'raidLeave' }); s.tick();
   assert.equal(s.raid, null); assert.equal(s.world.kind, 'town');
   assert.deepEqual(s.state.party.map((m) => m.id), home); assert.equal(H.hp, hp0);

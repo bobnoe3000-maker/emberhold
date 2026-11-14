@@ -195,7 +195,10 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {}, models 
   let armSalvage = null, armTimer = 0;                       // uid of a Fine+ item whose Salvage was tapped once
 
   const member = () => S.party[Math.min(who, S.party.length - 1)];
-  const isUp = (m, it) => upgradeScore(m, it) > 0.05;
+  // a raid's stand-in (raid.js) is another player's hero: never offered your bag, never shown an upgrade in it, its kit and
+  // its points not yours to touch (the owner, 2026-11-14: "Raid members should not have access to my inventory")
+  const ours = () => S.party.filter((q) => !q.standin);
+  const isUp = (m, it) => !m.standin && upgradeScore(m, it) > 0.05;
   const hasUpgrade = (m) => S.bag.some((it) => isUp(m, it));
 
   // ── the sheet ──────────────────────────────────────────────────────────────
@@ -205,7 +208,7 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {}, models 
     // not for this character: a small icon of the class it's for (the class of whoever in the party
     // can wear it, else the item's own). It was the first three letters of a name ("WRE", "SIG"),
     // which read as a code or as "equipped"; the icons are in classicons.js.
-    const who = !wear ? S.party.find((q) => canWear(q, it)) : null, tag = !wear ? classIcon(who ? who.cls : BASES[it.base].cls) : '';
+    const who = !wear ? ours().find((q) => canWear(q, it)) : null, tag = !wear ? classIcon(who ? who.cls : BASES[it.base].cls) : '';
     return `<button class="gslot ${it.r}${sl ? ' sel' : ''}${wear ? '' : ' off'}" data-uid="${it.uid}" ${slot ? `data-slot="${slot}"` : ''}><img src="${icon(it)}" alt="">`
       + `${tag ? `<span class="who">${tag}</span>` : ''}${isNew ? '<span class="new">NEW</span>' : ''}${n > 1 ? `<span class="qty">×${n}</span>` : ''}`
       + `${!slot && m && isUp(m, it) ? '<span class="up">▲</span>' : ''}${lbl ? `<span class="lbl">${lbl}</span>` : ''}</button>`;
@@ -214,27 +217,28 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {}, models 
     if (!open) return;
     const m = member(), s = statsFor(m), g = m.gear || {}, c = CLASSES[m.cls];
     const tabs = S.party.map((p, i) => `<div class="tab${i === who ? ' on' : ''}" data-who="${i}"><canvas width="${PORTRAIT_W}" height="${PORTRAIT_H}" data-actor="${portraitKey(p)}" data-idx="${i}"></canvas>`
-      + `<div style="min-width:0"><b>${esc(p.name)}</b><span>${(CLASSES[p.cls] || CLASSES.fighter).label.toUpperCase()} · L${p.level}${p.fallen ? ' · SLAIN' : ''}</span></div>${hasUpgrade(p) || pendingPoints(p) || pendingSkillPoints(p) ? '<span class="dot"></span>' : ''}</div>`).join('');
+      + `<div style="min-width:0"><b>${esc(p.name)}</b><span>${(CLASSES[p.cls] || CLASSES.fighter).label.toUpperCase()} · L${p.level}${p.fallen ? ' · SLAIN' : ''}</span></div>${!p.standin && (hasUpgrade(p) || pendingPoints(p) || pendingSkillPoints(p)) ? '<span class="dot"></span>' : ''}</div>`).join('');
     const col = (slots) => slots.map((sl) => slotHtml(g[sl], { slot: sl, lbl: SLOT_LABEL[sl] })).join('');
     const G = s.gear, stat = (k, v, gv) => `<div class="stat">${STAT_LABEL[k].toUpperCase()}<b>${v}</b><u class="${gv ? '' : 'z'}">${gv ? fmt(k, gv) : '—'}</u></div>`;
     const need = xpToNext(m.level), pa = pendingPoints(m), ps = pendingSkillPoints(m), stacks = bagStacks(S.bag);
     // the same green dot as the character tab, on whichever sub-tab needs you: an upgrade in the
     // bag (Gear), attribute points (Stats), skill points (Skills); it goes when that's resolved
     if (view === 'contract' && m.main) view = 'gear';
-    const views = `<div class="views">${[['gear', 'Gear', hasUpgrade(m)], ['stats', 'Stats', pa > 0], ['skills', 'Skills', ps > 0], ...(m.main ? [] : [['contract', 'Contract', m.owed > 0]])].map(([k, l, due]) => `<button data-view="${k}" class="${view === k ? 'on' : ''}">${l}${due ? '<span class="dot"></span>' : ''}</button>`).join('')}</div>`;
+    if (m.standin && view !== 'stats') view = 'gear';
+    const views = `<div class="views">${(m.standin ? [['gear', 'Gear', false], ['stats', 'Stats', false]] : [['gear', 'Gear', hasUpgrade(m)], ['stats', 'Stats', pa > 0], ['skills', 'Skills', ps > 0], ...(m.main ? [] : [['contract', 'Contract', m.owed > 0]])]).map(([k, l, due]) => `<button data-view="${k}" class="${view === k ? 'on' : ''}">${l}${due ? '<span class="dot"></span>' : ''}</button>`).join('')}</div>`;
     // a found companion (Brannoc) has more to say than a hire: talk to him from here (npcs.js)
     const talk = NPCS[m.id] && NPCS[m.id].found && !m.main ? `<button class="talkb" data-talk="${esc(m.id)}"${m.down || m.fallen ? ' disabled' : ''}>Talk to ${esc(m.name)}</button>` : '';
     const head = `<div class="grab"></div><button class="x" data-close>✕</button><div class="tabs">${tabs}</div>${views}${talk}`;
-    if (view === 'stats') { sheet.innerHTML = head + statsView(m, s); card.classList.remove('on'); sel = null; paintTabs(); return; }
+    if (view === 'stats') { sheet.innerHTML = head + (m.standin ? standinStats(m, s) : statsView(m, s)); card.classList.remove('on'); sel = null; paintTabs(); return; }
     if (view === 'skills') { sheet.innerHTML = head + skillsView(m); card.classList.remove('on'); sel = null; paintTabs(); firstOpen('skills'); return; }
     if (view === 'contract') { sheet.innerHTML = head + contractView(m); card.classList.remove('on'); sel = null; paintTabs(); return; }
     sheet.innerHTML = `${head}
       <div class="doll"><div class="col">${col(['weapon', 'off', 'trinket'])}</div>
-        <div class="fig" style="--glow:${classColor(m.cls, 0.16)}"><div class="gnd"></div>${g.helm ? `<button class="helmt${m.hideHelm ? '' : ' on'}" data-helm aria-pressed="${!m.hideHelm}" aria-label="Show the helm on ${esc(m.name)}">Helm ${m.hideHelm ? 'hidden' : 'shown'}</button>` : ''}<canvas width="${FIGURE_W}" height="${FIGURE_H}" data-fig="${actorOf(m)}"></canvas><div class="nm">${esc(m.name.toUpperCase())} · ${c.label.toUpperCase()} · LV ${m.level}</div><div class="xpb"><i style="width:${Math.min(100, Math.round(100 * m.xp / need))}%"></i></div></div>
+        <div class="fig" style="--glow:${classColor(m.cls, 0.16)}"><div class="gnd"></div>${g.helm && !m.standin ? `<button class="helmt${m.hideHelm ? '' : ' on'}" data-helm aria-pressed="${!m.hideHelm}" aria-label="Show the helm on ${esc(m.name)}">Helm ${m.hideHelm ? 'hidden' : 'shown'}</button>` : ''}<canvas width="${FIGURE_W}" height="${FIGURE_H}" data-fig="${actorOf(m)}"></canvas><div class="nm">${esc(m.name.toUpperCase())} · ${c.label.toUpperCase()} · LV ${m.level}</div><div class="xpb"><i style="width:${Math.min(100, Math.round(100 * m.xp / need))}%"></i></div></div>
         <div class="col">${col(['helm', 'armor', 'boots'])}</div></div>
       <div class="stats">${stat('hp', s.maxHp, G.hp)}${stat('mp', s.maxMp, G.mp)}${stat('atk', s.atk, G.atk)}${stat('def', s.def, G.def)}${stat('crit', s.crit + '%', G.crit)}${stat('dodge', s.dodge + '%', G.dodge)}${stat('hpr', s.hpr + '/s', G.hpr)}${stat('mpr', s.mpr + '/s', G.mpr)}</div>
-      <div class="bagh">Party bag · ${stacks.length}/${BAG_SIZE}<span class="cur">${S.counters.gold || 0} gold<i>✦ ${S.counters.embers || 0} cinders</i></span></div>
-      <div class="bag">${stacks.map((st) => slotHtml(st.find((x) => sel && x.uid === sel.uid) || st[0], { m, n: st.length, isNew: st.some((x) => fresh.has(x.uid)) })).join('')}${Array.from({ length: Math.max(0, BAG_SIZE - stacks.length) }, () => '<div class="gslot empty"></div>').join('')}</div>`;
+      ${m.standin ? `<div class="hint" style="margin-top:10px">${esc(m.name)} is on this raid with you. Their kit is their own: nothing in your bag goes to them, and nothing of theirs comes to you.</div>` : `<div class="bagh">Party bag · ${stacks.length}/${BAG_SIZE}<span class="cur">${S.counters.gold || 0} gold<i>✦ ${S.counters.embers || 0} cinders</i></span></div>
+      <div class="bag">${stacks.map((st) => slotHtml(st.find((x) => sel && x.uid === sel.uid) || st[0], { m, n: st.length, isNew: st.some((x) => fresh.has(x.uid)) })).join('')}${Array.from({ length: Math.max(0, BAG_SIZE - stacks.length) }, () => '<div class="gslot empty"></div>').join('')}</div>`}`;
     paintTabs(); if (open) firstOpen('bag');   // (the bag's card, the first time: docs/first-steps-plan.md §3)
     const fc = sheet.querySelector('canvas[data-fig]'); if (fc) drawCharacter(fc, fc.dataset.fig);
     liveFig(m, fc);
@@ -276,6 +280,13 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {}, models 
       <div class="hint">From attributes: ${share || 'nothing yet'}${s.power ? ` · ability power +${Math.round(s.power * 1000) / 10}%` : ''}</div>
       <div class="stats">${stat('hp', s.maxHp, G.hp)}${stat('mp', s.maxMp, G.mp)}${stat('atk', s.atk, G.atk)}${stat('def', s.def, G.def)}${stat('crit', s.crit + '%', G.crit)}${stat('dodge', s.dodge + '%', G.dodge)}${stat('hpr', s.hpr + '/s', G.hpr)}${stat('mpr', s.mpr + '/s', G.mpr)}</div>
       <div class="hint" style="margin-top:10px">${m.origin ? `Origin: ${esc(originName(m.origin))} · ` : ''}${Array.isArray(m.perks) && m.perks.length ? `${esc(m.perks.map((id) => perkWord(id).name).join(', '))} · ` : ''}stance: ${STANCE_LABEL[stanceOf(m)]} (green: what gear adds)</div>`;
+  }
+  // a raid's stand-in: what they bring, read only (no points to spend, no Auto: theirs, not yours)
+  function standinStats(m, s) {
+    const a = attrsOf(m), G = s.gear, stat = (k, v, gv) => `<div class="stat">${STAT_LABEL[k].toUpperCase()}<b>${v}</b><u class="${gv ? '' : 'z'}">${gv ? fmt(k, gv) : '—'}</u></div>`;
+    return `<div class="hint">${esc(m.name)}: ${ATTRS.map((k) => `${ATTR_LABEL[k]} ${a[k]}`).join(' · ')}</div>
+      <div class="stats">${stat('hp', s.maxHp, G.hp)}${stat('mp', s.maxMp, G.mp)}${stat('atk', s.atk, G.atk)}${stat('def', s.def, G.def)}${stat('crit', s.crit + '%', G.crit)}${stat('dodge', s.dodge + '%', G.dodge)}${stat('hpr', s.hpr + '/s', G.hpr)}${stat('mpr', s.mpr + '/s', G.mpr)}</div>
+      <div class="hint" style="margin-top:10px">On this raid with you. How they're built and what they carry is their own.</div>`;
   }
   // ── the Contract tab: a companion's terms with the Lantern Guild (GDD §6.2) ────
   function contractView(m) {
@@ -376,7 +387,7 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
     const it = findSel(); if (!it) { card.classList.remove('on'); sel = null; return; }
     const m = member(), B = BASES[it.base], worn = !!sel.worn, st = itemStats(it);
     const stackN = worn ? 1 : (bagStacks(S.bag).find((q) => q.includes(it)) || [it]).length;
-    const wearer = canWear(m, it) ? m : S.party.find((q) => canWear(q, it));
+    const wearer = canWear(m, it) && !m.standin ? m : ours().find((q) => canWear(q, it));
     // comparison with what the member who'd wear it has on (bag items only)
     let cmp = null;
     if (!worn && wearer) {
@@ -397,7 +408,8 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
       const town = sim.world.kind === 'town';
       lines.push(`<div class="ln">Read it and the party is on the town square at once. It works once.${town ? ' <em>You are in town.</em>' : ''}</div>`);
       btns = `<button class="gbtn pri" data-act="use" ${town ? 'disabled' : ''}>Read it · home</button><button class="gbtn ghost" data-act="close">Close</button>`;
-    } else if (worn) btns = `<button class="gbtn" data-act="unequip">Unequip</button><button class="gbtn ghost" data-act="close">Close</button>`;
+    } else if (worn && m.standin) btns = `<button class="gbtn ghost" data-act="close">Close</button>`;   // (a raid's stand-in: their own)
+    else if (worn) btns = `<button class="gbtn" data-act="unequip">Unequip</button><button class="gbtn ghost" data-act="close">Close</button>`;
     else {
       const eq = wearer ? `<button class="gbtn pri" data-act="equip" data-to="${wearer.id}">${wearer === m ? 'Equip' : `Give to ${esc(wearer.name)}`}</button>` : '';
       const armed = armSalvage === it.uid;

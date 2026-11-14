@@ -85,7 +85,7 @@ export function createPartyPanel(sim) {
     if (!m) return `<div class="card empty">empty slot<br> hire at a<br> town tavern</div>`;
     const c = CLASSES[m.cls], s = statsFor(m), need = xpToNext(m.level);
     const hp = Math.max(0, Math.round(m.hp));
-    const pts = pendingPoints(m) + pendingSkillPoints(m);
+    const pts = m.standin ? 0 : pendingPoints(m) + pendingSkillPoints(m);   // (a raid's stand-in: not yours to spend, raid.js)
     // a companion's rank and wage (GDD §6.2): ◆ 72/d, ◆ OWED, or ◆ free for a found one; the word, not just the colour
     const col = RANK_COL[m.rank] || '#c8bcae', wg = m.main || !m.rank ? '' : m.owed > 0 ? '<span class="wg owed">◆ OWED</span>'
       : `<span class="wg" style="color:${col};border-color:${col}">◆ ${hired(m) ? `${wageOf(m, false)}/d` : 'free'}</span>`;
