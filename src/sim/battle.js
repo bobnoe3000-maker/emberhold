@@ -895,21 +895,24 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const w = getWorld(), c = e.cage && (w.enemies || []).find((o) => o.id === e.cage && o.hp > 0 && !o.dead);
     if (c) { c.hp = 0; c.dead = DEATH_T; if (focusId === c.id) focusId = 0; freeing(c); }
   }
+  // the count (lamps.js) is the story's: a raid's cages, lamps and dead free their souls in the fight (the bound still lie
+  // down) but write nothing to the slot (GDD §18; docs/shared-play-rules.md §3.5)
+  const tally = (o) => { if (!raidRun()) credit(state, bus, o); };
   function freeing(e) {
     const w = getWorld();
     if (e.kind === 'lantern') {                                     // Teague's cage: a caught soul, as a harvester's cage holds
-      credit(state, bus, { lamps: 1, souls: 1 });
+      tally({ lamps: 1, souls: 1 });
       bus.emit('bossCage', { id: 'teague', x: e.x, y: e.y }); bus.emit('combat', { t: 'freed', x: e.x, y: e.y });
       return;
     }
-    if (e.undead) credit(state, bus, { souls: 1 });
+    if (e.undead) tally({ souls: 1 });
     const lamp = e.boss ? lampOf(e.boss) : null;
     if (lamp) {
       const bound = (w.enemies || []).filter((o) => o !== e && o.undead && o.hp > 0 && !o.dead);
       for (const o of bound) { o.hp = 0; o.dead = DEATH_T; if (focusId === o.id) focusId = 0; bus.emit('combat', { t: 'freed', x: o.x, y: o.y }); }
-      const broken = countOf(state) && state.lampsBroken, first = !broken.includes(lamp);
+      const broken = countOf(state) && state.lampsBroken, first = !raidRun() && !broken.includes(lamp);   // (a raid's lamp breaks in the fight, never in the story)
       if (first) broken.push(lamp);
-      credit(state, bus, { lamps: first ? 1 : 0, souls: bound.length + (first ? LAMPS[lamp].souls : 0) });
+      tally({ lamps: first ? 1 : 0, souls: bound.length + (first ? LAMPS[lamp].souls : 0) });
       bus.emit('lampBroken', { id: lamp, name: LAMPS[lamp].name, first, freed: bound.length, held: first ? LAMPS[lamp].souls : 0, x: e.x, y: e.y });
     }
     if (CAGE_KINDS.has(e.kind) && e.elite && w.kind === 'dungeon') {   // the band's elite: its cage, on the floor where it fell (or the nearest free tile)
@@ -931,7 +934,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       let by = null, bd = 1e9;
       state.party.forEach((q, i) => { if (!alive(q)) return; const qx = i ? q.x : p.x, qy = i ? q.y : p.y, d = hypot(x - qx, y - qy); if (d < bd) { bd = d; by = q; } });
       w.mods.set(k, { opened: true });
-      credit(state, bus, { lamps: 1, souls: 1 });
+      tally({ lamps: 1, souls: 1 });
       bus.emit('cageBroken', { tx, ty, x, y, by: by ? by.name : '', auto: true });
     }
   }

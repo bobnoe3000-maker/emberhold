@@ -2062,7 +2062,7 @@ a list of made-up players. They follow you and fight on their own, as companions
   (its base level; its land open, its way in found), and what each of the two open **seats wants**, Any or a class. An
   Any rounds the three out: a healer if there's none, then a front line, then a striker. The **lobby** shows the two the
   Guild finds (the very two the raid will field), then **Set out**. Only your hero goes: the company waits where it was
-  (wages run as ever) and is back as it was when the raid ends.
+  (wages run as ever: the dawn pays it as if it were in the party) and is back as it was when the raid ends.
 - **Three a hero a game day**, spent on setting out (the Bowl's game day: an hour of play). Leaving early or losing
   doesn't give it back.
 - **The run: the dungeon as it is** (its own rooms, levels, foes and bosses), with an end:
@@ -2071,7 +2071,9 @@ a list of made-up players. They follow you and fight on their own, as companions
   - a floor's **gate** drops when the room before it is won (not 20 waves), for the run only: the slot's gates are as
     they were;
   - a floor's boss is always home (not away after a fall), and doesn't count for the story (`state.bosses`, quests and
-    the Chronicle are untouched); nobody met in a dungeon stands in a raid's;
+    the Chronicle are untouched); nor do the lanterns: a raid's cages, slain dead and a lamp-keeper's fall free their souls
+    in the fight but add nothing to the count, and the Standard's lamp, when he ends a Sunken Chapel raid, isn't broken in
+    your story (`lamps.js`; docs/shared-play-rules.md §3.5); nobody met in a dungeon stands in a raid's;
   - the band's boss, in the last floor's hall, **ends it, won**.
 - **A loss costs nothing** (the owner): a wipe ends the run with no gold lost, nobody Weakened or Fallen (a raid never
   makes anyone Fallen), and you keep what you found. Leaving by the way out, or reading a Homeward Scroll, ends it too.

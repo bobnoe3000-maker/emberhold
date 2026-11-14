@@ -141,7 +141,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const dropHere = (/** @type {string} */ src, /** @type {any} */ o) => (raidOn && RAID_SRC[src] ? loot.drop(RAID_SRC[src], { ...o, own: state.party[0].cls }) : loot.drop(src, o));
   const expeditions = createExpeditions({ state, bus, getWorld: () => world, seed: baseSeed, give: (it, src) => loot.give(it, src) });   // the bench's road work (expeditions.js)
   // creation, points, skills, stance, the bench, the temple and the inn (heroes.js)
-  const heroes = createHeroes({ state, bus, getWorld: () => world, seed: baseSeed });
+  const heroes = createHeroes({ state, bus, getWorld: () => world, seed: baseSeed, waiting: () => (raidOn ? raidOn.party.slice(1) : []) });   // (a raid: the company waiting is still paid at dawn)
   const dev = createDev({ state, bus });                  // the menu's Developer tools: they mark the game a dev game (dev.js)
   // room battles (battle.js): waves, party AI, damage, XP / gold, defeat → back to town
   const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town', 'temple'), hallWanted: (site, d) => quests.wantsHall(site, d),
@@ -621,7 +621,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
         }
         if (prop === 'cage') {                              // a harvester's lantern-cage (lamps.js): a touch breaks it, and its soul goes free
           world.mods.set(cmd.tx + ',' + cmd.ty, { opened: true });
-          credit(state, bus, { lamps: 1, souls: 1 });           // (counted first: what it says reads the count)
+          if (!raidOn) credit(state, bus, { lamps: 1, souls: 1 });   // (counted first: what it says reads the count; a raid's never: the story's)
           bus.emit('cageBroken', { tx: cmd.tx, ty: cmd.ty, x: cmd.tx + 0.5, y: cmd.ty + 0.5 });
           return;
         }

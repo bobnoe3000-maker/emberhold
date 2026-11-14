@@ -57,8 +57,9 @@ export const DAY_S = 3600;              // an in-game day: an hour of play (2.5 
 export const WEAK_S = 600;              // Weakened lasts 10 minutes of play
 export const RES_COST = 25, RESPEC_COST = 20, REST_COST = 5, FREE_RES_LEVEL = 5;
 
-/** @param {{ state: any, bus: any, getWorld: () => any, seed: number }} deps */
-export function createHeroes({ state, bus, getWorld, seed }) {
+// waiting: the company left behind while the hero is on a raid (core.js raidOn; raid.js), paid at dawn as if in the party
+/** @param {{ state: any, bus: any, getWorld: () => any, seed: number, waiting?: () => any[] }} deps */
+export function createHeroes({ state, bus, getWorld, seed, waiting = () => /** @type {any[]} */ ([]) }) {
   if (!state.bench) state.bench = [];
   if (!state.temple) state.temple = { freeDay: -1 };
   if (!state.tavern) state.tavern = { day: 0, ask: 0 };     // how often you asked around, and on which day
@@ -105,7 +106,7 @@ export function createHeroes({ state, bus, getWorld, seed }) {
   // and the company is in town, it's on retainer: the party is paid the bench's half too.
   function payDawn(d) {
     const C2 = state.counters; let paid = 0, total = 0; const unpaid = [], retainer = !!state.away && getWorld().kind === 'town';
-    for (const [list, benched] of [[state.party, retainer], [state.bench, true]]) for (const m of list) {
+    for (const [list, benched] of [[[...state.party, ...waiting()], retainer], [state.bench, true]]) for (const m of list) {
       if (!hired(m)) continue;
       const w = wageOf(m, benched), due = w + (m.owed || 0); total += due;
       if ((C2.gold || 0) >= due) { C2.gold -= due; paid += due; m.owed = 0; if (!benched && !m.fallen) bonded(m, 1); }

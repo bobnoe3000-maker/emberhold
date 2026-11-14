@@ -170,3 +170,27 @@ test('the coffer: a pure function of the raid; an heirloom only one the company 
   for (let n = 0; n < 400; n++) assert.equal(cofferOf(SEED, n, 'wickham_keep', 0, () => true).heirloom, null, 'held: a Rare instead');
   for (let n = 0; n < 400; n++) assert.equal(cofferOf(SEED, n, 'barrows', 0, () => false).heirloom, null, 'a dungeon whose bosses carry none');
 });
+
+test('the company left waiting is paid at dawn while the hero is on a raid, as if in the party', () => {
+  const s = company(3), waitingIds = s.state.party.slice(1).map((m) => m.id);
+  s.state.counters.gold = 10000; for (const m of s.state.party.slice(1)) m.owed = 0;
+  go(s, 'barrows'); assert.ok(s.raid);
+  let paid = null; s.bus.on('wages', (e) => { paid = e; });
+  s.state.t = (Math.floor(s.state.t / DAY_S) + 1) * DAY_S + 1; s.tick();   // (past a dawn)
+  assert.ok(paid && paid.total > 0, 'a dawn\'s wages came due');
+  s.commands.push({ type: 'raidLeave' }); s.tick();
+  const back = s.state.party.filter((m) => waitingIds.includes(m.id));
+  assert.equal(back.length, 2); assert.ok(back.every((m) => !m.owed), 'paid in full, nothing owed');
+});
+
+test('a raid moves no story count: the Standard\'s lamp breaks in the fight, not in the slot; souls and cages uncounted', () => {
+  const s = company(9, 'fighter'); s.state.counters.gold = 0;
+  const before = { count: { ...s.state.count }, lamps: [...s.state.lampsBroken] };
+  go(s, 'sunken_chapel'); assert.ok(s.raid);
+  let broke = 0; s.bus.on('lampBroken', () => broke++);
+  play(s, 60);
+  assert.deepEqual(s.state.count, before.count, 'the count as it was');
+  assert.deepEqual(s.state.lampsBroken, before.lamps, 'no lamp broken in the story');
+  if (s.raid && s.raid.done) assert.ok(broke >= 1, 'his lamp still broke in the fight');
+});
+
