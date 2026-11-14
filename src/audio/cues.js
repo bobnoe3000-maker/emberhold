@@ -97,7 +97,7 @@ export function eventCue(name, ev) {
 // steel and breath, the rogue's whip and hiss, the mage's fire and frost, the cleric's bell-gold, the shaman's spirit
 // and hex. Played on the skill's 'skill' event where it lands (Shield Wall's war cry on its cast); a heal's, a ward's and
 // a hex's own event still sounds under it ('heal', 'ward', 'hex').
-/** @type {Record<string, { at?: 'cast' | 'land', cues: [string, number, number][] }>} [cue, rate, gain] */
+/** @type {Record<string, { at?: 'cast' | 'land', cues: [string, number, number][], strike?: [string, number, number][] }>} [cue, rate, gain]; strike: a leap's touchdown (battle.js TIER.leap) */
 const SKILL_SOUND = {
   cleave: { cues: [['swing', 0.66, 0.95], ['guard', 1.45, 0.35]] },                 // a heavy sweep, steel ringing
   shield_wall: { at: 'cast', cues: [['warcry', 0.92, 0.8], ['guard', 0.8, 0.7]] },   // the war cry, the shield set
@@ -115,7 +115,7 @@ const SKILL_SOUND = {
   ancestors_breath: { cues: [['spirit', 1.28, 0.55], ['heal', 0.7, 0.25]] },       // a long breath out
   hex: { cues: [['cult_cry', 1.45, 0.22]] },                                          // a whisper (and its 'hex')
   // the tiers (GDD §5.1 v1.55)
-  vault: { cues: [['warcry', 1.1, 0.5], ['quake', 1.0, 0.6]] },                      // a shout up, the landing's thud
+  vault: { cues: [['warcry', 1.1, 0.55]], strike: [['quake', 0.9, 0.85], ['swing', 0.6, 0.5]] },   // a shout as he springs; the landing's thud, the blade (v1.99: on the touchdown)
   cutting_wave: { cues: [['swing', 0.52, 0.9], ['ward', 1.9, 0.3]] },                 // a long sweep, a ringing edge
   earthshatter: { cues: [['quake', 0.62, 0.95], ['guard', 0.6, 0.4]] },              // the floor breaking
   whirling_blades: { cues: [['swing', 1.15, 0.6], ['swing', 0.88, 0.45]] },          // blades round, twice
@@ -136,9 +136,10 @@ const SKILL_SOUND = {
   spirit_totem: { cues: [['spirit', 0.95, 0.5], ['guard', 0.7, 0.35]] },           // the post set, a low hum
   thunder_drum: { cues: [['quake', 1.25, 0.8], ['warcry', 0.6, 0.3]] },             // the drum's boom
 };
-/** the sound of a skill's moment, or [] (its event: battle.js skillEv) @param {string} id @param {'cast' | 'land'} at @returns {Cue[]} */
+/** the sound of a skill's moment, or [] (its event: battle.js skillEv) @param {string} id @param {'cast' | 'land' | 'strike'} at @returns {Cue[]} */
 export function skillCue(id, at) {
-  const S = SKILL_SOUND[id]; if (!S || (S.at || 'land') !== at) return [];
+  const S = SKILL_SOUND[id]; if (S && at === 'strike') return (S.strike || []).map(([cue, rate, gain]) => ({ cue, bus: 'combat', rate, gain }));
+  if (!S || (S.at || 'land') !== at) return [];
   return S.cues.map(([cue, rate, gain]) => ({ cue, bus: 'combat', rate, gain }));
 }
 /** every skill with a sound of its own (for checks) */

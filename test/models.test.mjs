@@ -39,6 +39,7 @@ test('each model carries exactly the clips its actors play, and the weapons they
     }
     const s = plays.get(c.v.model) || new Set(['Idle']); plays.set(c.v.model, s);
     for (const k of Object.values(c.clips)) s.add(k.clip);
+    for (const m of c.moves || []) s.add(m);   // (a fighter's look: the Vault's leap, posed in the air, src/render/leap.js)
     for (const f of Object.values(c.v.attach || {})) assert.ok(existsSync(at(`assets/models/${f}`)), `${f} is shipped`);
   }
   for (const [model, want] of plays) {

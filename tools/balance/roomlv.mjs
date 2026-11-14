@@ -40,6 +40,9 @@ const fi = args.indexOf('--fresh'), FRESH = fi >= 0 ? (args.splice(fi, 1), true)
 const ui = args.indexOf('--up'), UP = ui >= 0 ? +args.splice(ui, 2)[1] : 0;
 // --off id,id: those abilities' auto-use off for every member (to weigh one skill against the party without it)
 const oi = args.indexOf('--off'), OFF = oi >= 0 ? args.splice(oi, 2)[1].split(',') : [];
+// --loadout id,id,…: the abilities a member of the class they're from takes into the fight (up to four, in its priority
+// order: skills.js inPlay), in place of its first four; so a fifth (Vault, the fighter's) can be measured
+const li = args.indexOf('--loadout'), LOADOUT = li >= 0 ? args.splice(li, 2)[1].split(',') : null;
 // --born m,g,f,fo: the hero born with those (a roll's six attribute points, GDD §6.1 v1.64: might, grit, finesse, focus);
 // --trait id,id: the hero born with those perks (a roll's trait). Without them: the class table, the contract's runs.
 const bi = args.indexOf('--born'), BORN = bi >= 0 ? args.splice(bi, 2)[1].split(',').map(Number) : null;
@@ -50,6 +53,7 @@ const load = (f) => import(pathToFileURL(path.join(SRC, f)).href);
 const { createSim } = await load('sim/core.js'), { isWalkable } = await load('sim/world.js'), { statsFor } = await load('sim/party.js');
 const attrs = await load('sim/attributes.js').catch(() => null);
 const items = await load('sim/items.js').catch(() => null);
+const skillsMod = await load('sim/skills.js').catch(() => null);
 
 const [secs, RL, HL] = args.slice(0, 3).map(Number), hire = (args[3] || '').split(',').filter(Boolean).map(Number), seed = +(args[4] || 20260807);
 const s = createSim(seed, undefined, { scene: 'town' }); for (const i of hire) { s.state.counters.gold = 1e9; s.commands.push({ type: 'hire', idx: i }); s.tick(); } s.state.counters.gold = 0; s.state.party.slice(1).forEach((m, i) => { if (PERKS !== 'keep') { m.perks = GIVE ? GIVE[i] || [] : []; m.hidden = null; } });   // (the contract: hires without perks)
@@ -69,6 +73,7 @@ for (const m of sim.state.party) {
   if (ROGUE && m.cls === 'rogue') { m.gear.weapon = items.makeItem(ROGUE, HL, 'common', { uid: m.id + ':bow' }); if (items.isTwoHanded(m.gear.weapon)) m.gear.off = null; }
   m.hp = statsFor(m).maxHp; m.mp = undefined;
   if (OFF.length) m.off = [...(m.off || []), ...OFF];
+  if (LOADOUT && skillsMod && LOADOUT.every((id) => (skillsMod.SKILLS[m.cls] || []).some((q) => q.id === id))) m.loadout = LOADOUT;
 }
 // (a room of the size that isn't the floor's hall: an authored floor's last room is its boss's, a fight of its own)
 const L = sim.world.level, r = (PART && L.rooms.find((q) => q.part === PART)) || L.rooms.find((q) => q !== L.entrance && !(L.plan && q === L.descentRoom) && (!q.size || q.size === SIZE)) || L.rooms.find((q) => q !== L.entrance), p = sim.state.player; sim.world.roomLevels.set(r.id, RL);

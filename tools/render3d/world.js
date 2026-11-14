@@ -263,10 +263,12 @@ function placeFigure(a, key, dt, camAz) {
   if (f.yaw === null || f.seen < figSeen - 1) f.yaw = want;
   else { let df = want - f.yaw; df -= 2 * Math.PI * Math.round(df / (2 * Math.PI)); f.yaw += df * (1 - Math.exp(-dt * 16)); }
   f.root.rotation.y = f.yaw;
-  poseFigure(f, d.clip, Math.min(0.999, u), true);
+  // a Vault in flight (src/render/leap.js): its pose, the chop over the jump's legs, on a model that carries the clips
+  if (a.mv && def.moves) poseFigure(f, a.mv.clip, Math.min(0.999, a.mv.t), true, a.mv.legs ? { clip: a.mv.legs.clip, t: Math.min(0.999, a.mv.legs.t) } : null);
+  else poseFigure(f, d.clip, Math.min(0.999, u), true);
   const k = (a.cw && meta.cw ? a.cw / meta.cw : 1) * T.ppu / NATIVE_PER_UNIT;
   const L = T.look; if (L) f.root.scale.set(k * L.w, k * L.h, k * L.w); else f.root.scale.setScalar(k);   // (a build's girth, a height's stature)
-  f.root.position.set(a.x, game.tileMap.getHeight(a.x, a.z) - T.minY * k * (L ? L.h : 1), a.z);
+  f.root.position.set(a.x, game.tileMap.getHeight(a.x, a.z) - T.minY * k * (L ? L.h : 1) + (a.air || 0), a.z);   // (air: a leap's height)
   f.root.updateMatrixWorld(true);
   // its light: a share of the sprites' self-light, a hit's white flash, a wind-up's ember glow (as the sprites' tint)
   const fl = a.flash || 0, wn = fl ? 0 : Math.round((a.warn || 0) * 20) / 20, op = 1 - (a.fade || 0);
@@ -1031,16 +1033,23 @@ function quadsOf(rec, key, n) { if (!rec[key]) { rec[key] = []; for (let i = 0; 
 /** a flat directional frame (pointing along +U) laid along (dx, dz) */
 const along = (dx, dz) => { const l = Math.hypot(dx, dz) || 1; return { dirX: dz / l, dirZ: -dx / l }; };
 const TIER_LOOK = {
-  // FIGHTER · Vault (Skyfall Judgement): his sigil under the foe, the great sword falling onto it, the floor cracking, dust
+  // FIGHTER · Vault (Skyfall Judgement; v1.99 the slow leap: src/render/leap.js): dust kicked up where he springs, his
+  // sigil turning under the foe through the flight (the great sword's ghost that fell in his place is gone: he is the
+  // blade falling now, and it drew the eye off him onto the foe); and as he lands (S.hit: the sim's strike), the floor cracking, the blow's flash, a ring of dust thrown out, the light
   vault(S, rec, L, K, H, vx, vz) {
     if (L == null) return null;
-    const [sig, sword, crack, hit, ...dust] = quadsOf(rec, 'q', 9), yf = H(S.tx, S.tz), fall = clamp01((L - 0.12) / 0.18);
-    q(sig, { frame: 'heroSigil', x: S.tx, y: yf + 0.04, z: S.tz, mode: 'flat', scale: 0.12 + 0.1 * smooth(L / 0.3), rot: L * 1.5, ...col(STEEL, 0.8), a: 0.9 * (1 - smooth((L - 0.5) / 0.4)) });
-    q(sword, { frame: 'heroSword', index: L < 0.3 ? 0 : 1, x: S.tx + vx * 0.25, y: yf + 2.4 + 3.2 * (1 - fall), z: S.tz + vz * 0.25, mode: 'billboard', scale: 0.4, ...col(STEEL_HOT), a: L < 0.12 ? 0 : 1 - smooth((L - 0.45) / 0.25), halo: 1 });
-    q(crack, { frame: 'heroCrack', x: S.tx, y: yf + 0.05, z: S.tz, mode: 'flat', scale: 0.55 * smooth((L - 0.3) / 0.12), ...col(STEEL, 0.9), a: L > 0.3 ? 1 - smooth((L - 0.6) / 0.35) : 0 });
-    q(hit, { frame: 'impact', index: Math.min(3, Math.floor((L - 0.3) * 14)), x: S.tx + vx * 0.3, y: yf + 0.7, z: S.tz + vz * 0.3, mode: 'billboard', scale: 3.2, ...col(STEEL_HOT), a: L > 0.3 && L < 0.6 ? 1 : 0, halo: 1 });
-    dust.forEach((h, i) => { const a = i * 1.2566 + (rec.seed % 5) * 0.2, t = L - 0.3, d = 0.3 + 0.6 * smooth(t / 0.4); q(h, { frame: 'dust', index: Math.min(2, Math.floor(t * 8)), x: S.tx + Math.cos(a) * d, y: yf + 0.2 + 0.2 * t, z: S.tz + Math.sin(a) * d, mode: 'billboard', scale: 2, ...col(DUSTC), a: t > 0 ? 1 - smooth(t / 0.5) : 0 }); });
-    return L > 0.28 ? { x: S.tx, z: S.tz, k: 2.6 * Math.exp(-(L - 0.3) / 0.2), color: [1.9, 1.5, 0.8] } : null;
+    const T = S.air || 0.3, P = S.hit != null ? S.hit : L >= T + 0.25 ? L - T : null;   // (P: s since he landed; a strike never heard: as timed)
+    const [sig, crack, hit, ring, ...rest] = quadsOf(rec, 'q', 11), dust = rest.slice(0, 5), puff = rest.slice(5), yf = H(S.tx, S.tz), y0 = H(S.fx, S.fz);
+    const grow = smooth(L / T), out = P == null ? 1 : 1 - smooth((P - 0.3) / 0.4);
+    q(sig, { frame: 'heroSigil', x: S.tx, y: yf + 0.04, z: S.tz, mode: 'flat', scale: 0.1 + 0.14 * grow, rot: L * 2.2, ...col(STEEL, 0.5 + 0.6 * grow), a: 0.95 * out });
+    puff.forEach((h, i) => { const a = i * 3.1416 + 0.8, t = L, d = 0.25 + 0.45 * smooth(t / 0.35); q(h, { frame: 'dust', index: Math.min(2, Math.floor(t * 7)), x: S.fx + Math.cos(a) * d, y: y0 + 0.15 + 0.15 * t, z: S.fz + Math.sin(a) * d, mode: 'billboard', scale: 1.6, ...col(DUSTC), a: 0.8 * (1 - smooth(t / 0.45)) }); });
+    const p = P == null ? -1 : P;
+    q(crack, { frame: 'heroCrack', x: S.tx, y: yf + 0.05, z: S.tz, mode: 'flat', scale: 0.62 * smooth(p / 0.1), ...col(STEEL, 0.9), a: p >= 0 ? 1 - smooth((p - 0.45) / 0.4) : 0 });
+    q(hit, { frame: 'impact', index: Math.min(3, Math.floor(p * 14)), x: S.tx + vx * 0.3, y: yf + 0.7, z: S.tz + vz * 0.3, mode: 'billboard', scale: 2.8, ...col(STEEL_HOT), a: p >= 0 && p < 0.25 ? 1 : 0, halo: 1 });
+    q(ring, { frame: 'partyRing', index: 1, x: S.tx, y: yf + 0.06, z: S.tz, mode: 'flat', scale: 0.15 + 0.5 * smooth(p / 0.35), ...col(DUSTC, 1.2), a: p >= 0 ? 0.8 * (1 - smooth(p / 0.45)) : 0 });
+    dust.forEach((h, i) => { const a = i * 1.2566 + (rec.seed % 5) * 0.2, d = 0.35 + 0.9 * smooth(p / 0.45); q(h, { frame: 'dust', index: Math.min(2, Math.floor(p * 7)), x: S.tx + Math.cos(a) * d, y: yf + 0.2 + 0.25 * Math.max(0, p), z: S.tz + Math.sin(a) * d, mode: 'billboard', scale: 2.3, ...col(DUSTC), a: p >= 0 ? 1 - smooth(p / 0.6) : 0 }); });
+    if (P == null) return { x: S.tx, z: S.tz, k: 0.5 * grow, color: [1.4, 1.2, 0.8] };
+    return { x: S.tx, z: S.tz, k: 3.0 * Math.exp(-P / 0.22), color: [1.9, 1.5, 0.8] };
   },
   // FIGHTER · Cutting Wave (Dragonfang Wave): the wave racing along its lane, the fang crest riding it
   cutting_wave(S, rec, L, K, H, vx, vz) {
@@ -1368,7 +1377,7 @@ const api = {
   /**
    * one frame: the camera, the hour, the weather, who's where, then a step of Luminati and its picture
    * @param {{ dt: number, focus: number[], ppu: number, hour: number, weather: string, fog?: number, hero: number[] | null,
-   *   actors: { name: string, cw: number, col: number, row: number, x: number, z: number, fade: number, flash?: number, warn?: number, key?: number }[],   (key: the same figure from frame to frame, its model's)
+   *   actors: { name: string, cw: number, col: number, row: number, x: number, z: number, fade: number, flash?: number, warn?: number, key?: number, air?: number, mv?: { clip: string, t: number, legs?: { clip: string, t: number } } }[],   (key: the same figure from frame to frame, its model's; air, mv: a Vault in flight, its height and pose: src/render/leap.js)
    *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps?: number } | null, carry?: number, draw?: boolean, bright?: number,
    *   bits?: { canvas: HTMLCanvasElement, ax: number, ay: number, x: number, z: number, lift: number, glow: number, flash?: number }[], water?: { id: string, cells: number[] } | null,
    *   blast?: { x: number, z: number, k: number } | null,

@@ -331,6 +331,8 @@ const LULL = 4, OUT_OF_BATTLE_REGEN = 5, LULL_REGEN = 1.5, BOLT_SPEED = 26, AUTO
 // comes WINDUP s after the attack starts (the baked attack clip's impact frame); a slain
 // skeleton lies DEATH_T s (death clip, then a fade) before it's cleared.
 export const WINDUP = 0.18, WINDUP_HEAVY = 0.38, DEATH_T = 1.1;
+// a Vault's landing: s he stays crouched over the blow, the sword in the floor, before he fights on (render/leap.js)
+export const LEAP_SETTLE = 0.45;
 // Swings: light attacks alternate two baked clips (A / B); abilities (Cleave, Backstab,
 // Firebolt) and every elite blow are HEAVY — a bigger clip whose impact frame comes later,
 // so the blow lands WINDUP_HEAVY into it. atkKind tells the renderer which clip to play.
@@ -1086,7 +1088,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // pick(m, A, foes, w, F): whom or where it's worth casting on now (null: not now); land(m, A, mult, tgt, w): it lands
   const revKey = (m) => (m.rival ? 'rrevived' : 'revived');   // (once a visit a side)
   const TIER = {
-    // Vault: a foe on foot A.min–A.max off that's striking an ally (not him), or any when nothing's in his reach (never off a boss or an elite); the nearest
+    // Vault (v1.99, the owner: "a slower more dramatic jump and attack"): a crouch (A.crouch, the cast's wind-up), then
+    // A.air s in the air, the blow landing as he does; he's held (act) through the flight and the landing. In the air
+    // he's still where he took off, for the sim: the arc is the renderer's (render/leap.js), from the takeoff's event to
+    // the strike's. A foe on foot A.min–A.max off that's striking an ally (not him), or any when nothing's in his reach (never off a boss or an elite); the nearest
     leap: {
       pick: (m, A, foes, _w, F) => {
         const reach = foes.filter((o) => up(o) && hypot(o.x - m.x, o.y - m.y) <= F.range + 0.25), free = !reach.length;   // (nothing in his reach: any gap is worth closing)
@@ -1094,13 +1099,16 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         return nearest(m, foes, (o) => { const d = hypot(o.x - m.x, o.y - m.y); if (!up(o) || d < A.min || d > A.max) return false; const a = o.aim; return free || (!o.bolt && !!a && a !== m && alive(a) && hypot(a.x - o.x, a.y - o.y) <= (o.range || 1.5) + 0.5); });   // (a foe on foot at an ally: not a shooter, who strikes from anywhere: he left the Drowned Choir for her cantors)
       },
       land(m, A, mult, tgt, w) {
-        skillEv(A, 'land', m, tgt, false, within(foesOf(m, w), tgt.x, tgt.y, A.sr));   // (from where he stood: the arc's start)
-        m.act = Math.max(m.act, 0.4);
-        pending.push({ t: 0.3, fn: () => {
+        const air = A.air || 0.3;
+        skillEv(A, 'land', m, tgt, false, within(foesOf(m, w), tgt.x, tgt.y, A.sr), false, { air });   // (from where he stood: the arc's start; the takeoff)
+        m.act = Math.max(m.act, air + LEAP_SETTLE);
+        pending.push({ t: air, fn: () => {
           if (!alive(m) || !battle) return;
           const d = hypot(m.x - tgt.x, m.y - tgt.y) || 1, at = 1.1 + MELEE_GAP; placeAt(m, tgt.x + ((m.x - tgt.x) / d) * at, tgt.y + ((m.y - tgt.y) / d) * at, w);   // (a melee gap off it, v1.87)
-          const aS = skillStats(m); strikeAt(aS, tgt, A.power * mult, w); hold(tgt, 'knocked', A.knock, m);
-          for (const o of within(foesOf(m, w), tgt.x, tgt.y, A.sr)) if (o !== tgt) strikeAt(aS, o, A.splash * mult, w, false);
+          const aS = skillStats(m), hit = within(foesOf(m, w), tgt.x, tgt.y, A.sr), fell = { x: tgt.x, y: tgt.y }; strikeAt(aS, tgt, A.power * mult, w); hold(tgt, 'knocked', A.knock, m);
+          for (const o of hit) if (o !== tgt) strikeAt(aS, o, A.splash * mult, w, false);
+          m.act = Math.max(m.act, LEAP_SETTLE);
+          skillEv(A, 'strike', m, fell, false, hit);   // (the touchdown: the renderer's slam, its sound; where the blow fell, before the knockdown slid it)
           bus.emit('combat', { t: 'heavy', x: tgt.x, y: tgt.y, party: false });
         } });
       },
@@ -1303,10 +1311,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   }
   // the cast starts: paid, the wind-up (Kidney Shot's quick, Revive's a kneel), then it lands
   function begin(m, c, target, w, F) {
-    const A = c.A, wind = A.kind === 'kidney' ? WINDUP : A.kind === 'revive' ? A.kneel : WINDUP_HEAVY;
+    const A = c.A, wind = A.kind === 'kidney' ? WINDUP : A.kind === 'revive' ? A.kneel : A.crouch || WINDUP_HEAVY;   // (Vault's crouch)
     m.mp -= c.cost; m.act = Math.max(0.55, wind); m.cd = F.interval; m.atkN = (m.atkN || 0) + 1; m.atkKind = 'heavy'; m.moving = false;
     bus.emit('combat', { t: 'ability', x: m.x, y: m.y, name: A.name });
-    skillEv(A, 'cast', m, target, true);
+    skillEv(A, 'cast', m, target, true, [], false, A.crouch ? { wind } : null);
     const tg = target;
     pending.push({ t: wind, fn: () => { if (alive(m)) utility(m, c, tg, w); } });
   }

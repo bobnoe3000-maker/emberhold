@@ -64,6 +64,9 @@ function prune(json, bin, keep) {
   return out;
 }
 
+// the fighters' looks (src/sim/party.js LOOKS.fighter) carry the Vault's leap besides what the atlases bake: its jump and
+// overhead chop, posed in the air by the renderer (src/render/leap.js LEAP_CLIPS; cast.json `moves`), never baked
+const LEAPERS = new Set(['hero_knight', 'hero_barbarian']), LEAP_CLIPS = ['Jump_Start', 'Jump_Idle', 'Jump_Land', '2H_Melee_Attack_Chop'];
 // what each model plays (every clip bake.json bakes on a variant of it) and what the cast attaches and wears
 const plays = new Map(), attach = new Set(), presets = new Set(), actors = {};
 for (const a of bake.actors) {
@@ -82,7 +85,8 @@ for (const a of bake.actors) {
   if (rig) set.add(rig.clips.Idle);   // (its bind: the idle's first frame, creatures.js onKayKit)
   for (const f of Object.values(v.attach || {})) attach.add(f);
   if (typeof v.face === 'string') presets.add(v.face);
-  actors[a.out] = { v, px: a.px || bake.px, clips };
+  const moves = LEAPERS.has(a.out); if (moves) for (const c of LEAP_CLIPS) set.add(c);
+  actors[a.out] = { v, px: a.px || bake.px, clips, ...(moves ? { moves: LEAP_CLIPS } : {}) };
 }
 rmSync(OUT, { recursive: true, force: true }); mkdirSync(OUT, { recursive: true });
 let before = 0, after = 0;

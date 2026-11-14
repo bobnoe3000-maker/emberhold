@@ -21,6 +21,7 @@ import { beastOf, beastFrame } from './beasts.js';
 import { TW, HW, HH, ZH, project, resolveTap } from './iso.js';
 import { buildProps } from './gsprite.js';
 import { createAnimator } from './anim.js';
+import { leapAt } from './leap.js';
 import { createFX, styleOfSrc, raisedLook, BOLT_RGB } from './fx.js';
 import { createSkillFX, LUM_LOOKS, LUM_HOLDS } from './skillfx.js';
 import { siteOpen, bossAt } from '../sim/sites.js';
@@ -382,15 +383,38 @@ export function createRenderer(canvas, sim, input) {
   // foes (LUM_HOLDS: a stun's or a knockdown's stars). The owner's picks, final (2026-11-09: the ?tierlooks review went)
   const LUM_SPELLS = new Set(LUM_LOOKS), LUM_ALSO = new Set(['firebolt', 'shield_wall']), lumHolds = new Set(LUM_HOLDS);
   const SPELL_LIFE = { frost_nova: 2.7, turn_undead: 1.2, mend: 1.0, bless: 1.4, cleave: 0.8, firebolt: 1.2, shield_wall: 0.9,
-    vault: 1.0, cutting_wave: 0.9, kidney_shot: 0.8, fan_of_knives: 0.7, shadowstep: 0.9, caltrops: 6, flare: 1.4, gather: 0.9,
+    vault: 1.8, cutting_wave: 0.9, kidney_shot: 0.8, fan_of_knives: 0.7, shadowstep: 0.9, caltrops: 6, flare: 1.4, gather: 0.9,
     sanctuary: 4, consecrate: 8, revive: 1.7, judgement: 1.7, old_marks: 0.8, spirit_totem: 8, thunder_drum: 0.9 }, spells = [];
   const boltIds = new WeakMap(); let boltN = 0;
   let spellN = 0;
   function spellEvent(e, now) {
     if (e.at === 'cast') { spells.push({ e, key: `${e.id}:${++spellN}`, seed: (spellN * 7919) % 8192, t0: now, land: null }); if (spells.length > 12) spells.shift(); return; }
     if (e.id === 'shield_wall') e = { ...e, reached: (sim.world.enemies || []).filter((f) => f.hp > 0 && !f.dead && Math.hypot(f.x - e.x, f.y - e.y) < 7).map((f) => ({ id: f.id, x: f.x, y: f.y })) };   // (the foes it turns: battle.js taunt, 7 tiles)
+    if (e.at === 'strike') {                                    // a Vault's touchdown (battle.js TIER.leap): the slam, now
+      const V = [...spells].reverse().find((q) => q.e.id === e.id && q.e.by === e.by && q.land != null && q.hit == null);
+      if (V) { V.hit = now; V.hitAt = { x: e.tx, y: e.ty }; }   // (where the blow fell: its crack and flash there)
+      jolt('slam', e.tx, e.ty, e.x, e.y);
+      return;
+    }
     const S = [...spells].reverse().find((q) => q.e.id === e.id && q.e.by === e.by && q.land == null);
-    if (S) { S.land = now; S.e = { ...e, tx: S.e.tx, ty: S.e.ty }; } else spells.push({ e, key: `${e.id}:${++spellN}`, seed: (spellN * 7919) % 8192, t0: now, land: now });
+    if (S) { S.land = now; S.e = { ...e, tx: S.e.tx, ty: S.e.ty, wind: S.e.wind }; } else spells.push({ e, key: `${e.id}:${++spellN}`, seed: (spellN * 7919) % 8192, t0: now, land: now });
+  }
+  // a Vault in flight (render/leap.js): for the member who leapt, where he's drawn (null: where the sim has him: the
+  // crouch, and once he's landed), how high, the way he faces and his pose. In the air until the sim's strike says he's
+  // down (a held frame can't land him short of where the sim will put him)
+  const LEAP_GAP = 1.1 + 0.5; let alphaNow = 1;                                     // (battle.js: a melee gap off the target, 1.1 + MELEE_GAP)
+  /** @param {any} m @param {number} now */
+  function leapOf(m, now) {
+    if (!m || m.id == null) return null;
+    let S = null; for (let i = spells.length - 1; i >= 0; i--) if (spells[i].e.id === 'vault' && spells[i].e.by === m.id) { S = spells[i]; break; }
+    if (!S) return null;
+    const e = S.e, air = e.air || 0.8, age = (now - S.t0) / 1000;
+    const airT = S.land == null ? null : S.hit != null ? air + (now - S.hit) / 1000 : Math.min(air - 0.001, (now - S.land) / 1000);
+    const T = foeById(e.tid), ip = (u, k) => (u['p' + k] === undefined ? u[k] : u['p' + k] + (u[k] - u['p' + k]) * alphaNow), tx = T ? ip(T, 'x') : e.tx, ty = T ? ip(T, 'y') : e.ty;
+    const dx = tx - e.x, dy = ty - e.y, d = Math.hypot(dx, dy) || 1, ex = tx - (dx / d) * LEAP_GAP, ey = ty - (dy / d) * LEAP_GAP;
+    const L = leapAt({ wind: e.wind, air, crouchT: S.land == null ? age : null, airT }, Math.hypot(ex - e.x, ey - e.y));
+    if (!L) return null;
+    return { at: L.phase === 'air' ? { x: e.x + (ex - e.x) * L.g, y: e.y + (ey - e.y) * L.g } : null, lift: L.lift, pose: L.pose, fx: dx, fy: dy };
   }
   /** @param {number} now */
   function spellsNow(now) {
@@ -399,7 +423,9 @@ export function createRenderer(canvas, sim, input) {
       const S = spells[i], age = (now - S.t0) / 1000, L = S.land == null ? null : (now - S.land) / 1000;
       if ((L ?? 0) >= SPELL_LIFE[S.e.id] || (L == null && age > 1.2)) { spells.splice(i, 1); continue; }   // (over, or cut down mid-cast)
       const by = S.e.cls ? memberById(S.e.by) : null;
-      out.push({ key: S.key, id: S.e.id, seed: S.seed, age, land: L, x: by && by.x !== undefined ? by.x : S.e.x, y: by && by.y !== undefined ? by.y : S.e.y, fx: S.e.x, fy: S.e.y, tx: S.e.tx, ty: S.e.ty, r: S.e.r, k: S.e.marks || 0, reached: S.e.reached || [] });   // (fx, fy: where it was cast from: a leap's, a dash's start)
+      // a Vault's mark follows the foe he's leaping at (it moves in the crouch and the flight), then stays where he struck
+      if (S.e.id === 'vault') { const T = S.hitAt ? null : foeById(S.e.tid), at = S.hitAt || (T ? { x: T.px === undefined ? T.x : T.px + (T.x - T.px) * alphaNow, y: T.py === undefined ? T.y : T.py + (T.y - T.py) * alphaNow } : null); if (at) S.e = { ...S.e, tx: at.x, ty: at.y }; }
+      out.push({ key: S.key, id: S.e.id, seed: S.seed, age, land: L, air: S.e.air || 0, hit: S.hit == null ? null : (now - S.hit) / 1000, x: by && by.x !== undefined ? by.x : S.e.x, y: by && by.y !== undefined ? by.y : S.e.y, fx: S.e.x, fy: S.e.y, tx: S.e.tx, ty: S.e.ty, r: S.e.r, k: S.e.marks || 0, reached: S.e.reached || [] });   // (fx, fy: where it was cast from: a leap's, a dash's start)
     }
     // what holds, from the state: Shield Wall's dome over each walled member, Arcane Ward's ring under each warded one
     sim.state.party.forEach((m, i) => {
@@ -465,6 +491,7 @@ export function createRenderer(canvas, sim, input) {
     crit: { stop: 35, amp: 0.9, ms: 110 },            // our crit on a foe
     heavy: { stop: 50, amp: 1.6, ms: 160 },           // our heavy blow (an ability)
     heavyCrit: { stop: 75, amp: 2.0, ms: 170 },
+    slam: { stop: 95, amp: 2.8, ms: 260 },            // a Vault coming down (render/leap.js)
     struck: { stop: 0, amp: 1.2, ms: 120 },           // a foe's crit on one of us
     struckHeavy: { stop: 65, amp: 2.2, ms: 180 },     // an elite's heavy blow on one of us
     struckBoss: { stop: 90, amp: 3.0, ms: 240 },      // a boss's
@@ -540,9 +567,11 @@ export function createRenderer(canvas, sim, input) {
   let heard = null;                                   // a listener for each frame's figures (the sound); reads, never writes
 
   function render(alpha, now) {
-    clockNow = now;
+    clockNow = now; alphaNow = alpha;
     const p = sim.state.player;
-    const ix = p.px + (p.x - p.px) * alpha, iy = p.py + (p.y - p.py) * alpha;
+    let ix = p.px + (p.x - p.px) * alpha, iy = p.py + (p.y - p.py) * alpha;
+    const hLeap = leapOf(sim.state.party[0], now);                 // (a Vault in flight: the camera rides the arc with him)
+    if (hLeap && hLeap.at) { ix = hLeap.at.x; iy = hLeap.at.y; }
     const pz = heightAt(sim.world, Math.floor(ix), Math.floor(iy));
     const P = project(ix, iy, pz);
     const { ox, oy } = (lastCam = camera(ix, iy, pz)); lastDrawn = now;
@@ -570,8 +599,8 @@ export function createRenderer(canvas, sim, input) {
     if (hAtl) {                                       // (until its atlas is in, the hero isn't drawn, as a companion isn't: the old paper doll read as a pink stand-in)
       const heroAtlas = hAtl;
       const tn = talkingTo && !p.moving && (sim.world.npcs || []).find((n) => n.id === talkingTo);   // in a conversation: face them
-      const a = pickAnim(H, heroAtlas, { now, x: ix, y: iy, moving: p.moving, faceX: tn ? tn.x - ix : H.fx, faceY: tn ? tn.y - iy : H.fy, facing: H.act > 0 || !!tn, dead: H.down, stride: STRIDE.hero });
-      draws.push({ d: ix + iy + 0.01, fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy, look: lookOf(H, H.down ? 0.35 : 0), team: 1, atl: heroAtlas, a, u: H });
+      const a = pickAnim(H, heroAtlas, { now, x: ix, y: iy, moving: p.moving && !hLeap, faceX: hLeap ? hLeap.fx : tn ? tn.x - ix : H.fx, faceY: hLeap ? hLeap.fy : tn ? tn.y - iy : H.fy, facing: H.act > 0 || !!tn || !!hLeap, dead: H.down, stride: STRIDE.hero });
+      draws.push({ d: ix + iy + 0.01, fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy, look: lookOf(H, H.down ? 0.35 : 0), team: 1, atl: heroAtlas, a, u: H, ...(hLeap ? { air: hLeap.lift, mv: hLeap.pose } : {}) });
     }
     // companions: their sim positions (they follow you, or fight on their own). Not in a bout in the Bowl the hero fights
     // alone: they're off the sand, as the rival's own company is (the owner, 2026-11-14: "Individual fights we should hide
@@ -580,12 +609,13 @@ export function createRenderer(canvas, sim, input) {
     party.slice(1).forEach((m, i) => {
       if (benched) return;
       const atl = memberAtlas(m, m.actor || MEMBER_LOOK[m.cls]); if (!atl || m.x === undefined) return;
-      const mx = lerp(m, 'x'), my = lerp(m, 'y'), f = fol[i] || (fol[i] = {}); f.x = mx; f.y = my;
+      const lp = leapOf(m, now);                                   // (a Vault in flight: render/leap.js)
+      const mx = lp && lp.at ? lp.at.x : lerp(m, 'x'), my = lp && lp.at ? lp.at.y : lerp(m, 'y'), f = fol[i] || (fol[i] = {}); f.x = mx; f.y = my;
       const cz = heightAt(sim.world, Math.floor(mx), Math.floor(my)), cp = project(mx, my, cz);
-      const a = pickAnim(m, atl, { now, x: mx, y: my, moving: m.moving, faceX: m.fx, faceY: m.fy, facing: m.act > 0 || !m.moving, dead: m.down, sit: m.sitting && !m.moving, stride: STRIDE.hero, seed: 0.37 * (i + 1) });
+      const a = pickAnim(m, atl, { now, x: mx, y: my, moving: m.moving && !lp, faceX: lp ? lp.fx : m.fx, faceY: lp ? lp.fy : m.fy, facing: m.act > 0 || !m.moving || !!lp, dead: m.down, sit: m.sitting && !m.moving, stride: STRIDE.hero, seed: 0.37 * (i + 1) });
       const up = raisedAt.get(m), rl = raisedLook(up === undefined ? undefined : (now - up) / 1000);   // just raised (fx.js)
       const look = m.fallen || rl === 'ghost' ? GHOST : rl !== null ? { flash: rl, fade: 0 } : lookOf(m, m.down ? 0.35 : 0);
-      draws.push({ d: mx + my, fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: mx + my, look, team: m.fallen ? undefined : 1, atl, a, u: m.fallen ? null : m });
+      draws.push({ d: mx + my, fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: mx + my, look, team: m.fallen ? undefined : 1, atl, a, u: m.fallen ? null : m, ...(lp ? { air: lp.lift, mv: lp.pose } : {}) });
     });
     // named townsfolk (sim world.npcs): idle where they stand, turning to you as you come near, with a
     // gesture now and then. Their playback state is presentation-only, kept here by NPC id.

@@ -131,10 +131,20 @@ export function applyFrame(root, body) {
     if (body.bend && body.bend[base]) { const [x, y, z] = body.bend[base]; b.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z))); } });
 }
 /** the figure at `t` (0..1) through a clip (Idle if it hasn't the clip), heroic or stock @param {{ root: THREE.Object3D, mixer: THREE.AnimationMixer, clips: THREE.AnimationClip[], frame: any }} c */
-export function pose(c, clipName, t, heroic) {
+// legs: the legs (and the hips' height) taken from another clip at its own moment, the rest of him from this one: the
+// Vault's chop swung over a jump's legs (src/render/leap.js); a clip the model hasn't, no layer
+const LEG = /^(upperleg|lowerleg|foot|toes)(l|r)$/;
+export function pose(c, clipName, t, heroic, legs = null) {
+  const lc = legs && c.clips.find((a) => a.name === legs.clip);
+  if (lc) {
+    const L = c._legs || (c._legs = []); if (!L.length) c.root.traverse((b) => { if (b.isBone && (LEG.test(b.name) || b.name === 'hips')) L.push({ b, hips: b.name === 'hips', q: new THREE.Quaternion(), y: 0 }); });
+    c.mixer.stopAllAction(); c.mixer.clipAction(lc).play(); c.mixer.setTime(legs.t * lc.duration);
+    for (const q of L) { q.q.copy(q.b.quaternion); q.y = q.b.position.y; }
+  }
   c.mixer.stopAllAction();
   const clip = c.clips.find((a) => a.name === clipName) || c.clips.find((a) => a.name === 'Idle');
   c.mixer.clipAction(clip).play(); c.mixer.setTime(t * clip.duration);
+  if (lc) for (const q of c._legs) { if (q.hips) q.b.position.y = q.y; else q.b.quaternion.copy(q.q); }
   if (c.creature) applyFit(c.root);                      // (a creature on KayKit's rig: the clip's pose on its own joints)
   if (heroic && !c.creature) applyHeroic(c.root);        // after sampling: clips key scale+translation (a creature's own proportions: no man's)
   if (heroic && c.frame) applyFrame(c.root, c.frame);

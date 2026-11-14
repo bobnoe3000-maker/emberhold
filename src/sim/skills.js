@@ -57,7 +57,7 @@ export const SKILLS = {
     { id: 'cutting_wave', name: 'Cutting Wave', lv: 3, mp: 12, kind: 'wave', power: 1.6, len: 6, half: 1.0, text: 'a wave along a lane 6 tiles long: 1.6× to every foe in it' },
     { id: 'shield_wall', name: 'Shield Wall', lv: 6, trial: true, mp: 20, kind: 'guard', dur: 6, def: 0.5, taunt: true, text: '+50 % DEF for 6 s; foes turn on you' },
     { id: 'second_wind', name: 'Second Wind', lv: 12, trial: true, mp: 25, kind: 'heal', heal: 0.25, text: 'heal 25 % of max HP' },
-    { id: 'vault', name: 'Vault', lv: 15, mp: 14, kind: 'leap', power: 1.5, splash: 0.6, sr: 1.8, knock: 0.8, min: 3, max: 8, text: 'leap to a foe 3–8 tiles off that is striking an ally (or any, with none in reach; never off a boss): 1.5× on it, 0.6× round it, knocked down 0.8 s' },
+    { id: 'vault', name: 'Vault', lv: 15, mp: 14, kind: 'leap', power: 1.5, splash: 0.6, sr: 1.8, knock: 0.8, min: 3, max: 8, crouch: 0.5, air: 0.8, text: 'leap to a foe 3–8 tiles off that is striking an ally (or any, with none in reach; never off a boss): 1.5× on it, 0.6× round it, knocked down 0.8 s' },
     { id: 'earthshatter', name: 'Earthshatter', lv: 21, mp: 22, kind: 'slam', power: 1.2, radius: 3.75, knock: 1.2, spikes: 0.5, min: 2, text: 'two or more foes round you: 1.2× to every foe within 3¾ tiles, knocked down 1.2 s; then spikes of rock, 0.5×' },
     { id: 'whirling_blades', name: 'Whirling Blades', lv: 24, mp: 24, kind: 'blades', power: 0.45, radius: 3.75, every: 0.6, dur: 5, text: 'three swords circle you for 5 s: 0.45× to every foe within 3¾ tiles every 0.6 s' },
   ],

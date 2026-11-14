@@ -104,7 +104,17 @@ test('crowd control: a boss takes half of a hold, the rest the full time', () =>
 
 // ── each ability, cast in a fight ─────────────────────────────────────────────────────────────────────────────────
 test('Vault: to a foe that\'s striking an ally or shooting, 3–8 tiles off; he lands by it and knocks it down', () => {
-  const { land, sim, P, foe } = fight('fighter', 'vault', { more: 0.4 });
+  // (v1.99, the slow leap: a crouch, A.air s in the air, then the blow as he lands, its 'strike' event for the renderer)
+  const A = SKILLS.fighter.find((q) => q.id === 'vault'); let mid = null, up = null, heard = false;
+  const each = (s, Q) => { if (!heard) { heard = true; s.bus.on('skill', (e) => { if (e.id === 'vault' && e.at === 'land' && up == null) up = s.state.t; }); }
+    if (up != null && mid == null && s.state.t >= up + A.air / 2) mid = { x: Q.m.x, y: Q.m.y, act: Q.m.act }; };
+  const { land, sim, P, foe, log } = fight('fighter', 'vault', { more: A.air + 0.2, each });
+  const cast = log.skill.find((e) => e.id === 'vault' && e.at === 'cast'), strike = log.skill.find((e) => e.id === 'vault' && e.at === 'strike');
+  assert.ok(cast && Math.abs(land.time - cast.time - A.crouch) < 0.06, `the crouch: ${A.crouch} s from the cast to the takeoff`);
+  assert.equal(cast.wind, A.crouch, 'the cast tells the renderer the crouch'); assert.equal(land.air, A.air, 'the takeoff, the time in the air');
+  assert.ok(strike && Math.abs(strike.time - land.time - A.air) < 0.06, `the strike ${A.air} s after the takeoff (${strike && (strike.time - land.time).toFixed(2)})`);
+  assert.ok(mid && D(mid, { x: land.x, y: land.y }) < 0.01 && mid.act > 0.12, 'in the air he\'s held where he took off (the arc is drawn)');
+  assert.ok(!log.combat.some((c) => c.t === 'hit' && !c.party && c.time > land.time + 0.01 && c.time < strike.time - 0.01 && D(c, { x: land.tx, y: land.ty }) < 0.01), 'no blow on it before he lands');
   const t = foe(land.tid), from = { x: land.x, y: land.y }; assert.ok(D(from, { x: land.tx, y: land.ty }) >= 3 - 0.3, 'from 3 tiles off or more');
   assert.ok(t && D(P.m, t) < 3 + MELEE_GAP, `he lands in reach of it (${t && D(P.m, t).toFixed(2)})`); assert.ok(!t || t.knocked > 0 || t.ccImm > 0 || t.hp <= 0, 'knocked down');
   assert.equal(P.m.x, sim.state.player.x, 'the hero moves the player');

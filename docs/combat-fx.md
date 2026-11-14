@@ -553,3 +553,42 @@ page (Tempest Edge, Dragonfang Wave, Skyfall Judgement, Earthshatter, Flare, Gla
 resonance marks, a totem), crowd control, a leap, something planted, a raise in a fight, more skills a class
 ("add more skills available to learn for each class"), and the five Luminati looks for Shield Wall, Arcane Ward, Mend
 and Bless, Cleave and Firebolt.
+
+## Vault's leap (2026-11-14, GDD v1.99)
+
+The owner: "Vault skill need a slower more dramatic jump and attack animation". Before, the fighter played his heavy blow
+on the spot for 0.38 s, the great sword's ghost fell on the foe, and 0.3 s later he was simply *there*: the sim moved him
+in one tick, and the camera (which follows the hero, unsmoothed) jumped with him. There was no jump to see.
+
+![Vault before and after, the Stage's live fight at +0 … +1.75 s](img/fx/vault-leap.jpg)
+![After, at 2×: the crouch, the spring, the sword up at the top, down onto the foe, the landing's crouch](img/fx/vault-leap-detail.jpg)
+
+**The leap, now** (`src/render/leap.js`, a pure function of the skill's clock; `test/leap.test.mjs`):
+
+| | time | the body (KayKit clips, `figure.js` pose with a legs layer) | the effect (`world.js` TIER_LOOK.vault) |
+|---|---|---|---|
+| crouch | 0.5 s (the cast's wind-up, `A.crouch`) | down into `Jump_Start`, slowly, to its lowest | the sigil under the foe, faint |
+| spring | first 16 % of the air | `Jump_Start` on through its spring | dust kicked up where he took off |
+| flight | 0.8 s in all (`A.air`) | `2H_Melee_Attack_Chop` to its raise, over `Jump_Idle`'s tucked legs; the arc 2.2 tiles high (+0.28 a tile of leap), the ground eased so the top hangs | the sigil turning under the foe, following it as it moves, brightening |
+| the blow | the last 30 % | the chop brought down, striking at the touchdown, `Jump_Land`'s legs taking the floor | — |
+| landing | the sim's `strike` event | the chop's follow-through over `Jump_Land`'s deep crouch, 0.45 s (`LEAP_SETTLE`), then up | the crack, the flash, a ring of dust thrown out, the light; a `slam` jolt (95 ms hold, 2.8 px, the heavy blow's 50 / 1.6) |
+
+The ghost sword that fell in his place is gone: the fighter is the falling blade now, and the ghost drew the eye off him onto
+the foe beside him. The sound split: the war cry as he springs (`land`), the thud and the blade as he lands (`strike`).
+
+**Who owns what.** The sim (battle.js TIER.leap) keeps him where he took off for the whole flight, held by `act`, and
+places him and strikes at `A.air`; it says so in events: the cast carries `wind`, the takeoff (`land`) carries `air`, and
+the touchdown is its own `strike` event (where the blow fell, before the knockdown slid the foe). The renderer draws the
+arc between them, the hero's camera riding it, and keeps him in the air until the strike is heard, so a held frame can't
+land him short of where the sim puts him. The clips are only in the fighters' models (`hero_knight`, `hero_barbarian`:
+`tools/actor-lab/models.mjs` LEAPERS, cast.json `moves`; Knight.glb +88 KB, Barbarian.glb +81 KB); the atlases are as they
+were, and `?figures=sprites` keeps the old look.
+
+**The cost in the fight.** From cast to blow 1.3 s (it was 0.68 s); the fighter out of the fight 1.75 s a Vault. The
+right party with Vault in its four (`roomlv.mjs 300 L L 1,3 seed --loadout cleave,cutting_wave,shield_wall,vault`, a room
+two levels up, seeds 1–3): before held 8 of 9 (15: 14/14/14 waves; 18: 14/14/14; 21: 12 ✗/14/14), after 8 of 9 (15: 13 ✗/14/14;
+18: 14/14/13; 21: 14/14/13), 21–35 Vaults a run either way. Without `--loadout` the contract's party doesn't take Vault
+(it's the fighter's fifth), and its numbers are unchanged to the last digit.
+
+Shot with `node tools/capture/stage.mjs --show fx --skills vault --at 0,250,450,650,850,1050,1250,1450,1750` (`--at`, new:
+the moments of a slower skill's strip).

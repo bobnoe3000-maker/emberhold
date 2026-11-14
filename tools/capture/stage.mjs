@@ -15,7 +15,8 @@
 //     skill, from its first cast in view, frames at +0, 0.15, 0.3, 0.5, 0.8, 1.2 s cropped round it
 //     → <out>/<skill>.png strips and <out>/sheet.jpg (a row a skill)
 //   node tools/capture/stage.mjs --show fx [--skills all|<id>,…] [--cls mage] [--lv 15] [--with fighter,cleric] [--wait 40]
-//        [--site barrows] [--floor 0] [--room big] [--size 600x700] [--dpr 1]
+//        [--site barrows] [--floor 0] [--room big] [--size 600x700] [--dpr 1] [--at 0,150,300,500,800,1200]
+//     --at: the moments shot, ms from the first cast (a slower skill's whole arc: Vault's leap, 0,250,…,1800)
 //     --wait: the most sim seconds given a skill to fire before it's skipped (noted on the sheet)
 //   --show fx --foes firebeetle,golem,…  a row a kind: a room of that kind alone against a plain party, from its first
 //     heavy blow or shot (else a blow) · --bosses rat_king,spider_queen: a row a boss in a hall, from his mechanic (else
@@ -61,7 +62,7 @@ if (show === 'fx') {
   const pickOf = (id) => (FOES ? (L) => L.find((q) => q.id === id + ':heavy' || q.id === id + ':shot') || L.find((q) => q.id.startsWith(id + ':'))
     : BOSSES ? (L) => L.find((q) => q.id === id + ':swarm' || q.id === id + ':call') || L.find((q) => q.id === id + ':heavy')
       : (L) => L.find((q) => q.id === id && q.at === 'cast') || L.find((q) => q.id === id));
-  const AT = [0, 150, 300, 500, 800, 1200], WAIT = +arg('wait', '40'), CW = 300, CH = 260;
+  const AT = arg('at', '0,150,300,500,800,1200').split(',').map(Number), WAIT = +arg('wait', '40'), CW = 300, CH = 260;
   const open = async (extra) => {
     const q = new URLSearchParams({ ...(extra ? {} : { skill: ids[0], with: arg('with', 'fighter,cleric') }), lv: arg('lv', extra ? '6' : '15'), site: arg('site', 'barrows'), ...(arg('floor') ? { floor: arg('floor') } : extra && extra.boss ? {} : { floor: '0' }), room: arg('room', 'big'), ...(extra || {}) });
     await page.goto(`${base}/index.html?dev&manual&notitle&scene=stage&show=fx&${q}`);
