@@ -534,7 +534,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       foe(w, elite ? F.elite : kinds[i], lvl, x, y, tough, elite, F);
     }
     b.wave += 1;
-    bus.emit('wave', { wave: b.wave, level: lvl, tide: b.tide });
+    bus.emit('wave', { wave: b.wave, level: lvl, tide: b.tide, ...(eliteWave ? { elite: F.elite } : {}) });   // (elite: its kind, the HUD's call when it carries a full cage)
   }
   // a spawn point's band (camps.js, GDD §10.3): this fill's kinds at their posts round the fire or at the burrow's hole,
   // where they idled (no rising: already out); an elite in one fill of four, its last foe.

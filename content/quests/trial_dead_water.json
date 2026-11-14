@@ -15,7 +15,7 @@
   "steps": [
     {
       "id": "vats",
-      "journal": "Defeat five of the Canal Locks' wave-leaders. At Vat Seven, the second floor, they're the harvesters'.",
+      "journal": "Defeat five of the Canal Locks' wave-leaders: every fifth wave, the harvester whose cage glows, an orange bar over it.",
       "objectives": [
         {
           "type": "elites",

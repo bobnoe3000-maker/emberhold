@@ -11,6 +11,7 @@ import { weatherLeft, weatherName, skyAt } from '../sim/weather.js';
 import { weatherIcon, skyWord } from './weathericon.js';
 import { PART_NAMES } from '../render/daylight.js';
 import { SHRINES } from '../sim/shrines.js';
+import { CAGE_KINDS } from '../sim/lamps.js';
 
 export function createHud(sim) {
   // the top bar's bottom edge (the phone's safe area included) as --hud-b, for what stacks under it, and its line 1's
@@ -62,6 +63,8 @@ export function createHud(sim) {
   // the Mere Tower (sim tower.js): Wenna won't take a company under 12; out of the hall mid-climb, the satchel's lost
   sim.bus.on('siteLevel', (e) => show(e.site === 'mere_tower' ? `Wenna Pike won’t row a company under level ${e.need} out to the Mere Tower` : `Come back at level ${e.need}`, 3200));
   sim.bus.on('towerOut', (e) => { if (e.lost && (e.lost.gold || e.lost.cinders)) show(`Out of the Tower mid-climb · the satchel is lost: ${e.lost.gold} gold, ${e.lost.cinders} cinders`, 3600); });
+  // the one harvester in a lot with a full cage (lamps.js: the elite, every fifth wave; the others' cages are empty and dark)
+  sim.bus.on('wave', (e) => { if (e && e.elite && CAGE_KINDS.has(e.elite)) show('A harvester comes in with a full cage, lit · put it down to free its soul', 3200, 'cage'); });
   sim.bus.on('cageDropped', () => show('A full cage falls · the company will break it when the fighting stops', 2600, 'cage'));   // (lamps.js: or tap it)
   sim.bus.on('cageBroken', (e) => { const c = sim.state.count; show(`${e && e.auto && e.by ? `${e.by} breaks the cage` : 'The cage breaks'} · a soul goes free · ${c.souls} freed`, 2600, 'cage'); });
   sim.bus.on('fallen', (f) => show(`${f.name} is slain: out of the fight until raised · at the temple in town, or a shrine below`, 3200));

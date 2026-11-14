@@ -207,6 +207,17 @@ function templateOf(name, def, look = null, lk = '') {
 const HEAD_SHADOW = typeof location !== 'undefined' && new URLSearchParams(location.search).get('headshadow') === '1';
 const figs = new Map();                                       // a figure's key (hybrid.js) → its model, posed
 let figSeen = 0;
+// the halo round a full cage's soul (figureFor): one additive sprite material, a soft violet disc, made once
+let haloMat = null;
+function soulHalo() {
+  if (haloMat) return haloMat;
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, 'rgba(225,210,255,0.95)'); r.addColorStop(0.25, 'rgba(170,140,255,0.55)'); r.addColorStop(1, 'rgba(120,80,230,0)');
+  g.fillStyle = r; g.fillRect(0, 0, 64, 64);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  haloMat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+  return haloMat;
+}
 function figureFor(key, name, T) {
   let f = figs.get(key);
   if (f && f.name !== name) { game.engine.scene.remove(f.root); figs.delete(key); f = null; }
@@ -233,7 +244,11 @@ function figureFor(key, name, T) {
   const bones = []; root.traverse((b) => { if (b.isBone) bones.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
   // (creature: a creature keeps its own proportions, figure.js pose, and one on KayKit's rig its joints; without it the
   // heroes' heroic pass shrank a creature's head to 0.62 in the world, the atlases had it as built)
-  f = { name, root, mixer: new THREE.AnimationMixer(root), clips: T.clips, frame: T.frame, creature: T.creature, look: T.look, bones, mats, shines: mats.some((q) => q.shine), yaw: null, key: '', fpos: 0, seen: 0, lit: '' };
+  // a Cult harvester's caught soul (props.js cagepole Cage_Soul): lit only in a cage that holds one (a.empty: the lot's
+  // empty cages, dark; the leader's full one burns, the one the Sickpools want broken: lamps.js)
+  const souls = []; root.traverse((o) => { if (o.name === 'Cage_Soul') souls.push(o); });
+  for (const s of souls) { const h = new THREE.Sprite(soulHalo()); h.scale.setScalar(0.9 / Math.max(1e-3, s.scale.x)); h.renderOrder = 2; s.add(h); s.scale.multiplyScalar(1.3); }   // (a halo three times the soul, so a full cage reads at a phone's size)
+  f = { name, root, mixer: new THREE.AnimationMixer(root), clips: T.clips, frame: T.frame, creature: T.creature, look: T.look, bones, mats, shines: mats.some((q) => q.shine), yaw: null, key: '', fpos: 0, seen: 0, lit: '', souls };
   game.engine.scene.add(root); figs.set(key, f);
   return f;
 }
@@ -263,6 +278,7 @@ function placeFigure(a, key, dt, camAz) {
   if (f.yaw === null || f.seen < figSeen - 1) f.yaw = want;
   else { let df = want - f.yaw; df -= 2 * Math.PI * Math.round(df / (2 * Math.PI)); f.yaw += df * (1 - Math.exp(-dt * 16)); }
   f.root.rotation.y = f.yaw;
+  for (const s of f.souls) s.visible = !a.empty;
   // a Vault in flight (src/render/leap.js): its pose, the chop over the jump's legs, on a model that carries the clips
   if (a.mv && def.moves) poseFigure(f, a.mv.clip, Math.min(0.999, a.mv.t), true, a.mv.legs ? { clip: a.mv.legs.clip, t: Math.min(0.999, a.mv.legs.t) } : null);
   else poseFigure(f, d.clip, Math.min(0.999, u), true);

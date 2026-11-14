@@ -15,7 +15,7 @@
   "steps": [
     {
       "id": "cages",
-      "journal": "Go down to Vat Seven, the Canal Locks' second floor, and break three full lantern-cages. Only the harvesters who lead the others carry a full one.",
+      "journal": "At the Canal Locks every fifth wave is led in by a harvester whose cage glows (an orange bar over it). Put it down and break the cage it drops: three.",
       "objectives": [
         {
           "type": "cages",

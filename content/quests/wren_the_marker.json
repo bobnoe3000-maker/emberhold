@@ -13,7 +13,7 @@
   "steps": [
     {
       "id": "locks",
-      "journal": "Defeat three harvesters' leaders at the Canal Locks. They lead every fifth wave there, and carry the marker's pieces.",
+      "journal": "Defeat three harvesters' leaders at the Canal Locks: every fifth wave, the one whose cage glows (an orange bar). They carry the marker's pieces.",
       "objectives": [
         {
           "type": "elites",

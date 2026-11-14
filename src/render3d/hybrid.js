@@ -27,6 +27,7 @@ import { lookOf } from './looks.js';
 import { HW, HH, ZH, project } from '../render/iso.js';
 import { DAY_S } from '../sim/heroes.js';
 import { PART_S } from '../sim/npcs.js';
+import { CAGE_KINDS } from '../sim/lamps.js';
 import { weatherNow } from '../render/weatherfx.js';
 import { readGraphics } from './settings.js';
 import { brightAt, brightFor } from './bright.js';
@@ -251,7 +252,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         const fade = d.look ? Math.max(d.look.fade || 0, d.look.dissolve || 0, d.look.ghost ? 0.55 : 0) : 0;
         const X = (x - origin.x) / 2, Z = (y - origin.y) / 2;
         const lk = d.u ? lookOf(d.u) : null;                   // (GDD v1.65: a member's own face and build)
-        actors.push({ name: d.atl.name, cw: d.atl.meta.cw, col: d.a.frame, row: d.a.dir, x: X, z: Z, fade, flash: (d.look && d.look.flash) || 0, warn: (d.look && d.look.warn) || 0, key: keyOf(d.u || d.who), look: lk && lk.a, lk: lk ? lk.k : '', ...(d.mv ? { air: (d.air || 0) / 2, mv: d.mv } : {}) });   // (cw: as drawn, a boss 1.3×; key: the same figure each frame, its model's)
+        actors.push({ name: d.atl.name, cw: d.atl.meta.cw, col: d.a.frame, row: d.a.dir, x: X, z: Z, fade, flash: (d.look && d.look.flash) || 0, warn: (d.look && d.look.warn) || 0, key: keyOf(d.u || d.who), look: lk && lk.a, lk: lk ? lk.k : '', ...(d.u && d.foe && CAGE_KINDS.has(d.u.kind) && !d.u.elite ? { empty: true } : {}), ...(d.mv ? { air: (d.air || 0) / 2, mv: d.mv } : {}) });   // (cw: as drawn, a boss 1.3×; key: the same figure each frame, its model's)
         // a named person met in a dungeon (Wren in the Toadking's Mound…): a gold ring at their feet, fight or no fight
         if (d.guide) rings.push({ x: X, z: Z, col: GUIDE_RGB, a: 0.9 });
         // in a fight, a ring at each fighter's feet in its side's colour (Emberlit's footMark), on the ground in 3D

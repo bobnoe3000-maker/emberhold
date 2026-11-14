@@ -123,3 +123,12 @@ test('save v19: an older save is credited the Standard\'s lamp if he fell; bad c
   for (const cmd of [{ type: 'count', lamps: 99 }, { type: 'setCount', souls: 99 }, { type: 'harvest', tx: 0, ty: 0 }, { type: 'credit', souls: 5 }]) { sim.commands.push(cmd); sim.tick(); }
   assert.deepEqual(sim.state.count, { lamps: 0, souls: 0 });
 });
+
+test('the wave a harvester leads in names it (the HUD\'s call: the one with a full cage), every fifth wave and only then', () => {
+  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'canal_locks' }); party(sim, 15); sim.tick(); vats(sim); room(sim);
+  const waves = []; sim.bus.on('wave', (e) => { if (!e.cleared) waves.push(e); });
+  fight(sim, 400, () => waves.length >= 6);
+  assert.ok(waves.length >= 6, `waves: ${waves.length}`);
+  for (const e of waves) assert.equal(e.elite || null, e.wave % 5 === 0 ? 'harvester' : null, `wave ${e.wave}`);
+  assert.ok(waves.some((e) => e.wave === 5), 'the fifth wave came');
+});
