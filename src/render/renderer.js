@@ -403,7 +403,7 @@ export function createRenderer(canvas, sim, input) {
     }
     // what holds, from the state: Shield Wall's dome over each walled member, Arcane Ward's ring under each warded one
     sim.state.party.forEach((m, i) => {
-      const u = i === 0 ? sim.state.player : m; if (!u || u.x === undefined || m.down) return;
+      const u = i === 0 ? sim.state.player : m; if (!u || u.x === undefined || m.down || (i && sim.battle && sim.battle.bout && sim.battle.bout.alone)) return;
       const b = m.buff || {};
       if (b.wall > 0) out.push({ key: 'aura:wall:' + m.id, id: 'aura_wall', seed: 0, age: 0, land: null, x: u.x, y: u.y, tx: u.x, ty: u.y, r: 0, k: b.wall, reached: [] });
       if (m.ward > 0) out.push({ key: 'aura:ward:' + m.id, id: 'aura_ward', seed: 0, age: 0, land: null, x: u.x, y: u.y, tx: u.x, ty: u.y, r: 0, k: m.ward, reached: [] });
@@ -573,8 +573,12 @@ export function createRenderer(canvas, sim, input) {
       const a = pickAnim(H, heroAtlas, { now, x: ix, y: iy, moving: p.moving, faceX: tn ? tn.x - ix : H.fx, faceY: tn ? tn.y - iy : H.fy, facing: H.act > 0 || !!tn, dead: H.down, stride: STRIDE.hero });
       draws.push({ d: ix + iy + 0.01, fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy, look: lookOf(H, H.down ? 0.35 : 0), team: 1, atl: heroAtlas, a, u: H });
     }
-    // companions: their sim positions (they follow you, or fight on their own)
+    // companions: their sim positions (they follow you, or fight on their own). Not in a bout in the Bowl the hero fights
+    // alone: they're off the sand, as the rival's own company is (the owner, 2026-11-14: "Individual fights we should hide
+    // my companions just like the opponent"); the sim keeps them where they stand, out of it
+    const benched = !!(sim.battle && sim.battle.bout && sim.battle.bout.alone);
     party.slice(1).forEach((m, i) => {
+      if (benched) return;
       const atl = memberAtlas(m, m.actor || MEMBER_LOOK[m.cls]); if (!atl || m.x === undefined) return;
       const mx = lerp(m, 'x'), my = lerp(m, 'y'), f = fol[i] || (fol[i] = {}); f.x = mx; f.y = my;
       const cz = heightAt(sim.world, Math.floor(mx), Math.floor(my)), cp = project(mx, my, cz);
@@ -1064,7 +1068,7 @@ export function createRenderer(canvas, sim, input) {
     };
     if (b) {
       for (const e of w.enemies || []) if (e.hp > 0 && !(e.spawn > 0)) bar(e.x, e.y, e.hp / e.maxHp, e.elite ? '#ff9a3a' : '#d24a3c', e.elite || e.rival ? 24 : 18);   // (a rival's as long as a party member's)
-      party.forEach((m, i) => { if (m.down || m.fallen) return; const x = i ? (fol[i - 1] || m).x : ix, y = i ? (fol[i - 1] || m).y : iy; const s = sim.state.party[i]; const mx = maxHpOf(s); bar(x, y, s.hp / mx, '#5aa35c', 16); });
+      party.forEach((m, i) => { if (m.down || m.fallen || (i && b.bout && b.bout.alone)) return; const x = i ? (fol[i - 1] || m).x : ix, y = i ? (fol[i - 1] || m).y : iy; const s = sim.state.party[i]; const mx = maxHpOf(s); bar(x, y, s.hp / mx, '#5aa35c', 16); });
       // the room-level · wave pill under the HUD, tinted by how far the room is above you
       // …and, from the second wave, how far the tide has lifted the foes (GDD §7.1: each wave of a visit is tougher)
       const T = b.tower && sim.state.tower, sat = T ? `  ·  ${T.satchel.gold}g ${T.satchel.cinders}✦` : '';   // (the Mere Tower: its wave, its strength, the satchel at risk)
