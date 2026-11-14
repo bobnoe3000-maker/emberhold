@@ -15,7 +15,7 @@
   "steps": [
     {
       "id": "teague",
-      "journal": "Go into the Drowned Abbey, in the canal's flood beyond the Locks. Brother Teague waits at the choir's door, in the first floor's hall. Break his cage, then him.",
+      "journal": "Go into the Drowned Abbey, in the canal's flood beyond the Locks. Brother Teague keeps a cell off its cloister. Break his cage, then him.",
       "objectives": [
         {
           "type": "boss",

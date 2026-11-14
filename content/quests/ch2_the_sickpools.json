@@ -15,7 +15,7 @@
   "steps": [
     {
       "id": "cages",
-      "journal": "Go down to Vat Seven, the Canal Locks' third floor, and break three full lantern-cages. Only the harvesters who lead the others carry a full one.",
+      "journal": "Go down to Vat Seven, the Canal Locks' second floor, and break three full lantern-cages. Only the harvesters who lead the others carry a full one.",
       "objectives": [
         {
           "type": "cages",

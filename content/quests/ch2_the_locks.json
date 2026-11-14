@@ -28,14 +28,14 @@
     },
     {
       "id": "sluice",
-      "journal": "The lock-men in the Sluice have stopped lying still. Go down to the Locks' second floor and hold the Sluice, the hall at the far end, for five waves.",
+      "journal": "The lock-men in the Sluice have stopped lying still. Hold the Sluice, the hall at the far end of the Locks' first floor, for five waves.",
       "objectives": [
         {
           "type": "waves",
           "site": "canal_locks",
           "count": 5,
           "hall": true,
-          "floor": 2,
+          "floor": 1,
           "label": "Waves held in the Sluice"
         }
       ]

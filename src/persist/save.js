@@ -138,6 +138,12 @@
 //   v48: raids (GDD §18 v1.97, sim/raid.js): `raid`, the game day's raids set out, coffers since a Rare, raids won. Older
 //       data has none: restore() reads a missing one as a fresh record (raid.js restoreRaid). A raid in progress is never
 //       saved (a save made on one is the world it set out from), so nothing else changes.
+//   v49: the Greywater Fens' dungeons authored (GDD v1.102, docs/fens-dungeons-audit.md; the owner: "go ahead with
+//       recommendations"): Toadking's Mound, the Canal Locks and the Drowned Abbey two floors each, built from their
+//       plans (three before). The shape is unchanged. Older data (plansFor49), as v33 did for the Vale: a visit in one of
+//       them starts again at its first floor's way in (its floors are new; a third is gone), a Fens board job under way
+//       is let go (its posting is drawn anew from the new floors), and a gate opened on a floor below the first is the
+//       second floor's (the two lower floors are one now). Quests carry over: their floors moved with them.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -149,7 +155,7 @@ import { reachedOf } from '../sim/coach.js';
 import { SITES, bossAt } from '../sim/sites.js';
 import { withFrame43 } from '../sim/appearance.js';
 
-export const SAVE_VERSION = 48;   // (v48: raids, `raid`; v47: the Bowl's two ladders, bowl.team / bowl.solo; v46: the Bowl's board, bowl.picks / refresh; v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
+export const SAVE_VERSION = 49;   // (v49: the Fens' dungeons authored, two floors each; v48: raids, `raid`; v47: the Bowl's two ladders, bowl.team / bowl.solo; v46: the Bowl's board, bowl.picks / refresh; v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
 /** v40 and older (v41: the floors' gates): an old save comes back with the gates it has been through open, as far as the save
  * tells: every floor whose hall's boss is down (sites.js bossAt; state.bosses), and every floor above the one it was made
  * on. A generated hall with no boss, passed and left: its gate stands (its twenty waves again). @param {any} data */
@@ -190,7 +196,7 @@ export function metaOf(data) {
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object' || !raw.data) return null;
   if (raw.version === SAVE_VERSION) return raw;
-  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); if (raw.version < 31) data = bandsFor(data); if (raw.version < 32) data = questsFor32(data); if (raw.version < 33) data = plansFor33(data); if (raw.version < 36) data = ladderFor36(data); if (raw.version < 41) data = gatesFor41(data); if (raw.version < 43) data = looksFor43(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
+  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); if (raw.version < 31) data = bandsFor(data); if (raw.version < 32) data = questsFor32(data); if (raw.version < 33) data = plansFor33(data); if (raw.version < 36) data = ladderFor36(data); if (raw.version < 41) data = gatesFor41(data); if (raw.version < 43) data = looksFor43(data); if (raw.version < 49) data = plansFor49(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
   return null;                       // unknown / newer / un-migratable
 }
 
@@ -268,6 +274,17 @@ export function plansFor33(data) {
   for (const [k, v] of Object.entries(quests)) if (/^board_/.test(k) && !/_fens$/.test(k) && !(Array.isArray(v) && v[0] === 3)) delete quests[k];   // (3: done)
   const out = { ...data, quests };
   return data.scene === 'dungeon' && SITES[data.site || 'barrows'] && SITES[data.site || 'barrows'].plan ? visitFor(out) : out;
+}
+/** the Fens' band dungeons, authored in v49 (see v49 above) */
+export const FENS49 = ['toadking_mound', 'canal_locks', 'drowned_abbey'];
+/** v48 → v49: the Fens' dungeons authored (see v49 above) @param {any} data */
+export function plansFor49(data) {
+  if (!data || typeof data !== 'object') return data;
+  const quests = { ...(data.quests || {}) };
+  for (const [k, v] of Object.entries(quests)) if (/^board_.*_fens$/.test(k) && !(Array.isArray(v) && v[0] === 3)) delete quests[k];   // (3: done)
+  const gates = Array.isArray(data.gates) ? [...new Set(data.gates.map((g) => { const [site, d] = String(g).split(':'); return FENS49.includes(site) && +d > 1 ? `${site}:1` : g; }))] : data.gates;
+  const out = { ...data, quests, ...(gates !== undefined ? { gates } : {}) };
+  return data.scene === 'dungeon' && FENS49.includes(data.site) ? visitFor(out) : out;
 }
 /** sites gone in v31, and what took their place @type {Record<string, string>} */
 export const GONE_SITES = { tithe_mill: 'barrows', scrag_warren: 'wickham_keep', sickpools: 'canal_locks' };

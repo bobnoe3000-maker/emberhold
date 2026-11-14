@@ -136,12 +136,12 @@ test('content: each new fragment\'s words are canon; Ilse reads the whole set an
 // The Fair Copy; the Toadking and the Abbess carry theirs; Ilse reads it, and sends you to Mother Agnes for the key ──
 test('the Fens set: the bosses carry theirs; the last found reveals the Undercroft, whose vault keeps The Fair Copy, once', () => {
   const sim = createSim(SEED, undefined, { scene: 'town' }), ev = events(sim, ['fragmentFound', 'siteRevealed']); sim.tick(); sim.state.party[0].level = 18;
-  at(sim, 'toadking_mound', 2); sim.state.bosses.toadking = 1; sim.bus.emit('bossDown', { id: 'toadking', first: true });   // (v1.48: the Boat Hall is the Mound's third floor)
-  at(sim, 'drowned_abbey', 2); sim.state.bosses.abbess_below = 1; sim.bus.emit('bossDown', { id: 'abbess_below', first: true });
+  at(sim, 'toadking_mound', 1); sim.state.bosses.toadking = 1; sim.bus.emit('bossDown', { id: 'toadking', first: true });   // (v1.102: the Boat Hall is the Mound's second floor, its last)
+  at(sim, 'drowned_abbey', 1); sim.state.bosses.abbess_below = 1; sim.bus.emit('bossDown', { id: 'abbess_below', first: true });
   assert.deepEqual(ev.filter((e) => e.n === 'fragmentFound').map((e) => e.id), ['frag_fens_tithe_plate', 'frag_fens_last_hour']);
   sim.state.fragments.push(...SETS.fens.filter((id) => !sim.state.fragments.includes(id) && id !== 'frag_fens_sluice_book'));
   assert.ok(!sim.state.revealed.has('reedholm_undercroft'));
-  at(sim, 'canal_locks', 1); const hall = sim.world.level.descentRoom.id;
+  at(sim, 'canal_locks', 0); const hall = sim.world.level.descentRoom.id;   // (the Sluice, the first floor's hall: v1.102)
   sim.bus.emit('battle', { on: true, room: hall }); for (let i = 0; i < HALL_WAVES; i++) sim.bus.emit('wave', { cleared: true, room: hall });
   assert.equal(ev.at(-1).site, 'reedholm_undercroft', 'the Sluice-Book, last: the Undercroft revealed');
   at(sim, 'reedholm_undercroft', 0);

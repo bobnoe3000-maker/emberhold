@@ -14,14 +14,14 @@
   "steps": [
     {
       "id": "mound",
-      "journal": "Go down to Toadking's Mound's second floor and hold its last hall, the one with the stairs down, for ten waves.",
+      "journal": "Go into Toadking's Mound and hold the Toad Pens, its first floor's last hall, the one with the stairs down, for ten waves.",
       "objectives": [
         {
           "type": "waves",
           "site": "toadking_mound",
           "count": 10,
           "hall": true,
-          "floor": 2,
+          "floor": 1,
           "label": "Waves held in the Mound's hall"
         }
       ]

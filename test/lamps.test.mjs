@@ -21,8 +21,8 @@ const intoHall = (sim) => {
   p.x = p.px = best[0] + 0.5; p.y = p.py = best[1] + 0.5; sim.state.party.forEach((m, i) => { if (i) { m.x = m.px = p.x + (i === 1 ? -0.9 : 0.9); m.y = m.py = p.y + 0.9; } });
 };
 const fight = (sim, secs, until) => { for (let i = 0; i < secs * 20 && !until(); i++) { for (const m of sim.state.party) if (!m.down) m.hp = Math.max(m.hp, statsFor(m).maxHp * 0.6); sim.tick(); } };
-// (v1.48) the harvest: Vat Seven, the Canal Locks' third floor (it was the Sickpools, a site of their own)
-const vats = (sim) => { down(sim); down(sim); assert.equal(sim.state.depth, 2); };
+// (v1.48) the harvest: Vat Seven, the Canal Locks' second floor (v1.102; the third before, the Sickpools before that)
+const vats = (sim) => { down(sim); assert.equal(sim.state.depth, 1); };
 const room = (sim, size) => { const L = sim.world.level, open = L.rooms.filter((q) => q.id !== L.entrance.id && (!L.descentRoom || q.id !== L.descentRoom.id)), r = open.find((q) => !size || q.size === size) || open[0], p = sim.state.player; p.x = p.px = r.cx + 0.5; p.y = p.py = r.cy + 0.5; };
 
 test('an Ashbound put down frees a soul; the living never count', () => {

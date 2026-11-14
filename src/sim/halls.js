@@ -24,7 +24,7 @@
 
 import { mulberry32 } from './rng.js';
 
-export const HALL_W = 6;            // a hall's width: three abreast, as the caverns' corridors
+export const HALL_W = 10;           // a hall's width (v1.102, the owner's "halls 10" for every dungeon: it was 6, three abreast, as the caverns' corridors)
 export const HALLS = [8, 12];       // a hall's length between two rooms
 export const WALL_REACH = 8;        // x + y units a full-height wall hides behind it: 5 levels × 6 px ÷ 4 px a unit ≈ 7.5
 const W = 320, H = 320, MIN_FACE = HALL_W + 4;   // two rooms join only across 10+ tiles of facing wall

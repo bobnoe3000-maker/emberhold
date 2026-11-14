@@ -92,10 +92,10 @@ test('the fight\'s other moments each draw, and no two alike; the bosses\' holds
 test('a spent ward says it broke; the bosses name who did it and to whom; and saying so changes nothing', () => {
   // (a ward spent: battle.js applyHit, wardBreak before the blow lands through)
   const sim = createSim(7, undefined, { scene: 'dungeon', site: 'drowned_abbey' });
-  sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), scene: 'dungeon', site: 'drowned_abbey', depth: 1 }); sim.tick();
+  sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), scene: 'dungeon', site: 'drowned_abbey', depth: 0 }); sim.tick();
   const hall = sim.world.level.descentRoom, lv = sim.world.roomLevels.get(hall.id), run = (listen) => {
     const s = createSim(7, undefined, { scene: 'dungeon', site: 'drowned_abbey' });
-    s.restore({ ...JSON.parse(JSON.stringify(s.snapshot())), scene: 'dungeon', site: 'drowned_abbey', depth: 1 }); s.tick();
+    s.restore({ ...JSON.parse(JSON.stringify(s.snapshot())), scene: 'dungeon', site: 'drowned_abbey', depth: 0 }); s.tick();
     s.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };
     s.state.party = ['fighter', 'mage', 'cleric'].map((c, i) => { const m = i ? makeMember('c' + i, 'C' + i, c, lv) : makeHero({ cls: c }); m.level = lv; m.attrs = null; m.autoAttrs = true; autoAllocate(m); m.gear = starterKit(m); m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp; return m; });
     const P = s.state.player; P.x = P.px = hall.cx + 0.5; P.y = P.py = hall.cy + 0.5;

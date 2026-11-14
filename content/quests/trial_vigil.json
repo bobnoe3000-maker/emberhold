@@ -14,14 +14,14 @@
   "steps": [
     {
       "id": "mound",
-      "journal": "Keep a vigil on the Toadking's island: hold six waves on its third floor, its old burying-ground.",
+      "journal": "Keep a vigil on the Toadking's island: hold six waves on its second floor, by its old burying-ground.",
       "objectives": [
         {
           "type": "waves",
           "site": "toadking_mound",
           "count": 6,
-          "floor": 3,
-          "label": "Waves kept on the Mound's third floor"
+          "floor": 2,
+          "label": "Waves kept on the Mound's second floor"
         }
       ]
     }

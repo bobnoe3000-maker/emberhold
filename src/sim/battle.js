@@ -323,9 +323,18 @@ export const familyOf = (w, room) => {
 // first fall counts for the story (state.bosses, bossDown's `first`) and pays his heirloom.
 export const BOSS_BACK = 30 * 60;
 /** the hall's boss while he's away: { id, left } (seconds), or null @param {any} state @param {string} site @param {number} depth */
-export function bossAway(state, site, depth) {
-  const id = site && bossAt(site, depth || 0), at = id && state.bossBack ? state.bossBack[id] : 0;
+export function bossAway(state, site, depth) { return bossGone(state, site && bossAt(site, depth || 0)); }
+/** this boss while he's away: { id, left }, or null @param {any} state @param {string | null} id */
+export function bossGone(state, id) {
+  const at = id && state.bossBack ? state.bossBack[id] : 0;
   return id && at > state.t ? { id, left: at - state.t } : null;
+}
+/** the boss a side room holds (v1.102, the Fens authored: Brother Teague in his cell off the Drowned Abbey's cloister):
+ *  an authored floor's offshoot names its own (plans.js `boss`); a floor's hall's is bossAt's. null for any other room
+ *  @param {any} w @param {number} room */
+export function sideBoss(w, room) {
+  const r = w && w.level && w.level.plan ? w.level.rooms.find((q) => q.id === room) : null;
+  return r && r.role === 'offshoot' && r.boss ? r.boss : null;
 }
 const LULL = 4, OUT_OF_BATTLE_REGEN = 5, LULL_REGEN = 1.5, BOLT_SPEED = 26, AUTO_DELAY = 0.5;
 // Animation timing the sim honours so hits land on the swing: a blow (or a bolt's release)
@@ -604,9 +613,9 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     for (const [x, y] of cells) if (isWalkable(w, x + 0.5, y + 0.5)) walk[(y - y0) * gw + (x - x0)] = 1;
     pending = [];
     for (const m of state.party) { m.downs = 0; m.stood = 0; m.buff = null; m.ward = 0; }   // a new room visit
-    const hall = w.level.descentRoom && w.level.descentRoom.id === room, bid = hall ? bossAt(w.site, w.depth || 0) : null;
+    const hall = w.level.descentRoom && w.level.descentRoom.id === room, bid = hall ? bossAt(w.site, w.depth || 0) : sideBoss(w, room);   // (a side room's own: Teague's cell)
     battle = { room, t0: state.t, lastBlow: null, level: (w.roomLevels && w.roomLevels.get(room)) || 1 + (w.depth || 0), wave: 0, lull: 1.2, cells, grid: { x0, y0, gw, gh, walk }, fields: new Map(),
-      tide: 0, boss: bid && (modeOf(null, raidRun()).bossHome || !bossAway(state, w.site, w.depth)) ? bid : null, bossUp: false, quiet: false, lastSlain: null,
+      tide: 0, boss: bid && (modeOf(null, raidRun()).bossHome || !bossGone(state, bid)) ? bid : null, bossUp: false, quiet: false, lastSlain: null,
       hazards: [], flood: 0, edge: null, size: (w.level.rooms.find((r) => r.id === room) || {}).size || 'large' };       // the ground hazard (hazards.js); the room's size (SIZE_CAP)
     if (w.site === TOWER.site) {                                 // the Mere Tower's stair hall: its own climb, carried on where it was (tower.js)
       const T = towerOf(state); Object.assign(battle, { tower: true, level: TOWER.level, wave: T.wave, boss: null, quiet: T.atLanding, between: T.wave > 0, tide: towerTough(Math.max(1, T.wave)) - 1 });   // (between: the last wave was paid for already)
@@ -850,7 +859,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     bus.emit('countersChanged', { ...state.counters });
     bus.emit('combat', { t: 'xp', x: e.x, y: e.y, amount: share });
     if (e.boss) bossGone(e);
-    if (e.boss && !M.story) { if (battle) battle.quiet = true; bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first: false, x: e.x, y: e.y, lvl: e.lvl, raid: true }); }   // (a raid's: not the story's, no time away)
+    if (e.boss && !M.story) { if (battle) battle.quiet = true; bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first: false, x: e.x, y: e.y, lvl: e.lvl, raid: true, room: battle ? battle.room : null }); }   // (a raid's: not the story's, no time away)
     else if (e.boss) { const first = !(state.bosses || {})[e.boss]; (state.bosses ||= {})[e.boss] = ((state.bosses || {})[e.boss] || 0) + 1; if (battle) battle.quiet = true;
       (state.bossBack ||= {})[e.boss] = state.t + BOSS_BACK;   // (gone for BOSS_BACK: his hall empty till then)
       bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first, x: e.x, y: e.y, lvl: e.lvl }); }   // (core.js pays its heirloom / loot; the room goes quiet)
@@ -1877,7 +1886,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     // (a hall where a found companion still waits, his captor fallen, is quiet: the Company left him there
     // (npcs.js placeFound); and for the rest of the visit once he's walked out of it with you)
     const R = raidRun();
-    const waiting = R ? R.won.has(`${w.depth || 0}:${room}`) : hallHere(w, room) && (w.freedHall === room || (w.npcs || []).some((n) => n.found && (state.bosses || {})[n.boss]) || (!!bossAway(state, w.site, w.depth) && !hallWanted(w.site || 'barrows', w.depth || 0)));   // (or its boss away: the hall empty till he's back, unless a quest asks you to hold it)
+    const side = R ? null : sideBoss(w, room);   // (a side room whose boss is away stands empty, as a hall does)
+    const waiting = R ? R.won.has(`${w.depth || 0}:${room}`) : (!!side && !!bossGone(state, side)) || hallHere(w, room) && (w.freedHall === room || (w.npcs || []).some((n) => n.found && (state.bosses || {})[n.boss]) || (!!bossAway(state, w.site, w.depth) && !hallWanted(w.site || 'barrows', w.depth || 0)));   // (or its boss away: the hall empty till he's back, unless a quest asks you to hold it)
     if (!battle && inDungeon && !w.arena && room >= 0 && w.level.entrance && room !== w.level.entrance.id && alive(H) && !waiting) startBattle(w, room);   // (the Bowl's sand: only a bout, bowl.js)
     if (!battle && onLand && alive(H)) {                            // a spawn point on the overland: within its reach and full (camps.js)
       const list = campsOf(w.region), h = campNear(list, p.x, p.y, 'reach');

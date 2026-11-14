@@ -48,10 +48,12 @@ export const SITES = {
   proving_pens: { name: 'The Proving Pens', region: 'vale', theme: 'cave', base: 4, perFloor: 0, floors: 2, plan: true, family: 'bestiary', rooms: [5, 5], layout: 'halls', flat: true, bosses: { 1: 'rat_king', 2: 'spider_queen' }, dress: ['dig', 'cellar'], mix: 0x9e57 },
   ninth_milestone: { name: 'The Ninth Milestone', region: 'vale', theme: 'chasm', base: 9, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [5, 5], layout: 'halls', flat: true, hidden: true, secret: true, vault: 'last_order', mix: 0x9e11 },
   // the Greywater Fens, 10–18: the Toadking's island of boats, the lock halls going down into the vats, the Abbey; the
-  // Undercroft its secret. The Sickpools are the Locks' third floor, Vat Seven (they were a site of their own).
-  toadking_mound: { name: "Toadking's Mound", region: 'fens', theme: 'mire', base: 10, perFloor: 1, floors: 3, family: 'reedmen', families: ['toadmen', 'boathall', 'boathall'], rooms: [6, 6], layout: 'halls', band: true, bosses: { 3: 'toadking' }, dress: ['mound', 'mound', 'mound'], mix: 0x70ad },
-  canal_locks: { name: 'The Canal Locks', region: 'fens', theme: 'sluice', themes: ['sluice', 'sluice', 'poison'], base: 13, perFloor: 1, floors: 3, family: 'lockcult', families: ['ashbound', 'lockcult', 'harvest'], rooms: [6, 6], layout: 'halls', band: true, bosses: { 3: 'vatwarden' }, dress: ['locks', 'locks', 'vats'], mix: 0x10c5 },
-  drowned_abbey: { name: 'The Drowned Abbey', region: 'fens', theme: 'water', base: 16, perFloor: 1, floors: 3, family: 'drowned', rooms: [4, 4], layout: 'halls', band: true, bosses: { 1: 'teague', 2: 'drowned_choir', 3: 'abbess_below' }, dress: ['abbey', 'abbey', 'abbey'], mix: 0xab3e },
+  // Undercroft its secret. (v1.102, the owner: the Vale's rules for them too) each authored as the Vale's are, two floors
+  // of five spaces from plans.js, a band of three levels over the two: Vat Seven the Locks' second floor (it was the
+  // third; the Sickpools before that, a site of its own), the Toadking and Wren the Mound's second, the Abbess the Abbey's.
+  toadking_mound: { name: "Toadking's Mound", region: 'fens', theme: 'mire', base: 10, perFloor: 1, floors: 2, span: 3, plan: true, family: 'reedmen', families: ['toadmen', 'boathall'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 2: 'toadking' }, dress: ['mound', 'mound'], mix: 0x70ad },
+  canal_locks: { name: 'The Canal Locks', region: 'fens', theme: 'sluice', themes: ['sluice', 'poison'], base: 13, perFloor: 1, floors: 2, span: 3, plan: true, family: 'lockcult', families: ['lockcult', 'harvest'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 2: 'vatwarden' }, dress: ['locks', 'vats'], mix: 0x10c5 },
+  drowned_abbey: { name: 'The Drowned Abbey', region: 'fens', theme: 'water', base: 16, perFloor: 1, floors: 2, span: 3, plan: true, family: 'drowned', rooms: [5, 5], layout: 'halls', band: true, bosses: { 1: 'drowned_choir', 2: 'abbess_below' }, dress: ['abbey', 'abbey'], mix: 0xab3e },   // (Brother Teague in his cell off the cloister: plans.js, battle.js sideBoss)
   // the Mere Tower (tower.js; world doc v1.23): its landing and the stair hall, where the climb goes on; Wenna Pike's punt
   // from Saltmere's landing, from level 12 (minLevel: core.js turns a company under it back at the jetty). It pays no XP,
   // so it competes with no band.

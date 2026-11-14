@@ -447,6 +447,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   function raidBoss(e) {
     if (!raidOn) return;
     dropHere('boss', { ilv: e.lvl, x: e.x, y: e.y });
+    if (e.room != null) raidOn.won.add(`${state.depth}:${e.room}`);   // (his room won for the run: a side room's boss, Teague's, isn't there to fall twice)
     if (state.depth < SITES[raidOn.site].floors - 1 || raidOn.done) return;
     const R = raidOn, r = raidOf(state), H = state.party[0];
     const holds = (name) => [...state.bag, ...[...R.party, ...state.bench].flatMap((m) => Object.values(m.gear || {}))].some((it) => it && it.r === 'heirloom' && it.name === name);

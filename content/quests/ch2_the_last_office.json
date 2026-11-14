@@ -16,7 +16,7 @@
   "steps": [
     {
       "id": "abbess",
-      "journal": "Go down to the Drowned Abbey's chapter-house, the third floor's hall, and put down the Abbess Below. The water comes in with her bells; keep out of it.",
+      "journal": "Go down to the Drowned Abbey's chapter-house, the second floor's hall, and put down the Abbess Below. The water comes in with her bells; keep out of it.",
       "objectives": [
         {
           "type": "boss",

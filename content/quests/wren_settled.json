@@ -17,21 +17,20 @@
   "steps": [
     {
       "id": "abbey",
-      "journal": "Hold the Drowned Abbey's first-floor hall for five waves while Wren sees to the boat.",
+      "journal": "Hold the Drowned Abbey's cloister, on its first floor, for five waves while Wren sees to the boat.",
       "objectives": [
         {
           "type": "waves",
           "site": "drowned_abbey",
           "count": 5,
-          "hall": true,
           "floor": 1,
-          "label": "Waves held in the Abbey's first hall"
+          "label": "Waves held in the Abbey"
         }
       ]
     }
   ],
   "ready": "Tell Wren it's done: tap her party card, then Talk.",
-  "done": "The Cult's boat burned to the waterline while you held the hall. Wren gave you the ring she'd paid her debt with.",
+  "done": "The Cult's boat burned to the waterline while you held the cloister. Wren gave you the ring she'd paid her debt with.",
   "rewards": {
     "share": 0.45,
     "lv": 16,

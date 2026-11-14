@@ -16,7 +16,7 @@
   "steps": [
     {
       "id": "choir",
-      "journal": "Go down to the Drowned Abbey's second floor. The Drowned Choir sings in its hall, over the stair the rolls come up. Silence the Choir.",
+      "journal": "Go into the Drowned Abbey. The Drowned Choir sings in the choir, the first floor's hall, over the stair the rolls come up. Silence the Choir.",
       "objectives": [
         {
           "type": "boss",
@@ -29,13 +29,13 @@
     },
     {
       "id": "rolls",
-      "journal": "Save what's left of the rolls: open two chests on the Abbey's second floor, where the Cult dropped them when the singing stopped.",
+      "journal": "Save what's left of the rolls: open two chests in the Abbey, where the Cult dropped them when the singing stopped.",
       "objectives": [
         {
           "type": "loot",
           "site": "drowned_abbey",
           "count": 2,
-          "floor": 2,
+          "floor": 1,
           "label": "Chests opened on the second floor"
         }
       ]

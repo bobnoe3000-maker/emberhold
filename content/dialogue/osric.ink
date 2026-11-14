@@ -87,7 +87,7 @@ Osric looks at the space beside you where {fallen_name} should be, and writes so
 == osric_long_watch_offer ==
 "The gate at the Keep was a fight. This is the other thing. A post." He turns the ledger round and shows you a page of names with dates beside them and no second dates.
 "Men I've put on a post and not relieved. Some of them I couldn't. Some of them I forgot. They stood anyway. That's the Watch. Not the sword. The standing."
-"Toadking's Mound, down in the Fens. The hall at the bottom of its second floor, the one with the stairs down, where everything on the island comes past sooner or later. Hold it ten waves with nobody coming, and I'll teach your fighters how to get their breath back without stepping off the line."
+"Toadking's Mound, down in the Fens. The hall at the bottom of its first floor, the Toad Pens, the one with the stairs down, where everything on the island comes past sooner or later. Hold it ten waves with nobody coming, and I'll teach your fighters how to get their breath back without stepping off the line."
 + [We'll hold it. #mark: quest]
     "Ten. Count them. Write them down if you like. I would." # quest: accept trial_the_long_watch
     -> osric_topics
@@ -96,7 +96,7 @@ Osric looks at the space beside you where {fallen_name} should be, and writes so
     -> osric_topics
 
 == osric_long_watch_active ==
-"The Mound's second floor, its last hall. Ten waves. Nobody's coming. Breathe anyway."
+"The Mound's first floor, its last hall. Ten waves. Nobody's coming. Breathe anyway."
 -> osric_topics
 
 == osric_long_watch_turnin ==

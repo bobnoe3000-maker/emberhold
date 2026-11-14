@@ -59,7 +59,7 @@ export const NPCS = {
   mother_agnes: { region: 'fens', spots: [['temple', [12, 15]]], knot: 'agnes_hub', flags: ['met_agnes'] },   // (on the chapel's deck: at [14, 4] she stood in the Stilt House's footprint, drawn through it on the home screen: Saltmere's critic pass)
   // Wren, found tied in the Toadking's Boat Hall (world doc v1.29 §5); the Kindler, met once on the Canal Locks' first
   // floor, by its way in (`entrance`), who leaves when he's said his piece (`visitor`: gone once that flag is set)
-  wren: { region: 'fens', found: { site: 'toadking_mound', depth: 2, boss: 'toadking' }, spots: [], knot: 'wren_hub', flags: ['met_wren'] },
+  wren: { region: 'fens', found: { site: 'toadking_mound', depth: 1, boss: 'toadking' }, spots: [], knot: 'wren_hub', flags: ['met_wren'] },
   kindler: { region: 'fens', found: { site: 'canal_locks', depth: 0, entrance: true }, visitor: 'met_kindler', spots: [], knot: 'kindler_hub', flags: ['met_kindler'] },
   // (v1.48, world doc §3.1) the Vale's dungeons each have someone by the way in, who names the floors: Thornwick's
   // sexton at the barrow mouth, the Mill's miller held in the Keep's bailey, the beekeeper in the chapel's porch

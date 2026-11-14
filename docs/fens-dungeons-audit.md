@@ -1,6 +1,6 @@
 # The Greywater Fens' dungeons against the dungeon rules
 
-**Status:** Analysis (2026-11-14), for the owner's decisions (§4). The raid cap (§3) is built.
+**Status:** Implemented (2026-11-14). The raid cap (§3) and the owner's *"go ahead with recommendations"* on §4: the Fens authored as the Vale, as built in §5.
 
 The owner, 2026-11-14: *"Raid dungeon no more than 2 floors like our overall dungeon rules. Also check saltmere
 dungeons do they follow our design rules?"*
@@ -91,3 +91,43 @@ Decisions for the owner:
    Abbey as in 2. Every quest's journal line and count rewritten to match, with a save migration for a quest under way.
 4. **Order.** The Mound first (the Fens' way in, level 10), then the Locks, then the Abbey, each its own commit with its
    plan drawn (`tools/dungeon/vale-plans.mjs` grows a Fens mode), balance runs at the band's levels and captures.
+
+## 5. As built (2026-11-14)
+
+The owner: *"Yes go ahead with recommendations"*: §4's four, all three dungeons in one change.
+
+- **Plans** (`plans.js`, each `checkPlan` clean, drawn by `tools/dungeon/vale-plans.mjs` →
+  `docs/img/dungeon/vale-<site>.png`):
+  - **Toadking's Mound** (10–12), a mound of boats: floor 1 *the Landing* → *the Reed Beds* (*the Eel Store* off it) →
+    *the Mudflats* → *the Toad Pens*, down; floor 2 *the Stilt Stair* → *the Net Walk* (*the Burying-Ground* off it,
+    Vigil's) → *the Slipway* → *the Boat Hall*, the Toadking's, Wren held there.
+  - **The Canal Locks** (13–15): floor 1 the locks, *the Lock Gate* → *the Lock Chamber* (*the Tally House*) → *the
+    Basin* → *the Sluice*, down (The Locks' five waves); floor 2 the vats, *the Vat Stair* → *the Vat Row* (*the Drain
+    Office*) → *the Cage Store* → *Vat Seven*, the Vatwarden's.
+  - **The Drowned Abbey** (16–18): floor 1 *the West Door* → *the Cloister Walk* (*Brother Teague's Cell*, Teague's, a
+    dead end) → *the Garth* → *the Choir*, the Drowned Choir's hall and the way down; floor 2 *the Night Stair* → *the
+    Dorter* (*the Scriptorium*) → *the Lay Crypt* → *the Chapter-House*, round, the Abbess Below's.
+- **A boss in an offshoot** (`battle.js` `sideBoss`): Teague fights in his cell as a hall's boss does; while he's away
+  (fallen, `BOSS_BACK`) the cell stands empty.
+- **The story moved to two floors** (quests, Ink, lore, Wren in `npcs.js`, the world doc v1.48, the GDD v1.102): every
+  "third floor" now the second; *Settled* holds five waves in the cloister (the Abbey's first hall is the Choir's now).
+- **Save v49** (`persist/save.js` `plansFor49`): a game inside a Fens dungeon starts its visit again at the first floor;
+  a Fens board job under way is dropped (its floor may be gone); a gate's `site:2`+ becomes `site:1`.
+- **The Tower and the Undercroft**: generated halls 10 wide (`halls.js` `HALL_W`, every generated floor).
+- **Dressing** by kind (`world.js` recipes `boats`, `reeds`, `nets`, `pens`, `windlasses`, `vats`; caps `boat` 3,
+  `vat` 6): `dress-audit.mjs` caps, 30 Fens rooms, **0 over**; `--clear`, 18 floors, **0 breaks**.
+- **Visibility** (`visibility.mjs`): the six floors, 47 subjects, **0 under half** (the Locks' cliff miss gone with its
+  generated floor). Saltmere's Drowned Eel door is **not fixed**: the hero stands under the stilt tavern's own porch roof
+  (`buildkit.js` stilttavern), an art change for its own pass.
+
+Measured, before (generated, three floors) → after (authored, two):
+
+| | Before | After |
+|---|---|---|
+| `roomlv.mjs` the right party at room level, medium rooms (2 seeds): waves before a fall | 10–16 | 11–15, every run 10+ |
+| `boss.mjs` the right party at the hall's level | (the old halls) | all fall: Toadking 51 s, Vatwarden 61 s, Choir 90 s, Abbess 67 s |
+| `loot.mjs` an hour at 12 / 15 / 18: chests | 13 / 0 / 53 | 14 / 14 / 14 |
+| `raid.mjs` a fighter with Any + Any at the band's top, 6 seeds: won, median run | Mound 6/6 15.4 min · Locks 6/6 13.6 · Abbey 6/6 5.8 | 6/6 9.5 · 6/6 9.8 · 6/6 9.4 |
+
+The hour's chests even out (the old floors' share swung with the seed's rooms); the Abbey's raid is longer, as it now
+crosses the Choir's hall on its way to the Abbess.

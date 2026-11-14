@@ -11,15 +11,16 @@ import { createSim } from '../src/sim/core.js';
 import { statsFor } from '../src/sim/party.js';
 import { autoAllocate } from '../src/sim/attributes.js';
 import { starterKit, HEIRLOOMS } from '../src/sim/items.js';
-import { BOSSES, MUD_S, MUD_T, BELL_S, FLOOD_MAX, VESPERS_S, SLUICE_S, SLUICE_R, SLUICE_T, halved } from '../src/sim/battle.js';
+import { BOSSES, MUD_S, MUD_T, BELL_S, FLOOD_MAX, VESPERS_S, SLUICE_S, SLUICE_R, SLUICE_T, halved, sideBoss } from '../src/sim/battle.js';
 import { bossAt } from '../src/sim/sites.js';
 import { isWalkable } from '../src/sim/world.js';
 import { LAMPS } from '../src/sim/lamps.js';
 import { HAZARD, hazardAt, edgeDistances, openGround } from '../src/sim/hazards.js';
 
 const SEED = 20260807;
-// the right party (fighter, rogue, cleric) at a level, walked into a site's hall on floor `floor`
-function inHall(site, level, floor, seed = SEED) {
+// the right party (fighter, rogue, cleric) at a level, walked into a site's hall on floor `floor` (or the room `part`:
+// v1.102, Teague's cell off the Abbey's cloister)
+function inHall(site, level, floor, seed = SEED, part = '') {
   const sim = createSim(seed, undefined, { scene: 'dungeon', site });
   sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };
   const t = createSim(seed, undefined, { scene: 'town' }); for (const i of [0, 2]) { t.state.counters.gold = 1e9; t.commands.push({ type: 'hire', idx: i }); t.tick(); }
@@ -27,7 +28,7 @@ function inHall(site, level, floor, seed = SEED) {
   ['fighter', 'rogue', 'cleric'].forEach((c, i) => { const m = sim.state.party[i]; m.cls = c; m.level = level; m.attrs = null; autoAllocate(m); m.gear = starterKit(m); m.hp = statsFor(m).maxHp; m.mp = undefined; });
   sim.tick();
   while (sim.world.stairsAt && sim.state.depth < floor - 1) { const s = sim.world.stairsAt, p = sim.state.player; p.x = p.px = s.x + 0.5; p.y = p.py = s.y + 1.5; sim.commands.push({ type: 'harvest', tx: s.x, ty: s.y }); sim.tick(); }
-  const L = sim.world.level, r = L.descentRoom, p = sim.state.player; let best = null, bd = 1e9;
+  const L = sim.world.level, r = part ? L.rooms.find((q) => q.part === part) : L.descentRoom, p = sim.state.player; let best = null, bd = 1e9;
   for (const [k, c] of L.cells) { if (c.kind !== 'floor' || c.room !== r.id) continue; const [x, y] = k.split(',').map(Number); const d = Math.hypot(x - r.cx, y - r.cy); if (d < bd && isWalkable(sim.world, x + 0.5, y + 0.5)) { bd = d; best = [x, y]; } }   // (open ground: not the stairwell)
   p.x = p.px = best[0] + 0.5; p.y = p.py = best[1] + 0.5; sim.state.party.forEach((m, i) => { if (i) { m.x = m.px = p.x + (i === 1 ? -0.9 : 0.9); m.y = m.py = p.y + 0.9; } });
   const ev = []; for (const k of ['bossWave', 'bossDown', 'bossMud', 'bossCage', 'bossVespers', 'bossFlood', 'bossSluice', 'lampBroken', 'loot', 'defeat']) sim.bus.on(k, (e) => ev.push([k, e]));
@@ -37,9 +38,11 @@ const until = (sim, secs, done) => { for (let i = 0; i < secs * 20 && !done(); i
 const boss = (sim) => (sim.world.enemies || []).find((e) => e.boss && e.hp > 0);
 const pos = (sim, i) => (i ? sim.state.party[i] : sim.state.player);
 
-test('the halls: the Toadking on the Mound\'s third floor; Teague, the Choir and the Abbess on the Abbey\'s three', () => {
-  assert.deepEqual([0, 1, 2].map((d) => bossAt('toadking_mound', d)), [null, null, 'toadking']);
-  assert.deepEqual([0, 1, 2].map((d) => bossAt('drowned_abbey', d)), ['teague', 'drowned_choir', 'abbess_below']);
+test('the halls (v1.102, two floors): the Toadking on the Mound\'s second; the Choir and the Abbess the Abbey\'s, Teague in his cell', () => {
+  assert.deepEqual([0, 1].map((d) => bossAt('toadking_mound', d)), [null, 'toadking']);
+  assert.deepEqual([0, 1].map((d) => bossAt('drowned_abbey', d)), ['drowned_choir', 'abbess_below']);
+  const w = createSim(SEED, undefined, { scene: 'dungeon', site: 'drowned_abbey' }).world, cell = w.level.rooms.find((r) => r.part === 'teagues_cell');
+  assert.equal(sideBoss(w, cell.id), 'teague', 'Teague\'s cell is his'); assert.equal(sideBoss(w, w.level.descentRoom.id), null, 'the hall\'s is bossAt\'s');
   for (const id of ['toadking', 'teague', 'drowned_choir', 'abbess_below']) assert.ok(HEIRLOOMS[BOSSES[id].heirloom], `${id}'s heirloom`);
   assert.deepEqual([BOSSES.teague.once, BOSSES.toadking.once], [true, undefined], 'Teague falls once; the others come back');
   assert.deepEqual(LAMPS.choir_lamp, { name: "The Abbey's choir-lamp", keeper: 'abbess_below', souls: 312 });
@@ -56,7 +59,7 @@ test('the hazard: a hall\'s edge, a patch, the ground out of it', () => {
 });
 
 test('the Toadking: mud under each of the party every 9 s; in it, half speed and slower to recover; they step out; it goes with him', () => {
-  const { sim, ev } = inHall('toadking_mound', 12, 3);
+  const { sim, ev } = inHall('toadking_mound', 12, 2);
   until(sim, 30, () => ev.some(([k]) => k === 'bossMud'));
   const mud = ev.find(([k]) => k === 'bossMud'); assert.ok(mud, 'he stamped'); assert.equal(ev.find(([k]) => k === 'bossWave')[1].id, 'toadking');
   const B = sim.battle; assert.equal(B.hazards.length, mud[1].n); assert.ok(mud[1].n >= 2);
@@ -72,7 +75,7 @@ test('the Toadking: mud under each of the party every 9 s; in it, half speed and
 });
 
 test('in the mud: the hero you steer goes at half speed, and a blow takes longer to recover from', () => {
-  const { sim } = inHall('toadking_mound', 12, 3);
+  const { sim } = inHall('toadking_mound', 12, 2);
   until(sim, 4, () => !!(sim.battle && sim.battle.bossUp));
   const p = sim.state.player, run = (mud) => {
     sim.battle.hazards = mud ? [{ kind: 'mud', x: p.x, y: p.y, r: 30, until: sim.state.t + 60 }] : [];
@@ -86,7 +89,7 @@ test('in the mud: the hero you steer goes at half speed, and a blow takes longer
 });
 
 test('Brother Teague: his lit cage mends him and halves his hurts; broken, its soul goes free and he\'s only a man; once', () => {
-  const { sim, ev } = inHall('drowned_abbey', 16, 1);
+  const { sim, ev } = inHall('drowned_abbey', 17, 1, SEED, 'teagues_cell');
   until(sim, 10, () => !!boss(sim));
   const T = boss(sim); assert.equal(T.boss, 'teague');
   const cage = sim.world.enemies.find((e) => e.kind === 'lantern'); assert.ok(cage && cage.inert && cage.owner === T.id && cage.id === T.cage);
@@ -109,9 +112,9 @@ test('Brother Teague: his lit cage mends him and halves his hurts; broken, its s
 // (M8 slice 11, the boss harness) seed 4242 at the hall's level never ended: Teague was shoved out of his hall into the
 // corridor below it, the fighter after him, where the rest of the party (leashed to the room) couldn't follow; and his
 // cage, carried at his side with his back to a wall, sat in the wall where no blow could reach it
-test('Teague can\'t be shoved out of his hall, nor his cage carried into a wall: the right party at 16 puts him down, every seed', () => {
+test('Teague can\'t be shoved out of his cell, nor his cage carried into a wall: the right party at 17 puts him down, every seed', () => {
   for (const seed of [4242, 3, 20260807]) {
-    const { sim, ev } = inHall('drowned_abbey', 16, 1, seed);
+    const { sim, ev } = inHall('drowned_abbey', 17, 1, seed, 'teagues_cell');
     let outside = 0, inWall = 0;
     const roomAt = (w, x, y) => { const c = w.level.cells.get(Math.floor(x) + ',' + Math.floor(y)); return c && c.kind === 'floor' ? c.room : -1; };
     for (let i = 0; i < 20 * 150 && !ev.some(([k]) => k === 'bossDown' || k === 'defeat'); i++) {
@@ -127,7 +130,7 @@ test('Teague can\'t be shoved out of his hall, nor his cage carried into a wall:
 });
 
 test('the Drowned Choir: while a cantor sings the drowned mend; with the singers down, another stands up out of the stalls', () => {
-  const { sim, ev } = inHall('drowned_abbey', 17, 2);
+  const { sim, ev } = inHall('drowned_abbey', 17, 1);
   until(sim, 10, () => !!boss(sim));
   const C = boss(sim); assert.equal(C.boss, 'drowned_choir');
   const singers = () => sim.world.enemies.filter((e) => e.singer === C.id && e.hp > 0 && !e.dead);
@@ -146,7 +149,7 @@ test('the Drowned Choir: while a cantor sings the drowned mend; with the singers
 });
 
 test('the Abbess Below: each bell floods the hall a tile further in, to 3; she falls, the water goes, her choir-lamp breaks once', () => {
-  const { sim, ev } = inHall('drowned_abbey', 18, 3);
+  const { sim, ev } = inHall('drowned_abbey', 18, 2);
   until(sim, 10, () => !!boss(sim)); assert.equal(boss(sim).boss, 'abbess_below');
   until(sim, BELL_S + 1, () => ev.some(([k]) => k === 'bossFlood'));
   assert.equal(sim.battle.flood, 1); const E = sim.battle.edge; assert.ok(E && E.size > 10);
@@ -165,8 +168,8 @@ test('the Abbess Below: each bell floods the hall a tile further in, to 3; she f
 // (v1.48, one dungeon a level: GDD §17, world doc v1.32) the Vatwarden holds Vat Seven, the Locks' third floor (it was the
 // Sickpools): every SLUICE_S s a strip of sick water across his hall through the party's middle, along x, then along y
 test('the Vatwarden: every 11 s a line of sick water across his hall through the party, one way then the other; it runs out; it goes with him', () => {
-  assert.deepEqual([0, 1, 2].map((d) => bossAt('canal_locks', d)), [null, null, 'vatwarden']);
-  const { sim, ev } = inHall('canal_locks', 15, 3);
+  assert.deepEqual([0, 1].map((d) => bossAt('canal_locks', d)), [null, 'vatwarden']);
+  const { sim, ev } = inHall('canal_locks', 15, 2);
   const opened = [];                                                                       // (at the moment it opens: the party's middle, the new patches)
   sim.bus.on('bossSluice', () => {
     const up = sim.state.party.map((m, i) => (!m.down && m.hp > 0 ? pos(sim, i) : null)).filter(Boolean);

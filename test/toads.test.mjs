@@ -24,7 +24,7 @@ test('the toads: the sim\'s kinds, named, mirroring a role; a toad doesn\'t get 
 });
 
 test('Toadking\'s Mound: mire toads among his men on every floor, a gulper the elite below the first; Dumpling at his side', () => {
-  assert.deepEqual([0, 1, 2].map((d) => familyAt('toadking_mound', d)), ['toadmen', 'boathall', 'boathall']);
+  assert.deepEqual([0, 1].map((d) => familyAt('toadking_mound', d)), ['toadmen', 'boathall']);   // (v1.102: two floors)
   for (const id of ['toadmen', 'boathall']) {
     const F = FAMILIES[id];
     assert.ok(F.melee.includes('mudtoad') && F.melee.includes('reedcutter'), id);

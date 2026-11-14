@@ -57,7 +57,7 @@ test('every site builds each floor in its band; the last floor has no stairs dow
 test('one dungeon a level: the open bands run 1–18 in six, each level in exactly one; the room rule by rank', () => {
   const bands = SITE_IDS.filter((id) => SITES[id].band);
   assert.deepEqual(bands, ['barrows', 'wickham_keep', 'sunken_chapel', 'toadking_mound', 'canal_locks', 'drowned_abbey']);
-  for (const id of bands) assert.equal(SITES[id].floors, SITES[id].plan ? 2 : 3, `${id}: ${SITES[id].plan ? 'two floors, authored (the Vale, 2026-11-02)' : 'three floors'}`);
+  for (const id of bands) { assert.ok(SITES[id].plan, `${id}: authored (the Vale 2026-11-02, the Fens v1.102)`); assert.equal(SITES[id].floors, 2, `${id}: two floors, the owner's rule`); }
   for (const id of bands) assert.equal(bandTop(SITES[id]), SITES[id].base + 2, `${id}: a band of three levels`);
   for (let lv = 1; lv <= 18; lv++) {
     const at = bands.filter((id) => SITES[id].base <= lv && lv <= bandTop(SITES[id]));
@@ -86,10 +86,10 @@ test('the parked sites (the Mill, the Warren) are out of play: the Reach\'s, shu
   const vale = createOutdoor(20260807, 'overland', 'vale');
   assert.ok(vale.labels.some((l) => l.text === 'The Tithe Mill' && !l.site), 'the mill stands on the Vale as a landmark, no site');
   assert.equal(SITES.sickpools, undefined, 'the Sickpools are no site of their own');
-  // they are the Canal Locks' third floor, Vat Seven: its own look, foes and warden
-  assert.equal(themeAt('canal_locks', 2), 'poison'); assert.equal(familyAt('canal_locks', 2), 'harvest'); assert.equal(bossAt('canal_locks', 2), 'vatwarden');
-  assert.deepEqual([0, 1, 2].map((d) => themeAt('canal_locks', d)), ['sluice', 'sluice', 'poison']);
-  assert.deepEqual([0, 1, 2].map((d) => familyAt('canal_locks', d)), ['ashbound', 'lockcult', 'harvest']);
+  // they are the Canal Locks' second floor (v1.102; the third before), Vat Seven: its own look, foes and warden
+  assert.equal(themeAt('canal_locks', 1), 'poison'); assert.equal(familyAt('canal_locks', 1), 'harvest'); assert.equal(bossAt('canal_locks', 1), 'vatwarden');
+  assert.deepEqual([0, 1].map((d) => themeAt('canal_locks', d)), ['sluice', 'poison']);
+  assert.deepEqual([0, 1].map((d) => familyAt('canal_locks', d)), ['lockcult', 'harvest']);
 });
 
 test('the Old Barrows come out as they did before sites: same seed, same floor', () => {
@@ -148,8 +148,8 @@ test('into a Fens site and back out: you are in the Fens, out at its door; the U
   sim.reveal('reedholm_undercroft'); sim.tick();
   assert.equal(sim.world.site, 'reedholm_undercroft');
 });
-test('the Drowned Abbey: three floors of four rooms, 16–18; every site\'s band', () => {
-  assert.equal(SITES.drowned_abbey.floors, 3); assert.deepEqual(SITES.drowned_abbey.rooms, [4, 4]);
+test('the Drowned Abbey: two authored floors of five spaces (v1.102), 16–18; every site\'s band', () => {
+  assert.equal(SITES.drowned_abbey.floors, 2); assert.ok(SITES.drowned_abbey.plan); assert.deepEqual(SITES.drowned_abbey.rooms, [5, 5]);
   assert.deepEqual(Object.fromEntries(SITE_IDS.filter((id) => !SITES[id].parked).map((id) => [id, levelBand(id)])), {
     barrows: '1–3', wickham_keep: '4–6', sunken_chapel: '7–9', proving_pens: '4', ninth_milestone: '9',
     toadking_mound: '10–12', canal_locks: '13–15', drowned_abbey: '16–18', mere_tower: '12', reedholm_undercroft: '18' });

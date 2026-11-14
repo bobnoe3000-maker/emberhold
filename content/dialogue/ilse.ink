@@ -282,7 +282,7 @@ Ilse takes the shard in a cloth, not her hand. It glows faintly through the clot
 "The Third Legion was bound under that chapel, where it stood. The robed men dug down to it and cut sparks out of it, and every spark they carried past the barrows on the road woke the rest. That's why the barrows opened this spring. Nobody called a muster. Somebody walked past with a pocketful of them."
 "Their standard's still down there, in the Binding Crypt, with the legion's lamp on it. It's dark. A dark lamp breaks like old iron. Break it, and every one of them goes free at once, and lies down wherever they're standing. The road with them."
 + [We'll break it. #mark: quest]
-    "The third floor. The bound stand in rows down there, the way they were stopped. Don't wake more of them than you have to. And bring me back what you can of the lamp. I'd like to know who cast it." # quest: accept ch1_the_standard
+    "The second floor. The bound stand in rows down there, the way they were stopped. Don't wake more of them than you have to. And bring me back what you can of the lamp. I'd like to know who cast it." # quest: accept ch1_the_standard
     { boss_standard == 1: "You've already been down. Then it's done, and you can tell me about it now." }
     -> ilse_topics
 + [Not yet.]

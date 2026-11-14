@@ -47,7 +47,6 @@ function fightIn(sim, until, room = (L) => L.descentRoom, secs = 900) {
 }
 const firstRoom = (L) => L.rooms.find((q) => q !== L.entrance && q !== L.descentRoom);
 function openAt(sim, key) { const [x, y] = key.split(',').map(Number), p = sim.state.player; p.x = p.px = x + 0.5; p.y = p.py = y + 1.5; if (!isWalkable(sim.world, p.x, p.y)) { p.y = p.py = y - 0.5; } sim.commands.push({ type: 'harvest', tx: x, ty: y }); sim.tick(); }
-const down = (sim) => { const s = sim.world.stairsAt, p = sim.state.player; p.x = p.px = s.x + 0.5; p.y = p.py = s.y + 1.5; sim.commands.push({ type: 'harvest', tx: s.x, ty: s.y }); sim.tick(); };
 // open chests over fresh visits to a floor (about one a floor) until `until`
 function chests(sim, site, depth, until) { for (let v = 0; v < 8 && !until(); v++) { go(sim, 'dungeon', site, depth); for (const [k, kind] of [...sim.world.props]) if (kind === 'chest' && !until()) openAt(sim, k); } return until(); }
 
@@ -63,7 +62,7 @@ test('M8 golden path: Act II with Wren, her chain, a level-12 trial, the Fens se
   // 1. Fog on the Canal: Ilse → Dace; the Toadking in the Boat Hall (the Mound's third floor); Wren reads his berth-book, and joins (the bench)
   talk(sim, 'sister_ilse'); effect(sim, 'quest', 'accept', 'ch2_fog_on_the_canal');
   talk(sim, 'dace_pike'); assert.equal(sim.state.quests.ch2_fog_on_the_canal.step, 1, 'a word with Dace');
-  go(sim, 'dungeon', 'toadking_mound', 2); assert.ok(fightIn(sim, () => !!sim.state.bosses.toadking), 'the Toadking falls');
+  go(sim, 'dungeon', 'toadking_mound', 1); assert.ok(fightIn(sim, () => !!sim.state.bosses.toadking), 'the Toadking falls');   // (the Boat Hall, the second floor's: v1.102)
   assert.ok(sim.state.fragments.includes('frag_fens_tithe_plate'), 'he carried the tithe-boat\'s plate');
   here(sim, 'wren'); assert.equal(st(sim, 'ch2_fog_on_the_canal'), QS.READY, 'Wren\'s word');
   effect(sim, 'companion', 'join'); sim.commands.push({ type: 'endTalk' }); sim.tick();
@@ -75,7 +74,7 @@ test('M8 golden path: Act II with Wren, her chain, a level-12 trial, the Fens se
   talk(sim, 'dace_pike'); effect(sim, 'quest', 'accept', 'ch2_the_locks');
   go(sim, 'dungeon', 'canal_locks', 0); here(sim, 'kindler'); effect(sim, 'flag', 'set', 'met_kindler'); sim.commands.push({ type: 'endTalk' }); sim.tick(); sim.tick();
   assert.equal(sim.state.quests.ch2_the_locks.step, 1); assert.ok(!sim.world.npcs.some((n) => n.id === 'kindler'), 'gone on the boat');
-  go(sim, 'dungeon', 'canal_locks', 1); assert.ok(fightIn(sim, () => st(sim, 'ch2_the_locks') === QS.READY), 'the Sluice');
+  go(sim, 'dungeon', 'canal_locks', 0); assert.ok(fightIn(sim, () => st(sim, 'ch2_the_locks') === QS.READY), 'the Sluice');   // (the first floor's hall: v1.102)
   talk(sim, 'dace_pike'); effect(sim, 'quest', 'turnin', 'ch2_the_locks');
 
   // Wren's chain, from her card: the marker off three of the Locks' leaders; two of her caches at Vat Seven (the Locks'
@@ -83,38 +82,37 @@ test('M8 golden path: Act II with Wren, her chain, a level-12 trial, the Fens se
   card(sim, 'wren'); effect(sim, 'quest', 'accept', 'wren_the_marker');
   go(sim, 'dungeon', 'canal_locks', 0); assert.ok(fightIn(sim, () => st(sim, 'wren_the_marker') === QS.READY, firstRoom, 1500), 'the marker');
   card(sim, 'wren'); effect(sim, 'quest', 'turnin', 'wren_the_marker'); card(sim, 'wren'); effect(sim, 'quest', 'accept', 'wren_night_boats');
-  chests(sim, 'canal_locks', 1, () => false);
-  assert.deepEqual(sim.state.quests.wren_night_boats.n, [0], 'the Sluice\'s chests aren\'t hers');
-  assert.ok(chests(sim, 'canal_locks', 2, () => st(sim, 'wren_night_boats') === QS.READY), 'her caches');
+  chests(sim, 'canal_locks', 0, () => false);
+  assert.deepEqual(sim.state.quests.wren_night_boats.n, [0], 'the lock halls\' chests aren\'t hers');
+  assert.ok(chests(sim, 'canal_locks', 1, () => st(sim, 'wren_night_boats') === QS.READY), 'her caches');
   card(sim, 'wren'); effect(sim, 'quest', 'turnin', 'wren_night_boats');
 
-  // 3. The Sickpools (Vat Seven, the Locks' third floor, where the harvesters carry their cages): three full cages broken,
+  // 3. The Sickpools (Vat Seven, the Locks' second floor (v1.102), where the harvesters carry their cages): three full cages broken,
   // then the Vatwarden in its hall (v1.49)
   talk(sim, 'pim_rushlight'); effect(sim, 'quest', 'accept', 'ch2_the_sickpools');
-  go(sim, 'dungeon', 'canal_locks', 2); assert.ok(fightIn(sim, () => sim.state.quests.ch2_the_sickpools.step === 1, firstRoom, 1500), 'three cages');
+  go(sim, 'dungeon', 'canal_locks', 1); assert.ok(fightIn(sim, () => sim.state.quests.ch2_the_sickpools.step === 1, firstRoom, 1500), 'three cages');
   assert.ok(fightIn(sim, () => st(sim, 'ch2_the_sickpools') === QS.READY), 'the Vatwarden');
   talk(sim, 'pim_rushlight'); effect(sim, 'quest', 'turnin', 'ch2_the_sickpools');
 
-  // 4. The Bells: Brother Teague at the choir's door; then Wren's Settled, in his hall
+  // 4. The Bells: Brother Teague in his cell off the cloister (v1.102); then Wren's Settled, the cloister held
   talk(sim, 'sister_orla'); effect(sim, 'quest', 'accept', 'ch2_the_bells');
-  go(sim, 'dungeon', 'drowned_abbey', 0); assert.ok(fightIn(sim, () => st(sim, 'ch2_the_bells') === QS.READY), 'Teague');
+  go(sim, 'dungeon', 'drowned_abbey', 0); assert.ok(fightIn(sim, () => st(sim, 'ch2_the_bells') === QS.READY, (L) => L.rooms.find((q) => q.part === 'teagues_cell')), 'Teague');
   talk(sim, 'sister_orla'); effect(sim, 'quest', 'turnin', 'ch2_the_bells');
   card(sim, 'wren'); effect(sim, 'quest', 'accept', 'wren_settled');
-  go(sim, 'dungeon', 'drowned_abbey', 0); assert.ok(fightIn(sim, () => st(sim, 'wren_settled') === QS.READY), 'the hall held while she burns the boat');
+  go(sim, 'dungeon', 'drowned_abbey', 0); assert.ok(fightIn(sim, () => st(sim, 'wren_settled') === QS.READY, firstRoom), 'the cloister held while she burns the boat');
   card(sim, 'wren'); effect(sim, 'quest', 'turnin', 'wren_settled');
   assert.equal(sim.state.bag.filter((it) => it.name === 'The Receipt').length, 1);
 
-  // 5. The Rolls (v1.49): down to the Abbey's second floor by its stairs, the Choir silenced in its hall, two chests
-  // there, to Agnes
+  // 5. The Rolls (v1.49; v1.102 the Choir in the first floor's hall): the Choir silenced, two chests in the Abbey, to Agnes
   talk(sim, 'sister_orla'); effect(sim, 'quest', 'accept', 'ch2_the_rolls');
-  go(sim, 'dungeon', 'drowned_abbey', 0); down(sim);
-  assert.equal(sim.state.depth, 1); assert.ok(fightIn(sim, () => sim.state.quests.ch2_the_rolls.step === 1), 'the Choir');
-  assert.ok(chests(sim, 'drowned_abbey', 1, () => st(sim, 'ch2_the_rolls') === QS.READY), 'what\'s left of the rolls');
+  go(sim, 'dungeon', 'drowned_abbey', 0);
+  assert.ok(fightIn(sim, () => sim.state.quests.ch2_the_rolls.step === 1), 'the Choir');
+  assert.ok(chests(sim, 'drowned_abbey', 0, () => st(sim, 'ch2_the_rolls') === QS.READY), 'what\'s left of the rolls');
   talk(sim, 'mother_agnes'); effect(sim, 'quest', 'turnin', 'ch2_the_rolls');
 
   // 6. The Last Office: the Abbess Below, and her ledger to Ilse in Thornwick
   talk(sim, 'mother_agnes'); effect(sim, 'quest', 'accept', 'ch2_the_last_office');
-  go(sim, 'dungeon', 'drowned_abbey', 2); assert.ok(fightIn(sim, () => st(sim, 'ch2_the_last_office') === QS.READY), 'the Abbess');
+  go(sim, 'dungeon', 'drowned_abbey', 1); assert.ok(fightIn(sim, () => st(sim, 'ch2_the_last_office') === QS.READY), 'the Abbess');
   assert.ok(sim.state.lampsBroken.includes('choir_lamp') || sim.state.count.lamps > 0, 'the choir-lamp breaks with her');
   assert.ok(sim.state.fragments.includes('frag_fens_last_hour'), 'she carried the last hour');
   talk(sim, 'sister_ilse'); effect(sim, 'quest', 'turnin', 'ch2_the_last_office');
@@ -124,9 +122,9 @@ test('M8 golden path: Act II with Wren, her chain, a level-12 trial, the Fens se
   assert.ok(!unlocked(sim.state.party[0], wind, sim.state.trials));
   assert.ok(sim.state.fragments.includes('frag_fens_sluice_book'), 'found holding the Sluice in chapter 2');
   sim.state.fragments = [...sim.state.fragments.filter((id) => id !== 'frag_fens_sluice_book'), ...SETS.fens.filter((id) => !sim.state.fragments.includes(id))];   // (the shortcut: every page but the Sluice's)
-  go(sim, 'dungeon', 'canal_locks', 1); assert.ok(fightIn(sim, () => sim.state.revealed.has('reedholm_undercroft')), 'the Sluice-Book, the set\'s last, held in the Sluice');
+  go(sim, 'dungeon', 'canal_locks', 0); assert.ok(fightIn(sim, () => sim.state.revealed.has('reedholm_undercroft')), 'the Sluice-Book, the set\'s last, held in the Sluice');
   talk(sim, 'osric_hale'); effect(sim, 'quest', 'accept', 'trial_the_long_watch');
-  go(sim, 'dungeon', 'toadking_mound', 1); assert.ok(fightIn(sim, () => st(sim, 'trial_the_long_watch') === QS.READY), 'ten waves in the Mound\'s hall (v1.49)');
+  go(sim, 'dungeon', 'toadking_mound', 0); assert.ok(fightIn(sim, () => st(sim, 'trial_the_long_watch') === QS.READY), 'ten waves in the Toad Pens, the Mound\'s first hall (v1.102)');
   talk(sim, 'osric_hale'); effect(sim, 'quest', 'turnin', 'trial_the_long_watch');
   assert.ok(unlocked(sim.state.party[0], wind, sim.state.trials), 'Second Wind');
   go(sim, 'dungeon', 'reedholm_undercroft', 0); const t0 = sim.state.t; openAt(sim, sim.world.vault.key);

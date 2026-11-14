@@ -252,8 +252,8 @@ per map … wider aggro/chase radius (show as a dotted line when encountered)"*.
 |---|---|
 | **Room sizes:** small 18–26 tiles, medium 28–38, large 40–62; a gallery (a large corridor) 60–80 long and 18–28 across | *test* layout, plans |
 | **A floor's last hall (the descent room, its boss's hall) is always large; an entrance is never small** | *test* layout, plans |
-| **Authored floors** (the Vale's, plans.js `checkPlan`): at most 2 floors and 5 spaces a floor; halls 10 wide, 8–14 long; one entrance, one last hall; one offshoot, a dead end off one room; every space reached; nothing overlapping; levels within the floor's +0…+1 | *test* plans.test.mjs (built floors too) |
-| **Generated floors:** 6–8 rooms; corridors and halls 6 wide; halls 8–12 long, 14 at most, joined only across 10+ tiles of facing wall. Every live site is halls or a plan (2026-11-13: the Mound was the last on caverns, which run past what Luminati draws; only the parked Scrag Warren keeps them) | *test* layout.test.mjs |
+| **Authored floors** (the Vale's and the Fens', plans.js `checkPlan`): at most 2 floors and 5 spaces a floor; halls 10 wide, 8–14 long; one entrance, one last hall; one offshoot, a dead end off one room; every space reached; nothing overlapping; levels within the floor's +0…+1 | *test* plans.test.mjs (built floors too) |
+| **Generated floors:** 6–8 rooms; corridors and halls 10 wide (halls.js `HALL_W`, 6 before 2026-11-14, the owner's "halls 10" for every dungeon); halls 8–12 long, 14 at most, joined only across 10+ tiles of facing wall. Every live site is halls or a plan (2026-11-13: the Mound was the last on caverns, which run past what Luminati draws; only the parked Scrag Warren keeps them) | *test* layout.test.mjs |
 | **The walls facing the camera are cut low.** A wall with floor up-screen of it within 8 tiles is a knee-high stub; the north and west walls stand | *test* layout.test.mjs |
 | **The stairs.** The way up stands against the entrance's north or west wall. The way down is a 6×6 well nothing walks over, under its arch; coming back up you stand in the corridor outside the descent room | *test* floors.test.mjs |
 | **A small room holds 4 foes at once at most**; a large room the full wave of 5 | *test* layout.test.mjs |
@@ -470,7 +470,7 @@ the road, in front (100 %).
 |---|---|---|
 | A service door's angle to the well | within 55° (town-layout-proposal.md) | within 45° (town.test.mjs) |
 | An authored hall's width | 8 or more (vale-dungeons-plan.md) | 10 (plans.js `PLAN_RULES`, the owner: "halls 10") |
-| A hall's width, generated floors | — | 6 (halls.js); authored 10 |
+| A hall's width, generated floors | — | 10 (halls.js `HALL_W`, from 6 on 2026-11-14); authored 10 |
 | A landmark's draw calls | about 10 (vale-landmarks-proposal.md) | 12 at most (the browser suite) |
 | The Vale plans' status | "a proposal, not yet built" (plans.js header) | implemented (2026-11-02) |
 | A room's caps | `DRESS_CAP` by kind, any size | `DRESS_CAP` and, by size, `dresscaps.js` (§4.3) |

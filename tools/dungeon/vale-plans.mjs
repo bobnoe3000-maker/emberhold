@@ -16,12 +16,17 @@ const K = 4, PAD = 30, GAP = 70, HEAD = 92, FOOT = 44;
 const want = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 // what a space is built of, by its dungeon's kind and its shape: floor, wall (the outline), and a palette strip per kind
 const LOOK = {
+  // (v1.102) the Greywater Fens: the Toadking's mud and reeds, the lock halls and the vats' sick water, the drowned abbey
+  mound: { rect: ['#3f4636', '#7f8a66'], cave: ['#43402f', '#7a7050'], round: ['#3f4636', '#7f8a66'], light: '#e0b860', strip: [['#43402f', 'grey mud, reeds'], ['#5a4a34', 'tarred hulls, planks'], ['#2f4a52', 'standing water'], ['#e0b860', 'lanterns']] },
+  locks: { rect: ['#3e4646', '#8a9692'], cave: ['#3a4038', '#6e7a68'], round: ['#3e4646', '#8a9692'], light: '#b8d08a', strip: [['#3e4646', 'wet ashlar, weed'], ['#4a3e30', 'lock timbers, chains'], ['#4a5a2a', 'the vats\' sick water'], ['#b8d08a', 'lantern and vat-glow']] },
+  abbey: { rect: ['#40484e', '#98a2aa'], cave: ['#3a4048', '#6e7884'], round: ['#3c4250', '#9aa2b8'], light: '#c8d8f0', strip: [['#40484e', 'pale abbey stone'], ['#2a4250', 'the flood over the flags'], ['#5a5048', 'stalls, cots, desks'], ['#c8d8f0', 'candle and drowned light']] },
   crypt: { rect: ['#4a4652', '#8e8798'], cave: ['#4c4033', '#7d6a52'], round: ['#4a4652', '#8e8798'], light: '#9fb4d8', strip: [['#4a4652', 'cold limestone flags'], ['#4c4033', 'dug earth, timber'], ['#9fb4d8', 'candle and cold light'], ['#d08a3a', 'the Redhand\'s fires']] },
   keep: { rect: ['#4e4a40', '#9a9078'], cave: ['#33403f', '#5f7a76'], round: ['#4e4a40', '#9a9078'], light: '#e8a456', strip: [['#4e4a40', 'cobbles, flags'], ['#6b4a2e', 'timber, straw'], ['#33403f', 'wet cave rock'], ['#e8a456', 'firelight']] },
   temple: { rect: ['#46504c', '#a3aca2'], cave: ['#3d3646', '#6e6280'], round: ['#3f3a4a', '#9a8fae'], light: '#c9d6b0', strip: [['#46504c', 'pale stone, moss'], ['#2f4a52', 'standing water'], ['#3d3646', 'the cult\'s cut'], ['#c9a0ff', 'the binding\'s glow']] },
   pen: { rect: ['#4e4a40', '#9a9078'], cave: ['#4c4033', '#7d6a52'], round: ['#4e4a40', '#9a9078'], light: '#e8a456', strip: [['#4c4033', 'the adit\'s dug rock'], ['#4e4a40', 'the pens\' flags'], ['#e8a456', 'lantern light']] },   // (v1.60: the Proving Pens, a trial)
   vault: { rect: ['#44464e', '#8a8e9a'], cave: ['#44464e', '#8a8e9a'], round: ['#44464e', '#8a8e9a'], light: '#d8c890', strip: [['#44464e', 'dry ashlar'], ['#d8c890', 'lamp light'], ['#8a6a3a', 'iron and oak']] },
 };
+const KIND_NAME = { abbey: 'an abbey', locks: 'lock halls and vats', mound: 'a mound of boats' };
 const ROLE = { entrance: '#6fae7a', room: '#d8c39a', offshoot: '#a8c8e8', descent: '#e0905a', end: '#e06a5a' };
 const hash = (...a) => { let h = 2166136261; for (const c of a.join('|')) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return (h >>> 0) / 4294967296; };
 const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
@@ -184,7 +189,7 @@ function planSvg(p) {
   const legend = Object.entries(ROLE).map(([k, c], i) => `<rect x="${PAD + i * 120}" y="${HEAD + H + 10}" width="12" height="12" fill="${c}"/><text x="${PAD + i * 120 + 17}" y="${HEAD + H + 21}" font-size="11" fill="#cfc6b6">${{ entrance: 'entrance (safe)', room: 'room', offshoot: 'offshoot (dashed)', descent: 'descent room', end: 'last hall' }[k]}</text>`).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${HEAD + H + FOOT + 10}" font-family="Georgia, 'DejaVu Serif', serif">
 <rect width="100%" height="100%" fill="#14121a"/>
-<text x="${PAD}" y="30" font-size="22" font-weight="700" fill="#f6ecd6">${esc(p.name)} · ${p.flat ? `${p.kind === 'pen' ? 'a trial' : 'secret'}, level ${p.base}` : `levels ${p.base}–${p.base + 2}`} · a ${esc(p.kind)}</text>${strip}
+<text x="${PAD}" y="30" font-size="22" font-weight="700" fill="#f6ecd6">${esc(p.name)} · ${p.flat ? `${p.kind === 'pen' ? 'a trial' : 'secret'}, level ${p.base}` : `levels ${p.base}–${p.base + 2}`} · ${esc(KIND_NAME[p.kind] || 'a ' + p.kind)}</text>${strip}
 ${parts.join('\n')}${legend}<text x="${PAD}" y="${HEAD + H + 42}" font-size="11" fill="#8a8274">4 px a tile · halls marked with their width · src/sim/plans.js</text></svg>`;
 }
 

@@ -138,16 +138,16 @@ Wren counts what's in them, out loud, in front of you, coin by coin. It takes a 
 // What's Owed, 3: Settled (content/quests/wren_settled.json)
 == wren_settled_offer ==
 "The Cult's boat. The one that ties up under the Abbey, the one the Toadking charged double. They carry everything on it: the cages, the rolls, the people who said yes."
-"I'd like to burn it. Somebody has to hold the hall above it while I do, and it can't be me, because I'll be busy being on fire carefully."
-+ [We'll hold the hall. #mark: quest]
-    "The Drowned Abbey, the first floor's hall. Five lots of them, and I'll have it alight. Don't come looking for me. I'll come looking for you." # quest: accept wren_settled
+"I'd like to burn it. Somebody has to hold the cloister above it while I do, and it can't be me, because I'll be busy being on fire carefully."
++ [We'll hold the cloister. #mark: quest]
+    "The Drowned Abbey, the cloister, on the first floor. Five lots of them, and I'll have it alight. Don't come looking for me. I'll come looking for you." # quest: accept wren_settled
     -> wren_topics
 + [Not now.]
     "It'll still float tomorrow. That's the problem with boats."
     -> wren_topics
 
 == wren_settled_active ==
-"The Abbey, the first floor's hall. Hold it five waves. I'll do the rest. I like doing the rest."
+"The Abbey's cloister, the first floor. Hold it five waves. I'll do the rest. I like doing the rest."
 -> wren_topics
 
 == wren_settled_turnin ==

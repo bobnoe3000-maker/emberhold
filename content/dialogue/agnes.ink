@@ -57,7 +57,7 @@ She unties the first one, and reads it standing up, and then she sits down to re
 "And beside it, a lamp's mark. She didn't drown with them. She kept them. In the choir-lamp, in the chapter-house, under the Choir, trimmed every night like a sanctuary light."
 "And now the Cult comes for the harvest, and she lets them, because the lamp has to be fed, and she's been feeding it three hundred years." Agnes grips the stick. "Let them go. I'd say it more kindly if I knew how."
 + [We'll let them go. #mark: quest]
-    "The chapter-house is the third floor's hall. When she rings the bells, the water comes in from the walls, a little further each time. The dead don't mind it. You will." # quest: accept ch2_the_last_office
+    "The chapter-house is the second floor's hall. When she rings the bells, the water comes in from the walls, a little further each time. The dead don't mind it. You will." # quest: accept ch2_the_last_office
     "There'll be a ledger under the lamp. There's always a ledger. Take it to Ilse in Thornwick. She reads things twice. I could only bear to read this once."
     -> agnes_topics
 + [Not yet.]
@@ -65,13 +65,13 @@ She unties the first one, and reads it standing up, and then she sits down to re
     -> agnes_topics
 
 == agnes_office_active ==
-"The Drowned Abbey, the third floor's hall: the chapter-house. Stay out of the water when the bells ring. Break the lamp. Bring Ilse the ledger."
+"The Drowned Abbey, the second floor's hall: the chapter-house. Stay out of the water when the bells ring. Break the lamp. Bring Ilse the ledger."
 -> agnes_topics
 
 // ── the cleric's second trial (content/quests/trial_vigil.json; world doc v1.30) ──
 == agnes_vigil_offer ==
 "A vigil is a night you stay awake for somebody who can't. That's all it is. People make it sound holy so they don't have to do it."
-"The Toadking's island was a burying-ground before it was his. The fen-folk put their drowned in the mud there, and nobody there had the words, so nobody said anything over them. Go and keep a vigil on its third floor, six waves, where the old graves are. Then I'll teach your cleric the last thing the order taught before it stopped teaching anything."
+"The Toadking's island was a burying-ground before it was his. The fen-folk put their drowned in the mud there, and nobody there had the words, so nobody said anything over them. Go and keep a vigil on its second floor, six waves, where the old graves are. Then I'll teach your cleric the last thing the order taught before it stopped teaching anything."
 + [We'll keep it. #mark: quest]
     "Stay awake. Don't pray at them. Pray for them. They can tell the difference." # quest: accept trial_vigil
     -> agnes_topics
@@ -80,7 +80,7 @@ She unties the first one, and reads it standing up, and then she sits down to re
     -> agnes_topics
 
 == agnes_vigil_active ==
-"Toadking's Mound, its third floor, where the old graves are. Six waves. Stay awake."
+"Toadking's Mound, its second floor, where the old graves are. Six waves. Stay awake."
 -> agnes_topics
 
 == agnes_vigil_turnin ==

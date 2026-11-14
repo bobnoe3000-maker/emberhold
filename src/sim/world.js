@@ -72,15 +72,17 @@ const FALLEN = [[-0.4, 0.25], [0.25, -0.3]];   // (two columns down across the p
 /** how many of a piece a room holds at most (the owner, 2026-11-04: "Dont repeat or duplicate set pieces in a room,
  *  piece placement and counts should make sense"): a set piece once, a pair where the place has a pair (guardians either
  *  side of the stair, a camp's two cookfires, the porch's two doors), the rest by what the room would hold */
-export const DRESS_CAP = { urns: 4, bones: 4, well: 1, hen_cart: 1, map_table: 1, stockade: 1, altar: 1, font: 1, shaft: 1, portcullis: 1, iron_door: 1, sarcophagus_open: 1, circle: 1, windlass: 1,
-  ledgers: 1, rug: 1, coins: 2, papers: 2, guardian: 2, cookfire: 2, desk: 2, cart: 2, fallen_door: 2, hives: 2, bench: 2, standard: 2, banner: 2, hay: 3, tent: 3,
+export const DRESS_CAP = { urns: 4, bones: 4, well: 1, hen_cart: 1, map_table: 1, stockade: 1, altar: 1, font: 1, shaft: 1, portcullis: 1, iron_door: 1, sarcophagus_open: 1, circle: 1, windlass: 2,
+  ledgers: 1, rug: 1, coins: 2, papers: 2, boat: 3, vat: 6, guardian: 2, cookfire: 2, desk: 2, cart: 2, fallen_door: 2, hives: 2, bench: 2, standard: 2, banner: 2, hay: 3, tent: 3,
   saint: 2, lantern: 4, candles: 4, candelabra: 4, torch: 4, brazier: 4, ladder: 1, puddle: 4, scorch: 3, straw: 6, sacks: 3, crates: 2, barrels: 2, cracks: 6 };
 /** what stands out on an authored room's floor, by its place (not the kit's whole list: a gibbet in the stables and the
  *  gate-warden's chapel, a monolith in the legion's vault, said nothing) */
-const PLAN_OB = { dig: ['spoil', 'brokenpillar'], gallery: ['pillar', 'brokenpillar'], muster: ['pillar'], bailey: ['pillar'], barracks: ['pillar'], cellar: ['stalagmite', 'boulder'], nave: ['pillar', 'brokenpillar'], cultcut: ['brokenpillar', 'spoil'], binding: ['pillar'] };
-const DOOR_LIGHT = { dig: 'lantern', gallery: 'candles', muster: 'torch', bailey: 'torch', barracks: 'torch', cellar: 'lantern', nave: 'candelabra', cultcut: 'candles', binding: 'candles' };
-const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding' };
-const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', crates: 'crates', sacks: 'sacks', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', skulls: 'bones' };
+const PLAN_OB = { dig: ['spoil', 'brokenpillar'], gallery: ['pillar', 'brokenpillar'], muster: ['pillar'], bailey: ['pillar'], barracks: ['pillar'], cellar: ['stalagmite', 'boulder'], nave: ['pillar', 'brokenpillar'], cultcut: ['brokenpillar', 'spoil'], binding: ['pillar'],
+  mound: ['reeds'], locks: ['pillar'], vats: ['pillar'], abbey: ['pillar', 'brokenpillar'] };   // (v1.102: the Fens authored)
+const DOOR_LIGHT = { dig: 'lantern', gallery: 'candles', muster: 'torch', bailey: 'torch', barracks: 'torch', cellar: 'lantern', nave: 'candelabra', cultcut: 'candles', binding: 'candles',
+  mound: 'lantern', locks: 'lantern', vats: 'lantern', abbey: 'candelabra' };   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
+const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave' };
+const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', crates: 'crates', sacks: 'sacks', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', skulls: 'bones', bones: 'bones', barrels: 'barrels' };
 function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, count }) {
   // every piece through the room's caps (CAP): a recipe can't stand a second well or a fifth torch
   const room = (k) => !DRESS_CAP[k] || count(k) < DRESS_CAP[k];
@@ -166,6 +168,13 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       case 'chest': at(1, 6, 'chest'); break;
       case 'shrine': { const q = pickEdge(8); if (q) place(q[0], q[1], 'shrine'); } break;
       case 'bedrolls': if (!has('tents')) at(3, 6, 'bedroll'); break;   // (where there are tents, a bedroll at each one's door)
+      // ── the Greywater Fens (v1.102, authored): the Toadking's mound, the Canal Locks and Vat Seven, the Drowned Abbey
+      case 'boats': for (let u = -L * 0.55, i = 0; u <= L * 0.55 + 0.01 && i < 3; u += 13, i++) putAt(u, -(wall - 1), 'boat'); break;   // (hauled up keel-over at the back wall, three at most)
+      case 'reeds': at(4, 5, 'reeds'); break;
+      case 'nets': row(-wall, -L * 0.5, L * 0.5, 9, 'rack'); break;                 // (the drying racks, nets over them)
+      case 'pens': for (let u = -L * 0.7, i = 0; u <= L * 0.7 + 0.01; u += 7, i++) { putAt(u, -wall, alongK('stall')); putAt(u + 1, -wall + 2.5, i % 2 ? 'straw' : 'reeds'); } putAt(L * 0.5, Wd * 0.45, alongK('trough')); break;
+      case 'windlasses': for (const s of [-1, 1]) putAt(s * L * 0.45, -wall, 'windlass'); break;   // (the gear either side, at the back wall)
+      case 'vats': for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 10) putAt(u, -(Wd - 3), 'vat'); break;   // (the tubs down the back wall: tall, so never the near one, §4.2)
       default: if (PLAN_KIND[d]) at(d === 'candles' || d === 'lanterns' ? 2 : d === 'spoil' || d === 'bedrolls' ? 3 : 1, 6, PLAN_KIND[d]);
     }
   }

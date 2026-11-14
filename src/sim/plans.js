@@ -207,6 +207,128 @@ export const PLANS = {
     ] },
   ] },
 
+  // ── The Greywater Fens (v1.102; the owner, 2026-11-14: "Raid dungeon no more than 2 floors like our overall dungeon
+  //    rules", then "go ahead with recommendations": docs/fens-dungeons-audit.md §4). Brought onto the Vale's rules: two
+  //    floors, five spaces a floor, halls 10, the same rooms every visit; their own shapes, not the Vale's.
+
+  // ── Toadking's Mound (10–12): an island of boats in the reeds. The toad-men's landing and their mud below the reed
+  //    beds; then the stilt-built boat houses over the water, the Toadking in his Boat Hall with Wren his prisoner.
+  toadking_mound: { site: 'toadking_mound', name: "Toadking's Mound", kind: 'mound', base: 10, floors: [
+    { name: 'The Landing and the Mudflats', spaces: [
+      { id: 'the_landing', name: 'The Landing', role: 'entrance', x: 0, y: 0, w: 34, h: 28, shape: 'cave', lv: 0, kit: 'mound',
+        dress: ['boats', 'reeds', 'lanterns', 'crates'], note: 'Where the punts come in under the mound: boats hauled up on the mud, reeds through the boards. The plank ramp up to the reeds is the way out.' },
+      { id: 'the_reed_beds', name: 'The Reed Beds', role: 'room', x: 44, y: 0, w: 40, h: 32, shape: 'cave', lv: 0, kit: 'mound', foes: 'toadmen',
+        dress: ['reeds', 'pools', 'lanterns'], note: 'The reeds growing in through the mound\'s side, cut back for the toad-men\'s paths; standing water between.' },
+      { id: 'the_eel_store', name: 'The Eel Store', role: 'offshoot', x: 94, y: 4, w: 24, h: 22, shape: 'rect', lv: 1, kit: 'mound', foes: 'toadmen',
+        dress: ['barrels', 'nets', 'chest', 'shrine'], note: 'The eel-men\'s smoke store, taken over: casks of salted eel, nets on the walls, a chest, and the Reed Tally (the Chronicle).' },
+      { id: 'the_mudflats', name: 'The Mudflats', role: 'room', x: 30, y: 42, w: 58, h: 46, shape: 'cave', lv: 0, kit: 'mound', foes: 'toadmen',
+        dress: ['pools', 'reeds', 'boats'], note: 'A wide floor of grey mud the mound\'s water seeps up through, a boat or two sunk in it: the toads\' ground.' },
+      { id: 'the_toad_pens', name: 'The Toad Pens', role: 'descent', x: 40, y: 98, w: 50, h: 44, shape: 'rect', lv: 1, kit: 'mound', foes: 'toadmen',
+        dress: ['pens', 'reeds', 'stair_down'], note: 'Wattle pens where the toad-men keep their beasts, the reeds trodden flat. The stair down to the boat houses is at the back.' },
+    ], halls: [
+      { from: 'the_landing', to: 'the_reed_beds', x: 34, y: 10, w: 10, h: 10, rough: true },
+      { from: 'the_reed_beds', to: 'the_eel_store', x: 84, y: 10, w: 10, h: 10 },
+      { from: 'the_reed_beds', to: 'the_mudflats', x: 56, y: 32, w: 10, h: 10, rough: true },
+      { from: 'the_mudflats', to: 'the_toad_pens', x: 58, y: 88, w: 10, h: 10, rough: true },
+    ] },
+    { name: 'The Boat Houses and the Boat Hall', spaces: [
+      { id: 'the_stilt_stair', name: 'The Stilt Stair', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'rect', lv: 1, kit: 'mound',
+        dress: ['lanterns', 'barrels', 'stair_up'], note: 'The foot of the ladder-stair, on piles over the black water.' },
+      { id: 'the_net_walk', name: 'The Net Walk', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'rect', lv: 1, kit: 'mound', foes: 'boathall',
+        dress: ['nets', 'boats', 'lanterns'], note: 'A large corridor: the boardwalk between the boat houses, nets drying on the rails, boats slung overhead.' },
+      { id: 'the_burying_ground', name: 'The Old Burying-Ground', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'cave', lv: 2, kit: 'mound', foes: 'boathall',
+        dress: ['bones', 'candles', 'chest', 'shrine'], note: 'The island\'s burying-ground from before the Toadking, the mound raised over it: old bones in the mud, the eel-men\'s candles still left. Kept a vigil over.' },
+      { id: 'the_slipway', name: 'The Slipway', role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'rect', lv: 2, kit: 'mound', foes: 'boathall',
+        dress: ['boats', 'windlasses', 'barrels'], note: 'Where the boats are drawn up: a windlass at the head of the slip, a boat half up it, the gulpers wallowing at its foot.' },
+      { id: 'the_boat_hall', name: 'The Boat Hall', role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'rect', lv: 2, kit: 'mound', foes: 'boathall', boss: 'toadking',
+        dress: ['boats', 'pools', 'reeds', 'braziers'], note: 'The Toadking\'s hall, roofed with upturned hulls, the tithe plate nailed over his seat. Wren tied to a mooring post.' },
+    ], halls: [
+      { from: 'the_stilt_stair', to: 'the_net_walk', x: 30, y: 8, w: 10, h: 10 },
+      { from: 'the_net_walk', to: 'the_burying_ground', x: 56, y: 24, w: 10, h: 10 },
+      { from: 'the_net_walk', to: 'the_slipway', x: 110, y: 8, w: 10, h: 10 },
+      { from: 'the_slipway', to: 'the_boat_hall', x: 132, y: 34, w: 10, h: 10 },
+    ] },
+  ] },
+
+  // ── The Canal Locks (13–15): built lock halls, then the vats. The lock gate, the long lock chamber and its basin, the
+  //    Sluice at the end; below, the Cult's Vat Seven, where the harvesters fill their cages.
+  canal_locks: { site: 'canal_locks', name: 'The Canal Locks', kind: 'locks', base: 13, floors: [
+    { name: 'The Lock Chamber and the Sluice', spaces: [
+      { id: 'the_lock_gate', name: 'The Lock Gate', role: 'entrance', x: 0, y: 36, w: 30, h: 24, shape: 'rect', lv: 0, kit: 'locks',
+        dress: ['windlasses', 'chains', 'lanterns'], note: 'The upper gate, its beams black with the canal: the winding gear, the chains. The Kindler waits here. The gate\'s stair is the way out.' },
+      { id: 'the_lock_chamber', name: 'The Lock Chamber', role: 'room', x: 40, y: 34, w: 72, h: 26, shape: 'rect', lv: 0, kit: 'locks', foes: 'ashbound',
+        dress: ['colonnade', 'chains', 'pools'], note: 'A large corridor: the drained lock itself, its walls weeded to the old waterline, the lock-men who drowned in it standing up again.' },
+      { id: 'the_tally_house', name: 'The Tally House', role: 'offshoot', x: 60, y: 4, w: 24, h: 20, shape: 'rect', lv: 1, kit: 'locks', foes: 'lockcult',
+        dress: ['desks', 'rolls', 'chest', 'shrine'], note: 'Where the lock-keeper counted the boats through: his tallies on the shelves, a chest, a shrine with the canal\'s order.' },
+      { id: 'the_basin', name: 'The Basin', role: 'room', x: 122, y: 30, w: 38, h: 36, shape: 'rect', lv: 0, kit: 'locks', foes: 'lockcult',
+        dress: ['pools', 'barrels', 'chains'], note: 'The turning basin below the lock, half drained: barrels the Cult rolled down, the water in pools.' },
+      { id: 'the_sluice', name: 'The Sluice', role: 'descent', x: 112, y: 76, w: 56, h: 44, shape: 'rect', lv: 1, kit: 'locks', foes: 'lockcult',
+        dress: ['windlasses', 'pools', 'braziers', 'stair_down'], note: 'The sluice-house over the outfall: its paddle gear, the Sluice Book on its stand, and the stair down to the vats.' },
+    ], halls: [
+      { from: 'the_lock_gate', to: 'the_lock_chamber', x: 30, y: 42, w: 10, h: 10 },
+      { from: 'the_lock_chamber', to: 'the_tally_house', x: 66, y: 24, w: 10, h: 10 },
+      { from: 'the_lock_chamber', to: 'the_basin', x: 112, y: 40, w: 10, h: 10 },
+      { from: 'the_basin', to: 'the_sluice', x: 136, y: 66, w: 10, h: 10 },
+    ] },
+    { name: 'Vat Seven', spaces: [
+      { id: 'the_vat_stair', name: 'The Vat Stair', role: 'entrance', x: 0, y: 0, w: 30, h: 28, shape: 'rect', lv: 1, kit: 'vats',
+        dress: ['barrels', 'lanterns', 'stair_up'], note: 'The stair\'s foot, the air already sour: barrels stacked by the wall.' },
+      { id: 'the_vat_row', name: 'The Vat Row', role: 'room', x: 0, y: 38, w: 76, h: 22, shape: 'rect', lv: 1, kit: 'vats', foes: 'harvest',
+        dress: ['vats', 'chains', 'candles'], note: 'A large corridor of the Cult\'s tubs, six down the wall, the seventh beyond: what they render there.' },
+      { id: 'the_drain_office', name: 'The Drain Office', role: 'offshoot', x: 18, y: 70, w: 24, h: 20, shape: 'rect', lv: 2, kit: 'vats', foes: 'harvest',
+        dress: ['desks', 'ledgers', 'chest', 'shrine'], note: 'The drain-master\'s office the Cult kept its books in: the vat ledger in a chest, the drain order at the shrine.' },
+      { id: 'the_cage_store', name: 'The Cage Store', role: 'room', x: 86, y: 30, w: 34, h: 32, shape: 'rect', lv: 2, kit: 'vats', foes: 'harvest',
+        dress: ['gibbets', 'chains', 'barrels'], note: 'The harvesters\' store of empty lantern-cages, hung from the beams, waiting to be filled.' },
+      { id: 'vat_seven', name: 'Vat Seven', role: 'end', x: 80, y: 72, w: 60, h: 46, shape: 'rect', lv: 2, kit: 'vats', foes: 'harvest', boss: 'vatwarden',
+        dress: ['vats', 'pools', 'braziers', 'chest'], note: 'The seventh vat, the great one, poison standing round it: the Vatwarden keeps it.' },
+    ], halls: [
+      { from: 'the_vat_stair', to: 'the_vat_row', x: 10, y: 28, w: 10, h: 10 },
+      { from: 'the_vat_row', to: 'the_drain_office', x: 24, y: 60, w: 10, h: 10 },
+      { from: 'the_vat_row', to: 'the_cage_store', x: 76, y: 44, w: 10, h: 10 },
+      { from: 'the_cage_store', to: 'vat_seven', x: 96, y: 62, w: 10, h: 10 },
+    ] },
+  ] },
+
+  // ── The Drowned Abbey (16–18): an abbey under the flood. The cloister walk, Brother Teague in his cell off it, the
+  //    garth and the choir where the Drowned Choir sings; below, the night stair, the dorter and the chapter-house, round,
+  //    where the Abbess Below rings her bells.
+  drowned_abbey: { site: 'drowned_abbey', name: 'The Drowned Abbey', kind: 'abbey', base: 16, floors: [
+    { name: 'The Cloister and the Choir', spaces: [
+      { id: 'the_west_door', name: 'The West Door', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'rect', lv: 0, kit: 'abbey',
+        dress: ['doors', 'candles', 'saints'], note: 'The abbey\'s west door, the flood\'s line on it at head height. Its steps up are the way out.' },
+      { id: 'the_cloister_walk', name: 'The Cloister Walk', role: 'room', x: 40, y: 2, w: 72, h: 20, shape: 'rect', lv: 0, kit: 'abbey', foes: 'drowned',
+        dress: ['colonnade', 'pools', 'saints'], note: 'A large corridor: the cloister\'s north walk, its arcade open on the drowned garth, water over the flags.' },
+      { id: 'teagues_cell', name: 'Brother Teague\'s Cell', role: 'offshoot', x: 44, y: 32, w: 24, h: 22, shape: 'rect', lv: 1, kit: 'abbey', foes: 'drowned', boss: 'teague',
+        dress: ['candles', 'chest', 'shrine'], note: 'A monk\'s cell off the walk, kept dry: Teague\'s lantern-cage and his bed. He waits at its door.' },
+      { id: 'the_garth', name: 'The Garth', role: 'room', x: 122, y: 0, w: 36, h: 36, shape: 'rect', lv: 0, kit: 'abbey', foes: 'drowned',
+        dress: ['pools', 'font', 'saints'], note: 'The cloister\'s square garden, a pond now: the lavabo standing in it, the saints fallen in.' },
+      { id: 'the_choir', name: 'The Choir', role: 'descent', x: 108, y: 48, w: 56, h: 48, shape: 'rect', lv: 1, kit: 'abbey', foes: 'drowned', boss: 'drowned_choir',
+        dress: ['pews', 'pools', 'candles', 'chest', 'stair_down'], note: 'The monks\' stalls in two rows, the water to their seats. The Drowned Choir sings over the night stair, down which the rolls came up.' },
+    ], halls: [
+      { from: 'the_west_door', to: 'the_cloister_walk', x: 30, y: 8, w: 10, h: 10 },
+      { from: 'the_cloister_walk', to: 'teagues_cell', x: 50, y: 22, w: 10, h: 10 },
+      { from: 'the_cloister_walk', to: 'the_garth', x: 112, y: 6, w: 10, h: 10 },
+      { from: 'the_garth', to: 'the_choir', x: 134, y: 36, w: 10, h: 12 },
+    ] },
+    { name: 'The Dorter and the Chapter-House', spaces: [
+      { id: 'the_night_stair', name: 'The Night Stair', role: 'entrance', x: 0, y: 40, w: 28, h: 26, shape: 'rect', lv: 1, kit: 'abbey',
+        dress: ['candles', 'stair_up'], note: 'The monks\' stair down from the choir to their beds, worn hollow.' },
+      { id: 'the_dorter', name: 'The Dorter', role: 'room', x: 38, y: 42, w: 64, h: 22, shape: 'rect', lv: 1, kit: 'abbey', foes: 'drowned',
+        dress: ['bunks', 'pools', 'candles'], note: 'A large corridor: the monks\' dormitory, their cots in two rows, the flood come in over them.' },
+      { id: 'the_scriptorium', name: 'The Scriptorium', role: 'offshoot', x: 56, y: 10, w: 24, h: 22, shape: 'rect', lv: 2, kit: 'abbey', foes: 'drowned',
+        dress: ['desks', 'rolls', 'chest', 'shrine'], note: 'The copying room, up a step from the water: desks, the day book, a chest.' },
+      { id: 'the_lay_crypt', name: 'The Lay Crypt', role: 'room', x: 112, y: 36, w: 34, h: 34, shape: 'rect', lv: 2, kit: 'abbey', foes: 'drowned',
+        dress: ['sarcophagi', 'candles', 'pools'], note: 'The lay brothers\' crypt, its tombs awash.' },
+      { id: 'the_chapter_house', name: 'The Chapter-House', role: 'end', x: 104, y: 80, w: 50, h: 50, shape: 'round', lv: 2, kit: 'abbey', foes: 'drowned', boss: 'abbess_below',
+        dress: ['ring_of_pillars', 'pools', 'braziers'], note: 'Round, its vault on a ring of pillars, the water black: the Abbess Below in the abbess\'s seat, her bells.' },
+    ], halls: [
+      { from: 'the_night_stair', to: 'the_dorter', x: 28, y: 48, w: 10, h: 10 },
+      { from: 'the_dorter', to: 'the_scriptorium', x: 62, y: 32, w: 10, h: 10 },
+      { from: 'the_dorter', to: 'the_lay_crypt', x: 102, y: 46, w: 10, h: 10 },
+      { from: 'the_lay_crypt', to: 'the_chapter_house', x: 124, y: 70, w: 10, h: 10 },
+    ] },
+  ] },
+
   // ── The Bowl (GDD §17 v1.85, v1.88; world doc v1.46 §3.9; docs/bowl-arena-proposal.md §12, the owner's "B"): the
   //    Quarry Ring in Solmere, the arena cut down into the old sandstone quarry. Not on any land: the menu takes a company
   //    to it from level 6 and back. One space, open to the sky: the sand, oval, open from wall to wall, the company's gate

@@ -1,4 +1,4 @@
-// plans.test.mjs — the Hollow Vale's authored dungeon plans (src/sim/plans.js, docs/vale-dungeons-plan.md) keep the
+// plans.test.mjs — the authored dungeon plans (the Hollow Vale's, and the Greywater Fens' from v1.102) (src/sim/plans.js, docs/vale-dungeons-plan.md) keep the
 // owner's rules: two floors at most, five spaces a floor at most, halls 10 wide, a progression with an offshoot,
 // the band's levels over the two floors, and each plan's site and bosses the sim's own.
 import { test } from 'node:test';
@@ -6,14 +6,14 @@ import assert from 'node:assert/strict';
 import { PLANS, PLAN_RULES, checkPlan, sizeOf } from '../src/sim/plans.js';
 import { SITES } from '../src/sim/sites.js';
 
-test('plans: every Vale plan keeps the owner\'s rules (≤ 2 floors, ≤ 5 spaces, halls 10 wide, joined, no overlaps)', () => {
+test('plans: every plan keeps the owner\'s rules (≤ 2 floors, ≤ 5 spaces, halls 10 wide, joined, no overlaps)', () => {
   for (const p of Object.values(PLANS)) assert.deepEqual(checkPlan(p), [], p.site);
 });
 
 test('plans: each floor runs entrance → rooms → its last hall, with one offshoot, and levels climb the band', () => {
   for (const p of Object.values(PLANS)) {
     if (SITES[p.site] && SITES[p.site].arena) continue;          // (the Bowl's sand: a way in and the sand, test/bowl.test.mjs)
-    assert.ok(SITES[p.site] && SITES[p.site].region === 'vale', `${p.site} is a Vale site`);
+    assert.ok(SITES[p.site] && ['vale', 'fens'].includes(SITES[p.site].region), `${p.site} is a Vale or a Fens site`);
     assert.equal(p.base, SITES[p.site].base, `${p.site}: the band's base as sites.js has it`);
     p.floors.forEach((f, fi) => {
       assert.equal(f.spaces.filter((s) => s.role === 'offshoot').length, 1, `${p.site} floor ${fi + 1}: one offshoot`);
@@ -34,7 +34,15 @@ test('plans: the bosses stand where the band wants them, and are the sim\'s own'
   assert.deepEqual(bosses.barrows, [['quartermaster', 3]]);
   assert.deepEqual(bosses.wickham_keep, [['goblin_chief', 5], ['redhand_captain', 6]]);
   assert.deepEqual(bosses.sunken_chapel, [['robed_stranger', 8], ['standard', 9]]);
-  for (const [site, list] of Object.entries(bosses)) for (const [b] of list) assert.ok(Object.values(SITES[site].bosses || {}).includes(b), `${site}: ${b} is one of its bosses today`);
+  // (v1.102) the Fens: the Toadking and the Vatwarden at their bands' tops; the Abbey's three, Teague in his cell off the
+  // cloister (a side room's own boss: battle.js sideBoss), the Choir in the first floor's hall, the Abbess in the second's
+  assert.deepEqual(bosses.toadking_mound, [['toadking', 12]]);
+  assert.deepEqual(bosses.canal_locks, [['vatwarden', 15]]);
+  assert.deepEqual(bosses.drowned_abbey, [['teague', 17], ['drowned_choir', 17], ['abbess_below', 18]]);
+  for (const p of Object.values(PLANS)) p.floors.forEach((f, d) => { for (const s of f.spaces) if (s.boss) {
+    if (s.role === 'offshoot') assert.ok(!Object.values(SITES[p.site].bosses || {}).includes(s.boss), `${p.site}: ${s.boss} a side room's own, no hall's`);
+    else assert.equal((SITES[p.site].bosses || {})[d + 1], s.boss, `${p.site} floor ${d + 1}: ${s.boss} its hall's`);
+  } });
 });
 
 test('plans: the rules catch a plan that breaks them', () => {

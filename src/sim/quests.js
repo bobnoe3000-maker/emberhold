@@ -175,7 +175,7 @@ export const QUESTS = {
   ch2_the_locks: {
     kind: 'chapter', giver: 'dace_pike', region: 'fens', level: [13, 30], after: ['ch2_fog_on_the_canal'],
     steps: [{ id: 'kindler', objectives: [{ type: 'meet', npc: 'kindler', site: 'canal_locks', count: 1 }] },
-      { id: 'sluice', objectives: [{ type: 'waves', site: 'canal_locks', count: 5, hall: true, floor: 2 }] }],
+      { id: 'sluice', objectives: [{ type: 'waves', site: 'canal_locks', count: 5, hall: true, floor: 1 }] }],
     rewards: { share: 0.4, lv: 14, gold: 260 },
   },
   ch2_the_sickpools: {
@@ -192,7 +192,7 @@ export const QUESTS = {
   ch2_the_rolls: {
     kind: 'chapter', giver: 'sister_orla', turnin: 'mother_agnes', region: 'fens', level: [17, 30], after: ['ch2_the_bells'],
     steps: [{ id: 'choir', objectives: [{ type: 'boss', site: 'drowned_abbey', boss: 'drowned_choir', count: 1 }] },   // (v1.49: caught on the way up, under the Choir)
-      { id: 'rolls', objectives: [{ type: 'loot', site: 'drowned_abbey', count: 2, floor: 2 }] }],
+      { id: 'rolls', objectives: [{ type: 'loot', site: 'drowned_abbey', count: 2, floor: 1 }] }],
     rewards: { share: 0.45, lv: 17, gold: 320 },
   },
   ch2_the_last_office: {
@@ -203,7 +203,7 @@ export const QUESTS = {
   // the level-12 trials (world doc v1.30 §5; docs/m8-plan.md slice 9): in the Fens, at 12, after the class's first
   trial_the_long_watch: {                            // Osric: a fighter holds a hall ten waves, as the Watch holds a post
     kind: 'trial', giver: 'osric_hale', trial: 'fighter', trialLv: 12, region: 'fens', level: [1, 30],
-    steps: [{ id: 'mound', objectives: [{ type: 'waves', site: 'toadking_mound', count: 10, hall: true, floor: 2 }] }],   // (v1.49: the Mound's second-floor hall, 11; it was the Sluice, 14)
+    steps: [{ id: 'mound', objectives: [{ type: 'waves', site: 'toadking_mound', count: 10, hall: true, floor: 1 }] }],   // (v1.102: the Toad Pens, the first floor's hall, 11; the second floor's before, 11; the Sluice before that, 14)
     rewards: { share: 0.3, lv: 12, gold: 120 },
   },
   trial_dead_water: {                                // Wren: the harvesters' leaders at the vats, unseen (v1.48: the Locks')
@@ -218,7 +218,7 @@ export const QUESTS = {
   },
   trial_vigil: {                                     // Mother Agnes: a cleric keeps a vigil on the Toadking's island, its burying-ground
     kind: 'trial', giver: 'mother_agnes', trial: 'cleric', trialLv: 12, region: 'fens', level: [1, 30],
-    steps: [{ id: 'mound', objectives: [{ type: 'waves', site: 'toadking_mound', count: 6, floor: 3 }] }],   // (v1.49: the Mound's burying-ground, 12; it was the Abbey, 16+)
+    steps: [{ id: 'mound', objectives: [{ type: 'waves', site: 'toadking_mound', count: 6, floor: 2 }] }],   // (v1.102: the Mound's second floor, by its burying-ground, 11–12; its third before, 12; the Abbey before that, 16+)
     rewards: { share: 0.3, lv: 12, gold: 120 },
   },
   trial_the_old_water: {                             // Col: a shaman quiets the Toadking's island, where his grandmother wouldn't go
@@ -235,12 +235,12 @@ export const QUESTS = {
   },
   wren_night_boats: {
     kind: 'companion', giver: 'wren', companion: 'wren', region: 'fens', level: [1, 30], after: ['wren_the_marker'],
-    steps: [{ id: 'vats', objectives: [{ type: 'loot', site: 'canal_locks', count: 2, floor: 3 }] }],
+    steps: [{ id: 'vats', objectives: [{ type: 'loot', site: 'canal_locks', count: 2, floor: 2 }] }],
     rewards: { share: 0.3, lv: 15, gold: 180 },
   },
   wren_settled: {                                   // (after The Bells: the hall she wants held is Brother Teague's until he falls)
     kind: 'companion', giver: 'wren', companion: 'wren', region: 'fens', level: [1, 30], after: ['wren_night_boats', 'ch2_the_bells'],
-    steps: [{ id: 'abbey', objectives: [{ type: 'waves', site: 'drowned_abbey', count: 5, hall: true, floor: 1 }] }],
+    steps: [{ id: 'abbey', objectives: [{ type: 'waves', site: 'drowned_abbey', count: 5, floor: 1 }] }],
     rewards: { share: 0.45, lv: 16, gold: 200, item: 'the_receipt' },
   },
 };
