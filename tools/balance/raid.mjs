@@ -1,6 +1,6 @@
 // raid.mjs — raids headless (GDD §18 v1.97, sim/raid.js, docs/party-up-raids-proposal.md §9): a hero at a level sets out
 // on a dungeon's raid with two stand-ins and is played as a player would: fight each room as it comes (the run holds it
-// its six waves), make for the gate's room while the gate is up, then the stairs down or the last hall, until the band's
+// its ten waves), make for the gate's room while the gate is up, then the stairs down or the last hall, until the band's
 // boss falls (won), the company is wiped (lost) or the time runs out. Prints, per seed: won, minutes, rooms won, the
 // hero's lowest HP, downs, and what was found; then the share won, the median time and the gear a run found.
 //

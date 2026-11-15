@@ -20,6 +20,7 @@
 //   xp, gold  a kill's XP and coin, × (the Tower pays by the wave instead: tower.js)
 //   waves     a room is won after this many waves held (0: the room's own way, a gate's or none)
 //   tide      a room's climb, { step, cap } a wave (null: the room's own, tideOf)
+//   foeHp, foeAtk  every foe's HP and attack × (a raid's: GDD §18 v1.108), its boss and his escort too
 //   loot      'slot' (loot.js DROP at the slot's odds), 'raid' (DROP raid*, for the hero's class: core.js dropHere) or
 //             'none' (an event: nothing drops in the fight, its pay is the tier's at the end, ring.js)
 // Pure data and nothing imported: battle.js, core.js, quests.js, lore.js and raid.js read it, and nothing here reads them.
@@ -31,10 +32,10 @@
 export const BOUT = { cc: 0.5, heal: 0.75, dmg: 0.5, react: 0.8, secs: 120, draw: 0.02, call: 3, gap: 16, rest: 2.5 };
 
 /** @typedef {{ kind: 'slot' | 'camp' | 'tower' | 'bout' | 'raid' | 'event', story: boolean, count: boolean, death: 'wipe' | 'satchel' | 'none' | 'bout' | 'respawn',
- *   fallen: boolean, boon: boolean, heal: number, dmg: number, bossHome: boolean, xp: number, gold: number, waves: number,
+ *   fallen: boolean, boon: boolean, heal: number, dmg: number, bossHome: boolean, xp: number, gold: number, waves: number, foeHp: number, foeAtk: number,
  *   tide: { step: number, cap: number } | null, loot: 'slot' | 'raid' | 'none' }} Mode */
 
-const SLOT = { story: true, count: true, death: 'wipe', fallen: true, boon: true, heal: 1, dmg: 1, bossHome: false, xp: 1, gold: 1, waves: 0, tide: null, loot: 'slot' };
+const SLOT = { story: true, count: true, death: 'wipe', fallen: true, boon: true, heal: 1, dmg: 1, bossHome: false, xp: 1, gold: 1, waves: 0, foeHp: 1, foeAtk: 1, tide: null, loot: 'slot' };
 /** @type {Readonly<Record<Mode['kind'], Readonly<Mode>>>} */
 export const MODES = Object.freeze({
   // single play: everything on (a dungeon's rooms, the overland's fights)
@@ -47,8 +48,11 @@ export const MODES = Object.freeze({
   // (heal and dmg read BOUT as it stands: tools/balance/bowl.mjs tunes them, --heal, --dmg)
   bout: Object.freeze(/** @type {Mode} */ ({ kind: 'bout', ...SLOT, death: 'bout', fallen: false, boon: false, get heal() { return BOUT.heal; }, get dmg() { return BOUT.dmg; } })),
   // a raid (raid.js, GDD §18 v1.97): not the story's and not the count's, no cost to a wipe, nobody Fallen, the boss always
-  // home; a room won after six waves on +10 % a wave (+50 % at the sixth); a kill pays 1.25×; the loot at a raid's odds
-  raid: Object.freeze(/** @type {Mode} */ ({ kind: 'raid', ...SLOT, story: false, count: false, death: 'none', fallen: false, bossHome: true, xp: 1.25, gold: 1.25, waves: 6, tide: Object.freeze({ step: 0.1, cap: 0.5 }), loot: 'raid' })),
+  // home; a room won after ten waves (six before GDD v1.108, the owner: "now 6 waves to drop a gate it should be 10") on
+  // +5 % a wave (+45 % at the tenth; it was +10 % to +50 % at the sixth, which over ten would have turned back to nothing at
+  // the seventh); every foe twice the HP and 15 % harder (v1.108, the owner: "double the hp of all enemies, and they attack
+  // 15% harder"); a kill pays 1.25×; the loot at a raid's odds
+  raid: Object.freeze(/** @type {Mode} */ ({ kind: 'raid', ...SLOT, story: false, count: false, death: 'none', fallen: false, bossHome: true, xp: 1.25, gold: 1.25, waves: 10, foeHp: 2, foeAtk: 1.15, tide: Object.freeze({ step: 0.05, cap: 0.5 }), loot: 'raid' })),
   // a region boss's event (ring.js, GDD §19 v1.105; shared-play-rules decisions 3–5): not the story's or the count's, no
   // wipe (a Downed member gets up at the edge, RING.respawn), nobody Fallen, no boon carried in, the boss always home, no
   // XP, coin or loot in the fight (the pay is the tier's at the end)

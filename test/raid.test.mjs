@@ -1,6 +1,6 @@
 // Raids (GDD §18 v1.97, sim/raid.js, docs/party-up-raids-proposal.md; the owner, 2026-11-14: "3 per hero, when set out,
 // dungeon as is, no penalty for loss, start with what we have, use the term Raid"): who may set out and where, the
-// stand-ins and the seats they fill, a room held its six waves and won, the gate dropped for the run only, a run played to
+// stand-ins and the seats they fill, a room held its ten waves (six before v1.108) and won, the gate dropped for the run only, a run played to
 // its end and its coffer, a wipe that costs nothing, the company given back, a save made on a raid, and the record saved.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -13,6 +13,8 @@ import { LANDS } from '../src/sim/regions.js';
 import { QS } from '../src/sim/quests.js';
 import { makeRival } from '../src/sim/rivals.js';
 import { BASES } from '../src/sim/items.js';
+import { MODES } from '../src/sim/modes.js';
+import { ENEMIES } from '../src/sim/battle.js';
 
 const SEED = 20261114;
 /** a made hero at a level, two hires, in Thornwick's square */
@@ -89,7 +91,7 @@ test('a stand-in isn\'t the company\'s: nothing given it, nobody hired or benche
   s.commands.push({ type: 'swap', slot: 1, id: 'nobody' }); s.tick(); assert.match(ev.refused.pop(), /raid/);
 });
 
-test('a room holds its six waves and is won, quiet for the run; the gate drops for the run only', () => {
+test('a room holds its ten waves and is won, quiet for the run; the gate drops for the run only', () => {
   const s = company(3), ev = events(s);
   go(s, 'barrows');
   let won = 0; s.bus.on('raidRoom', () => won++);
@@ -100,7 +102,7 @@ test('a room holds its six waves and is won, quiet for the run; the gate drops f
     for (const m of s.state.party) if (!m.down) m.hp = Math.max(m.hp, statsFor(m).maxHp * 0.8);   // (kept on their feet: this is about the count)
     s.tick();
   }
-  assert.ok(won >= 1, 'a room won'); assert.ok(ev.room.every((e) => e.wave === RAID.waves), 'at its sixth wave');
+  assert.ok(won >= 1, 'a room won'); assert.equal(RAID.waves, 10); assert.ok(ev.room.every((e) => e.wave === RAID.waves), 'at its tenth wave');
   assert.ok(s.world.gate && !s.world.gateShut, 'the gate is down for the run');
   assert.deepEqual([...s.state.gates], gates, 'the slot\'s gates as they were (20 waves, out of a raid)');
   // the won room is quiet: walking back in starts nothing
@@ -212,4 +214,19 @@ test('a raid runs two floors at most: a longer dungeon\'s last two; its way up l
   const out = s.destinations().find((q) => q.id === 'exit'); assert.ok(out && out.label === 'Leave the raid', 'its stair up leaves the raid');
   const ex = s.world.exitAt, p = s.state.player; p.x = p.px = ex.x; p.y = p.py = ex.y; s.tick();
   assert.equal(s.raid, null, 'walked up the stair: out of the raid'); assert.equal(s.world.kind, 'town', 'back where it set out');
+});
+
+test('a raid\'s foes: twice the HP and 15 % harder (GDD §18 v1.108); every other kind of play as it was', () => {
+  assert.equal(MODES.raid.foeHp, 2); assert.equal(MODES.raid.foeAtk, 1.15); assert.equal(MODES.raid.waves, 10);
+  for (const k of ['slot', 'camp', 'tower', 'bout', 'event']) { assert.equal(MODES[k].foeHp, 1, k); assert.equal(MODES[k].foeAtk, 1, k); }
+  // in a run: a first-wave foe's HP is at least twice its kind's at its level (the tide is nothing yet; the premium only adds)
+  const s = company(3); go(s, 'barrows');
+  for (let i = 0; i < 20 * 60 && !(s.battle && (s.world.enemies || []).some((e) => !e.dead)); i++) {
+    const p = s.state.player; if (!s.battle && !p.path) { const q = s.destinations().find((x) => x.id === 'next-room' && !x.off); if (q) s.commands.push({ type: 'goto', tx: q.tx, ty: q.ty, near: q.near, room: q.room }); }
+    s.tick();
+  }
+  const raidFoe = (s.world.enemies || []).find((e) => !e.elite && !e.dead);
+  assert.ok(raidFoe, 'a foe in a raid room');
+  const lvl = raidFoe.lvl, scale = 1 + 0.14 * (lvl - 1), E = ENEMIES[raidFoe.kind];
+  assert.ok(raidFoe.maxHp >= Math.round(E.hp * scale * 2) - 1, `HP ${raidFoe.maxHp}: twice ${Math.round(E.hp * scale)} at the first wave (no tide)`);
 });

@@ -28,7 +28,7 @@ import { MODES } from './modes.js';
 
 export const RAID = {
   perDay: 3,            // raids a hero sets out on in a game day (the owner: "3 per hero")
-  // a room won after this many waves held, its climb (+10 % a wave, +50 % at the sixth), a kill's XP and gold: the
+  // a room won after this many waves held, its climb (+5 % a wave, +45 % at the tenth), a kill's XP and gold: the
   // raid's row in modes.js, which the fight reads (kept here too for what reads RAID: the harness, the tests)
   waves: MODES.raid.waves, tide: MODES.raid.tide, xp: MODES.raid.xp, gold: MODES.raid.gold,
   cofferGold: 25,       // × the band's top level (50 before GDD v1.104: half the drops)

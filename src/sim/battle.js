@@ -583,10 +583,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
    * ×2.5 HP, ×1.3 ATK; a boss (B) its own multiples @param {any} w @param {string} k @param {number} lvl
    * @param {number} x @param {number} y @param {number} tough @param {boolean} elite @param {any} F @param {any} [B] */
   function foe(w, k, lvl, x, y, tough, elite, F, B = null) {
-    const scale = 1 + 0.14 * (lvl - 1), atkScale = 1 + 0.12 * (lvl - 1), E = ENEMIES[B ? B.like : k];
-    const hp = Math.round(E.hp * scale * tough * (elite ? 2.5 : 1) * (B ? B.hp : 1));
+    const scale = 1 + 0.14 * (lvl - 1), atkScale = 1 + 0.12 * (lvl - 1), E = ENEMIES[B ? B.like : k], M = mode();   // (M.foeHp, foeAtk: a raid's tougher foes, modes.js)
+    const hp = Math.round(E.hp * scale * tough * (elite ? 2.5 : 1) * (B ? B.hp : 1) * M.foeHp);
     const u = { id: nextId++, kind: k, undead: B ? !!B.undead : F.undead(k), elite: elite || !!B, lvl, x, y, hp, maxHp: hp,
-      atk: E.atk * atkScale * tough * (elite ? 1.3 : 1) * (B ? B.atk : 1), def: E.def * scale * (B ? B.def : 1),
+      atk: E.atk * atkScale * tough * (elite ? 1.3 : 1) * (B ? B.atk : 1) * M.foeAtk, def: E.def * scale * (B ? B.def : 1),
       crit: E.crit, dodge: E.dodge, interval: E.interval, range: B && B.range ? B.range : E.range, speed: B && B.speed ? B.speed : E.speed, bolt: E.bolt,
       xp: E.xp * (elite ? 3 : 1) * (B ? B.xp : 1), gold: E.gold * (elite ? 4 : 1) * (B ? B.gold : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 };
     if (B && B.body) { u.body = B.body; u.anchor = true; }   // (the Kingstone: ground it stands on, never shoved)
