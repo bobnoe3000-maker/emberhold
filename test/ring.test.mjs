@@ -197,3 +197,18 @@ test('in the Kingstone\'s fight no attribute or skill points are lent: none show
   walkOut(s); for (let i = 0; i < 40 && s.battle && s.battle.ring; i++) s.tick();
   assert.equal(H.level, 14); assert.equal(H.syncFrom, undefined);
 });
+
+// (the owner, 2026-11-15: "The region boss wont show even if it is time if i am already fighting the stone giant NPCs, i have to
+// exit the ring for the boss to show")
+test('the hour comes while the company fights the old stones\' golems: they go, and the Kingstone\'s fight starts there', () => {
+  const s = company(14); s.tick(); walkIn(s);
+  assert.ok(s.battle && s.battle.camp && s.battle.camp.id === C.id && !s.battle.ring, 'fighting the golems');
+  assert.ok(!s.world.enemies.some((e) => e.kind === 'kingstone'), 'no Kingstone yet');
+  open(s, windowFor(1)); s.tick();
+  assert.ok(s.battle && s.battle.ring, 'the Kingstone\'s fight, without walking out');
+  assert.ok(s.world.enemies.some((e) => e.kind === 'kingstone' && e.hp > 0), 'it stands'); assert.ok(!s.world.enemies.some((e) => e.kind === 'golem' && e.hp > 0), 'its golems gone');
+  for (const m of s.state.party) assert.equal(m.level, RING.level, 'synced to the Ring');
+  // under level 10: the golems' fight goes on, nothing taken from it
+  const lo = company(9); lo.tick(); walkIn(lo); open(lo, windowFor(1)); lo.tick();
+  assert.ok(lo.battle && lo.battle.camp && !lo.battle.ring, 'no Kingstone for a company under 10: its golems\' fight goes on');
+});

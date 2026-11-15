@@ -2161,6 +2161,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (h && ringHere(h.c)) onRingReach(h.c, h.i);                 // (the old stones in a window: the Kingstone stands there, core.js ringIn)
       else if (h && campUp(state, h.c)) startCamp(w, h.c, h.i);
     }
+    // (the owner, 2026-11-15: "The region boss wont show even if it is time if i am already fighting the stone giant NPCs, i have
+    // to exit the ring for the boss to show"): the hour comes while the company fights the old stones' golems: they go back
+    // into the stones and the Kingstone stands up among the company, its fight begun where it stands (core.js ringReach)
+    if (battle && battle.camp && !battle.ring && onLand && alive(H) && H.level >= RING.minLevel && ringHere(battle.camp)) {   // (under 10: the golems' fight goes on)
+      const c = battle.camp, i = campsOf(w.region).indexOf(c); endBattle(w, 'ring'); if (i >= 0) onRingReach(c, i);
+    }
     if (!battle && onLand) idleCamps(w);
 
     // regen: ×5 out of a fight (corridors, the overland, towns); a room's lulls are a breath (×1.5 for 4 s)
