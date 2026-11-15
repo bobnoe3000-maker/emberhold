@@ -992,18 +992,20 @@ Object.assign(TYPES, {
   // Deepdelve Mine: a rock outcrop with a timbered adit, rails and an ore cart, spoil heap, winch frame, lanterns
   mine(S, g, r) {
     const out = new THREE.Group(); out.position.set(-0.2, 0, -0.25); g.add(out);
-    const oc = (ny, y, q) => (ny > 0.6 && y < 0.35 ? tint(ROCK.grass, 0.8 + q * 0.3) : ny > 0.35 ? tint(ROCK.light, 0.85 + q * 0.2) : tint(ROCK.base, 0.8 + q * 0.25));
+    // (2026-11-15: the crags read as one dark lump at the game's camera; paler, in bands, and more of them)
+    const oc = (ny, y, q) => (ny > 0.6 && y < 0.35 ? tint(ROCK.grass, 0.85 + q * 0.3) : ny > 0.35 ? tint(ROCK.light, 1.3 + q * 0.25) : tint(ROCK.base, (Math.floor(y * 9) % 2 ? 1.2 : 1.45) + q * 0.2));
     const crag = (x, z, rad, ht, seg) => { const geo = solidCone(rad, ht, seg, 3); geo.translate(0, ht / 2, 0); const m = new THREE.Mesh(faceted(geo, r, rad * 0.3, oc), vmat()); m.position.set(x, 0, z); m.rotation.y = r() * 6; out.add(m); };
     crag(0, 0, 0.85, 0.42, 10);                                                   // a broad low outcrop…
     crag(-0.25, -0.2, 0.5, 0.78, 7); crag(0.22, -0.28, 0.42, 0.62, 7); crag(-0.05, 0.1, 0.4, 0.55, 7);   // …with a few blunt crags
+    crag(-0.55, 0.05, 0.3, 0.42, 6); crag(0.42, 0.02, 0.26, 0.36, 6); crag(-0.48, -0.5, 0.34, 0.56, 6); crag(0.05, -0.55, 0.3, 0.9, 6);   // (and a broken skyline over the adit)
     for (let i = 0; i < 3; i++) { const a = r() * 6.28; const k = rockMesh(r, 0.18 + r() * 0.1, 0.8); k.position.set(Math.cos(a) * 0.6 - 0.2, 0, Math.sin(a) * 0.5 - 0.25); g.add(k); }
     // adit on the +z face: dark mouth framed with timber, a little plank roof
     const ad = new THREE.Group(); ad.position.set(0.05, 0, 0.35); g.add(ad);
-    box(0.34, 0.36, 0.3, mat(null, '#0b0a0e'), 0, 0, -0.05, ad);
-    for (const sx of [-1, 1]) box(0.05, 0.4, 0.05, S.m.beam, sx * 0.19, 0, 0.08, ad);
-    box(0.46, 0.06, 0.07, S.m.beam, 0, 0.4, 0.08, ad);
-    const rf = box(0.52, 0.03, 0.22, S.m.wood, 0, 0.47, 0.05, ad); rf.rotation.x = 0.35;
-    lantern(ad, S, -0.24, 0.36, 0.14);
+    box(0.34, 0.48, 0.3, mat(null, '#0b0a0e'), 0, 0, -0.05, ad);                 // (2026-11-15: 0.36 high, a man; now a man and a third)
+    for (const sx of [-1, 1]) box(0.05, 0.52, 0.05, S.m.beam, sx * 0.19, 0, 0.08, ad);
+    box(0.46, 0.06, 0.07, S.m.beam, 0, 0.52, 0.08, ad);
+    const rf = box(0.52, 0.03, 0.22, S.m.wood, 0, 0.59, 0.05, ad); rf.rotation.x = 0.35;
+    lantern(ad, S, -0.24, 0.46, 0.14);
     // rails running out of the adit with sleepers, an ore cart on them
     for (let i = 0; i < 7; i++) box(0.22, 0.015, 0.035, S.m.wood, 0.05, 0, 0.5 + i * 0.09, g);
     for (const sx of [-1, 1]) box(0.015, 0.02, 0.66, S.m.trim, 0.05 + sx * 0.07, 0.015, 0.78, g);
@@ -1024,39 +1026,41 @@ Object.assign(TYPES, {
   // A house on piles: a plank platform on six posts a man's height over the water, the house on it (plaster over
   // rubble, a steep slate roof), a ladder down at the front, a lantern by the door, nets and an eel basket hung out.
   stilthouse(S, g, r) {
-    const P = 0.2, w = 0.58 + r() * 0.12, d = 0.5, h = 0.4, pw = w + 0.24, pd = d + 0.22;
+    const P = 0.2, w = 0.58 + r() * 0.12, d = 0.5, h = 0.5, pw = w + 0.24, pd = d + 0.22;   // (2026-11-15: h 0.4, the door 0.3: under a man)
     for (const [x, z] of [[-pw / 2, -pd / 2], [pw / 2, -pd / 2], [-pw / 2, pd / 2], [pw / 2, pd / 2], [0, pd / 2], [pw / 2, 0]]) box(0.04, P + 0.02, 0.04, S.m.beam, x, -0.02, z, g);
     for (const x of [-pw / 2, pw / 2]) { const br = box(0.02, 0.02, pd * 1.05, S.m.beam, x, P * 0.45, 0, g); br.rotation.x = 0.35; }   // cross-braces
     box(pw + 0.04, 0.03, pd + 0.04, S.m.wood, 0, P, 0, g);                                             // the platform
     const hs = new THREE.Group(); hs.position.set(-0.03, P + 0.03, -0.04); g.add(hs);
     storeyBlock(S, hs, w, d, 0, h, r() < 0.5 ? S.m.upper : S.m.lower, true, { doorZ: 0.08 });
-    doorOn(hs, S, { side: 'z', wallW: w, wallD: d }, 0.08, 0.15, 0.3, false);
+    doorOn(hs, S, { side: 'z', wallW: w, wallD: d }, 0.08, 0.17, 0.42, false);
     roofOver(S, hs, w, d, h, S.roofRise * 1.3, r() < 0.5);
     if (r() < 0.6) chimney(hs, S, -w / 2 + 0.1, -d / 4, h, 0.28);
     for (let i = 0; i < 5; i++) box(0.11, 0.012, 0.018, S.m.wood, 0.06, P - 0.04 - i * 0.045, pd / 2 + 0.03, g);   // the ladder's rungs
     for (const sx of [0, 0.12]) box(0.012, P + 0.03, 0.012, S.m.beam, sx, -0.02, pd / 2 + 0.03, g);
-    lantern(g, S, 0.2, P + 0.3, pd / 2 - 0.02);
+    lantern(g, S, 0.22, P + 0.42, pd / 2 - 0.02);
     const net = mat(null, '#4a4a3a'); box(0.2, 0.16, 0.006, net, pw / 2 - 0.12, P + 0.06, pd / 2 + 0.01, g);       // a net hung to dry
     const basket = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.02, 0.09, 7), mat(null, '#6a5a38')); basket.position.set(pw / 2 + 0.02, P - 0.06, 0.05); g.add(basket);
   },
   // The Drowned Eel: the waystation's tavern (and the Guild's board), bigger, two storeys on piles, a porch over
   // the deck with a bench, two lanterns and the board by the door, an eel on the sign.
   stilttavern(S, g, r) {
-    const P = 0.18, w = 1.0, d = 0.7, h1 = 0.46, h2 = 0.4, pw = w + 0.3, pd = d + 0.34;
+    const P = 0.18, w = 1.0, d = 0.7, h1 = 0.52, h2 = 0.4, pw = w + 0.3, pd = d + 0.34;
     for (let i = 0; i < 4; i++) for (const z of [-pd / 2, pd / 2]) box(0.05, P + 0.02, 0.05, S.m.beam, -pw / 2 + (pw * i) / 3, -0.02, z, g);
     box(pw + 0.04, 0.035, pd + 0.04, S.m.wood, 0, P, 0, g);
     const hs = new THREE.Group(); hs.position.set(-0.02, P + 0.035, -0.08); g.add(hs);
     storeyBlock(S, hs, w, d, 0, h1, S.m.lower, true, { doorZ: 0.05 });
-    doorOn(hs, S, { side: 'z', wallW: w, wallD: d }, 0.05, 0.22, 0.38, true);
+    doorOn(hs, S, { side: 'z', wallW: w, wallD: d }, 0.05, 0.24, 0.46, true);
     storeyBlock(S, hs, w + S.jetty * 2, d + S.jetty * 2, h1, h2, S.m.upper, true, { timber: true });
     roofOver(S, hs, w + S.jetty * 2, d + S.jetty * 2, h1 + h2, S.roofRise * 1.1);
     chimney(hs, S, 0.34, -0.12, h1 + h2, 0.42);
     sign(hs, S, 0.32, 0.48, d / 2);
     const po = new THREE.Group(); po.position.set(0.1, P + 0.035, d / 2 + 0.06); g.add(po);
-    for (const x of [-0.3, 0.42]) box(0.035, 0.4, 0.035, S.m.beam, x, 0, 0.1, po);
-    const pr = box(0.8, 0.03, 0.3, S.m.roof, 0.06, 0.41, 0, po); pr.rotation.x = 0.3;
+    // (2026-11-15: a pent roof over it hid whoever stood at the door from the camera, a third of them in view:
+    // level-design-rules.md §1.1; now an open frame, posts and a beam with the lanterns, the door in plain sight)
+    for (const x of [-0.3, 0.42]) box(0.035, 0.56, 0.035, S.m.beam, x, 0, 0.1, po);
+    box(0.8, 0.04, 0.04, S.m.beam, 0.06, 0.56, 0.1, po);
     box(0.36, 0.03, 0.08, S.m.wood, 0.02, 0.09, 0.08, po);                                              // the bench
-    lantern(po, S, -0.3, 0.36, 0.13); lantern(po, S, 0.42, 0.36, 0.13);
+    lantern(po, S, -0.3, 0.5, 0.13); lantern(po, S, 0.42, 0.5, 0.13);
     const nb = new THREE.Group(); nb.position.set(-0.44, P + 0.035, d / 2 + 0.06); g.add(nb);           // the Guild's board
     for (const sx of [-1, 1]) box(0.025, 0.32, 0.025, S.m.beam, sx * 0.13, 0, 0, nb);
     box(0.3, 0.18, 0.025, S.m.wood, 0, 0.13, 0, nb); box(0.34, 0.03, 0.06, S.m.roof, 0, 0.31, 0, nb);
@@ -1068,13 +1072,13 @@ Object.assign(TYPES, {
   // sleeping-room windows upstairs, a ladder down to a moored punt, a lantern and a hanging sign with a candle on it,
   // and a gallery along its front where the bench sits. Faces the camera (+z), as the tavern does.
   stiltinn(S, g, r) {
-    const P = 0.2, w = 1.22, d = 0.56, h1 = 0.4, h2 = 0.34, pw = w + 0.26, pd = d + 0.36;
+    const P = 0.2, w = 1.22, d = 0.56, h1 = 0.48, h2 = 0.34, pw = w + 0.26, pd = d + 0.36;
     for (let i = 0; i < 5; i++) for (const z of [-pd / 2, pd / 2]) box(0.05, P + 0.02, 0.05, S.m.beam, -pw / 2 + (pw * i) / 4, -0.02, z, g);
     for (const x of [-pw / 2, pw / 2]) { const br = box(0.02, 0.02, pd * 1.05, S.m.beam, x, P * 0.45, 0, g); br.rotation.x = 0.35; }   // cross-braces
     box(pw + 0.04, 0.035, pd + 0.04, S.m.wood, 0, P, 0, g);                                             // the platform
     const hs = new THREE.Group(); hs.position.set(0, P + 0.035, -0.1); g.add(hs);
     storeyBlock(S, hs, w, d, 0, h1, S.m.lower, true, { doorZ: -0.2 });
-    doorOn(hs, S, { side: 'z', wallW: w, wallD: d }, -0.2, 0.2, 0.34, false);
+    doorOn(hs, S, { side: 'z', wallW: w, wallD: d }, -0.2, 0.2, 0.4, false);
     storeyBlock(S, hs, w + S.jetty * 2, d + S.jetty * 2, h1, h2, S.m.upper, true, { timber: true });
     roofOver(S, hs, w + S.jetty * 2, d + S.jetty * 2, h1 + h2, S.roofRise * 1.25);
     chimney(hs, S, -0.42, -0.1, h1 + h2, 0.4); chimney(hs, S, 0.44, -0.1, h1 + h2, 0.34);
@@ -1153,8 +1157,12 @@ Object.assign(TYPES, {
   // side; its door framed in oars under a painted wooden crown on a boat-hook; more hulls on their sides along the
   // shore, a punt pulled up, stakes, reeds.
   boathall(S, g, r) {
+    // (the art pass, 2026-11-15, the owner: "are they the right size and look good enough?": the hall stood lower than a
+    // man and its door was 0.7 of one; now the hall is two men high on its mound, three hulls keel-up its roof, and the way
+    // in is a passage out of the mound's face, a man and a third high, roofed with a fourth boat and lit either side.
+    // A figure is 0.35 of a kit unit; the footprint is the one the sim walks round, envfoot.js)
     const turf = (ny, y, q) => (ny > 0.5 ? tint(ROCK.grass, 0.72 + q * 0.2) : tint(C3('#3e352a'), 0.8 + q * 0.2));
-    const mg = new THREE.SphereGeometry(0.8, 12, 5, 0, Math.PI * 2, 0, Math.PI / 2); mg.scale(1.2, 0.3, 1);
+    const mg = new THREE.SphereGeometry(0.8, 12, 5, 0, Math.PI * 2, 0, Math.PI / 2); mg.scale(1.2, 0.42, 1);
     const mound = new THREE.Mesh(faceted(mg, r, 0.05, turf), vmat()); mound.position.set(-0.05, 0, -0.1); g.add(mound);
     const hull = (x, y, z, len, wide, ry, rz = 0, k = 1) => {
       const hg = new THREE.Group(); hg.position.set(x, y, z); hg.rotation.set(0, ry, rz); g.add(hg);
@@ -1165,49 +1173,78 @@ Object.assign(TYPES, {
       for (const sz of [-1, 1]) box(0.02, 0.05, 0.02, S.m.beam, 0, wide * 0.7, sz * len * 0.88, hg);   // stem and stern posts
       return hg;
     };
-    // the hall: three hulls keel-up over a low plank wall, the middle one longest
-    box(0.82, 0.16, 0.7, S.m.wood, 0, 0.12, -0.12, g);
-    hull(-0.26, 0.26, -0.12, 0.44, 0.17, 0, 0, 0.9); hull(0.02, 0.28, -0.1, 0.5, 0.19, 0); hull(0.3, 0.25, -0.14, 0.42, 0.16, 0, 0, 0.85);
-    // the door: dark, framed in two oars, a boat-hook standing by it with the Toadking's crown on top
-    box(0.2, 0.24, 0.06, mat(null, '#0c0a0c'), 0.02, 0.1, 0.24, g); box(0.26, 0.03, 0.08, S.m.wood, 0.02, 0.34, 0.25, g);   // the door, a lintel plank over it
-    for (const sx of [-1, 1]) { const oar = box(0.022, 0.34, 0.02, S.m.beam, 0.02 + sx * 0.13, 0.1, 0.25, g); oar.rotation.z = -sx * 0.12; const blade = box(0.05, 0.08, 0.012, S.m.wood, 0.02 + sx * 0.15, 0.4, 0.25, g); blade.rotation.z = -sx * 0.12; }
-    box(0.02, 0.6, 0.02, S.m.beam, 0.3, 0.06, 0.32, g);
-    const hook = box(0.012, 0.08, 0.012, S.m.trim, 0.33, 0.62, 0.32, g); hook.rotation.z = -0.8;
+    // the hall on the mound's crown: a tarred plank wall, three hulls keel-up over it, the middle one longest and highest
+    box(0.94, 0.32, 0.66, S.m.wood, 0, 0.22, -0.24, g);
+    for (let i = 0; i < 5; i++) box(0.035, 0.34, 0.035, S.m.beam, -0.44 + i * 0.22, 0.2, 0.1, g);         // its posts, on the face
+    hull(-0.3, 0.54, -0.24, 0.4, 0.2, 0, 0, 0.9); hull(0.02, 0.56, -0.22, 0.46, 0.24, 0); hull(0.33, 0.53, -0.26, 0.38, 0.19, 0, 0, 0.85);
+    // the way in: a passage out of the mound's face, plank cheeks, a smaller boat keel-up for its roof, the mouth dark
+    const P = new THREE.Group(); P.position.set(0.02, 0, 0.4); g.add(P);
+    box(0.34, 0.47, 0.5, mat(null, '#0c0a0c'), 0, 0, -0.04, P);
+    for (const sx of [-1, 1]) box(0.06, 0.48, 0.5, S.m.wood, sx * 0.2, 0, -0.04, P);
+    hull(0.02, 0.47, 0.36, 0.3, 0.21, 0, 0, 0.95);
+    for (let i = 0; i < 3; i++) dress(box(0.3, 0.014, 0.06, S.m.wood, 0.02, 0, 0.66 + i * 0.03, g)).rotation.y = (r() - 0.5) * 0.15;   // planks over the mud to the mouth
+    // its frame: two oars stood up either side of the mouth, a lintel plank over it with the Toadking's count of boats, notched
+    for (const sx of [-1, 1]) { const oar = box(0.026, 0.56, 0.024, S.m.beam, sx * 0.25, 0, 0.23, P); oar.rotation.z = -sx * 0.06; const blade = box(0.07, 0.13, 0.014, S.m.wood, sx * 0.27, 0.54, 0.23, P); blade.rotation.z = -sx * 0.06; }
+    box(0.5, 0.05, 0.06, S.m.wood, 0, 0.47, 0.22, P);
+    for (let i = 0; i < 7; i++) box(0.012, 0.03, 0.01, mat(null, '#1a1612'), -0.18 + i * 0.06, 0.48, 0.255, P);
+    lantern(P, S, -0.29, 0.46, 0.27); lantern(P, S, 0.31, 0.46, 0.27);
+    // the boat-hook by the door, the Toadking's crown on its head, over the hall's roof line
+    box(0.025, 1.0, 0.025, S.m.beam, 0.42, 0, 0.5, g);
+    const hook = box(0.014, 0.1, 0.014, S.m.trim, 0.45, 1.0, 0.5, g); hook.rotation.z = -0.8;
     const gold = mat(null, '#a8843a');
-    box(0.09, 0.03, 0.09, gold, 0.3, 0.66, 0.32, g);
-    for (const [dx, dz] of [[-0.035, -0.035], [0.035, -0.035], [-0.035, 0.035], [0.035, 0.035]]) box(0.016, 0.04, 0.016, gold, 0.3 + dx, 0.69, 0.32 + dz, g);
-    lantern(g, S, -0.2, 0.34, 0.3);
+    box(0.11, 0.035, 0.11, gold, 0.42, 1.03, 0.5, g);
+    for (const [dx, dz] of [[-0.045, -0.045], [0.045, -0.045], [-0.045, 0.045], [0.045, 0.045]]) box(0.02, 0.05, 0.02, gold, 0.42 + dx, 1.065, 0.5 + dz, g);
     // hulls on their sides along the shore, a punt, stakes, reeds
     hull(-0.72, 0.1, 0.2, 0.36, 0.13, 0.9, 1.25, 0.8); hull(0.72, 0.1, -0.3, 0.32, 0.12, -0.5, -1.2, 0.75); hull(-0.5, 0.08, -0.7, 0.3, 0.12, 0.2, 1.3, 0.7);
-    box(0.16, 0.025, 0.44, S.m.wood, 0.6, 0, 0.42, g).rotation.y = -0.6;
-    for (const [x, z, h] of [[-0.62, 0.52, 0.26], [-0.45, 0.62, 0.2], [0.78, 0.1, 0.24]]) { const st = new THREE.Mesh(new THREE.ConeGeometry(0.02, h, 5), S.m.beam); st.position.set(x, h / 2, z); st.rotation.z = (r() - 0.5) * 0.4; g.add(st); }
+    box(0.16, 0.025, 0.44, S.m.wood, 0.66, 0, 0.36, g).rotation.y = -0.6;
+    for (const [x, z, h] of [[-0.62, 0.52, 0.3], [-0.45, 0.62, 0.24], [0.8, 0.08, 0.28]]) { const st = new THREE.Mesh(new THREE.ConeGeometry(0.022, h, 5), S.m.beam); st.position.set(x, h / 2, z); st.rotation.z = (r() - 0.5) * 0.4; g.add(st); }
     const reed = mat(null, '#6a6a3e');
-    for (const [cx, cz] of [[-0.86, -0.1], [0.9, 0.36], [-0.2, 0.7], [0.4, -0.78]]) for (let i = 0; i < 6; i++) {
-      const b = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.009, 0.1 + r() * 0.06, 3), reed); b.position.set(cx + (r() - 0.5) * 0.08, 0.05, cz + (r() - 0.5) * 0.08); b.rotation.set((r() - 0.5) * 0.7, 0, (r() - 0.5) * 0.7); g.add(b); }
+    for (const [cx, cz] of [[-0.86, -0.1], [0.9, 0.36], [-0.24, 0.66], [0.4, -0.8]]) for (let i = 0; i < 7; i++) {
+      const b = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.01, 0.14 + r() * 0.08, 3), reed); b.position.set(cx + (r() - 0.5) * 0.09, 0.07, cz + (r() - 0.5) * 0.09); b.rotation.set((r() - 0.5) * 0.7, 0, (r() - 0.5) * 0.7); g.add(b); }
   },
   // The Canal Locks: the lock-keepers' hall, imperial ashlar under a slate roof with a squat stair-tower, its door to
   // the camera; on its canal side (+x) a stone pier with the windlass the gates were worked by, a gate's balance beam
   // run out over it, and a spare gate leaf lying in the reeds.
   lockhall(S, g, r) {
-    const w = 0.7, d = 0.56, h = 0.5, st = S.m.ashlar;
-    box(w + 0.08, 0.06, d + 0.08, S.m.stoneDark, 0, 0, 0, g);                                        // the plinth, water-stained
-    storeyBlock(S, g, w, d, 0.06, h, st, true, { doorZ: -0.08 });
-    doorOn(g, S, { side: 'z', wallW: w, wallD: d }, -0.08, 0.2, 0.36, true);
-    roofOver(S, g, w, d, h + 0.06, S.roofRise * 0.9, true); chimney(g, S, 0.2, -0.12, h + 0.06, 0.3);
-    const tw = new THREE.Group(); tw.position.set(-w / 2 - 0.02, 0, -d / 2 + 0.12); g.add(tw);
-    box(0.24, 0.82, 0.24, st, 0, 0, 0, tw); pyramid(tw, 0.28, 0.82, 0.22, S.m.roof);
-    windowOn(tw, S, { side: 'z', wallW: 0.24, wallD: 0.24 }, 0, 0.6, 0.06, 0.12, { lit: true });
-    // the pier and the windlass: a capstan with four bars, chain to the gate
-    const pr = new THREE.Group(); pr.position.set(w / 2 + 0.3, 0, 0.1); g.add(pr);
-    box(0.34, 0.12, 0.3, st, 0, 0, 0, pr);
-    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.16, 10), S.m.wood); cap.position.set(0, 0.2, 0); pr.add(cap);
-    for (let i = 0; i < 4; i++) { const bar = box(0.3, 0.018, 0.018, S.m.beam, 0, 0.25, 0, pr); bar.rotation.y = (i * Math.PI) / 4; }
-    for (let i = 0; i < 6; i++) box(0.02, 0.02, 0.03, S.m.trim, 0.1 + i * 0.03, 0.16 - i * 0.022, 0, pr);   // the chain
-    const beam = box(0.62, 0.06, 0.07, S.m.beam, 0.34, 0.14, 0.06, pr); beam.rotation.y = -0.3;            // a gate's balance beam
-    const leaf = new THREE.Group(); leaf.position.set(0.36, 0.03, 0.5); leaf.rotation.set(-Math.PI / 2 + 0.1, 0.5, 0); g.add(leaf);   // a spare leaf, fallen
-    box(0.4, 0.5, 0.04, S.m.wood, 0, 0, 0, leaf); for (const y of [0.08, 0.25, 0.42]) box(0.42, 0.03, 0.05, S.m.trim, 0, y, 0, leaf);
-    lantern(g, S, 0.14, 0.34, d / 2 + 0.04);
-    barrel(g, S, -0.3, d / 2 + 0.12);
+    // (the art pass, 2026-11-15: it was a one-storey cottage with a door a man high, and nothing said *locks*; now the
+    // lock-keepers' hall is two storeys of ashlar and timber with its stair-tower over the roof, the door a man and a third,
+    // and on its canal side the lock itself: a stone chamber with water in it, a pair of mitre gates at each end, their
+    // long balance beams out over the copings, the capstan that worked them. Within the old footprint, envfoot.js)
+    const w = 0.66, d = 0.56, h1 = 0.5, h2 = 0.32, st = S.m.ashlar, X0 = -0.24;
+    const hall = new THREE.Group(); hall.position.x = X0; g.add(hall);
+    box(w + 0.08, 0.06, d + 0.08, S.m.stoneDark, 0, 0, 0, hall);                                        // the plinth, water-stained
+    storeyBlock(S, hall, w, d, 0.06, h1, st, true, { doorZ: 0.06 });
+    doorOn(hall, S, { side: 'z', wallW: w, wallD: d }, 0.06, 0.24, 0.48, true);
+    storeyBlock(S, hall, w + S.jetty * 2, d + S.jetty * 2, 0.06 + h1, h2, S.m.upper, true, { timber: true });
+    roofOver(S, hall, w + S.jetty * 2, d + S.jetty * 2, 0.06 + h1 + h2, S.roofRise * 0.9, true); chimney(hall, S, 0.18, -0.12, 0.06 + h1 + h2, 0.34);
+    const tw = new THREE.Group(); tw.position.set(-w / 2 - 0.02, 0, -d / 2 + 0.12); hall.add(tw);
+    box(0.26, 1.22, 0.26, st, 0, 0, 0, tw); hipRoof(tw, 0.26, 1.22, 0.26, S.m.roof);
+    for (const y of [0.5, 0.95]) windowOn(tw, S, { side: 'z', wallW: 0.26, wallD: 0.26 }, 0, y, 0.06, 0.12, { lit: y > 0.9 });
+    lantern(hall, S, -0.17, 0.48, d / 2 + 0.05); lantern(hall, S, 0.29, 0.48, d / 2 + 0.05);
+    barrel(hall, S, -0.28, d / 2 + 0.14);
+    // the lock: a stone chamber along z beside the hall, the canal's water in it, its copings a step over the bank
+    const L = new THREE.Group(); L.position.set(0.72, 0, -0.04); g.add(L);
+    const LW = 0.36, LL = 0.84, cw = 0.1;
+    for (const sx of [-1, 1]) { box(cw, 0.14, LL, st, sx * (LW / 2 + cw / 2), 0, 0, L); box(cw + 0.02, 0.03, LL + 0.02, S.m.stoneDark, sx * (LW / 2 + cw / 2), 0.14, 0, L); }
+    const water = new THREE.Mesh(new THREE.BoxGeometry(LW, 0.02, LL), mat(null, '#2c3e40')); water.position.set(0, 0.04, 0); L.add(water);
+    // a pair of mitre gates at each end, closed to a shallow V upstream, with a walk-board over them
+    for (const [z, sgn] of [[-LL / 2 + 0.05, -1], [LL / 2 - 0.05, 1]]) {
+      for (const sx of [-1, 1]) {
+        const leaf = new THREE.Group(); leaf.position.set(sx * LW / 2, 0, z); leaf.rotation.y = -sx * sgn * 0.32; L.add(leaf);
+        box(LW / 2 + 0.03, 0.22, 0.035, S.m.wood, -sx * (LW / 4 + 0.01), 0.02, 0, leaf);
+        for (const y of [0.06, 0.15]) box(LW / 2 + 0.04, 0.025, 0.045, S.m.trim, -sx * (LW / 4 + 0.01), y, 0, leaf);
+        // the balance beam: long, out over the coping and the bank, a man's waist high
+        const beam = box(0.42, 0.05, 0.06, S.m.beam, sx * 0.16, 0.24, sgn * 0.05, leaf); beam.rotation.y = sx * sgn * 0.12;
+      }
+      box(LW + 0.06, 0.02, 0.07, S.m.wood, 0, 0.24, z, L);
+    }
+    // the capstan on the coping at the downstream gate, its bars and chain
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 0.14, 10), S.m.wood); cap.position.set(LW / 2 + cw / 2, 0.24, LL / 2 - 0.2); L.add(cap);
+    for (let i = 0; i < 2; i++) { const bar = box(0.26, 0.016, 0.016, S.m.beam, LW / 2 + cw / 2, 0.28, LL / 2 - 0.2, L); bar.rotation.y = (i * Math.PI) / 2 + 0.3; }
+    lantern(L, S, -(LW / 2 + cw / 2), 0.5, LL / 2 - 0.12);
+    // a spare gate leaf lying in the reeds behind
+    const leaf = new THREE.Group(); leaf.position.set(0.12, 0.03, -0.22); leaf.rotation.set(-Math.PI / 2 + 0.1, 0.4, 0); g.add(leaf);
+    box(0.36, 0.3, 0.04, S.m.wood, 0, 0, 0, leaf); for (const y of [0.06, 0.2]) box(0.38, 0.03, 0.05, S.m.trim, 0, y, 0, leaf);
   },
   // The Sickpools: three imperial vats, stone-ringed tubs on a flagged floor, still brimming green; Vat Seven at the
   // front drained, a ladder down into it; a pipe run between them, a broken valve wheel, a Cult lantern-pole.
@@ -1217,7 +1254,7 @@ Object.assign(TYPES, {
     const vat = (x, z, rad, full) => {
       const v = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad * 1.05, 0.26, 14), st); v.position.set(x, 0.13, z); g.add(v);
       for (const y of [0.06, 0.2]) { const h = new THREE.Mesh(new THREE.TorusGeometry(rad * 1.02, 0.012, 4, 18), S.m.trim); h.rotation.x = Math.PI / 2; h.position.set(x, y, z); g.add(h); }
-      const top = new THREE.Mesh(new THREE.CylinderGeometry(rad * 0.92, rad * 0.92, 0.01, 14), full ? slime : dark); top.position.set(x, full ? 0.266 : 0.262, z); if (full) top.userData.glow = true; g.add(top);
+      const top = new THREE.Mesh(new THREE.CylinderGeometry(rad * 0.92, rad * 0.92, 0.01, 14), full ? slime : dark); top.position.set(x, full ? 0.266 : 0.262, z); g.add(top);   // (no glow flag: in 3D a glowing part takes the world's window glass, dark by day, and the slime went black; 2026-11-15)
       if (full) for (let i = 0; i < 3; i++) { const drip = box(0.03, 0.12 + r() * 0.08, 0.012, slime, x + (r() - 0.5) * rad, 0.04, z + rad * 0.98, g); drip.rotation.y = (r() - 0.5) * 0.5; }
     };
     vat(-0.36, -0.3, 0.26, true); vat(0.32, -0.36, 0.24, true); vat(0.42, 0.24, 0.2, true); vat(-0.14, 0.24, 0.24, false);
@@ -1245,7 +1282,9 @@ Object.assign(TYPES, {
     gable(nave, w, d, h, S.roofRise * w / 2 * 1.5, S.m.roof, st, 0.06, 0.04);
     const tw = new THREE.Group(); tw.position.set(-0.1, -0.08, d / 2 - 0.1); tw.rotation.z = 0.03; g.add(tw);
     box(0.36, 1.36, 0.34, st, 0, 0, 0, tw);
-    doorOn(tw, S, { side: 'z', wallW: 0.36, wallD: 0.34 }, 0, 0.18, 0.36, true);
+    doorOn(tw, S, { side: 'z', wallW: 0.36, wallD: 0.34 }, 0, 0.22, 0.56, false);   // (2026-11-15: 0.36 high, sunk 0.08: under a man; now a man and a third over the flood. No arch: doorOn's
+    // stands out of the wall a door's half-width, and on a wider door it pushed the footprint over the exit, outdoor.js DOOR_Y)
+    box(0.3, 0.06, 0.05, st, 0, 0.56, 0.17, tw);                                                    // a plain lintel
     windowOn(tw, S, { side: 'z', wallW: 0.36, wallD: 0.34 }, 0, 0.98, 0.1, 0.2, { pointed: true, lit: false });
     windowOn(tw, S, { side: 'x', wallW: 0.36, wallD: 0.34 }, 0, 0.98, 0.1, 0.2, { pointed: true, lit: false });
     crenels(tw, S, 0.36, 0.34, 1.36, st, 0.06);
@@ -1260,6 +1299,7 @@ Object.assign(TYPES, {
     for (const [x, z, sx, sz] of [[0, 0.1, 1.2, 1.0], [0.5, 0.6, 0.6, 0.4], [-0.55, -0.2, 0.5, 0.8]]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.004, 18), water); p.scale.set(sx, 1, sz); p.position.set(x, 0.002, z); g.add(p); }
     deadTree(g, r, -0.62, 0.35, 0.9);
     box(0.03, 0.34, 0.03, S.m.beam, 0.14, 0, 0.62, g); lantern(g, S, 0.14, 0.36, 0.62);
+    lantern(tw, S, -0.15, 0.56, 0.08); lantern(tw, S, 0.15, 0.56, 0.08);   // (the west door lit either side, for dusk)
   },
   // Reedholm, the Grey Sisters' prioress house, on its rise: a small chapel and a dormitory range round a walled
   // garth, the bell-cote over the chapel's gable, and in the chapel's front, below the sill, the low iron-banded door
@@ -1269,18 +1309,19 @@ Object.assign(TYPES, {
     const rise = new THREE.SphereGeometry(0.9, 12, 4, 0, Math.PI * 2, 0, Math.PI / 2); rise.scale(1.15, 0.16, 1);
     g.add(new THREE.Mesh(faceted(rise, r, 0.03, (ny, y, q) => (ny > 0.6 ? tint(ROCK.grass, 0.72 + q * 0.18) : tint(ROCK.base, 0.78 + q * 0.2))), vmat()));
     const ch = new THREE.Group(); ch.position.set(-0.12, 0.1, -0.05); g.add(ch);
-    const w = 0.46, d = 0.8, h = 0.5;
+    const w = 0.46, d = 0.8, h = 0.66;   // (2026-11-15: 0.5; taller, so the undercroft's door under its sill is a man high)
     box(w, h, d, st, 0, 0, 0, ch);
     for (let i = 0; i < 3; i++) windowOn(ch, S, { side: 'x', wallW: w, wallD: d }, -d / 2 + (d * (i + 0.5)) / 3, h * 0.6, 0.07, 0.2, { pointed: true, lit: i === 2 });
-    windowOn(ch, S, { side: 'z', wallW: w, wallD: d }, 0, h * 0.7, 0.1, 0.2, { pointed: true, lit: true });
+    windowOn(ch, S, { side: 'z', wallW: w, wallD: d }, 0, h * 0.76, 0.1, 0.2, { pointed: true, lit: true });
     gable(ch, w, d, h, S.roofRise * w / 2 * 1.4, S.m.roof, st, 0.06, 0.04);
     box(0.08, 0.14, 0.06, st, 0, h + 0.28, d / 2 - 0.03, ch);                                           // the bell-cote
     // the undercroft door: low in the chapel's front, half below the ground, steps down to it, iron bands
-    box(0.22, 0.2, 0.05, mat(null, '#0c0a0c'), 0, -0.04, d / 2 + 0.02, ch);
-    box(0.16, 0.17, 0.012, S.m.door, 0, -0.02, d / 2 + 0.05, ch);
-    for (const y of [0.02, 0.1]) box(0.17, 0.014, 0.015, S.m.trim, 0, y, d / 2 + 0.058, ch);
-    for (const sx of [-1, 1]) box(0.04, 0.22, 0.06, st, sx * 0.12, -0.04, d / 2 + 0.04, ch);   // its jambs
-    for (let i = 0; i < 3; i++) box(0.26, 0.025, 0.07, st, 0, -0.08 + i * 0.03, d / 2 + 0.16 - i * 0.05, ch);   // steps down to it
+    box(0.28, 0.42, 0.05, mat(null, '#0c0a0c'), 0, -0.08, d / 2 + 0.02, ch);
+    box(0.21, 0.37, 0.012, S.m.door, 0, -0.06, d / 2 + 0.05, ch);
+    for (const y of [0.0, 0.14, 0.26]) box(0.22, 0.016, 0.015, S.m.trim, 0, y, d / 2 + 0.058, ch);
+    for (const sx of [-1, 1]) box(0.05, 0.44, 0.07, st, sx * 0.155, -0.08, d / 2 + 0.04, ch);   // its jambs
+    box(0.36, 0.06, 0.08, st, 0, 0.34, d / 2 + 0.045, ch);                                           // its lintel
+    for (let i = 0; i < 3; i++) box(0.32, 0.025, 0.07, st, 0, -0.1 + i * 0.03, d / 2 + 0.16 - i * 0.05, ch);   // steps down to it
     // the dormitory range and the garth wall, behind and to the side
     const dm = new THREE.Group(); dm.position.set(0.42, 0.1, -0.26); g.add(dm);
     storeyBlock(S, dm, 0.36, 0.5, 0, 0.36, S.m.upper, true, {}); roofOver(S, dm, 0.36, 0.5, 0.36, S.roofRise, false);

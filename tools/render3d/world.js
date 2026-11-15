@@ -326,10 +326,11 @@ function sweepFigures() {
 // the same design, lit and shadowed by the world (docs/vale-landmarks-proposal.md; the owner, 2026-11-10: "the old
 // design for the Keep actually looks OK - can we keep this, and are those tile assets re-usable for our overall asset
 // catalogue?" — one catalogue). One kit unit is ten of our tiles, five of Luminati's units. Which pieces (?landmarks=):
-//   'chosen' (the default, the owner's choices: the proposal's §8): every kit piece of the Vale's but the ones convert.js
-//     marks `card` (Thornwick's palisade, towers and gatehouse seen from inside the town);
+//   'chosen' (the default, the owner's choices: the proposal's §8): every kit piece but the ones convert.js marks `card`
+//     (Thornwick's palisade, towers and gatehouse seen from inside the town). Every region's since the buildings' art
+//     pass (2026-11-15, docs/buildings-art-pass.md): the Fens' doors and Saltmere's stilts were cards till then;
 //   'doors': the Vale's three dungeon doors alone, the Keep, the Old Barrows and the Sunken Chapel;
-//   'all': every kit piece of the Vale's, cards and all;
+//   'all': every kit piece, cards and all;
 //   'sprites': the baked sprites, as before.
 let envSprites = [], LANDMARKS = 'chosen';
 const KIT_UNIT = 5, KIT_LIFT = 1.3, KIT = new Map();
@@ -435,8 +436,8 @@ async function placeEnv(list, region) {
   for (const p of list) {
     if (p.canvas) { standOurs(p); continue; }
     if (p.arch) { const g = buildArch(p.arch); game.engine.scene.add(g); envSprites.push(g); continue; }
-    const kit = KIT.get(p.id), vale = (region || 'vale') === 'vale';
-    if (kit && vale && (LANDMARKS === 'all' || (LANDMARKS === 'chosen' && !p.card) || (LANDMARKS === 'doors' && DOORS.has(p.id)))) {
+    const kit = KIT.get(p.id);
+    if (kit && (LANDMARKS === 'all' || (LANDMARKS === 'chosen' && !p.card) || (LANDMARKS === 'doors' && DOORS.has(p.id)))) {
       // (on the ground round it, not the tile under its middle: the chapel stands in water the converter laid under it)
       const H = (dx, dz) => game.tileMap.getHeight(p.x + dx, p.z + dz), y = Math.max(H(0, 0), H(0, 3), H(0, -3), H(3, 0), H(-3, 0));
       const g = kitPiece(kit, p.x, y, p.z);

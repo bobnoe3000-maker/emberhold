@@ -117,8 +117,8 @@ The owner: *"Yes go ahead with recommendations"*: §4's four, all three dungeons
 - **Dressing** by kind (`world.js` recipes `boats`, `reeds`, `nets`, `pens`, `windlasses`, `vats`; caps `boat` 3,
   `vat` 6): `dress-audit.mjs` caps, 30 Fens rooms, **0 over**; `--clear`, 18 floors, **0 breaks**.
 - **Visibility** (`visibility.mjs`): the six floors, 47 subjects, **0 under half** (the Locks' cliff miss gone with its
-  generated floor). Saltmere's Drowned Eel door is **not fixed**: the hero stands under the stilt tavern's own porch roof
-  (`buildkit.js` stilttavern), an art change for its own pass.
+  generated floor). Saltmere's Drowned Eel door was left here (the hero stood under the stilt tavern's own porch roof); fixed in
+  the buildings' art pass, 2026-11-15 ([buildings-art-pass.md](./buildings-art-pass.md)): the porch an open frame, 0 under.
 
 Measured, before (generated, three floors) → after (authored, two):
 

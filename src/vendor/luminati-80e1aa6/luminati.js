@@ -7410,23 +7410,23 @@ Object.assign(tc, {
 	mine(e, t, n) {
 		let r = new A();
 		r.position.set(-.2, 0, -.25), t.add(r);
-		let i = (e, t, n) => e > .6 && t < .35 ? uc(lc.grass, .8 + n * .3) : e > .35 ? uc(lc.light, .85 + n * .2) : uc(lc.base, .8 + n * .25), a = (e, t, a, o, s) => {
+		let i = (e, t, n) => e > .6 && t < .35 ? uc(lc.grass, .85 + n * .3) : e > .35 ? uc(lc.light, 1.3 + n * .25) : uc(lc.base, (Math.floor(t * 9) % 2 ? 1.2 : 1.45) + n * .2), a = (e, t, a, o, s) => {
 			let c = cc(a, o, s, 3);
 			c.translate(0, o / 2, 0);
 			let l = new M(oc(c, n, a * .3, i), sc());
 			l.position.set(e, 0, t), l.rotation.y = n() * 6, r.add(l);
 		};
-		a(0, 0, .85, .42, 10), a(-.25, -.2, .5, .78, 7), a(.22, -.28, .42, .62, 7), a(-.05, .1, .4, .55, 7);
+		a(0, 0, .85, .42, 10), a(-.25, -.2, .5, .78, 7), a(.22, -.28, .42, .62, 7), a(-.05, .1, .4, .55, 7), a(-.55, .05, .3, .42, 6), a(.42, .02, .26, .36, 6), a(-.48, -.5, .34, .56, 6), a(.05, -.55, .3, .9, 6);
 		for (let e = 0; e < 3; e++) {
 			let e = n() * 6.28, r = dc(n, .18 + n() * .1, .8);
 			r.position.set(Math.cos(e) * .6 - .2, 0, Math.sin(e) * .5 - .25), t.add(r);
 		}
 		let o = new A();
-		o.position.set(.05, 0, .35), t.add(o), z(.34, .36, .3, R(null, "#0b0a0e"), 0, 0, -.05, o);
-		for (let t of [-1, 1]) z(.05, .4, .05, e.m.beam, t * .19, 0, .08, o);
-		z(.46, .06, .07, e.m.beam, 0, .4, .08, o);
-		let s = z(.52, .03, .22, e.m.wood, 0, .47, .05, o);
-		s.rotation.x = .35, fc(o, e, -.24, .36, .14);
+		o.position.set(.05, 0, .35), t.add(o), z(.34, .48, .3, R(null, "#0b0a0e"), 0, 0, -.05, o);
+		for (let t of [-1, 1]) z(.05, .52, .05, e.m.beam, t * .19, 0, .08, o);
+		z(.46, .06, .07, e.m.beam, 0, .52, .08, o);
+		let s = z(.52, .03, .22, e.m.wood, 0, .59, .05, o);
+		s.rotation.x = .35, fc(o, e, -.24, .46, .14);
 		for (let n = 0; n < 7; n++) z(.22, .015, .035, e.m.wood, .05, 0, .5 + n * .09, t);
 		for (let n of [-1, 1]) z(.015, .02, .66, e.m.trim, .05 + n * .07, .015, .78, t);
 		let c = new A();
@@ -7457,7 +7457,7 @@ Object.assign(tc, {
 		f.rotation.x = Math.PI / 2, f.position.set(0, .7, 0), d.add(f), z(.008, .45, .008, e.m.trim, .06, .2, 0, d), fc(t, e, .32, .46, .62), Gs(t, e, -.35, .55), Gs(t, e, -.45, .5);
 	},
 	stilthouse(e, t, n) {
-		let r = .2, i = .58 + n() * .12, a = .5, o = .4, s = i + .24, c = .72;
+		let r = .2, i = .58 + n() * .12, a = .5, o = .5, s = i + .24, c = .72;
 		for (let [n, r] of [
 			[-s / 2, -.72 / 2],
 			[s / 2, -.72 / 2],
@@ -7476,15 +7476,15 @@ Object.assign(tc, {
 			side: "z",
 			wallW: i,
 			wallD: a
-		}, .08, .15, .3, !1), Qs(e, l, i, a, o, e.roofRise * 1.3, n() < .5), n() < .6 && Vs(l, e, -i / 2 + .1, -.5 / 4, o, .28);
+		}, .08, .17, .42, !1), Qs(e, l, i, a, o, e.roofRise * 1.3, n() < .5), n() < .6 && Vs(l, e, -i / 2 + .1, -.5 / 4, o, .28);
 		for (let n = 0; n < 5; n++) z(.11, .012, .018, e.m.wood, .06, .16 - n * .045, .39, t);
 		for (let n of [0, .12]) z(.012, .23, .012, e.m.beam, n, -.02, .39, t);
-		fc(t, e, .2, .5, c / 2 - .02), z(.2, .16, .006, R(null, "#4a4a3a"), s / 2 - .12, .26, .37, t);
+		fc(t, e, .22, .62, c / 2 - .02), z(.2, .16, .006, R(null, "#4a4a3a"), s / 2 - .12, .26, .37, t);
 		let u = new M(new k(.035, .02, .09, 7), R(null, "#6a5a38"));
 		u.position.set(s / 2 + .02, .14, .05), t.add(u);
 	},
 	stilttavern(e, t, n) {
-		let r = .7, i = .46, a = 1.3, o = 1.04;
+		let r = .7, i = .52, a = 1.3, o = 1.04;
 		for (let n = 0; n < 4; n++) for (let r of [-1.04 / 2, o / 2]) z(.05, .19999999999999998, .05, e.m.beam, -1.3 / 2 + a * n / 3, -.02, r, t);
 		z(1.34, .035, 1.08, e.m.wood, 0, .18, 0, t);
 		let s = new A();
@@ -7492,26 +7492,25 @@ Object.assign(tc, {
 			side: "z",
 			wallW: 1,
 			wallD: r
-		}, .05, .22, .38, !0), Zs(e, s, 1 + e.jetty * 2, r + e.jetty * 2, i, .4, e.m.upper, !0, { timber: !0 }), Qs(e, s, 1 + e.jetty * 2, r + e.jetty * 2, .8600000000000001, e.roofRise * 1.1), Vs(s, e, .34, -.12, .8600000000000001, .42), Ws(s, e, .32, .48, r / 2);
+		}, .05, .24, .46, !0), Zs(e, s, 1 + e.jetty * 2, r + e.jetty * 2, i, .4, e.m.upper, !0, { timber: !0 }), Qs(e, s, 1 + e.jetty * 2, r + e.jetty * 2, .92, e.roofRise * 1.1), Vs(s, e, .34, -.12, .92, .42), Ws(s, e, .32, .48, r / 2);
 		let c = new A();
 		c.position.set(.1, .215, .41), t.add(c);
-		for (let t of [-.3, .42]) z(.035, .4, .035, e.m.beam, t, 0, .1, c);
-		let l = z(.8, .03, .3, e.m.roof, .06, .41, 0, c);
-		l.rotation.x = .3, z(.36, .03, .08, e.m.wood, .02, .09, .08, c), fc(c, e, -.3, .36, .13), fc(c, e, .42, .36, .13);
-		let u = new A();
-		u.position.set(-.44, .215, .41), t.add(u);
-		for (let t of [-1, 1]) z(.025, .32, .025, e.m.beam, t * .13, 0, 0, u);
-		z(.3, .18, .025, e.m.wood, 0, .13, 0, u), z(.34, .03, .06, e.m.roof, 0, .31, 0, u);
+		for (let t of [-.3, .42]) z(.035, .56, .035, e.m.beam, t, 0, .1, c);
+		z(.8, .04, .04, e.m.beam, .06, .56, .1, c), z(.36, .03, .08, e.m.wood, .02, .09, .08, c), fc(c, e, -.3, .5, .13), fc(c, e, .42, .5, .13);
+		let l = new A();
+		l.position.set(-.44, .215, .41), t.add(l);
+		for (let t of [-1, 1]) z(.025, .32, .025, e.m.beam, t * .13, 0, 0, l);
+		z(.3, .18, .025, e.m.wood, 0, .13, 0, l), z(.34, .03, .06, e.m.roof, 0, .31, 0, l);
 		for (let [t, n] of [
 			[-.08, .24],
 			[.03, .19],
 			[.09, .24],
 			[-.02, .15]
-		]) z(.05, .06, .03, e.m.paper, t, n, .004, u);
+		]) z(.05, .06, .03, e.m.paper, t, n, .004, l);
 		Gs(t, e, a / 2 - .08, o / 2 - .05);
 	},
 	stiltinn(e, t, n) {
-		let r = .2, i = 1.22, a = .56, o = .4, s = 1.48, c = .92;
+		let r = .2, i = 1.22, a = .56, o = .48, s = 1.48, c = .92;
 		for (let n = 0; n < 5; n++) for (let r of [-.92 / 2, c / 2]) z(.05, .22, .05, e.m.beam, -1.48 / 2 + s * n / 4, -.02, r, t);
 		for (let n of [-1.48 / 2, s / 2]) {
 			let i = z(.02, .02, c * 1.05, e.m.beam, n, r * .45, 0, t);
@@ -7523,7 +7522,7 @@ Object.assign(tc, {
 			side: "z",
 			wallW: i,
 			wallD: a
-		}, -.2, .2, .34, !1), Zs(e, l, i + e.jetty * 2, a + e.jetty * 2, o, .34, e.m.upper, !0, { timber: !0 }), Qs(e, l, i + e.jetty * 2, a + e.jetty * 2, .74, e.roofRise * 1.25), Vs(l, e, -.42, -.1, .74, .4), Vs(l, e, .44, -.1, .74, .34), Ws(l, e, -.46, .46, a / 2), z(.02, .06, .012, R(null, "#e8d8a8"), -.46, .43, .34, l);
+		}, -.2, .2, .4, !1), Zs(e, l, i + e.jetty * 2, a + e.jetty * 2, o, .34, e.m.upper, !0, { timber: !0 }), Qs(e, l, i + e.jetty * 2, a + e.jetty * 2, .8200000000000001, e.roofRise * 1.25), Vs(l, e, -.42, -.1, .8200000000000001, .4), Vs(l, e, .44, -.1, .8200000000000001, .34), Ws(l, e, -.46, .46, a / 2), z(.02, .06, .012, R(null, "#e8d8a8"), -.46, .43, .34, l);
 		let u = new A();
 		u.position.set(0, .23500000000000001, a / 2 - .02), t.add(u);
 		for (let t of [
@@ -7535,7 +7534,7 @@ Object.assign(tc, {
 		z(1.2, .025, .025, e.m.beam, .02, .18, .12, u), z(.4, .03, .08, e.m.wood, .2, .09, .02, u), fc(u, e, -.2, .36, .1), fc(u, e, .6, .36, .1);
 		for (let n = 0; n < 5; n++) z(.11, .012, .018, e.m.wood, s / 2 - .16, .16 - n * .045, .49, t);
 		for (let n of [s / 2 - .22, s / 2 - .1]) z(.012, .23, .012, e.m.beam, n, -.02, .49, t);
-		z(.22, .012, .1, R(null, "#6a4a3a"), -.3, .6600000000000001, .4, t);
+		z(.22, .012, .1, R(null, "#6a4a3a"), -.3, .74, .4, t);
 	},
 	cistern(e, t, n) {
 		for (let [n, r] of [
@@ -7597,7 +7596,7 @@ Object.assign(tc, {
 	},
 	boathall(e, t, n) {
 		let r = (e, t, n) => e > .5 ? uc(lc.grass, .72 + n * .2) : uc(ac("#3e352a"), .8 + n * .2), i = new j(.8, 12, 5, 0, Math.PI * 2, 0, Math.PI / 2);
-		i.scale(1.2, .3, 1);
+		i.scale(1.2, .42, 1);
 		let a = new M(oc(i, n, .05, r), sc());
 		a.position.set(-.05, 0, -.1), t.add(a);
 		let o = (r, i, a, o, s, c, l = 0, u = 1) => {
@@ -7610,88 +7609,106 @@ Object.assign(tc, {
 			for (let t of [-1, 1]) z(.02, .05, .02, e.m.beam, 0, s * .7, t * o * .88, d);
 			return d;
 		};
-		z(.82, .16, .7, e.m.wood, 0, .12, -.12, t), o(-.26, .26, -.12, .44, .17, 0, 0, .9), o(.02, .28, -.1, .5, .19, 0), o(.3, .25, -.14, .42, .16, 0, 0, .85), z(.2, .24, .06, R(null, "#0c0a0c"), .02, .1, .24, t), z(.26, .03, .08, e.m.wood, .02, .34, .25, t);
-		for (let n of [-1, 1]) {
-			let r = z(.022, .34, .02, e.m.beam, .02 + n * .13, .1, .25, t);
-			r.rotation.z = -n * .12;
-			let i = z(.05, .08, .012, e.m.wood, .02 + n * .15, .4, .25, t);
-			i.rotation.z = -n * .12;
+		z(.94, .32, .66, e.m.wood, 0, .22, -.24, t);
+		for (let n = 0; n < 5; n++) z(.035, .34, .035, e.m.beam, -.44 + n * .22, .2, .1, t);
+		o(-.3, .54, -.24, .4, .2, 0, 0, .9), o(.02, .56, -.22, .46, .24, 0), o(.33, .53, -.26, .38, .19, 0, 0, .85);
+		let s = new A();
+		s.position.set(.02, 0, .4), t.add(s), z(.34, .47, .5, R(null, "#0c0a0c"), 0, 0, -.04, s);
+		for (let t of [-1, 1]) z(.06, .48, .5, e.m.wood, t * .2, 0, -.04, s);
+		o(.02, .47, .36, .3, .21, 0, 0, .95);
+		for (let r = 0; r < 3; r++) Is(z(.3, .014, .06, e.m.wood, .02, 0, .66 + r * .03, t)).rotation.y = (n() - .5) * .15;
+		for (let t of [-1, 1]) {
+			let n = z(.026, .56, .024, e.m.beam, t * .25, 0, .23, s);
+			n.rotation.z = -t * .06;
+			let r = z(.07, .13, .014, e.m.wood, t * .27, .54, .23, s);
+			r.rotation.z = -t * .06;
 		}
-		z(.02, .6, .02, e.m.beam, .3, .06, .32, t);
-		let s = z(.012, .08, .012, e.m.trim, .33, .62, .32, t);
-		s.rotation.z = -.8;
-		let c = R(null, "#a8843a");
-		z(.09, .03, .09, c, .3, .66, .32, t);
+		z(.5, .05, .06, e.m.wood, 0, .47, .22, s);
+		for (let e = 0; e < 7; e++) z(.012, .03, .01, R(null, "#1a1612"), -.18 + e * .06, .48, .255, s);
+		fc(s, e, -.29, .46, .27), fc(s, e, .31, .46, .27), z(.025, 1, .025, e.m.beam, .42, 0, .5, t);
+		let c = z(.014, .1, .014, e.m.trim, .45, 1, .5, t);
+		c.rotation.z = -.8;
+		let l = R(null, "#a8843a");
+		z(.11, .035, .11, l, .42, 1.03, .5, t);
 		for (let [e, n] of [
-			[-.035, -.035],
-			[.035, -.035],
-			[-.035, .035],
-			[.035, .035]
-		]) z(.016, .04, .016, c, .3 + e, .69, .32 + n, t);
-		fc(t, e, -.2, .34, .3), o(-.72, .1, .2, .36, .13, .9, 1.25, .8), o(.72, .1, -.3, .32, .12, -.5, -1.2, .75), o(-.5, .08, -.7, .3, .12, .2, 1.3, .7), z(.16, .025, .44, e.m.wood, .6, 0, .42, t).rotation.y = -.6;
+			[-.045, -.045],
+			[.045, -.045],
+			[-.045, .045],
+			[.045, .045]
+		]) z(.02, .05, .02, l, .42 + e, 1.065, .5 + n, t);
+		o(-.72, .1, .2, .36, .13, .9, 1.25, .8), o(.72, .1, -.3, .32, .12, -.5, -1.2, .75), o(-.5, .08, -.7, .3, .12, .2, 1.3, .7), z(.16, .025, .44, e.m.wood, .66, 0, .36, t).rotation.y = -.6;
 		for (let [r, i, a] of [
 			[
 				-.62,
 				.52,
-				.26
+				.3
 			],
 			[
 				-.45,
 				.62,
-				.2
+				.24
 			],
 			[
-				.78,
-				.1,
-				.24
+				.8,
+				.08,
+				.28
 			]
 		]) {
-			let o = new M(new et(.02, a, 5), e.m.beam);
+			let o = new M(new et(.022, a, 5), e.m.beam);
 			o.position.set(r, a / 2, i), o.rotation.z = (n() - .5) * .4, t.add(o);
 		}
-		let l = R(null, "#6a6a3e");
+		let u = R(null, "#6a6a3e");
 		for (let [e, r] of [
 			[-.86, -.1],
 			[.9, .36],
-			[-.2, .7],
-			[.4, -.78]
-		]) for (let i = 0; i < 6; i++) {
-			let i = new M(new k(.003, .009, .1 + n() * .06, 3), l);
-			i.position.set(e + (n() - .5) * .08, .05, r + (n() - .5) * .08), i.rotation.set((n() - .5) * .7, 0, (n() - .5) * .7), t.add(i);
+			[-.24, .66],
+			[.4, -.8]
+		]) for (let i = 0; i < 7; i++) {
+			let i = new M(new k(.003, .01, .14 + n() * .08, 3), u);
+			i.position.set(e + (n() - .5) * .09, .07, r + (n() - .5) * .09), i.rotation.set((n() - .5) * .7, 0, (n() - .5) * .7), t.add(i);
 		}
 	},
 	lockhall(e, t, n) {
-		let r = .7, i = .56, a = e.m.ashlar;
-		z(.7799999999999999, .06, .64, e.m.stoneDark, 0, 0, 0, t), Zs(e, t, r, i, .06, .5, a, !0, { doorZ: -.08 }), zs(t, e, {
+		let r = .66, i = .56, a = e.m.ashlar, o = new A();
+		o.position.x = -.24, t.add(o), z(.74, .06, .64, e.m.stoneDark, 0, 0, 0, o), Zs(e, o, r, i, .06, .5, a, !0, { doorZ: .06 }), zs(o, e, {
 			side: "z",
 			wallW: r,
 			wallD: i
-		}, -.08, .2, .36, !0), Qs(e, t, r, i, .56, e.roofRise * .9, !0), Vs(t, e, .2, -.12, .56, .3);
-		let o = new A();
-		o.position.set(-.7 / 2 - .02, 0, -.56 / 2 + .12), t.add(o), z(.24, .82, .24, a, 0, 0, 0, o), As(o, .28, .82, .22, e.m.roof), js(o, e, {
-			side: "z",
-			wallW: .24,
-			wallD: .24
-		}, 0, .6, .06, .12, { lit: !0 });
+		}, .06, .24, .48, !0), Zs(e, o, r + e.jetty * 2, i + e.jetty * 2, .56, .32, e.m.upper, !0, { timber: !0 }), Qs(e, o, r + e.jetty * 2, i + e.jetty * 2, .8800000000000001, e.roofRise * .9, !0), Vs(o, e, .18, -.12, .8800000000000001, .34);
 		let s = new A();
-		s.position.set(.6499999999999999, 0, .1), t.add(s), z(.34, .12, .3, a, 0, 0, 0, s);
-		let c = new M(new k(.05, .06, .16, 10), e.m.wood);
-		c.position.set(0, .2, 0), s.add(c);
-		for (let t = 0; t < 4; t++) {
-			let n = z(.3, .018, .018, e.m.beam, 0, .25, 0, s);
-			n.rotation.y = t * Math.PI / 4;
+		s.position.set(-.66 / 2 - .02, 0, -.56 / 2 + .12), o.add(s), z(.26, 1.22, .26, a, 0, 0, 0, s), $s(s, .26, 1.22, .26, e.m.roof);
+		for (let t of [.5, .95]) js(s, e, {
+			side: "z",
+			wallW: .26,
+			wallD: .26
+		}, 0, t, .06, .12, { lit: t > .9 });
+		fc(o, e, -.17, .48, .33), fc(o, e, .29, .48, .33), Gs(o, e, -.28, .42000000000000004);
+		let c = new A();
+		c.position.set(.72, 0, -.04), t.add(c);
+		let l = .36, u = .84;
+		for (let t of [-1, 1]) z(.1, .14, u, a, t * .22999999999999998, 0, 0, c), z(.12000000000000001, .03, .86, e.m.stoneDark, t * .22999999999999998, .14, 0, c);
+		let d = new M(new F(l, .02, u), R(null, "#2c3e40"));
+		d.position.set(0, .04, 0), c.add(d);
+		for (let [t, n] of [[-.37, -1], [u / 2 - .05, 1]]) {
+			for (let r of [-1, 1]) {
+				let i = new A();
+				i.position.set(r * l / 2, 0, t), i.rotation.y = -r * n * .32, c.add(i), z(.21, .22, .035, e.m.wood, -r * .09999999999999999, .02, 0, i);
+				for (let t of [.06, .15]) z(.22, .025, .045, e.m.trim, -r * .09999999999999999, t, 0, i);
+				let a = z(.42, .05, .06, e.m.beam, r * .16, .24, n * .05, i);
+				a.rotation.y = r * n * .12;
+			}
+			z(.42, .02, .07, e.m.wood, 0, .24, t, c);
 		}
-		for (let t = 0; t < 6; t++) z(.02, .02, .03, e.m.trim, .1 + t * .03, .16 - t * .022, 0, s);
-		let l = z(.62, .06, .07, e.m.beam, .34, .14, .06, s);
-		l.rotation.y = -.3;
-		let u = new A();
-		u.position.set(.36, .03, .5), u.rotation.set(-Math.PI / 2 + .1, .5, 0), t.add(u), z(.4, .5, .04, e.m.wood, 0, 0, 0, u);
-		for (let t of [
-			.08,
-			.25,
-			.42
-		]) z(.42, .03, .05, e.m.trim, 0, t, 0, u);
-		fc(t, e, .14, .34, .32), Gs(t, e, -.3, .4);
+		let f = new M(new k(.045, .055, .14, 10), e.m.wood);
+		f.position.set(.22999999999999998, .24, u / 2 - .2), c.add(f);
+		for (let t = 0; t < 2; t++) {
+			let n = z(.26, .016, .016, e.m.beam, .22999999999999998, .28, u / 2 - .2, c);
+			n.rotation.y = t * Math.PI / 2 + .3;
+		}
+		fc(c, e, -.22999999999999998, .5, u / 2 - .12);
+		let p = new A();
+		p.position.set(.12, .03, -.22), p.rotation.set(-Math.PI / 2 + .1, .4, 0), t.add(p), z(.36, .3, .04, e.m.wood, 0, 0, 0, p);
+		for (let t of [.06, .2]) z(.38, .03, .05, e.m.trim, 0, t, 0, p);
 	},
 	vats(e, t, n) {
 		let r = e.m.ashlar, i = R(null, "#5a8a3a"), a = R(null, "#0e0c0c");
@@ -7704,7 +7721,7 @@ Object.assign(tc, {
 				r.rotation.x = Math.PI / 2, r.position.set(o, n, s), t.add(r);
 			}
 			let d = new M(new k(c * .92, c * .92, .01, 14), l ? i : a);
-			if (d.position.set(o, l ? .266 : .262, s), l && (d.userData.glow = !0), t.add(d), l) for (let e = 0; e < 3; e++) {
+			if (d.position.set(o, l ? .266 : .262, s), t.add(d), l) for (let e = 0; e < 3; e++) {
 				let e = z(.03, .12 + n() * .08, .012, i, o + (n() - .5) * c, .04, s + c * .98, t);
 				e.rotation.y = (n() - .5) * .5;
 			}
@@ -7751,7 +7768,7 @@ Object.assign(tc, {
 			side: "z",
 			wallW: .36,
 			wallD: .34
-		}, 0, .18, .36, !0), js(c, e, {
+		}, 0, .22, .56, !1), z(.3, .06, .05, r, 0, .56, .17, c), js(c, e, {
 			side: "z",
 			wallW: .36,
 			wallD: .34
@@ -7797,14 +7814,14 @@ Object.assign(tc, {
 			let a = new M(new k(.5, .5, .004, 18), d);
 			a.scale.set(r, 1, i), a.position.set(e, .002, n), t.add(a);
 		}
-		ic(t, n, -.62, .35, .9), z(.03, .34, .03, e.m.beam, .14, 0, .62, t), fc(t, e, .14, .36, .62);
+		ic(t, n, -.62, .35, .9), z(.03, .34, .03, e.m.beam, .14, 0, .62, t), fc(t, e, .14, .36, .62), fc(c, e, -.15, .56, .08), fc(c, e, .15, .56, .08);
 	},
 	priory(e, t, n) {
 		let r = e.m.ashlar, i = new j(.9, 12, 4, 0, Math.PI * 2, 0, Math.PI / 2);
 		i.scale(1.15, .16, 1), t.add(new M(oc(i, n, .03, (e, t, n) => e > .6 ? uc(lc.grass, .72 + n * .18) : uc(lc.base, .78 + n * .2)), sc()));
 		let a = new A();
 		a.position.set(-.12, .1, -.05), t.add(a);
-		let o = .46, s = .8, c = .5;
+		let o = .46, s = .8, c = .66;
 		z(o, c, s, r, 0, 0, 0, a);
 		for (let t = 0; t < 3; t++) js(a, e, {
 			side: "x",
@@ -7818,13 +7835,18 @@ Object.assign(tc, {
 			side: "z",
 			wallW: o,
 			wallD: s
-		}, 0, c * .7, .1, .2, {
+		}, 0, c * .76, .1, .2, {
 			pointed: !0,
 			lit: !0
-		}), ks(a, o, s, c, e.roofRise * o / 2 * 1.4, e.m.roof, r, .06, .04), z(.08, .14, .06, r, 0, .78, s / 2 - .03, a), z(.22, .2, .05, R(null, "#0c0a0c"), 0, -.04, .42000000000000004, a), z(.16, .17, .012, e.m.door, 0, -.02, .45, a);
-		for (let t of [.02, .1]) z(.17, .014, .015, e.m.trim, 0, t, .458, a);
-		for (let e of [-1, 1]) z(.04, .22, .06, r, e * .12, -.04, .44, a);
-		for (let e = 0; e < 3; e++) z(.26, .025, .07, r, 0, -.08 + e * .03, .56 - e * .05, a);
+		}), ks(a, o, s, c, e.roofRise * o / 2 * 1.4, e.m.roof, r, .06, .04), z(.08, .14, .06, r, 0, .9400000000000001, s / 2 - .03, a), z(.28, .42, .05, R(null, "#0c0a0c"), 0, -.08, .42000000000000004, a), z(.21, .37, .012, e.m.door, 0, -.06, .45, a);
+		for (let t of [
+			0,
+			.14,
+			.26
+		]) z(.22, .016, .015, e.m.trim, 0, t, .458, a);
+		for (let e of [-1, 1]) z(.05, .44, .07, r, e * .155, -.08, .44, a);
+		z(.36, .06, .08, r, 0, .34, .445, a);
+		for (let e = 0; e < 3; e++) z(.32, .025, .07, r, 0, -.1 + e * .03, .56 - e * .05, a);
 		let l = new A();
 		l.position.set(.42, .1, -.26), t.add(l), Zs(e, l, .36, .5, 0, .36, e.m.upper, !0, {}), Qs(e, l, .36, .5, .36, e.roofRise, !1);
 		for (let [e, n, i, a] of [
@@ -17558,38 +17580,38 @@ async function qp(e, t) {
 		}
 		return null;
 	}, a = Af;
-	for (let s of e) {
-		if (s.canvas) {
-			fm(s);
+	for (let t of e) {
+		if (t.canvas) {
+			fm(t);
 			continue;
 		}
-		if (s.arch) {
-			let e = Gp(s.arch);
+		if (t.arch) {
+			let e = Gp(t.arch);
 			Y.engine.scene.add(e), Ip.push(e);
 			continue;
 		}
-		let e = Bp.get(s.id);
-		if (e && (t || "vale") === "vale" && (Lp === "all" || Lp === "chosen" && !s.card || Lp === "doors" && Hp.has(s.id))) {
-			let t = (e, t) => Y.tileMap.getHeight(s.x + e, s.z + t), n = Math.max(t(0, 0), t(0, 3), t(0, -3), t(3, 0), t(-3, 0)), r = Up(e, s.x, n, s.z);
-			Y.engine.scene.add(r), Ip.push(r);
+		let e = Bp.get(t.id);
+		if (e && (Lp === "all" || Lp === "chosen" && !t.card || Lp === "doors" && Hp.has(t.id))) {
+			let n = (e, n) => Y.tileMap.getHeight(t.x + e, t.z + n), r = Math.max(n(0, 0), n(0, 3), n(0, -3), n(3, 0), n(-3, 0)), i = Up(e, t.x, r, t.z);
+			Y.engine.scene.add(i), Ip.push(i);
 			continue;
 		}
-		let c = i(s.id);
-		if (!c) continue;
-		let [l, u] = c, d = await ip(`${yf}env/${l}.alb.png?v=${r[n.indexOf(l)]._v}`).catch(() => null);
-		if (!d || a !== Af) return;
-		let f = document.createElement("canvas");
-		f.width = u.w, f.height = u.h, f.getContext("2d").drawImage(d, u.x, u.y, u.w, u.h, 0, 0, u.w, u.h);
-		let p = new Te(f);
-		p.magFilter = p.minFilter = D, p.generateMipmaps = !1, p.colorSpace = o;
-		let m = {
-			texture: p,
-			frameWidth: u.w,
-			frameHeight: u.h,
+		let s = i(t.id);
+		if (!s) continue;
+		let [c, l] = s, u = await ip(`${yf}env/${c}.alb.png?v=${r[n.indexOf(c)]._v}`).catch(() => null);
+		if (!u || a !== Af) return;
+		let d = document.createElement("canvas");
+		d.width = l.w, d.height = l.h, d.getContext("2d").drawImage(u, l.x, l.y, l.w, l.h, 0, 0, l.w, l.h);
+		let f = new Te(d);
+		f.magFilter = f.minFilter = D, f.generateMipmaps = !1, f.colorSpace = o;
+		let p = {
+			texture: f,
+			frameWidth: l.w,
+			frameHeight: l.h,
 			columns: 1,
 			rows: 1,
 			pixelsPerUnit: Sf,
-			anchor: [u.ax / u.w, 0],
+			anchor: [l.ax / l.w, 0],
 			animations: { idle_down: {
 				frames: [{
 					col: 0,
@@ -17598,16 +17620,16 @@ async function qp(e, t) {
 				fps: 1,
 				loop: !1
 			} },
-			name: `ember-env:${s.id}`,
+			name: `ember-env:${t.id}`,
 			dispose() {
-				p.dispose();
+				f.dispose();
 			}
-		}, h = new Ut(m, {
+		}, m = new Ut(p, {
 			...Cf,
 			castShadow: !1,
 			blobShadow: !1
 		});
-		h.name = `ember:${l}:${s.id}`, h.userData.sheet = m, fp(h, s.x, s.z, u.h - u.ay, Sf), Y.engine.scene.add(h), Ip.push(h), h.update(0, Y.engine.camera);
+		m.name = `ember:${c}:${t.id}`, m.userData.sheet = p, fp(m, t.x, t.z, l.h - l.ay, Sf), Y.engine.scene.add(m), Ip.push(m), m.update(0, Y.engine.camera);
 	}
 }
 var Jp = (e, t) => {
