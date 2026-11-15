@@ -51,6 +51,8 @@ against the Kingstone with one AI company, seed 20261115), before and after; and
 
 ## 3. Measured, after
 
+![In the Fens' map at 430 px: the Kingstone standing at the old stones in a window, their reach ringed in ember; its sweep's fan from its middle; its slam told under the fighter at its feet](img/ring/kingstone-map.jpg)
+
 The same two minutes:
 
 | | Before | After |

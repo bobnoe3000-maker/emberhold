@@ -1513,10 +1513,13 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     // open ground: a spot the sim says you can stand on, a third of the land across from where you are, tapped where the map draws it
     const at = await p.evaluate(async () => { const L = await (await fetch('./assets/maps/minimap-fens.json')).json(), s = globalThis.__sim, pl = s.state.player;
       const v = document.querySelector('#worldmap .view'), m = document.querySelector('#worldmap .map'), k = m.clientWidth / L.w;
-      for (const [fx, fy] of [[0.5, 0.35], [0.35, 0.5], [0.65, 0.5], [0.5, 0.6]]) {
+      for (const [fx, fy] of [[0.5, 0.35], [0.35, 0.5], [0.65, 0.5], [0.5, 0.6], [0.3, 0.7], [0.7, 0.3]]) {
         const sp = s.spotNear(L.x0 + L.w * fx, L.y0 + L.h * fy); if (!sp || Math.hypot(sp.tx - pl.x, sp.ty - pl.y) < 20) continue;
         const want = m.getBoundingClientRect().top + (sp.ty + 0.5 - L.y0) * k; v.scrollTop += want - (v.getBoundingClientRect().top + v.clientHeight * 0.35);
-        const r = m.getBoundingClientRect(); return { x: r.left + (sp.tx + 0.5 - L.x0) * k, y: r.top + (sp.ty + 0.5 - L.y0) * k, sp };
+        const r = m.getBoundingClientRect(), x = r.left + (sp.tx + 0.5 - L.x0) * k, y = r.top + (sp.ty + 0.5 - L.y0) * k;
+        // (open ground: clear of a thumb's reach of any pin, which would take the tap: the old stones' since v1.105 stand here)
+        if ([...document.querySelectorAll('#worldmap .pin')].some((n) => { const b = n.getBoundingClientRect(); return Math.hypot(b.left + b.width / 2 - x, b.top + b.height / 2 - y) < 36; })) continue;
+        return { x, y, sp };
       } return null; });
     if (at) await p.touchscreen.tap(at.x, at.y); await p.waitForTimeout(300);
     const spot = await p.evaluate(() => ({ card: document.querySelector('#worldmap .card.on')?.innerText || '', mark: !!document.querySelector('#worldmap .pin.spot') }));

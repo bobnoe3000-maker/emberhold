@@ -2246,7 +2246,7 @@ stands* while a window is open and you haven't stood in it. Its card says when i
 levels, and **Walk there**: to just outside the stones' reach on your side (a step on, and you're in its fight). The
 fight's arena is ringed on the ground as a spawn point's is, the stones' reach in ember while it stands.
 
-![The Kingstone at 430 px (v1.105's Ring: in the map since v1.106): the sweep's fan filling under it; then the stones falling, three companies in](img/ring/kingstone.jpg)
+![The Kingstone in the Fens' map at 430 px (v1.106): it stands at the old stones in a window, their reach ringed in ember; its sweep's fan; its slam told under the fighter](img/ring/kingstone-map.jpg)
 
 **19.9 Measured** (v1.106, in the map, 70 % hits; `tools/balance/regionboss.mjs`: the right party in starter kit at 18,
 the window's draw picked for the head count; piloted: the hero moved out of a tell after a 0.5 s look; autobattle: left

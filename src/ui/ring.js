@@ -23,7 +23,7 @@ const CSS = `
 #ringLine.on { display: block; }
 #ringLine b { color: #ffb070; font-weight: 600; }
 #ringBar { position: fixed; left: 12px; right: 12px; top: calc(var(--hud-b, 44px) + 6px); z-index: 4; display: none; max-width: 440px; margin: 0 auto; pointer-events: none;
-  background: rgba(16,12,10,.92); border: 1px solid rgba(255,140,70,.55); border-radius: 12px; padding: 6px 10px 7px; color: #efe4cf; box-shadow: 0 2px 12px rgba(0,0,0,.5); }
+  background: rgb(16,12,10); border: 1px solid rgba(255,140,70,.55); border-radius: 12px; padding: 6px 10px 7px; color: #efe4cf; box-shadow: 0 2px 12px rgba(0,0,0,.5); }
 #ringBar.on { display: block; }
 #ringBar .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font: 600 13px Georgia, serif; color: #ffcf9a; }
 #ringBar .top small { font: 11.5px ui-monospace, Menlo, monospace; color: #e6d6c0; font-weight: 400; }
