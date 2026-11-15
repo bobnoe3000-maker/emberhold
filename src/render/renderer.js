@@ -49,9 +49,11 @@ const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', ro
   quartermaster: 'boss_quartermaster', vatwarden: 'boss_vatwarden',   // (v1.48)
   firebeetle: 'creature_firebeetle', gob: 'creature_goblin', wraith: 'creature_wraith', golem: 'creature_golem',   // (v1.59) the bestiary, built in code
   mudtoad: 'creature_toad', gulper: 'creature_gulper',   // (v1.83) the Toadking's toads, built in code
-  rat_king: 'boss_ratking', spider_queen: 'boss_spiderqueen' };
+  rat_king: 'boss_ratking', spider_queen: 'boss_spiderqueen',
+  kingstone: 'creature_golem' };   // (v1.105) the Kingstone: the golem drawn twice its size (BIG), four times a man
 // the Mere Tower's wardens (sim tower.js): baked tall as the bosses are (tools/actor-lab variants W1–W10), named on the boss bar
 for (const id of Object.keys(WARDENS)) ENEMY_ACTOR[id] = 'boss_' + id.slice('warden_'.length);
+const BIG = /** @type {Record<string, number>} */ ({ kingstone: 2 });   // a kind drawn larger than its actor's model (hybrid.js: the figure's scale)
 const UNDEAD_LOOK = new Set(SKELETONS.concat(['boss_standard', 'boss_quartermaster', 'drowned_brother', 'drowned_cantor', 'boss_bellringer', 'boss_hush', 'boss_watcher', 'boss_starroom', 'boss_choir', 'boss_abbess']));   // (they rise from the ground and shamble)
 // walk-cycle length in tiles (one full loop of the baked walk clip): frames advance with
 // distance, so this sets the stride — hero/companion run (Running_A), skeleton shamble
@@ -617,6 +619,14 @@ export function createRenderer(canvas, sim, input) {
       const look = m.fallen || rl === 'ghost' ? GHOST : rl !== null ? { flash: rl, fade: 0 } : lookOf(m, m.down ? 0.35 : 0);
       draws.push({ d: mx + my, fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: mx + my, look, team: m.fallen ? undefined : 1, atl, a, u: m.fallen ? null : m, ...(lp ? { air: lp.lift, mv: lp.pose } : {}) });
     });
+    // the Kingstone's other companies (battle.js startRing: sim world.allies): people on our side, each its own look and
+    // kit, as the Bowl's rivals are drawn but ringed as friends
+    for (const m of sim.world.allies || []) {
+      const atl = memberAtlas(m, m.actor || MEMBER_LOOK[m.cls]); if (!atl || m.x === undefined) continue;
+      const rx = lerp(m, 'x'), ry = lerp(m, 'y'), rz = heightAt(sim.world, Math.floor(rx), Math.floor(ry)), rp = project(rx, ry, rz);
+      const a = pickAnim(m, atl, { now, x: rx, y: ry, moving: m.moving, faceX: m.fx, faceY: m.fy, facing: m.act > 0 || !m.moving, dead: m.down, stride: STRIDE.hero, seed: (m.id * 0.37) % 1 });
+      draws.push({ d: rx + ry, fx: ox + rp.sx, fy: oy + rp.sy, h: rz * ZH, k: rx + ry, look: lookOf(m, m.down ? 0.35 : 0), team: m.down ? 0 : 1, atl, a, uid: m.id, u: m });
+    }
     // named townsfolk (sim world.npcs): idle where they stand, turning to you as you come near, with a
     // gesture now and then. Their playback state is presentation-only, kept here by NPC id.
     // (townsfolk walk a routine, world doc §5 v1.6: interpolated like everyone else, walking where they're headed)
@@ -694,7 +704,7 @@ export function createRenderer(canvas, sim, input) {
       const a = pickAnim(e, skelAtlas, { now, x: exi, y: eyi, moving: e.moving, faceX: e.fx, faceY: e.fy, facing: true, dead, deadT, dir0: 2,
         spawnP: e.spawn > 0 && undead ? 1 - e.spawn / 0.5 : undefined, stride: undead ? STRIDE.skel : strideOf(skelAtlas, STRIDE.walk), seed: (e.id * 0.37) % 1 });
       const fade = dead ? Math.max(0, (deadT - (DEATH_T - 0.35)) / 0.35) : 0;
-      draws.push({ d: exi + eyi, fx: ex, fy: ey, h: ez * ZH, k: exi + eyi, look: { flash: e.flash > 0 ? 0.36 : 0, warn: dead ? 0 : windGlow.get(e.id) || 0, dissolve: dead ? fade : !undead && e.spawn > 0 ? e.spawn / 0.5 : 0 }, team: dead ? 0 : e.elite ? 3 : 2, atl: skelAtlas, a, uid: e.id, u: e, foe: true });   // (the living walk in out of the dark: a fade, not a rise)
+      draws.push({ d: exi + eyi, fx: ex, fy: ey, h: ez * ZH, k: exi + eyi, look: { flash: e.flash > 0 ? 0.36 : 0, warn: dead ? 0 : windGlow.get(e.id) || 0, dissolve: dead ? fade : !undead && e.spawn > 0 ? e.spawn / 0.5 : 0 }, team: dead ? 0 : e.elite ? 3 : 2, atl: skelAtlas, a, uid: e.id, u: e, foe: true, big: BIG[e.kind] });   // (the living walk in out of the dark: a fade, not a rise)
     }
     // bolts in flight: small glowing sprites, a little above the ground
     for (const b of sim.world.projectiles || []) {
@@ -1026,7 +1036,8 @@ export function createRenderer(canvas, sim, input) {
   const bossLine = { call: ['calls his men to him', 'he stands behind them until they fall'], kindle: ['kindles the dead', 'the last one down gets back up'], line: ['holds the line', 'the dead near it take half: knock it down first'], swarm: ['drums', 'while he drums, more come out of the tunnels: put him down'],
     mud: ['stamps', 'mud comes up round your feet: step out of it'], cage: ['carries a lit cage', 'while his cage burns he mends: break it first'],
     vespers: ['sings', 'while a cantor sings, the drowned mend: silence them'], bells: ['rings the bells', 'the water comes in from the walls: keep to the middle'],
-    issue: ['issues arms', 'the most broken of his ranks stands up whole: put him down first'], sluice: ['opens the sluice', 'the vat runs across the floor: step out of it'] };
+    issue: ['issues arms', 'the most broken of his ranks stands up whole: put him down first'], sluice: ['opens the sluice', 'the vat runs across the floor: step out of it'],
+    ring: ['stands', 'red on the ground: get out of it before it lands'] };   // (the Kingstone, GDD §19 v1.105)
   sim.bus.on('bossWave', ({ id, name }) => { const B = BOSSES[id]; banner = { text: name, sub: bossLine[B.mech][1], until: clock() + 3200 }; });
   // (named from the boss: the Mere Tower's wardens call, drum and kindle too)
   const bossName = (id) => ({ redhand_captain: 'Garrow', goblin_chief: 'Skarn', robed_stranger: 'The Stranger' })[id] || (BOSSES[id] ? BOSSES[id].name : 'The warden');
@@ -1100,7 +1111,8 @@ export function createRenderer(canvas, sim, input) {
       octx.fillStyle = col; octx.fillRect(sx - bw / 2, sy, bw * Math.max(0, Math.min(1, frac)), bh);
     };
     if (b) {
-      for (const e of w.enemies || []) if (e.hp > 0 && !(e.spawn > 0)) bar(e.x, e.y, e.hp / e.maxHp, e.elite ? '#ff9a3a' : '#d24a3c', e.elite || e.rival ? 24 : 18);   // (a rival's as long as a party member's)
+      for (const e of w.enemies || []) if (e.hp > 0 && !(e.spawn > 0) && !BIG[e.kind]) bar(e.x, e.y, e.hp / e.maxHp, e.elite ? '#ff9a3a' : '#d24a3c', e.elite || e.rival ? 24 : 18);   // (a rival's as long as a party member's)
+      for (const m of w.allies || []) if (!m.down && m.hp > 0) bar(m.x, m.y, m.hp / maxHpOf(m), '#4f8f74', 14);   // (the Ring's other companies: a cooler green, shorter)
       party.forEach((m, i) => { if (m.down || m.fallen || (i && b.bout && b.bout.alone)) return; const x = i ? (fol[i - 1] || m).x : ix, y = i ? (fol[i - 1] || m).y : iy; const s = sim.state.party[i]; const mx = maxHpOf(s); bar(x, y, s.hp / mx, '#5aa35c', 16); });
       // the room-level · wave pill under the HUD, tinted by how far the room is above you
       // …and, from the second wave, how far the tide has lifted the foes (GDD §7.1: each wave of a visit is tougher)

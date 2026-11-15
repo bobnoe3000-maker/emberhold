@@ -7,11 +7,11 @@
 //   - a hall's flooded edge: battle.flood = N, every floor tile of the hall within N × battle.floodStep of its walls
 //     (battle.edge, the tiles' distances to the walls, worked out once a fight), e.g. the Abbess Below's water.
 // Deterministic: arrays and a fixed table of directions (detmath), no draws.
-import { hypot, sin, cos } from './detmath.js';
+import { hypot, sin, cos, atan2 } from './detmath.js';
 
 export const HAZARD = { slow: 0.5, recover: 0.7 };
 const DIRS = Array.from({ length: 16 }, (_, i) => [cos((i * Math.PI) / 8), sin((i * Math.PI) / 8)]);
-const RINGS = [1.2, 1.9, 2.6, 3.4, 4.3, 5.4];
+const RINGS = [1.2, 1.9, 2.6, 3.4, 4.3, 5.4], RINGS_FAR = [...RINGS, 6.8, 8.4, 10.2];   // (further with tells up: the Kingstone's sweep is 9 long, v1.105)
 
 /** each of a hall's floor tiles' distance to its walls (1 = against one, 8-way), once a fight @param {[number, number][]} cells */
 export function edgeDistances(cells) {
@@ -37,14 +37,31 @@ export function hazardAt(b, x, y) {
   if (b.flood > 0 && b.edge) { const d = b.edge.get(Math.floor(x) + ',' + Math.floor(y)); if (d !== undefined && d <= b.flood * (b.floodStep || 1)) return 'water'; }
   return null;
 }
+/** a tell (GDD §19 v1.105, the Kingstone's: battle.js ringTells): a shape on the ground where a blow will land, filling till
+ * it does. { kind, x, y, r, dir?, arc?, from, at, done } — a circle, or with `arc` a cone `r` long about `dir`. Kept on the
+ * battle (battle.tells) apart from the hazards: a tell doesn't slow anyone, it's somewhere not to be when it lands.
+ * @param {any} t @param {number} x @param {number} y */
+export function inTell(t, x, y) {
+  const dx = x - t.x, dy = y - t.y; if (hypot(dx, dy) >= t.r) return false;
+  if (!t.arc) return true;
+  let a = atan2(dy, dx) - t.dir; while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI;
+  return Math.abs(a) <= t.arc / 2;
+}
+/** the tell over (x, y) that hasn't landed (and that `seen` says has been seen: the AI's reaction), or null
+ * @param {any} b @param {number} x @param {number} y @param {(t: any) => boolean} [seen] */
+export function tellAt(b, x, y, seen) {
+  if (!b || !b.tells) return null;
+  for (const t of b.tells) if (!t.done && (!seen || seen(t)) && inTell(t, x, y)) return t;
+  return null;
+}
 /** the nearest open ground to (x, y): the smallest ring of 16 directions with a spot that's walkable (`ok`) and out of
- * every hazard, the one nearest (px, py) there (where the fight is) @returns {[number, number] | null} */
+ * every hazard and tell, the one nearest (px, py) there (where the fight is) @returns {[number, number] | null} */
 export function openGround(b, x, y, px, py, ok) {
-  for (const r of RINGS) {
+  for (const r of b && b.tells && b.tells.length ? RINGS_FAR : RINGS) {
     let best = null, bd = 1e9;
     for (const [dx, dy] of DIRS) {
       const gx = x + dx * r, gy = y + dy * r;
-      if (!ok(gx, gy) || hazardAt(b, gx, gy)) continue;
+      if (!ok(gx, gy) || hazardAt(b, gx, gy) || tellAt(b, gx, gy)) continue;
       const d = hypot(gx - px, gy - py); if (d < bd) { bd = d; best = [gx, gy]; }
     }
     if (best) return best;

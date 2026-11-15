@@ -24,6 +24,7 @@ import { createShrineCard } from './ui/shrine.js';
 import { createTowerCard } from './ui/tower.js';
 import { createBowl } from './ui/bowl.js';
 import { createPartyUp } from './ui/partyup.js';
+import { createRing } from './ui/ring.js';
 import { createAway } from './ui/away.js';
 import { createDefeat } from './ui/defeat.js';
 import { createGuildTerms } from './ui/guildterms.js';
@@ -134,6 +135,7 @@ createShrineCard({ sim });             // a shrine's blessing, offered: Use or C
 createTowerCard({ sim });              // the Mere Tower's landings: Climb on or Home with Wenna (GDD §17)
 const bowl = createBowl({ sim, partyPanel });
 const partyUp = createPartyUp({ sim });         // Party Up and raids (GDD §18 v1.97): from ☰, the lobby, the run's end      // the Bowl (GDD §17 v1.85): its board from ☰, the bout's bar and speed, the result
+const ring = createRing({ sim, params, dev: DEV });   // the Kingstone (GDD §19 v1.105): the hour's line, Enter the Ring at the old stones, its bar and end card
 createDefeat({ sim });                // a wipe: what happened, before you wake at the Shrine (ui/defeat.js)
 createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare(), questTitle: (id) => journal.title(id) });   // compass travel (docs/compass-mockup.html)
 const gearSheet = createGearSheet(sim, { partyPanel, openTerms: () => guildTerms.open(), models: !WORLD_OFF && !/sprites/.test(params.get('figures') || '') });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)
@@ -220,7 +222,7 @@ else document.getElementById('bootSplash')?.remove();
 let awaySecs = saved && !PREVIEW ? Math.max(0, (Date.now() - (saved.savedAt || Date.now())) / 1000) : 0, hiddenAt = 0;
 function catchUp(secs = awaySecs) { awaySecs = 0; if (secs >= AWAY_MIN && sim.state.created && !PREVIEW) away.run(secs); }
 if (!BOOT) renderer.ready.then(() => catchUp());
-if (DEV) globalThis.__ui = { title, brightness, creation, partyScreen, slots, cinema, dialogue, journal, worldMap, firstSteps, bowl, partyUp, gearSheet };
+if (DEV) globalThis.__ui = { title, brightness, creation, partyScreen, slots, cinema, dialogue, journal, worldMap, firstSteps, bowl, partyUp, ring, gearSheet };
 
 
 // tap: a named person → talk; a service → its menu; an enemy → focus; anything else → walk there (and use a chest /

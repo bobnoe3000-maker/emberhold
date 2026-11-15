@@ -20,7 +20,8 @@
 //   xp, gold  a kill's XP and coin, × (the Tower pays by the wave instead: tower.js)
 //   waves     a room is won after this many waves held (0: the room's own way, a gate's or none)
 //   tide      a room's climb, { step, cap } a wave (null: the room's own, tideOf)
-//   loot      'slot' (loot.js DROP at the slot's odds) or 'raid' (DROP raid*, for the hero's class: core.js dropHere)
+//   loot      'slot' (loot.js DROP at the slot's odds), 'raid' (DROP raid*, for the hero's class: core.js dropHere) or
+//             'none' (an event: nothing drops in the fight, its pay is the tier's at the end, ring.js)
 // Pure data and nothing imported: battle.js, core.js, quests.js, lore.js and raid.js read it, and nothing here reads them.
 
 // a bout in the Bowl (GDD §17.2 v1.85, docs/bowl-arena-proposal.md §3): crowd control half as long on a company's member;
@@ -29,9 +30,9 @@
 // companies `gap` tiles apart at their marks; `rest` s after the end before the sand is cleared (battle.js re-exports it)
 export const BOUT = { cc: 0.5, heal: 0.75, dmg: 0.5, react: 0.8, secs: 120, draw: 0.02, call: 3, gap: 16, rest: 2.5 };
 
-/** @typedef {{ kind: 'slot' | 'camp' | 'tower' | 'bout' | 'raid', story: boolean, count: boolean, death: 'wipe' | 'satchel' | 'none' | 'bout',
+/** @typedef {{ kind: 'slot' | 'camp' | 'tower' | 'bout' | 'raid' | 'event', story: boolean, count: boolean, death: 'wipe' | 'satchel' | 'none' | 'bout' | 'respawn',
  *   fallen: boolean, boon: boolean, heal: number, dmg: number, bossHome: boolean, xp: number, gold: number, waves: number,
- *   tide: { step: number, cap: number } | null, loot: 'slot' | 'raid' }} Mode */
+ *   tide: { step: number, cap: number } | null, loot: 'slot' | 'raid' | 'none' }} Mode */
 
 const SLOT = { story: true, count: true, death: 'wipe', fallen: true, boon: true, heal: 1, dmg: 1, bossHome: false, xp: 1, gold: 1, waves: 0, tide: null, loot: 'slot' };
 /** @type {Readonly<Record<Mode['kind'], Readonly<Mode>>>} */
@@ -48,11 +49,15 @@ export const MODES = Object.freeze({
   // a raid (raid.js, GDD §18 v1.97): not the story's and not the count's, no cost to a wipe, nobody Fallen, the boss always
   // home; a room won after six waves on +10 % a wave (+50 % at the sixth); a kill pays 1.25×; the loot at a raid's odds
   raid: Object.freeze(/** @type {Mode} */ ({ kind: 'raid', ...SLOT, story: false, count: false, death: 'none', fallen: false, bossHome: true, xp: 1.25, gold: 1.25, waves: 6, tide: Object.freeze({ step: 0.1, cap: 0.5 }), loot: 'raid' })),
+  // a region boss's event (ring.js, GDD §19 v1.105; shared-play-rules decisions 3–5): not the story's or the count's, no
+  // wipe (a Downed member gets up at the edge, RING.respawn), nobody Fallen, no boon carried in, the boss always home, no
+  // XP, coin or loot in the fight (the pay is the tier's at the end)
+  event: Object.freeze(/** @type {Mode} */ ({ kind: 'event', ...SLOT, story: false, count: false, death: 'respawn', fallen: false, boon: false, bossHome: true, xp: 0, gold: 0, loot: 'none' })),
 });
 
 /** the rules of the fight going on: a bout, a raid (raidRun: core.js's run, between rooms too), the Tower, a spawn
  *  point's, or the slot's @param {any} battle battle.js's fight (or null) @param {any} raid the raid being run (or null) @returns {Readonly<Mode>} */
-export const modeOf = (battle, raid) => (battle && battle.bout ? MODES.bout : raid ? MODES.raid : battle && battle.tower ? MODES.tower : battle && battle.camp ? MODES.camp : MODES.slot);
+export const modeOf = (battle, raid) => (battle && battle.ring ? MODES.event : battle && battle.bout ? MODES.bout : raid ? MODES.raid : battle && battle.tower ? MODES.tower : battle && battle.camp ? MODES.camp : MODES.slot);
 /** the rules of a world you're in, from the world alone (quests.js, lore.js: they see the world, not the fight; a raid's
  *  floor is marked: core.js raidFloor) @param {any} w @returns {Readonly<Mode>} */
 export const modeOfWorld = (w) => (w && w.raid ? MODES.raid : MODES.slot);

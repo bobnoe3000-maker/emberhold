@@ -44,10 +44,11 @@ import { has, companyMods, healMod, goldMod, sworn, FIGHT, SWORN_RISE } from './
 import { DAY_S } from './heroes.js';
 import { inPlay, unlocked, autocastOn, rankOf, skillMult, rankCost, stanceOf, passiveVal, HEAL_BONUS, DRAIN_MEND } from './skills.js';
 import { WEAK_S } from './heroes.js';
-import { hypot, sin, cos, exp } from './detmath.js';
+import { hypot, sin, cos, exp, atan2 } from './detmath.js';
 import { siteOf, bossAt } from './sites.js';
 import { LAMPS, lampOf, CAGE_KINDS, CAGE_PICKUP_S, CAGE_REACH, countOf, credit } from './lamps.js';
-import { HAZARD, hazardAt, openGround, edgeDistances, ageHazards } from './hazards.js';
+import { HAZARD, hazardAt, openGround, edgeDistances, ageHazards, tellAt, inTell } from './hazards.js';
+import { RING, hpStepOf } from './ring.js';
 import { campsOf, campNear, campUp, campState, bandOf, postOf, clearCamp, CAMP_ROOM } from './camps.js';
 import { BOUT, modeOf } from './modes.js';
 
@@ -283,6 +284,10 @@ export const BOSSES = {
   // brood at 2/3 and 1/3 as Captain Garrow calls his men, and hides behind them
   rat_king: { name: 'The Rat King', like: 'gutter', hp: 26, atk: 2.08, def: 1.8, speed: 3.0, xp: 12, gold: 28, mech: 'swarm', escort: ['rat', 'rat'] },
   spider_queen: { name: 'The Spider Queen', like: 'spider', hp: 23.2, atk: 2.3, def: 1.33, speed: 2.8, xp: 12, gold: 30, mech: 'call', escort: ['spider', 'spinner'] },
+  // the region boss (GDD §19 v1.105, ring.js): the old stones' centre stone, a stone golem four times a man. Its HP very
+  // high (× the companies in the Ring, ring.js hpStepOf), its plain blow slow and long (range: it's huge; body: the
+  // ground it stands on, which blows reach across and nobody walks into); what kills is its three tells (ringTells)
+  kingstone: { name: 'The Kingstone', like: 'golem', hp: 115, atk: 1.6, def: 1.5, speed: 1.1, xp: 0, gold: 0, mech: 'ring', escort: [], range: 5.5, body: 2.4, event: true },
   vatwarden: { name: 'The Vatwarden', like: 'harvester', hp: 20, atk: 2.2, def: 1.6, speed: 2.7, xp: 13, gold: 30, mech: 'sluice', escort: ['fenghoul', 'bogwitch'] },
   ...WARDENS,   // the Mere Tower's (tower.js): a warden every tenth wave
 };
@@ -412,10 +417,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // where a foe pays out.
   const NONE = [];
   const rivalsOf = () => (battle && battle.bout ? battle.bout.rivals : NONE);
-  const ours = () => (battle && battle.bout ? battle.bout.ours : state.party);   // (a bout: the party as fielded, the hero alone or all)
+  const ours = () => (battle && battle.bout ? battle.bout.ours : battle && battle.ring ? battle.ring.all : state.party);   // (a bout: the party as fielded, the hero alone or all; the Ring: every company in it)
   const allies = (m) => (m && m.rival ? rivalsOf() : ours());
   const foesOf = (m, w) => (m && m.rival ? ours() : w.enemies);
-  const trialsOf = (m) => (m && m.rival ? m.trials : state.trials);
+  const trialsOf = (m) => (m && (m.rival || m.ally) ? m.trials : state.trials);
   const isMember = (u) => !!u && u.cls !== undefined;
   const healK = () => mode().heal;                                                // (a bout's heals land at BOUT.heal)
   const boon = (st) => (mode().boon ? boonK(state, st) : 1);                      // (no shrine's boon carried into the Bowl)
@@ -579,8 +584,9 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const hp = Math.round(E.hp * scale * tough * (elite ? 2.5 : 1) * (B ? B.hp : 1));
     const u = { id: nextId++, kind: k, undead: B ? !!B.undead : F.undead(k), elite: elite || !!B, lvl, x, y, hp, maxHp: hp,
       atk: E.atk * atkScale * tough * (elite ? 1.3 : 1) * (B ? B.atk : 1), def: E.def * scale * (B ? B.def : 1),
-      crit: E.crit, dodge: E.dodge, interval: E.interval, range: E.range, speed: B && B.speed ? B.speed : E.speed, bolt: E.bolt,
+      crit: E.crit, dodge: E.dodge, interval: E.interval, range: B && B.range ? B.range : E.range, speed: B && B.speed ? B.speed : E.speed, bolt: E.bolt,
       xp: E.xp * (elite ? 3 : 1) * (B ? B.xp : 1), gold: E.gold * (elite ? 4 : 1) * (B ? B.gold : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 };
+    if (B && B.body) { u.body = B.body; u.anchor = true; }   // (the Kingstone: ground it stands on, never shoved)
     if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; u.swarmT = 0; u.mudT = 0; u.vesT = 0; u.bellT = 0; u.issueT = 0; u.sluiceT = 0; u.sluiceN = 0; u.mend = 0; }
     w.enemies.push(u);
     return u;
@@ -658,7 +664,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     }
   }
   function endBattle(w, why) {
-    if (battle && battle.bout) { endBout(); return; }               // (walked off the sand mid-bout: it's lost, nobody's Fallen)
+    if (battle && battle.bout) { endBout(); return; }
+    if (battle && battle.ring) { endRing(why === 'left' ? 'left' : null); return; }   // (out of the Ring mid-fight: walked out on)               // (walked off the sand mid-bout: it's lost, nobody's Fallen)
     if (battle && battle.tower && why !== 'defeat') towerOut();
     battle = null; focusId = 0; pending = [];
     if (w) { w.enemies = []; w.projectiles = []; }
@@ -748,6 +755,164 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     bus.emit('boutEnd', res);
     bus.emit('partyChanged', state.party);
   }
+  // ── the Ring (GDD §19 v1.105, ring.js): the region boss, the Kingstone, against the companies in the Ring ─────────────
+  // Every company in it is the party's side (ours(): battle.ring.all), the AI companies fighting through memberTurn as a
+  // companion does, each following its own first. The Kingstone stands in the middle and doesn't fight as a hall's boss:
+  // its blows are slow, and what kills is its three tells (ringTells), shapes on the ground filling till they land, that
+  // the AI steps out of after a moment (RING.react) and the hero you steer is yours to move. Nobody's Fallen and there's
+  // no wipe: a Downed member gets up at the ring's edge after RING.respawn s. Each member's part (damage dealt, healing
+  // done, time standing) is kept for the tiers (ring.js tierOf); it ends when it falls or the window's time runs out.
+  /** start the Ring's fight in `room` of w: the Kingstone at its middle, the AI companies to come at RING.arrive.
+   *  @param {any} w @param {number} room @param {{ companies: { id: string, members: any[] }[], secs: number, salt?: number }} opts */
+  function startRing(w, room, opts) {
+    if (battle) endBattle(w, 'left');
+    const g = roomGrid(w, room), cx = (g.x0 + g.x1 + 1) / 2, cy = (g.y0 + g.y1 + 1) / 2;
+    pending = []; focusId = 0;
+    battle = { room, t0: state.t, lastBlow: null, level: RING.level, wave: 1, lull: 0, cells: g.cells, grid: g.grid, fields: new Map(),
+      tide: 0, boss: 'kingstone', bossUp: true, quiet: true, lastSlain: null, hazards: [], tells: [], flood: 0, edge: null, size: 'large',
+      ring: { cx, cy, R: Math.min(g.x1 - g.x0 + 1, g.y1 - g.y0 + 1) / 2, t: 0, secs: Math.max(60, opts.secs || RING.window), boss: 0, base: 0,
+        coming: opts.companies.slice(0, RING.maxParties - 1).map((c, i) => ({ at: RING.arrive[i], id: c.id, members: c.members, in: false })),
+        companies: [], all: [...state.party], part: new Map(), parties: 1, over: null, rest: 0, tellN: 0,
+        stampT: 4, sweepT: 7, stonesT: 16, stonesAt: [...RING.stones.at], cracked: false } };
+    w.enemies = []; w.projectiles = []; w.allies = [];
+    rng = mulberry32(streamSeed(seed ^ Math.imul((opts.salt || 0) + 1, 0x9e3779b1), 0x41b6));   // (the Ring's own draws: its window's salt)
+    const R = battle.ring, k = foe(w, 'kingstone', RING.level, cx, cy, 1 + PREMIUM * Math.max(0, RING.level - 3), false, FAMILIES.golems, BOSSES.kingstone);
+    k.spawn = 0; k.cd = 2.5; R.boss = k.id; R.base = k.maxHp;
+    for (const m of state.party) { m.down = false; m.downs = 0; m.downT = 0; }
+    bus.emit('battle', { on: true, room, level: battle.level, ring: true });
+    bus.emit('ring', { t: 'start', secs: R.secs, boss: k.id, hp: k.maxHp });
+    bus.emit('bossWave', { id: 'kingstone', name: BOSSES.kingstone.name });
+  }
+  // ground a member can step out to: the room's, and (the Ring) not inside the Kingstone's body: open ground picked
+  // through it, toward what they fight, left them pressed against it in the stamp till it landed (test/ring.test.mjs)
+  const standOn = (w, x, y) => { if (!isWalkable(w, x, y) || roomAt(w, x, y) !== battle.room) return false; const k = battle.ring ? ringBoss(w) : null; return !k || hypot(x - k.x, y - k.y) > (k.body || 0) + 0.9; };
+  const ringBoss = (w) => battle && battle.ring ? (w.enemies || []).find((e) => e.id === battle.ring.boss) || null : null;
+  const posOf = (m) => (m === hero() ? state.player : m);                       // (the hero you steer stands where you do)
+  /** a member's part in the Ring (ring.js tierOf): damage dealt, healing done ×1.5, time standing @param {any} m */
+  function partOf(m) {
+    const R = battle && battle.ring; if (!R || !m || m.id === undefined) return null;
+    let q = R.part.get(m.id);
+    if (!q) { q = { id: m.id, name: m.name, cls: m.cls, company: m.ally ? m.company : 0, dmg: 0, heal: 0, stood: 0, downs: 0 }; R.part.set(m.id, q); }
+    return q;
+  }
+  const partCredit = (m, k, n) => { const q = partOf(m); if (q) q[k] += n; };
+  // a spot at the ring's edge for one getting up or coming in: the north gap's side for the party, spread round for the
+  // companies, the nearest open ground to it
+  function edgeSpot(w, i) {
+    const R = battle.ring, a = -Math.PI / 2 + (i % 2 ? 1 : -1) * (0.35 + 0.42 * Math.floor((i + 1) / 2)), r = R.R - 2.5;
+    let x = R.cx + cos(a) * r, y = R.cy + sin(a) * r;
+    if (!isWalkable(w, x, y)) { const o = openGround(battle, x, y, R.cx, R.cy, (gx, gy) => isWalkable(w, gx, gy) && roomAt(w, gx, gy) === battle.room); if (o) [x, y] = o; }
+    return [x, y];
+  }
+  // a company walks in (ring.js RING.arrive): whole, at its edge spot; the Kingstone's HP steps up for it, never down
+  function ringArrive(w, c) {
+    const R = battle.ring, n = R.companies.length + 1, [ex, ey] = edgeSpot(w, n);
+    c.members.forEach((m, i) => {
+      const s = statsFor(m);
+      Object.assign(m, { id: nextId++, ally: true, company: n, dead: 0, spawn: 0, fallen: false, down: false, downs: 0, downT: 0, dir: 2, moving: false, lvl: m.level,
+        hp: s.maxHp, mp: s.maxMp, buff: null, ward: 0, cd: 0.5 + i * 0.3, act: 0, flash: 0, poison: null, drain: null, hex: null, slow: 0, rooted: 0, ccImm: 0, fieldSlow: 1, marks: 0 });
+      for (const h of HOLDS) m[h] = 0;
+      placeAt(m, ex + (i - 1) * 1.4, ey + (i === 1 ? 0 : 0.9), w); m.px = m.x; m.py = m.y;
+    });
+    R.companies.push(c.members); R.all.push(...c.members); w.allies = R.all.filter((m) => m.ally);
+    const k = ringBoss(w);
+    if (k) { const was = k.maxHp, to = Math.round(R.base * hpStepOf(n + 1)); if (to > was) { k.maxHp = to; k.hp += to - was; } }
+    R.parties = n + 1;
+    bus.emit('ring', { t: 'arrive', company: c.id, n: R.parties, hp: k ? k.maxHp : 0 });
+  }
+  // the Kingstone's three tells (GDD §19.2): each a shape on the ground filling over its wind, landing as a share of max HP
+  // on whoever's still in it. Stamp: the biggest knot of the companies. Sweep: a cone at whoever it faces. Stones fall: many
+  // small circles across the ring, every 30 s and at 75 / 50 / 25 %. Under half it cracks: stamp and sweep come faster.
+  function ringTells(w, k, dt) {
+    const R = battle.ring, T = state.t, live = R.all.filter(alive);
+    if (!R.cracked && k.hp < k.maxHp * RING.cracked) { R.cracked = true; bus.emit('ring', { t: 'cracked' }); }
+    const push = (t) => { t.id = ++R.tellN; t.from = T; battle.tells.push(t); bus.emit('tell', { id: t.id, kind: t.kind, x: t.x, y: t.y, r: t.r, dir: t.dir ?? null, arc: t.arc ?? null, wind: t.at - T }); };
+    if (!live.length) return;
+    if ((R.stampT -= dt) <= 0) {
+      const S = RING.stamp; R.stampT = R.cracked ? S.crackedEvery : S.every;
+      let best = live[0], bn = -1;
+      for (const m of live) { const a = posOf(m); let n = 0; for (const o of live) { const b = posOf(o); if (hypot(a.x - b.x, a.y - b.y) < S.r) n++; } if (n > bn) { bn = n; best = m; } }
+      const a = posOf(best); push({ kind: 'stamp', x: a.x, y: a.y, r: S.r, at: T + S.wind, hurt: S.hurt });
+      k.fx = a.x - k.x; k.fy = a.y - k.y; k.act = S.wind;
+    }
+    if ((R.sweepT -= dt) <= 0) {
+      const S = RING.sweep; R.sweepT = R.cracked ? S.crackedEvery : S.every;
+      const t = nearest(k, live.map(posOf)) || posOf(live[0]), dir = atan2(t.y - k.y, t.x - k.x);
+      push({ kind: 'sweep', x: k.x, y: k.y, r: S.len + (k.body || 0), dir, arc: S.arc, at: T + S.wind, hurt: S.hurt, throw: S.throw });
+      k.fx = t.x - k.x; k.fy = t.y - k.y; k.act = S.wind;
+    }
+    const share = k.hp / k.maxHp, due = R.stonesAt.length && share <= R.stonesAt[0];
+    if ((R.stonesT -= dt) <= 0 || due) {
+      const S = RING.stones; R.stonesT = S.every; if (due) R.stonesAt.shift();
+      const [lo, hi] = R.cracked ? S.crackedN : S.n, n = lo + Math.floor(rng() * (hi - lo + 1)), cells = battle.cells;
+      // half on the companies (where somebody stands, a step off), the rest anywhere in the ring
+      for (let i = 0; i < n && cells.length; i++) {
+        let x, y;
+        if (i % 2 === 0 && live.length) { const a = posOf(live[Math.floor(rng() * live.length)]); x = a.x + (rng() - 0.5) * 3; y = a.y + (rng() - 0.5) * 3; }
+        else { const c = cells[Math.floor(rng() * cells.length)]; x = c[0] + 0.5; y = c[1] + 0.5; }
+        push({ kind: 'stone', x, y, r: S.r, at: T + S.wind, hurt: S.hurt });
+      }
+      bus.emit('ring', { t: 'stones', n });
+    }
+    // landing: whoever's still in it
+    for (const t of battle.tells) {
+      if (t.done || T < t.at) continue;
+      t.done = true; let hit = 0;
+      for (const m of R.all) {
+        if (!alive(m)) continue;
+        const a = posOf(m); if (!inTell(t, a.x, a.y)) continue;
+        hit++;
+        applyHit(k, m, { dmg: Math.max(1, Math.round(statsFor(m).maxHp * t.hurt)), crit: false }, true, w, true);
+        if (t.throw && alive(m)) {                                   // the sweep throws you clear of it
+          const dx = a.x - k.x, dy = a.y - k.y, d = hypot(dx, dy) || 1, gx = a.x + (dx / d) * t.throw, gy = a.y + (dy / d) * t.throw;
+          if (isWalkable(w, gx, gy) && roomAt(w, gx, gy) === battle.room) { if (m === hero()) { state.player.x = gx; state.player.y = gy; } m.x = gx; m.y = gy; }
+        }
+      }
+      bus.emit('tellLand', { id: t.id, kind: t.kind, x: t.x, y: t.y, r: t.r, dir: t.dir ?? null, arc: t.arc ?? null, hit });
+    }
+    battle.tells = battle.tells.filter((t) => !t.done || T - t.at < 0.6);
+  }
+  // the Ring's clock: the companies coming, the Downed getting up, the parts kept; the end at its fall or the window's
+  function ringTick(w, dt) {
+    const R = battle.ring, k = ringBoss(w);
+    if (R.over) { if ((R.rest += dt) >= RING.over) R.done = true; return; }
+    R.t += dt;
+    for (const c of R.coming) if (!c.in && R.t >= c.at && R.parties < RING.maxParties && (!k || k.hp > k.maxHp * RING.joinUntil)) { c.in = true; ringArrive(w, c); }
+    for (const m of R.all) {
+      if (alive(m)) { const q = partOf(m); if (q) q.stood += dt; continue; }
+      if (!m.down) continue;
+      if ((m.downT = (m.downT || 0) + dt) < RING.respawn) continue;
+      const s = statsFor(m), [ex, ey] = edgeSpot(w, m.ally ? m.company : 0);
+      m.down = false; m.downT = 0; m.hp = s.maxHp; m.mp = Math.max(m.mp || 0, s.maxMp * 0.5); m.buff = null; m.poison = null; m.drain = null; m.hex = null; m.slow = 0; m.rooted = 0; for (const h of HOLDS) m[h] = 0;
+      if (m === hero()) { const p = state.player; p.x = p.px = ex; p.y = p.py = ey; p.path = null; }
+      placeAt(m, ex, ey, w); m.px = m.x; m.py = m.y;
+      const q = partOf(m); if (q) q.downs++;
+      bus.emit('combat', { t: 'rise', x: m.x, y: m.y, name: m.name });
+    }
+    if (k && k.hp > 0) ringTells(w, k, dt);
+    if (R.t >= R.secs && !R.over) ringOver('lost', 'time');
+  }
+  function ringOver(how, why) {
+    const R = battle && battle.ring; if (!R || R.over) return;
+    const parts = [...R.part.values()], stood = parts.filter((q) => q.stood >= RING.tier.bronze), score = (q) => q.dmg + q.heal * 1.5;
+    const avg = stood.length ? stood.reduce((a, q) => a + score(q), 0) / stood.length : 0;
+    R.over = { how, why, t: Math.round(R.t), parties: R.parties, avg, parts: parts.map((q) => ({ ...q, score: score(q) })) };
+    battle.tells = [];
+    bus.emit('ring', { t: 'over', how, why, secs: R.over.t, parties: R.parties });
+  }
+  /** the Ring's end (its fall or its time, or walked out on: 'left'): the party as it came in (core.js syncs the levels back),
+   *  the AI companies gone, the result out (ringEnd) */
+  function endRing(how = null) {
+    const R = battle && battle.ring; if (!R) return;
+    if (!R.over) ringOver(how || 'left', how ? 'called' : 'left');
+    const w = getWorld(), res = { ...R.over };
+    for (const m of state.party) { m.down = false; m.downT = 0; m.downs = 0; m.buff = null; m.ward = 0; m.poison = null; m.drain = null; m.hex = null; m.slow = 0; m.rooted = 0; m.ccImm = 0; for (const k of HOLDS) m[k] = 0; const s = statsFor(m); m.hp = Math.max(1, Math.min(m.hp, s.maxHp)); }
+    battle = null; focusId = 0; pending = [];
+    if (w) { w.enemies = []; w.projectiles = []; w.allies = []; }
+    bus.emit('battle', { on: false, why: 'ring' });
+    bus.emit('ringEnd', res);
+    bus.emit('partyChanged', state.party);
+  }
   // out of the Mere Tower's hall (walked out, read a scroll, took Wenna home): the climb ends. At a landing the satchel
   // is already banked; mid-climb what's in it is lost (tower.js). Beaten: the same, and no gold besides (defeat).
   function towerOut() {
@@ -815,7 +980,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (g) { const share = Math.max(1, Math.round(dmg * FIGHT.bodyguard)); dmg -= share; g.hp = Math.max(1, g.hp - share); g.flash = 0.12; }
     }
     tgt.hp = Math.max(0, tgt.hp - dmg); tgt.flash = 0.12; tgt.hitN = (tgt.hitN || 0) + 1;
-    const by = att.src || att;                                  // the striker (party stats are a copy): where the blow came from, who struck it — hit sparks
+    const by = att.src || att;
+    if (battle && battle.ring && !isParty && isMember(by)) partCredit(by, 'dmg', dmg);   // (the Ring: each member's part, ring.js tierOf)                                  // the striker (party stats are a copy): where the blow came from, who struck it — hit sparks
     bus.emit('combat', { t: 'hit', x: tgt.x, y: tgt.y, amount: dmg, crit: r.crit, party: isParty, ax: by.x, ay: by.y, src: by.actor || by.cls || by.kind, heavy, boss: !!by.boss });
     const LL = tgt.rival ? 'rlifeline' : 'lifeline';             // (once a visit a side)
     const lifeline = tgt.hp <= 0 && isParty && battle && !battle[LL] ? allies(tgt).find((q) => alive(q) && passiveVal(q, 'lifeline') > 0) : null;
@@ -834,13 +1000,15 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       bus.emit('combat', { t: 'down', x: tgt.x, y: tgt.y, name: tgt.name, rival: !!tgt.rival });
       if (tgt.rival && focusId === tgt.id) focusId = 0;
       if (tgt.downs >= 2 && !tgt.main && mode().fallen) fall(tgt);      // twice in one room visit (the main character stays Downed; nobody's Fallen in the Bowl)
-      if (!allies(tgt).some(alive)) { if (battle && battle.bout) boutOver(tgt.rival ? 'won' : 'lost', 'down'); else defeat(w); }
+      if (battle && battle.ring) { if (focusId === tgt.id) focusId = 0; }      // (the Ring: no wipe, they get up at the edge, ringTick)
+      else if (!allies(tgt).some(alive)) { if (battle && battle.bout) boutOver(tgt.rival ? 'won' : 'lost', 'down'); else defeat(w); }
     }
     else { tgt.dead = DEATH_T; reward(tgt); if (focusId === tgt.id) focusId = 0; }
   }
   const guardedHalf = (tgt, w) => halved(tgt, w.enemies);
   function reward(e) {
-    if (e.inert) { freeing(e); return; }                         // Teague's cage: no XP, no coin, its soul goes free
+    if (e.inert) { freeing(e); return; }
+    if (battle && battle.ring) { if (e.id === battle.ring.boss) ringOver('won', 'fell'); return; }   // (the Ring: nothing pays in the fight; the Kingstone's fall ends it)                         // Teague's cage: no XP, no coin, its soul goes free
     // the Quartermaster's ranks (issue): a fallen one he can stand up again, the last to fall first (FELL_MAX kept);
     // one he already stood up pays nothing again, no XP, coin, souls or count, so a hall he holds is no farm
     if (battle && !e.boss && battle.boss && BOSSES[battle.boss].mech === 'issue') { (battle.fell ||= []).push({ kind: e.kind, x: e.x, y: e.y, elite: !!e.elite }); if (battle.fell.length > FELL_MAX) battle.fell.shift(); }
@@ -1351,11 +1519,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       bus.emit('combat', { t: 'guard', x: m.x, y: m.y, name: A.name }); skillEv(A, 'land', m, m, true);
     } else if (A.kind === 'heal') {
       const s = statsFor(m), n = Math.round(s.maxHp * A.heal * mult * healMod(m, allies(m)) * healK()); m.hp = Math.min(s.maxHp, m.hp + n);
-      bus.emit('combat', { t: 'heal', x: m.x, y: m.y, amount: n }); skillEv(A, 'land', m, m, true);
+      bus.emit('combat', { t: 'heal', x: m.x, y: m.y, amount: n }); skillEv(A, 'land', m, m, true); if (battle && battle.ring) partCredit(m, 'heal', n);
     } else if (A.kind === 'mend') {
       if (!alive(tgt)) return;
       const s = statsFor(tgt), n = Math.round(s.maxHp * A.heal * mult * (m.cls === 'cleric' ? HEAL_BONUS : 1) * (1 + passiveVal(m, 'devotion')) * healMod(m, allies(m)) * healK()); tgt.hp = Math.min(s.maxHp, tgt.hp + n);
-      bus.emit('combat', { t: 'heal', x: tgt.x, y: tgt.y, amount: n }); skillEv(A, 'land', m, tgt, true);
+      bus.emit('combat', { t: 'heal', x: tgt.x, y: tgt.y, amount: n }); skillEv(A, 'land', m, tgt, true); if (battle && battle.ring) partCredit(m, 'heal', n);
     } else if (A.kind === 'bless') {
       for (const q of allies(m)) if (alive(q)) { const b = q.buff || (q.buff = {}); b.bless = A.dur; b.blessK = A.buff * mult; }
       bus.emit('combat', { t: 'guard', x: m.x, y: m.y, name: A.name }); skillEv(A, 'land', m, m, true, allies(m).filter(alive));
@@ -1509,6 +1677,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   function separate(units, w, SEP_X = SEP_XB, SEP_Y = SEP_YB, stiff = 1, foe = false) {   // stiff < 1: a gentle nudge per tick (walking), not a shove; foe: the fight's (opposing sides kept SEP_FOE further apart)
     for (let i = 0; i < units.length; i++) for (let j = i + 1; j < units.length; j++) {
       const a = units[i], b = units[j], dx = b.x - a.x, dy = b.y - a.y;
+      if (a.anchor || b.anchor) {                                  // the Kingstone's body: nobody stands in it, and it isn't moved
+        const A = a.anchor ? a : b, o = a.anchor ? b : a, ox = o.x - A.x, oy = o.y - A.y, d = hypot(ox, oy) || 1e-3, need = (A.body || 0) + 0.6;
+        if (d < need && !o.isHero && !o.anchor) { const k = Math.min(MAX_SHOVE, need - d) / d, nx = o.x + ox * k, ny = o.y + oy * k; if (shoveOk(w, o.x, o.y, nx, ny)) { o.x = nx; o.y = ny; } }
+        continue;
+      }
       const k0 = foe && sideOf(a) !== sideOf(b) ? SEP_FOE : 1, SX = SEP_X * k0, SY = SEP_Y * k0;   // (two of a side: as close as ever; across the line, a step apart)
       let u = ((dx - dy) * 8) / SX, v = ((dx + dy) * 4) / SY, e = hypot(u, v);
       if (e >= 1) continue;
@@ -1561,7 +1734,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   const freeStations = (tgt) => STATIONS.length - ((claims.get(tgt) || { size: 0 }).size);
   // Melee: hold a station beside the target and swing when in reach; never slide mid-swing.
   function melee(u, tgt, F, dt, w, isParty, move) {
-    const d = hypot(tgt.x - u.x, tgt.y - u.y), st = station(u, tgt, F.range, w);
+    const body = tgt.body || 0, d = hypot(tgt.x - u.x, tgt.y - u.y) - body, st = station(u, tgt, F.range + body, w);   // (a body's edge is in reach: the Kingstone's)
     const inReach = d <= F.range + 0.25;
     if (inReach && u.cd <= 0) { u.moving = false; attack(u, tgt, isParty, w, F, isParty ? pickStrike(u, tgt) : null); return; }
     if (u.act > 0.12) { u.moving = false; return; }                     // finishing the swing
@@ -1577,7 +1750,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // stand when there's nowhere left to go. Otherwise close to the range and shoot.
   const KEEP_CLEAR = 5, FLEE_TURNS = [0, 0.7, -0.7, 1.4, -1.4];
   function ranged(u, tgt, F, foes, w, isParty, move, flee) {
-    const d = hypot(tgt.x - u.x, tgt.y - u.y), keep = Math.min(KEEP_CLEAR, F.range - 0.5);
+    const d = hypot(tgt.x - u.x, tgt.y - u.y) - (tgt.body || 0), keep = Math.min(KEEP_CLEAR, F.range - 0.5);
     let px = 0, py = 0, near = Infinity;
     for (const e of foes) { const ex = u.x - e.x, ey = u.y - e.y, de = hypot(ex, ey) || 0.01; near = Math.min(near, de); if (de < keep) { const k = (keep - de) / keep; px += (ex / de) * k; py += (ey / de) * k; } }
     if (u.act > 0.12) { u.moving = false; return; }                     // finishing the shot
@@ -1632,20 +1805,36 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   const memberSlow = (e) => Math.min(e.slow > 0 ? 0.5 : 1, e.fieldSlow || 1);
   // a member's turn in a fight: the party's (i its place, 0 the hero you steer) and, in a bout, a rival's (i its place + 1,
   // so never the hero's). L is where its company's leader stands (the hero you steer: the player), LU the leader itself.
+  /** how long a member takes to see a tell (s): a companion's or an AI company's its own, in RING.react, by its id; the
+   *  hero's when you let go RING.heroReact @param {any} m @param {number} i */
+  const idHash = (id) => { const t = String(id); let h = 7; for (let k = 0; k < t.length; k++) h = Math.imul(h ^ t.charCodeAt(k), 2654435761); return h >>> 0; };
+  const reactOf = (m, i) => (i === 0 && !m.ally ? RING.heroReact : RING.react[0] + (idHash(m.id) % 1000) / 1000 * (RING.react[1] - RING.react[0]));
   function memberTurn(m, i, foes, w, dt, L, LU, focus) {
     if (!alive(m) || !foes.length) return;
     if (battle.bout && (battle.bout.call > 0 || battle.bout.over)) { m.moving = false; return; }   // (the Crier's call; the bout called)
+    if (battle.ring && battle.ring.over) { m.moving = false; return; }                             // (the Ring's over)
     if (battle.bout && statusTick(m, w, dt)) return;              // (a bout: held, as a foe is, or poisoned down)
     const p = state.player;
-    const mx = i ? m.x : p.x, my = i ? m.y : p.y, hz = hazardAt(battle, mx, my), F0 = fightOf(m), stance = stanceOf(m);
-    let F = hz ? { ...F0, speed: F0.speed * HAZARD.slow } : F0;   // (the ground hazard: half speed in it)
+    const mx = i ? m.x : p.x, my = i ? m.y : p.y, F0 = fightOf(m), stance = stanceOf(m);
+    // (the Kingstone's tells, GDD §19 v1.105: seen after a moment, RING.react, and stepped out of as a patch of mud is; the
+    // hero when you let go a little later, RING.heroReact: watching and moving first is better. A tell doesn't slow.)
+    const seen = (t) => state.t - t.from >= reactOf(m, i), tells = !!(battle.tells && battle.tells.length);
+    const tell = tells ? tellAt(battle, mx, my, seen) : null;
+    // (and once out, it doesn't walk back in to its station before the blow lands: it holds where it is, and strikes if
+    // it's in reach)
+    const keepOut = (move) => (tells ? (gx, gy) => { if (tellAt(battle, gx, gy, seen)) { m.moving = false; return; } move(gx, gy); } : move);
+    const hz = hazardAt(battle, mx, my) || (tell ? 'tell' : null);
+    let F = hz && hz !== 'tell' ? { ...F0, speed: F0.speed * HAZARD.slow } : F0;   // (the ground hazard: half speed in it)
     if (battle.bout) {                                            // (a bout: slowed and rooted as a foe is; the other side's Smoke Step loses it, its Shield Wall turns it)
       const k = m.rooted > 0 ? 0 : memberSlow(m); if (k < 1) F = { ...F, speed: F.speed * k };
       const seen = foes.filter((o) => !(o.buff && o.buff.smoke > 0)); if (seen.length) foes = seen;
       const wall = nearest(m, foes, (o) => !!(o.buff && o.buff.wall > 0) && hypot(o.x - m.x, o.y - m.y) < 7); if (wall) focus = wall;
     }
     // Defensive companions fight only what comes near the leader, and fall back to it otherwise
-    const near = i > 0 && stance === 'defensive' && !F.bolt ? foes.filter((e) => hypot(e.x - L.x, e.y - L.y) < DEF_LEASH) : foes;
+    // (to its edge: the Kingstone's middle is its body away, and a defensive company stood idle beside it, regionboss.mjs)
+    const near = i > 0 && stance === 'defensive' && !F.bolt ? foes.filter((e) => hypot(e.x - L.x, e.y - L.y) - (e.body || 0) < DEF_LEASH) : foes;
+    // (a companion out of a tell first, whatever it was about: one going back to its leader walked through the stamp)
+    if (tell && i > 0) { const o = openGround(battle, m.x, m.y, L.x, L.y, (x, y) => standOn(w, x, y)); if (o) { chase(m, o[0], o[1], F.speed, dt, w); return; } }
     if (!near.length) { if (hypot(L.x - m.x, L.y - m.y) > 2.5) chase(m, L.x, L.y, F.speed, dt, w); else m.moving = false; return; }
     // a fighter guards the leader — while it stands: guarding a Downed hero, one stood idle 45 s
     // on a far station beside two foes hitting it
@@ -1676,14 +1865,14 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         if (q.x !== p.x || q.y !== p.y) { moveHero(q.x - p.x, q.y - p.y); m.x = p.x; m.y = p.y; }
       };
       const go = heroMove((q, gx, gy) => chase(q, gx, gy, F.speed, dt, w));
-      if (hz && (hz !== 'water' || F.bolt || d > F.range + 0.25)) { const o = openGround(battle, p.x, p.y, tgt.x, tgt.y, (x, y) => isWalkable(w, x, y) && roomAt(w, x, y) === battle.room); if (o) { go(o[0], o[1]); return; } }   // out of it first
-      if (F.bolt) ranged(m, tgt, F, foes, w, true, go, heroMove((q, gx, gy) => stepToward(q, gx, gy, F.speed, dt, w, battle.room)));
-      else melee(m, tgt, F, dt, w, true, go);
+      if (hz && (hz !== 'water' || F.bolt || d > F.range + 0.25)) { const o = openGround(battle, p.x, p.y, tgt.x, tgt.y, (x, y) => standOn(w, x, y)); if (o) { go(o[0], o[1]); return; } }   // out of it first
+      if (F.bolt) ranged(m, tgt, F, foes, w, true, keepOut(go), keepOut(heroMove((q, gx, gy) => stepToward(q, gx, gy, F.speed, dt, w, battle.room))));
+      else melee(m, tgt, F, dt, w, true, keepOut(go));
       return;
     }
-    if (hz && (hz !== 'water' || F.bolt || d > F.range + 0.25)) { const o = openGround(battle, m.x, m.y, tgt.x, tgt.y, (x, y) => isWalkable(w, x, y) && roomAt(w, x, y) === battle.room); if (o) { chase(m, o[0], o[1], F.speed, dt, w); return; } }   // out of it first: mud always; the water unless it's in reach of what it's fighting
-    if (F.bolt) ranged(m, tgt, F, foes, w, true, (gx, gy) => chase(m, gx, gy, F.speed, dt, w), (gx, gy) => stepToward(m, gx, gy, F.speed, dt, w, battle.room));
-    else melee(m, tgt, F, dt, w, true, (gx, gy) => chase(m, gx, gy, F.speed, dt, w));
+    if (hz && (hz !== 'water' || F.bolt || d > F.range + 0.25)) { const o = openGround(battle, m.x, m.y, tgt.x, tgt.y, (x, y) => standOn(w, x, y)); if (o) { chase(m, o[0], o[1], F.speed, dt, w); return; } }   // out of it first: mud always; the water unless it's in reach of what it's fighting
+    if (F.bolt) ranged(m, tgt, F, foes, w, true, keepOut((gx, gy) => chase(m, gx, gy, F.speed, dt, w)), keepOut((gx, gy) => stepToward(m, gx, gy, F.speed, dt, w, battle.room)));
+    else melee(m, tgt, F, dt, w, true, keepOut((gx, gy) => chase(m, gx, gy, F.speed, dt, w)));
   }
 
   // ── companions at ease (critic: they huddled on the hero) ────────────────────
@@ -1877,7 +2066,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     p.steer = (p.steer ?? 1e9) + dt;
     ensureRuntime(w, dt);
     // last tick's positions, so the renderer can interpolate every unit between 20 Hz steps
-    for (const m of state.party) { m.px = m.x; m.py = m.y; }
+    for (const m of battle && battle.ring ? battle.ring.all : state.party) { m.px = m.x; m.py = m.y; }   // (the Ring: its companies' too)
     for (const e of w.enemies || []) { e.px = e.x; e.py = e.y; }
     for (const b of w.projectiles || []) { b.px = b.x; b.py = b.y; }
     const inDungeon = w.kind === 'dungeon', onLand = w.kind === 'overland';
@@ -1897,7 +2086,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
 
     // regen: ×5 out of a fight (corridors, the overland, towns); a room's lulls are a breath (×1.5 for 4 s)
     const calm = !battle, lull = !!battle && battle.between;
-    for (const m of battle && battle.bout ? [...state.party, ...battle.bout.rivals] : state.party) {   // (a bout: the rivals' too)
+    for (const m of battle && battle.bout ? [...state.party, ...battle.bout.rivals] : battle && battle.ring ? battle.ring.all : state.party) {   // (a bout: the rivals' too; the Ring: its companies')
       if (m.down || m.fallen) continue;
       const s = statsFor(m), k = calm ? OUT_OF_BATTLE_REGEN : lull ? LULL_REGEN : 1;
       const iron = m.hp < s.maxHp * 0.3 && passiveVal(m, 'iron_hide') ? 2 : 1;                      // Iron Hide
@@ -1905,7 +2094,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (battle && has(m, 'field_medic') && (m.medicT = (m.medicT || 0) + dt) >= FIGHT.medicEvery) {   // a Field Medic sees to the most hurt
         m.medicT = 0; let low = null, lo = 1;
         for (const q of allies(m)) if (alive(q)) { const f = q.hp / statsFor(q).maxHp; if (f < lo) { lo = f; low = q; } }
-        if (low) { const qs = statsFor(low), n = Math.round(qs.maxHp * FIGHT.medicHeal * healK()); low.hp = Math.min(qs.maxHp, low.hp + n); bus.emit('combat', { t: 'heal', x: low.x, y: low.y, amount: n }); }
+        if (low) { const qs = statsFor(low), n = Math.round(qs.maxHp * FIGHT.medicHeal * healK()); low.hp = Math.min(qs.maxHp, low.hp + n); bus.emit('combat', { t: 'heal', x: low.x, y: low.y, amount: n }); if (battle.ring) partCredit(m, 'heal', n); }
       } m.mp = Math.min(s.maxMp, m.mp + s.mpr * k * dt);   // regen grows with the pool, plus gear regen
       if (m.buff && m.buff.breath > 0) m.hp = Math.min(s.maxHp, m.hp + s.maxHp * m.buff.breathK * healK() * dt);   // Ancestors' Breath
       if (battle) { let rad = 0; for (const q of allies(m)) { const v = alive(q) ? passiveVal(q, 'radiance') : 0; if (v && hypot(q.x - m.x, q.y - m.y) <= HOLD_R) rad = Math.max(rad, v); }
@@ -1923,6 +2112,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       ageHazards(battle, state.t);
       // waves (a bout has none: its clock, boutTick)
       if (battle.bout) boutTick(dt);
+      else if (battle.ring) ringTick(w, dt);                     // (the Ring has no waves: its clock, its tells, ringTick)
       else if (!foes.length && !w.enemies.some((e) => e.dead > 0 || e.spawn > 0)) {
         if (battle.wave > 0 && !battle.between) {               // a wave just fell: start the lull
           battle.between = true; battle.lull = battle.camp ? battle.camp.respawn : LULL;   // (a spawn point's next band after its respawn: twice a room's lull)
@@ -1953,10 +2143,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       }
       tickFields(w, dt);
       claims = new Map();
-      bodies = [...(alive(H) ? [{ x: p.x, y: p.y, src: H }] : []), ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => e.hp > 0 && !e.dead && !(e.spawn > 0))];   // (the Downed take up no room)
+      bodies = [...(alive(H) ? [{ x: p.x, y: p.y, src: H }] : []), ...state.party.slice(1).filter(alive), ...(battle.ring ? battle.ring.all.filter((m) => m.ally && alive(m)) : []), ...w.enemies.filter((e) => e.hp > 0 && !e.dead && !(e.spawn > 0))];   // (the Downed take up no room)
       const focus = focusId && foes.find((e) => e.id === focusId);
       // party AI (in a bout the rival company's too, through the same turn: memberTurn, below)
       state.party.forEach((m, i) => { if (!battle.bout || battle.bout.ours.includes(m)) memberTurn(m, i, foes, w, dt, p, H, focus); });
+      if (battle.ring) for (const c of battle.ring.companies) { const lead = c.find(alive); if (lead) c.forEach((m, i) => memberTurn(m, i + 1, foes, w, dt, lead, lead, null)); }   // (the Ring: each AI company after its own first)
       // enemy AI (leashed to the room)
       const living = ours().filter(alive);
       const hidden = living.filter((q) => !(q.buff && q.buff.smoke > 0)), targets = hidden.length ? hidden : living;   // Smoke Step: foes lose you
@@ -1972,6 +2163,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
           if (o) { const at = cageAt(w, o); e.x = at[0]; e.y = at[1]; e.fx = o.fx; e.fy = o.fy; e.moving = o.moving; }
           continue;
         }
+        if (battle.ring && battle.ring.over) { e.moving = false; continue; }   // (the Ring's over: the Kingstone stands still, fallen or not)
         if (e.boss) bossMech(e, w, dt);
         if (statusTick(e, w, dt)) continue;                                  // (Downed by its poison, or held)
         const slow = memberSlow(e); if (e.slow > 0) e.slow -= dt;           // Frost Nova; Caltrops, Blizzard
@@ -1991,7 +2183,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         else if (e.bolt) { if (d > (e.swarm ? e.range / 2 : e.range)) walk(t.x, t.y); else { e.moving = false; if (e.cd <= 0) attack(e, t, false, w, e); } }
         else melee(e, t, e, dt, w, false, walk);
       }
-      separate([...(alive(H) ? [{ ...H, x: p.x, y: p.y, isHero: true }] : []), ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => !e.dead && e.spawn <= 0 && !e.inert && !e.down)], w, SEP_X, SEP_Y, 1, true);   // (a Downed hero shoves nobody: it had held a boss and the last companion apart for good; Teague's cage is carried, not shoved)
+      separate([...(alive(H) ? [{ ...H, x: p.x, y: p.y, isHero: true }] : []), ...state.party.slice(1).filter(alive), ...(battle && battle.ring ? battle.ring.all.filter((m) => m.ally && alive(m)) : []), ...w.enemies.filter((e) => !e.dead && e.spawn <= 0 && !e.inert && !e.down)], w, SEP_X, SEP_Y, 1, true);   // (a Downed hero shoves nobody: it had held a boss and the last companion apart for good; Teague's cage is carried, not shoved)
     }
     // wind-ups: blows land and bolts leave on the attack clip's impact frame
     if (pending.length) { const due = []; pending = pending.filter((q) => ((q.t -= dt) > 0 ? true : (due.push(q), false))); if (battle) for (const q of due) q.fn(); }
@@ -2002,6 +2194,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (w.enemies && battle) for (const e of w.enemies) if (e.dead > 0) e.dead -= dt;
     if (w.enemies && battle) w.enemies = w.enemies.filter((e) => e.rival || !(e.hp <= 0 && e.dead <= 0));   // (a Downed rival lies where it fell)
     if (battle && battle.bout && battle.bout.done) endBout();
+    if (battle && battle.ring && battle.ring.done) endRing(battle.ring.over.how);
   }
 
   return {
@@ -2015,10 +2208,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       const b = battle && battle.bout, H = hero(), k = b && H ? (b.call > 0 || b.over || held(H) || H.rooted > 0 ? 0 : memberSlow(H)) : 1;   // (a bout: held, rooted or slowed as a rival is)
       return battle && hazardAt(battle, x, y) ? HAZARD.slow * k : k;
     },
-    reset() { if (battle && battle.bout) endBout(); const was = !!battle; if (battle && battle.tower) towerOut(); battle = null; focusId = 0; pending = []; calmT = 0; if (was) downedOut(true); placeCompanions(); },   // travel mid-fight = walking out
+    reset() { if (battle && battle.bout) endBout(); if (battle && battle.ring) endRing('left'); const was = !!battle; if (battle && battle.tower) towerOut(); battle = null; focusId = 0; pending = []; calmT = 0; if (was) downedOut(true); placeCompanions(); },   // travel mid-fight = walking out
     placeCompanions,
     towerClimb,
     startBout,
     endBout,
+    startRing,
+    endRing,
   };
 }

@@ -86,6 +86,13 @@ const propState = (w, list) => list.map((it) => propAt(w, it.tx, it.ty) || '-').
 // Emberlit's (renderer.js boltSprite, arrowSprite, gsprite's cage) as a canvas once, its glowing pixels lifted (Luminati
 // lights the canvas as a figure; a bolt is its own light), for the world page to stand up where Emberlit drew it.
 const bitCanvases = new WeakMap();
+/** the Kingstone's tells for Luminati (battle.js ringTells, GDD §19 v1.105), from the sim's clock: its stamp and the
+ *  falling stones a circle, its sweep a fan from its middle toward dir @param {any} sim @param {{ x: number, y: number }} origin */
+function tellsOf(sim, origin) {
+  const b = sim.battle, T = sim.state.t; if (!b || !b.tells || !b.tells.length) return [];
+  return b.tells.map((t) => ({ kind: t.kind, x: (t.x - origin.x) / 2, z: (t.y - origin.y) / 2, r: t.r / 2, dx: t.dir == null ? 1 : Math.cos(t.dir), dz: t.dir == null ? 0 : Math.sin(t.dir),
+    p: Math.max(0, Math.min(1, (T - t.from) / Math.max(0.05, t.at - t.from))), hit: t.done ? Math.max(0, 1 - (T - t.at) / 0.6) : 0 }));
+}
 // a figure's key, the same each frame (a unit, an NPC's presence, a crowd walker, a picket: renderer.js `u` / `who`), so
 // Luminati keeps its model, mid-clip and mid-turn (world.js placeFigure); a draw with none is keyed by order there
 const figKeys = new WeakMap(); let figKeyN = 0;
@@ -252,7 +259,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         const fade = d.look ? Math.max(d.look.fade || 0, d.look.dissolve || 0, d.look.ghost ? 0.55 : 0) : 0;
         const X = (x - origin.x) / 2, Z = (y - origin.y) / 2;
         const lk = d.u ? lookOf(d.u) : null;                   // (GDD v1.65: a member's own face and build)
-        actors.push({ name: d.atl.name, cw: d.atl.meta.cw, col: d.a.frame, row: d.a.dir, x: X, z: Z, fade, flash: (d.look && d.look.flash) || 0, warn: (d.look && d.look.warn) || 0, key: keyOf(d.u || d.who), look: lk && lk.a, lk: lk ? lk.k : '', ...(d.u && d.foe && CAGE_KINDS.has(d.u.kind) && !d.u.elite ? { empty: true } : {}), ...(d.mv ? { air: (d.air || 0) / 2, mv: d.mv } : {}) });   // (cw: as drawn, a boss 1.3×; key: the same figure each frame, its model's)
+        actors.push({ name: d.atl.name, cw: d.atl.meta.cw * (d.big || 1), col: d.a.frame, row: d.a.dir, x: X, z: Z, fade, flash: (d.look && d.look.flash) || 0, warn: (d.look && d.look.warn) || 0, key: keyOf(d.u || d.who), look: lk && lk.a, lk: lk ? lk.k : '', ...(d.u && d.foe && CAGE_KINDS.has(d.u.kind) && !d.u.elite ? { empty: true } : {}), ...(d.mv ? { air: (d.air || 0) / 2, mv: d.mv } : {}) });   // (cw: as drawn, a boss 1.3×; key: the same figure each frame, its model's)
         // a named person met in a dungeon (Wren in the Toadking's Mound…): a gold ring at their feet, fight or no fight
         if (d.guide) rings.push({ x: X, z: Z, col: GUIDE_RGB, a: 0.9 });
         // in a fight, a ring at each fighter's feet in its side's colour (Emberlit's footMark), on the ground in 3D
@@ -281,6 +288,9 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         // a foe's warning (renderer.js warnsNow): a heavy blow's ring at Emberlit's size (its circles drawn ×√2), a shot's lane
         warns: (c.warns || []).map((w) => ({ x: (w.x - origin.x) / 2, z: (w.y - origin.y) / 2, tx: (w.tx - origin.x) / 2, tz: (w.ty - origin.y) / 2,
           r: ((w.boss ? WARN_R.boss : WARN_R.heavy) * Math.SQRT2) / 2, w: ((w.heavy ? 0.6 : 0.4) * Math.SQRT2) / 2, p: w.p, hit: w.hit, heavy: w.heavy, lane: w.lane })),
+        // the Kingstone's tells (battle.js ringTells: battle.tells), each its share wound (p) and, landed, its flash fading
+        // (hit), at the size it hits (a sim tile is half a unit: no ×√2, what's drawn is what's hit)
+        tells: tellsOf(sim, origin),
         blast: c.blast ? { x: (c.blast.x - origin.x) / 2, z: (c.blast.y - origin.y) / 2, k: c.blast.k } : null,   // (a fire landing's light: renderer.js blasts)
         bright: sim.world.kind === 'dungeon' || arena ? 1 : brightAt(brightFor(sim.world.region || 'vale', sim.state.scene, dial), c.t ?? sim.state.t),   // (bright.js: the shipped look × the player's dial)
         draw: globalThis.__lumDraw !== false,                   // (dev, tools/capture/rig.mjs: frames stepped and not drawn while a shot settles)

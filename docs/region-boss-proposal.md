@@ -1,6 +1,8 @@
 # A region boss: a proposal
 
-**Status:** Proposal (2026-11-15), for the owner's decisions (§9).
+**Status:** Implemented, stages 1–2 (2026-11-15): GDD §19 v1.105 is the plan of record now; this is the proposal as it
+was, with what was built differently in §10. The owner, on §9: *"Ok go with your proposal, except world boss at the top of
+each hour for now (24x)"*.
 
 The owner, 2026-11-15:
 
@@ -237,3 +239,26 @@ What the offline stages have to get right now, so the server stage is a room and
 4. **The pay and the tiers** as in §4, or more (or less) generous. Is the heirloom chance right?
 5. **Offline AI companies** filling the other four places until the server (proposed), or your party alone until then.
 6. **Death:** get up at the edge after 8 s at no cost (proposed), or out for the rest of the fight once downed twice.
+
+## 10. As built (GDD §19 v1.105)
+
+Every decision of §9 as proposed, except the windows: **the top of every hour**, 24 a day (15 minutes each, announced
+from ten to), not three. What else came out differently, and why:
+
+- **The windows are hours** (§6): no `content/events.json`; the id is the hour, `2026-11-15T14`, and the command is
+  `ringEnter { window, left }` (`src/ui/ring.js` reads the device's clock; `?dev&ring=on` holds one open on localhost).
+- **The other companies are fighters in the fight, not parties of the sim** (§7.1): offline an AI company is a list of
+  members in `battle.ring` (each following its own first, on the member AI), so `parties[]` is still the server stage's
+  work. There's always at least one: the window's draw brings 1–4, so offline a Ring has 2–5 companies.
+- **HP steps** (§4): 1.0, 1.85, **4.0, 5.0, 6.5** (2.6, 3.3, 4.0 proposed), on a base of 115 × the room's HP at 18: with
+  the steps as proposed five companies were done in 3½ minutes. Measured, 5.7–6.1 minutes at every head count from 2 to 5,
+  piloted or on autobattle (GDD §19.9).
+- **The stamp** (§2): **2.0 s and radius 3.5** (1.6 and 4 proposed): from its middle, after its look, a member couldn't
+  clear it, and most were caught. No knockdown.
+- **The tiers** (§4) are the **company's** part against the average company's (Gold 1.15×, Silver 0.8×): by each hero's
+  own, the fighter who holds it and the cleric who heals were always Bronze beside a mage.
+- **The way out is shut while it stands**: on autobattle the hero stepped back through the gate mid-fight and lost the
+  window (the harness found it). *Leave* on the end card, or the gate after.
+- **Not yet:** a marker on the World map and the minimap (§1.1), and the Guild's coach to Saltmere for it; the AI's
+  reaction by grade (one range for all).
+

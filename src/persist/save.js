@@ -148,6 +148,10 @@
 //       Legion's 240 → 16, the choir-lamp's 312 → 12. The shape is unchanged. Older data (lampsFor50): a count that
 //       broke one takes the difference off its souls (never below none), so the Freed reads as if the lamp had always
 //       held what it does now. (A v18 or older save is credited at v19 at today's 16 already: lampsFor50 skips it.)
+//   v51: the Kingstone (GDD §19 v1.105, world doc v1.50; the owner: "world boss at the top of each hour"): `ring`, the
+//       hero's record of it ({ paid: the windows it was paid for, the last 48; won; best }, sim/ring.js). Older data has
+//       none and reads as a fresh record (restoreRing); nothing else changes. A save made in the Ring is the world it set
+//       out from (as the Bowl's): the levels, HP and MP it walked in with (core.js snapshot), and that window paid.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -159,7 +163,7 @@ import { reachedOf } from '../sim/coach.js';
 import { SITES, bossAt } from '../sim/sites.js';
 import { withFrame43 } from '../sim/appearance.js';
 
-export const SAVE_VERSION = 50;   // (v50: a lamp's souls 16 / 12, the count's difference taken off; v49: the Fens' dungeons authored, two floors each; v48: raids, `raid`; v47: the Bowl's two ladders, bowl.team / bowl.solo; v46: the Bowl's board, bowl.picks / refresh; v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
+export const SAVE_VERSION = 51;   // (v51: the Kingstone's record, `ring`; v50: a lamp's souls 16 / 12, the count's difference taken off; v49: the Fens' dungeons authored, two floors each; v48: raids, `raid`; v47: the Bowl's two ladders, bowl.team / bowl.solo; v46: the Bowl's board, bowl.picks / refresh; v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
 /** v40 and older (v41: the floors' gates): an old save comes back with the gates it has been through open, as far as the save
  * tells: every floor whose hall's boss is down (sites.js bossAt; state.bosses), and every floor above the one it was made
  * on. A generated hall with no boss, passed and left: its gate stands (its twenty waves again). @param {any} data */

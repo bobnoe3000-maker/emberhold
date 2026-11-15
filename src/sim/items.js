@@ -188,6 +188,8 @@ export const HEIRLOOMS = {
   teagues_name: { base: 'ring', name: "Teague's Name", flav: 'He gave it to everyone he took.', aff: ['crit', 'atk', 'mp'] },
   vespers: { base: 'charm', name: 'Vespers', flav: 'Sung in water, heard in bone.', aff: ['mp', 'mpr', 'hpr'] },
   the_last_office: { base: 'amulet', name: 'The Last Office', flav: 'Said every night, by the dead, for the living.', aff: ['def', 'hp', 'hpr'] },
+  // the Kingstone's (GDD §19 v1.105, world doc v1.50 §3.2): a Gold-tier chance in the Ring, once a hero
+  kingstones_ember: { base: 'charm', name: "The Kingstone's Ember", flav: 'Still warm. It was warm when the Empire found it.', aff: ['hp', 'def', 'atk'] },
   // the Fens set's vault, the Reedholm Undercroft (world doc v1.30 §7)
   the_fair_copy: { base: 'charm', name: 'The Fair Copy', flav: 'Every name, in a better hand than it was ever written in.', aff: ['mp', 'mpr', 'def'] },
   // Wren's chain, What's Owed (world doc v1.29 §5)

@@ -826,9 +826,12 @@ function mergeGeo(list) {
 // blow's disc filling out to its rim under the one it's meant for; a shot's lane, a bed the length of the shot and its
 // fill running along it to the mark. A lane is a unit strip from its start (x 0..1), turned and stretched to the shot.
 const WRIM_GEO = new THREE.RingGeometry(0.88, 1, 40), LANE_GEO = new THREE.PlaneGeometry(1, 1).translate(0.5, 0, 0);
+// the Kingstone's sweep (GDD §19 v1.105, battle.js ringTells): a 120° fan from its middle, filling out to its rim; its
+// rim the arc alone (the fan's straight sides drawn as lanes)
+const CONE_ARC = (2 * Math.PI) / 3, CONE_GEO = new THREE.CircleGeometry(1, 36, -CONE_ARC / 2, CONE_ARC), CRIM_GEO = new THREE.RingGeometry(0.93, 1, 36, 1, -CONE_ARC / 2, CONE_ARC);
 const groundMat = () => new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, toneMapped: false });
-const groundPools = { ring: [], disc: [], rim: [], focus: [], wfill: [], wrim: [], lane: [] };
-const GEO = { ring: RING_GEO, disc: DISC_GEO, rim: RIM_GEO, focus: FOCUS_GEO, wfill: DISC_GEO, wrim: WRIM_GEO, lane: LANE_GEO };
+const groundPools = { ring: [], disc: [], rim: [], focus: [], wfill: [], wrim: [], lane: [], cone: [], crim: [] };
+const GEO = { ring: RING_GEO, disc: DISC_GEO, rim: RIM_GEO, focus: FOCUS_GEO, wfill: DISC_GEO, wrim: WRIM_GEO, lane: LANE_GEO, cone: CONE_GEO, crim: CRIM_GEO };
 function groundMesh(kind, n) {
   const p = groundPools[kind];
   while (p.length <= n) { const m = new THREE.Mesh(GEO[kind], groundMat()); m.rotation.x = -Math.PI / 2; m.renderOrder = 2; m.visible = false; game.engine.scene.add(m); p.push(m); }
@@ -1399,7 +1402,8 @@ const api = {
    *   bits?: { canvas: HTMLCanvasElement, ax: number, ay: number, x: number, z: number, lift: number, glow: number, flash?: number }[], water?: { id: string, cells: number[] } | null,
    *   blast?: { x: number, z: number, k: number } | null,
    *   spells?: { key: string, id: string, seed: number, age: number, land: number | null, x: number, z: number, tx: number, tz: number, r: number, k?: number, reached: { x: number, z: number }[] }[],
-   *   warns?: { x: number, z: number, tx: number, tz: number, r: number, w: number, p: number, hit: number, heavy: boolean, lane: boolean }[] }} f
+   *   warns?: { x: number, z: number, tx: number, tz: number, r: number, w: number, p: number, hit: number, heavy: boolean, lane: boolean }[],
+   *   tells?: { kind: string, x: number, z: number, r: number, dx: number, dz: number, p: number, hit: number }[] }} f
    */
   frame(f) {
     if (!game || !game.engine) return;
@@ -1441,7 +1445,7 @@ const api = {
     for (const [sheet, p] of pools) { const n = used.get(sheet) || 0; for (let i = n; i < p.length; i++) if (p[i].visible) p[i].visible = false; }
     sweepFigures();
     // the fight's ground
-    const nk = { ring: 0, disc: 0, rim: 0, focus: 0, wfill: 0, wrim: 0, lane: 0 };
+    const nk = { ring: 0, disc: 0, rim: 0, focus: 0, wfill: 0, wrim: 0, lane: 0, cone: 0, crim: 0 };
     for (const r of f.rings || []) placeGround(groundMesh('ring', nk.ring++), r.x, r.z, 1, r.col, r.a);
     if (f.mark) { const m = groundMesh('focus', nk.focus++); placeGround(m, f.mark.x, f.mark.z, 1, [255, 226, 150], 0.7 + 0.2 * Math.sin(focusSpin * 4)); m.rotation.z = focusSpin; focusSpin += (f.dt || 0) * 0.9; }
     for (const h of f.hazards || []) { placeGround(groundMesh('disc', nk.disc++), h.x, h.z, h.r, h.col, 0.82 * h.a); placeGround(groundMesh('rim', nk.rim++), h.x, h.z, h.r, h.rim, 0.42 * h.a); }
@@ -1456,6 +1460,22 @@ const api = {
         placeLane(groundMesh('lane', nk.lane++), w.x, w.z, w.tx, w.tz, 1, w.w, WARN, 0.16 * g * out);
         placeLane(groundMesh('lane', nk.lane++), w.x, w.z, w.tx, w.tz, w.p, w.w * 0.7, w.hit > 0 ? WARN_HOT : WARN, (0.22 + 0.28 * w.p) * g * out);
         placeGround(groundMesh('wrim', nk.wrim++), w.tx, w.tz, w.heavy ? 0.42 : 0.3, w.hit > 0 ? WARN_HOT : WARN, (0.35 + 0.4 * w.p) * g * out);
+      }
+    }
+    // the Kingstone's tells (hybrid.js tellsOf, battle.js ringTells): its stamp's and the falling stones' circles, its
+    // sweep's fan, each filling from nothing to its edge as it winds (p 0..1), white as it lands (hit: 1 → 0 after it)
+    for (const t of f.tells || []) {
+      const e = 1 - (1 - t.p) * (1 - t.p), hot = t.hit > 0, col = hot ? WARN_HOT : WARN, out = hot ? t.hit : 1;
+      if (t.kind === 'sweep') {
+        const yaw = Math.atan2(-t.dz, t.dx), pc = (m, r, a) => { placeGround(m, t.x, t.z, r, hot ? WARN_HOT : a === 0.5 ? WARN_INK : col, a * out); if (m.visible) m.rotation.z = yaw; };
+        pc(groundMesh('cone', nk.cone++), t.r * 1.03, 0.5);
+        pc(groundMesh('cone', nk.cone++), t.r * e, 0.22 + 0.32 * t.p);
+        pc(groundMesh('crim', nk.crim++), t.r, 0.75 + 0.25 * t.p);
+        for (const s of [-1, 1]) { const a = yaw + s * CONE_ARC / 2; placeLane(groundMesh('lane', nk.lane++), t.x, t.z, t.x + Math.cos(a) * t.r, t.z - Math.sin(a) * t.r, 1, 0.06, col, (0.7 + 0.3 * t.p) * out); }
+      } else {
+        placeGround(groundMesh('wrim', nk.wrim++), t.x, t.z, t.r * 1.08, WARN_INK, 0.5 * out);
+        placeGround(groundMesh('wfill', nk.wfill++), t.x, t.z, t.r * e, col, (0.24 + 0.32 * t.p) * out);
+        placeGround(groundMesh('wrim', nk.wrim++), t.x, t.z, t.r, col, (0.75 + 0.25 * t.p) * out);
       }
     }
     placeWater(f.water);
