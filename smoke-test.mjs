@@ -267,6 +267,7 @@ gb.commands.push({ type: 'equip', member: fh.id, uid: 't1' }); gb.tick();
 const twoH = fh.gear.weapon.uid === 't1' && !fh.gear.off && statsFor(fh).atk > atk0 && gb.state.bag.some((it) => it.base === 'roundshield');
 gb.commands.push({ type: 'equip', member: fh.id, uid: 't2' }); gb.commands.push({ type: 'equip', member: fh.id, uid: 't3' }); gb.tick();
 gb.commands.push({ type: 'unequip', member: fh.id, slot: 'helm' }); gb.tick();
+gb.state.counters.gold = Math.max(gb.state.counters.gold || 0, 50);   // (salvage costs 50 gold a Common: GDD v1.107)
 const emb0 = gb.state.counters.embers; gb.commands.push({ type: 'salvage', uid: 't3' }); gb.tick();
 const rulesOk = twoH && refused === 2 && !fh.gear.helm && gb.state.counters.embers > emb0 && !gb.state.bag.some((it) => it.uid === 't3');
 // save / load keeps worn gear, the bag and Embers

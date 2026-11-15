@@ -24,6 +24,10 @@ export const STAT_LABEL = { hp: 'HP', mp: 'MP', atk: 'ATK', def: 'DEF', crit: 'C
 export const RARITIES = ['common', 'fine', 'rare', 'heirloom'];
 const RMULT = { common: 1, fine: 1.15, rare: 1.3, heirloom: 1.45 };
 export const SALVAGE = { common: 1, fine: 2, rare: 5, heirloom: 12 };        // cinders (✦; counters.embers in the save)
+// what salvaging costs, gold a piece (GDD §8 v1.107; the owner, 2026-11-15: "Salvaging for embers should cost 50 gold for
+// common and up to 500 for heirloom"): the bag's Salvage, the smith's every-plain-Common, and a drop that finds the bag
+// full (salvaged at once if the purse covers it, else left where it fell: a full bag is no way round the fee)
+export const SALVAGE_GOLD = { common: 50, fine: 100, rare: 250, heirloom: 500 };
 // the smith's +1…+5 (GDD §8; v1.76, the owner, asked: "20% and traits too"): +20 % base stats and +10 % traits a step. At 8 %
 // on the base alone a +5 kit held one wave more than none (the right party at 6 in a room one up, 11 → 12); measured at 20 %
 // base alone, 15 waves, and two up 3 → 6, a room three up still winning (5 waves).

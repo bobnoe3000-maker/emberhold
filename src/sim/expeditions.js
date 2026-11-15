@@ -13,7 +13,7 @@
 // a time each; any number of the bench may be out. Nothing here is given: the rewards are this rule, which the server
 // can replay. member.exp { kind, from, until } is durable (core.js MEMBER_KEYS; save v22).
 // Commands: expeditionSend { id, kind } (in town, at an inn). Events: 'expeditionSent' { id, name, kind, until },
-// 'expeditionBack' { id, name, kind, xp, gold, item?, salvaged?, levels }.
+// 'expeditionBack' { id, name, kind, xp, gold, item?, salvaged?, left?, levels } (left: the bag full and the purse short of the salvage fee).
 
 import { mulberry32, streamSeed } from './rng.js';
 import { xpRate, gainXp } from './party.js';
@@ -37,7 +37,7 @@ export function expeditionPay(kind, level) {
 /** is this member out on the road? @param {any} m */
 export const isOut = (m) => !!(m && m.exp);
 
-/** @param {{ state: any, bus: any, getWorld: () => any, seed: number, give: (item: any, src: string) => number }} o */
+/** @param {{ state: any, bus: any, getWorld: () => any, seed: number, give: (item: any, src: string) => { salvaged: number, fee: number, left: boolean } }} o */
 export function createExpeditions({ state, bus, getWorld, seed, give }) {
   const refuse = (reason) => { bus.emit('refused', { reason }); return true; };
   const inn = () => { const w = getWorld(); return w.kind === 'town' && (w.services || []).some((s) => s.kind === 'inn'); };
@@ -59,7 +59,7 @@ export function createExpeditions({ state, bus, getWorld, seed, give }) {
     const kind = m.exp.kind, E = EXPEDITIONS[kind], pay = expeditionPay(kind, m.level), from = Math.round(m.exp.from * 20);   // (the tick it set out)
     let idh = 7; for (let i = 0; i < m.id.length; i++) idh = Math.imul(idh ^ m.id.charCodeAt(i), 16777619);
     const rng = mulberry32(streamSeed((seed ^ Math.imul(from, 0x9e3779b1) ^ idh) >>> 0, STREAM_EXP));
-    const before = m.level, out = { id: m.id, name: m.name, kind, xp: pay.xp, gold: pay.gold, item: null, salvaged: 0, levels: 0 };
+    const before = m.level, out = { id: m.id, name: m.name, kind, xp: pay.xp, gold: pay.gold, item: null, salvaged: 0, left: false, levels: 0 };
     m.exp = null;
     gainXp(m, pay.xp, () => bus.emit('levelUp', { id: m.id, name: m.name, level: m.level }));
     out.levels = m.level - before;
@@ -68,7 +68,7 @@ export function createExpeditions({ state, bus, getWorld, seed, give }) {
       const q = rng(), rarity = q < E.rare ? 'rare' : q < E.rare + E.fine ? 'fine' : 'common';
       state.counters.uidN = (state.counters.uidN || 0) + 1;
       const item = rollItem(rng, { ilv: Math.max(1, m.level), rarity, classes: [m.cls], uid: 'i' + state.counters.uidN });
-      out.item = item; out.salvaged = give(item, 'expedition');
+      out.item = item; const k = give(item, 'expedition'); out.salvaged = k.salvaged; out.left = k.left;   // (the pay's gold is in first: it covers a full bag's salvage fee)
     }
     bus.emit('expeditionBack', out);
     bus.emit('countersChanged', { ...state.counters }); bus.emit('partyChanged', state.party);

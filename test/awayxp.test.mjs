@@ -1,6 +1,7 @@
-// Time away pays half XP a kill (GDD §12 v1.74; the owner, 2026-11-12: two hours away in a level-3 room took a level-4
-// party from 4 to 6, "I would like them to only increase 1 level"). Live play is untouched. Two runs of the same room on
-// the same seed, one played as time away: the same fight blow for blow (XP changes nothing in it), half the XP.
+// Time away pays a quarter of a kill's XP (GDD §12: half in v1.74, the owner, 2026-11-12: two hours away in a level-3 room
+// took a level-4 party from 4 to 6, "I would like them to only increase 1 level"; halved again in v1.107, 2026-11-15: "Half
+// offline exp progress again"). Live play is untouched. Two runs of the same room on
+// the same seed, one played as time away: the same fight blow for blow (XP changes nothing in it), a quarter of the XP.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
@@ -21,12 +22,12 @@ function run(away) {
   return { xp: h.xp, slain, away: !!sim.state.away };
 }
 
-test('time away: a kill pays half its XP; the fight itself is the same', () => {
-  assert.equal(AWAY_XP, 0.5);
+test('time away: a kill pays a quarter of its XP; the fight itself is the same', () => {
+  assert.equal(AWAY_XP, 0.25);
   const live = run(false), away = run(true);
   assert.ok(away.away, 'still away (an hour of it)');
   assert.ok(live.slain.length >= 10, `a fight: ${live.slain.length} slain`);
   assert.deepEqual(away.slain, live.slain, 'the same foes fall at the same moments');
   const k = away.xp / live.xp;
-  assert.ok(k > 0.47 && k < 0.53, `half the XP: ${away.xp} of ${live.xp} (${k.toFixed(3)})`);
+  assert.ok(k > 0.22 && k < 0.28, `a quarter of the XP: ${away.xp} of ${live.xp} (${k.toFixed(3)})`);
 });

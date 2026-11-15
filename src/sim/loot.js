@@ -10,7 +10,7 @@
 //         'gearRefused' { reason } — an equip the rules don't allow.
 
 import { mulberry32, streamSeed, STREAM } from './rng.js';
-import { BASES, SALVAGE, rollItem, canWear, isTwoHanded, upgradeScore, makeHeirloom, salvageOf, makeItem, SCROLL_DROP } from './items.js';
+import { BASES, SALVAGE, SALVAGE_GOLD, rollItem, canWear, isTwoHanded, upgradeScore, makeHeirloom, salvageOf, makeItem, SCROLL_DROP } from './items.js';
 import { statsFor } from './party.js';
 
 export const BAG_SIZE = 50;                  // slots; a slot holds one item or a stack (20 until 2026-10-03, the owner)
@@ -66,6 +66,17 @@ export function createLoot({ state, bus, seed }) {
     return best;
   }
 
+  // a found item into the bag; if the bag is full, salvaged at once for its fee (SALVAGE_GOLD) when the purse covers it,
+  // else left where it fell (GDD §8 v1.107: a full bag is no way round the fee)
+  /** @returns {{ salvaged: number, fee: number, left: boolean }} */
+  function keep(item) {
+    if (fits([item])) { toBag(item); return { salvaged: 0, fee: 0, left: false }; }
+    const fee = SALVAGE_GOLD[item.r] || 0;
+    if ((C.gold || 0) < fee) return { salvaged: 0, fee: 0, left: true };
+    C.gold -= fee; C.embers = (C.embers || 0) + SALVAGE[item.r];
+    return { salvaged: SALVAGE[item.r], fee, left: false };
+  }
+
   // a Homeward Scroll beside the gear, now and then (rare loot): its own stream, keyed by the drop counter, so the
   // gear rolls are as they were; one that won't fit the bag is lost (a scroll isn't salvage)
   function scroll(src, n, x, y) {
@@ -86,10 +97,8 @@ export function createLoot({ state, bus, seed }) {
     C.uidN = (C.uidN || 0) + 1;
     const classes = own ? [own] : [...new Set(state.party.map((m) => m.cls))];
     const item = rollItem(rng, { ilv: Math.max(1, ilv), rarity, classes, uid: 'i' + C.uidN, own: !!own });
-    let salvaged = 0;
-    if (fits([item])) toBag(item);
-    else { salvaged = SALVAGE[item.r]; C.embers = (C.embers || 0) + salvaged; }            // bag full: straight to Embers
-    bus.emit('loot', { item, x, y, src, best: salvaged ? null : bestFor(item), salvaged });
+    const { salvaged, fee, left } = keep(item);
+    bus.emit('loot', { item, x, y, src, best: salvaged || left ? null : bestFor(item), salvaged, fee, left });
     scroll(src, n, x, y);
     bus.emit('countersChanged', { ...C });
     return item;
@@ -99,20 +108,18 @@ export function createLoot({ state, bus, seed }) {
   function grant(id, { ilv, x, y, src, cls }) {
     C.uidN = (C.uidN || 0) + 1;
     const item = makeHeirloom(id, Math.max(1, ilv), 'i' + C.uidN, cls);   // (cls: a warden's heirloom is made for a class in the party)
-    let salvaged = 0;
-    if (fits([item])) toBag(item); else { salvaged = SALVAGE[item.r]; C.embers = (C.embers || 0) + salvaged; }
-    bus.emit('loot', { item, x, y, src, best: salvaged ? null : bestFor(item), salvaged, heirloom: id });
+    const { salvaged, fee, left } = keep(item);
+    bus.emit('loot', { item, x, y, src, best: salvaged || left ? null : bestFor(item), salvaged, fee, left, heirloom: id });
     bus.emit('countersChanged', { ...C });
     return item;
   }
 
   // an item found off the field (an expedition's, expeditions.js): into the bag, or its cinders if the bag is full
-  /** @returns {number} the cinders it was salvaged for (0: it's in the bag) */
+  /** @returns {{ salvaged: number, fee: number, left: boolean }} salvaged: the cinders, fee: the gold it took (0: in the bag); left: the bag was full and the purse short */
   function give(item, src) {
-    let salvaged = 0;
-    if (fits([item])) toBag(item); else { salvaged = SALVAGE[item.r]; C.embers = (C.embers || 0) + salvaged; }
-    bus.emit('loot', { item, x: 0, y: 0, src, best: salvaged ? null : bestFor(item), salvaged, away: true });
-    return salvaged;
+    const { salvaged, fee, left } = keep(item);
+    bus.emit('loot', { item, x: 0, y: 0, src, best: salvaged || left ? null : bestFor(item), salvaged, fee, left, away: true });
+    return { salvaged, fee, left };
   }
   const refuse = (reason) => { bus.emit('gearRefused', { reason }); return true; };
   const changed = (m) => {
@@ -141,7 +148,9 @@ export function createLoot({ state, bus, seed }) {
       m.gear[cmd.slot] = null; toBag(it); changed(m); return true;
     }
     if (cmd.type === 'salvage') {
-      const it = fromBag(cmd.uid); if (!it) return true;
+      const at = state.bag.find((q) => q.uid === cmd.uid); if (!at) return true;
+      const fee = SALVAGE_GOLD[at.r] || 0; if ((C.gold || 0) < fee) return refuse(`Not enough gold: salvaging it costs ${fee}`);
+      const it = fromBag(cmd.uid); C.gold -= fee;
       C.embers = (C.embers || 0) + salvageOf(it);                 // its rarity's cinders, and half of what the smith's upgrades took
       bus.emit('countersChanged', { ...C }); bus.emit('gearChanged', { member: null }); return true;
     }

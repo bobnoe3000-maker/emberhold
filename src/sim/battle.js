@@ -87,8 +87,10 @@ const STANCE_AI = { aggressive: { low: 0.3, reserve: 0 }, balanced: { low: 0.5, 
 // Time away (core.js `away`, GDD §12 v1.74; the owner, 2026-11-12: two hours away in a level-3 room took a level-4 party to
 // level 6, "I would like them to only increase 1 level"): a foe slain while the time away is played through pays this share
 // of its XP. Live play's pace is untouched. Measured: the right party at 4 in a level-3 room earns 214 XP a minute (at 5,
-// 224), so two hours away now pay ~13,100: level 5 (11,000) and an eighth of the way to 6, where it was 6.
-export const AWAY_XP = 0.5;
+// 224), so two hours away now pay ~13,100: level 5 (11,000) and an eighth of the way to 6, where it was 6. Halved again
+// (GDD v1.107; the owner, 2026-11-15: "Half offline exp progress again"): a quarter, ~6,550 for those two hours: no level, three-fifths
+// of the way from 4 to 5 (11,000).
+export const AWAY_XP = 0.25;
 const WIPE_HP = 0.3, DEF_LEASH = 5, ROGUE_PICK = 8;
 // a room holds for as long as you stay, so "downed twice in one visit" is measured over a
 // stretch: stand through WIND waves in a row and a member's downs are forgotten

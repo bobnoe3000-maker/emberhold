@@ -46,7 +46,7 @@ import { boardWords, boardReady, SKULLS } from './boardwords.js';
 import { feeOf, wageOf, hired, PERKS } from '../sim/companions.js';
 import { rankMark, perkLines, loyaltyWord, wageLine, perkWord, rankLine, wordsReady, SW_CSS } from './sellswords.js';
 import { BASES, SLOT_LABEL, STAT_LABEL, UP_MAX, itemStats, classesOf } from '../sim/items.js';
-import { upgradeCost, reforgeCost, salvageOf, sellPrice, buyPrice, SHOPKEEP } from '../sim/smith.js';
+import { upgradeCost, reforgeCost, salvageOf, sellPrice, buyPrice, SHOPKEEP, SALVAGE_GOLD } from '../sim/smith.js';
 import { townOf } from '../sim/coach.js';
 import { isUsable, SCROLL_PRICE } from '../sim/items.js';
 import { EXPEDITIONS, expeditionPay } from '../sim/expeditions.js';
@@ -342,11 +342,11 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
       ${H.filter(([it]) => it.aff && it.aff.length).map(([it, where]) => { const c = reforgeCost(it), ok = affords(c);
         return `<div class="merc sw"><div class="who">${itemHead(it, where)}<span class="sub">${costWords(c)} a reroll</span>
           ${it.aff.map(([k, v], i) => `<div class="aff"><span>${STAT_LABEL[k] || k} ${v > 0 ? '+' : ''}${v}${k === 'crit' || k === 'dodge' ? ' %' : ''}</span><button class="btn ghost" data-reforge="${it.uid}" data-aff="${i}" ${ok ? '' : 'disabled'}>Reroll</button></div>`).join('')}</div></div>`; }).join('') || '<p>Only Fine, Rare and heirloom pieces have traits to reforge.</p>'}`
-      : (() => { const commons = sim.state.bag.filter((it) => it.r === 'common' && !(it.up > 0));
-        return `<p class="hint2">Gear in the bag becomes cinders for the forge: more for finer pieces, and half of what any upgrades took. Worn gear stays worn.</p>
-        ${commons.length ? `<div class="row go" data-salvagecommons><div><b>Salvage every plain Common · ✦ ${commons.length}</b><span>${commons.length} in the bag (upgraded pieces are kept)</span></div><div class="go-arrow">›</div></div>` : ''}
+      : (() => { const commons = sim.state.bag.filter((it) => it.r === 'common' && !(it.up > 0) && !isUsable(it)), gold = sim.state.counters.gold || 0;   // (as the smith counts them: never a scroll)
+        return `<p class="hint2">Gear in the bag becomes cinders for the forge: more for finer pieces, and half of what any upgrades took. Bess charges for the work: ${SALVAGE_GOLD.common} gold a Common, ${SALVAGE_GOLD.fine} a Fine, ${SALVAGE_GOLD.rare} a Rare, ${SALVAGE_GOLD.heirloom} an heirloom. Worn gear stays worn.</p>
+        ${commons.length ? `<div class="row go" data-salvagecommons><div><b>Salvage every plain Common · ✦ ${commons.length}</b><span>${commons.length} in the bag for ${commons.length * SALVAGE_GOLD.common} gold${gold < commons.length * SALVAGE_GOLD.common ? ' (not enough gold)' : ''} (upgraded pieces are kept)</span></div><div class="go-arrow">›</div></div>` : ''}
         ${sim.state.bag.filter((it) => !isUsable(it)).map((it) => `<div class="merc"><div class="who">${itemHead(it, 'in the bag')}<span>${statLine(it)}</span></div>
-          <button class="btn${armUid === it.uid ? ' warnb' : ' ghost'}" data-salvage="${it.uid}">${armUid === it.uid ? `Sure? ✦ ${salvageOf(it)}` : `Salvage · ✦ ${salvageOf(it)}`}</button></div>`).join('') || '<p>The bag is empty.</p>'}`; })();
+          <button class="btn${armUid === it.uid ? ' warnb' : ' ghost'}" data-salvage="${it.uid}">${armUid === it.uid ? `Sure? ✦ ${salvageOf(it)} · ${SALVAGE_GOLD[it.r]} g` : `Salvage · ✦ ${salvageOf(it)} · ${SALVAGE_GOLD[it.r]} g`}</button></div>`).join('') || '<p>The bag is empty.</p>'}`; })();
     sheet.innerHTML = `${head('Smith', sv ? esc(sv.name) : 'The forge', 'Bess Hale’s forge. Upgrade what you wear and carry, reforge a trait, or melt down what you won’t use into cinders.')}
       ${purse()}${tabs('ftab', forgeTab, [['upgrade', 'Upgrade'], ['reforge', 'Reforge'], ['salvage', 'Salvage', `${sim.state.bag.length} in the bag`]])}${body}`;
   }

@@ -44,7 +44,7 @@ export function createAway({ sim, hold, refresh }) {
   const on = (k, f) => sim.bus.on(k, (e) => { if (rec) f(e); });
   on('wave', (e) => { if (e.cleared) rec.waves++; });
   on('slain', () => { rec.kills++; });
-  on('loot', (e) => { rec.loot.push({ name: e.item.name, r: e.item.r, salvaged: e.salvaged || 0 }); });
+  on('loot', (e) => { rec.loot.push({ name: e.item.name, r: e.item.r, salvaged: e.salvaged || 0, fee: e.fee || 0, left: !!e.left }); });
   on('defeat', (e) => { rec.defeat = e; });
   on('wages', (e) => { rec.wages += e.paid; if (e.unpaid && e.unpaid.length) rec.unpaid = e.unpaid; });
   on('towerLanding', () => { rec.landings++; });
@@ -89,9 +89,10 @@ export function createAway({ sim, hold, refresh }) {
       const gained = m.level > was.level ? `level ${was.level} → ${m.level}` : m.xp > was.xp ? `+${m.xp - was.xp} XP` : '';
       if (gained) li(m.name, gained);
     }
-    const kept = r.loot.filter((l) => !l.salvaged), salv = r.loot.filter((l) => l.salvaged);
+    const kept = r.loot.filter((l) => !l.salvaged && !l.left), salv = r.loot.filter((l) => l.salvaged), left = r.loot.filter((l) => l.left);
     if (kept.length) li('Found', kept.slice(0, 5).map((l) => `${l.name} (${RARITY[l.r] || l.r})`).join(', ') + (kept.length > 5 ? ` and ${kept.length - 5} more` : ''));
-    if (salv.length) li('Bag full', `${salv.length} salvaged for ✦${salv.reduce((n, l) => n + l.salvaged, 0)}`);
+    if (salv.length) li('Bag full', `${salv.length} salvaged for ✦${salv.reduce((n, l) => n + l.salvaged, 0)} (${salv.reduce((n, l) => n + l.fee, 0)} gold)`);
+    if (left.length) li('Left behind', `${left.length} the bag had no room for, and the purse no gold to salvage`);
     if (r.fallen.length) li('Slain', `${r.fallen.join(', ')}: raise them at a temple or a shrine`, 'bad');
     if (r.defeat) li('Beaten', `the room won; you woke at the temple${r.defeat.lost ? `, ${r.defeat.lost} gold lighter` : ''}, Weakened`, 'bad');
     if (r.unpaid) li('Owed', `couldn't pay ${r.unpaid.join(', ')} at dawn`, 'bad');

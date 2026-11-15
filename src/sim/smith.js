@@ -9,7 +9,7 @@
 //                           item's level on the REFORGE stream (the item's uid and how often it's been
 //                           reforged), so it's the same for everyone who does the same; each reforge of
 //                           that item costs double the last
-//   salvageCommons {}       every plain Common in the bag (never one upgraded) to cinders, 1 each
+//   salvageCommons {}       every plain Common in the bag (never one upgraded) to cinders, 1 each, for 50 gold each (SALVAGE_GOLD)
 // (salvage { uid } is loot.js's, anywhere: it now gives back half the cinders an upgrade took.)
 //
 // The shop (in town): a stock of STOCK_N plain Commons at the hero's level, for the party's classes,
@@ -26,13 +26,13 @@
 // 'traded' { what: 'buy' | 'sell' | 'buyBack', uid, gold }.
 
 import { mulberry32, streamSeed, STREAM } from './rng.js';
-import { BASES, SALVAGE, UP_MAX, UP_GOLD, UP_CINDERS, rollItem, rollAffix, refreshItem, salvageOf, cindersIn, CLASS_IDS, makeItem, isUsable, SCROLL_PRICE } from './items.js';
+import { BASES, SALVAGE, SALVAGE_GOLD, UP_MAX, UP_GOLD, UP_CINDERS, rollItem, rollAffix, refreshItem, salvageOf, cindersIn, CLASS_IDS, makeItem, isUsable, SCROLL_PRICE } from './items.js';
 import { bagStacks, BAG_SIZE } from './loot.js';
 import { DAY_S } from './heroes.js';
 import { ORIGIN_EDGE } from './party.js';
 import { townOf, COACH } from './coach.js';
 
-export { UP_GOLD, UP_CINDERS, salvageOf, cindersIn };
+export { UP_GOLD, UP_CINDERS, salvageOf, cindersIn, SALVAGE_GOLD };
 export const REFORGE_GOLD = 50, REFORGE_CINDERS = 6;     // gold × item level, doubling with each reforge of the item (cinders: 3 until v1.77)
 // a reforged trait rolls 1.0–1.2× its usual size, never under it (v1.76, the owner: "Never a weak roll"; a drop's: 0.8–1.2×)
 export const REFORGE_LO = 1.0;
@@ -121,6 +121,8 @@ export function createSmith({ state, bus, getWorld, seed }) {
       case 'salvageCommons': {
         const plain = state.bag.filter((it) => it.r === 'common' && !(it.up > 0) && !isUsable(it));   // (never a scroll)
         if (!plain.length) return true;
+        const fee = plain.length * SALVAGE_GOLD.common; if ((C.gold || 0) < fee) return refuse(`Not enough gold: salvaging ${plain.length} costs ${fee}`);
+        C.gold -= fee;
         state.bag = state.bag.filter((it) => !plain.includes(it));
         C.embers = (C.embers || 0) + plain.length * SALVAGE.common;
         bus.emit('forged', { uid: null, what: 'salvage', n: plain.length }); counters(); gear(); return true;

@@ -17,7 +17,7 @@ import { portraitKey, paintPortrait } from './portraits.js';
 import { firstOpen } from './firststeps.js';
 import { openPreview } from '../render3d/preview.js';
 import { lookOf } from '../render3d/looks.js';
-import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF, abilityMods, isUsable } from '../sim/items.js';
+import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, SALVAGE_GOLD, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF, abilityMods, isUsable } from '../sim/items.js';
 import { BAG_SIZE, bagStacks } from '../sim/loot.js';
 import { classIcon, classColor } from './classicons.js';
 import { NPCS } from '../sim/npcs.js';
@@ -413,7 +413,7 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
     else {
       const eq = wearer ? `<button class="gbtn pri" data-act="equip" data-to="${wearer.id}">${wearer === m ? 'Equip' : `Give to ${esc(wearer.name)}`}</button>` : '';
       const armed = armSalvage === it.uid;
-      btns = `${eq}<button class="gbtn${armed ? ' arm' : ''}" data-act="salvage">${armed ? `Sure? ✦${SALVAGE[it.r]}` : `Salvage ✦${SALVAGE[it.r]}`}</button><button class="gbtn ghost" data-act="close">Close</button>`;
+      btns = `${eq}<button class="gbtn${armed ? ' arm' : ''}" data-act="salvage">${armed ? `Sure? ✦${SALVAGE[it.r]} · ${SALVAGE_GOLD[it.r]} g` : `Salvage ✦${SALVAGE[it.r]} · ${SALVAGE_GOLD[it.r]} g`}</button><button class="gbtn ghost" data-act="close">Close</button>`;
     }
     card.innerHTML = `<div class="hd"><div class="big" style="border-color:${RC[it.r]}"><img src="${icon(it)}" alt=""></div>
       <div><h3 style="color:${RC[it.r]}">${it.name}${stackN > 1 ? ` <small>×${stackN}</small>` : ''}</h3><div class="meta"><em style="color:${RC[it.r]}">${it.r}</em> · item level ${it.ilv}<br>${SLOT_LABEL[B.slot]} · ${B.hands === 2 ? 'two-handed ' : ''}${B.kind} · ${clsName}</div></div></div>
@@ -490,8 +490,9 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
     toast.style.borderColor = 'rgba(214,170,98,0.45)'; toast.innerHTML = `<div class="s" style="margin:0;color:#efe4cf">${text}</div>`;
     toast.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, 2200);
   }
-  sim.bus.on('loot', ({ item, src, best, salvaged }) => {
-    if (salvaged) { showToastText(`Bag full · ${item.name} salvaged for ✦${salvaged}`); return; }
+  sim.bus.on('loot', ({ item, src, best, salvaged, fee, left }) => {
+    if (salvaged) { showToastText(`Bag full · ${item.name} salvaged for ✦${salvaged} (${fee} gold)`); return; }
+    if (left) { showToastText(`Bag full · ${item.name} left behind (salvaging it costs ${SALVAGE_GOLD[item.r]} gold)`); return; }
     fresh.add(item.uid);
     if (open) { render(); return; }
     const m = best && S.party.find((q) => q.id === best), B = BASES[item.base];
