@@ -31,7 +31,8 @@ import { familyOf, BOSSES, halved, bossAway, BOSS_BACK } from '../sim/battle.js'
 import { DEATH_T } from '../sim/battle.js';
 import { statsFor } from '../sim/party.js';
 import { shotOf } from '../sim/items.js';
-import { campsOf, campUp } from '../sim/camps.js';
+import { campsOf, campUp, CAMP_BY } from '../sim/camps.js';
+import { RING, paidFor } from '../sim/ring.js';
 
 const INTERACT = new Set(['chest', 'shrine', 'stairs', 'stairwell']);   // props a tap can target
 // Actor atlases (tools/actor-lab/bake.cjs) store one row per screen octant:
@@ -82,6 +83,7 @@ const PHONE_CSS = 390 / (VIEW_TILES * 16); // an iPhone 13 upright: CSS px per n
  *   setExternal) @param {any} sim @param {any} input
  */
 export function createRenderer(canvas, sim, input) {
+  /** @type {(() => any) | null} */ let ringClock = null;   // the Kingstone's hour (ui/ring.js: the device's clock), for the minimap's old stones
 
   // the overlay: the minimap, names, bars, numbers, the banner and the joystick, over the painter's world
   const overlay = document.createElement('canvas');
@@ -823,6 +825,15 @@ export function createRenderer(canvas, sim, input) {
       octx.beginPath(); octx.moveTo(mx, my - r); octx.lineTo(mx + r, my); octx.lineTo(mx, my + r); octx.lineTo(mx - r, my); octx.closePath(); octx.fill();
       octx.strokeStyle = 'rgba(0,0,0,0.55)'; octx.lineWidth = Math.max(1, 0.8 * k); octx.stroke();
     }
+    // the old stones (GDD §19 v1.105): a ring, lit and pulsing while the Kingstone stands, warm when it's about to (ui/ring.js's clock)
+    if (w.region === RING.region) {
+      const C = CAMP_BY.fens_stones, c = ringClock ? ringClock() : null, live = !!(c && c.open && !paidFor(sim.state, c.id)), soon = !!(c && c.soon);
+      const mx = bx + (C.x - x0) / span * MM, my = by + (C.y - y0) / span * MM, r = Math.max(3, 3.6 * k), t = performance.now() / 1000;
+      if (live) { octx.fillStyle = `rgba(255,122,42,${(0.25 + 0.2 * Math.sin(t * 4.5)).toFixed(3)})`; octx.beginPath(); octx.arc(mx, my, r * 2.2, 0, Math.PI * 2); octx.fill(); }
+      octx.fillStyle = live ? '#ff7a2a' : soon ? '#f0c890' : 'rgba(200,184,154,0.85)'; octx.beginPath(); octx.arc(mx, my, r, 0, Math.PI * 2); octx.fill();
+      octx.strokeStyle = live ? '#fff0d8' : soon ? '#ff9a50' : 'rgba(60,24,12,0.9)'; octx.lineWidth = Math.max(1.2, 1.4 * k); octx.stroke();
+      octx.beginPath(); octx.arc(mx, my, r * 0.4, 0, Math.PI * 2); octx.fillStyle = 'rgba(40,20,12,0.85)'; octx.fill();
+    }
     octx.fillStyle = '#f0a500'; octx.beginPath(); octx.arc(bx + (ix - x0) / span * MM, by + (iy - y0) / span * MM, Math.max(2, 2.6 * k), 0, Math.PI * 2); octx.fill();
     octx.strokeStyle = 'rgba(0,0,0,0.6)'; octx.stroke();
   }
@@ -1274,6 +1285,8 @@ export function createRenderer(canvas, sim, input) {
 
   return {
     render, resize,
+    /** (main.js) the Kingstone's hour, from ui/ring.js: the minimap lights the old stones while it stands */
+    set ringClock(f) { ringClock = f; },
     /** (for checks and tools/capture/feel.mjs) the camera's jolt now (native px) and the foes glowing as they wind up */
     get feel() { return { jx: lastCam ? lastCam.rx : 0, jy: lastCam ? lastCam.ry : 0, shaking: !!shake, glow: windGlow.size }; },
     /** the hit-stop asked for since the last call, ms (main.js holds the world) */

@@ -2226,7 +2226,12 @@ Nothing pays in the fight: no XP, coin or loot from its blows; no lanterns or so
 companies in it (*3 of 5*), and *down: up at the edge in 5 s*; toasts as a company comes in (by its player's name, as the
 Bowl's board shows them), as it cracks, as stones fall. The tells drawn on the ground in the warnings' red, filling as
 they wind, white as they land (Luminati, `world.js`). The end card: how it ended, the tier (its word beside its colour),
-the pay, your hero's part, and the companies ranked by their share; **Leave**.
+the pay, your hero's part, and the companies ranked by their share; **Leave**. **The old stones on the maps** (the owner: *"Add a map marker for the stones and the event"*): a ring on the
+minimap and a pin on the World map's Fens tab and its World tab (by Saltmere, once the Fens are open), pale between
+windows, warm with *the Kingstone at 15:00* in the last ten minutes before one, and orange and pulsing with *the Kingstone
+stands* while a window is open and you haven't stood in it. Its card says when it stands next (or how long is left), the
+levels, and **Walk there**: to the ring's edge on your side, inside the stones' reach and outside their golems', where
+*Enter the Ring* shows.
 
 ![The Ring at 430 px: the sweep's fan filling under the Kingstone; then the stones falling, three companies in](img/ring/kingstone.jpg)
 

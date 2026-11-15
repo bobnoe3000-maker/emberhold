@@ -129,13 +129,14 @@ const partyScreen = createPartyScreen({ sim, openSheet: (i) => gearSheet.open(i)
 const guildTerms = createGuildTerms({ sim });   // the Lantern Guild's terms for its sellswords (GDD §6.2): from the tavern and a Contract tab
 const townMenu = createTownMenu(sim, partyPanel, { openParty: () => partyScreen.open(), openTerms: () => guildTerms.open(), openMap: () => worldMap.open('world'), models: !WORLD_OFF && !/sprites/.test(params.get('figures') || '') });   // subscribe before restore, so a loaded counters event repaints
 const journal = createJournal({ sim, npcName: (id) => (cast[id] ? cast[id].name : id), toast: (m, ms, key, o) => hud.show(m, ms, key, o), partyPanel });   // quests (M4): the Journal, tracker and toasts
-const worldMap = createWorldMap({ sim, toast: (m, ms) => hud.show(m, ms), inSquare: () => townMenu.inSquare(), questTitle: (id) => journal.title(id), minimap: () => renderer.minimapRect });   // the World map and the Guild's coach (docs/worldmap-travel-proposal.md)
+const worldMap = createWorldMap({ sim, toast: (m, ms) => hud.show(m, ms), inSquare: () => townMenu.inSquare(), questTitle: (id) => journal.title(id), minimap: () => renderer.minimapRect, ringClock: () => ring.clock() });   // the World map and the Guild's coach (docs/worldmap-travel-proposal.md)
 createStepOut({ sim, partyPanel });   // the way out of a fight (GDD §7.1)
 createShrineCard({ sim });             // a shrine's blessing, offered: Use or Close (GDD §3.6)
 createTowerCard({ sim });              // the Mere Tower's landings: Climb on or Home with Wenna (GDD §17)
 const bowl = createBowl({ sim, partyPanel });
 const partyUp = createPartyUp({ sim });         // Party Up and raids (GDD §18 v1.97): from ☰, the lobby, the run's end      // the Bowl (GDD §17 v1.85): its board from ☰, the bout's bar and speed, the result
-const ring = createRing({ sim, params, dev: DEV });   // the Kingstone (GDD §19 v1.105): the hour's line, Enter the Ring at the old stones, its bar and end card
+const ring = createRing({ sim, params, dev: DEV });
+renderer.ringClock = () => ring.clock();   // (the minimap's old stones, lit while the Kingstone stands)   // the Kingstone (GDD §19 v1.105): the hour's line, Enter the Ring at the old stones, its bar and end card
 createDefeat({ sim });                // a wipe: what happened, before you wake at the Shrine (ui/defeat.js)
 createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare(), questTitle: (id) => journal.title(id) });   // compass travel (docs/compass-mockup.html)
 const gearSheet = createGearSheet(sim, { partyPanel, openTerms: () => guildTerms.open(), models: !WORLD_OFF && !/sprites/.test(params.get('figures') || '') });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)

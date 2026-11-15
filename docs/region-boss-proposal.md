@@ -259,6 +259,7 @@ from ten to), not three. What else came out differently, and why:
   own, the fighter who holds it and the cleric who heals were always Bronze beside a mage.
 - **The way out is shut while it stands**: on autobattle the hero stepped back through the gate mid-fight and lost the
   window (the harness found it). *Leave* on the end card, or the gate after.
-- **Not yet:** a marker on the World map and the minimap (§1.1), and the Guild's coach to Saltmere for it; the AI's
-  reaction by grade (one range for all).
+- **The marker** (§1.1): the old stones on the minimap and both World map tabs, lit by the hour (GDD §19.8), with a
+  Walk there to the ring's edge.
+- **Not yet:** the AI's reaction by grade (one range for all). The Guild's coach already goes to Saltmere.
 

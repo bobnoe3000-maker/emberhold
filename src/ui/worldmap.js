@@ -10,6 +10,9 @@
 //     town: the road out, walking on to the site), so nothing new reaches the sim but the coach. A tap on open ground
 //     (v1.72: "Let me click in the minimap to also walk to a location") drops a mark there, snapped to the nearest spot
 //     you can stand on (sim.spotNear), and its card's Walk here is a plain goto there.
+// The old stones (GDD §19 v1.105, the owner: "Add a map marker for the stones and the event"): on the Fens' tab a pin at the
+//     stones, on the World's one by Saltmere once the Fens are open, lit while the Kingstone stands or is about to (the
+//     clock is ui/ring.js's); its card says when it stands, and Walk there walks to the ring's edge, where Enter the Ring is.
 // It only reads state and pushes commands; the sim checks every one. Text renders as text (textContent), never HTML.
 
 import { WALL, PLACES, LAND_AREA, FOG_WORDS } from './wallmap.js';
@@ -20,6 +23,9 @@ import { BOSSES, bossAway } from '../sim/battle.js';
 import { NPCS } from '../sim/npcs.js';
 import { QS } from '../sim/quests.js';
 import { swallow } from './actorart.js';
+import { RING, paidFor } from '../sim/ring.js';
+import { CAMP_BY } from '../sim/camps.js';
+import { EMBERFALL } from './wallmap.js';
 
 const CSS = `
 /* the button: no face of its own, laid over the minimap as the renderer draws it (renderer.minimapRect), hidden where
@@ -50,6 +56,11 @@ const CSS = `
 #worldmap .pin.off { border-color: #6e6456; background: #b8ad98; }
 #worldmap .pin.sel { outline: 3px solid #f0c880; outline-offset: 3px; }
 #worldmap .pin.spot { width: 16px; height: 16px; margin: -8px 0 0 -8px; border: 2.5px solid #2e5a22; background: #bfe8a8; box-shadow: 0 0 0 3px rgba(240,228,200,.8); }
+#worldmap .pin.ring { width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 10px; border: 3px double #6a2a14; background: #c9b89a; }
+#worldmap .pin.ring.live { border: 3px solid #fff0d8; background: #ff7a2a; box-shadow: 0 0 0 3px rgba(255,122,42,.45), 0 0 14px rgba(255,122,42,.95); animation: wmRing 1.4s ease-in-out infinite; }
+#worldmap .pin.ring.soon { border-color: #ff9a50; background: #f0c890; box-shadow: 0 0 10px rgba(255,150,80,.8); }
+@keyframes wmRing { 50% { box-shadow: 0 0 0 7px rgba(255,122,42,0), 0 0 18px rgba(255,122,42,.95); } }
+#worldmap .card .sub.ring { color: #ffb070; }
 #worldmap .here { position: absolute; width: 32px; height: 32px; margin: -16px 0 0 -16px; border-radius: 16px; border: 2px solid #f0c880; box-shadow: 0 0 0 4px rgba(240,200,128,.3); pointer-events: none; }
 #worldmap .tag { position: absolute; font: italic 12px Georgia, serif; color: #2a2018; background: rgba(240,228,200,.92); padding: 1px 6px; border-radius: 5px; white-space: nowrap; pointer-events: none; }
 #worldmap .tag.me { color: #3b2208; font-weight: 600; }
@@ -88,7 +99,8 @@ function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.
 /**
  * @param {{ sim: any, toast: (msg: string, ms?: number) => void, inSquare: () => boolean, questTitle: (id: string) => string, minimap: () => ({ l: number, t: number, r: number, b: number } | null) }} o
  */
-export function createWorldMap({ sim, toast, inSquare, questTitle, minimap }) {
+/** @param {{ sim: any, toast: any, inSquare: () => boolean, questTitle: (id: string) => string, minimap: () => any, ringClock?: () => any }} o */
+export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ringClock = () => null }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const btn = el('button'); btn.id = 'mapBtn'; btn.setAttribute('aria-label', 'Map'); btn.append(el('span', 'dot'));
   const wrap = el('div'); wrap.id = 'mapWrap';
@@ -259,7 +271,14 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap }) {
         here: id === here ? (inTown ? 'you are here' : `you are in ${lower(LANDS[land].name)}`) : '', star: !!(q && q.land === land && townOf(land) === id),
         west: true });   // (the wall map writes a town's name under its mark and its sites' round it; west of Emberfall's towns is open land and the coast: "you are here" goes there, pass 13)
     }
+    if (sim.landOpen(RING.region)) { const C = CAMP_BY.fens_stones, [x, y] = EMBERFALL.fens(C.x, C.y); out.push(ringPin(x, y)); }
     return out;
+  }
+  // the old stones' pin: lit while the Kingstone stands (a window open, not yet stood in), warm when it's about to
+  function ringPin(/** @type {number} */ x, /** @type {number} */ y) {
+    const c = ringClock(), live = !!(c && c.open && !paidFor(S(), c.id)), soon = !!(c && c.soon);
+    return { key: 'ring', kind: 'ring', x, y, tap: true, here: '', star: false, cls: 'ring' + (live ? ' live' : soon ? ' soon' : ''),
+      label: live ? 'the Kingstone stands' : soon ? `the Kingstone at ${c.at}` : 'the old stones' };
   }
 
   // ── the land you're in: its town, its open sites and its roads out ────────────────────────────────────────────────
@@ -274,6 +293,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap }) {
       else if (p.kind === 'town') out.push({ ...base, label: LANDS[r].town, cls: S().reached.has(townOf(r)) ? 'lit' : 'dim', star: !!(q && q.land === r && !q.site), here: w.kind === 'town' ? 'you are here' : '' });
       else if (LANDS[p.id]) out.push({ ...base, label: `to ${lower(LANDS[p.id].name)}`, cls: sim.landOpen(p.id) ? '' : 'off', star: !!(q && q.land === p.id && q.land !== r) });
     }
+    if (r === RING.region) { const C = CAMP_BY.fens_stones; out.push(ringPin(C.x, C.y)); }
     if (w.kind === 'overland') { const pl = S().player; out.push({ key: 'me', kind: 'me', x: pl.x, y: pl.y, tap: false, cls: null, here: 'you are here', label: '' }); }
     return out;
   }
@@ -303,6 +323,22 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap }) {
       return;
     }
     const r = region();
+    if (p.kind === 'ring') {                               // the old stones and the Kingstone (GDD §19 v1.105)
+      const c = ringClock(), w = sim.world, P = S().player, C = CAMP_BY.fens_stones, mm = (/** @type {number} */ t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+      card.append(el('h3', '', 'The old stones'), el('div', 'sub', 'The Greywater Fens · the Kingstone stands the first 15 minutes of every hour'));
+      card.append(el('div', 'sub ring', !c ? '' : c.open ? (paidFor(S(), c.id) ? 'It stands now · you’ve stood against it this hour' : `It stands now · ${mm(c.left)} left`)
+        : `It stands next at ${c.at}${c.soon ? ` · in ${mm(c.until)}` : ''}`));
+      card.append(el('div', 'sub', `from level ${RING.minLevel} · fought at level ${RING.level} · up to five companies · walk into the ring to fight it`));
+      // Walk there: to the ring's edge on your side (inside the old stones' reach, outside their golems'), where Enter the Ring shows
+      let go = null, why = '', steps = '';
+      if (w.kind === 'overland' && w.region === RING.region) {
+        const dx = P.x - C.x, dy = P.y - C.y, d = Math.hypot(dx, dy) || 1, k = Math.min(d, RING.near - 7) / d, s = sim.spotNear(C.x + dx * k, C.y + dy * k);
+        if (s) { go = { type: 'goto', tx: s.tx, ty: s.ty, near: 0, then: null, label: 'The old stones' }; steps = `about ${s.steps} steps`; } else why = 'No way there from here.';
+      } else why = r !== RING.region ? 'In the Greywater Fens, north-east of Saltmere.' : w.kind === 'town' ? 'Take the road out first.' : 'Climb out first.';
+      if (go) info.append('The way', el('br'), el('em', '', steps));
+      button('Walk there', 'walk', why, () => { if (go) sim.commands.push(go); close(); });
+      return;
+    }
     if (p.kind === 'spot') {                               // a tap on open ground (v1.72): the walk there, a plain goto
       const w = sim.world, s = p.spot;
       card.append(el('h3', '', 'This spot'), el('div', 'sub', `open ground in ${lower(LANDS[r].name)}`));
