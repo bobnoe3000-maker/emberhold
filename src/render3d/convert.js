@@ -122,7 +122,7 @@ const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, d: 2, G: 1, g: 0 };
 /**
  * The world the sim is in, as a Luminati level, and the pieces of our own art to stand in it.
  * @param {any} w the sim's world (sim.world)
- * @param {{ region?: string, stairs?: string, walls?: string }} [o]
+ * @param {{ region?: string, stairs?: string, walls?: string, dlook?: string }} [o]
  * @returns {{ level: any, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps: number }, sprites: { id?: string, prop?: string, tx?: number, ty?: number, flat?: boolean, x: number, z: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
  */
 export function convertWorld(w, o = {}) {
@@ -464,7 +464,7 @@ function ruinWalls(W, D, tiles, heights, open) {
   return out;
 }
 
-/** @param {any} w @param {{ region?: string, stairs?: string, walls?: string }} [o] */
+/** @param {any} w @param {{ region?: string, stairs?: string, walls?: string, dlook?: string }} [o] */
 function dungeon(w, o = {}) {
   const cells = w.level.cells;
   let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
@@ -541,10 +541,44 @@ function dungeon(w, o = {}) {
     const lit = PROP_LIGHT[kind], pool = DOOR_POOL[kind] || [3.2, 4.5];
     if (lit && kind !== 'brazier' && kind !== 'cookfire') add({ type: 'light', x, z, dy: kind === 'candelabra' ? 1.7 : 0.9, color: hex(lit), intensity: pool[0], distance: pool[1], flicker: 0.15, nightOnly: false });
   }
+  if (/c/.test(o.dlook || '')) edgeRubble(W, D, heights, open, add);   // (a spike: ?dlook=c|bc, docs/dungeon-look-spike.md)
   const level = frame({ name: w.siteName || 'The Old Barrows', W, D, tiles, heights, objects, spawn: { x: X(sp.x), z: Z(sp.y), facing: 'up' },
     // (black beyond the walls, as Emberlit's: a backdrop colour, which the fog takes too, so the far rooms fade to it)
     environment: { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: true, backdrop: '#040306' } });
-  return { level, sprites, ambient: ambientOf(w.kit), origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D } };
+  const amb = ambientOf(w.kit);
+  return { level, sprites, ambient: /c/.test(o.dlook || '') ? coolAmbient(amb) : amb, origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D } };
+}
+
+// ── a SPIKE, option C (the owner, 2026-11-15: "show me before and after for our dungeon with b, c and b+c"): rubble
+// heaped at the foot of the walls, and a cooler, darker fill so the braziers' orange reads against blue-grey stone (the
+// reference's look). Behind ?dlook=c|bc; nothing ships on it until the owner chooses (docs/dungeon-look-spike.md).
+// A floor tile against a wall takes a stone or a heap now and then, pushed to the wall's side; a corridor (wall on both
+// sides) and a doorway stay clear, and the stairs' tiles are no floor ('2') so they're never touched.
+const EDGE_MAX = 420;
+function edgeRubble(W, D, heights, open, add) {
+  let n = 0;
+  for (let j = 1; j < D - 1 && n < EDGE_MAX; j++) for (let i = 1; i < W - 1 && n < EDGE_MAX; i++) {
+    if (heights[j][i] !== '2') continue;
+    const wl = (di, dj) => !open(i + di, j + dj) && heights[j + dj][i + di] !== '0';
+    const e = wl(1, 0), w_ = wl(-1, 0), s = wl(0, 1), nn = wl(0, -1);
+    if ((e && w_) || (s && nn)) continue;                          // a corridor or a doorway: kept clear
+    const dirs = [];
+    if (e) dirs.push([1, 0]); if (w_) dirs.push([-1, 0]); if (s) dirs.push([0, 1]); if (nn) dirs.push([0, -1]);
+    if (!dirs.length) continue;
+    const h = hash('er', i, j);   // (its shifts unsigned, >>>: a >> made a negative size, and Luminati's map drew a negative circle and threw)
+    if (h % 100 >= 38) continue;
+    const [dx, dz] = dirs[h % dirs.length], along = ((h >>> 8) % 60 - 30) / 100;
+    const x = r2(i + 0.5 + dx * 0.33 + (dz ? along : 0)), z = r2(j + 0.5 + dz * 0.33 + (dx ? along : 0));
+    const size = r2(0.34 + ((h >>> 4) % 40) / 100);
+    if ((h >>> 12) % 3 === 0) add({ type: 'rock', x, z, opts: { size: r2(size * 0.85), seed: (h >>> 3) % 97 } });
+    else add({ type: 'debris', x, z, rotation: ((h >>> 6) % 11) * 0.5, opts: { kind: 'rubble', size, charred: false, seed: (h >>> 2) % 997 } });
+    n++;
+  }
+}
+/** the cooler, darker fill: blue-grey, three-quarters as bright, the braziers' pools a touch stronger against it */
+function coolAmbient(a) {
+  const k = [0.72, 0.82, 1.04], f = (c) => c.map((v, i) => r2(v * k[i] * 0.86));
+  return { ...a, sky: f(a.sky), ground: f(a.ground), lamps: r2(a.lamps * 0.85) };
 }
 
 // ── the Bowl: the Quarry Ring (the owner chose B of three, docs/bowl-arena-proposal.md §12; world doc v1.46 §3.9) ──────

@@ -28,6 +28,7 @@ const STAGE = join(LUM, 'ember3d');
 rmSync(STAGE, { recursive: true, force: true }); mkdirSync(STAGE, { recursive: true });
 cpSync(join(HERE, 'world.js'), join(STAGE, 'world.js'));
 cpSync(join(HERE, 'ground.js'), join(STAGE, 'ground.js'));
+cpSync(join(HERE, 'hires.js'), join(STAGE, 'hires.js'));   // (a spike: the dungeons' painted textures, ?dlook=b)
 // the bake's figure builder, so the people in the world are the atlases' people as models (world.js placeFigure)
 for (const f of ['figure.js', 'faces.js', 'props.js', 'body.js', 'creatures.js', 'gear.js', 'buildkit.js', 'env.json', 'town.json']) cpSync(join(ROOT, 'tools', 'actor-lab', f), join(STAGE, f));
 

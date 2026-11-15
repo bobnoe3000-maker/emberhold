@@ -47,6 +47,7 @@ import { setFaceStyle } from './faces.js';
 // (GDD v1.79: every face is the painted head, faces.js paintedFace; ?faces=mesh the 3D parts, as before, for a comparison)
 if (typeof location !== 'undefined' && new URLSearchParams(location.search).get('faces') === 'mesh') setFaceStyle('mesh');
 import './ground.js';
+import { applyHires } from './hires.js';
 
 let ASSETS = '';                                              // (the game's assets/: createWorld's `assets`)
 const FOV = 1;                                                // (degrees: near enough orthographic, see above)
@@ -873,6 +874,7 @@ function cardAlpha(mat, uv) {
   return d.px[(y * d.w + x) * 4 + 3];
 }
 let CARRY_UP = 6, CARRY_GAIN = 1.6;   // (the carry light over the models: its height and strength; settings({ carryUp, carryGain }) for look-dev)
+let DLOOK = '';   // (a spike: ?dlook=, settings({ dlook }))
 let blastLight = null, carryLight = null, carryLevel = -1, focusSpin = 0, frameAmbient = null, inside = false;
 
 // ── two skills in Luminati's own looks (renderer.js spells; docs/combat-fx.md "Frost Nova and Turn Undead on Luminati") ─
@@ -1353,6 +1355,7 @@ const api = {
         await placeEnv(sprites, region);
       }
       curEnvKey = envKey;
+      if (inside && /b/.test(DLOOK)) { const r = applyHires(game.tileMap, game.engine?.renderer); globalThis.__dlook = r; }   // (a spike: ?dlook=b|bc, hires.js)
     })();
     try { await building; } finally { loading = false; }
     return id === levelId;
@@ -1360,6 +1363,7 @@ const api = {
   /** the menu's Graphics: the depth of field */
   settings(o = {}) {
     if (o.dof) dof = o.dof;
+    if (typeof o.dlook === 'string') DLOOK = o.dlook;
     // the resolution (the menu's: settings.js). Luminati draws at the screen's density up to PIXEL_RATIO within a budget of
     // 2.1 million pixels (its resolution controller: 2.53× on a 390 × 844 phone), and steps its render scale down when the
     // GPU's timer says a frame is slow, which iOS never tells it (no timer queries: the owner's phone drew every frame at
