@@ -1194,8 +1194,9 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
-// 16. The forge and the shop (GDD §8): an upgrade from the Smith's Upgrade tab takes the gold and cinders
-// and shows the next step; a level-1 piece too small to gain says so; the shop buys and sells.
+// 16. The forge and the shop (GDD §8): an upgrade from the Smith's Upgrade tab (v1.114: a piece from the bag given up,
+// picked with its odds; then the forge's animation and its verdict, Done) takes the gold, the cinders and the piece, and
+// shows the next step; a level-1 piece too small to gain says so; the shop buys and sells.
 {
   const b = await launch(chromium, 'chromium');
   if (b) {
@@ -1207,15 +1208,23 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.evaluate(async () => {
       const s = globalThis.__sim, { makeItem } = await import('/src/sim/items.js');
       s.state.party[0].level = 6; Object.assign(s.state.counters, { gold: 5000, embers: 10, wood: 0, stone: 0 });
-      s.state.bag.push(makeItem('kite', 6, 'common', { uid: 'k6' }));
+      s.state.bag.push(makeItem('kite', 6, 'common', { uid: 'k6' }), makeItem('kite', 6, 'common', { uid: 'k7' }));
       s.bus.emit('countersChanged', { ...s.state.counters });
     });
     await run(5); await p.waitForTimeout(600);
     await p.locator('button', { hasText: 'Smith' }).first().tap(); await run(2);
     await p.locator('#hubSheet [data-go="smith:upgrade"]').tap(); await run(2);
     const small = await p.locator('#hubSheet .merc', { hasText: 'Round Shield' }).innerText().catch(() => '');
-    await p.locator('#hubSheet [data-upgrade="k6"]').tap(); await run(3);
-    const up = await p.evaluate(() => { const s = globalThis.__sim, it = s.state.bag.find((q) => q.uid === 'k6'); return { up: it.up, gold: s.state.counters.gold, cinders: s.state.counters.embers }; });
+    await p.locator('#hubSheet [data-upgrade="k6"]').tap(); await run(2);
+    const pick = { offers: await p.locator('#hubSheet [data-offer]').count(), off: await p.locator('#hubSheet [data-upgo]').isDisabled() };
+    await p.locator('#hubSheet [data-offer="k7"]').tap(); await run(2);
+    const odds = await p.locator('#hubSheet .oleg').innerText().catch(() => '');
+    await p.locator('#hubSheet [data-upgo]').tap(); await run(3);
+    await p.waitForSelector('#forgeFx.on'); await p.waitForSelector('#forgeFx .done.on', { timeout: 20000 });
+    const verdict = await p.locator('#forgeFx .verdict').innerText();
+    await p.locator('#forgeFx .done').tap(); await run(2);
+    await p.locator('#hubSheet [data-upback]').tap(); await run(2);
+    const up = await p.evaluate(() => { const s = globalThis.__sim, it = s.state.bag.find((q) => q.uid === 'k6'); return { up: it.up || 0, gold: s.state.counters.gold, cinders: s.state.counters.embers, k7: s.state.bag.some((q) => q.uid === 'k7') }; });
     const next = await p.locator('#hubSheet [data-upgrade="k6"]').innerText().catch(() => '');
     await p.locator('#hubSheet .close').tap(); await run(2);
     await p.locator('button', { hasText: 'Shop' }).first().tap(); await run(2);
@@ -1238,10 +1247,11 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('shop: like items stack in the Sell list (one row, ×3, Sell one and Sell all); Sell all sells every piece of the stack',
       /×3/.test(stackRow) && /Sell all 3/.test(stackRow) && rowsBefore === shop.bag.length + 1 && stacked.left === 0 && stacked.sold === 3, JSON.stringify({ stackRow: stackRow.replace(/\n/g, ' · '), rowsBefore, stacked }));
     check('shop: every row of Buy and Sell shows the piece\'s own icon in its rarity\'s frame, as the bag does', buyTiles.rows >= 5 && buyTiles.tiles === buyTiles.rows && sellTiles.rows >= 1 && sellTiles.tiles === sellTiles.rows, JSON.stringify({ buyTiles, sellTiles }));
-    check('forge and shop: an upgrade takes 180 gold and ✦ 2 (v1.77) and offers the next; a small piece says when its gain shows ("shows at +3" since the 20 % step, v1.76; No gain where it never does); buy from the day\'s four, sell the +1 piece, and it waits to be bought back',
-      up.up === 1 && up.gold === 5000 - 180 && up.cinders === 8 && /Upgrade to \+2/.test(next) && (/shows at \+\d/.test(small) || /No gain/.test(small))
+    check('forge and shop: an upgrade asks for a piece from the bag first (its odds shown), then takes 180 gold, ✦ 2 and the piece, plays the forge and says how it went (v1.114), and offers the next; a small piece says when its gain shows ("shows at +3" since the 20 % step, v1.76; No gain where it never does); buy from the day\'s four, sell the piece, and it waits to be bought back',
+      pick.offers === 1 && pick.off && /Takes \d+ %/.test(odds) && /Can.t break/.test(odds) && (up.up === 1 ? /It takes: \+1/.test(verdict) : /didn.t take/.test(verdict)) && !up.k7
+      && up.gold === 5000 - 180 && up.cinders === 8 && new RegExp(`Upgrade to \\+${up.up + 1}`).test(next) && (/shows at \+\d/.test(small) || /No gain/.test(small))
       && buys.length === 4 && buys.every((t) => /^Buy · \d+/.test(t)) && shop.bag.length === 1 && !shop.bag.includes('k6') && shop.buyback[0] === 'k6' && /\d/.test(back) && errs.length === 0,
-      JSON.stringify({ up, next, small: small.slice(-40), buys: buys.slice(0, 1), shop, back }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+      JSON.stringify({ pick, odds, verdict, up, next, small: small.slice(-40), buys: buys.slice(0, 1), shop, back }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }
 }

@@ -49,9 +49,11 @@ test('Saltmere has a forge: an upgrade there is done, not refused', () => {
   sim.commands.push({ type: 'createHero', cls: 'fighter', look: 'hero_knight', origin: 'thornwick_born', name: 'Ada' }); sim.tick();
   const why = []; sim.bus.on('refused', (e) => why.push(e.reason));
   const it = sim.state.party[0].gear.weapon, up0 = it.up || 0; for (const k of Object.keys(sim.state.counters)) if (typeof sim.state.counters[k] === 'number') sim.state.counters[k] = 1e6;
-  sim.commands.push({ type: 'upgrade', uid: it.uid }); sim.tick();
+  const done = []; sim.bus.on('forged', (e) => done.push(e));
+  sim.state.bag.push({ ...it, uid: 'offer1' });   // (v1.114: an upgrade takes a piece of gear too)
+  sim.commands.push({ type: 'upgrade', uid: it.uid, offer: 'offer1' }); sim.tick();
   assert.ok(!why.some((r) => /no forge/.test(r)), why.join(' | '));
-  assert.equal(sim.state.party[0].gear.weapon.up, up0 + 1, 'the Tidewater Forge did the work');
+  assert.equal(done.length, 1, 'the Tidewater Forge did the work'); assert.equal(done[0].was, up0);
 });
 
 // (v1.44, the owner: "there should at least be a shop, and small tavern at these way stations… a reason to be there")

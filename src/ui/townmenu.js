@@ -46,7 +46,8 @@ import { boardWords, boardReady, SKULLS } from './boardwords.js';
 import { feeOf, wageOf, hired, PERKS } from '../sim/companions.js';
 import { rankMark, perkLines, loyaltyWord, wageLine, perkWord, rankLine, wordsReady, SW_CSS } from './sellswords.js';
 import { BASES, SLOT_LABEL, STAT_LABEL, UP_MAX, itemStats, classesOf } from '../sim/items.js';
-import { upgradeCost, reforgeCost, salvageOf, sellPrice, buyPrice, SHOPKEEP, SALVAGE_GOLD } from '../sim/smith.js';
+import { upgradeCost, reforgeCost, salvageOf, sellPrice, buyPrice, SHOPKEEP, SALVAGE_GOLD, upgradeOdds, canOffer } from '../sim/smith.js';
+import { createForgeFx } from './forgefx.js';
 import { townOf } from '../sim/coach.js';
 import { isUsable, SCROLL_PRICE } from '../sim/items.js';
 import { EXPEDITIONS, expeditionPay } from '../sim/expeditions.js';
@@ -87,15 +88,26 @@ const CSS = SW_CSS + LOOK_CSS + `
 #hubSheet .merc .who { flex: 1; min-width: 0; }
 /* the piece itself in a shop row (the owner, 2026-11-12: "Add gear models to the shop for buy and sell.. same as used in
    inventory"): the inventory's tile (sheet.js .gslot), its icon in a frame by rarity, +N where the smith has upgraded it */
-#hubSheet .merc .gtile { position: relative; flex: none; width: 52px; height: 52px; border-radius: 8px; background: radial-gradient(circle at 50% 40%, #221c2c, #120e18); border: 1.5px solid #5a5448; display: grid; place-items: center; }
-#hubSheet .merc .gtile img { width: 44px; height: 44px; pointer-events: none; }
-#hubSheet .merc .gtile.fine { border-color: #72d06c; box-shadow: 0 0 4px rgba(114,208,108,.28), inset 0 0 8px rgba(114,208,108,.14); }
-#hubSheet .merc .gtile.rare { border-color: #5aa8ff; box-shadow: 0 0 7px 1px rgba(90,168,255,.38), inset 0 0 11px rgba(90,168,255,.22); }
-#hubSheet .merc .gtile.heirloom { border-color: #f2a33c; box-shadow: 0 0 10px 2px rgba(242,163,60,.48), inset 0 0 14px rgba(242,163,60,.3); }
-#hubSheet .merc .gtile .up { position: absolute; bottom: 1px; right: 3px; color: #8fe07a; font: 700 11px ui-monospace, Menlo, monospace; text-shadow: 0 1px 0 #000; }
+#hubSheet :is(.merc, .offer) .gtile { position: relative; flex: none; width: 52px; height: 52px; border-radius: 8px; background: radial-gradient(circle at 50% 40%, #221c2c, #120e18); border: 1.5px solid #5a5448; display: grid; place-items: center; }
+#hubSheet :is(.merc, .offer) .gtile img { width: 44px; height: 44px; pointer-events: none; }
+#hubSheet :is(.merc, .offer) .gtile.fine { border-color: #72d06c; box-shadow: 0 0 4px rgba(114,208,108,.28), inset 0 0 8px rgba(114,208,108,.14); }
+#hubSheet :is(.merc, .offer) .gtile.rare { border-color: #5aa8ff; box-shadow: 0 0 7px 1px rgba(90,168,255,.38), inset 0 0 11px rgba(90,168,255,.22); }
+#hubSheet :is(.merc, .offer) .gtile.heirloom { border-color: #f2a33c; box-shadow: 0 0 10px 2px rgba(242,163,60,.48), inset 0 0 14px rgba(242,163,60,.3); }
+#hubSheet :is(.merc, .offer) .gtile .up { position: absolute; bottom: 1px; right: 3px; color: #8fe07a; font: 700 11px ui-monospace, Menlo, monospace; text-shadow: 0 1px 0 #000; }
 #hubSheet .merc .who b { font-size: 15px; color: #efe4cf; font-weight: 600; }
 #hubSheet .merc .who em { font-style: normal; font: 10.5px ui-monospace, Menlo, monospace; color: #c09a50; margin-left: 6px; }
 #hubSheet .merc .who span { display: block; font: 10.5px ui-monospace, Menlo, monospace; color: #978c80; margin-top: 3px; }
+/* the upgrade set up (v1.114): the bag's pieces it could take, each a tile with its odds; the chosen one's bar */
+#hubSheet .offers { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+#hubSheet .offer { display: grid; justify-items: center; gap: 3px; padding: 8px 6px; min-height: 44px; border-radius: 10px; border: 1px solid #3a3226; background: rgba(255,255,255,.03); color: #c9bba4; font: 11px/1.25 Georgia, serif; text-align: center; }
+#hubSheet .offer.on { border-color: #d8a040; box-shadow: 0 0 0 2px #d8a040; background: rgba(216,160,64,.08); }
+#hubSheet .offer .on1 { font-weight: 600; font-size: 12px; } #hubSheet .offer .on2 { color: #9a8d78; } #hubSheet .offer .on3 { font: 11px ui-monospace, Menlo, monospace; color: #e8c27a; }
+#hubSheet .odds { margin: 12px 0 4px; display: grid; gap: 6px; }
+#hubSheet .obar { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: #0f0b09; border: 1px solid #3a2e27; }
+#hubSheet .obar span { display: block; height: 100%; } #hubSheet .obar .s, #hubSheet .oleg i.s { background: #e0a840; } #hubSheet .obar .f, #hubSheet .oleg i.f { background: #6a6e75; } #hubSheet .obar .d, #hubSheet .oleg i.d { background: #e0574a; }
+#hubSheet .oleg { display: flex; flex-wrap: wrap; gap: 4px 14px; font: 12px ui-monospace, Menlo, monospace; color: #c9bba4; }
+#hubSheet .oleg i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; }
+#hubSheet .row2 { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; } #hubSheet .row2 .btn { min-height: 44px; padding: 10px 16px; }
 #hubSheet .btn { flex: none; font: 600 12px Georgia, serif; color: #1a1208; background: #d8a040; border: 0; border-radius: 7px; padding: 8px 12px; }
 #hubSheet .btn.ghost { background: transparent; color: #d8a040; border: 1px solid rgba(214,170,98,0.5); }
 #hubSheet .btn:disabled { background: #3a3444; color: #7a7088; }
@@ -187,9 +199,16 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     const rl = e.target.closest('[data-release]'); if (rl) { if (armRel !== rl.dataset.release) { armRel = rl.dataset.release; return hire(); } armRel = null; return send({ type: 'release', id: rl.dataset.release }); }   // tap twice
     const sw = e.target.closest('[data-swap]'); if (sw) return send({ type: 'swap', slot: +sw.dataset.swap, id: sw.dataset.who });
     const ht = e.target.closest('[data-htab]'); if (ht) { note = ''; return hire(ht.dataset.htab); }
-    const ft = e.target.closest('[data-ftab]'); if (ft) { note = ''; armUid = null; return smith(ft.dataset.ftab); }
+    const ft = e.target.closest('[data-ftab]'); if (ft) { note = ''; armUid = null; upPick = null; return smith(ft.dataset.ftab); }
     const pt = e.target.closest('[data-ptab]'); if (pt) { note = ''; return shop(pt.dataset.ptab); }
-    const up = e.target.closest('[data-upgrade]'); if (up) return send({ type: 'upgrade', uid: up.dataset.upgrade });
+    const up = e.target.closest('[data-upgrade]'); if (up) { note = ''; upPick = { uid: up.dataset.upgrade, offer: null }; return smith(); }   // (v1.114: first, the piece it takes)
+    const of = e.target.closest('[data-offer]'); if (of && upPick) { upPick.offer = of.dataset.offer; return smith(); }
+    if (e.target.closest('[data-upback]')) { upPick = null; return smith(); }
+    const ug = e.target.closest('[data-upgo]'); if (ug && upPick && upPick.offer) {   // the attempt: what's on the anvil and what goes for it, for the animation once the smith has rolled
+      const it = holdings().map(([q]) => q).find((q) => q.uid === upPick.uid), o = sim.state.bag.find((q) => q.uid === upPick.offer);
+      if (it && o) forging = { item: { ...it }, offer: { ...o } };
+      return send({ type: 'upgrade', uid: upPick.uid, offer: upPick.offer });
+    }
     const rf = e.target.closest('[data-reforge]'); if (rf) return send({ type: 'reforge', uid: rf.dataset.reforge, aff: +rf.dataset.aff });
     const sv = e.target.closest('[data-salvage]'); if (sv) { const it = sim.state.bag.find((q) => q.uid === sv.dataset.salvage);   // a Fine or better: tap twice
       if (it && it.r !== 'common' && armUid !== it.uid) { armUid = it.uid; return smith(); } armUid = null; return send({ type: 'salvage', uid: sv.dataset.salvage }); }
@@ -211,9 +230,18 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   sim.bus.on('partyChanged', redraw); sim.bus.on('countersChanged', redraw);
   sim.bus.on('questChanged', redraw); sim.bus.on('boardChanged', redraw); boardReady.then(redraw); wordsReady.then(redraw);
   for (const ev of ['rosterChanged', 'wages', 'retrained', 'wagesSettled', 'perkRevealed', 'forged', 'traded', 'gearChanged', 'expeditionSent', 'expeditionBack']) sim.bus.on(ev, redraw);
+  // the forge's verdict, played out (forgefx.js): the piece given up is spent; after a break there's nothing left to pick for
+  sim.bus.on('forged', (e) => {
+    if (e.what !== 'upgrade' || !forging) return;
+    const f = forging; forging = null;
+    if (upPick) upPick = e.result === 'broke' ? null : { uid: upPick.uid, offer: null };
+    (forgeFx || (forgeFx = createForgeFx())).play({ item: f.item, offer: f.offer, result: e.result, was: e.was, up: e.up }).then(redraw);
+  });
   sim.bus.on('rested', () => { note = ''; restDone = true; redraw(); });
   sim.bus.on('refused', (r) => { if (!sheet.classList.contains('on')) return; note = r.reason; redraw(); });
-  let current = null, view = null, note = '', restDone = false, retrainId = null, hireTab = null, forgeTab = 'upgrade', shopTab = 'buy', armUid = null, armRel = null;   // (armRel: a bench member's Dismiss for good, tapped once)
+  let current = null, view = null, note = '', restDone = false, retrainId = null, hireTab = null, forgeTab = 'upgrade', shopTab = 'buy', armUid = null, armRel = null;
+  /** @type {{ uid: string, offer: string | null } | null} */ let upPick = null;   // the upgrade being set up: the piece, and the one it takes (v1.114)
+  /** @type {any} */ let forging = null, forgeFx = null;   // (armRel: a bench member's Dismiss for good, tapped once)
 
   const LIVE = { 'Quest board': 'board', 'Hire companions': 'hire', 'The Guild’s coach': 'coach', 'Raise the slain': 'raise', Respec: 'respec', 'Change a look': 'look', Rest: 'rest', 'Party & bench': 'party',
     Expeditions: 'expeditions', Upgrade: 'smith:upgrade', Reforge: 'smith:reforge', Salvage: 'smith:salvage', Buy: 'shop:buy', Sell: 'shop:sell' };   // actions that work today
@@ -328,16 +356,34 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     for (const m of sim.state.party) for (const k of Object.keys(m.gear || {})) { const it = m.gear[k]; if (it) out.push([it, `worn by ${esc(m.name)}`]); }
     for (const it of sim.state.bag) if (!isUsable(it)) out.push([it, 'in the bag']); return out; };   // (a scroll isn't the forge's)
 
-  // Hale & Daughter's forge: Upgrade (+1…+5), Reforge (one affix of a Fine or better), Salvage (the bag)
+  // the upgrade set up (v1.114): the piece on the anvil, then the bag's pieces it could take, safest first, each with its odds;
+  // the one chosen, its odds as a bar and in words, the price, and Upgrade
+  const pc = (x) => (x > 0 && x < 0.0995 ? (x * 100).toFixed(1) : Math.round(x * 100)) + ' %';
+  function pickBody(it, where) {
+    const c = upgradeCost(it, sim.state.party[0].origin), to = (it.up || 0) + 1;
+    if (!c) return `<p class="hint2">${esc(it.name)} is at +${UP_MAX}.</p><div class="row go" data-upback><div><b>Back</b></div><div class="go-arrow">›</div></div>`;
+    const pool = sim.state.bag.filter((o) => canOffer(it, o)).map((o) => ({ o, d: /** @type {any} */ (upgradeOdds(it, o)) })).sort((a, b) => b.d.ok - a.d.ok);
+    const sel = pool.find((p) => p.o.uid === upPick.offer), ok = affords(c);
+    const odds = sel ? `<div class="odds"><div class="obar"><span class="s" style="width:${sel.d.ok * 100}%"></span><span class="f" style="width:${sel.d.fail * 100}%"></span><span class="d" style="width:${sel.d.broke * 100}%"></span></div>
+      <div class="oleg"><span><i class="s"></i>Takes ${pc(sel.d.ok)}</span><span><i class="f"></i>Fails ${pc(sel.d.fail)}${sel.d.drop && (it.up || 0) > 0 ? ` (drops to +${(it.up || 0) - 1})` : ''}</span><span><i class="d"></i>${sel.d.broke > 0 ? `Breaks ${pc(sel.d.broke)}` : 'Can’t break'}</span></div></div>` : '';
+    return `<div class="merc"><div class="who">${itemHead(it, where)}<span>${statLine(it)}</span><span class="nx">${nextStep(it)}</span><span class="sub">${costWords(c)} · and the piece you give up, whatever comes of it</span></div></div>
+      <h3>Give up a piece from the bag</h3><p class="hint2">Rarer pieces make it safer, and one for the same slot safer still; a piece well below this one's level helps less.</p>
+      <div class="offers">${pool.map(({ o, d }) => `<button class="offer${o.uid === upPick.offer ? ' on' : ''}" data-offer="${o.uid}" aria-pressed="${o.uid === upPick.offer}">${gearTile(o)}<span class="on1" style="color:${RC[o.r]}">${upName(o)}</span><span class="on2">${RW[o.r]} · ${SLOT_LABEL[BASES[o.base].slot]} · lv ${o.ilv}</span><span class="on3">takes ${pc(d.ok)}${d.broke > 0 ? ` · breaks ${pc(d.broke)}` : ''}</span></button>`).join('') || '<p>Nothing in the bag to give up.</p>'}</div>
+      ${odds}
+      <div class="row2"><button class="btn ghost" data-upback>Back</button><button class="btn" data-upgo ${sel && ok ? '' : 'disabled'}>Upgrade to +${to}${!ok ? '<small>not enough</small>' : !sel ? '<small>pick a piece</small>' : ''}</button></div>`;
+  }
+  // Hale & Daughter's forge: Upgrade (+1…+9, v1.114), Reforge (one affix of a Fine or better), Salvage (the bag)
   function smith(tab) {
     view = 'smith'; if (tab) forgeTab = tab;
     const H = holdings(), sv = (sim.world.services || []).find((q) => q.kind === 'smith');
-    const body = forgeTab === 'upgrade' ? `<p class="hint2">Each step adds 20 % to an item's base stats and 10 % to its traits.</p>
+    const picking = forgeTab === 'upgrade' && upPick ? holdings().find(([q]) => q.uid === upPick.uid) : null;
+    const body = picking ? pickBody(picking[0], picking[1])
+      : forgeTab === 'upgrade' ? `<p class="hint2">Each step to +5 adds 20 % to an item's base stats and 10 % to its traits; +6 to +9 add half as much again. An upgrade takes a piece of gear from the bag too, and it can fail or break the piece: a rarer piece given up, or one for the same slot, makes it safer.</p>
       ${H.map(([it, where]) => { const c = upgradeCost(it, sim.state.party[0].origin);
         if (!c) return `<div class="merc"><div class="who">${itemHead(it, where)}<span>${statLine(it)}</span></div><button class="btn" disabled>+${UP_MAX} · done</button></div>`;
         if (gainsAt(it) > UP_MAX) return `<div class="merc"><div class="who">${itemHead(it, where)}<span>${statLine(it)}</span><span class="sub">Too small a piece to gain from the forge: what a step adds rounds away even at +${UP_MAX}.</span></div><button class="btn" disabled>No gain</button></div>`;
-        const ok = affords(c); return `<div class="merc"><div class="who">${itemHead(it, where)}<span>${statLine(it)}</span><span class="nx">${nextStep(it)}</span><span class="sub">${costWords(c)}</span></div>
-        <button class="btn" data-upgrade="${it.uid}" ${ok ? '' : 'disabled'}>Upgrade to +${(it.up || 0) + 1}${ok ? '' : '<small>not enough</small>'}</button></div>`; }).join('') || '<p>Nothing to upgrade.</p>'}`
+        const ok = affords(c), any = sim.state.bag.some((o) => canOffer(it, o)); return `<div class="merc"><div class="who">${itemHead(it, where)}<span>${statLine(it)}</span><span class="nx">${nextStep(it)}</span><span class="sub">${costWords(c)} · and a piece of gear</span></div>
+        <button class="btn" data-upgrade="${it.uid}" ${ok && any ? '' : 'disabled'}>Upgrade to +${(it.up || 0) + 1}${!ok ? '<small>not enough</small>' : !any ? '<small>no gear in the bag</small>' : ''}</button></div>`; }).join('') || '<p>Nothing to upgrade.</p>'}`
       : forgeTab === 'reforge' ? `<p class="hint2">Bess rerolls one trait into a different one, at the item's level. Each reforge of the same piece costs double.</p>
       ${H.filter(([it]) => it.aff && it.aff.length).map(([it, where]) => { const c = reforgeCost(it), ok = affords(c);
         return `<div class="merc sw"><div class="who">${itemHead(it, where)}<span class="sub">${costWords(c)} a reroll</span>

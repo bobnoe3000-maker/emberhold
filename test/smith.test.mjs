@@ -13,23 +13,28 @@ const SEED = 20260807;
 const town = (gold = 1e6) => { const s = createSim(SEED, undefined, { scene: 'town' }); Object.assign(s.state.counters, { gold, embers: 500, wood: 500, stone: 500 }); s.tick(); return s; };
 const run = (s, cmd) => { s.commands.push(cmd); s.tick(); };
 const refusals = (s) => { const r = []; s.bus.on('refused', (e) => r.push(e.reason)); return r; };
+let offerN = 0;
+/** a piece of gear in the bag to give up for an upgrade (v1.114) @returns {string} its uid */
+const offer = (s, r = 'common', base = 'ring', ilv = 6) => { const it = makeItem(base, ilv, r, { uid: 'offer' + ++offerN, aff: r === 'common' ? undefined : [['hp', 3]] }); s.state.bag.push(it); return it.uid; };
 
-test('an upgrade: +20 % a step on the base stats and +10 % on the traits (v1.76), its price by step in gold and cinders (no wood or stone, v1.75), to +5', () => {
+test('an upgrade: +20 % a step on the base stats and +10 % on the traits to +5 (v1.76), +9 worth 1.5× +5 (v1.114); its price by step in gold, cinders and a piece of gear', () => {
   const it = makeItem('sword', 6, 'fine', { uid: 'x', aff: [['crit', 2]] }), base = itemStats(it);
-  const at5 = itemStats({ ...it, up: 5 });
+  const at5 = itemStats({ ...it, up: 5 }), at9 = itemStats({ ...it, up: 9 });
   assert.ok(at5.atk > base.atk && Math.abs(at5.atk - it.st.atk * 2) <= 1, `${base.atk} → ${at5.atk} (×2 at +5)`);
   assert.equal(at5.crit, Math.round(((it.st.crit ? Math.round(it.st.crit * 2) : 0) + 2 * 1.5) * 10) / 10, 'the base crit ×2, the trait\'s 2 ×1.5');
-  assert.deepEqual([0, 1, 2, 3, 4].map((up) => upgradeCost({ ...it, up })), [0, 1, 2, 3, 4].map((n) => ({ gold: UP_GOLD[n] * 6, cinders: UP_CINDERS[n] })));
+  assert.ok(Math.abs(at9.atk - it.st.atk * 2.5) <= 1, `${at9.atk}: ×2.5 at +9 (+150 %, 1.5× +5's +100 %)`);
+  assert.equal(UP_MAX, 9);
+  assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 7, 8].map((up) => upgradeCost({ ...it, up })), [0, 1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({ gold: UP_GOLD[n] * 6, cinders: UP_CINDERS[n] })));
   assert.equal(upgradeCost({ ...it, up: UP_MAX }), null);
-  const s = town(), w = s.state.party[0].gear.weapon, C = s.state.counters, g0 = C.gold, c0 = C.embers;
-  for (let i = 0; i < 6; i++) run(s, { type: 'upgrade', uid: w.uid });
-  assert.equal(w.up, 5); assert.equal(g0 - C.gold, UP_GOLD.reduce((a, b) => a + b, 0) * w.ilv); assert.equal(c0 - C.embers, 57);
+  const s = town(), w = s.state.party[0].gear.weapon, C = s.state.counters, g0 = C.gold, c0 = C.embers, o = offer(s);
+  run(s, { type: 'upgrade', uid: w.uid, offer: o });
+  assert.equal(g0 - C.gold, UP_GOLD[0] * w.ilv); assert.equal(c0 - C.embers, UP_CINDERS[0]); assert.ok(!s.state.bag.some((q) => q.uid === o), 'the piece given up is spent');
   assert.equal(C.wood, 500); assert.equal(C.stone, 500, 'no wood or stone taken');
 });
 
 test('upgrades and reforges only in town, and only when you can pay; nothing changes otherwise', () => {
-  const s = town(0), no = refusals(s), w = s.state.party[0].gear.weapon;
-  run(s, { type: 'upgrade', uid: w.uid }); assert.ok(!w.up); assert.match(no.at(-1), /Not enough gold/);
+  const s = town(0), no = refusals(s), w = s.state.party[0].gear.weapon, o = offer(s);
+  run(s, { type: 'upgrade', uid: w.uid, offer: o }); assert.ok(!w.up); assert.match(no.at(-1), /Not enough gold/); assert.ok(s.state.bag.some((q) => q.uid === o), 'the piece kept');
   const d = createSim(SEED, undefined, { scene: 'dungeon' }); d.state.counters.gold = 1e6; d.state.counters.embers = 99; const dw = d.state.party[0].gear.weapon, dn = refusals(d);
   d.commands.push({ type: 'upgrade', uid: dw.uid }); d.tick(); assert.ok(!dw.up); assert.match(dn.at(-1), /forge in town/);
   run(s, { type: 'upgrade', uid: 'nobody' }); run(s, { type: 'reforge', uid: w.uid, aff: 0 });   // (a kit Common has no traits)
@@ -84,10 +89,10 @@ test("the shop: a day's stock at the hero's level, bought once each; sell for go
 });
 
 test("the forge and the shop keep: upgrades, the day's stock and the buyback round-trip through a save", () => {
-  const s = town(); const w = s.state.party[0].gear.weapon; run(s, { type: 'upgrade', uid: w.uid }); run(s, { type: 'buy', idx: 0 });
+  const s = town(); const w = s.state.party[0].gear.weapon; run(s, { type: 'upgrade', uid: w.uid, offer: offer(s, 'heirloom', 'sword') }); run(s, { type: 'buy', idx: 0 });
   const sold = s.state.bag.at(-1); run(s, { type: 'sell', uid: sold.uid });
   const data = JSON.parse(JSON.stringify(s.snapshot())), r = createSim(SEED, undefined, { scene: 'town' }); r.restore(data);
-  assert.equal(r.state.party[0].gear.weapon.up, 1); assert.deepEqual(r.state.shop, s.state.shop); assert.deepEqual(r.state.buyback.map((it) => it.uid), [sold.uid]);
+  assert.equal(r.state.party[0].gear.weapon.up, w.up); assert.equal(r.state.party[0].gear.weapon.ut, 1, 'how often it\'s been tried, kept'); assert.deepEqual(r.state.shop, s.state.shop); assert.deepEqual(r.state.buyback.map((it) => it.uid), [sold.uid]);
   const old = { ...data }; delete old.shop; delete old.shops; delete old.buyback; r.restore(old); assert.equal(r.state.shop.day, -1); assert.deepEqual(r.state.buyback, []);
 });
 
@@ -106,5 +111,5 @@ test('a Deepdelver-fostered hero pays 10 % less gold for an upgrade (origin edge
   assert.deepEqual(upgradeCost(it, 'deepdelver_fostered'), { ...upgradeCost(it), gold: Math.round(UP_GOLD[0] * 6 * 0.9) });
   assert.deepEqual(upgradeCost(it, 'thornwick_born'), upgradeCost(it));
   const s = town(); s.state.party[0].origin = 'deepdelver_fostered'; const w = s.state.party[0].gear.weapon, g0 = s.state.counters.gold;
-  run(s, { type: 'upgrade', uid: w.uid }); assert.equal(g0 - s.state.counters.gold, Math.round(UP_GOLD[0] * w.ilv * 0.9));
+  run(s, { type: 'upgrade', uid: w.uid, offer: offer(s) }); assert.equal(g0 - s.state.counters.gold, Math.round(UP_GOLD[0] * w.ilv * 0.9));
 });

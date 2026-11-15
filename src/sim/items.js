@@ -3,7 +3,7 @@
 //
 // An item is plain JSON, rolled once and stored whole:
 //   { uid, base, r, ilv, name, st: { atk: 4, … }, aff: [['crit', 2]], mod?, flav?, up?, rf? }
-// up = the smith's upgrade, +1 to +5 (smith.js): each step is UP_STEP more on the base stats (st) and UP_TRAIT
+// up = the smith's upgrade, +1 to +9 (smith.js; +9 since v1.114, upK past +5): each step is UP_STEP more on the base stats (st) and UP_TRAIT
 // more on the affixes (v1.76); rf = how many times the smith has reforged it (the next costs double).
 // st = the base's stats at that item level and rarity, a pure function of (base, ilv, r): a load
 // re-derives it (refreshItem), so a formula change reaches old loot the same as new. What was
@@ -31,12 +31,16 @@ export const SALVAGE_GOLD = { common: 50, fine: 100, rare: 250, heirloom: 500 };
 // the smith's +1…+5 (GDD §8; v1.76, the owner, asked: "20% and traits too"): +20 % base stats and +10 % traits a step. At 8 %
 // on the base alone a +5 kit held one wave more than none (the right party at 6 in a room one up, 11 → 12); measured at 20 %
 // base alone, 15 waves, and two up 3 → 6, a room three up still winning (5 waves).
-export const UP_MAX = 5, UP_STEP = 0.2, UP_TRAIT = 0.1;
+// (v1.114, the owner: "Lets also go to +9 gear as a top out, increasing current buffs by 150% of the buffs provided at +5"):
+// past +5 each step adds an eighth of +5's gain, so +9 is worth UP_TOP × +5's: +150 % base stats, +75 % traits (upK)
+export const UP_MAX = 9, UP_STEP = 0.2, UP_TRAIT = 0.1, UP_TOP = 1.5;
+/** an upgrade's worth in +1 steps: n to +5, then (UP_TOP − 1) × 5 / 4 a step more @param {number} up */
+export const upK = (up) => (up <= 5 ? up : 5 + ((UP_TOP - 1) * 5 * (up - 5)) / 4);
 // what each step costs at the smith (smith.js): gold × item level and cinders (v1.75, the owner: "Drop the wood and stone reqs
 // for upgrades": from +3 it took 8, 12, 16 of each too)
 // (v1.77, the owner: "increase embers required": ×2.5 with the step's 2.5× gain, from 1, 2, 4, 6, 10 = 23 an item to 57; the right
 // party at 6 earns ~60 an hour, 48 from elites and ~12 salvaging its drops, so +5 on a piece is about an hour's cinders)
-export const UP_GOLD = [30, 60, 120, 240, 480], UP_CINDERS = [2, 5, 10, 15, 25];
+export const UP_GOLD = [30, 60, 120, 240, 480, 720, 960, 1280, 1600], UP_CINDERS = [2, 5, 10, 15, 25, 35, 45, 60, 80];   // (+6 … +9: v1.114)
 /** the cinders an item's upgrades took @param {any} it */
 export const cindersIn = (it) => UP_CINDERS.slice(0, Math.max(0, Math.min(UP_MAX, it.up || 0))).reduce((x, y) => x + y, 0);
 /** what salvaging it gives: its rarity's cinders and half of what its upgrades took @param {any} it */
@@ -237,8 +241,9 @@ export function itemStats(it) {
   const up = Math.max(0, Math.min(UP_MAX, it.up || 0)), s = { ...it.st };
   // (rounded: on a small piece a step's gain can round away. Rounding up instead let a +5 level-3 kit hold
   // a room three levels up for 300 s, against the balance contract; the forge says when a gain won't show)
-  if (up) for (const k of Object.keys(s)) if (s[k] > 0) s[k] = round(k, s[k] * (1 + UP_STEP * up));
-  for (const [k, v] of it.aff || []) s[k] = Math.round(((s[k] || 0) + (v > 0 ? v * (1 + UP_TRAIT * up) : v)) * 10) / 10;   // (a trait: UP_TRAIT a step)
+  const n = upK(up);
+  if (up) for (const k of Object.keys(s)) if (s[k] > 0) s[k] = round(k, s[k] * (1 + UP_STEP * n));
+  for (const [k, v] of it.aff || []) s[k] = Math.round(((s[k] || 0) + (v > 0 ? v * (1 + UP_TRAIT * n) : v)) * 10) / 10;   // (a trait: UP_TRAIT a step)
   return s;
 }
 export const canWear = (m, it) => { const B = BASES[it.base]; return B.cls === 'any' || B.cls === m.cls || (B.also || []).includes(m.cls); };

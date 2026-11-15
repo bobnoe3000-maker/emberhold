@@ -3,8 +3,12 @@
 // counters.embers in the save) go. No draughts: what keeps a party standing is who's in it.
 //
 // The forge (in town):
-//   upgrade { uid }         +1 a step up to +5 (items.js UP_STEP more on the base stats a step, UP_TRAIT on the traits), for
-//                           UP_GOLD[n] × item level gold (−10 % for a Deepdelver-fostered hero) and UP_CINDERS[n] cinders (no wood or stone since v1.75)
+//   upgrade { uid, offer }  +1 a step up to +9 (items.js UP_STEP more on the base stats a step, UP_TRAIT on the traits; past +5,
+//                           upK), for UP_GOLD[n] × item level gold (−10 % for a Deepdelver-fostered hero), UP_CINDERS[n] cinders
+//                           and a piece of gear from the bag given up (`offer`, v1.114); and it's a risk (upgradeOdds): it takes,
+//                           fails (the cost spent; from DROP_FROM up the piece drops a step) or breaks (the piece is lost, worn
+//                           or not; never an heirloom: its break is a failure). The roll is the UPGRADE stream's, mixed with
+//                           the item and how often it's been tried (it.ut): the same for everyone who does the same
 //   reforge { uid, aff }    reroll one affix of a Fine or better item: a different kind, rolled fresh at the
 //                           item's level on the REFORGE stream (the item's uid and how often it's been
 //                           reforged), so it's the same for everyone who does the same; each reforge of
@@ -49,6 +53,27 @@ export function upgradeCost(it, origin) {
   const e = origin ? ORIGIN_EDGE[origin] : null, off = e && e.kind === 'smithDiscount' ? e.value : 0;
   return { gold: Math.round(UP_GOLD[n] * it.ilv * (1 - off)), cinders: UP_CINDERS[n] };
 }
+// The upgrade's risk (GDD §8 v1.114; the owner: "gear upgrades: add chance of failure, and possible destruction. Lets also
+// require at least 1 piece of gear along with embers. Higher rarity gear lowers the failure/destruction change. Same gear
+// slot even further"; on the prototype: heirlooms never break, a failure drops a level, a lower-level piece helps less).
+// UP_RISK[n]: the chance of [failing, breaking] the step to +n+1 with a Common from another slot at the item's level. The
+// piece given up scales both: its rarity (OFFER_K), the same slot (SAME_SLOT_K), and a piece below the item's level gives
+// less of that help, none OFFER_GAP levels down (a Common from another slot is the base, whatever its level).
+export const UP_RISK = [[0.10, 0], [0.22, 0], [0.32, 0.05], [0.42, 0.10], [0.50, 0.18], [0.55, 0.22], [0.58, 0.26], [0.60, 0.30], [0.62, 0.33]];
+export const OFFER_K = { common: 1, fine: 0.7, rare: 0.45, heirloom: 0.2 }, SAME_SLOT_K = 0.6, OFFER_GAP = 10, DROP_FROM = 4;
+const slotOf = (it) => (BASES[it.base] ? BASES[it.base].slot : '');
+/** the odds of upgrading `it` with `offer` given up: { ok, fail, broke } (they sum to 1), and whether a failure drops it a
+ *  step (drop); null at +UP_MAX or without a piece @param {any} it @param {any} offer */
+export function upgradeOdds(it, offer) {
+  const to = (it.up || 0) + 1; if (to > UP_MAX || !offer) return null;
+  const [f, d] = UP_RISK[to - 1], gap = Math.max(0, (it.ilv || 1) - (offer.ilv || 1)), q = Math.max(0, 1 - gap / OFFER_GAP);
+  const k0 = (OFFER_K[offer.r] ?? 1) * (slotOf(offer) === slotOf(it) ? SAME_SLOT_K : 1), k = 1 - (1 - k0) * q;
+  let fail = f * k, broke = d * k;
+  if (it.r === 'heirloom') { fail += broke; broke = 0; }   // (there's only one of each: it never breaks)
+  return { ok: 1 - fail - broke, fail, broke, drop: to >= DROP_FROM };
+}
+/** a piece that may be given up for an upgrade of `it`: in the bag, not it, not a scroll @param {any} it @param {any} o */
+export const canOffer = (it, o) => !!o && o !== it && o.uid !== it.uid && !isUsable(o);
 /** the next reforge's price @param {any} it */
 export const reforgeCost = (it) => ({ gold: REFORGE_GOLD * it.ilv * (1 << Math.min(10, it.rf || 0)), cinders: REFORGE_CINDERS });
 /** what the shop pays (null: it won't buy it) @param {any} it */
@@ -103,9 +128,22 @@ export function createSmith({ state, bus, getWorld, seed }) {
         { const no = lacks('smith', 'Upgrades are done at the forge in town'); if (no) return refuse(no); }
         const it = find(cmd.uid); if (!it || isUsable(it)) return true;
         const cost = upgradeCost(it, state.party[0].origin); if (!cost) return refuse(`${it.name} is at +${UP_MAX}`);
+        const offer = cmd.offer != null ? state.bag.find((o) => o.uid === cmd.offer) : null;
+        if (!canOffer(it, offer)) return refuse('An upgrade takes a piece of gear from the bag as well');
         const no = short(cost); if (no) return refuse(`Not enough ${no}`);
-        pay(cost); it.up = (it.up || 0) + 1;
-        bus.emit('forged', { uid: it.uid, what: 'upgrade', up: it.up }); counters(); gear(); return true;
+        const odds = /** @type {NonNullable<ReturnType<typeof upgradeOdds>>} */ (upgradeOdds(it, offer)), was = it.up || 0;
+        pay(cost); state.bag = state.bag.filter((o) => o !== offer);
+        const r = mulberry32(streamSeed(seed ^ hashStr(String(it.uid)) ^ Math.imul((it.ut || 0) + 1, 0x85ebca6b), STREAM.UPGRADE))();
+        it.ut = (it.ut || 0) + 1;
+        let result = 'ok';
+        if (r < odds.ok) it.up = was + 1;
+        else if (r < odds.ok + odds.fail) { result = 'fail'; if (odds.drop && was > 0) it.up = was - 1; }
+        else {                                             // broken: gone from the bag, or from whoever wore it
+          result = 'broke';
+          state.bag = state.bag.filter((o) => o !== it);
+          for (const m of members()) for (const [s, g] of Object.entries(m.gear || {})) if (g === it) m.gear[s] = null;
+        }
+        bus.emit('forged', { uid: it.uid, what: 'upgrade', up: it.up || 0, was, result, name: it.name, offer: offer.uid, odds: { ok: odds.ok, fail: odds.fail, broke: odds.broke } }); counters(); gear(); return true;
       }
       case 'reforge': {
         { const no = lacks('smith', 'Reforging is done at the forge in town'); if (no) return refuse(no); }
