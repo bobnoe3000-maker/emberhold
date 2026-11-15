@@ -166,6 +166,10 @@ const CSS = SW_CSS + `
 #gearSheet .sbtns button.play small { display: block; font-size: 8px; font-weight: 400; letter-spacing: .5px; color: #978c80; text-transform: none; }
 #gearSheet .sbtns button.play.on { border-color: rgba(214,170,98,.75); color: #f0c880; }
 #gearSheet .arow.out { opacity: .72; }
+#gearSheet .arow.short { border-color: #4a3a6a; } #gearSheet .arow.short .nm2 span.short { color: #c8a8ff; }
+#gearSheet .mpnow { display: flex; align-items: center; gap: 8px; margin: 12px 0 10px; font-size: 12px; color: #a8b8d8; }
+#gearSheet .mpnow div { flex: 1; height: 7px; background: #1a1c26; border: 1px solid #2a2e40; position: relative; }
+#gearSheet .mpnow div i { position: absolute; left: 0; top: 0; bottom: 0; background: #4a86d8; }
 #gearSheet .stance button { flex: 1; min-height: 44px; border-radius: 8px; border: 1px solid #2c2838; background: none; color: #b8aca0; font: 600 13px Georgia, serif; }
 #gearSheet .stance button.on { border-color: #d8a040; color: #f0c880; background: rgba(216,160,64,.12); }
 #gearSheet .hint { font-size: 10.5px; color: #978c80; line-height: 1.45; margin: 4px 2px 10px; }
@@ -346,10 +350,15 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
   function skillsView(m) {
     const c = CLASSES[m.cls], n = pendingSkillPoints(m), order = priorityOf(m), st = stanceOf(m);
     const play = inPlay(m, S.trials).map((A) => A.id), full = play.length >= LOADOUT;
+    // the MP on hand and its regen (the owner, 2026-11-15: mana unseen in play): an ability in play the member can't pay for
+    // now says what it needs, as the party card's bar dims
+    const sx = statsFor(m), mpNow = Math.max(0, Math.floor(m.mp ?? sx.maxMp));
     const rows = order.map((A, i) => {
       const r = rankOf(m, A.id), open = unlocked(m, A, S.trials), on = autocastOn(m, A.id), inp = play.includes(A.id);
       const pips = '●'.repeat(r) + `<s>${'●'.repeat(MAX_RANK - r)}</s>`;
-      return `<div class="arow${open ? '' : ' locked'}${open && !inp ? ' out' : ''}"><div class="nm2"><b>${A.name}</b> <span class="pips">${pips}</span>
+      const cost = effectAt(m, A, r).mp, short = open && inp && on && mpNow < cost;   // (in play, on auto-use, more than the MP on hand now)
+      return `<div class="arow${open ? '' : ' locked'}${open && !inp ? ' out' : ''}${short ? ' short' : ''}"><div class="nm2"><b>${A.name}</b> <span class="pips">${pips}</span>
+          ${short ? `<span class="short">needs ${cost} MP · ${mpNow} now</span>` : ''}
           ${(() => { const now = effectAt(m, A, r), nx = open && r < MAX_RANK ? effectAt(m, A, r + 1) : null;
             const lock = open ? '' : `<span>${m.level < A.lv ? `unlocks at level ${A.lv}${A.trial ? `, with the ${c.label.toLowerCase()}'s ${A.lv >= 12 ? 'second ' : ''}trial` : ''}` : `the ${c.label.toLowerCase()}'s ${A.lv >= 12 ? 'second ' : ''}trial teaches it: ask ${(A.lv >= 12 ? TRIAL_GIVER_12 : TRIAL_GIVER)[m.cls]}`}</span>`;
             return `${lock}<span class="eff">Rank ${r}: ${now.mp} MP · ${now.e}</span>${nx ? `<span class="nx">Rank ${r + 1} → ${nx.mp !== now.mp ? `${nx.mp} MP · ` : ''}${nx.v}</span>` : open ? '<span class="nx">Top rank</span>' : ''}`; })()}</div>
@@ -366,7 +375,8 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
           ${open ? '' : `<span>unlocks at level ${P.lv}</span>`}<span class="eff">Rank ${r}: ${P.text.replace('{v}', pv(P, v))}</span>${open && r < MAX_RANK ? `<span class="nx">Rank ${r + 1} → ${pv(P, nv)}</span>` : open ? '<span class="nx">Top rank</span>' : ''}</div>
         <div class="sbtns"><button data-rank="${P.id}" ${open && n && r < MAX_RANK ? '' : 'disabled'}>${r >= MAX_RANK ? 'Max' : 'Rank +'}</button></div></div>`;
     }).join('');
-    return `<div class="ptsh">Skill points <b>${n}</b><span class="sp">one at every even level</span></div>
+    return `<div class="mpnow" aria-label="mana">MP ${mpNow}/${sx.maxMp}<div><i style="width:${sx.maxMp ? Math.round((100 * Math.min(mpNow, sx.maxMp)) / sx.maxMp) : 0}%"></i></div>+${sx.mpr}/s</div>
+      <div class="ptsh">Skill points <b>${n}</b><span class="sp">one at every even level</span></div>
       <div class="ptsh"><span>In play <b>${play.length}</b> of ${LOADOUT}</span><span class="sp">abilities taken into a fight</span></div>
       <div class="hint">A new skill opens every 3 levels; every third is a passive. Up to ${LOADOUT} abilities go into a fight (In play); in battle each turn goes to the first of them, top down, that is ready, affordable and worth it. ▲ moves one earlier. Auto-use Off: never cast. Each rank adds 10 % to an ability's strength; damage is shown before the foe's armour.</div>
       ${rows}

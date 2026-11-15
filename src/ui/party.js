@@ -1,14 +1,20 @@
 // party.js (UI) — the party's stat cards along the bottom of the screen: you in the
 // centre, up to two hired companions either side. Each card: portrait (cut from the
-// character's own baked atlas), level badge, name, class, HP bar, ATK / DEF / CRT / DDG,
+// character's own baked atlas), level badge, name, class, HP bar, MP bar, ATK / DEF / CRT / DDG,
 // and level + XP bar. Empty companion slots point you at a tavern. Tapping a card opens that
 // member's character sheet (sheet.js); a green badge flags an upgrade waiting in the bag, a
 // "+N" one points to spend. A Fallen member's card greys out and says so; Weakened shows in
 // amber. DOM only.
+// The MP bar (the owner, 2026-11-15: "mana and mana regen dont seem to be in gameplay"): mana held back the right party
+// all along (tools/balance/roomlv.mjs MP=1: the rogue short of its cheapest ability three-quarters of a level-6 fight) and
+// nothing showed it. The bar dims while the member can't pay for the cheapest ability it has in play (no words: the
+// owner, "we dont need the words 'No MP' since its obvious its low").
+// The bars move in place, a few times a second, so a fight's ticking HP and MP don't rebuild the cards under a finger.
 
 import { CLASSES, statsFor, xpToNext } from '../sim/party.js';
 import { pendingPoints } from '../sim/attributes.js';
-import { pendingSkillPoints } from '../sim/skills.js';
+import { pendingSkillPoints, inPlay, rankOf, rankCost, autocastOn } from '../sim/skills.js';
+import { abilityMods } from '../sim/items.js';
 import { esc, PORTRAIT_W, PORTRAIT_H } from './actorart.js';
 import { portraitKey, paintPortrait } from './portraits.js';
 import { wageOf, hired } from '../sim/companions.js';
@@ -37,6 +43,10 @@ const CSS = `
 #party .hp { position: relative; height: 11px; background: #1c1a22; border: 1px solid #2c2838; margin-bottom: 5px; }
 #party .hp i { position: absolute; left: 0; top: 0; bottom: 0; background: #5aa35c; }
 #party .hp span { position: absolute; right: 3px; top: -1px; font-size: 8.5px; color: #f2f0ea; text-shadow: 0 1px 0 #000; }
+#party .mp { position: relative; height: 9px; background: #1a1c26; border: 1px solid #2a2e40; margin: -2px 0 5px; }
+#party .mp i { position: absolute; left: 0; top: 0; bottom: 0; background: #4a86d8; transition: width .15s linear; }
+#party .mp span { position: absolute; right: 3px; top: -2px; font-size: 8px; color: #e4ecff; text-shadow: 0 1px 0 #000; }
+#party .mp.short { border-color: #50406a; } #party .mp.short i { background: #3a4a6a; } #party .mp.short span { color: #c8a8ff; }
 #party .st { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 2px 4px; font-size: 9px; color: #8a8498; letter-spacing: 1px; }
 #party .st b { color: #e8e2d4; font-weight: 600; text-align: right; }
 #party .st b.hi { color: #8fd0ff; }
@@ -62,6 +72,7 @@ const CSS = `
   #party .top { margin-bottom: 4px; }
   #party .pf { width: 28px; height: 33px; }
   #party .hp { margin-bottom: 4px; }
+  #party .mp { margin: -1px 0 4px; height: 8px; }
   /* one row: each label beside its value, the four pairs spread across (DDG 18.6% had run out of the card, and in
      eight even columns a value sat nearer the next label than its own) */
   #party .st { grid-template-columns: max-content max-content 1fr max-content max-content 1fr max-content max-content 1fr max-content max-content; gap: 2px 0; letter-spacing: 0; font-size: 8.5px; }
@@ -74,6 +85,18 @@ const CSS = `
 `;
 const LANDSCAPE = '(orientation: landscape) and (max-height: 540px)';
 
+/** the MP the cheapest ability a member has in play and on auto-use costs (its rank's, less a Rare's), or 0: none
+ *  @param {any} m @param {any} trials */
+function cheapestMp(m, trials) {
+  let lo = 0;
+  for (const A of inPlay(m, trials)) { if (!autocastOn(m, A.id)) continue; const c = Math.max(0, rankCost(A, rankOf(m, A.id)) - abilityMods(m, A.name).cost); if (!lo || c < lo) lo = c; }
+  return lo;
+}
+/** the MP bar's fill, words and state @param {any} m @param {any} s its stats @param {any} trials */
+function mpBits(m, s, trials) {
+  const mp = Math.max(0, Math.floor(m.mp ?? s.maxMp)), need = cheapestMp(m, trials), short = !m.down && !m.fallen && need > 0 && mp < need;
+  return { w: s.maxMp ? Math.round((100 * Math.min(mp, s.maxMp)) / s.maxMp) : 0, text: `${mp}/${s.maxMp}`, short };
+}
 // a member's portrait (portraits.js): the baked one, or their own face once they've a look of their own
 export function createPartyPanel(sim) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
@@ -93,6 +116,7 @@ export function createPartyPanel(sim) {
       <div class="top"><div class="pf"><canvas width="${PORTRAIT_W}" height="${PORTRAIT_H}" data-actor="${portraitKey(m)}" data-idx="${idx}"></canvas><div class="lv">L${m.level}</div></div>
         <div style="min-width:0"><div class="nm">${esc(m.name)}</div><div class="cl">${c.label.toUpperCase()}${m.weakUntil > 0 ? ' · WEAK' : ''}</div></div></div>
       <div class="hp"><i style="width:${Math.round((100 * hp) / s.maxHp)}%"></i><span>${m.fallen ? 'SLAIN' : m.down ? 'DOWN' : hp + '/' + s.maxHp}</span></div>
+      ${(() => { const b = mpBits(m, s, sim.state.trials); return `<div class="mp${b.short ? ' short' : ''}" aria-label="mana"><i style="width:${b.w}%"></i><span>${b.text}</span></div>`; })()}
       <div class="st"><span>ATK</span><b class="${m.cls === 'mage' ? 'hi' : ''}">${s.atk}</b><span>DEF</span><b>${s.def}</b>
         <span>CRT</span><b>${s.crit}%</b><span>DDG</span><b>${s.dodge}%</b></div>
       <div class="xp">LV ${m.level}<div><i style="width:${Math.round((100 * m.xp) / need)}%"></i></div>${wg}</div></div>`;
@@ -106,8 +130,21 @@ export function createPartyPanel(sim) {
   // live: HP / XP / level move in battle — redraw a few times a second when anything changed
   let sig = '';
   const gearSig = () => (sim.state.bag || []).length + ':' + sim.state.party.map((m) => Object.values(m.gear || {}).map((it) => (it ? it.uid : '-')).join('.')).join('/');
-  setInterval(() => { const n = sim.state.party.map((m) => `${Math.round(m.hp)}|${m.xp}|${m.level}|${m.down ? 1 : 0}|${m.fallen ? 1 : 0}|${m.weakUntil > 0 ? 1 : 0}|${pendingPoints(m) + pendingSkillPoints(m)}|${portraitKey(m)}|${m.name}|${m.rank || ''}|${m.owed || 0}|${hired(m) ? wageOf(m, false) : 0}`).join(',') + gearSig(); if (n !== sig) { sig = n; draw(); } }, 180);
+  // (HP and MP move in place, below: the cards are rebuilt only when what they say changes)
+  setInterval(() => { live(); const n = sim.state.party.map((m) => `${m.xp}|${m.level}|${m.down ? 1 : 0}|${m.fallen ? 1 : 0}|${m.weakUntil > 0 ? 1 : 0}|${pendingPoints(m) + pendingSkillPoints(m)}|${portraitKey(m)}|${m.name}|${m.rank || ''}|${m.owed || 0}|${hired(m) ? wageOf(m, false) : 0}`).join(',') + gearSig(); if (n !== sig) { sig = n; draw(); } }, 180);
   draw();
+  // the bars, each card's HP and MP, set where they stand (no rebuild: a fight ticks them several times a second)
+  function live() {
+    for (const c of el.querySelectorAll('.card[data-idx]')) {
+      const m = sim.state.party[+c.dataset.idx]; if (!m) continue;
+      const s = statsFor(m), hp = Math.max(0, Math.round(m.hp)), h = c.querySelector('.hp');
+      if (h) { const w = `${Math.round((100 * hp) / s.maxHp)}%`, t = m.fallen ? 'SLAIN' : m.down ? 'DOWN' : `${hp}/${s.maxHp}`, i = h.firstElementChild, sp = h.lastElementChild;
+        if (i.style.width !== w) i.style.width = w; if (sp.textContent !== t) sp.textContent = t; }
+      const q = c.querySelector('.mp');
+      if (q) { const b = mpBits(m, s, sim.state.trials), w = `${b.w}%`, i = q.firstElementChild, sp = q.lastElementChild;
+        if (i.style.width !== w) i.style.width = w; if (sp.textContent !== b.text) sp.textContent = b.text; q.classList.toggle('short', b.short); }
+    }
+  }
   // tap a card: that member's character sheet. The cards re-render several times a second
   // in battle (HP ticks), so the press and the release can land on two copies of the same
   // card — match them by index rather than relying on 'click'.

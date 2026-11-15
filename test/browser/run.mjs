@@ -324,6 +324,9 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       }, cls);
       const fought = await p.waitForFunction(() => !!globalThis.__sim.battle && globalThis.__sim.world.enemies.length > 0, null, { timeout: 60000 }).then(() => true, () => false);   // a frozen loop never gets here
       const t0 = await p.evaluate(() => globalThis.__sim.state.tick); await p.waitForTimeout(3000); const t1 = fought ? await p.evaluate(() => globalThis.__sim.state.tick) : t0;
+      // every card's MP bar (the owner, 2026-11-15: mana unseen): its numbers, the bar dimmed while the member can't pay its cheapest ability
+      const mpb = await p.evaluate(() => [...document.querySelectorAll('#party .card[data-idx]')].map((c) => { const q = c.querySelector('.mp'); return q ? { t: q.textContent, short: q.classList.contains('short') } : null; }));
+      if (cls === 'fighter') check('party cards: each has an MP bar with its numbers (dimmed while short of its cheapest ability, no words)', mpb.length >= 2 && mpb.every((q) => q && /^\d+\/\d+$/.test(q.t)), JSON.stringify(mpb));
       check(`fight: a ${cls} and a ${cls === 'cleric' ? 'fighter' : 'cleric'} fight a room, the game keeps running`, t1 - t0 > 40 && errs.length === 0, `${t1 - t0} ticks in 3 s${errs.length ? ' · ' + [...new Set(errs)].join(' | ') : ''}`);
       await ctx.close();
     }
