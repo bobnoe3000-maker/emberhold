@@ -164,7 +164,7 @@ export function passiveVal(m, id) {
   return P.val[0] + P.val[1] * (rankOf(m, id) - 1);
 }
 /** @param {any} m */
-export const skillPointsEarned = (m) => Math.floor((m.level || 1) / 2);
+export const skillPointsEarned = (m) => Math.floor((m.syncFrom ?? m.level ?? 1) / 2);   // (m.syncFrom: one's own level while a fight lends another, attributes.js pointsEarned)
 /** (passives' ranks count, as abilities' do) @param {any} m */
 export const skillPointsSpent = (m) => [...skillsOf(m.cls), ...passivesOf(m.cls)].reduce((a, s) => a + rankOf(m, s.id) - 1, 0);
 /** @param {any} m */

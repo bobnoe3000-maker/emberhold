@@ -38,7 +38,10 @@ export const attrsOf = (m) => ({ might: 0, grit: 0, finesse: 0, focus: 0, ...(m.
 /** @param {any} m */
 export const pointsSpent = (m) => { const a = attrsOf(m); return a.might + a.grit + a.finesse + a.focus; };
 /** @param {any} m */
-export const pointsEarned = (m) => POINTS_PER_LEVEL * Math.max(0, (m.level || 1) - 1);
+// (m.syncFrom: the member's own level while a fight holds it at another, the Kingstone's level 18, core.js ringIn: points
+// are earned at one's own level, so none are shown or spent that the fight lent; the owner, 2026-11-15, "starting the region
+// boss battle - flagged for all upgrades - even there were no actual upgrades or points to be spent")
+export const pointsEarned = (m) => POINTS_PER_LEVEL * Math.max(0, (m.syncFrom ?? m.level ?? 1) - 1);
 /** @param {any} m */
 export const pendingPoints = (m) => Math.max(0, pointsEarned(m) - pointsSpent(m));
 

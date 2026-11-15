@@ -14,6 +14,7 @@ import * as attrs from '../src/sim/attributes.js';
 import { RING, isWindowId, windowDraw, windowAt, hpStepOf, tierOf, payOf, restoreRing } from '../src/sim/ring.js';
 import { inTell, tellAt } from '../src/sim/hazards.js';
 import { MODES, modeOf } from '../src/sim/modes.js';
+import { pendingSkillPoints } from '../src/sim/skills.js';
 
 const SEED = 20261115;
 /** a window whose draw brings `n` AI companies */
@@ -178,4 +179,21 @@ test('saved mid-fight, a game is at its own levels; the record round-trips', () 
   const b = createSim(SEED); b.restore(snap); assert.deepEqual(b.state.ring, s.state.ring);
   assert.deepEqual(restoreRing({ paid: ['x', '2026-11-15T03'], won: -2, best: 'q' }), { paid: ['2026-11-15T03'], won: 0, best: 0 });
   assert.deepEqual(restoreRing(undefined), { paid: [], won: 0, best: 0 }, 'an older save: a fresh record');
+});
+
+// (the owner, 2026-11-15: "starting the region boss battle - flagged for all upgrades - even there were no actual upgrades
+// or points to be spent"): the fight holds the company at level 18, but points are earned at one's own level; none are
+// shown or can be spent that the fight lent, and the level comes back as it was
+test('in the Kingstone\'s fight no attribute or skill points are lent: none shown, none spent; the own level back after', () => {
+  const s = company(14), H = s.state.party[0], skills = (m) => pendingSkillPoints(m);
+  const pts0 = s.state.party.map((m) => attrs.pendingPoints(m)), sk0 = s.state.party.map((m) => skills(m));
+  enter(s, windowFor(1));
+  assert.ok(s.battle && s.battle.ring, 'in the fight'); assert.equal(H.level, RING.level);
+  assert.deepEqual(s.state.party.map((m) => attrs.pendingPoints(m)), pts0, 'no attribute points lent');
+  assert.deepEqual(s.state.party.map((m) => skills(m)), sk0, 'no skill points lent');
+  const r = refusals(s), a0 = { ...(H.attrs || {}) };
+  s.commands.push({ type: 'spendPoint', id: H.id, attr: 'might' }); s.tick();
+  assert.deepEqual(H.attrs, a0, 'a point the fight lent can\'t be spent'); void r;
+  walkOut(s); for (let i = 0; i < 40 && s.battle && s.battle.ring; i++) s.tick();
+  assert.equal(H.level, 14); assert.equal(H.syncFrom, undefined);
 });

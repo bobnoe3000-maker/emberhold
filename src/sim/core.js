@@ -423,7 +423,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     const D = windowDraw(baseSeed, id), r = ringOf(state);
     ringOn = { id, salt: D.salt, levels: state.party.map((m) => [m, m.level, m.hp, m.mp]), t0: state.t, ended: false };
     r.paid = [...r.paid.filter((q) => q !== id), id].slice(-RING.PAID_KEEP);
-    for (const m of state.party) { m.level = RING.level; if (!m.fallen) { const s = statsFor(m); m.hp = s.maxHp; m.mp = s.maxMp; m.down = false; } }
+    for (const m of state.party) { m.syncFrom = m.level; m.level = RING.level; if (!m.fallen) { const s = statsFor(m); m.hp = s.maxHp; m.mp = s.maxMp; m.down = false; } }   // (syncFrom: runtime, not saved; points are earned at it, attributes.js)
     const companies = D.ids.map((cid) => ({ id: cid, members: makeCompany(cid, RING.level, 'seasoned') }));
     battle.startRing(world, CAMP_ROOM(i), { companies, secs, salt: D.salt, camp: c });
     bus.emit('ringStarted', { window: id, secs, coming: D.n });
@@ -433,7 +433,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   function ringSyncBack() {
     if (!ringOn || ringOn.ended) return;
     ringOn.ended = true;
-    for (const [m, lv, hp, mp] of ringOn.levels) { m.level = lv; m.hp = hp; m.mp = mp; m.down = false; }
+    for (const [m, lv, hp, mp] of ringOn.levels) { m.level = lv; m.hp = hp; m.mp = mp; m.down = false; delete m.syncFrom; }
   }
   bus.on('ringEnd', (res) => {
     if (!ringOn) return;
