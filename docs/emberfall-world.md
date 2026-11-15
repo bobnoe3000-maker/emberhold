@@ -456,7 +456,7 @@ on the stilt-houses never go out.
 - **Out on the Fens (v1.42).** Fights away from the dungeons, one at each of the Fens' bands:
   - **The spinner beds:** giant spiders in the reed beds south-west of the Canal Locks, a wrecked punt and its eel-men
     wrapped in silk among them. Level 11.
-  - **The old stones:** a ring of standing stones north-east of Saltmere, older than the Empire; the stone golems stand up out
+  - **The old stones:** a ring of standing stones in the fen's north-east corner, on a dry rise well north-east of Saltmere, older than the Empire; the stone golems stand up out
     of it when anyone comes near, moss on their shoulders and their ember cores warm. Level 14. **The Kingstone** (v1.50) is
     the ring's centre stone, half-buried in the turf inside it, four times a man's height: at the top of every hour it
     stands, and companies from all over the Fens come in at the gap on the north side to fight it, as many as five at once.

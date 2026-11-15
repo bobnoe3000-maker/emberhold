@@ -72,7 +72,8 @@ export const CAMPS = [
   { id: 'fens_spinners', region: 'fens', kind: 'nest', name: 'The spinner beds', x: 60, y: 166, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 11,
     family: 'cellar', band: ['spider', 'spinner', 'spider'], min: 2, elite: 0.25, respawn: RESPAWN, hole: [0, 1.2],
     dress: [['reeds', -3.2, -2.4], ['reeds', 3.6, -1.6], ['reeds', -4.2, 2.6], ['boat', 4.4, 3.2], ['bound', -1.8, -4.2], ['bones', 2.4, 4.2], ['bones', -3.6, 0.4]] },
-  { id: 'fens_stones', region: 'fens', kind: 'camp', name: 'The old stones', x: 126, y: 80, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 14,
+  { id: 'fens_stones', region: 'fens', kind: 'camp', name: 'The old stones', x: 200, y: 40,   // (the Fens' north-east, its clearing dry and open: outdoor.js FENS.stones, STONES_CLEAR; it stood at 126, 80 among meres and carr until 2026-11-15)
+    reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 14,
     family: 'golems', band: ['golem', 'golem'], elite: 0.25, respawn: RESPAWN, posts: [[-2.4, 0.4], [2.4, 0.4]], face: [0, 0],
     dress: [['pillar', -4.4, -3.2], ['pillar', 4.2, -3.6], ['brokenpillar', -5.2, 2.2], ['pillar', 4.8, 2.8], ['brokenpillar', 0.4, -5.2], ['boulder', -1.6, 4.6], ['boulder', 2.2, 5.0]] },
   { id: 'fens_graves', region: 'fens', kind: 'camp', name: 'The drowned graves', x: 204, y: 168, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 17,

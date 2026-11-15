@@ -107,6 +107,7 @@ export function groundAt(o, gx, gy) {
   }
   if (bestRank) return out;
   for (const p of o.pools || []) {                   // still water (M8): a soft superellipse, a reedy fringe round it
+    if (inClear(o, gx, gy)) break;                   // (a clearing is dry: o.clear, set once the land is built: clearGround)
     const u = (gx - p.cx) / p.rx, v = (gy - p.cy) / p.ry, au = Math.abs(u), av = Math.abs(v), e = au * au * au + av * av * av;
     const wob = (fbm(gx * 0.11, gy * 0.11, o.seed + 37) - 0.5) * 0.55;
     if (e < 1 + wob) { out.g = G.POOL; out.t = e; return out; }
@@ -118,7 +119,7 @@ export function groundAt(o, gx, gy) {
       out.t = Math.min(gx - f.x0, f.x1 - gx, gy - f.y0, f.y1 - gy); return out;
     }
   }
-  if (o.marsh && fbm(gx * 0.045, gy * 0.045, o.seed + 31) > 0.55) { out.g = G.MARSH; out.t = 1; }   // the fen's open ground: patches of wet peat and reed
+  if (o.marsh && fbm(gx * 0.045, gy * 0.045, o.seed + 31) > 0.55 && !inClear(o, gx, gy)) { out.g = G.MARSH; out.t = 1; }   // the fen's open ground: patches of wet peat and reed (none in a clearing: o.clear)
   else if (o.patches) for (const p of o.patches) {   // the Reach's cracked earth, the Heights' snow and scree: patches by a slow noise
     const n = fbm(gx * p.f, gy * p.f, o.seed + p.s);   // (t: 0 at the patch's edge → 1 a little way in, for the painter's dither)
     if (n > p.th) { out.g = p.g; out.t = Math.min(1, (n - p.th) / 0.06); break; }
@@ -176,7 +177,10 @@ function fits(o, id, x, y, margin = 1, allowRoad = false) {
 // shape: 'rect' (buildings), 'round' (trees, mountains), 'none', 'deck' (bridges clear water)
 function put(o, id, x, y, shape = 'rect', shrink = 0.12) {
   if (!ENV_FOOT[id]) return;
-  o.structs.push({ id, x, y });
+  o.structs.push({ id, x, y }); stamp(o, id, x, y, shape, shrink);
+}
+// a footprint's tiles: held (occ), and walled where it stands (blocked) by its shape
+function stamp(o, id, x, y, shape, shrink) {
   const [x0, y0, x1, y1] = footRect(id, x, y), w = x1 - x0, h = y1 - y0;
   for (let ty = Math.floor(y0); ty <= Math.floor(y1); ty++) for (let tx = Math.floor(x0); tx <= Math.floor(x1); tx++) {
     const i = gi(o, tx, ty); if (i < 0) continue;
@@ -484,7 +488,15 @@ function buildTown(seed, region) {
 // crosses, and the Drowned Abbey in the canal's flood. Open ground is wet peat and reed (o.marsh), with meres of
 // still bog water. The five sites (m8-plan slice 3) stand on the canal's banks and the meres' shores, each with its
 // way in toward the camera (+y) where its road or causeway ends, its own water behind it.
-export const FENS = { north: [60, -6], salt: [72, 60], mound: [34, 104], locks: [100, 128], lockhall: [76, 112], pools: [180, 96], abbey: [126, 206], reedholm: [202, 190] };
+export const FENS = { north: [60, -6], salt: [72, 60], mound: [34, 104], locks: [100, 128], lockhall: [76, 112], pools: [180, 96], abbey: [126, 206], reedholm: [202, 190], stones: [200, 40] };
+// the old stones' clearing (camps.js fens_stones, the Kingstone's ground, GDD §19; the owner, 2026-11-15: "move the region
+// boss further to the NE corner, and make sure the ground area is clear of trees - and no water or mini islands for players
+// to get stuck on"): its fight's arena (REACH_WIDE + 4 = 25) and a margin, dry ground, no mere, no marsh, no tree
+export const STONES_CLEAR = 32;
+/** inside a land's clearing (o.clear: [x, y, r][]): no mere, marsh or tree there @param {any} o @param {number} x @param {number} y */
+const inClear = (o, x, y) => !!o.clear && o.clear.some(([cx, cy, r]) => { const d = hypot(x - cx, y - cy);
+  return d < r - CLEAR_WOB || (d < r + CLEAR_WOB && d < r + (fbm(x * 0.09, y * 0.09, o.seed + 53) - 0.5) * 2 * CLEAR_WOB); });   // (its edge wanders: a mere it cuts keeps a shore, not an arc)
+const CLEAR_WOB = 4;
 function buildFens(seed) {
   const o = makeWorld(seed, 'overland', 240, 240, 90), rng = mulberry32(streamSeed(seed, 4431)), B = (t, n = 1) => `fens_${t}_${n}`;
   o.name = 'The Greywater Fens'; o.region = 'fens'; o.marsh = true;
@@ -496,6 +508,7 @@ function buildFens(seed) {
   o.pools.push({ cx: salt[0] - 3, cy: salt[1] - 6, rx: 16, ry: 13 }, { cx: mound[0] - 12, cy: mound[1] - 10, rx: 17, ry: 12 },
     { cx: pools[0] + 4, cy: pools[1] - 16, rx: 15, ry: 9 }, { cx: abbey[0] + 2, cy: abbey[1] - 4, rx: 22, ry: 15 },
     { cx: salt[0] + 9, cy: salt[1] + 16, rx: 6, ry: 5 });   // (and the pool Wenna's punt waits in, at the jetty's end)
+  const named = o.pools.length;
   const keepOut = [north, salt, mound, locks, lockhall, pools, abbey, reedholm];
   for (let i = 0; i < 26; i++) {
     const cx = rng() * 240, cy = rng() * 240, rx = 5 + rng() * 11, ry = 4 + rng() * 8;
@@ -576,7 +589,43 @@ function buildFens(seed) {
   o.exits.push({ x0: salt[0] + 8.5, y0: salt[1] + 9.5, x1: salt[0] + 11.5, y1: salt[1] + 12, to: 'dungeon', site: 'mere_tower' });
   o.arrivals.mere_tower = { x: salt[0] + 10.5, y: salt[1] + 6 };
   o.spawn = o.arrivals.default;
+  clearGround(o, FENS.stones[0], FENS.stones[1], STONES_CLEAR, named);   // (last: the rest of the fen as it was, tree for tree)
   return o;
+}
+
+// A clearing carved in a land already built (the Fens' old stones, the Kingstone's ground: the owner, 2026-11-15, "make
+// sure the ground area is clear of trees - and no water or mini islands for players to get stuck on"). Every mere the
+// seed laid that reaches into it runs dry, whole (cut, its shore would be an arc), and the willows and the dead that
+// stood at its edge go with it; inside r the named meres' fringes and the marsh run dry too (groundAt reads o.clear), and
+// every tree, rock and bush that reaches in is taken away. The grass and flowers walked through stay. Carved after the
+// build, so nothing else on the map moves for it (a draw skipped while building shifts every tree after it).
+const STANDS = /^(pine|oak|autumn|dead|grove|birch|alder|willow|carr|rock_|ug_bush)/;
+function clearGround(o, cx, cy, r, named = o.pools.length) {
+  (o.clear ||= []).push([cx, cy, r]);
+  const meets = (p) => { if (hypot(p.cx - cx, p.cy - cy) < r) return true;
+    for (let a = 0; a < 32; a++) if (hypot(p.cx + cos(a * Math.PI / 16) * p.rx * 1.3 - cx, p.cy + sin(a * Math.PI / 16) * p.ry * 1.3 - cy) < r + CLEAR_WOB) return true;   // (1.3: its reedy fringe)
+    return false; };
+  let x0 = cx - r - CLEAR_WOB - 2, y0 = cy - r - CLEAR_WOB - 2, x1 = cx + r + CLEAR_WOB + 2, y1 = cy + r + CLEAR_WOB + 2;
+  for (let k = o.pools.length - 1; k >= named; k--) { const p = o.pools[k]; if (!meets(p)) continue;
+    o.pools.splice(k, 1); x0 = Math.min(x0, p.cx - p.rx * 1.5 - 12); y0 = Math.min(y0, p.cy - p.ry * 1.5 - 12); x1 = Math.max(x1, p.cx + p.rx * 1.5 + 12); y1 = Math.max(y1, p.cy + p.ry * 1.5 + 12); }
+  x0 = Math.max(x0, -6); y0 = Math.max(y0, -6); x1 = Math.min(x1, o.W + 6); y1 = Math.min(y1, o.H + 6);   // (inside the forest ring's hard edge, which stays as it is)
+  const reach = (s) => { const [a, b, c, d] = footRect(s.id, s.x, s.y), dx = Math.max(a - cx, 0, cx - c), dy = Math.max(b - cy, 0, cy - d); return Math.sqrt(dx * dx + dy * dy); };
+  const inBox = (s) => { const [a, b, c, d] = footRect(s.id, s.x, s.y); return c >= x0 - 1 && a <= x1 + 1 && d >= y0 - 1 && b <= y1 + 1; };
+  for (let k = o.structs.length - 1; k >= 0; k--) { const s = o.structs[k];
+    if (STANDS.test(s.id) && (reach(s) < r + CLEAR_WOB + 1.5 || (/willow|dead/.test(s.id) && inBox(s) && !waterNear(o, s.x, s.y, 9)))) o.structs.splice(k, 1); }   // (+1.5: a tile stamped round a footprint's edge; 9: the edge's own reach, test/biomes.test.mjs)
+  // the ground in the box built again: its tiles as the land now lies, then what still stands on them stamped back (a
+  // building, which none here is, kept as it was)
+  const held = new Map();
+  for (const s of o.structs) if (inBox(s) && !STANDS.test(s.id) && !/^ug_/.test(s.id)) { const [a, b, c, d] = footRect(s.id, s.x, s.y);
+    for (let ty = Math.floor(b); ty <= Math.floor(d); ty++) for (let tx = Math.floor(a); tx <= Math.floor(c); tx++) { const i = gi(o, tx, ty); if (i >= 0) held.set(i, [o.blocked[i], o.occ[i]]); } }
+  for (let ty = Math.floor(y0); ty <= y1; ty++) for (let tx = Math.floor(x0); tx <= x1; tx++) {
+    const i = gi(o, tx, ty); if (i < 0) continue;
+    const g = groundAt(o, tx + 0.5, ty + 0.5).g; o.tmat[i] = g;
+    o.blocked[i] = g === G.WATER || g === G.POOL ? 1 : 0;
+    o.occ[i] = g !== G.GRASS && g !== G.FIELD && g !== G.MARSH && g !== G.SCREE && g !== G.SNOW ? 2 : 0;
+  }
+  for (const s of o.structs) if (inBox(s) && (STANDS.test(s.id) || /^ug_/.test(s.id))) stamp(o, s.id, s.x, s.y, STANDS.test(s.id) ? 'round' : 'none', 0.35);
+  for (const [i, [b, q]] of held) { o.blocked[i] = b; o.occ[i] = q; }
 }
 
 // ── SALTMERE, the Fens' waystation (M8; docs/region-towns-proposal.md) ─────────────────────────────────────────
