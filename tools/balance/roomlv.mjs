@@ -87,7 +87,18 @@ const casts = {}; if (process.env.SKILLS) sim.bus.on('skill', (e) => { if (e.at 
 sim.bus.on('defeat', () => (def = true));
 // DMG=1: damage dealt and taken by each party member, and how much of the fight each spent shooting / swinging
 const dealt = {}, taken = {}; if (process.env.DMG) sim.bus.on('combat', (c) => { if (c.t !== 'hit') return; if (c.party) { const m = sim.state.party.find((q) => Math.abs(q.x - c.x) < 0.01 && Math.abs(q.y - c.y) < 0.01); if (m) taken[m.cls] = (taken[m.cls] || 0) + c.amount; } else dealt[c.src] = (dealt[c.src] || 0) + c.amount; }); sim.bus.on('fallen', () => fallen++);
-for (let t = 0; t < 20 * secs && !def; t++) { sim.tick(); if (sim.world.enemies.length) low = Math.min(low, frac()); }
+// MP=1: each member's mana in the fight (the owner, 2026-11-15: "mana and mana regen dont seem to be in gameplay"): its mean
+// share of the pool, the share of fight time it couldn't pay for its cheapest ability in play, casts a minute; MPINF=1: every
+// member's MP kept full, so a run with it against one without says what mana holds back
+const mpOf = {}, inF = () => sim.world.enemies.some((e) => !e.dead && e.hp > 0);
+const cheapest = (m) => { const l = skillsMod && skillsMod.inPlay ? skillsMod.inPlay(m, sim.state.trials) : []; return l.length ? Math.min(...l.map((q) => q.mp)) : 0; };
+if (process.env.MP) sim.bus.on('skill', (e) => { if (e.at !== 'land' || !sim.state.party.some((q) => q.id === e.by)) return; (mpOf[e.cls] ||= { n: 0, t: 0, sum: 0, short: 0, casts: 0 }).casts++; });   // (a cast where it landed: one a cast)
+for (let t = 0; t < 20 * secs && !def; t++) {
+  sim.tick(); if (sim.world.enemies.length) low = Math.min(low, frac());
+  if (process.env.MPINF) for (const m of sim.state.party) if (!m.down && !m.fallen) m.mp = statsFor(m).maxMp;
+  if (process.env.MP && inF()) for (const m of sim.state.party) { if (m.down || m.fallen) continue; const o = (mpOf[m.cls] ||= { n: 0, t: 0, sum: 0, short: 0, casts: 0 }); o.t++; o.sum += m.mp / statsFor(m).maxMp; if (m.mp < cheapest(m)) o.short++; }
+}
+if (process.env.MP) console.log('  mana', Object.entries(mpOf).map(([k, o]) => `${k}: mean ${Math.round(100 * o.sum / Math.max(1, o.t))} % · short ${Math.round(100 * o.short / Math.max(1, o.t))} % of the fight · ${(o.casts / Math.max(1e-9, o.t / 20 / 60)).toFixed(1)} casts/min`).join(' | '));
 const avg = (a) => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);
 console.log(`${SITE === 'barrows' ? '' : SITE + ' '}${GIVE ? `{${GIVE.map((g) => g.join('+') || '-').join(' / ')}} ` : ''}${HERO || ROGUE ? `[${sim.state.party.map((m) => m.cls + (m.cls === 'rogue' ? ':' + m.gear.weapon.base : '')).join(' ')}] ` : ''}room L${RL} hero L${HL}${hire.length ? ' +' + hire.length : ''}: ${def ? 'DEFEAT' : 'held'} ${sim.state.t.toFixed(0)}s · ${costs.length} waves · end lv ${sim.state.party.map((m) => m.level).join('/')} · cost/wave first10 ${Math.round(100 * avg(costs.slice(0, 10)))}% · lowest ${Math.round(100 * Math.min(1, ...lows))}% · downs ${downs} · fallen ${fallen} · gold ${sim.state.counters.gold}`);
 if (process.env.DMG) console.log('  dealt', JSON.stringify(dealt), '· taken', JSON.stringify(taken));
