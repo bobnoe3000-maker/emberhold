@@ -18,9 +18,9 @@ import { RING, windowAt, paidFor } from '../sim/ring.js';
 import { CAMP_BY } from '../sim/camps.js';
 
 const CSS = `
-#ringLine { position: fixed; left: 50%; transform: translateX(-50%); top: calc(var(--hud-b, 44px) + 6px); z-index: 4; display: none; pointer-events: none;
-  background: rgba(18,14,10,.9); border: 1px solid rgba(255,150,80,.5); border-radius: 14px; padding: 4px 12px; color: #ffd8b0;
-  font: 12px ui-monospace, Menlo, monospace; white-space: nowrap; box-shadow: 0 2px 10px rgba(0,0,0,.45); }
+#ringLine { position: fixed; left: calc(10px + env(safe-area-inset-left, 0px)); top: calc(var(--hud-b, 44px) + 6px); z-index: 4; display: none; pointer-events: none; max-width: calc(100vw - 150px);
+  background: rgba(18,14,10,.9); border: 1px solid rgba(255,150,80,.5); border-radius: 12px; padding: 4px 10px; color: #ffd8b0;
+  font: 12px/1.35 ui-monospace, Menlo, monospace; box-shadow: 0 2px 10px rgba(0,0,0,.45); }
 #ringLine.on { display: block; }
 #ringLine b { color: #ffb070; font-weight: 600; }
 #ringBar { position: fixed; left: 12px; right: 12px; top: calc(var(--hud-b, 44px) + 6px); z-index: 4; display: none; max-width: 440px; margin: 0 auto; pointer-events: none;
@@ -36,7 +36,7 @@ const CSS = `
 #ringToast { position: fixed; left: 50%; transform: translateX(-50%); top: calc(var(--hud-b, 44px) + 74px); z-index: 4; display: none; pointer-events: none; max-width: 92vw;
   background: rgba(30,14,8,.92); border: 1px solid rgba(255,140,70,.6); border-radius: 10px; padding: 6px 12px; color: #ffe4c8; font: 13px Georgia, serif; text-align: center; }
 #ringToast.on { display: block; }
-#ringEnter { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 150px); z-index: 5; display: none; min-height: 52px; min-width: 220px; max-width: 86vw;
+#ringEnter { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 150px); z-index: 5; display: none; min-height: 52px; min-width: 240px; max-width: 86vw;
   border-radius: 26px; border: 1px solid #ffc890; background: linear-gradient(#ff9a50, #b4461c); color: #1a0c06; box-shadow: 0 4px 18px rgba(0,0,0,.55), 0 0 18px rgba(255,140,60,.35);
   font: 600 16px Georgia, serif; padding: 6px 18px; }
 #ringEnter.on { display: block; }
@@ -139,8 +139,8 @@ export function createRing({ sim, params, dev = false }) {
     const c = clock(), band = H && H.level >= RING.minLevel && S.created;
     let txt = '';
     if (band && !inRing) {
-      if (c.open) txt = paidFor(S, c.id) ? `The Kingstone stands · <b>stood against this hour</b>` : `The Kingstone stands · <b>${mmss(c.left)}</b> left · the old stones, the Fens`;
-      else if (c.soon) txt = `The Kingstone stands at ${c.at} · in <b>${mmss(c.until)}</b>`;
+      if (c.open) txt = paidFor(S, c.id) ? `The Kingstone stands · <b>stood against this hour</b>` : `The Kingstone stands · <b>${mmss(c.left)}</b> left`;
+      else if (c.soon) txt = `The Kingstone stands at ${c.at} · <b>${mmss(c.until)}</b>`;
       if (c.soon && announced !== c.id) { announced = c.id; say(`The old stones are stirring · the Kingstone stands at ${c.at}`, 3600); }
     }
     if (txt !== lastLine) { line.innerHTML = txt; lastLine = txt; }
@@ -149,7 +149,7 @@ export function createRing({ sim, params, dev = false }) {
     const at = w && w.kind === 'overland' && w.region === RING.region && Math.hypot(P.x - C.x, P.y - C.y) <= RING.near;
     const can = at && c.open && !paidFor(S, c.id) && !b && !S.away;
     if (can) {
-      const h = `Enter the Ring<small>${H.level < RING.minLevel ? `from level ${RING.minLevel}` : `${mmss(c.left)} left · fought at level ${RING.level}`}</small>`;
+      const h = `Enter the Ring<small>${H.level < RING.minLevel ? `from level ${RING.minLevel}` : `${mmss(c.left)} left · at level ${RING.level}`}</small>`;
       if (enter.innerHTML !== h) enter.innerHTML = h;
     }
     enter.classList.toggle('on', !!can);

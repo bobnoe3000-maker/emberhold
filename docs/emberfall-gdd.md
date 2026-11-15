@@ -2157,7 +2157,7 @@ hour** rather than three a day. The proposal's stages 1 and 2 are built; the ser
 
 **19.1 The window.** The first 15 minutes of every hour, by the device's clock (the sim keeps none: `src/ui/ring.js`
 reads it and the command carries the window's id, `2026-11-15T14`, and the seconds it has left). From ten to the hour a
-line under the top bar counts down (*The Kingstone stands at 15:00 · in 7:12*) with a toast as it starts to stir; in the
+line under the top bar counts down (*The Kingstone stands at 15:00 · 7:12*) with a toast as it starts to stir; in the
 window, *The Kingstone stands · 11:03 left*. Shown to a hero of the band (level 10 up). Offline play is unverified (as
 raids' three a day are); online the window will be the server's.
 
@@ -2241,7 +2241,7 @@ the AI companies included):
 
 5–7 minutes at every head count, as the proposal's target. A company that never moves is down over and over and the fight
 runs long, but never wiped (the target: *down several times, not a wipe*). A level-10 hero synced up (its kit a level-10
-kit): won in 6.0–6.5 minutes, Silver or Bronze, a few downs a run. The tiers: with two companies your right party is Gold,
+kit): won in 6.0–6.7 minutes, Silver or Bronze, up to two downs a run. The tiers: with two companies your right party is Gold,
 with three to five Silver (Bronze in one window's draw of three companies, piloted or not). The pay at Silver for a level-18 hero: 2,160 gold, 20 % of a level each,
 10 cinders and a Fine: once an hour at most.
 
