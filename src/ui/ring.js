@@ -133,8 +133,11 @@ export function createRing({ sim, params, dev = false }) {
     // boss bar, the wave pill) hold that place, and the stones are a walk away anyway
     const c = clock(), band = H && H.level >= RING.minLevel && S.created, open = w.kind !== 'dungeon' && !w.arena && !sim.raid && !sim.battle;
     let txt = '';
+    // once the company has stood against this hour's Kingstone, nothing to say until the next one stirs (the owner, 2026-11-15:
+    // "The kingstone banner wont go away"): it stayed for the rest of the quarter hour, over the HUD; the World map's card
+    // still says it
     if (band && !inRing && open) {
-      if (c.open) txt = paidFor(S, c.id) ? `The Kingstone stands · <b>stood against this hour</b>` : `The Kingstone stands at the old stones · <b>${mmss(c.left)}</b> left`;
+      if (c.open) txt = paidFor(S, c.id) ? '' : `The Kingstone stands at the old stones · <b>${mmss(c.left)}</b> left`;
       else if (c.soon) txt = `The Kingstone stands at ${c.at} · <b>${mmss(c.until)}</b>`;
       if (c.soon && announced !== c.id) { announced = c.id; say(`The old stones are stirring · the Kingstone stands at ${c.at}`, 3600); }
     }

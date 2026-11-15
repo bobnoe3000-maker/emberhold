@@ -339,17 +339,23 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
   const b = await launch(chromium, 'chromium');
   if (b) {
     const seen = {};
-    for (const [k, q] of [['overland', 'scene=overland&region=fens'], ['dungeon', 'scene=dungeon&site=barrows']]) {
+    for (const [k, q] of [['overland', 'scene=overland&region=fens'], ['dungeon', 'scene=dungeon&site=barrows'], ['paid', 'scene=overland&region=fens']]) {
       const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
       const errs = []; p.on('pageerror', (e) => errs.push(e.message));
       await p.goto(`${base}/index.html?dev&notitle&ring=on&${q}`); await p.waitForFunction(() => !!globalThis.__sim, null, { timeout: 60000 * SLOW });
       await p.evaluate(() => { const s = globalThis.__sim; s.state.created = true; for (const m of s.state.party) m.level = 15; });
+      // (the owner, 2026-11-15: "The kingstone banner wont go away") stood against this hour: the window the sim was told of
+      // marked paid, as the end of a fight marks it; the line says nothing more until the next one
+      if (k === 'paid') await p.evaluate(async () => {
+        const { windowAt, ringOf } = await import('./src/sim/ring.js'), n = new Date();
+        ringOf(globalThis.__sim.state).paid.push(windowAt({ y: n.getFullYear(), mo: n.getMonth() + 1, d: n.getDate(), h: n.getHours(), m: 0, s: 0 }).id);
+      });
       await p.waitForTimeout(2500);
       seen[k] = { on: await p.evaluate(() => document.getElementById('ringLine').classList.contains('on')), errs: errs.length };
       await ctx.close();
     }
     await b.close();
-    check('the Kingstone\'s hour line: on the Fens\' overland in its window, never in a dungeon (a raid\'s or a hall\'s banners hold that place)', seen.overland.on && !seen.dungeon.on && !seen.overland.errs && !seen.dungeon.errs, JSON.stringify(seen));
+    check('the Kingstone\'s hour line: on the Fens\' overland in its window, never in a dungeon (a raid\'s or a hall\'s banners hold that place), gone once stood against', seen.overland.on && !seen.dungeon.on && !seen.paid.on && !seen.overland.errs && !seen.dungeon.errs && !seen.paid.errs, JSON.stringify(seen));
   }
 }
 // 5b. the first-open cards (docs/first-steps-plan.md §3; the flows run with them off): each service's card the first time
