@@ -1402,25 +1402,30 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
-// 21. The way to the Mere Tower (the owner, 2026-10-05: "Its not obvious what to click on to get to the mere tower"):
-// from Saltmere's boardwalk at night the ferry stage's sign is a plaque with a ›, on screen; a tap on it walks the party
-// down the jetty, and at level 12 Wenna takes them out to the Tower.
+// 21. The Mere Tower from ☰ (v1.112; the owner, 2026-11-15: "put the Mere Tower entrance just on the main menu - like
+// party up and arena. Move it off of the actual map"): no sign or way in on the Fens' map; once the Fens are open, ☰
+// shows The Mere Tower (greyed under level 12); at 12 a tap takes the company out to it from the Vale, and the stair
+// down brings it back to where it stood.
 {
   const b = await launch(chromium, 'chromium');
   if (b) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
     const errs = []; p.on('pageerror', (e) => errs.push(e.message));
-    await p.goto(`${base}/index.html?dev&manual&notitle&scene=overland&region=fens&tod=night`);
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=overland&region=vale&world=off`);
     await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
-    await p.evaluate(() => { const s = globalThis.__sim; s.state.created = true; s.state.party[0].level = 12; });
-    for (let i = 0; i < 300; i++) { await p.evaluate(() => globalThis.__frame(1000 / 60)); if (i % 50 === 0) await p.waitForTimeout(30); }
-    const at = await p.evaluate(() => { for (let y = 60; y < 800; y += 4) for (let x = 4; x < 386; x += 4) { const L = globalThis.__renderer.doorAt(x, y); if (L) return { x, y, site: L.site }; } return null; });
-    if (at) await p.touchscreen.tap(at.x + 24, at.y + 2);
-    let kind = 'overland';
-    for (let i = 0; i < 80 && kind === 'overland'; i++) kind = await p.evaluate(() => { for (let k = 0; k < 30; k++) globalThis.__frame(1000 / 60); return globalThis.__sim.world.kind; });
-    const site = await p.evaluate(() => globalThis.__sim.world.site);
-    check('the Mere Tower: from Saltmere\'s boardwalk its sign is a plaque on screen; a tap walks you down the jetty and Wenna takes you out',
-      !!at && at.site === 'mere_tower' && kind === 'dungeon' && site === 'mere_tower' && errs.length === 0, JSON.stringify({ at, kind, site, errs }));
+    const from = await p.evaluate(() => { const s = globalThis.__sim; s.state.created = true; const L = 'ch1_ember_in_the_fist'; s.state.quests[L] = { ...(s.state.quests[L] || {}), st: 3 }; s.state.party[0].level = 11;
+      for (let k = 0; k < 10; k++) globalThis.__frame(1000 / 60); const P = s.state.player; return { x: P.x, y: P.y }; });
+    const onMap = await p.evaluate(async () => { const { createOutdoor } = await import('./src/sim/outdoor.js'); const o = createOutdoor(20260807, 'overland', 'fens'); return o.exits.some((e) => e.site === 'mere_tower') || o.labels.some((l) => l.site === 'mere_tower'); });
+    await p.tap('#menuBtn'); await p.waitForSelector('#titleWrap.on');
+    const under = await p.locator('#title button', { hasText: 'The Mere Tower' }).isDisabled();
+    await p.evaluate(() => { globalThis.__ui.title.close(); globalThis.__sim.state.party[0].level = 12; });
+    await p.tap('#menuBtn'); await p.waitForSelector('#titleWrap.on');
+    await p.locator('#title button', { hasText: 'The Mere Tower' }).tap();
+    const there = await p.evaluate(() => { for (let k = 0; k < 10; k++) globalThis.__frame(1000 / 60); const w = globalThis.__sim.world; return { kind: w.kind, site: w.site }; });
+    const back = await p.evaluate(() => { const s = globalThis.__sim, P = s.state.player; P.x = P.px = s.world.exitAt.x; P.y = P.py = s.world.exitAt.y; for (let k = 0; k < 10; k++) globalThis.__frame(1000 / 60); return { kind: s.world.kind, region: s.state.region, x: P.x, y: P.y }; });
+    check('the Mere Tower from ☰: no way in on the Fens\' map; greyed under 12; at 12 a tap takes the company out to it from the Vale, and its stair brings it back to where it stood',
+      !onMap && under && there.kind === 'dungeon' && there.site === 'mere_tower' && back.kind === 'overland' && back.region === 'vale' && Math.hypot(back.x - from.x, back.y - from.y) < 0.6 && errs.length === 0,
+      JSON.stringify({ onMap, under, there, back, from, errs }));
     await ctx.close(); await b.close();
   }
 }

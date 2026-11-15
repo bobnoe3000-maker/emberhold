@@ -32,7 +32,7 @@
 
 import { PLANS } from './plans.js';
 
-/** @typedef {{ name: string, region: string, theme: string | null, base: number, perFloor: number, floors: number, span?: number, plan?: boolean, family: string, rooms: [number, number] | null, layout?: 'caverns' | 'halls', flat?: boolean, hidden?: boolean, minLevel?: number, bosses?: Record<number, string>, families?: string[], themes?: string[], dress?: string[], vault?: string, band?: boolean, secret?: boolean, parked?: boolean, arena?: boolean, mix: number }} SiteDef */
+/** @typedef {{ name: string, region: string, theme: string | null, base: number, perFloor: number, floors: number, span?: number, plan?: boolean, family: string, rooms: [number, number] | null, layout?: 'caverns' | 'halls', flat?: boolean, hidden?: boolean, minLevel?: number, bosses?: Record<number, string>, families?: string[], themes?: string[], dress?: string[], vault?: string, band?: boolean, secret?: boolean, parked?: boolean, arena?: boolean, menu?: boolean, mix: number }} SiteDef */   // (menu: reached from ☰, no way in on its land: the Mere Tower, v1.112)
 /** @type {Record<string, SiteDef>} */
 export const SITES = {
   // the Hollow Vale, 1–9: a crypt, a fort that goes down into a cave, a drowned chapel; the Ninth Milestone its secret
@@ -55,9 +55,9 @@ export const SITES = {
   canal_locks: { name: 'The Canal Locks', region: 'fens', theme: 'sluice', themes: ['sluice', 'poison'], base: 13, perFloor: 1, floors: 2, span: 3, plan: true, family: 'lockcult', families: ['lockcult', 'harvest'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 2: 'vatwarden' }, dress: ['locks', 'vats'], mix: 0x10c5 },
   drowned_abbey: { name: 'The Drowned Abbey', region: 'fens', theme: 'water', base: 16, perFloor: 1, floors: 2, span: 3, plan: true, family: 'drowned', rooms: [5, 5], layout: 'halls', band: true, bosses: { 1: 'drowned_choir', 2: 'abbess_below' }, dress: ['abbey', 'abbey'], mix: 0xab3e },   // (Brother Teague in his cell off the cloister: plans.js, battle.js sideBoss)
   // the Mere Tower (tower.js; world doc v1.23): its landing and the stair hall, where the climb goes on; Wenna Pike's punt
-  // from Saltmere's landing, from level 12 (minLevel: core.js turns a company under it back at the jetty). It pays no XP,
-  // so it competes with no band.
-  mere_tower: { name: 'The Mere Tower', region: 'fens', theme: 'dread', base: 12, perFloor: 0, floors: 1, family: 'ashbound', rooms: [2, 2], layout: 'halls', flat: true, minLevel: 12, mix: 0x3e7e },
+  // out to it from ☰ (v1.112, core.js towerGo: from wherever the company is, and back there), from level 12 (minLevel:
+  // core.js turns a company under it away). It pays no XP, so it competes with no band.
+  mere_tower: { name: 'The Mere Tower', region: 'fens', theme: 'dread', base: 12, perFloor: 0, floors: 1, family: 'ashbound', rooms: [2, 2], layout: 'halls', flat: true, minLevel: 12, menu: true, mix: 0x3e7e },
   reedholm_undercroft: { name: 'The Reedholm Undercroft', region: 'fens', theme: 'chasm', base: 18, perFloor: 0, floors: 1, family: 'ashbound', rooms: [4, 4], layout: 'halls', flat: true, hidden: true, secret: true, vault: 'the_fair_copy', mix: 0x4e3d },
   // the Bowl (GDD §17 v1.85; bowl.js): the arena in Solmere, reached from the menu for now (from level 6), never from a
   // land, so parked: on no map, in no band, no foes of its own (a bout's rivals are bowl.js's)

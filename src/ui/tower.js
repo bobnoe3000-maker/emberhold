@@ -1,8 +1,8 @@
 // @ts-check
 // tower.js — the Mere Tower's landing card (sim/tower.js; GDD §17 v1.31). Every tenth wave past a warden is a landing:
 // the satchel is banked and the stair hall waits. The card says what was banked and how high the company has been,
-// and offers **Climb on** (`towerClimb`) or **Home with Wenna** (`towerLeave`, back to Saltmere's jetty, everything
-// kept). It says what walking out mid-climb costs before you do it. It shows on 'towerLanding' and, after a load, when
+// and offers **Climb on** (`towerClimb`) or **Home with Wenna** (`towerLeave`, back to where the company set out
+// from, ☰'s trip since v1.112; everything kept). It says what walking out mid-climb costs before you do it. It shows on 'towerLanding' and, after a load, when
 // the climb was left at a landing; it closes on a climb, on leaving, or when the floor changes. Its text is text.
 
 import { swallow } from './actorart.js';

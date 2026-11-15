@@ -540,11 +540,10 @@ function buildFens(seed) {
     for (const [id, x, y] of [[B('stilttavern'), salt[0] - 6, salt[1] - 12], [B('stilt', 1), salt[0] - 16, salt[1]], [B('stilt', 2), salt[0] + 2, salt[1] - 18],
       [B('stilt', 3), salt[0] - 14, salt[1] + 12], [B('stilt', 1), salt[0] - 20, salt[1] - 16], [B('stilt', 2), salt[0] - 8, salt[1] - 26]]) put(o, id, x, y);
     for (const [id, x, y] of [[B('punt'), salt[0] + 8, salt[1] + 17], [B('punt'), salt[0] - 22, salt[1] - 8], [B('eeltrap'), salt[0] - 22, salt[1] + 4], [B('eeltrap'), salt[0] + 2, salt[1] + 10]]) put(o, id, x, y, 'rect', 0);
-    // Wenna Pike's ferry stage over the jetty's end, her punt moored past it (2026-10-05, the owner: it wasn't obvious
-    // where to go for the Mere Tower): an arch taller than the landing gate, lanterns on it, a black board with a pale
-    // tower; walked under, its posts either side of the jetty
-    put(o, B('ferrystage'), salt[0] + 10, salt[1] + 9, 'none');
-    for (const dx of [-2.4, 2.4]) { const i = gi(o, salt[0] + 10 + dx, salt[1] + 9); if (i >= 0) o.blocked[i] = 1; } }
+    // (Wenna Pike's ferry stage stood over the jetty's end, the way out to the Mere Tower, until 2026-11-15, the owner:
+    // "put the Mere Tower entrance just on the main menu - like party up and arena. Move it off of the actual map": the
+    // Tower is ☰'s now, core.js towerGo. The jetty and her punt stay, a landing's own.)
+  }
   // the sites (world doc §3.2): the Toadking's island, the lock-keepers' hall by the gates, the vats, the Abbey in its
   // flood, Reedholm on its rise (the Undercroft's door in its chapel front, shut until the Fens set is whole)
   put(o, B('boathall'), mound[0], mound[1]); put(o, B('lockhall'), lockhall[0], lockhall[1]); put(o, B('vats'), pools[0], pools[1]);
@@ -553,8 +552,7 @@ function buildFens(seed) {
   o.labels.push({ x: salt[0] + 4, y: salt[1], id: B('landing'), text: 'Saltmere' },
     { x: mound[0], y: mound[1], id: B('boathall'), text: "Toadking's Mound", site: 'toadking_mound' }, { x: lockhall[0], y: lockhall[1], id: B('lockhall'), text: 'The Canal Locks', site: 'canal_locks' },
     { x: pools[0], y: pools[1], id: B('vats'), text: 'The Sickpools' }, { x: abbey[0], y: abbey[1], id: B('abbey'), text: 'The Drowned Abbey', site: 'drowned_abbey' },   // (v1.48: the Sickpools a landmark; their vats are the Canal Locks' third floor)
-    { x: reedholm[0], y: reedholm[1], id: B('priory'), text: 'Reedholm' },
-    { x: salt[0] + 10, y: salt[1] + 9, id: B('ferrystage'), text: 'The Mere Tower · Wenna’s punt', site: 'mere_tower', door: true });   // door: a plaque a tap walks you to (renderer doorAt)
+    { x: reedholm[0], y: reedholm[1], id: B('priory'), text: 'Reedholm' });
   // the fen's trees: alder carr and willows, low and dark, dead trees standing in the water's edge; never on a road
   // (v1.78, the owner: "Thin the Fens trees by 25% too": each on the land, and each willow at the water's edge, kept on a draw
   // of its own stream, as the Vale's (TREE_KEEP); the ring past the edge whole, the Fens' wall)
@@ -585,9 +583,6 @@ function buildFens(seed) {
   for (const [site, [x, y]] of Object.entries(SITE_AT)) o.exits.push({ x0: x - 2.5, y0: y + DOOR_Y[site], x1: x + 3.5, y1: y + DOOR_Y[site] + 3, to: 'dungeon', site });
   o.arrivals = { default: { x: salt[0] + 12.5, y: salt[1] + 0.5 }, saltmere: { x: salt[0] + 12.5, y: salt[1] + 0.5 }, vale_road: { x: north[0] + 0.5, y: 2.5 } };   // on the boardwalk, facing the gate
   for (const [site, [x, y]] of Object.entries(SITE_AT)) o.arrivals[site] = { x: x + 1.5, y: y + DOOR_Y[site] + 7.5 };
-  // Wenna Pike's punt at the jetty's end (world doc v1.23; tower.js): out to the Mere Tower, and back to the jetty
-  o.exits.push({ x0: salt[0] + 8.5, y0: salt[1] + 9.5, x1: salt[0] + 11.5, y1: salt[1] + 12, to: 'dungeon', site: 'mere_tower' });
-  o.arrivals.mere_tower = { x: salt[0] + 10.5, y: salt[1] + 6 };
   o.spawn = o.arrivals.default;
   clearGround(o, FENS.stones[0], FENS.stones[1], STONES_CLEAR, named);   // (last: the rest of the fen as it was, tree for tree)
   return o;

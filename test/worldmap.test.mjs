@@ -24,7 +24,7 @@ test('each land\'s map is in assets/maps, and its pins are the overland\'s exits
     }
     assert.ok(L.w > 0 && L.h > 0 && L.px === 4);
     // (v1.48) one pin a site of the land in play: the Mill and the Warren are parked for the Reach, the Sickpools gone
-    assert.deepEqual(L.pins.filter((p) => p.kind === 'site').map((p) => p.id).sort(), SITE_IDS.filter((id) => SITES[id].region === r && !SITES[id].parked).sort(), `${r}: its sites' pins`);
+    assert.deepEqual(L.pins.filter((p) => p.kind === 'site').map((p) => p.id).sort(), SITE_IDS.filter((id) => SITES[id].region === r && !SITES[id].parked && !SITES[id].menu).sort(), `${r}: its sites' pins`);   // (menu: the Mere Tower, ☰'s since v1.112)
   }
   assert.ok(existsSync(new URL(WALL.src.replace('./', ''), ROOT)), 'the wall map');
 });

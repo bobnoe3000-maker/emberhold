@@ -5,7 +5,8 @@
 //   · the launch (after the boot's loading screen, src/cutscene/player.js; it holds the world still): Continue (or Begin,
 //     for a slot with no hero yet: the intro, then creation), Game slots, Settings, The Chronicle (the intro again);
 //   · ☰ in play ('pause': a fight goes on under it): Resume, Settings, Party Up (raids: ui/partyup.js, GDD §18 v1.97), The Bowl (from level 6: ui/bowl.js; the owner,
-//     2026-11-13: "Menu fine at min level 6"), How to play (the first steps again), Game slots;
+//     2026-11-13: "Menu fine at min level 6"), The Mere Tower (once the Fens are open, from level 12: sim towerGo, v1.112;
+//     the owner, 2026-11-15: "put the Mere Tower entrance just on the main menu - like party up and arena"), How to play (the first steps again), Game slots;
 //   · Settings: two tabs, Sound (a slider a kind of sound, audio/settings.js) and Graphics (render3d/settings.js), a row a
 //     setting, its control on the right: Quality, Resolution, Depth of field, Hit feel, Zoom, Brightness;
 //   · Account (net/account.js; the owner, 2026-11-13: "Lets do the account setup including guest"): the guest's handle
@@ -28,6 +29,8 @@ import { ZOOM_PCT_MIN, ZOOM_PCT_MAX } from '../render3d/settings.js';
 import { PROVIDER_LABEL } from '../net/account.js';
 import { BOWL } from '../sim/bowl.js';
 import { RAID, raidsLeft } from '../sim/raid.js';
+import { TOWER, inTower } from '../sim/tower.js';
+import { SITES } from '../sim/sites.js';
 
 const CSS = `
 #titleWrap { position: fixed; inset: 0; z-index: 11; display: none; background: linear-gradient(rgba(8,6,12,.35), rgba(8,6,12,.55) 40%, rgba(8,6,12,.94) 72%); }
@@ -266,6 +269,7 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         ${acct}
         ${openRaid && made && html`<button onClick=${() => { close(); openRaid(); }}>Party Up<small>${sim.raid ? `on a raid · ${sim.raid.name}` : `raids · ${raidsLeft(S)} of ${RAID.perDay} left today`}</small></button>`}
         ${openBowl && made && h.level >= BOWL.minLevel && html`<button onClick=${() => { close(); openBowl(); }}>The Bowl<small>the arena · ${S.bowl ? `${S.bowl.marks} marks` : 'company against company'}</small></button>`}
+        ${made && sim.landOpen && sim.landOpen(SITES[TOWER.site].region) && html`<button disabled=${h.level < SITES[TOWER.site].minLevel || inTower(sim.world)} onClick=${() => { close(); sim.commands.push({ type: 'towerGo' }); }}>The Mere Tower<small>${inTower(sim.world) ? `climbing · wave ${((S.tower || {}).wave || 0) + 1}` : h.level < SITES[TOWER.site].minLevel ? `Wenna rows out from level ${SITES[TOWER.site].minLevel}` : `Wenna’s punt · best wave ${(S.tower || {}).best || 0}`}</small></button>`}
         ${openSteps && made && html`<button onClick=${() => { close(); openSteps(); }}>How to play<small>the first steps again</small></button>`}
         <button onClick=${() => openSlots()}>Game slots<small>saved as you go</small></button>`
       : html`

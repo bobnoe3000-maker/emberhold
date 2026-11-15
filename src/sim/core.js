@@ -31,7 +31,7 @@ import { siteOf, siteOpen, SITES, SECRET_REST } from './sites.js';
 import { campsFrom } from './camps.js';
 import { restoreCount, credit } from './lamps.js';
 import { SHRINES, shrineKind, boonsOf, restoreBoons } from './shrines.js';
-import { towerOf, restoreTower, inTower, bracketOf, BRACKETS } from './tower.js';
+import { TOWER, towerOf, restoreTower, inTower, bracketOf, BRACKETS } from './tower.js';
 import { bowlOf, settleBout, restoreBowl, freshBowl, companyOn, refreshPicks, modeOf, BOWL } from './bowl.js';
 import { RAID, freshRaid, restoreRaid, raidOf, raidSites, raidFloors, standIns, cofferOf } from './raid.js';
 import { modeOf as playOf } from './modes.js';
@@ -390,6 +390,10 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   }
   function leaveBowl() {
     if (!away || raidOn || battle.battle) return;              // (not mid-bout; a raid leaves by leaveRaid)
+    giveBack();
+  }
+  /** the world the company left for the Bowl or the Tower, given back as it stood */
+  function giveBack() {
     const p = state.player, a = away;
     world = a.world; curScene = a.scene; curSite = a.site; curRegion = a.region; state.depth = a.depth; floors = a.floors;
     p.x = p.px = a.x; p.y = p.py = a.y; p.moving = false; p.vx = p.vy = 0;
@@ -397,6 +401,25 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     battle.reset();
     bus.emit('levelChanged', { depth: state.depth, theme: world.theme, scene: curScene });
   }
+  // ── the Mere Tower (tower.js; the owner, 2026-11-15: "put the Mere Tower entrance just on the main menu - like party
+  // up and arena. Move it off of the actual map"): from ☰ (`towerGo`), Wenna Pike's punt takes the company out to it from
+  // wherever it is, a pocket trip as the Bowl's is: the world it left kept as it stood, and given back when it comes home
+  // (Home with Wenna at a landing, or the stair down out of the hall; walked out mid-climb, the satchel's lost as ever).
+  // A save made up there is the world it came from (snapAway); the climb is the state's, and carries on next time.
+  function towerIn() {
+    const p = state.player;
+    stopWalk(); p.resume = null; p.journey = null;
+    away = { world, scene: curScene, site: curSite, region: curRegion, depth: state.depth, floors, x: p.x, y: p.y };
+    battle.reset();
+    curScene = 'dungeon'; curSite = TOWER.site; curRegion = SITES[TOWER.site].region; state.depth = 0; floors = new Map(); state.sitesEntered.add(curSite);
+    world = buildWorld(0);
+    const a = world.stairArrive && isWalkable(world, world.stairArrive.x, world.stairArrive.y) ? world.stairArrive : findSpawn(world);
+    p.x = p.px = a.x; p.y = p.py = a.y; p.moving = false; p.vx = p.vy = 0;
+    battle.reset();
+    bus.emit('levelChanged', { depth: 0, theme: world.theme, scene: curScene, tower: true });
+  }
+  /** home from the Tower: to where the company set out from (a trip from ☰), or Saltmere (a save from before v1.112) */
+  const leaveTower = () => { if (away) { battle.reset(); giveBack(); } else travel('overland', curSite); };
 
   // ── the Kingstone (ring.js, GDD §19 v1.105–v1.106): the region boss, standing in the Fens' own map at the old stones in
   // a window (v1.106, the owner: "Can we spawn the region boss directly in the map?"; it was a pocket trip to a Ring of its
@@ -669,7 +692,17 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     }
     if (cmd.type === 'raidLeave') { if (raidOn && (raidOn.done || !battle.battle || battle.battle.quiet)) leaveRaid(raidOn.done ? 'won' : 'left'); return; }   // (never mid-fight, unless it's won)
     if (cmd.type === 'towerClimb') { if (inTower(world)) battle.towerClimb(); return; }
-    if (cmd.type === 'towerLeave') { if (inTower(world) && towerOf(state).atLanding && battle.battle && battle.battle.tower) travel('overland', curSite); return; }
+    if (cmd.type === 'towerLeave') { if (inTower(world) && towerOf(state).atLanding && battle.battle && battle.battle.tower) leaveTower(); return; }
+    if (cmd.type === 'towerGo') {                          // ☰ → The Mere Tower: Wenna rows the company out from wherever it is
+      const H = state.party[0], no = (reason) => bus.emit('refused', { reason });
+      if (!state.created || H.down || H.fallen || state.away || inTower(world)) return;
+      if (raidOn || away) { no('Not from here'); return; }
+      if (battle.battle && !battle.battle.quiet) { no('Not in the middle of a fight'); return; }
+      if (!landOpen(SITES[TOWER.site].region)) { no('That land isn’t open to you yet'); return; }
+      if (H.level < (SITES[TOWER.site].minLevel || 0)) { bus.emit('siteLevel', { site: TOWER.site, need: SITES[TOWER.site].minLevel }); return; }
+      towerIn();
+      return;
+    }
     if (cmd.type === 'useShrine') {                        // the shrine popup's Use (ui/shrine.js): unspent, in reach, and needed
       const dx = cmd.tx + 0.5 - p.x, dy = cmd.ty + 0.5 - p.y;
       if (propAt(world, cmd.tx, cmd.ty) !== 'shrine') return;
@@ -692,6 +725,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
         face(p, dx, dy);
         if (prop === 'stairs' && world.kind === 'overland') { travel('dungeon', undefined, 'barrows'); return; }   // into the Old Barrows
         if (prop === 'exit' && raidOn) { leaveRaid(raidOn.done ? 'won' : 'left'); return; }            // a raid's way out: back to where you set out from
+        if (prop === 'exit' && away && inTower(world)) { leaveTower(); return; }                        // the Tower's stair down: home with Wenna
         if (prop === 'exit' && away) { leaveBowl(); return; }                                         // the Dust Gate's stair: back to where you were
         if (prop === 'exit') { travel('overland', curSite); return; }                                  // back up to the surface
         if (prop === 'stairs' || prop === 'stairwell') { bus.emit('descend', { depth: state.depth + 1 }); descend(); return; }   // any tile of the stairwell
@@ -816,7 +850,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       else if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive, ex.site, ex.region);
       if (!ex) shut = null;
     }
-    else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) { if (away && !raidOn) leaveBowl(); else if (state.depth > (raidOn ? raidOn.top : 0)) ascend(); else if (raidOn) leaveRaid(raidOn.done ? 'won' : 'left'); else travel('overland', curSite); }   // (the Bowl's gate: back where you were, never the land)   // walk up the stair: a floor up, or out
+    else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) { if (away && !raidOn && inTower(world)) leaveTower(); else if (away && !raidOn) leaveBowl(); else if (state.depth > (raidOn ? raidOn.top : 0)) ascend(); else if (raidOn) leaveRaid(raidOn.done ? 'won' : 'left'); else travel('overland', curSite); }   // (the Bowl's gate: back where you were, never the land)   // walk up the stair: a floor up, or out
     if (p.journey && !p.path && !p.resume) p.journey = null;   // arrived (a leg that changed scenes has already walked on), or stopped
     state.t += TICK_DT; state.tick += 1;
     if (state.away && --state.away.left <= 0) { const secs = state.away.secs; state.away = null; bus.emit('awayEnded', { secs, stopped: false }); }

@@ -117,7 +117,7 @@ test('every site has its way in on its own land, and only there', async () => {
   const { isWalkable } = await import('../src/sim/world.js');
   for (const region of ['vale', 'fens']) {
     const o = createOutdoor(20260807, 'overland', region), ins = o.exits.filter((e) => e.to === 'dungeon').map((e) => e.site);
-    assert.deepEqual(ins.sort(), SITE_IDS.filter((id) => SITES[id].region === region && !SITES[id].parked).sort(), region);
+    assert.deepEqual(ins.sort(), SITE_IDS.filter((id) => SITES[id].region === region && !SITES[id].parked && !SITES[id].menu).sort(), region);   // (menu: the Mere Tower, from ☰ since v1.112)
     for (const id of ins) { const a = o.arrivals[id]; assert.ok(a && isWalkable(o, a.x, a.y), `${id}: an arrival on open ground`); }
   }
 });

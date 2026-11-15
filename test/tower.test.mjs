@@ -6,8 +6,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
 import { makeMember, statsFor } from '../src/sim/party.js';
-import { TOWER, towerTough, blockFamily, wardenWave, wardenAt, waveGold, restoreTower, WARDENS } from '../src/sim/tower.js';
+import { towerTough, blockFamily, wardenWave, wardenAt, waveGold, restoreTower, WARDENS } from '../src/sim/tower.js';
 import { BOSSES } from '../src/sim/battle.js';
+import { LANDS } from '../src/sim/regions.js';
+import { QS } from '../src/sim/quests.js';
 
 const SEED = 20260807;
 // a party in the tower's stair hall: strong (to climb) or not
@@ -32,49 +34,27 @@ test('the table: +6 % a wave, compounding, the same every time; a new kind every
   assert.ok(waveGold(20) > waveGold(1));
 });
 
-test('Wenna\'s punt at Saltmere\'s jetty: under level 12 she won\'t take you; at 12 it\'s out to the Tower, and its stair brings you back', () => {
-  const sim = createSim(SEED, undefined, { scene: 'overland', region: 'fens' }), ev = [];
-  sim.bus.on('siteLevel', (e) => ev.push(e));
-  const ex = sim.world.exits.find((e) => e.site === 'mere_tower'); assert.ok(ex, 'a way in on the Fens');
-  const p = sim.state.player, at = () => { p.x = p.px = (ex.x0 + ex.x1) / 2; p.y = p.py = (ex.y0 + ex.y1) / 2; };
-  sim.state.party[0].level = 11; at(); sim.tick();
-  assert.equal(sim.world.kind, 'overland'); assert.deepEqual(ev, [{ site: 'mere_tower', need: 12 }]);
-  sim.state.party[0].level = 12; p.x = p.px = sim.world.arrivals.mere_tower.x; p.y = p.py = sim.world.arrivals.mere_tower.y; sim.tick(); at(); sim.tick();
-  assert.equal(sim.world.kind, 'dungeon'); assert.equal(sim.world.site, 'mere_tower'); assert.equal(sim.state.region, 'fens');
+// (v1.112, the owner, 2026-11-15: "put the Mere Tower entrance just on the main menu - like party up and arena. Move it
+// off of the actual map") ☰ → The Mere Tower: Wenna rows the company out from wherever it is, and home again to there
+test('from ☰: under level 12 she won\'t take you; at 12 it\'s out to the Tower from where you stand, and its stair brings you back there', () => {
+  const sim = createSim(SEED, undefined, { scene: 'overland', region: 'vale' }), ev = [], refused = [];
+  sim.state.created = true; sim.tick();
+  sim.bus.on('siteLevel', (e) => ev.push(e)); sim.bus.on('refused', (e) => refused.push(e.reason));
+  assert.ok(!sim.world.exits.some((e) => e.site === 'mere_tower'), 'no way in on a map');
+  const fens = createSim(SEED, undefined, { scene: 'overland', region: 'fens' }).world;
+  assert.ok(!fens.exits.some((e) => e.site === 'mere_tower') && !fens.labels.some((l) => l.site === 'mere_tower') && !fens.structs.some((s) => s.id === 'fens_ferrystage_1'), 'none on the Fens either: no stage, no sign');
+  const p = sim.state.player, H = sim.state.party[0], from = { x: p.x, y: p.y };
+  H.level = 12; sim.commands.push({ type: 'towerGo' }); sim.tick();
+  assert.equal(sim.world.kind, 'overland'); assert.deepEqual(refused, ['That land isn’t open to you yet'], 'not before the Fens are open');
+  const L = LANDS.fens; sim.state.quests[L.opens] = { ...(sim.state.quests[L.opens] || {}), st: QS.DONE };
+  H.level = 11; sim.commands.push({ type: 'towerGo' }); sim.tick();
+  assert.equal(sim.world.kind, 'overland', 'not under 12');
+  H.level = 12; sim.commands.push({ type: 'towerGo' }); sim.tick();
+  assert.equal(sim.world.site, 'mere_tower'); assert.equal(sim.state.region, 'fens');
   p.x = p.px = sim.world.exitAt.x; p.y = p.py = sim.world.exitAt.y; sim.tick();
-  const a = sim.world.arrivals.mere_tower; assert.equal(sim.world.kind, 'overland'); assert.ok(Math.hypot(p.x - a.x, p.y - a.y) < 2, 'back on the jetty');
-});
-
-// (2026-10-05, the owner: "Its not obvious what to click on to get to the mere tower") the ferry stage stands over the
-// jetty's end, its sign a door label; a tap on it walks you there as the compass row does, from Saltmere's boardwalk
-test('the way to the punt is marked: the ferry stage over the jetty\'s end, a sign that walks you there from the boardwalk', () => {
-  const sim = createSim(SEED, undefined, { scene: 'overland', region: 'fens' }), w = sim.world;
-  const ex = w.exits.find((e) => e.site === 'mere_tower'), st = w.structs.find((s) => s.id === 'fens_ferrystage_1'), sign = w.labels.find((l) => l.door && l.site === 'mere_tower');
-  assert.ok(st && sign && sign.id === st.id, 'the sign hangs on the stage');
-  assert.ok(st.x > ex.x0 && st.x < ex.x1 && st.y <= ex.y0 && st.y > ex.y0 - 2, 'the way out is under the arch');
-  sim.state.party[0].level = 12;
-  const row = sim.destinations().find((d) => d.id === 'site:mere_tower'); assert.ok(row && !row.off, 'a compass row for it');
-  sim.commands.push({ type: 'goto', tx: row.tx, ty: row.ty, near: 0, label: row.label, site: row.site, journey: row.journey });
-  for (let i = 0; i < 20 * 60 && w === sim.world; i++) sim.tick();
-  assert.equal(sim.world.site, 'mere_tower', 'walked to the punt and out to the Tower');
-});
-
-test('the climb: no XP; each wave into the satchel; the tenth a warden; at the landing the satchel is banked and the hall waits', () => {
-  const { sim, ev } = inHall(), xp0 = sim.state.party.map((m) => m.xp), g0 = sim.state.counters.gold || 0;
-  toLanding(sim, ev);
-  const T = sim.state.tower, land = ev.find(([k]) => k === 'towerLanding')[1];
-  assert.equal(land.wave, 10); assert.equal(land.landing, 1);
-  const paid = [...Array(10)].reduce((n, _, i) => n + waveGold(i + 1), 0);
-  assert.equal(land.banked.gold, paid); assert.equal(land.banked.cinders, 10 * TOWER.cinders + TOWER.wardenCinders);
-  assert.equal(sim.state.counters.gold - g0, paid, 'banked: the satchel is yours');
-  assert.deepEqual(sim.state.party.map((m) => m.xp), xp0, 'no XP');
-  assert.deepEqual(ev.filter(([k]) => k === 'bossWave').map(([, e]) => e.name), ['The Doorward']);
-  assert.ok(T.atLanding && T.wave === 10 && T.best === 10 && T.landing === 1); assert.deepEqual(T.satchel, { gold: 0, cinders: 0 });
-  for (let i = 0; i < 20 * 20; i++) sim.tick();
-  assert.equal(ev.filter(([k, e]) => k === 'wave' && !e.cleared).length, 10, 'the hall waits at a landing');
-  sim.commands.push({ type: 'towerClimb' }); for (let i = 0; i < 20 * 8; i++) sim.tick();
-  const w11 = ev.filter(([k, e]) => k === 'wave' && !e.cleared).pop()[1]; assert.equal(w11.wave, 11);
-  assert.ok(sim.world.enemies.some((e) => e.kind === 'cutthroat' || e.kind === 'brute' || e.kind === 'crossbow'), 'the second ten are the Redhand');
+  assert.equal(sim.world.kind, 'overland'); assert.equal(sim.state.region, 'vale', 'back in the Vale');
+  assert.ok(Math.hypot(p.x - from.x, p.y - from.y) < 0.5, 'where it set out from');
+  assert.deepEqual(ev, [{ site: 'mere_tower', need: 12 }]);
 });
 
 test('at a landing, home with Wenna keeps everything; walked out mid-climb, the satchel is lost; a bad command does nothing', () => {
