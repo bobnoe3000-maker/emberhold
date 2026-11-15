@@ -17,7 +17,7 @@ export const LEAP_CLIPS = ['Jump_Start', 'Jump_Idle', 'Jump_Land', '2H_Melee_Att
 // KayKit's own moments, as fractions of each clip: Jump_Start is lowest at 0.27 s of 0.6 (0.45), then springs; the chop's sword is up over the head at 0.3 and strikes at 0.44 (frame 5 of the bake's 0–0.8 span);
 // Jump_Land is deepest at 0.2 s of 0.67 (0.3)
 const START_LOW = 0.45, CHOP_UP = 0.3, CHOP_HIT = 0.44, CHOP_END = 0.62, LAND_LOW = 0.3;
-const SETTLE = 0.45;                                      // (battle.js LEAP_SETTLE)
+const LEAP_SETTLE = 0.45;                                 // (battle.js LEAP_SETTLE)
 const smooth = (x) => { const t = x < 0 ? 0 : x > 1 ? 1 : x; return t * t * (3 - 2 * t); };
 const lerp = (a, b, t) => a + (b - a) * t;
 
@@ -27,13 +27,13 @@ export const apexOf = (d) => 2.2 + 0.28 * Math.min(8, Math.max(0, d));
 /**
  * Where a leap is at: `phase` 'crouch' (s into the wind-up), 'air' or 'land' (s since takeoff), or null when it's over.
  * g: how far along the ground from takeoff to landing (0..1); lift: tiles above the floor; pose: the model's pose.
- * @param {{ wind?: number, air: number, crouchT?: number | null, airT?: number | null }} L  crouchT: s since the cast
- *   (the leap not yet off the floor); airT: s since takeoff
+ * @param {{ wind?: number, air: number, crouchT?: number | null, airT?: number | null, apex?: number, settle?: number }} L  crouchT: s since the cast
+ *   (the leap not yet off the floor); airT: s since takeoff; apex, settle: a hop's own (Earthshatter's, render/moves.js), else a Vault's
  * @param {number} dist tiles from takeoff to landing
  * @returns {null | { phase: 'crouch' | 'air' | 'land', g: number, lift: number, pose: { clip: string, t: number, legs?: { clip: string, t: number } } }}
  */
 export function leapAt(L, dist) {
-  const air = L.air || 0.8;
+  const air = L.air || 0.8, SETTLE = L.settle || LEAP_SETTLE;
   if (L.airT == null) {
     if (L.crouchT == null) return null;
     const w = L.wind || 0.5, k = Math.min(1, L.crouchT / w);
@@ -45,7 +45,7 @@ export function leapAt(L, dist) {
     const p = s / air;
     // the ground eased so the top hangs: 60 % even, 40 % slowed over the middle
     const c = 2 * p - 1, g = 0.6 * p + 0.4 * (0.5 + 0.5 * Math.sign(c) * c * c);
-    const lift = apexOf(dist) * 4 * g * (1 - g);
+    const lift = (L.apex || apexOf(dist)) * 4 * g * (1 - g);
     let pose;
     if (p < 0.16) pose = { clip: 'Jump_Start', t: lerp(START_LOW, 1, p / 0.16) };   // the spring off the floor
     else {

@@ -350,6 +350,8 @@ const LULL = 4, OUT_OF_BATTLE_REGEN = 5, LULL_REGEN = 1.5, BOLT_SPEED = 26, AUTO
 export const WINDUP = 0.18, WINDUP_HEAVY = 0.38, DEATH_T = 1.1;
 // a Vault's landing: s he stays crouched over the blow, the sword in the floor, before he fights on (render/leap.js)
 export const LEAP_SETTLE = 0.45;
+// Earthshatter's hop and Shadowstep's dash (v1.111, render/moves.js): s he stays down over the slam, she over her stab
+export const HOP_SETTLE = 0.35, DASH_SETTLE = 0.3;
 // Swings: light attacks alternate two baked clips (A / B); abilities (Cleave, Backstab,
 // Firebolt) and every elite blow are HEAVY — a bigger clip whose impact frame comes later,
 // so the blow lands WINDUP_HEAVY into it. atkKind tells the renderer which clip to play.
@@ -1357,14 +1359,24 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         for (const o of hit) strikeAt(aS, o, A.power * mult, w);
       },
     },
-    // Earthshatter: two or more round him (foes stand 2.8 apart, round whoever they fight: GDD v1.53)
+    // Earthshatter: two or more round him (foes stand 2.8 apart, round whoever they fight: GDD v1.53). (v1.111, the owner:
+    // "the same treatment for other movement skills") a crouch (A.crouch, the wind-up), a hop off the floor (A.hop s, 'go':
+    // the renderer's, render/moves.js), and the blow on whoever's round him as his feet and blade come down; held through it
     slam: {
       pick: (m, A, foes) => (within(foes, m.x, m.y, A.radius).length >= need(m, A) ? m : null),
       land(m, A, mult, _t, w) {
-        const hit = within(foesOf(m, w), m.x, m.y, A.radius), aS = skillStats(m); skillEv(A, 'land', m, m, true, hit);
-        for (const o of hit) { strikeAt(aS, o, A.power * mult, w); hold(o, 'knocked', A.knock, m); }
-        bus.emit('combat', { t: 'heavy', x: m.x, y: m.y, party: false });
-        pending.push({ t: 0.4, fn: () => { if (battle) for (const o of within(foesOf(m, w), m.x, m.y, A.radius)) strikeAt(aS, o, A.spikes * mult, w, false); } });   // (the spikes)
+        const hop = A.hop || 0;
+        const fall = () => {
+          if (!alive(m) || !battle) return;
+          const hit = within(foesOf(m, w), m.x, m.y, A.radius), aS = skillStats(m); skillEv(A, 'land', m, m, true, hit);
+          for (const o of hit) { strikeAt(aS, o, A.power * mult, w); hold(o, 'knocked', A.knock, m); }
+          if (hop) m.act = Math.max(m.act, HOP_SETTLE);
+          bus.emit('combat', { t: 'heavy', x: m.x, y: m.y, party: false });
+          pending.push({ t: 0.4, fn: () => { if (battle) for (const o of within(foesOf(m, w), m.x, m.y, A.radius)) strikeAt(aS, o, A.spikes * mult, w, false); } });   // (the spikes)
+        };
+        if (!hop) return fall();
+        skillEv(A, 'go', m, m, true, [], false, { air: hop }); m.act = Math.max(m.act, hop + HOP_SETTLE);
+        pending.push({ t: hop, fn: fall });
       },
     },
     // Whirling Blades: two or more round him, and his blades not already up
@@ -1390,16 +1402,25 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         for (const o of hit) strikeAt(aS, o, A.power * mult, w, false);
       },
     },
-    // Shadowstep: the most hurt shooter within reach
+    // Shadowstep: the most hurt shooter within reach. (v1.111) A dash: she goes ('go', A.dash s, the way she'll come out
+    // behind it fixed as she goes: bx, by; the renderer runs her round it, render/moves.js), and as she comes out behind it
+    // the stab; held through the dash and the stab. For the sim she's where she stood until she's there
     step: {
       pick: (m, A, foes) => { let best = null; for (const o of foes) if (up(o) && o.bolt && hypot(o.x - m.x, o.y - m.y) <= A.reach && (!best || o.hp / o.maxHp < best.hp / best.maxHp)) best = o; return best; },
       land(m, A, mult, tgt, w) {
         if (!up(tgt)) return;
-        skillEv(A, 'land', m, tgt, false, [], true);                                   // (from where she stood: the smoke's)
         const fl = hypot(tgt.fx || 0, tgt.fy || 0), bx = fl > 0.01 ? -(tgt.fx / fl) : (tgt.x - m.x) / (hypot(tgt.x - m.x, tgt.y - m.y) || 1), by = fl > 0.01 ? -(tgt.fy / fl) : (tgt.y - m.y) / (hypot(tgt.x - m.x, tgt.y - m.y) || 1);
-        placeAt(m, tgt.x + bx * 1.0, tgt.y + by * 1.0, w);
-        strikeAt(skillStats(m), tgt, A.power * mult, w, true, true);
-        const b = m.buff || (m.buff = {}); b.smoke = Math.max(b.smoke || 0, A.hide); b.smokeK = b.smokeK || 0;   // (foes lose her)
+        const out = () => {
+          if (!alive(m) || !battle || !up(tgt)) return;
+          skillEv(A, 'land', m, tgt, false, [], true);                                 // (from where she stood: the smoke's)
+          placeAt(m, tgt.x + bx * 1.0, tgt.y + by * 1.0, w);
+          strikeAt(skillStats(m), tgt, A.power * mult, w, true, true);
+          if (A.dash) m.act = Math.max(m.act, DASH_SETTLE);
+          const b = m.buff || (m.buff = {}); b.smoke = Math.max(b.smoke || 0, A.hide); b.smokeK = b.smokeK || 0;   // (foes lose her)
+        };
+        if (!A.dash) return out();
+        skillEv(A, 'go', m, tgt, false, [], false, { air: A.dash, bx, by }); m.act = Math.max(m.act, A.dash + DASH_SETTLE);
+        pending.push({ t: A.dash, fn: out });
       },
     },
     // planted: Caltrops, Blizzard, Consecrate on a knot of foes; Sanctuary under the hurt; the Spirit Totem by the party

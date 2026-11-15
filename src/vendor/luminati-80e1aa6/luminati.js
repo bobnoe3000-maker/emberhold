@@ -19330,8 +19330,8 @@ var cg = (e, t) => {
 	},
 	shadowstep(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let s = sg(t, "p", 8), [c, l] = sg(t, "q", 2), u = i(e.tx, e.tz);
-		return s.forEach((t, r) => {
+		let s = e.air || 0, c = (e.hit == null ? n >= s + .25 ? n - s : null : e.hit) ?? -1, l = sg(t, "p", 8), [u, d] = sg(t, "q", 2), f = i(e.tx, e.tz);
+		return l.forEach((t, r) => {
 			let a = r < 4 ? {
 				x: e.fx,
 				z: e.fz,
@@ -19339,14 +19339,14 @@ var cg = (e, t) => {
 			} : {
 				x: e.tx,
 				z: e.tz,
-				t: n - .1
-			}, o = r * 1.57 + .4, s = a.t, c = .15 + .35 * Z(s / .5);
+				t: c + .05
+			}, o = r * 1.57 + .4, s = a.t, l = .15 + .35 * Z(s / .5);
 			Q(t, {
 				frame: "dust",
 				index: Math.min(2, Math.max(0, Math.floor(s * 5))),
-				x: a.x + Math.cos(o) * c,
+				x: a.x + Math.cos(o) * l,
 				y: i(a.x, a.z) + .35 + .35 * s,
-				z: a.z + Math.sin(o) * c,
+				z: a.z + Math.sin(o) * l,
 				mode: "billboard",
 				scale: 2.6,
 				r: .35,
@@ -19354,33 +19354,33 @@ var cg = (e, t) => {
 				b: .45,
 				a: s > 0 ? 1 - Z(s / .6) : 0
 			});
-		}), Q(c, {
+		}), Q(u, {
 			frame: "slashBig",
-			index: Math.min(3, Math.max(0, Math.floor((n - .12) * 16))),
+			index: Math.min(3, Math.max(0, Math.floor(c * 16))),
 			x: e.tx + a * .3,
-			y: u + .8,
+			y: f + .8,
 			z: e.tz + o * .3,
 			mode: "billboard",
 			scale: 1.1,
 			rot: .6,
 			...$(Qh, 1.3),
-			a: +(n > .12 && n < .4),
+			a: +(c >= 0 && c < .28),
 			halo: 1
-		}), Q(l, {
+		}), Q(d, {
 			frame: "crit",
-			index: Math.min(3, Math.max(0, Math.floor((n - .14) * 12))),
+			index: Math.min(3, Math.max(0, Math.floor((c - .02) * 12))),
 			x: e.tx + a * .32,
-			y: u + 1,
+			y: f + 1,
 			z: e.tz + o * .32,
 			mode: "billboard",
 			scale: 2.4,
 			...$(Qh, 1.4),
-			a: +(n > .14 && n < .5),
+			a: +(c > .02 && c < .38),
 			halo: 1
-		}), n > .12 ? {
+		}), c >= 0 ? {
 			x: e.tx,
 			z: e.tz,
-			k: 1.5 * Math.exp(-(n - .12) / .2),
+			k: 1.5 * Math.exp(-c / .2),
 			color: [
 				1.8,
 				.4,

@@ -1123,15 +1123,17 @@ const TIER_LOOK = {
     hits.forEach((h, i) => { const o = S.reached[i], t = L - 0.12; q(h, { frame: 'impact', index: Math.min(3, Math.max(0, Math.floor(t * 14))), x: o.x + vx * 0.3, y: H(o.x, o.z) + 0.75, z: o.z + vz * 0.3, mode: 'billboard', scale: 2, ...col(VERDANT, 1.3), a: t > 0 && t < 0.28 ? 1 : 0, halo: 1 }); });
     return null;
   },
-  // ROGUE · Shadowstep: smoke where she stood and where she comes out, a crimson cross-cut and its crit on the foe
+  // ROGUE · Shadowstep: smoke where she stood as she goes (L: since the dash began, v1.111 render/moves.js), and as she
+  // comes out behind the foe (S.hit: the sim's blow) smoke there, a crimson cross-cut and its crit on the foe
   shadowstep(S, rec, L, K, H, vx, vz) {
     if (L == null) return null;
+    const T = S.air || 0, P = S.hit != null ? S.hit : L >= T + 0.25 ? L - T : null, p = P == null ? -1 : P;   // (P: s since she came out; never heard: as timed)
     const puffs = quadsOf(rec, 'p', 8), [cut, crit] = quadsOf(rec, 'q', 2), y = H(S.tx, S.tz);
-    puffs.forEach((h, i) => { const at = i < 4 ? { x: S.fx, z: S.fz, t: L } : { x: S.tx, z: S.tz, t: L - 0.1 }, a = i * 1.57 + 0.4, t = at.t, d = 0.15 + 0.35 * smooth(t / 0.5);
+    puffs.forEach((h, i) => { const at = i < 4 ? { x: S.fx, z: S.fz, t: L } : { x: S.tx, z: S.tz, t: p + 0.05 }, a = i * 1.57 + 0.4, t = at.t, d = 0.15 + 0.35 * smooth(t / 0.5);
       q(h, { frame: 'dust', index: Math.min(2, Math.max(0, Math.floor(t * 5))), x: at.x + Math.cos(a) * d, y: H(at.x, at.z) + 0.35 + 0.35 * t, z: at.z + Math.sin(a) * d, mode: 'billboard', scale: 2.6, r: 0.35, g: 0.32, b: 0.45, a: t > 0 ? 1 - smooth(t / 0.6) : 0 }); });
-    q(cut, { frame: 'slashBig', index: Math.min(3, Math.max(0, Math.floor((L - 0.12) * 16))), x: S.tx + vx * 0.3, y: y + 0.8, z: S.tz + vz * 0.3, mode: 'billboard', scale: 1.1, rot: 0.6, ...col(CRIMSON, 1.3), a: L > 0.12 && L < 0.4 ? 1 : 0, halo: 1 });
-    q(crit, { frame: 'crit', index: Math.min(3, Math.max(0, Math.floor((L - 0.14) * 12))), x: S.tx + vx * 0.32, y: y + 1.0, z: S.tz + vz * 0.32, mode: 'billboard', scale: 2.4, ...col(CRIMSON, 1.4), a: L > 0.14 && L < 0.5 ? 1 : 0, halo: 1 });
-    return L > 0.12 ? { x: S.tx, z: S.tz, k: 1.5 * Math.exp(-(L - 0.12) / 0.2), color: [1.8, 0.4, 0.5] } : null;
+    q(cut, { frame: 'slashBig', index: Math.min(3, Math.max(0, Math.floor(p * 16))), x: S.tx + vx * 0.3, y: y + 0.8, z: S.tz + vz * 0.3, mode: 'billboard', scale: 1.1, rot: 0.6, ...col(CRIMSON, 1.3), a: p >= 0 && p < 0.28 ? 1 : 0, halo: 1 });
+    q(crit, { frame: 'crit', index: Math.min(3, Math.max(0, Math.floor((p - 0.02) * 12))), x: S.tx + vx * 0.32, y: y + 1.0, z: S.tz + vz * 0.32, mode: 'billboard', scale: 2.4, ...col(CRIMSON, 1.4), a: p > 0.02 && p < 0.38 ? 1 : 0, halo: 1 });
+    return p >= 0 ? { x: S.tx, z: S.tz, k: 1.5 * Math.exp(-p / 0.2), color: [1.8, 0.4, 0.5] } : null;
   },
   // ROGUE · Caltrops: a handful of iron points scattered on the knot, glinting while they lie, a dull crimson ring round them
   caltrops(S, rec, L, K, H, vx, vz) {

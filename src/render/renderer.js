@@ -22,6 +22,7 @@ import { TW, HW, HH, ZH, project, resolveTap } from './iso.js';
 import { buildProps } from './gsprite.js';
 import { createAnimator } from './anim.js';
 import { leapAt } from './leap.js';
+import { hopAt, dashAt, dashPoint } from './moves.js';
 import { createFX, styleOfSrc, raisedLook, BOLT_RGB } from './fx.js';
 import { createSkillFX, LUM_LOOKS, LUM_HOLDS } from './skillfx.js';
 import { siteOpen, bossAt } from '../sim/sites.js';
@@ -388,13 +389,20 @@ export function createRenderer(canvas, sim, input) {
   // foes (LUM_HOLDS: a stun's or a knockdown's stars). The owner's picks, final (2026-11-09: the ?tierlooks review went)
   const LUM_SPELLS = new Set(LUM_LOOKS), LUM_ALSO = new Set(['firebolt', 'shield_wall']), lumHolds = new Set(LUM_HOLDS);
   const SPELL_LIFE = { frost_nova: 2.7, turn_undead: 1.2, mend: 1.0, bless: 1.4, cleave: 0.8, firebolt: 1.2, shield_wall: 0.9,
-    vault: 1.8, cutting_wave: 0.9, kidney_shot: 0.8, fan_of_knives: 0.7, shadowstep: 0.9, caltrops: 6, flare: 1.4, gather: 0.9,
+    vault: 1.8, cutting_wave: 0.9, kidney_shot: 0.8, fan_of_knives: 0.7, shadowstep: 1.3, caltrops: 6, flare: 1.4, gather: 0.9,
     sanctuary: 4, consecrate: 8, revive: 1.7, judgement: 1.7, old_marks: 0.8, spirit_totem: 8, thunder_drum: 0.9 }, spells = [];
   const boltIds = new WeakMap(); let boltN = 0;
   let spellN = 0;
   function spellEvent(e, now) {
     if (e.at === 'cast') { spells.push({ e, key: `${e.id}:${++spellN}`, seed: (spellN * 7919) % 8192, t0: now, land: null }); if (spells.length > 12) spells.shift(); return; }
     if (e.id === 'shield_wall') e = { ...e, reached: (sim.world.enemies || []).filter((f) => f.hp > 0 && !f.dead && Math.hypot(f.x - e.x, f.y - e.y) < 7).map((f) => ({ id: f.id, x: f.x, y: f.y })) };   // (the foes it turns: battle.js taunt, 7 tiles)
+    if (e.id === 'shadowstep' && (e.at === 'go' || e.at === 'land')) {   // (v1.111: her dash's start is its look's landing, her coming out its strike)
+      const D = [...spells].reverse().find((q) => q.e.id === e.id && q.e.by === e.by && q.hit == null);
+      if (e.at === 'go') { if (D) { D.land = now; D.e = { ...D.e, air: e.air }; } else spells.push({ e, key: `${e.id}:${++spellN}`, seed: (spellN * 7919) % 8192, t0: now, land: now }); }
+      else if (D && D.land != null) { D.hit = now; D.e = { ...D.e, tx: e.tx, ty: e.ty }; }
+      else spells.push({ e, key: `${e.id}:${++spellN}`, seed: (spellN * 7919) % 8192, t0: now, land: now, hit: now });   // (no dash heard: it came out at once)
+      return;
+    }
     if (e.at === 'strike') {                                    // a Vault's touchdown (battle.js TIER.leap): the slam, now
       const V = [...spells].reverse().find((q) => q.e.id === e.id && q.e.by === e.by && q.land != null && q.hit == null);
       if (V) { V.hit = now; V.hitAt = { x: e.tx, y: e.ty }; }   // (where the blow fell: its crack and flash there)
@@ -420,6 +428,40 @@ export function createRenderer(canvas, sim, input) {
     const L = leapAt({ wind: e.wind, air, crouchT: S.land == null ? age : null, airT }, Math.hypot(ex - e.x, ey - e.y));
     if (!L) return null;
     return { at: L.phase === 'air' ? { x: e.x + (ex - e.x) * L.g, y: e.y + (ey - e.y) * L.g } : null, lift: L.lift, pose: L.pose, fx: dx, fy: dy };
+  }
+  // Earthshatter's hop and Shadowstep's dash (render/moves.js): from the cast (the hop's crouch), the sim's 'go' (off the
+  // floor, away) and its 'land' (the blow). By member id; what moveOf gives is leapOf's, and a dash's fade
+  const goes = new Map(), MOVERS = new Set(['earthshatter', 'shadowstep']);
+  /** @returns {boolean} the event is the move's alone (no moment of its own) */
+  function goEvent(e, now) {
+    if (!MOVERS.has(e.id) || !e.cls) return false;
+    if (e.at === 'cast') goes.set(e.by, { e, t0: now, go: null, land: null });
+    else if (e.at === 'go') { const G = goes.get(e.by); goes.set(e.by, { e: { ...e, wind: G ? G.e.wind : 0 }, t0: G ? G.t0 : now, go: now, land: null }); return true; }
+    else if (e.at === 'land') { const G = goes.get(e.by); if (G && G.go != null) G.land = now; }
+    return false;
+  }
+  /** @param {any} m @param {number} now */
+  function moveOf(m, now) {
+    if (!m || m.id == null) return null;
+    const G = goes.get(m.id); if (!G) return null;
+    const e = G.e, air = e.air || 0.3;
+    if (e.id === 'earthshatter') {
+      const airT = G.go == null ? null : G.land != null ? air + (now - G.land) / 1000 : Math.min(air - 0.001, (now - G.go) / 1000);
+      const L = hopAt({ wind: e.wind, air: e.air || 0.42, crouchT: G.go == null ? (now - G.t0) / 1000 : null, airT });
+      if (!L) { if (G.go != null || (now - G.t0) > 1500) goes.delete(m.id); return null; }
+      return { at: null, lift: L.lift, pose: L.pose, fx: m.fx, fy: m.fy, fade: 0 };
+    }
+    if (G.go == null) { if (now - G.t0 > 1500) goes.delete(m.id); return null; }   // (Shadowstep's wind-up: her own heavy clip)
+    const t = G.land != null ? air + (now - G.land) / 1000 : Math.min(air - 0.001, (now - G.go) / 1000), D = dashAt({ air, t });
+    if (!D) { goes.delete(m.id); return null; }
+    const T = foeById(e.tid), ip = (u, k) => (u['p' + k] === undefined ? u[k] : u['p' + k] + (u[k] - u['p' + k]) * alphaNow);
+    const tx = T ? ip(T, 'x') : e.tx, ty = T ? ip(T, 'y') : e.ty, bx = tx + (e.bx || 0), by = ty + (e.by || 0);
+    if (D.phase === 'stab') return { at: null, lift: 0, pose: D.pose, fx: tx - bx, fy: ty - by, fade: 0 };
+    // round the shooter, not through it: the curve swung out on the side away from it
+    const dx = bx - e.x, dy = by - e.y, l = Math.hypot(dx, dy) || 1, side = (dx * (ty - (e.y + by) / 2) - dy * (tx - (e.x + bx) / 2)) / l;
+    const bend = Math.abs(side) > 1.2 ? 0 : (side > 0 ? -1 : 1) * (1.3 - Math.abs(side));
+    const P = dashPoint(e.x, e.y, bx, by, D.g, bend), Q = dashPoint(e.x, e.y, bx, by, Math.min(1, D.g + 0.05), bend);
+    return { at: P, lift: 0, pose: D.pose, fx: Q.x - P.x || dx, fy: Q.y - P.y || dy, fade: D.fade };
   }
   /** @param {number} now */
   function spellsNow(now) {
@@ -575,7 +617,7 @@ export function createRenderer(canvas, sim, input) {
     clockNow = now; alphaNow = alpha;
     const p = sim.state.player;
     let ix = p.px + (p.x - p.px) * alpha, iy = p.py + (p.y - p.py) * alpha;
-    const hLeap = leapOf(sim.state.party[0], now);                 // (a Vault in flight: the camera rides the arc with him)
+    const hLeap = leapOf(sim.state.party[0], now) || moveOf(sim.state.party[0], now);   // (a Vault in flight, a hop, a dash: the camera rides it with him)
     if (hLeap && hLeap.at) { ix = hLeap.at.x; iy = hLeap.at.y; }
     const pz = heightAt(sim.world, Math.floor(ix), Math.floor(iy));
     const P = project(ix, iy, pz);
@@ -605,7 +647,7 @@ export function createRenderer(canvas, sim, input) {
       const heroAtlas = hAtl;
       const tn = talkingTo && !p.moving && (sim.world.npcs || []).find((n) => n.id === talkingTo);   // in a conversation: face them
       const a = pickAnim(H, heroAtlas, { now, x: ix, y: iy, moving: p.moving && !hLeap, faceX: hLeap ? hLeap.fx : tn ? tn.x - ix : H.fx, faceY: hLeap ? hLeap.fy : tn ? tn.y - iy : H.fy, facing: H.act > 0 || !!tn || !!hLeap, dead: H.down, stride: STRIDE.hero });
-      draws.push({ d: ix + iy + 0.01, fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy, look: lookOf(H, H.down ? 0.35 : 0), team: 1, atl: heroAtlas, a, u: H, ...(hLeap ? { air: hLeap.lift, mv: hLeap.pose } : {}) });
+      draws.push({ d: ix + iy + 0.01, fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy, look: lookOf(H, H.down ? 0.35 : hLeap && hLeap.fade ? hLeap.fade : 0), team: 1, atl: heroAtlas, a, u: H, ...(hLeap ? { air: hLeap.lift, mv: hLeap.pose } : {}) });
     }
     // companions: their sim positions (they follow you, or fight on their own). Not in a bout in the Bowl the hero fights
     // alone: they're off the sand, as the rival's own company is (the owner, 2026-11-14: "Individual fights we should hide
@@ -614,12 +656,12 @@ export function createRenderer(canvas, sim, input) {
     party.slice(1).forEach((m, i) => {
       if (benched) return;
       const atl = memberAtlas(m, m.actor || MEMBER_LOOK[m.cls]); if (!atl || m.x === undefined) return;
-      const lp = leapOf(m, now);                                   // (a Vault in flight: render/leap.js)
+      const lp = leapOf(m, now) || moveOf(m, now);                 // (a Vault in flight: render/leap.js; a hop, a dash: render/moves.js)
       const mx = lp && lp.at ? lp.at.x : lerp(m, 'x'), my = lp && lp.at ? lp.at.y : lerp(m, 'y'), f = fol[i] || (fol[i] = {}); f.x = mx; f.y = my;
       const cz = heightAt(sim.world, Math.floor(mx), Math.floor(my)), cp = project(mx, my, cz);
       const a = pickAnim(m, atl, { now, x: mx, y: my, moving: m.moving && !lp, faceX: lp ? lp.fx : m.fx, faceY: lp ? lp.fy : m.fy, facing: m.act > 0 || !m.moving || !!lp, dead: m.down, sit: m.sitting && !m.moving, stride: STRIDE.hero, seed: 0.37 * (i + 1) });
       const up = raisedAt.get(m), rl = raisedLook(up === undefined ? undefined : (now - up) / 1000);   // just raised (fx.js)
-      const look = m.fallen || rl === 'ghost' ? GHOST : rl !== null ? { flash: rl, fade: 0 } : lookOf(m, m.down ? 0.35 : 0);
+      const look = m.fallen || rl === 'ghost' ? GHOST : rl !== null ? { flash: rl, fade: 0 } : lookOf(m, m.down ? 0.35 : lp && lp.fade ? lp.fade : 0);
       draws.push({ d: mx + my, fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: mx + my, look, team: m.fallen ? undefined : 1, atl, a, u: m.fallen ? null : m, ...(lp ? { air: lp.lift, mv: lp.pose } : {}) });
     });
     // the Kingstone's other companies (battle.js startRing: sim world.allies): people on our side, each its own look and
@@ -1010,6 +1052,7 @@ export function createRenderer(canvas, sim, input) {
   });
   const LOOT_RGB = { common: [220, 208, 185], fine: [120, 235, 110], rare: [90, 160, 255], heirloom: [255, 165, 50] };
   sim.bus.on('skill', (e) => {                                  // a skill's moment (battle.js skillEv)
+    if (goEvent(e, clock()) && e.id !== 'shadowstep') return;   // (a hop's start: the figure's alone; a dash's is its look's too)
     if (LUM_SPELLS.has(e.id)) spellEvent(e, clock());   // (these skills in Luminati's own looks: tools/render3d/world.js)
     else { sfx.event(e, clock()); if (LUM_ALSO.has(e.id)) spellEvent(e, clock()); }   // (and these with its pieces beside our light)
     if (e.id === 'firebolt' && e.at === 'land') {                // an explosion: its light on the room, and a harder jolt than a heavy blow's

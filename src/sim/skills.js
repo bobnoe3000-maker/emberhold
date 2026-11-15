@@ -58,7 +58,7 @@ export const SKILLS = {
     { id: 'shield_wall', name: 'Shield Wall', lv: 6, trial: true, mp: 20, kind: 'guard', dur: 6, def: 0.5, taunt: true, text: '+50 % DEF for 6 s; foes turn on you' },
     { id: 'second_wind', name: 'Second Wind', lv: 12, trial: true, mp: 25, kind: 'heal', heal: 0.25, text: 'heal 25 % of max HP' },
     { id: 'vault', name: 'Vault', lv: 15, mp: 14, kind: 'leap', power: 1.5, splash: 0.6, sr: 1.8, knock: 0.8, min: 3, max: 8, crouch: 0.5, air: 0.8, text: 'leap to a foe 3–8 tiles off that is striking an ally (or any, with none in reach; never off a boss): 1.5× on it, 0.6× round it, knocked down 0.8 s' },
-    { id: 'earthshatter', name: 'Earthshatter', lv: 21, mp: 22, kind: 'slam', power: 1.2, radius: 3.75, knock: 1.2, spikes: 0.5, min: 2, text: 'two or more foes round you: 1.2× to every foe within 3¾ tiles, knocked down 1.2 s; then spikes of rock, 0.5×' },
+    { id: 'earthshatter', name: 'Earthshatter', lv: 21, mp: 22, kind: 'slam', power: 1.2, radius: 3.75, knock: 1.2, spikes: 0.5, min: 2, crouch: 0.38, hop: 0.42, text: 'two or more foes round you: 1.2× to every foe within 3¾ tiles, knocked down 1.2 s; then spikes of rock, 0.5×' },
     { id: 'whirling_blades', name: 'Whirling Blades', lv: 24, mp: 24, kind: 'blades', power: 0.45, radius: 3.75, every: 0.6, dur: 5, text: 'three swords circle you for 5 s: 0.45× to every foe within 3¾ tiles every 0.6 s' },
   ],
   rogue: [
@@ -67,7 +67,7 @@ export const SKILLS = {
     { id: 'smoke_step', name: 'Smoke Step', lv: 6, trial: true, mp: 15, kind: 'guard', dur: 5, dodge: 30, text: '+30 % DODGE for 5 s; foes lose you' },
     { id: 'venom', name: 'Venom', lv: 12, trial: true, mp: 20, kind: 'strike', power: 0.8, poison: 0.35, pdur: 6, text: '0.8×, then poison: 0.35× ATK a second for 6 s' },
     { id: 'fan_of_knives', name: 'Fan of Knives', lv: 15, mp: 12, kind: 'fan', power: 1.0, len: 6, arc: 60, pair: true, text: 'five knives in a 60° fan, 6 tiles: 1.0× to every foe they find (two or more)' },
-    { id: 'shadowstep', name: 'Shadowstep', lv: 21, mp: 18, kind: 'step', power: 1.4, reach: 8, hide: 1.5, text: 'behind the most hurt shooter within 8 tiles: 1.4×, a sure crit; foes lose you 1.5 s' },
+    { id: 'shadowstep', name: 'Shadowstep', lv: 21, mp: 18, kind: 'step', power: 1.4, reach: 8, hide: 1.5, dash: 0.3, text: 'behind the most hurt shooter within 8 tiles: 1.4×, a sure crit; foes lose you 1.5 s' },
     { id: 'caltrops', name: 'Caltrops', lv: 24, mp: 16, kind: 'field', field: 'caltrops', radius: 2.5, dur: 6, power: 0.25, slowK: 0.5, reach: 10, min: 2, text: 'a field on a knot of foes for 6 s: slowed by half, 0.25× a second' },
   ],
   mage: [
