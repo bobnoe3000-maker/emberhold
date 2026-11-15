@@ -46,6 +46,7 @@ import { inPlay, unlocked, autocastOn, rankOf, skillMult, rankCost, stanceOf, pa
 import { WEAK_S } from './heroes.js';
 import { hypot, sin, cos, exp, atan2 } from './detmath.js';
 import { siteOf, bossAt } from './sites.js';
+import { gateShutOf, gateUp } from './world.js';
 import { LAMPS, lampOf, CAGE_KINDS, CAGE_PICKUP_S, CAGE_REACH, countOf, credit } from './lamps.js';
 import { HAZARD, hazardAt, openGround, edgeDistances, ageHazards, tellAt, inTell } from './hazards.js';
 import { RING, hpStepOf } from './ring.js';
@@ -2214,11 +2215,13 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
           bus.emit('wave', { wave: battle.wave, level: battle.level, cleared: true, room: battle.room, tower: !!battle.tower });
           if (battle.tower) towerCleared();                        // the Mere Tower pays by the wave, and banks at a landing
           else onDrop('wave', battle.level, p.x, p.y);             // now and then a fallen wave leaves something behind
-          // the floor's gate (world.js gateOf, GDD §3.4 v1.70): its twentieth wave held in one visit of a room behind it,
-          // and it's down, for good in this slot
-          if (!battle.camp && !battle.tower && w.gate && w.gateShut && w.gate.rooms.includes(battle.room) && battle.wave >= w.gate.waves) {
-            state.gates.add(w.gate.id); w.gateShut = null; w._openCache = null;   // (the compass's walkable tiles, cached on the floor: travel.js)
-            bus.emit('gateOpened', { id: w.gate.id, room: battle.room, cells: w.gate.cells });
+          // the floor's gates (world.js gatesOf, GDD §3.4 v1.70, v1.118): the tenth wave held in one visit of a room before
+          // one, and every gate it wins is down, for good in this slot (a raid's are its own: core.js raidRoom)
+          if (!battle.camp && !battle.tower && !raidRun() && w.gateShut && w.gates) {
+            const won = w.gates.filter((g) => g.rooms.includes(battle.room) && battle.wave >= g.waves && gateUp(w, g));
+            for (const g of won) state.gates.add(g.id);
+            if (won.length) { w.gateShut = gateShutOf(w.gates, (id) => state.gates.has(id)); w._openCache = null; }   // (the compass's walkable tiles, cached on the floor: travel.js)
+            for (const g of won) bus.emit('gateOpened', { id: g.id, room: battle.room, to: g.room, hall: g.hall, cells: g.cells });
           }
           const M = mode(); if (M.waves && !battle.camp && !battle.tower && !battle.boss && battle.wave >= M.waves) {   // a raid's room held: won, quiet for the run
             battle.quiet = true; bus.emit('raidRoom', { room: battle.room, wave: battle.wave });

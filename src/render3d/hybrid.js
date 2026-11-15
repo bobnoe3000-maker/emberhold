@@ -32,7 +32,7 @@ import { weatherNow } from '../render/weatherfx.js';
 import { readGraphics } from './settings.js';
 import { brightAt, brightFor } from './bright.js';
 import { buildProps } from '../render/gsprite.js';
-import { propAt } from '../sim/world.js';
+import { propAt, gateUp } from '../sim/world.js';
 import { createOutdoor } from '../sim/outdoor.js';
 import { shrineKind } from '../sim/shrines.js';
 import { hash2 } from '../sim/rng.js';
@@ -128,23 +128,33 @@ function waterOf(b, origin) {
   return { id: waterKey, cells: waterCells };
 }
 
-// the floor's gate (sim world.js gateOf, GDD §3.4 v1.70): its tiles in Luminati's units and how far it has sunk, 0 up, 1
-// gone. Up while shut; once its twentieth wave falls (the sim's gateOpened) it sinks over GATE_DROP_MS; one opened
-// before this floor was built isn't drawn at all. Keyed by its id, so a floor's is built once.
+// the floor's gates (sim world.js gatesOf, GDD §3.4 v1.70, v1.118 a gate a room): each one's tiles in Luminati's units and
+// how far it has sunk, 0 up, 1 gone. Up while shut; once its tenth wave falls (the sim's gateOpened) it sinks over
+// GATE_DROP_MS; one opened before this floor was built isn't drawn at all. Keyed by id, so each is built once.
 const GATE_DROP_MS = 1400;
 let gateDropAt = new Map();                                    // gate id → when it began to sink (performance.now())
-function gateOf(w, origin, now) {
-  const G = w && w.gate; if (!G) return null;
-  const t0 = gateDropAt.get(G.id);
-  if (!w.gateShut && t0 === undefined) return null;             // (down before this floor: nothing to draw)
-  const drop = w.gateShut ? 0 : Math.min(1, (now - t0) / GATE_DROP_MS);
-  // each tile with its way into the hall (dx, dy): the bars stand on that edge, across the corridor
-  const L = w.level, hall = L.descentRoom && L.descentRoom.id;
-  return { id: G.id, drop, cells: G.cells.map((k) => {
-    const c = k.indexOf(','), x = +k.slice(0, c), y = +k.slice(c + 1);
-    let dx = 0, dy = 0; for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const n = L.cells.get(`${x + ax},${y + ay}`); if (n && n.room === hall) { dx = ax; dy = ay; break; } }
-    return [(x + 0.5 - origin.x) / 2, (y + 0.5 - origin.y) / 2, dx, dy];
-  }) };
+const gateCells = new Map();                                   // gate id → its tiles in Luminati's units (a floor's, built once)
+function gatesOf(w, origin, now) {
+  const out = []; if (!w || !w.gates || !w.level) return out;
+  const L = w.level;
+  for (const G of w.gates) {
+    const t0 = gateDropAt.get(G.id), up = gateUp(w, G);
+    if (!up && t0 === undefined) continue;                      // (down before this floor: nothing to draw)
+    const drop = up ? 0 : Math.min(1, (now - t0) / GATE_DROP_MS);
+    // each tile with its way into the room it guards (dx, dy): the bars stand on that edge, across the corridor
+    const key = `${G.id}|${origin.x},${origin.y}`;
+    let cells = gateCells.get(key);
+    if (!cells) {
+      cells = G.cells.map((k) => {
+        const c = k.indexOf(','), x = +k.slice(0, c), y = +k.slice(c + 1);
+        let dx = 0, dy = 0; for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const n = L.cells.get(`${x + ax},${y + ay}`); if (n && n.room === G.room) { dx = ax; dy = ay; break; } }
+        return [(x + 0.5 - origin.x) / 2, (y + 0.5 - origin.y) / 2, dx, dy];
+      });
+      if (gateCells.size > 64) gateCells.clear(); gateCells.set(key, cells);
+    }
+    out.push({ id: G.id, drop, cells });
+  }
+  return out;
 }
 
 /** the bundle (tools/render3d/build.mjs; its folder is named for Luminati's pin) */
@@ -284,7 +294,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       api.frame({ dt, focus: [(mx - origin.x) / 2, GROUND_Y, (my - origin.y) / 2], ppu, hour: arena ? ARENA_HOUR : hourOf(c.t ?? sim.state.t),
         weather: wx && wx.k > 0.3 && (wx.kind === 'rain' || wx.kind === 'snow') ? wx.kind : 'clear',
         fog: wx && wx.kind === 'fog' ? wx.k : 0,                    // (Luminati has no fog weather: its air thickened; Emberlit's overlay drifts the banks)
-        hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards, beasts, mark, ambient, bits, water: waterOf(c.battle, origin), gate: gateOf(sim.world, origin, now),
+        hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards, beasts, mark, ambient, bits, water: waterOf(c.battle, origin), gates: gatesOf(sim.world, origin, now),
         // Frost Nova and Turn Undead in Luminati's looks (renderer.js spellsNow): their reach at Emberlit's size, as the warnings
         spells: (c.spells || []).map((S) => ({ key: S.key, id: S.id, seed: S.seed, age: S.age, land: S.land, x: (S.x - origin.x) / 2, z: (S.y - origin.y) / 2,
           tx: (S.tx - origin.x) / 2, tz: (S.ty - origin.y) / 2, r: (S.r * Math.SQRT2) / 2, k: S.k || 0, reached: S.reached.map((o) => ({ x: (o.x - origin.x) / 2, z: (o.y - origin.y) / 2 })),

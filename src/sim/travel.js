@@ -15,7 +15,7 @@
 // Pure: it reads the world and state, never writes them. core.js turns a pick into a walk.
 
 import { findPath } from './path.js';
-import { heightAt, isWalkable } from './world.js';
+import { heightAt, isWalkable, gateUp, hallGate } from './world.js';
 import { hypot, sin, cos } from './detmath.js';
 import { SITES, siteOpen, levelBand, hasFloorBelow } from './sites.js';
 import { LANDS, landId } from './regions.js';
@@ -110,13 +110,16 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
 
     const dr = L.descentRoom, dlv = dr && lv.get(dr.id), below = hasFloorBelow(world.site || 'barrows', world.depth || 0);
     const siteName = (SITES[world.site || 'barrows'] || SITES.barrows).name.replace(/^The /, 'the ');
-    // the floor's gate, still up (world.js gateOf): the way on is the room its waves are won in; it says how many
-    const G = world.gate, gateUp = !!(G && world.gateShut);
-    if (gateUp) {
-      const gr = L.rooms.find((r) => r.id === G.rooms[0]), steps = gr ? pathLenD(gr.cx, gr.cy, 2) : null;
-      if (gr && steps !== null && steps !== undefined) out.push({ id: 'gate', icon: 'farm', label: 'The gate', sub: `hold ${world.raid ? 'its' : G.waves} waves in the room before it · ${steps} steps`, level: lv.get(gr.id), tx: gr.cx, ty: gr.cy, near: 2, room: gr.id, steps });
+    // the floor's gates, still up (world.js gatesOf, v1.118 a gate a room): the way on is the nearest room one is won in
+    // that you can walk to now; it says how many waves
+    let gate = null;
+    for (const G of world.gates || []) {
+      if (!gateUp(world, G)) continue;
+      for (const id of G.rooms) { const gr = L.rooms.find((r) => r.id === id), steps = gr ? pathLenD(gr.cx, gr.cy, 2) : null; if (gr && steps !== null && steps !== undefined && (!gate || steps < gate.steps)) gate = { G, gr, steps }; }
     }
-    if (dr && !gateUp && world.discovered.has(dr.id)) {
+    if (gate) out.push({ id: 'gate', icon: 'farm', label: gate.G.hall ? 'The last gate' : 'The gate', sub: `hold ${world.raid ? 'its' : gate.G.waves} waves in the room before it · ${gate.steps} steps`, level: lv.get(gate.gr.id), tx: gate.gr.cx, ty: gate.gr.cy, near: 2, room: gate.gr.id, steps: gate.steps });
+    const HG = hallGate(world), hallUp = !!(HG && gateUp(world, HG));
+    if (dr && !hallUp && world.discovered.has(dr.id)) {
       // the nearest tile beside the stairwell (any side: it's used from anywhere on its rim), then use it
       const at = world.stairsAt || { x: dr.cx, y: dr.cy }, S = world.stairwell, rim = [];
       if (S) for (let y = S.y0 - 1; y <= S.y1; y++) for (let x = S.x0 - 1; x <= S.x1; x++) {
@@ -130,7 +133,7 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
       if (steps !== null && steps !== undefined) out.push(below
         ? { id: 'stairs-down', icon: 'down', label: 'Stairs down', sub: `to depth ${(world.depth || 0) + 2} · ${steps} steps`, level: dlv, tx: best ? best.tx : at.x, ty: best ? best.ty : at.y, near: best ? 0 : 1, then: { type: 'harvest', tx: ux, ty: uy }, steps, journey: 'delve' }
         : { id: 'last-hall', icon: 'farm', label: 'The last hall', sub: `where ${siteName} ends · no way down · ${steps} steps`, level: dlv, tx: at.x, ty: at.y, near: 1, room: dr.id, steps });
-    } else if (dr && !world.gateShut) out.push(below ? { id: 'stairs-down', icon: 'down', label: 'Stairs down', sub: 'not found yet', level: dlv, off: true } : { id: 'last-hall', icon: 'farm', label: 'The last hall', sub: `where ${siteName} ends · not found yet`, level: dlv, off: true });
+    } else if (dr && !hallUp) out.push(below ? { id: 'stairs-down', icon: 'down', label: 'Stairs down', sub: 'not found yet', level: dlv, off: true } : { id: 'last-hall', icon: 'farm', label: 'The last hall', sub: `where ${siteName} ends · not found yet`, level: dlv, off: true });
 
     if (world.exitAt) {
       const t = standOn(world.exitAt.x, world.exitAt.y, 3), steps = t && pathLenD(t.tx, t.ty);

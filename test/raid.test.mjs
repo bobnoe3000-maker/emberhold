@@ -3,6 +3,7 @@
 // stand-ins and the seats they fill, a room held its ten waves (six before v1.108) and won, the gate dropped for the run only, a run played to
 // its end and its coffer, a wipe that costs nothing, the company given back, a save made on a raid, and the record saved.
 import { test } from 'node:test';
+import { hallGate, gateUp } from '../src/sim/world.js';
 import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
 import { statsFor } from '../src/sim/party.js';
@@ -96,15 +97,16 @@ test('a room holds its ten waves and is won, quiet for the run; the gate drops f
   go(s, 'barrows');
   let won = 0; s.bus.on('raidRoom', () => won++);
   const gates = [...s.state.gates];
-  for (let i = 0; i < 20 * 60 * 20 && !(s.world.gate && !s.world.gateShut); i++) {
+  const hallDown = () => { const g = hallGate(s.world); return !!g && !gateUp(s.world, g); };
+  for (let i = 0; i < 20 * 60 * 40 && !hallDown(); i++) {
     const p = s.state.player, b = s.battle;
     if (!(b && !b.quiet) && !p.path) { const r = s.destinations(), q = r.find((x) => x.id === 'gate' && !x.off) || r.find((x) => x.id === 'next-room' && !x.off); if (q) s.commands.push({ type: 'goto', tx: q.tx, ty: q.ty, near: q.near, room: q.room }); }
     for (const m of s.state.party) if (!m.down) m.hp = Math.max(m.hp, statsFor(m).maxHp * 0.8);   // (kept on their feet: this is about the count)
     s.tick();
   }
   assert.ok(won >= 1, 'a room won'); assert.equal(RAID.waves, 10); assert.ok(ev.room.every((e) => e.wave === RAID.waves), 'at its tenth wave');
-  assert.ok(s.world.gate && !s.world.gateShut, 'the gate is down for the run');
-  assert.deepEqual([...s.state.gates], gates, 'the slot\'s gates as they were (20 waves, out of a raid)');
+  assert.ok(hallDown(), 'the floor\'s gates down for the run, its last hall\'s too');
+  assert.deepEqual([...s.state.gates], gates, 'the slot\'s gates as they were (out of a raid)');
   // the won room is quiet: walking back in starts nothing
   const room = ev.room[0].room, R = s.world.level.rooms.find((r) => r.id === room);
   s.commands.push({ type: 'goto', tx: Math.floor(R.cx), ty: Math.floor(R.cy) }); for (let i = 0; i < 600; i++) s.tick();

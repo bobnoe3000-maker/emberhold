@@ -5,7 +5,7 @@
 // (harder). Everything the world can't re-derive from (seed, depth) lives in the
 // snapshot: player, counters, the mods/HP overlay, and the discovered-room fog.
 
-import { createWorld, isWalkable, hitResource, heightAt, propAt, resourceAt, CONSUMABLE_PROP } from './world.js';
+import { createWorld, isWalkable, hitResource, heightAt, propAt, resourceAt, CONSUMABLE_PROP, gateShutOf, gateUp } from './world.js';
 import { findPath } from './path.js';
 import { listDestinations, walkSpot } from './travel.js';
 import { createOutdoor, oExitAt, oBlock } from './outdoor.js';
@@ -88,14 +88,15 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   let curScene = scene, curSite = SITES[site] ? site : 'barrows';
   if (curScene === 'dungeon') curRegion = SITES[curSite].region;   // a site's floors are in its land (a ?site= preview, a test)
   /** @type {any} */ let clock = null;                     // the state, once made: a town is built with its people where the hour has them
-  // the floors' gates this slot has opened (world.js gateOf; v41): once open, open for good. A floor's is shut as it's
-  // built unless it's here (world.gateShut: isWalkable). The same Set is state.gates, so restore() fills it in place.
+  // the floors' gates this slot has opened (world.js gatesOf; v41, v1.118 a gate a room): once open, open for good. A
+  // floor's are shut as it's built unless they're here (world.gateShut: isWalkable). The same Set is state.gates, so
+  // restore() fills it in place.
   const gatesOpen = new Set();
-  /** @type {any} */ let raidOn = null;   // a raid being run (raid.js; below): { site, rules, party (the company as it was), hp, mp (the hero's at setting out), stand, won: Set 'depth:room', gates: Set depth, t0, rooms, done, n }
-  const shutGate = (w) => { w.gateShut = w.gate && !gatesOpen.has(w.gate.id) ? new Set(w.gate.cells) : null; return w; };
+  /** @type {any} */ let raidOn = null;   // a raid being run (raid.js; below): { site, rules, party (the company as it was), hp, mp (the hero's at setting out), stand, won: Set 'depth:room', gates: Set gate id, t0, rooms, done, n }
+  const shutGate = (w) => { w.gateShut = gateShutOf(w.gates, (id) => gatesOpen.has(id)); return w; };
   // a raid's floor (raid.js): nobody met there (the found, the people at the mouth: a run isn't the story), its gate shut
   // till the run wins the room before it, whatever the slot has opened
-  const raidFloor = (w, d) => { if (!raidOn || curScene !== 'dungeon') return w; w.npcs = []; w.raid = true; w.raidTop = raidOn.top; w.gateShut = w.gate && !raidOn.gates.has(d) ? new Set(w.gate.cells) : null; return w; };
+  const raidFloor = (w, d) => { if (!raidOn || curScene !== 'dungeon') return w; w.npcs = []; w.raid = true; w.raidTop = raidOn.top; w.gateShut = gateShutOf(w.gates, (id) => raidOn.gates.has(id)); return w; };
   const buildWorld = (d) => raidFloor(shutGate(placeRoad(placeFound(placeNpcs(curScene === 'dungeon' ? createWorld(levelSeed(d), override, d, curSite) : createOutdoor(baseSeed, curScene, curRegion), isWalkable, oBlock, clock ? partOf(clock.t) : 0),
     isWalkable, (id) => !!clock && (NPCS[id].visitor ? !(clock.flags || {})[NPCS[id].visitor] : ![...clock.party, ...clock.bench].some((m) => m.id === id))), clock)), d);   // a found companion waits in his hall until he joins, a visitor until he's gone (npcs.js); the dead hold the barrows road (road.js)
 
@@ -525,14 +526,14 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     bus.emit('levelChanged', { depth: state.depth, theme: world.theme, scene: curScene });
     bus.emit('partyChanged', state.party);
   }
-  // a room won (battle.js: its RAID.waves held): quiet for the run; the gate before the hall, if it was the gate's room
+  // a room won (battle.js: its RAID.waves held): quiet for the run; the gates it wins open for the run
   bus.on('raidRoom', (e) => {
     if (!raidOn) return;
     raidOn.won.add(`${state.depth}:${e.room}`); raidOn.rooms++;
-    if (world.gate && world.gateShut && world.gate.rooms.includes(e.room)) {
-      raidOn.gates.add(state.depth); world.gateShut = null; world._openCache = null;
-      bus.emit('gateOpened', { id: world.gate.id, room: e.room, cells: world.gate.cells, raid: true });
-    }
+    const won = (world.gates || []).filter((g) => g.rooms.includes(e.room) && gateUp(world, g));
+    for (const g of won) raidOn.gates.add(g.id);
+    if (won.length) { world.gateShut = gateShutOf(world.gates, (id) => raidOn.gates.has(id)); world._openCache = null; }
+    for (const g of won) bus.emit('gateOpened', { id: g.id, room: e.room, to: g.room, hall: g.hall, cells: g.cells, raid: true });
   });
   // a boss down on a raid: a raid's drop (Fine or better), and on the last floor the run won and the coffer opened
   function raidBoss(e) {
@@ -907,7 +908,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       revealed: [...state.revealed],
       secrets: { ...state.secrets },     // (v31)
       camps: Object.fromEntries(Object.entries(state.camps || {}).map(([k, v]) => [k, { at: v.at, n: v.n }])),   // (v37) camps.js
-      gates: [...gatesOpen],             // (v41) the floors' gates opened
+      gates: [...gatesOpen],             // (v41) the floors' gates opened (v1.118: `site:depth` the hall's, `site:depth:room` another's)
       flags: { ...state.flags },
       bosses: { ...state.bosses },
       bossBack: { ...state.bossBack },
@@ -983,7 +984,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     state.sitesEntered = new Set((data.sitesEntered ?? []).filter((k) => SITES[k]));
     state.secrets = {}; for (const [k, v] of Object.entries(data.secrets ?? {})) if (SITES[k] && SITES[k].secret && Number.isFinite(v)) state.secrets[k] = v;   // (v31)
     state.camps = campsFrom(data.camps);                                    // (v37) absent: every spawn point full
-    gatesOpen.clear(); for (const g of Array.isArray(data.gates) ? data.gates : []) if (typeof g === 'string' && /^[a-z_]+:\d+$/.test(g)) gatesOpen.add(g);   // (v41) absent: none open (save.js opens an old save's floors already passed)
+    gatesOpen.clear(); for (const g of Array.isArray(data.gates) ? data.gates : []) if (typeof g === 'string' && /^[a-z_]+:\d+(:\d+)?$/.test(g)) gatesOpen.add(g);   // (v41) absent: none open (save.js opens an old save's floors already passed)
     state.revealed = new Set((data.revealed ?? []).filter((k) => SITES[k] && SITES[k].hidden));
     state.flags = {}; for (const [k, v] of Object.entries(data.flags ?? {})) if (typeof v === 'number') state.flags[k] = v;   // v5 and older: none yet
     state.bosses = {}; for (const [k, v] of Object.entries(data.bosses ?? {})) if (BOSSES[k] && Number.isInteger(v) && v > 0) state.bosses[k] = v;   // v11 and older: none yet
