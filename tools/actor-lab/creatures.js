@@ -1143,7 +1143,11 @@ async function onKayKit(made, rig, load) {
     const m = new THREE.SkinnedMesh(geo, o.material); m.name = o.name; m.userData = { ...o.userData }; m.frustumCulled = false; root.add(m); m.updateMatrixWorld(true); m.bind(skeleton, m.matrixWorld);
   });
   // the clips: KayKit's, named as ours, with our own bones' turns from ours of the same name laid in
-  const clips = Object.entries(rig.clips).map(([name, from]) => {
+  // (only the clips the model carries: the game's models are pruned to the clips cast.json plays (models.mjs), so a rig's
+  // clip nothing plays (the Cast of the goblin, the wraith and the golem) isn't there; asked for, it threw, and those three
+  // fell back to their baked sprites in play, the Kingstone a 56-px golem drawn twice its size: the owner, 2026-11-15,
+  // "Region boss model looks low res or like we just zoomed in". The bake's full models have them all, so its atlases are as they were)
+  const clips = Object.entries(rig.clips).filter(([, from]) => g.animations.some((a) => a.name === from)).map(([name, from]) => {
     const c = clipOf(from).clone(), mine = made.clips.find((a) => a.name === name); c.name = name;
     if (mine) for (const t of mine.tracks) {
       const [bn, prop] = t.name.split('.'); if (prop !== 'quaternion' || !q0.has(bn)) continue;

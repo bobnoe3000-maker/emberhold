@@ -16427,7 +16427,7 @@ async function wd(e, t, n) {
 		let a = new qe(i, e.material);
 		a.name = e.name, a.userData = { ...e.userData }, a.frustumCulled = !1, v.add(a), a.updateMatrixWorld(!0), a.bind(x, a.matrixWorld);
 	});
-	let S = Object.entries(t.clips).map(([t, n]) => {
+	let S = Object.entries(t.clips).filter(([, e]) => r.animations.some((t) => t.name === e)).map(([t, n]) => {
 		let r = c(n).clone(), i = e.clips.find((e) => e.name === t);
 		if (r.name = t, i) for (let e of i.tracks) {
 			let [t, n] = e.name.split(".");

@@ -970,7 +970,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
   if (b) {
     const ctx = await b.newContext({ viewport: { width: 900, height: 700 } }), p = await ctx.newPage(), errs = [];
     p.on('pageerror', (e) => errs.push(e.message));
-    await p.goto(`${base}/index.html?dev&manual&notitle&scene=stage&show=cast&cast=vermin,hero_knight&clip=attack&at=0.5&world=on`, { waitUntil: 'commit' });
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=stage&show=cast&cast=vermin,hero_knight,creature_goblin,creature_wraith,creature_golem&clip=attack&at=0.5&world=on`, { waitUntil: 'commit' });
     await p.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__stage && globalThis.__stage.ready, null, { timeout: 120000 * SLOW });
     const cast = await p.evaluate(async (ms) => {
       const S = globalThis.__stage, sim = globalThis.__sim, t0 = sim.state.t, end = performance.now() + ms;
@@ -999,8 +999,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('stage: the live effects (show=fx) run a real fight with Frost Nova alone in the mage\'s play; it fires on its own rules in Luminati\'s ice, the party on its feet, no page errors',
       live.party[0] === 'mage' && live.battle && live.casts.includes('frost_nova:land') && live.casts.every((c) => c.startsWith('frost_nova')) && live.crystals > 0 && live.standing && errs2.length === 0,
       JSON.stringify(live) + (errs2.length ? ' · ' + errs2.join(' | ') : ''));
-    check('stage: the cast lined up on Luminati (the vermin and the knight, held in their attacks) each stands as its model in a real room, the sim held still, no page errors',
-      cast.names.length === 5 && cast.names.every((n) => cast.models.includes(n)) && !cast.figErr && !!cast.room && cast.still && !cast.battle && errs.length === 0,
+    check('stage: the cast lined up on Luminati (the vermin, the knight, and the goblin, wraith and golem on KayKit\'s rig, held in their attacks) each stands as its model in a real room, the sim held still, no page errors',
+      cast.names.length === 8 && cast.names.every((n) => cast.models.includes(n)) && !cast.figErr && !!cast.room && cast.still && !cast.battle && errs.length === 0,
       JSON.stringify(cast) + (errs.length ? ' · ' + errs.join(' | ') : ''));
   }
 }

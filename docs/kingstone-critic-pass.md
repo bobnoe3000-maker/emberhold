@@ -77,6 +77,20 @@ All won. The 5–7 minutes hold. A company that dodges is down about once in a f
 one that stands in the red is down again and again, and with two companies the fight runs to nine minutes, but it's
 never a wipe. A level-15 party synced to 18 wins in 5.8–6.3 minutes.
 
+## 3.1 Its model in play (2026-11-15)
+
+The owner, from the phone: *"Region boss model looks low res or like we just zoomed in. Do we need a separate model for this
+size of boss so it looks good?"* No: it was never drawn as its model. The golem's figure (`tools/actor-lab/creatures.js`,
+on KayKit's skeleton rig) asked its model for every clip its rig names, the Cast (`Taunt_Longer`) among them; the game's
+models carry only the clips that are played (`models.mjs` prunes them), so the build threw (`Skeleton_Warrior: no clip
+Taunt_Longer`) and the figure fell back to its baked 56-px sprite, drawn twice its size. The goblin (`Taunt`) and the
+graveyard wraith (`Spellcasting`) fell back the same way, everywhere they stood. The figure now takes the rig's clips its
+model carries; the three stand as their models (the bake's full models have every clip, so the atlases are unchanged).
+The browser suite's Stage check now lines them up and fails without the fix (`creature_goblin: Skeleton_Warrior: no clip
+Taunt`).
+
+![The Kingstone at the old stones on a 390 × 844 phone at 3×, before (the baked sprite, drawn 2×) and after (the model)](img/ring/kingstone-model.jpg)
+
 ## 4. Left for later
 
 - **Its own clips.** It plays the golem's clips at twice the size. A giant's slower walk cycle and a long two-handed
