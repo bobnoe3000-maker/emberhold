@@ -4,18 +4,17 @@
 // top of each hour for now (24x)"), and what a player needs round it:
 //   - a line under the top bar from ten minutes before the hour (*The Kingstone stands in 7:12*) and through the window
 //     (*The Kingstone stands · 11:03 left*), for a hero of the Fens' band; a toast as it starts to stir;
-//   - **Enter the Ring** while a window's open and the company is at the old stones (`ringEnter`, with the window's id and
-//     the seconds it has left; the sim checks the rest and says why not);
-//   - in the Ring, a bar: its HP, cracked or not, the window's time, the companies in it (n / 5), and the hero's getting up;
+//   - the window told to the sim as it opens (`ringOpen`: its id and the seconds it has left; v1.106): while it lasts the
+//     Kingstone stands at the old stones in the Fens' own map, and walking into their reach starts its fight;
+//   - in its fight, a bar: its HP, cracked or not, the window's time, the companies in it (n / 5), and the hero's getting up;
 //     toasts as companies come in, as it cracks, as stones fall;
 //   - the end card from `ringResult`: how it ended, the tier (its word beside its colour), the pay, the companies' parts
-//     ranked, and **Leave** (`ringLeave`).
+//     ranked, and **Close**.
 // A dev query (localhost) holds a window open: ?dev&ring=on. DOM only: reads sim state and events, pushes commands. Every
 // word is written here; names are content/arena.json's (a company by its player's, as the Bowl's board shows them).
 
 import { swallow } from './actorart.js';
 import { RING, windowAt, paidFor } from '../sim/ring.js';
-import { CAMP_BY } from '../sim/camps.js';
 
 const CSS = `
 #ringLine { position: fixed; left: calc(10px + env(safe-area-inset-left, 0px)); top: calc(var(--hud-b, 44px) + 6px); z-index: 4; display: none; pointer-events: none; max-width: calc(100vw - 150px);
@@ -36,11 +35,6 @@ const CSS = `
 #ringToast { position: fixed; left: 50%; transform: translateX(-50%); top: calc(var(--hud-b, 44px) + 74px); z-index: 4; display: none; pointer-events: none; max-width: 92vw;
   background: rgba(30,14,8,.92); border: 1px solid rgba(255,140,70,.6); border-radius: 10px; padding: 6px 12px; color: #ffe4c8; font: 13px Georgia, serif; text-align: center; }
 #ringToast.on { display: block; }
-#ringEnter { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 150px); z-index: 5; display: none; min-height: 52px; min-width: 240px; max-width: 86vw;
-  border-radius: 26px; border: 1px solid #ffc890; background: linear-gradient(#ff9a50, #b4461c); color: #1a0c06; box-shadow: 0 4px 18px rgba(0,0,0,.55), 0 0 18px rgba(255,140,60,.35);
-  font: 600 16px Georgia, serif; padding: 6px 18px; }
-#ringEnter.on { display: block; }
-#ringEnter small { display: block; font: 11px ui-monospace, Menlo, monospace; color: #3a1a0a; margin-top: 1px; }
 #ringCard { position: fixed; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 150px); z-index: 7; max-width: 440px; margin: 0 auto; display: none;
   background: rgba(16,11,8,.97); border: 1px solid rgba(255,150,80,.55); border-radius: 14px; padding: 13px 14px 12px; color: #efe4cf;
   box-shadow: 0 6px 28px rgba(0,0,0,.6), 0 0 22px rgba(255,140,60,.14); font-family: Georgia, serif; max-height: 70vh; overflow: auto; }
@@ -64,7 +58,6 @@ export function createRing({ sim, params, dev = false }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const mk = (tag, id) => { const e = document.createElement(tag); e.id = id; document.body.appendChild(e); return e; };
   const line = mk('div', 'ringLine'), bar = mk('div', 'ringBar'), toast = mk('div', 'ringToast');
-  const enter = /** @type {HTMLButtonElement} */ (mk('button', 'ringEnter')); swallow(enter);
   const card = mk('div', 'ringCard'); card.setAttribute('role', 'dialog'); card.setAttribute('aria-label', 'The Kingstone: the end'); swallow(card);
   bar.innerHTML = '<div class="top"><span>The Kingstone</span><small></small></div><div class="hp"><i></i><em></em></div><div class="sub"></div>';
   const barTop = /** @type {HTMLElement} */ (bar.querySelector('.top small')), barHp = /** @type {HTMLElement} */ (bar.querySelector('.hp i')), barSub = /** @type {HTMLElement} */ (bar.querySelector('.sub'));
@@ -82,8 +75,7 @@ export function createRing({ sim, params, dev = false }) {
   let toastT = 0;
   const say = (text, ms = 2800) => { toast.textContent = text; toast.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('on'), ms); };
 
-  enter.addEventListener('click', () => { const w = clock(); if (w.open) sim.commands.push({ type: 'ringEnter', window: w.id, left: Math.floor(w.left) }); });
-  card.querySelector && card.addEventListener('click', (e) => { if (/** @type {HTMLElement} */ (e.target).closest('button')) { sim.commands.push({ type: 'ringLeave' }); card.classList.remove('on'); } });
+  card.addEventListener('click', (e) => { if (/** @type {HTMLElement} */ (e.target).closest('button')) card.classList.remove('on'); });
 
   // what the Ring says as it goes (sim battle.js 'ring')
   let names = /** @type {string[]} */ ([]);
@@ -103,9 +95,9 @@ export function createRing({ sim, params, dev = false }) {
     card.textContent = '';
     const add = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; card.appendChild(e); return e; };
     add('div', 'kind', 'The Kingstone');
-    add('h2', '', won ? 'It falls back into the ring' : left ? 'You left the Ring' : 'The window shuts');
+    add('h2', '', won ? 'It falls back into the ring' : left ? 'You walked out on it' : 'The window shuts');
     add('p', '', won ? `It went down in ${mmss(r.secs)}, ${r.parties} companies round it. It stands again at the next hour.`
-      : left ? 'Walked out before the end: nothing paid for this hour.' : `It was still standing when the hour's quarter ran out. A minute there pays Bronze.`);
+      : left ? 'Out of the stones before the end: nothing paid for this hour.' : `It was still standing when the hour's quarter ran out. A minute there pays Bronze.`);
     add('div', `tier ${r.tier || 'none'}`, r.tier ? `${TIER[r.tier]} tier` : 'No tier');
     const nums = add('div', 'nums', null);
     const kv = (k, v) => { const d = document.createElement('div'); d.append(`${k} `); const b = document.createElement('b'); b.textContent = v; d.append(b); nums.appendChild(d); };
@@ -116,14 +108,14 @@ export function createRing({ sim, params, dev = false }) {
     if (me) kv('Your hero', `${Math.round(me.dmg)} dealt · ${Math.round(me.heal)} healed · down ${me.downs}×`);
     const ol = add('ol', '', null);
     ranked.forEach(([c, s]) => { const li = document.createElement('li'); li.textContent = `${c === 0 ? 'Your company' : names[c - 1] || `Company ${c + 1}`} · ${Math.round((s / total) * 100)} %`; if (c === 0) li.className = 'you'; ol.appendChild(li); });
-    add('button', '', 'Leave');
+    add('button', '', 'Close');
     card.classList.add('on');
   });
 
-  let lastLine = '', lastSub = '', announced = '';
+  let lastLine = '', lastSub = '', announced = '', told = '';
   (function watch() {
     const S = sim.state, H = S.party[0], b = sim.battle, R = b && b.ring, w = sim.world;
-    const inRing = !!(w && w.site === RING.site);
+    const inRing = !!R;
     // the fight's bar
     if (R && !R.over) {
       const k = (w.enemies || []).find((/** @type {any} */ e) => e.id === R.boss), share = k ? Math.max(0, k.hp / k.maxHp) : 0;
@@ -139,20 +131,14 @@ export function createRing({ sim, params, dev = false }) {
     const c = clock(), band = H && H.level >= RING.minLevel && S.created;
     let txt = '';
     if (band && !inRing) {
-      if (c.open) txt = paidFor(S, c.id) ? `The Kingstone stands · <b>stood against this hour</b>` : `The Kingstone stands · <b>${mmss(c.left)}</b> left`;
+      if (c.open) txt = paidFor(S, c.id) ? `The Kingstone stands · <b>stood against this hour</b>` : `The Kingstone stands at the old stones · <b>${mmss(c.left)}</b> left`;
       else if (c.soon) txt = `The Kingstone stands at ${c.at} · <b>${mmss(c.until)}</b>`;
       if (c.soon && announced !== c.id) { announced = c.id; say(`The old stones are stirring · the Kingstone stands at ${c.at}`, 3600); }
     }
     if (txt !== lastLine) { line.innerHTML = txt; lastLine = txt; }
     line.classList.toggle('on', !!txt && !(R && !R.over));
-    const C = CAMP_BY.fens_stones, P = S.player;
-    const at = w && w.kind === 'overland' && w.region === RING.region && Math.hypot(P.x - C.x, P.y - C.y) <= RING.near;
-    const can = at && c.open && !paidFor(S, c.id) && !b && !S.away;
-    if (can) {
-      const h = `Enter the Ring<small>${H.level < RING.minLevel ? `from level ${RING.minLevel}` : `${mmss(c.left)} left · at level ${RING.level}`}</small>`;
-      if (enter.innerHTML !== h) enter.innerHTML = h;
-    }
-    enter.classList.toggle('on', !!can);
+    // the window told to the sim, once each (it keeps it: the stones hold the Kingstone while it lasts)
+    if (c.open && told !== c.id && S.created) { told = c.id; sim.commands.push({ type: 'ringOpen', window: c.id, left: Math.floor(c.left) }); }
     requestAnimationFrame(watch);
   })();
   return { clock, get cardOpen() { return card.classList.contains('on'); } };

@@ -1,5 +1,5 @@
-// regionboss.mjs — the Kingstone headless (GDD §19 v1.105, src/sim/ring.js; docs/region-boss-proposal.md §4): the right
-// party (fighter, rogue, cleric) walks into the old stones in a window and fights the Ring to its end, with as many AI
+// regionboss.mjs — the Kingstone headless (GDD §19 v1.105–v1.106, src/sim/ring.js; docs/region-boss-proposal.md §4): the
+// right party (fighter, rogue, cleric) walks into the old stones in the Fens in a window and fights it to its end, with as many AI
 // companies as the window draws (1–4 offline: picked windows give 2–5 parties). Prints, per run and in sum: won or lost,
 // how long (the targets: 5–7 minutes at any head count), how often each of the party went down, the hero's tier and pay.
 //   node tools/balance/regionboss.mjs [--parties 2,3,4,5] [--lv 18] [--seeds 3] [--pilot | --blind] [--src dir]
@@ -33,16 +33,16 @@ function run(seed, parties) {
   sim.state.created = true; sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1 };
   sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m })));
   sim.state.party.forEach((m, i) => { m.cls = want[i]; m.level = LV; m.xp = 0; m.attrs = null; attrs.autoAllocate(m); m.gear = items.starterKit(m); m.fallen = false; m.down = false; m.weakUntil = 0; m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp; for (const p of m.perks || []) void p; if (i) { m.perks = []; m.hidden = null; } });
-  const C = CAMP_BY.fens_stones, p = sim.state.player; p.x = p.px = C.x + 0.5; p.y = p.py = C.y + RING.near - 4;
+  const C = CAMP_BY[RING.camp], p = sim.state.player; p.x = p.px = C.x + 0.5; p.y = p.py = C.y + C.reach - 2;   // (inside the stones' reach)
   const id = windowFor(seed, parties - 1); if (!id) return null;
   let res = null; sim.bus.on('ringResult', (e) => { res = e; });
-  sim.commands.push({ type: 'ringEnter', window: id, left: RING.window }); sim.tick();
+  sim.commands.push({ type: 'ringOpen', window: id, left: RING.window }); sim.tick(); sim.tick();
   if (!sim.battle || !sim.battle.ring) return { refused: true };
   for (let i = 0; i < 20 * (RING.window + 30) && !res; i++) {
     const b = sim.battle;
     if (PILOT && b && b.ring && !sim.state.party[0].down) {                 // the player's eye: out of a tell after a look
       const w = sim.world, tl = tellAt(b, p.x, p.y, (q) => sim.state.t - q.from >= 0.5);
-      const inRing = (x, y) => { const c = w.level.cells.get(Math.floor(x) + ',' + Math.floor(y)); return isWalkable(w, x, y) && !!c && c.room === b.room; };   // (not out of the gap: that's walking out)
+      const inRing = (x, y) => isWalkable(w, x, y) && Math.hypot(x - C.x, y - C.y) <= C.arena - 1;   // (not out of the stones' arena: that's walking out)
       if (tl) { const o = openGround(b, p.x, p.y, b.ring.cx, b.ring.cy, inRing); if (o) sim.commands.push({ type: 'move', x: o[0] - p.x, y: o[1] - p.y }); }
     }
     sim.tick();

@@ -704,7 +704,7 @@ export function createRenderer(canvas, sim, input) {
       if (ex < -60 || ex > nvw + 60 || ey < -40 || ey > nvh + 120) continue;      // offscreen
       const dead = e.hp <= 0, deadT = dead ? DEATH_T - Math.max(0, e.dead || 0) : 0;
       const a = pickAnim(e, skelAtlas, { now, x: exi, y: eyi, moving: e.moving, faceX: e.fx, faceY: e.fy, facing: true, dead, deadT, dir0: 2,
-        spawnP: e.spawn > 0 && undead ? 1 - e.spawn / 0.5 : undefined, stride: undead ? STRIDE.skel : strideOf(skelAtlas, STRIDE.walk), seed: (e.id * 0.37) % 1 });
+        spawnP: e.spawn > 0 && undead ? 1 - e.spawn / 0.5 : undefined, stride: (undead ? STRIDE.skel : strideOf(skelAtlas, STRIDE.walk)) * (BIG[e.kind] || 1), seed: (e.id * 0.37) % 1 });   // (a figure drawn BIG strides as far for each step: the Kingstone's feet slid at the golem's)
       const fade = dead ? Math.max(0, (deadT - (DEATH_T - 0.35)) / 0.35) : 0;
       draws.push({ d: exi + eyi, fx: ex, fy: ey, h: ez * ZH, k: exi + eyi, look: { flash: e.flash > 0 ? 0.36 : 0, warn: dead ? 0 : windGlow.get(e.id) || 0, dissolve: dead ? fade : !undead && e.spawn > 0 ? e.spawn / 0.5 : 0 }, team: dead ? 0 : e.elite ? 3 : 2, atl: skelAtlas, a, uid: e.id, u: e, foe: true, big: BIG[e.kind] });   // (the living walk in out of the dark: a fade, not a rise)
     }
@@ -1188,8 +1188,10 @@ export function createRenderer(canvas, sim, input) {
   function drawCampRings(ox, oy, hx, hy, now) {
     const b = sim.battle, k = vw / window.innerWidth;
     for (const c of campsOf(sim.world.region)) {
-      const fighting = b && b.camp === c, d = Math.hypot(hx - c.x, hy - c.y);
-      const r = fighting ? c.arena : c.reach, a = fighting ? 0.7 : campUp(sim.state, c) ? Math.max(0, Math.min(1, (c.reach + 14 - d) / 10)) * 0.75 : 0;
+      // (the old stones in a window hold the Kingstone, GDD §19: its reach ringed in ember, its fight's arena as a camp's is)
+      const king = c.id === RING.camp && (!!(b && b.ring) || (sim.world.enemies || []).some((e) => e.idle === c.id && e.kind === 'kingstone'));
+      const fighting = b && (b.camp === c || (king && b.ring)), d = Math.hypot(hx - c.x, hy - c.y);
+      const r = fighting ? c.arena : c.reach, a = fighting ? 0.7 : campUp(sim.state, c) || king ? Math.max(king ? 0.35 : 0, Math.min(1, (c.reach + 14 - d) / 10)) * 0.75 : 0;
       if (a <= 0.02) continue;
       const n = Math.max(64, Math.round(2 * Math.PI * r / 0.8)), sp = now / 4000;   // (a point every 0.8 tile round it, the dashes creeping slowly)
       octx.beginPath();
@@ -1200,7 +1202,7 @@ export function createRenderer(canvas, sim, input) {
       }
       octx.save(); octx.setLineDash([9 * k, 7 * k]); octx.lineDashOffset = -(sp % 1) * 16 * k; octx.lineCap = 'round';
       octx.lineWidth = 4.5 * k; octx.strokeStyle = `rgba(12,8,4,${(0.5 * a).toFixed(3)})`; octx.stroke();   // (a dark edge under it, as the goal ring has: it reads on grass and on road)
-      octx.lineWidth = 2.4 * k; octx.strokeStyle = fighting ? `rgba(232,96,66,${a.toFixed(3)})` : `rgba(242,198,112,${a.toFixed(3)})`; octx.stroke();
+      octx.lineWidth = 2.4 * k; octx.strokeStyle = fighting ? `rgba(232,96,66,${a.toFixed(3)})` : king ? `rgba(255,140,60,${a.toFixed(3)})` : `rgba(242,198,112,${a.toFixed(3)})`; octx.stroke();
       octx.restore();
     }
   }

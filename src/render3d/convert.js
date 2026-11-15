@@ -126,7 +126,7 @@ const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, d: 2, G: 1, g: 0 };
  * @returns {{ level: any, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps: number }, sprites: { id?: string, prop?: string, tx?: number, ty?: number, flat?: boolean, x: number, z: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
  */
 export function convertWorld(w, o = {}) {
-  return w.arena ? (w.site === 'kingstone_ring' ? ringArena(w, o) : arena(w, o)) : w.kind === 'dungeon' ? dungeon(w, o) : outdoor(w, o.region || w.region || 'vale');
+  return w.arena ? arena(w, o) : w.kind === 'dungeon' ? dungeon(w, o) : outdoor(w, o.region || w.region || 'vale');
 }
 
 /** a crop of ours, its tiles even and at most MAX_TILES a side, round a middle */
@@ -621,54 +621,3 @@ function arena(w, o = {}) {
   return { level, sprites, origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D } };
 }
 
-// ── the Kingstone's Ring (GDD §19 v1.105; world doc v1.50 §3.2): the old stones from inside ─────────────────────────────
-// The sim's one round space (plans.js kingstone_ring) drawn as the turf inside the old stones: short grass, worn to moss
-// and bare earth round the middle where the Kingstone stands up out of it; the ring of standing stones just past its
-// edge, grey and leaning, a gap at the north where the companies come in (the stair: the way back out, under its arch);
-// a turf bank behind the stones, and beyond it the Fens, dark grass, moss and a few dead trees. Nothing on the
-// camera's side stands higher than a man (level-design rules §1.1): the near stones are stumps, fallen or broken. Lit as
-// a day (hybrid.js holds the arena's hour), so a tell's red reads at once.
-/** @param {any} w @param {{ stairs?: string }} [o] */
-function ringArena(w, o = {}) {
-  const L = w.level, r = L.descentRoom, cells = L.cells;
-  const A = (r.x1 - r.x0 + 1) / 2, cx = (r.x0 + r.x1 + 1) / 2, cy = (r.y0 + r.y1 + 1) / 2;
-  const { x0, y0, W, D } = crop(r.x0 - 26, r.y0 - 24, r.x1 + 27, r.y1 + 25, cx, cy);
-  const X = (x) => r2((x - x0) / 2), Z = (y) => r2((y - y0) / 2);
-  const at = (x, y) => { const u = (x - cx) / A, v = (y - cy) / A, p = Math.hypot(u, v) || 1e-6; return { past: (p - 1) * A, near: Math.max(0, (u + v) / p / Math.SQRT2), mid: p * A }; };
-  const tiles = grid(W, D, 'G'), heights = grid(W, D, String(FLOOR));
-  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
-    let floor = false;
-    for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const c = cells.get(`${x0 + 2 * i + dx},${y0 + 2 * j + dy}`); if (c && c.kind === 'floor') floor = true; }
-    const P = at(x0 + 2 * i + 1, y0 + 2 * j + 1), h0 = hash('kr', i, j);
-    if (floor) { tiles[j][i] = P.mid < 4 ? 'd' : P.mid < 7 + (h0 % 3) ? 'm' : h0 % 9 ? 'g' : 'f'; continue; }
-    // the bank behind the stones (a step up, two on the far side), the Fens beyond: pools where it dips
-    const far = P.near < 0.5, h = P.past < 3 ? FLOOR : P.past < 9 ? FLOOR + (far ? 2 : 1) : FLOOR + 1;
-    tiles[j][i] = P.past < 3 ? 'g' : h0 % 11 === 0 ? 'm' : 'G'; heights[j][i] = String(h);   // (no pools: a lone water tile drew as a blue square)
-  }
-  const stairLights = stairs(w, x0, y0, W, D, tiles, heights, o.stairs !== 'plain');
-  const objects = [], count = {}, sprites = [];
-  const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; objects.push({ id: `${ob.type}_${count[ob.type]}`, ...ob }); };
-  for (const a of stairLights.arches || []) sprites.push({ arch: { ...a, stone: 'stone_brick' } });
-  for (const l of stairLights) if (l.glow) add({ type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity, distance: l.glow.distance, flicker: 0.08, nightOnly: false });
-  const pt = (t, past) => ({ x: cx + Math.cos(t) * (A + past), y: cy + Math.sin(t) * (A + past) });
-  const gate = (t) => Math.abs(Math.atan2(Math.sin(t + Math.PI / 2), Math.cos(t + Math.PI / 2))) < 0.24;   // (the north gap: the stair)
-  // the standing stones, a ring of twenty-two just past the turf's edge; on the camera's side broken to stumps or fallen
-  const N = 22;
-  for (let n = 0; n < N; n++) {
-    const t = (n / N) * Math.PI * 2 + 0.07; if (gate(t)) continue;
-    const b = pt(t, 1.6), hh = hash('ks', n), near = at(b.x, b.y).near > 0.45;
-    if (near && hh % 3 === 0) { add({ type: 'rock', x: X(b.x), z: Z(b.y), opts: { size: r2(0.7 + (hh % 4) * 0.1), seed: hh % 97 } }); continue; }   // (fallen)
-    add({ type: 'crag', x: X(b.x), z: Z(b.y), rotation: r2(t + ((hh % 9) - 4) * 0.05), opts: { kind: 'pillar', stone: 'basalt', height: r2(near ? 0.7 + (hh % 3) * 0.2 : 2.4 + (hh % 5) * 0.3), width: r2(0.9 + (hh % 3) * 0.15), seed: hh % 997 } });
-  }
-  // the bank's dead trees and a few boulders, on the far side only
-  for (let n = 0; n < 10; n++) {
-    const t = -Math.PI * 0.95 + (n / 9) * Math.PI * 1.15, b = pt(t, 14 + (hash('kt', n) % 7)), d = at(b.x, b.y);
-    if (d.near > 0.25) continue;
-    add(n % 3 ? { type: 'tree', x: X(b.x), z: Z(b.y), collider: false, opts: { kind: 'deadwood', height: r2(2.8 + (hash('kh', n) % 10) * 0.15), seed: hash('kx', n) % 997 } }
-      : { type: 'rock', x: X(b.x), z: Z(b.y), opts: { size: r2(0.9 + (hash('kb', n) % 4) * 0.15), seed: hash('kb', n) % 97 } });
-  }
-  const sp = w.spawn || { x: cx, y: cy };
-  const level = frame({ name: w.siteName || 'The Ring', W, D, tiles, heights, objects, spawn: { x: X(sp.x), z: Z(sp.y), facing: 'up' },
-    environment: { timeOfDay: ARENA_HOUR, border: 'none', outerScenery: true, godRays: true, interior: false } });
-  return { level, sprites, origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D } };
-}

@@ -37,7 +37,7 @@ import { RAID, freshRaid, restoreRaid, raidOf, raidSites, raidFloors, standIns, 
 import { modeOf as playOf } from './modes.js';
 import { makeCompany } from './rivals.js';
 import { RING, ringOf, restoreRing, paidFor, isWindowId, windowDraw, tierOf, payOf } from './ring.js';
-import { CAMP_BY } from './camps.js';
+import { CAMP_ROOM } from './camps.js';
 import { xpToNext, statsFor, gainXp } from './party.js';
 import { createExpeditions } from './expeditions.js';
 import { createCoach, reachedOf, townOf, COACH } from './coach.js';
@@ -153,6 +153,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town', 'temple'), hallWanted: (site, d) => quests.wantsHall(site, d),
     onDrop: (src, ilv, x, y) => dropHere(src, { ilv, x, y }),
     raidRun: () => raidOn, onRaidLost: () => leaveRaid('wipe'),
+    ringHere: (c) => ringHeld(c), onRingReach: (c, i) => ringReach(c, i),
     moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; p.vx = p.vy = 0; face(p, dx, dy); } });
 
   // the Guild's coach between the towns (coach.js): from a square, to a town reached, for its fare
@@ -352,7 +353,6 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   function travel(to, arrive, site = 'barrows', region = null) {
     stopWalk(); state.player.resume = null;
     if (raidOn) leaveRaid('left');                                         // (out of a raid by any other road, a scroll: it ends; the company back)
-    if (ringOn) leaveRing();                                               // (out of the Ring by any other road: walked out on)
     if (away) { battle.reset(); away = null; boutOn = null; }              // (out of the Bowl by any other road: a bout walked out on is lost)
     if (region && LANDS[region]) curRegion = landId(region);
     floors = new Map();                                    // a new visit: the site's floors are fresh
@@ -389,7 +389,6 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     battle.startBout(world, world.level.descentRoom.id, on.alone ? rivals.slice(0, 1) : rivals, { id: on.id, salt: state.tick, alone: on.alone });
   }
   function leaveBowl() {
-    if (ringOn) { leaveRing(); return; }                       // (the Ring's stair, or its Leave: ring.js)
     if (!away || raidOn || battle.battle) return;              // (not mid-bout; a raid leaves by leaveRaid)
     const p = state.player, a = away;
     world = a.world; curScene = a.scene; curSite = a.site; curRegion = a.region; state.depth = a.depth; floors = a.floors;
@@ -399,31 +398,38 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     bus.emit('levelChanged', { depth: state.depth, theme: world.theme, scene: curScene });
   }
 
-  // ── the Ring (ring.js, GDD §19 v1.105): the region boss, a pocket trip as the Bowl's is (the world you were in kept as
-  // it stood, given back as it was). In at the old stones in a window, the company at the Ring's level (level sync: each
-  // member's level held aside and given back, their HP and MP whole, given back as they came in: no cost), the window spent
-  // as it's entered (once a window a hero, as a raid is spent on setting out); out by the stair, Leave, or any road. The pay
-  // is at its end, by the hero's tier (ring.js payOf), at the hero's own level.
+  // ── the Kingstone (ring.js, GDD §19 v1.105–v1.106): the region boss, standing in the Fens' own map at the old stones in
+  // a window (v1.106, the owner: "Can we spawn the region boss directly in the map?"; it was a pocket trip to a Ring of its
+  // own). The sim keeps no clock, so the UI says when a window is on (ringOpen: its id, the seconds it has left); while it
+  // is, and the hero hasn't stood in it, the stones hold the Kingstone and not their golems (battle.js idleCamps), and
+  // walking into their reach starts its fight there (battle.js startRing on the camp's arena), as any spawn point's does.
+  // The company fights at the Ring's level (level sync: each member's level, HP and MP held aside and given back at the
+  // end, before the pay); the window is spent as it's entered (once a window a hero, as a raid is on setting out). Out of
+  // the stones' arena mid-fight is walking out on it: no pay. The pay is at its end, by the hero's tier (ring.js payOf),
+  // at the hero's own level.
+  /** @type {{ id: string, until: number, told?: boolean } | null} */ let ringNow = null;   // the window the UI says is on (runtime: the page says it again after a load)
   /** @type {any} */ let ringOn = null;                        // { id, salt, levels: [member, level, hp, mp][], t0, ended }
-  function ringIn(id, secs) {
-    const p = state.player, D = windowDraw(baseSeed, id), r = ringOf(state);
-    stopWalk(); p.resume = null; p.journey = null;
-    away = { world, scene: curScene, site: curSite, region: curRegion, depth: state.depth, floors, x: p.x, y: p.y };
+  const ringLive = () => !!(ringNow && state.t < ringNow.until);
+  /** do the old stones hold the Kingstone now? (battle.js: who stands there, and what walking in starts) @param {any} c */
+  function ringHeld(c) { return c.id === RING.camp && curScene === 'overland' && curRegion === RING.region && ringLive() && !paidFor(state, ringNow.id) && !ringOn; }
+  /** walked into its reach: the fight, if the company may (else said once a window) @param {any} c @param {number} i */
+  function ringReach(c, i) {
+    const H = state.party[0], no = (reason) => { if (!ringNow.told) { ringNow.told = true; bus.emit('refused', { reason }); } };
+    if (!state.created || H.down || H.fallen || state.away || raidOn || away) return;
+    if (H.level < RING.minLevel) { no(`The Kingstone doesn’t stir for a company under level ${RING.minLevel}`); return; }
+    ringIn(ringNow.id, Math.max(30, Math.min(RING.window, ringNow.until - state.t)), c, i);
+  }
+  function ringIn(id, secs, c, i) {
+    const D = windowDraw(baseSeed, id), r = ringOf(state);
     ringOn = { id, salt: D.salt, levels: state.party.map((m) => [m, m.level, m.hp, m.mp]), t0: state.t, ended: false };
     r.paid = [...r.paid.filter((q) => q !== id), id].slice(-RING.PAID_KEEP);
     for (const m of state.party) { m.level = RING.level; if (!m.fallen) { const s = statsFor(m); m.hp = s.maxHp; m.mp = s.maxMp; m.down = false; } }
-    curScene = 'dungeon'; curSite = RING.site; curRegion = SITES[RING.site].region; state.depth = 0; floors = new Map();
-    world = buildWorld(0);
-    const a = world.stairArrive && isWalkable(world, world.stairArrive.x, world.stairArrive.y) ? world.stairArrive : findSpawn(world);
-    p.x = p.px = a.x; p.y = p.py = a.y; p.moving = false; p.vx = p.vy = 0;
-    battle.reset();
-    bus.emit('levelChanged', { depth: 0, theme: world.theme, scene: curScene, ring: true });
     const companies = D.ids.map((cid) => ({ id: cid, members: makeCompany(cid, RING.level, 'seasoned') }));
-    battle.startRing(world, world.level.descentRoom.id, { companies, secs, salt: D.salt });
+    battle.startRing(world, CAMP_ROOM(i), { companies, secs, salt: D.salt, camp: c });
     bus.emit('ringStarted', { window: id, secs, coming: D.n });
     bus.emit('partyChanged', state.party);
   }
-  // the levels and HP given back (once): at the Ring's end, before the pay, so XP lands on the hero's own level
+  // the levels and HP given back (once): at the end, before the pay, so XP lands on the hero's own level
   function ringSyncBack() {
     if (!ringOn || ringOn.ended) return;
     ringOn.ended = true;
@@ -450,22 +456,9 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     if (res.how === 'won') { r.won++; r.best = r.best ? Math.min(r.best, res.t) : res.t; }
     const ranked = [...res.parts].sort((a, b) => b.score - a.score).map((x) => ({ id: x.id, name: x.name, cls: x.cls, company: x.company, score: Math.round(x.score), dmg: Math.round(x.dmg), heal: Math.round(x.heal), stood: Math.round(x.stood), downs: x.downs }));
     bus.emit('ringResult', { window: ringOn.id, how: res.how, why: res.why, secs: res.t, parties: res.parties, tier: pay ? pay.tier : null, pay, parts: ranked, you: H.id });
+    ringOn = null;
     bus.emit('partyChanged', state.party);
   });
-  /** out of the Ring: mid-fight it's walked out on (no pay); back where you were, the company as it came in */
-  function leaveRing() {
-    if (!ringOn) return;
-    if (battle.battle && battle.battle.ring) battle.endRing('left');           // (ringEnd: synced back, no pay for walking out)
-    ringSyncBack();
-    const p = state.player, a = away;
-    world = a.world; curScene = a.scene; curSite = a.site; curRegion = a.region; state.depth = a.depth; floors = a.floors;
-    p.x = p.px = a.x; p.y = p.py = a.y; p.moving = false; p.vx = p.vy = 0;
-    away = null; ringOn = null;
-    battle.reset();
-    bus.emit('ringLeft', {});
-    bus.emit('levelChanged', { depth: state.depth, theme: world.theme, scene: curScene });
-    bus.emit('partyChanged', state.party);
-  }
   bus.on('boutEnd', (res) => { if (!boutOn) return; const on = boutOn; boutOn = null; bus.emit('bowlResult', settleBout(state, on, res)); });
 
   // ── Raids (raid.js, GDD §18 v1.97): a pocket trip as the Bowl's is (the world you were in kept as it stood, given back
@@ -651,21 +644,14 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       return;
     }
     if (cmd.type === 'bowlLeave') { leaveBowl(); return; }
-    // the Ring (ring.js, GDD §19 v1.105): in at the old stones in a window (the UI's clock says which: its id and the
-    // seconds it has left), once a window a hero; ringLeave: back where you were (mid-fight: walked out on, no pay)
-    if (cmd.type === 'ringEnter') {
-      const H = state.party[0], no = (reason) => bus.emit('refused', { reason }), C = CAMP_BY.fens_stones;
-      if (!state.created || H.down || H.fallen || state.away) return;
-      if (raidOn || away || ringOn) { no('Not from here'); return; }
-      if (battle.battle) { no('Not in the middle of a fight'); return; }
+    // the Kingstone's window (ring.js, GDD §19 v1.106): the UI's clock says one is on, its id and the seconds it has left
+    // (anywhere; the sim only remembers it, and the old stones hold the Kingstone while it lasts: ringHeld)
+    if (cmd.type === 'ringOpen') {
       if (!isWindowId(cmd.window)) return;
-      if (curScene !== 'overland' || curRegion !== RING.region || hypot(p.x - C.x, p.y - C.y) > RING.near) { no('The Kingstone stands in the old stones, north-east of Saltmere'); return; }
-      if (H.level < RING.minLevel) { no(`The stones don’t stir for a company under level ${RING.minLevel}`); return; }
-      if (paidFor(state, cmd.window)) { no('You’ve stood against the Kingstone this hour. It stands again at the next'); return; }
-      ringIn(cmd.window, Math.max(60, Math.min(RING.window, Number(cmd.left) || RING.window)));
+      const left = Math.floor(Number(cmd.left)); if (!(left > 0 && left <= RING.window)) return;
+      if (!ringNow || ringNow.id !== cmd.window) ringNow = { id: cmd.window, until: state.t + left };
       return;
     }
-    if (cmd.type === 'ringLeave') { leaveRing(); return; }
     // Raids (raid.js, GDD §18 v1.97): set out on one of the band dungeons with two stand-ins, what each open seat wants
     // ('any' or a class); anywhere out of a fight, three a day; spent on setting out (the owner). raidLeave: back from one
     if (cmd.type === 'raidOut') {
@@ -830,7 +816,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       else if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive, ex.site, ex.region);
       if (!ex) shut = null;
     }
-    else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) { if (away && !raidOn) { if (!(battle.battle && battle.battle.ring)) leaveBowl(); } else if (state.depth > (raidOn ? raidOn.top : 0)) ascend(); else if (raidOn) leaveRaid(raidOn.done ? 'won' : 'left'); else travel('overland', curSite); }   // (the Bowl's gate: back where you were, never the land; the Ring's shut while it's fought: a step back in autobattle lost the fight, regionboss.mjs; its end card's Leave or ringLeave)   // walk up the stair: a floor up, or out
+    else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) { if (away && !raidOn) leaveBowl(); else if (state.depth > (raidOn ? raidOn.top : 0)) ascend(); else if (raidOn) leaveRaid(raidOn.done ? 'won' : 'left'); else travel('overland', curSite); }   // (the Bowl's gate: back where you were, never the land)   // walk up the stair: a floor up, or out
     if (p.journey && !p.path && !p.resume) p.journey = null;   // arrived (a leg that changed scenes has already walked on), or stopped
     state.t += TICK_DT; state.tick += 1;
     if (state.away && --state.away.left <= 0) { const secs = state.away.secs; state.away = null; bus.emit('awayEnded', { secs, stopped: false }); }
@@ -856,10 +842,9 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       state.party = [H, ...R.party.slice(1)]; H.hp = R.hp; H.mp = R.mp; H.down = false;
       try { return snap(); } finally { world = here.world; curScene = here.scene; curSite = here.site; curRegion = here.region; state.depth = here.depth; floors = here.floors; p.x = here.x; p.y = here.y; state.party = party; [H.hp, H.mp, H.down] = now; }
     }
-    if (!away) return snap();
-    const lv = ringOn && !ringOn.ended ? ringOn.levels.map(([m, l, hp, mp]) => ({ m, l, hp, mp, now: [m.level, m.hp, m.mp, m.down] })) : [];   // (in the Ring: the levels and HP as it came in)
+    const lv = ringOn && !ringOn.ended ? ringOn.levels.map(([m, l, hp, mp]) => ({ m, l, hp, mp, now: [m.level, m.hp, m.mp, m.down] })) : [];   // (fighting the Kingstone: the levels and HP as it came in)
     for (const k of lv) { k.m.level = k.l; k.m.hp = k.hp; k.m.mp = k.mp; k.m.down = false; }
-    try { return snapAway(); } finally { for (const k of lv) [k.m.level, k.m.hp, k.m.mp, k.m.down] = k.now; }
+    try { return away ? snapAway() : snap(); } finally { for (const k of lv) [k.m.level, k.m.hp, k.m.mp, k.m.down] = k.now; }
   }
   function snapAway() {
     const p = state.player, here = { world, scene: curScene, site: curSite, region: curRegion, depth: state.depth, floors, x: p.x, y: p.y };

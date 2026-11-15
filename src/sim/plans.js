@@ -340,15 +340,6 @@ export const PLANS = {
     ], halls: [] },
   ] },
 
-  // ── The Ring (GDD §19 v1.105; world doc v1.50 §3.2): the old stones north-east of Saltmere, its turf open to the sky,
-  //    the standing stones round it and the Kingstone half-buried in the middle. One space, round, as the Bowl's sand; the
-  //    way out the stones' gap on the north (the stair up).
-  kingstone_ring: { site: 'kingstone_ring', name: 'The Ring', kind: 'arena', base: 18, flat: true, floors: [
-    { name: 'The Ring', spaces: [
-      { id: 'the_ring', name: 'The Ring', role: 'end', x: 0, y: 0, w: 44, h: 44, shape: 'round', lv: 0, kit: 'cave',
-        dress: [], note: 'The old stones\' turf inside the ring, older than the Empire, the Kingstone half-buried at its middle; the companies come in at the gap on the north.' },
-    ], halls: [] },
-  ] },
 };
 
 /** a space's size class by its sides (PLAN_RULES) @param {{ w: number, h: number }} s */

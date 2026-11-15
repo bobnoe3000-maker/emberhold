@@ -259,6 +259,10 @@ from ten to), not three. What else came out differently, and why:
   own, the fighter who holds it and the cleric who heals were always Bronze beside a mage.
 - **The way out is shut while it stands**: on autobattle the hero stepped back through the gate mid-fight and lost the
   window (the harness found it). *Leave* on the end card, or the gate after.
+- **In the map, not a Ring of its own** (v1.106, the owner: *"Can we spawn the region boss directly in the map?"*): in a
+  window the Kingstone stands at the old stones' middle in the Fens' map, and walking into their reach is its fight (no
+  Enter button, no pocket trip; out of the stones mid-fight is walking out). Its hits are all tells now, 70 % of max HP
+  each (a fourth, the slam, its plain blow), and it walks and turns as a giant ([kingstone-critic-pass.md](./kingstone-critic-pass.md)).
 - **The marker** (§1.1): the old stones on the minimap and both World map tabs, lit by the hour (GDD §19.8), with a
   Walk there to the ring's edge.
 - **Not yet:** the AI's reaction by grade (one range for all). The Guild's coach already goes to Saltmere.

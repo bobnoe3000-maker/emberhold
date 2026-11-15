@@ -329,10 +329,10 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
       card.append(el('div', 'sub ring', !c ? '' : c.open ? (paidFor(S(), c.id) ? 'It stands now · you’ve stood against it this hour' : `It stands now · ${mm(c.left)} left`)
         : `It stands next at ${c.at}${c.soon ? ` · in ${mm(c.until)}` : ''}`));
       card.append(el('div', 'sub', `from level ${RING.minLevel} · fought at level ${RING.level} · up to five companies · walk into the ring to fight it`));
-      // Walk there: to the ring's edge on your side (inside the old stones' reach, outside their golems'), where Enter the Ring shows
+      // Walk there: to just outside the stones' reach on your side; a step on and you're in it (and, in a window, its fight)
       let go = null, why = '', steps = '';
       if (w.kind === 'overland' && w.region === RING.region) {
-        const dx = P.x - C.x, dy = P.y - C.y, d = Math.hypot(dx, dy) || 1, k = Math.min(d, RING.near - 7) / d, s = sim.spotNear(C.x + dx * k, C.y + dy * k);
+        const dx = P.x - C.x, dy = P.y - C.y, d = Math.hypot(dx, dy) || 1, k = Math.min(d, C.reach + 3) / d, s = sim.spotNear(C.x + dx * k, C.y + dy * k);
         if (s) { go = { type: 'goto', tx: s.tx, ty: s.ty, near: 0, then: null, label: 'The old stones' }; steps = `about ${s.steps} steps`; } else why = 'No way there from here.';
       } else why = r !== RING.region ? 'In the Greywater Fens, north-east of Saltmere.' : w.kind === 'town' ? 'Take the road out first.' : 'Climb out first.';
       if (go) info.append('The way', el('br'), el('em', '', steps));

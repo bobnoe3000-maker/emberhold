@@ -1,6 +1,8 @@
-// The Kingstone (GDD §19 v1.105, src/sim/ring.js; docs/region-boss-proposal.md; the owner, 2026-11-15: "Ok go with your
-// proposal, except world boss at the top of each hour for now (24x)"): in at the old stones in a window, the company at the
-// Ring's level, the AI companies coming in and the Kingstone's HP stepping up for each, its tells landing only on who's
+// The Kingstone (GDD §19 v1.105–v1.106, src/sim/ring.js; docs/region-boss-proposal.md; the owner, 2026-11-15: "Ok go with
+// your proposal, except world boss at the top of each hour for now (24x)", then "Can we spawn the region boss directly in
+// the map?"): standing at the old stones in the Fens' own map in a window, its fight begun by walking into their reach,
+// every hit of its 70 % of max HP ("a level 15 char down to about 30%... the second... should knock me out"), its own
+// walk and turn, the company at the Ring's level, the AI companies coming in and the Kingstone's HP stepping up for each, its tells landing only on who's
 // still in them, a Downed member up again at no cost, the pay once a window at the hero's own level, and the record saved.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -19,17 +21,23 @@ function windowFor(n) {
   for (let d = 1; d < 29; d++) for (let h = 0; h < 24; h++) { const id = `2026-11-${String(d).padStart(2, '0')}T${String(h).padStart(2, '0')}`; if (windowDraw(SEED, id).n === n) return id; }
   throw new Error('no window');
 }
-/** the right party (fighter, rogue, cleric) at `level` in the Fens, standing at the old stones' approach */
-function company(level = 14, at = RING.near - 4) {
+const C = CAMP_BY[RING.camp];
+/** the right party (fighter, rogue, cleric) at `level` in the Fens, `at` tiles south of the old stones' middle (out of
+ *  their reach by default) */
+function company(level = 14, at = C.reach + 4) {
   const t = createSim(SEED, undefined, { scene: 'town' }); for (const i of [0, 2]) { t.state.counters.gold = 1e9; t.commands.push({ type: 'hire', idx: i }); t.tick(); }
   const s = createSim(SEED, undefined, { scene: 'overland', region: 'fens' });
   s.state.created = true;
   s.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m })));
   s.state.party.forEach((m, i) => { m.cls = ['fighter', 'rogue', 'cleric'][i]; m.level = level; m.xp = 0; m.attrs = null; attrs.autoAllocate(m); m.gear = items.starterKit(m); m.fallen = false; m.down = false; m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp; if (i) { m.perks = []; m.hidden = null; } });
-  const C = CAMP_BY.fens_stones, p = s.state.player; p.x = p.px = C.x + 0.5; p.y = p.py = C.y + at;
+  const p = s.state.player; p.x = p.px = C.x + 0.5; p.y = p.py = C.y + at;
   return s;
 }
-const enter = (s, id, left = RING.window) => { s.commands.push({ type: 'ringEnter', window: id, left }); s.tick(); };
+const open = (s, id, left = RING.window) => { s.commands.push({ type: 'ringOpen', window: id, left }); s.tick(); };
+const walkIn = (s) => { const p = s.state.player; p.x = p.px = C.x + 0.5; p.y = p.py = C.y + C.reach - 2; s.tick(); s.tick(); };
+/** the window told, and the company walked into the stones' reach */
+const enter = (s, id, left = RING.window) => { open(s, id, left); walkIn(s); };
+const walkOut = (s) => { const p = s.state.player; p.x = p.px = C.x + 0.5; p.y = p.py = C.y + C.arena + 3; s.tick(); };
 const refusals = (s) => { const r = []; s.bus.on('refused', (e) => r.push(e.reason)); return r; };
 const boss = (s) => s.world.enemies.find((e) => e.id === s.battle.ring.boss);
 
@@ -52,20 +60,42 @@ test('the top of every hour (the owner: 24 a day): open for its first 15 minutes
   for (let h = 0; h < 24; h++) assert.ok(isWindowId(at(h, 3).id) && at(h, 3).open, `the ${h}:00 window`);
 });
 
-test('the stones take a company only near them, from level 10, once a window, out of a fight; the event row rules in it', () => {
-  const id = windowFor(1);
-  let s = company(14, RING.near + 6), no = refusals(s); enter(s, id);
-  assert.ok(!s.battle, 'too far'); assert.match(no[0], /old stones/);
-  s = company(9); no = refusals(s); enter(s, id); assert.ok(!s.battle, 'under level 10'); assert.match(no[0], /level 10/);
-  s = company(14); enter(s, 'soon'); assert.ok(!s.battle, 'a bad window id does nothing');
-  enter(s, id);
-  assert.ok(s.battle && s.battle.ring, 'in'); assert.equal(modeOf(s.battle, null), MODES.event);
+test('in a window the old stones hold the Kingstone, in the map; walking into their reach is its fight, from level 10, once a window', () => {
+  const id = windowFor(1), kingAt = (s) => s.world.enemies.find((e) => e.kind === 'kingstone'), golems = (s) => s.world.enemies.filter((e) => e.idle === C.id && e.kind !== 'kingstone');
+  let s = company(14); s.tick();
+  assert.ok(!kingAt(s) && golems(s).length, 'out of a window: the golems at the stones');
+  open(s, 'soon'); assert.ok(!kingAt(s), 'a bad window id does nothing');
+  open(s, id); s.tick();
+  const k = kingAt(s); assert.ok(k && !golems(s).length, 'in one: the Kingstone stands there, its golems gone');
+  assert.ok(Math.hypot(k.x - C.x, k.y - C.y) < 0.01, 'at their middle'); assert.equal(s.world.kind, 'overland');
+  let no = refusals(s); const lo = company(9); const nl = refusals(lo); enter(lo, id);
+  assert.ok(!lo.battle, 'under level 10: nothing starts'); assert.match(nl[0], /level 10/); void no;
+  walkIn(s);
+  assert.ok(s.battle && s.battle.ring, 'walked in: its fight'); assert.equal(modeOf(s.battle, null), MODES.event); assert.equal(s.world.kind, 'overland', 'there, in the map');
   for (const m of s.state.party) { assert.equal(m.level, RING.level, 'synced to the Ring'); assert.equal(m.hp, statsFor(m).maxHp); }
-  no = refusals(s); enter(s, id); assert.match(no[0], /Not from here/);
-  s.commands.push({ type: 'ringLeave' }); s.tick();
-  assert.ok(!s.battle); for (const m of s.state.party) assert.equal(m.level, 14, 'the levels given back');
-  enter(s, id); assert.ok(!s.battle, 'that window is spent'); assert.match(no.at(-1), /this hour/);
   s.commands.push({ type: 'spendPoint', id: s.state.party[0].id, stat: 'str' }); s.tick();
+  no = refusals(s); s.commands.push({ type: 'rest' }); s.tick(); assert.match(no[0] || '', /Not in the Ring/);
+  walkOut(s);
+  assert.ok(!s.battle, 'out of the stones: walked out on it'); for (const m of s.state.party) assert.equal(m.level, 14, 'the levels given back');
+  for (let i = 0; i < 4; i++) s.tick();
+  assert.ok(!kingAt(s) && golems(s).length, 'that window spent: the golems back'); walkIn(s);
+  assert.ok(!s.battle || !s.battle.ring, 'not the Kingstone again this hour');
+});
+
+test('every hit of its takes 70 % of max HP: a hero left at 30 %, a second unhealed Downs them; it walks and turns as a giant', () => {
+  const s = company(15); enter(s, windowFor(1));
+  const H = s.state.party[0], k = s.world.enemies.find((e) => e.id === s.battle.ring.boss), mx = statsFor(H).maxHp;
+  for (const kind of ['slam', 'stamp', 'sweep', 'stones']) assert.equal(RING[kind].hurt, 0.7, kind);
+  const p = s.state.player, land = () => { s.battle.tells.push({ id: 999, kind: 'slam', x: p.x, y: p.y, r: 2.4, from: s.state.t, at: s.state.t, hurt: 0.7, done: false }); s.tick(); };
+  for (const m of s.battle.ring.all) if (m !== H) m.cd = 99;   // (nobody casts a heal between the two: 'not healed')
+  s.battle.lifeline = true;                                      // (a cleric's Lifeline, once a fight, spent: it would catch the second)
+  H.hp = mx; land(); assert.ok(Math.abs(H.hp / mx - 0.3) < 0.05, `one hit: ${Math.round(H.hp / mx * 100)} %`);
+  land(); assert.ok(H.down, 'a second, unhealed: Downed');
+  // its own walk: it moves, turns no faster than RING.king.turn a second, and never plays a plain blow
+  let walked = 0, lx = k.x, ly = k.y, lf = k.face, worst = 0;
+  for (let i = 0; i < 20 * 60; i++) { s.tick(); walked += Math.hypot(k.x - lx, k.y - ly); lx = k.x; ly = k.y; let d = k.face - lf; d -= 2 * Math.PI * Math.round(d / (2 * Math.PI)); worst = Math.max(worst, Math.abs(d)); lf = k.face; }
+  assert.ok(walked > 8, `it walks (${walked.toFixed(1)} tiles in a minute)`); assert.ok(worst <= RING.king.turn / 20 + 1e-9, 'it turns slowly');
+  assert.ok(Math.hypot(k.x - C.x, k.y - C.y) <= C.arena - RING.king.edge, 'and keeps inside the stones');
 });
 
 test('the AI companies come in, and the Kingstone\'s HP steps up for each; nobody is Fallen, a Downed member is up in 8 s', () => {
@@ -119,20 +149,18 @@ test('the pay: by the company\'s tier, at the hero\'s own level, once; a minute 
   assert.ok(H.xp > xp0 || H.level > 14); assert.ok(s.state.party.every((m) => m.level >= 14 && m.level < RING.level));
   assert.ok(res.parts.some((q) => q.heal > 0), 'the cleric\'s healing counted');
   assert.deepEqual(s.state.ring.paid, [res.window]);
-  s.commands.push({ type: 'ringLeave' }); s.tick(); assert.equal(s.world.kind, 'overland');
+  assert.equal(s.world.kind, 'overland');
   // walked out on: nothing
   const w = company(); let r2 = null; w.bus.on('ringResult', (e) => { r2 = e; });
   enter(w, windowFor(1)); for (let i = 0; i < 20 * 70; i++) w.tick();
-  w.commands.push({ type: 'ringLeave' }); w.tick();
+  walkOut(w);
   assert.equal(r2.how, 'left'); assert.equal(r2.pay, null); assert.equal(w.world.kind, 'overland');
 });
 
-test('its fall pays its tier, and it\'s counted; the gate stays shut while it stands', () => {
+test('its fall pays its tier, and it\'s counted', () => {
   const s = company(); let res = null; s.bus.on('ringResult', (e) => { res = e; });
   enter(s, windowFor(1));
   for (let i = 0; i < 20 * 65; i++) s.tick();
-  const p = s.state.player, ex = s.world.exitAt; p.x = p.px = ex.x; p.y = p.py = ex.y; s.tick();
-  assert.ok(s.battle && s.battle.ring, 'the gate doesn\'t take you out mid-fight');
   boss(s).hp = 1;
   for (let i = 0; i < 20 * 30 && !res; i++) s.tick();
   assert.ok(res && res.how === 'won', 'it fell'); assert.ok(['gold', 'silver', 'bronze'].includes(res.tier));
@@ -140,7 +168,7 @@ test('its fall pays its tier, and it\'s counted; the gate stays shut while it st
   if (res.pay.item) assert.ok(['fine', 'rare', 'heirloom'].includes(res.pay.item.r));
 });
 
-test('saved in the Ring, a game is the world it set out from at its own levels; the record round-trips', () => {
+test('saved mid-fight, a game is at its own levels; the record round-trips', () => {
   const s = company(); enter(s, windowFor(3));
   for (let i = 0; i < 20 * 10; i++) s.tick();
   const snap = JSON.parse(JSON.stringify(s.snapshot()));

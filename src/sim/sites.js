@@ -64,7 +64,6 @@ export const SITES = {
   bowl: { name: 'The Bowl', region: 'fens', theme: 'desert', base: 6, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [1, 1], layout: 'halls', flat: true, parked: true, arena: true, mix: 0xb0e1 },
   // the Ring (GDD §19 v1.105; ring.js): the old stones north-east of Saltmere, where the Kingstone stands at the top of
   // every hour; reached by walking into the stones in a window, never from a door, so parked as the Bowl is
-  kingstone_ring: { name: 'The Ring', region: 'fens', theme: 'mound', base: 18, perFloor: 0, floors: 1, plan: true, family: 'golems', rooms: [1, 1], layout: 'halls', flat: true, parked: true, arena: true, mix: 0x41b6 },   // (the Kingstone's Ring, GDD §19 v1.105: ring.js; plans.js kingstone_ring)
   // parked for the Cinder Reach (world doc v1.32 §3.3): its Assay Yards and its Cold Seam, as they were in the Vale
   tithe_mill: { name: 'The Tithe Mill', region: 'reach', theme: 'desert', base: 1, perFloor: 0, floors: 1, family: 'redhand', rooms: [6, 6], layout: 'halls', parked: true, mix: 0x3117 },
   scrag_warren: { name: 'The Scrag Warren', region: 'reach', theme: 'warren', base: 2, perFloor: 1, floors: 2, family: 'goblin', rooms: [6, 6], parked: true, mix: 0x6b1d },
