@@ -625,7 +625,7 @@ function arena(w, o = {}) {
 // The sim's one round space (plans.js kingstone_ring) drawn as the turf inside the old stones: short grass, worn to moss
 // and bare earth round the middle where the Kingstone stands up out of it; the ring of standing stones just past its
 // edge, grey and leaning, a gap at the north where the companies come in (the stair: the way back out, under its arch);
-// a turf bank behind the stones, and beyond it the Fens, dark grass, still pools and a few dead trees. Nothing on the
+// a turf bank behind the stones, and beyond it the Fens, dark grass, moss and a few dead trees. Nothing on the
 // camera's side stands higher than a man (level-design rules §1.1): the near stones are stumps, fallen or broken. Lit as
 // a day (hybrid.js holds the arena's hour), so a tell's red reads at once.
 /** @param {any} w @param {{ stairs?: string }} [o] */
@@ -643,7 +643,7 @@ function ringArena(w, o = {}) {
     if (floor) { tiles[j][i] = P.mid < 4 ? 'd' : P.mid < 7 + (h0 % 3) ? 'm' : h0 % 9 ? 'g' : 'f'; continue; }
     // the bank behind the stones (a step up, two on the far side), the Fens beyond: pools where it dips
     const far = P.near < 0.5, h = P.past < 3 ? FLOOR : P.past < 9 ? FLOOR + (far ? 2 : 1) : FLOOR + 1;
-    tiles[j][i] = P.past > 12 && h0 % 13 === 0 ? 'o' : P.past < 3 ? 'g' : 'G'; heights[j][i] = String(h);
+    tiles[j][i] = P.past < 3 ? 'g' : h0 % 11 === 0 ? 'm' : 'G'; heights[j][i] = String(h);   // (no pools: a lone water tile drew as a blue square)
   }
   const stairLights = stairs(w, x0, y0, W, D, tiles, heights, o.stairs !== 'plain');
   const objects = [], count = {}, sprites = [];
@@ -658,7 +658,7 @@ function ringArena(w, o = {}) {
     const t = (n / N) * Math.PI * 2 + 0.07; if (gate(t)) continue;
     const b = pt(t, 1.6), hh = hash('ks', n), near = at(b.x, b.y).near > 0.45;
     if (near && hh % 3 === 0) { add({ type: 'rock', x: X(b.x), z: Z(b.y), opts: { size: r2(0.7 + (hh % 4) * 0.1), seed: hh % 97 } }); continue; }   // (fallen)
-    add({ type: 'crag', x: X(b.x), z: Z(b.y), rotation: r2(t + ((hh % 9) - 4) * 0.05), opts: { kind: 'pillar', stone: '', height: r2(near ? 0.7 + (hh % 3) * 0.2 : 2.4 + (hh % 5) * 0.3), width: r2(0.9 + (hh % 3) * 0.15), seed: hh % 997 } });
+    add({ type: 'crag', x: X(b.x), z: Z(b.y), rotation: r2(t + ((hh % 9) - 4) * 0.05), opts: { kind: 'pillar', stone: 'basalt', height: r2(near ? 0.7 + (hh % 3) * 0.2 : 2.4 + (hh % 5) * 0.3), width: r2(0.9 + (hh % 3) * 0.15), seed: hh % 997 } });
   }
   // the bank's dead trees and a few boulders, on the far side only
   for (let n = 0; n < 10; n++) {

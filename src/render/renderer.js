@@ -1126,14 +1126,14 @@ export function createRenderer(canvas, sim, input) {
       // under the HUD row (hudB: the phone's safe area included), centred, but never under the minimap
       const tw = octx.measureText(txt).width + 18 * k, mmL = vw - (MM_CSS + 2 * MM_PAD + MM_RIGHT + safeR + 8) * k;
       const px = Math.max(tw / 2 + 10 * k, Math.min(vw / 2, mmL - tw / 2)), py = (hudB + 16) * k;
-      if (!b.bout) {                                     // (a bout's clock and shares are its own bar: ui/bowl.js)
+      if (!b.bout && !b.ring) {                          // (a bout's clock and shares are its own bar: ui/bowl.js; the Ring's too, ui/ring.js)
       octx.fillStyle = 'rgba(14,10,18,0.82)'; octx.strokeStyle = dc; octx.lineWidth = Math.max(1, k);
       octx.beginPath(); octx.roundRect(px - tw / 2, py - 13 * k, tw, 19 * k, 9 * k); octx.fill(); octx.stroke();
       octx.fillStyle = dc; octx.fillText(txt, px, py + 1 * k);
       }
       // a boss's bar under the pill: its name, its health, and a shield while it's guarded (battle.js BOSSES)
       const boss = (w.enemies || []).find((e) => e.boss && e.hp > 0 && !e.dead);
-      if (boss) {
+      if (boss && !b.ring) {
         const bw = Math.min(vw * 0.38, 150 * k, 2 * (mmL - px)), bh = 7 * k, bx0 = px - bw / 2, by0 = py + 24 * k, f = boss.hp / boss.maxHp;   // (clear of the minimap on the right)
         const guarded = halved(boss, w.enemies || []);
         octx.font = `600 ${Math.round(12 * k)}px Georgia, 'Times New Roman', serif`; octx.fillStyle = 'rgba(0,0,0,0.7)'; octx.fillText(BOSSES[boss.boss].name, px + k, by0 - 3 * k + k);
