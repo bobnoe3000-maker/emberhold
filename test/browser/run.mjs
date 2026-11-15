@@ -1194,8 +1194,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
-// 16. The forge and the shop (GDD §8): an upgrade from the Smith's Upgrade tab (v1.114: a piece from the bag given up,
-// picked with its odds; then the forge's animation and its verdict, Done) takes the gold, the cinders and the piece, and
+// 16. The forge and the shop (GDD §8): an upgrade from the Smith's Upgrade window (v1.115: the piece, then a piece from the bag
+// given up into the anvil's slot, picked with its odds; then the forge's animation and its verdict, Done) takes the gold, the cinders and the piece, and
 // shows the next step; a level-1 piece too small to gain says so; the shop buys and sells.
 {
   const b = await launch(chromium, 'chromium');
@@ -1214,7 +1214,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await run(5); await p.waitForTimeout(600);
     await p.locator('button', { hasText: 'Smith' }).first().tap(); await run(2);
     await p.locator('#hubSheet [data-go="smith:upgrade"]').tap(); await run(2);
-    const small = await p.locator('#hubSheet .merc', { hasText: 'Round Shield' }).innerText().catch(() => '');
+    const small = await p.locator('#hubSheet [data-upgrade]', { hasText: 'Round Shield' }).first().innerText().catch(() => '');   // (v1.115: the Upgrade window's tiles)
     await p.locator('#hubSheet [data-upgrade="k6"]').tap(); await run(2);
     const pick = { offers: await p.locator('#hubSheet [data-offer]').count(), off: await p.locator('#hubSheet [data-upgo]').isDisabled() };
     await p.locator('#hubSheet [data-offer="k7"]').tap(); await run(2);
@@ -1223,9 +1223,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.waitForSelector('#forgeFx.on'); await p.waitForSelector('#forgeFx .done.on', { timeout: 20000 });
     const verdict = await p.locator('#forgeFx .verdict').innerText();
     await p.locator('#forgeFx .done').tap(); await run(2);
-    await p.locator('#hubSheet [data-upback]').tap(); await run(2);
     const up = await p.evaluate(() => { const s = globalThis.__sim, it = s.state.bag.find((q) => q.uid === 'k6'); return { up: it.up || 0, gold: s.state.counters.gold, cinders: s.state.counters.embers, k7: s.state.bag.some((q) => q.uid === 'k7') }; });
-    const next = await p.locator('#hubSheet [data-upgrade="k6"]').innerText().catch(() => '');
+    const next = await p.locator('#hubSheet [data-upgo]').innerText().catch(() => '');   // (the anvil's button: the piece still on it)
     await p.locator('#hubSheet .close').tap(); await run(2);
     await p.locator('button', { hasText: 'Shop' }).first().tap(); await run(2);
     await p.locator('#hubSheet [data-go="shop:buy"]').tap(); await run(2);

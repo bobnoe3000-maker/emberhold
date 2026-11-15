@@ -59,15 +59,18 @@ export function upgradeCost(it, origin) {
 // UP_RISK[n]: the chance of [failing, breaking] the step to +n+1 with a Common from another slot at the item's level. The
 // piece given up scales both: its rarity (OFFER_K), the same slot (SAME_SLOT_K), and a piece below the item's level gives
 // less of that help, none OFFER_GAP levels down (a Common from another slot is the base, whatever its level).
-export const UP_RISK = [[0.10, 0], [0.22, 0], [0.32, 0.05], [0.42, 0.10], [0.50, 0.18], [0.55, 0.22], [0.58, 0.26], [0.60, 0.30], [0.62, 0.33]];
-export const OFFER_K = { common: 1, fine: 0.7, rare: 0.45, heirloom: 0.2 }, SAME_SLOT_K = 0.6, OFFER_GAP = 10, DROP_FROM = 4;
+// (v1.115, the owner, on the new window: "Already upgraded items also improve upgrade chance. Fail rate no more that 10, but
+// using good items can get this under 5%": the worst an attempt goes wrong, failing and breaking together, is 2 % at +1 up
+// to 10 % at +9 (it was 10 % to 95 %); a piece given up that's been upgraded helps OFFER_UP_K more for each +1 it has)
+export const UP_RISK = [[0.02, 0], [0.03, 0], [0.035, 0.005], [0.04, 0.01], [0.045, 0.015], [0.05, 0.02], [0.055, 0.025], [0.06, 0.03], [0.06, 0.04]];
+export const OFFER_K = { common: 1, fine: 0.7, rare: 0.45, heirloom: 0.2 }, SAME_SLOT_K = 0.6, OFFER_GAP = 10, DROP_FROM = 4, OFFER_UP_K = 0.05;
 const slotOf = (it) => (BASES[it.base] ? BASES[it.base].slot : '');
 /** the odds of upgrading `it` with `offer` given up: { ok, fail, broke } (they sum to 1), and whether a failure drops it a
  *  step (drop); null at +UP_MAX or without a piece @param {any} it @param {any} offer */
 export function upgradeOdds(it, offer) {
   const to = (it.up || 0) + 1; if (to > UP_MAX || !offer) return null;
   const [f, d] = UP_RISK[to - 1], gap = Math.max(0, (it.ilv || 1) - (offer.ilv || 1)), q = Math.max(0, 1 - gap / OFFER_GAP);
-  const k0 = (OFFER_K[offer.r] ?? 1) * (slotOf(offer) === slotOf(it) ? SAME_SLOT_K : 1), k = 1 - (1 - k0) * q;
+  const k0 = (OFFER_K[offer.r] ?? 1) * (slotOf(offer) === slotOf(it) ? SAME_SLOT_K : 1) * (1 - OFFER_UP_K * Math.min(UP_MAX, offer.up || 0)), k = 1 - (1 - k0) * q;
   let fail = f * k, broke = d * k;
   if (it.r === 'heirloom') { fail += broke; broke = 0; }   // (there's only one of each: it never breaks)
   return { ok: 1 - fail - broke, fail, broke, drop: to >= DROP_FROM };

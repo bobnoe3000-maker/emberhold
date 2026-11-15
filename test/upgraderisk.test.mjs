@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
 import { makeItem } from '../src/sim/items.js';
 import { upgradeOdds, UP_RISK, OFFER_K, SAME_SLOT_K, DROP_FROM } from '../src/sim/smith.js';
+import { UP_MAX } from '../src/sim/items.js';
 
 const SEED = 20260807;
 const town = () => { const s = createSim(SEED, undefined, { scene: 'town' }); Object.assign(s.state.counters, { gold: 1e12, embers: 1e9 }); s.tick(); return s; };
@@ -78,4 +79,16 @@ test('a failure under +4 keeps the piece where it was; a worn piece that breaks 
     const ev = []; s.bus.on('forged', (e) => ev.push(e)); run(s, { type: 'upgrade', uid: h.uid, offer: s.state.bag.at(-1).uid });
     assert.notEqual(ev[0].result, 'broke'); assert.ok(s.state.bag.includes(h));
   }
+});
+
+// (v1.115, the owner: "Already upgraded items also improve upgrade chance. Fail rate no more that 10, but using good items can
+// get this under 5%")
+test('never more than 10 % goes wrong, failing and breaking together; good pieces bring it under 5 %; an upgraded piece helps more', () => {
+  for (let up = 0; up < UP_MAX; up++) {
+    const it = { ...piece('rare', 'sword', 20), up }, worst = upgradeOdds(it, piece('common', 'ring', 1)), good = upgradeOdds(it, piece('rare', 'sword', 20));
+    assert.ok(worst.fail + worst.broke <= 0.10 + 1e-12, `+${up} → +${up + 1}: ${(100 * (worst.fail + worst.broke)).toFixed(1)} % at worst`);
+    assert.ok(good.fail + good.broke < 0.05, `+${up + 1} with a Rare for the same slot: ${(100 * (good.fail + good.broke)).toFixed(1)} %`);
+  }
+  const it = { ...piece('fine', 'sword', 20), up: 8 }, plain = upgradeOdds(it, piece('fine', 'sword', 20)), upped = upgradeOdds(it, piece('fine', 'sword', 20, { up: 5 }));
+  assert.ok(upped.ok > plain.ok, `a +5 piece helps more: ${upped.ok.toFixed(4)} > ${plain.ok.toFixed(4)}`);
 });
