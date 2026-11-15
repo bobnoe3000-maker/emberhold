@@ -14,10 +14,13 @@
 
 /** @type {Record<string, { name: string, keeper: string, souls: number }>} */
 export const LAMPS = {
-  // "Souls, two hundred and forty" is the Third Legion's muster (world doc §3.6, the tithe ledger)
-  third_legion: { name: "The Third Legion's standard-lamp", keeper: 'standard', souls: 240 },
-  // the Abbey's roll, "three hundred and twelve professed" (world doc v1.27 §3.2): the Abbess Below keeps it trimmed
-  choir_lamp: { name: "The Abbey's choir-lamp", keeper: 'abbess_below', souls: 312 },
+  // what a lamp holds is what it keeps back, unwoken; the bound walk, and each one put down is freed by itself (world doc
+  // v1.49 §2.1; the owner, 2026-11-15: "should be under 20"). The Third Legion's muster, "Souls, two hundred and forty",
+  // walks; the standard-lamp holds its colour party (240 before, save v50)
+  third_legion: { name: "The Third Legion's standard-lamp", keeper: 'standard', souls: 16 },
+  // the Abbey's roll, "three hundred and twelve professed" (world doc v1.27 §3.2), walks as the drowned; the choir-lamp
+  // holds the Abbess's own chapter (312 before)
+  choir_lamp: { name: "The Abbey's choir-lamp", keeper: 'abbess_below', souls: 12 },
 };
 /** the lamp a boss carries, if any @param {string} boss */
 export const lampOf = (boss) => Object.keys(LAMPS).find((id) => LAMPS[id].keeper === boss) || null;

@@ -1,6 +1,6 @@
 // The count (M8 slice 5; GDD §17, world doc §2.1 and §7; sim/lamps.js): lamps broken and souls freed, two durable
 // integers added to only by sim rules. An Ashbound put down frees one soul; the living never count. The Standard of the
-// Third Legion carries his legion's lamp: when he falls it breaks (once: 240 souls, the legion's muster), and the bound
+// Third Legion carries his legion's lamp: when he falls it breaks (once: its colour party, 16 souls; 240 before v50), and the bound
 // still standing in his hall lie down. A harvester drops its cage where it falls; a touch in reach breaks it (a lamp
 // and a soul). Save v19 credits a save that already put the Standard down; no command sets the count.
 import { test } from 'node:test';
@@ -36,7 +36,7 @@ test('an Ashbound put down frees a soul; the living never count', () => {
   assert.ok(living.length >= 4); assert.deepEqual(keep.state.count, { lamps: 0, souls: 0 }, 'the Redhand were never bound');
 });
 
-test('the Standard falls: his lamp breaks once (240 souls), and the bound still standing in his hall lie down', () => {
+test('the Standard falls: his lamp breaks once (16 souls, 240 before v50), and the bound still standing in his hall lie down', () => {
   const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'sunken_chapel' }); party(sim, 12); sim.tick();   // (v1.48: he stands over the binding; 2026-11-02: the Chapel's second floor, its last)
   down(sim); assert.equal(sim.state.depth, 1); assert.ok(!sim.world.stairsAt, 'the Chapel\'s last floor');
   const ev = []; for (const k of ['bossWave', 'lampBroken', 'bossDown']) sim.bus.on(k, (e) => ev.push([k, e]));
@@ -47,7 +47,7 @@ test('the Standard falls: his lamp breaks once (240 souls), and the bound still 
   const lb = ev.find(([k]) => k === 'lampBroken'); assert.ok(lb, 'the lamp broke'); const L = lb[1];
   assert.equal(L.id, 'third_legion'); assert.ok(L.first); assert.equal(L.held, LAMPS.third_legion.souls);
   assert.equal(sim.state.count.lamps, 1); assert.deepEqual(sim.state.lampsBroken, ['third_legion']);
-  assert.equal(sim.state.count.souls - before.souls, 1 + L.freed + 240, 'his own soul (he is Ashbound too), the line he held, and the 240 in the lamp');
+  assert.equal(sim.state.count.souls - before.souls, 1 + L.freed + LAMPS.third_legion.souls, 'his own soul (he is Ashbound too), the line he held, and the 16 in the lamp');
   assert.ok((sim.world.enemies || []).every((e) => !e.undead || e.hp <= 0), 'every bound foe in the hall lies down');
   // a second time (his echo, the next visit): the line lies down again, but the lamp counts once
   const again = createSim(1); again.restore(JSON.parse(JSON.stringify(sim.snapshot())));
@@ -115,7 +115,7 @@ test('a cage far from the hero waits; a fight under way holds it', () => {
 test('save v19: an older save is credited the Standard\'s lamp if he fell; bad counts are refused; no command sets it', () => {
   const data = JSON.parse(JSON.stringify(createSim(SEED, undefined, { scene: 'town' }).snapshot())); delete data.count; delete data.lampsBroken;
   const fell = migrate({ version: 18, savedAt: 1, data: { ...data, bosses: { standard: 2 } } }).data;
-  assert.deepEqual(fell.count, { lamps: 1, souls: 240 }); assert.deepEqual(fell.lampsBroken, ['third_legion']);
+  assert.deepEqual(fell.count, { lamps: 1, souls: LAMPS.third_legion.souls }); assert.deepEqual(fell.lampsBroken, ['third_legion']);   // (16 since v50; 240 before)
   assert.deepEqual(migrate({ version: 18, savedAt: 1, data }).data.count, { lamps: 0, souls: 0 }, 'he never fell: nothing');
   assert.deepEqual(countFrom({ ...data, count: { lamps: 3, souls: 9 } }).count, { lamps: 3, souls: 9 }, 'a v19 count is left alone');
   assert.deepEqual(restoreCount({ count: { lamps: -1, souls: 2.5 }, lampsBroken: ['third_legion', 'nope', 'third_legion'] }), { count: { lamps: 0, souls: 0 }, lampsBroken: ['third_legion'] });

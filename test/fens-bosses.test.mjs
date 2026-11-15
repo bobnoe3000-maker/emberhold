@@ -45,7 +45,7 @@ test('the halls (v1.102, two floors): the Toadking on the Mound\'s second; the C
   assert.equal(sideBoss(w, cell.id), 'teague', 'Teague\'s cell is his'); assert.equal(sideBoss(w, w.level.descentRoom.id), null, 'the hall\'s is bossAt\'s');
   for (const id of ['toadking', 'teague', 'drowned_choir', 'abbess_below']) assert.ok(HEIRLOOMS[BOSSES[id].heirloom], `${id}'s heirloom`);
   assert.deepEqual([BOSSES.teague.once, BOSSES.toadking.once], [true, undefined], 'Teague falls once; the others come back');
-  assert.deepEqual(LAMPS.choir_lamp, { name: "The Abbey's choir-lamp", keeper: 'abbess_below', souls: 312 });
+  assert.deepEqual(LAMPS.choir_lamp, { name: "The Abbey's choir-lamp", keeper: 'abbess_below', souls: 12 });
 });
 
 test('the hazard: a hall\'s edge, a patch, the ground out of it', () => {
@@ -160,7 +160,7 @@ test('the Abbess Below: each bell floods the hall a tile further in, to 3; she f
   until(sim, 240, () => ev.some(([k]) => k === 'bossDown' || k === 'defeat'));
   assert.ok(ev.some(([k]) => k === 'bossDown'), 'she falls');
   assert.equal(sim.battle ? sim.battle.flood : 0, 0, 'the water goes down');
-  const lb = ev.find(([k]) => k === 'lampBroken'); assert.ok(lb && lb[1].id === 'choir_lamp' && lb[1].first && lb[1].held === 312);
+  const lb = ev.find(([k]) => k === 'lampBroken'); assert.ok(lb && lb[1].id === 'choir_lamp' && lb[1].first && lb[1].held === 12);
   assert.ok(sim.state.lampsBroken.includes('choir_lamp'));
   assert.ok(ev.some(([k, e]) => k === 'loot' && e.heirloom === 'the_last_office'));
 });

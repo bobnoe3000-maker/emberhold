@@ -16,7 +16,7 @@
 //     verified Wall, brackets and the flame clock wait for the validator, M10).
 // A warden falls like any boss (state.bosses counts it; its first fall pays a boss's drop, later ones a bossAgain).
 
-export const TOWER = { site: 'mere_tower', level: 9, step: 0.06, landing: 10, gate: 12, gold: 120, cinders: 1, wardenCinders: 5 };
+export const TOWER = { site: 'mere_tower', level: 9, step: 0.06, landing: 10, gate: 12, gold: 60, cinders: 1, wardenCinders: 5 };   // (gold: 120 before GDD v1.104, half the drops)
 /** whose waves each block of ten is, round and round (battle.js FAMILIES) */
 export const BLOCKS = ['ashbound', 'redhand', 'goblin', 'reedmen', 'chapel', 'lockcult', 'diggers', 'harvest', 'drowned'];
 // the wardens (world doc §12), shaped as battle.js BOSSES: a `like` kind's stats × their own, one mechanic each, no

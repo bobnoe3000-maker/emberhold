@@ -751,7 +751,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   // (M3: attributes, auto, origin, skill ranks, auto-cast off-list, priority, stance, Fallen,
   // Weakened-until and respec count; v14: a sellsword's rank, perks, hidden perk, loyalty bond,
   // wages owed and retrains, companions.js)
-  // a chest's gold: (a + b × its room level) × 0.8–1.2 by where it stands (GDD §8, 2026-10-01), × GOLD_DROP (0.7, 2026-10-03)
+  // a chest's gold: (a + b × its room level) × 0.8–1.2 by where it stands (GDD §8, 2026-10-01), × GOLD_DROP (0.7, 2026-10-03; 0.35, v1.104)
   const CHEST_GOLD = [10, 5];
   const MEMBER_KEYS = ['id', 'name', 'cls', 'level', 'xp', 'trait', 'hp', 'mp', 'gear', 'actor', 'main', 'down',
     'attrs', 'autoAttrs', 'origin', 'skills', 'off', 'prio', 'stance', 'fallen', 'weakUntil', 'respecs',

@@ -31,7 +31,7 @@ export const RAID = {
   // a room won after this many waves held, its climb (+10 % a wave, +50 % at the sixth), a kill's XP and gold: the
   // raid's row in modes.js, which the fight reads (kept here too for what reads RAID: the harness, the tests)
   waves: MODES.raid.waves, tide: MODES.raid.tide, xp: MODES.raid.xp, gold: MODES.raid.gold,
-  cofferGold: 50,       // × the band's top level
+  cofferGold: 25,       // × the band's top level (50 before GDD v1.104: half the drops)
   cofferCinders: 10,
   coffer: { heirloom: 0.03, rare: 0.27 },   // the rest Fine
   dry: 0.05,            // each coffer without a Rare adds this to the next one's Rare

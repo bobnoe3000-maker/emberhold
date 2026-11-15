@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { migrate, metaOf, SAVE_VERSION, SLOTS } from '../src/persist/save.js';
 import { createSim } from '../src/sim/core.js';
 
-test('three game slots, save v49', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 49); });
+test('three game slots, save v50', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 50); });
 test('a v3 save migrates with its meta; junk is refused', () => {
   const data = createSim(7).snapshot();
   const m = migrate({ version: 3, savedAt: 5, data });
@@ -219,3 +219,15 @@ test('v48 → v49: a visit in a Fens dungeon starts again at its first floor; Fe
   assert.equal(vale.data.depth, 1, 'a Vale visit as it was');
 });
 
+
+// v50 (GDD v1.104, world doc v1.49): a lamp holds 16 or 12 souls; a count that broke one takes the difference off
+test('v50: a broken lamp\'s souls taken down to what it holds now, never below none; a v18 save credited at today\'s', async () => {
+  const { LAMPS } = await import('../src/sim/lamps.js');
+  assert.ok(LAMPS.third_legion.souls < 20 && LAMPS.choir_lamp.souls < 20, 'every lamp under a score');
+  const m = migrate({ version: 49, savedAt: 1, data: { count: { lamps: 2, souls: 600 }, lampsBroken: ['third_legion', 'choir_lamp'] } });
+  assert.equal(m.data.count.souls, 600 - (240 - LAMPS.third_legion.souls) - (312 - LAMPS.choir_lamp.souls)); assert.equal(m.data.count.lamps, 2);
+  assert.equal(migrate({ version: 49, savedAt: 1, data: { count: { lamps: 1, souls: 30 }, lampsBroken: ['third_legion'] } }).data.count.souls, 0, 'never below none');
+  assert.deepEqual(migrate({ version: 49, savedAt: 1, data: { count: { lamps: 0, souls: 41 }, lampsBroken: [] } }).data.count, { lamps: 0, souls: 41 }, 'nothing broken: as it was');
+  const old = migrate({ version: 18, savedAt: 1, data: { bosses: { standard: 1 } } });
+  assert.equal(old.data.count.souls, LAMPS.third_legion.souls, 'credited at v19 at today\'s, not taken off again');
+});

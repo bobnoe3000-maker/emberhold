@@ -144,6 +144,10 @@
 //       them starts again at its first floor's way in (its floors are new; a third is gone), a Fens board job under way
 //       is let go (its posting is drawn anew from the new floors), and a gate opened on a floor below the first is the
 //       second floor's (the two lower floors are one now). Quests carry over: their floors moved with them.
+//   v50: a lamp holds 16 or 12 souls (GDD v1.104, world doc v1.49; the owner: "should be under 20"): the Third
+//       Legion's 240 → 16, the choir-lamp's 312 → 12. The shape is unchanged. Older data (lampsFor50): a count that
+//       broke one takes the difference off its souls (never below none), so the Freed reads as if the lamp had always
+//       held what it does now. (A v18 or older save is credited at v19 at today's 16 already: lampsFor50 skips it.)
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -155,7 +159,7 @@ import { reachedOf } from '../sim/coach.js';
 import { SITES, bossAt } from '../sim/sites.js';
 import { withFrame43 } from '../sim/appearance.js';
 
-export const SAVE_VERSION = 49;   // (v49: the Fens' dungeons authored, two floors each; v48: raids, `raid`; v47: the Bowl's two ladders, bowl.team / bowl.solo; v46: the Bowl's board, bowl.picks / refresh; v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
+export const SAVE_VERSION = 50;   // (v50: a lamp's souls 16 / 12, the count's difference taken off; v49: the Fens' dungeons authored, two floors each; v48: raids, `raid`; v47: the Bowl's two ladders, bowl.team / bowl.solo; v46: the Bowl's board, bowl.picks / refresh; v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
 /** v40 and older (v41: the floors' gates): an old save comes back with the gates it has been through open, as far as the save
  * tells: every floor whose hall's boss is down (sites.js bossAt; state.bosses), and every floor above the one it was made
  * on. A generated hall with no boss, passed and left: its gate stands (its twenty waves again). @param {any} data */
@@ -196,7 +200,7 @@ export function metaOf(data) {
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object' || !raw.data) return null;
   if (raw.version === SAVE_VERSION) return raw;
-  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); if (raw.version < 31) data = bandsFor(data); if (raw.version < 32) data = questsFor32(data); if (raw.version < 33) data = plansFor33(data); if (raw.version < 36) data = ladderFor36(data); if (raw.version < 41) data = gatesFor41(data); if (raw.version < 43) data = looksFor43(data); if (raw.version < 49) data = plansFor49(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
+  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); if (raw.version < 31) data = bandsFor(data); if (raw.version < 32) data = questsFor32(data); if (raw.version < 33) data = plansFor33(data); if (raw.version < 36) data = ladderFor36(data); if (raw.version < 41) data = gatesFor41(data); if (raw.version < 43) data = looksFor43(data); if (raw.version < 49) data = plansFor49(data); if (raw.version >= 19 && raw.version < 50) data = lampsFor50(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
   return null;                       // unknown / newer / un-migratable
 }
 
@@ -277,6 +281,15 @@ export function plansFor33(data) {
 }
 /** the Fens' band dungeons, authored in v49 (see v49 above) */
 export const FENS49 = ['toadking_mound', 'canal_locks', 'drowned_abbey'];
+/** what each lamp held before v50 @type {Record<string, number>} */
+export const LAMP_SOULS_49 = { third_legion: 240, choir_lamp: 312 };
+/** v49 → v50: a broken lamp's souls as it holds them now (see v50 above) @param {any} data */
+export function lampsFor50(data) {
+  if (!data || typeof data !== 'object' || !data.count || !Array.isArray(data.lampsBroken)) return data;
+  let off = 0; for (const id of data.lampsBroken) if (LAMP_SOULS_49[id] && LAMPS[id]) off += LAMP_SOULS_49[id] - LAMPS[id].souls;
+  const souls = Number.isInteger(data.count.souls) ? Math.max(0, data.count.souls - off) : data.count.souls;
+  return { ...data, count: { ...data.count, souls } };
+}
 /** v48 → v49: the Fens' dungeons authored (see v49 above) @param {any} data */
 export function plansFor49(data) {
   if (!data || typeof data !== 'object') return data;

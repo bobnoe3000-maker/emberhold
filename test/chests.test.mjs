@@ -41,14 +41,14 @@ test('a chest gives gold, every time, and says what else it held (or that it hel
     if (!ev.length) continue;                                  // (out of reach where it stands: the walk's a different test)
     seen++; const e = ev[0]; if (e.item) gear++;
     assert.ok(e.gold > 0 && s.state.counters.gold === g + e.gold, `${e.gold} gold`);
-    // dropped gold is 70 % (2026-10-03, GDD §8): (10 + 5 × room level) × 0.8–1.2 × 0.7
+    // dropped gold is 35 % (70 % from 2026-10-03, GDD §8; half that since v1.104): (10 + 5 × room level) × 0.8–1.2 × GOLD_DROP
     const c = s.world.level.cells.get(k), lv = s.world.roomLevels.get(c.room) || Math.max(1, s.state.depth + 1), base = 10 + 5 * lv;   // (as core.js: the entrance, level 0, falls back to the floor)
-    assert.ok(e.gold >= Math.floor(base * 0.8 * 0.7) && e.gold <= Math.ceil(base * 1.2 * 0.7), `${e.gold} gold from a level-${lv} chest`);
+    assert.ok(e.gold >= Math.floor(base * 0.8 * GOLD_DROP) && e.gold <= Math.ceil(base * 1.2 * GOLD_DROP), `${e.gold} gold from a level-${lv} chest`);
     assert.ok(e.item === null || (typeof e.item.name === 'string' && e.item.r), JSON.stringify(e.item));
     assert.equal(s.world.props.get(k), 'chest', 'still there, to be drawn open'); assert.equal(propAt(s.world, x, y), null, 'and out of the way');
   }
   assert.ok(seen >= 20, `${seen} chests opened`);
   assert.ok(gear >= 1 && gear < seen, `${gear} of ${seen} held gear`);
   assert.equal(DROP.chest.chance, 0.15);
-  assert.equal(GOLD_DROP, 0.7, 'a kill\'s gold is cut the same');
+  assert.equal(GOLD_DROP, 0.35, 'a kill\'s gold is cut the same (0.7 before v1.104)');
 });

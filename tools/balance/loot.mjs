@@ -72,5 +72,5 @@ while (sim.state.t < END) {
 }
 const per = (n) => (n / HOURS).toFixed(1), tot = { common: 0, fine: 0, rare: 0, heirloom: 0 };
 for (const g of Object.values(got)) for (const k of Object.keys(tot)) tot[k] += g[k] || 0;
-console.log(`L${HL} · floor ${DEPTH + 1} · ${HOURS} h · seed ${seed}: per hour ${per(tot.common)} common, ${per(tot.fine)} fine, ${per(tot.rare)} rare`
+console.log(`L${HL} · floor ${DEPTH + 1} · ${HOURS} h · seed ${seed}: per hour ${per(tot.common)} common, ${per(tot.fine)} fine, ${per(tot.rare)} rare, ${per(sim.state.counters.gold || 0)} gold`
   + ` · by source ${Object.entries(got).map(([s, g]) => `${s} ${per(g.common + g.fine + g.rare)}`).join(', ')} · ${per(waves)} waves, ${per(chests)} chests, ${visits} visits, ${wipes} wipes`);

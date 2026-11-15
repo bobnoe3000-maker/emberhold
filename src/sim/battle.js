@@ -249,9 +249,9 @@ export const FAMILIES = {
 // · 'bossMud' { id, by, x, y, n, reached } · 'bossIssue' { id, by, tid, x, y, raised? } · 'bossVespers' { id, by, tid, x, y } · 'bossFlood' { id, by, level, x, y }
 // · 'bossDown' { id, name, first, x, y, lvl }. (by: the boss's id; tid / reached: those it raised, called, issued to: the
 // renderer's moments, render/skillfx.js, follow them. Presentation only: nothing reads them back.)
-// Gold that drops, from a kill or a chest (core.js), is cut to 70 % (2026-10-03, GDD §8): quest and board rewards,
-// which are paid, are not.
-export const GOLD_DROP = 0.7;
+// Gold that drops, from a kill or a chest (core.js), is cut to 70 % (2026-10-03, GDD §8), then halved to 35 % (GDD v1.104;
+// the owner, 2026-11-15: "Half the gold drops across the board"): quest and board rewards, which are paid, are not.
+export const GOLD_DROP = 0.35;
 //   (M8.6, GDD §17 v1.36, world doc v1.27: the Fens' four)
 //   mud     (the Toadking) every MUD_S s a patch of mud (hazards.js) under each of the party standing
 //   cage    (Brother Teague) his lantern-cage stands at his side (an inert foe, CAGE_HP of his HP): while it's lit he mends
