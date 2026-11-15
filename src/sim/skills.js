@@ -181,6 +181,18 @@ export const HEAL_BONUS = 1.2;
 export const DRAIN_MEND = 0.5;
 /** MP cost at a rank @param {{mp:number}} s @param {number} rank */
 export const rankCost = (s, rank) => s.mp - (rank >= 3 ? 1 : 0) - (rank >= 5 ? 1 : 0);
+/** the healing abilities (a member's own, or the party's): what the party's endurance gauge counts (ui: the room pill) */
+export const HEAL_IDS = ['mend', 'sanctuary', 'ancestors_breath'];
+/**
+ * how many more of its cheapest healing ability in play and on auto-use a member can pay for with the MP it has (the
+ * owner, 2026-11-15, mana's step 2: the party's endurance, shown in a fight); -1 when it has none in play. A read, no
+ * state touched. @param {any} m @param {any} trials @param {(m: any, A: any) => number} [less] what gear takes off the cost
+ */
+export function healsLeft(m, trials, less = () => 0) {
+  let cost = 0;
+  for (const A of inPlay(m, trials)) { if (!HEAL_IDS.includes(A.id) || !autocastOn(m, A.id)) continue; const c = Math.max(1, rankCost(A, rankOf(m, A.id)) - less(m, A)); if (!cost || c < cost) cost = c; }
+  return cost ? Math.floor(Math.max(0, m.mp ?? 0) / cost) : -1;
+}
 /** @param {any} m */
 export const stanceOf = (m) => (STANCES.includes(m.stance) ? m.stance : 'balanced');
 /** the member's abilities in priority order: its order (`prio`), then any it hasn't placed, in the ladder's @param {any} m */

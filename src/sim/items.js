@@ -281,8 +281,11 @@ export function starterKit(m) {
 
 // how much better an item is for this member than what they wear (stat-weighted; > 0 = upgrade)
 const WEIGHT = {
-  fighter: { atk: 1, def: 0.8, hp: 0.08, mp: 0.02, crit: 0.45, dodge: 0.4, hpr: 1.2, mpr: 0.3 },
-  rogue: { atk: 1, def: 0.55, hp: 0.07, mp: 0.02, crit: 0.6, dodge: 0.6, hpr: 1, mpr: 0.3 },
+  // (MP's weights, the owner 2026-11-15, mana's step 2: the rogue is short of its cheapest ability for half a fight and more,
+  // tools/balance/roomlv.mjs MP=1, so MP and its regen are worth near what they are to a caster; the fighter, short a tenth
+  // of the time, a little more than before. Only what's called an upgrade changes: nothing here is the fight's)
+  fighter: { atk: 1, def: 0.8, hp: 0.08, mp: 0.03, crit: 0.45, dodge: 0.4, hpr: 1.2, mpr: 0.6 },
+  rogue: { atk: 1, def: 0.55, hp: 0.07, mp: 0.06, crit: 0.6, dodge: 0.6, hpr: 1, mpr: 1.6 },
   mage: { atk: 1.1, def: 0.45, hp: 0.06, mp: 0.08, crit: 0.4, dodge: 0.35, hpr: 0.8, mpr: 2 },
   cleric: { atk: 0.8, def: 0.9, hp: 0.08, mp: 0.06, crit: 0.3, dodge: 0.3, hpr: 1.2, mpr: 1.6 },
   shaman: { atk: 1, def: 0.6, hp: 0.07, mp: 0.07, crit: 0.4, dodge: 0.35, hpr: 1, mpr: 1.8 },

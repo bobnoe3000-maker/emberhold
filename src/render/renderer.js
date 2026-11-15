@@ -30,7 +30,8 @@ import { WARDENS } from '../sim/tower.js';
 import { familyOf, BOSSES, halved, bossAway, BOSS_BACK } from '../sim/battle.js';
 import { DEATH_T } from '../sim/battle.js';
 import { statsFor } from '../sim/party.js';
-import { shotOf } from '../sim/items.js';
+import { shotOf, abilityMods } from '../sim/items.js';
+import { healsLeft } from '../sim/skills.js';
 import { campsOf, campUp, CAMP_BY } from '../sim/camps.js';
 import { RING, paidFor } from '../sim/ring.js';
 
@@ -1131,8 +1132,12 @@ export function createRenderer(canvas, sim, input) {
       const G = gateRoom() ? sim.world.gate : null, held = G ? Math.min(G.waves, b.between ? b.wave : Math.max(0, b.wave - 1)) : 0;   // (the gate: waves held this visit)
       const A = b.quiet && !T ? hallAway() : null;   // (the boss just fell: his hall's timer, v1.73)
       const R = sim.raid;   // (a raid: its own count, raid.js)
-      const txt = R ? (b.boss ? `RAID  ·  ${bossName(b.boss).toUpperCase()}` : b.quiet ? `RAID  ·  ROOM WON  ·  ${R.rooms} WON` : `RAID  ·  ROOM LV ${b.level}  ·  WAVE ${b.wave}/${R.waves}${b.tide > 0.005 ? `  ·  FOES +${Math.round(b.tide * 100)}%` : ''}`)
-        : A ? `${A.name.toUpperCase()}  ·  BACK IN ${A.clock}` : `${T ? 'MERE TOWER' : `ROOM LV ${b.level}`}  ·  WAVE ${b.wave}${b.tide > 0.005 ? `  ·  FOES +${Math.round(b.tide * 100)}%` : ''}${G ? `  ·  GATE ${held}/${G.waves}` : ''}${sat}`, dc = T ? '#c8b0ff' : dangerColor(b.level);
+      // the party's endurance (the owner, 2026-11-15, mana's step 2): the heals its healers can still pay for, ♥ ×N, while a
+      // wave is on; nothing when nobody has a heal in play (skills.js healsLeft)
+      let hl = -1; for (const m of sim.state.party) { if (m.down || m.fallen) continue; const n = healsLeft(m, sim.state.trials, (q, a) => abilityMods(q, a.name).cost); if (n >= 0) hl = Math.max(0, hl) + n; }
+      const heals = hl >= 0 && !b.quiet && !b.between ? `  ·  ♥ ×${hl}` : '';
+      const txt = R ? (b.boss ? `RAID  ·  ${bossName(b.boss).toUpperCase()}` : b.quiet ? `RAID  ·  ROOM WON  ·  ${R.rooms} WON` : `RAID  ·  ROOM LV ${b.level}  ·  WAVE ${b.wave}/${R.waves}${b.tide > 0.005 ? `  ·  FOES +${Math.round(b.tide * 100)}%` : ''}${heals}`)
+        : A ? `${A.name.toUpperCase()}  ·  BACK IN ${A.clock}` : `${T ? 'MERE TOWER' : `ROOM LV ${b.level}`}  ·  WAVE ${b.wave}${b.tide > 0.005 ? `  ·  FOES +${Math.round(b.tide * 100)}%` : ''}${G ? `  ·  GATE ${held}/${G.waves}` : ''}${sat}${heals}`, dc = T ? '#c8b0ff' : dangerColor(b.level);
       octx.font = `700 ${Math.round(11 * k)}px ui-monospace, Menlo, monospace`; octx.textAlign = 'center';
       // under the HUD row (hudB: the phone's safe area included), centred, but never under the minimap
       const tw = octx.measureText(txt).width + 18 * k, mmL = vw - (MM_CSS + 2 * MM_PAD + MM_RIGHT + safeR + 8) * k;

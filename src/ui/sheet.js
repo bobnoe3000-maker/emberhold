@@ -11,7 +11,7 @@
 
 import { CLASSES, statsFor, xpToNext } from '../sim/party.js';
 import { ATTRS, ATTR_LABEL, ATTR_TEXT, attrsOf, pendingPoints } from '../sim/attributes.js';
-import { STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unlocked, rankOf, rankCost, autocastOn, pendingSkillPoints, stanceOf, skillMult, HEAL_BONUS, DRAIN_MEND, passivesOf, passiveVal, inPlay, LOADOUT } from '../sim/skills.js';
+import { STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unlocked, rankOf, rankCost, autocastOn, pendingSkillPoints, stanceOf, skillMult, HEAL_BONUS, DRAIN_MEND, passivesOf, passiveVal, inPlay, LOADOUT, HEAL_IDS } from '../sim/skills.js';
 import { esc, drawCharacter, PORTRAIT_W, PORTRAIT_H, FIGURE_W, FIGURE_H } from './actorart.js';
 import { portraitKey, paintPortrait } from './portraits.js';
 import { firstOpen } from './firststeps.js';
@@ -110,6 +110,7 @@ const CSS = SW_CSS + `
 #gearCard .ln { display: flex; font-size: 11.5px; padding: 2px 0; }
 #gearCard .ln .k { color: #8a8498; letter-spacing: 1px; width: 76px; }
 #gearCard .ln.aff { color: #72d06c; } #gearCard .ln.aff .k { color: inherit; } #gearCard .ln.mod { color: #5aa8ff; } #gearCard .ln.mod.dim { color: #53708f; }
+#gearCard .ln.mana { color: #8fb8e8; font-size: 12px; line-height: 1.4; }   /* (mana in plain terms: what a piece's MP comes to, a minute of a fight) */
 #gearCard .ln .cmp { margin-left: auto; font-size: 10.5px; } #gearCard .ln .cmp.u { color: #8fe07a; } #gearCard .ln .cmp.d { color: #ff7a66; } #gearCard .ln .cmp.z { color: #5d566a; }
 #gearCard .note { font-size: 10px; color: #c89a60; margin-top: 6px; }
 #gearCard .note.bad { color: #ff7a66; }
@@ -408,6 +409,16 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
     const lines = [...Object.entries(it.st).map(([k, v]) => `<div class="ln"><span class="k">${STAT_LABEL[k]}</span><b>${fmt(k, v)}</b>${cmpCell(k)}</div>`),
       ...(it.aff || []).map(([k, v]) => `<div class="ln aff"><span class="k">${STAT_LABEL[k]}</span><b>${fmt(k, v)}</b>${cmp && !(k in it.st) ? cmpCell(k) : ''}</div>`)];
     if (cmp) for (const k of Object.keys(cmp)) if (!(k in it.st) && !(it.aff || []).some((a) => a[0] === k) && cmp[k]) lines.push(`<div class="ln"><span class="k">${STAT_LABEL[k]}</span><b style="color:#5d566a">—</b>${cmpCell(k)}</div>`);
+    // mana in plain terms (the owner, 2026-11-15, mana's step 2): what a piece's MP and MP regen come to for the member who'd
+    // wear it, a minute of a fight, and in casts of their main ability (a healer's heal, else the first in play)
+    { const wm = wearer || m, dmp = cmp ? cmp.mp || 0 : st.mp || 0, dmpr = cmp ? cmp.mpr || 0 : st.mpr || 0;
+      if (wm && !isUsable(it) && (dmp || dmpr)) {
+        const play = inPlay(wm, S.trials).filter((a) => autocastOn(wm, a.id)), A = play.find((a) => HEAL_IDS.includes(a.id)) || play[0];
+        const cost = A ? Math.max(1, rankCost(A, rankOf(wm, A.id)) - abilityMods(wm, A.name).cost) : 0, perMin = Math.round(dmpr * 60), sg = (v) => (v > 0 ? '+' : '−');
+        const casts = cost && perMin ? Math.round((Math.abs(perMin) / cost) * 10) / 10 : 0;
+        const bits = [perMin ? `${sg(perMin)}${Math.abs(perMin)} MP a minute` : '', dmp ? `${sg(dmp)}${Math.abs(dmp)} MP to the pool` : ''].filter(Boolean).join(', ');
+        lines.push(`<div class="ln mana">Mana${cmp ? '' : ' while worn'}: ${bits}${casts >= 0.5 ? ` · about ${casts} ${perMin > 0 ? 'more' : 'fewer'} ${esc(A.name)} a minute` : ''}${wm !== m ? ` (${esc(wm.name)})` : ''}</div>`);
+      } }
     if (it.mod) { const mine = wearer && it.mod.ab === ABILITY_OF[wearer.cls]; lines.push(`<div class="ln mod${mine ? '' : ' dim'}">◆ ${modText(it.mod)}${mine ? '' : ' (not this class)'}</div>`); }
     const clsName = classNames(B);
     let warn = '';
