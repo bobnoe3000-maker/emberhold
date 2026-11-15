@@ -4,15 +4,31 @@
 // boss falls (won), the company is wiped (lost) or the time runs out. Prints, per seed: won, minutes, rooms won, the
 // hero's lowest HP, downs, and what was found; then the share won, the median time and the gear a run found.
 //
-//   node tools/balance/raid.mjs <site> <heroLv> [seeds] [--hero cls] [--seats any,any] [--mins 60] [--src dir]
+//   node tools/balance/raid.mjs <site> <heroLv> [seeds] [--hero cls] [--seats any,any] [--mins 60] [--gear rarity+N] [--src dir]
+// --gear common+1 | fine+3 | rare+5 …: the hero's and both stand-ins' worn kit made again at that rarity and the smith's +N,
+//   at their level, each piece its own base with the traits a drop of that rarity carries (Fine one, Rare two and a Rare's
+//   modifier on the class's ability), drawn from a stream of their own (the owner, 2026-11-15, asked whether the balance
+//   runs allow for upgraded gear). Default: as the raid builds them, its grade's (rivals.js GRADES.seasoned: Common +1)
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 
 const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(k); if (i < 0) return d; const v = args[i + 1]; args.splice(i, 2); return v; };
 const SRC = path.resolve(opt('--src', path.resolve(import.meta.dirname, '../../src')));
-const HERO = opt('--hero', 'fighter'), SEATS = opt('--seats', 'any,any').split(','), MINS = +opt('--mins', 60);
+const GEAR = opt('--gear', ''), HERO = opt('--hero', 'fighter'), SEATS = opt('--seats', 'any,any').split(','), MINS = +opt('--mins', 60);
 const load = (f) => import(pathToFileURL(path.join(SRC, f)).href);
-const { createSim } = await load('sim/core.js'), { statsFor } = await load('sim/party.js');
+const { createSim } = await load('sim/core.js'), { statsFor } = await load('sim/party.js'), items = await load('sim/items.js'), { mulberry32 } = await load('sim/rng.js');
+const [GR, GU] = GEAR ? [GEAR.split('+')[0], +(GEAR.split('+')[1] || 0)] : [null, 0];
+if (GR && !items.RARITIES.includes(GR)) throw new Error(`--gear: a rarity of ${items.RARITIES.join(', ')}, then +N`);
+/** every worn piece made again at --gear's rarity and +N (its base and item level kept) */
+function rekit(m, rng) {
+  for (const [slot, it] of Object.entries(m.gear || {})) {
+    if (!it || items.isUsable?.(it)) continue;
+    const n = GR === 'rare' ? 2 : GR === 'fine' ? 1 : 0, aff = []; for (let i = 0; i < n; i++) aff.push(items.rollAffix(rng, it.ilv, aff.map((a) => a[0])));
+    const mod = GR === 'rare' ? { ab: items.ABILITY_OF[m.cls], k: rng() < 0.5 ? 'cost' : 'power', v: 0 } : null; if (mod) mod.v = mod.k === 'cost' ? 3 : 0.15;
+    const x = items.makeItem(it.base, it.ilv, GR, { uid: it.uid, aff, mod }); if (GU) x.up = GU; m.gear[slot] = x;
+  }
+  m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp;
+}
 const attrs = await load('sim/attributes.js'), { makeRival } = await load('sim/rivals.js'), { RAID } = await load('sim/raid.js'), { LANDS } = await load('sim/regions.js'), { QS } = await load('sim/quests.js');
 const SITE = args[0] || 'wickham_keep', HL = +(args[1] || 6), N = +(args[2] || 6);
 
@@ -32,6 +48,7 @@ for (let s = 0; s < N; s++) {
   sim.bus.on('shrineOffer', (o) => { if (o.will !== 'none') sim.commands.push({ type: 'useShrine', tx: o.tx, ty: o.ty }); });
   sim.commands.push({ type: 'raidOut', site: SITE, seats: SEATS }); sim.tick();
   if (!sim.raid) { console.log(`seed ${s}: refused`); continue; }
+  if (GR) { const rng = mulberry32((seed ^ 0x6a09e667) >>> 0); for (const m of S.party) rekit(m, rng); }
   const t0 = S.t; let stuck = 0, lx = 0, ly = 0;
   while (!end && S.t - t0 < MINS * 60) {
     const p = S.player, b = sim.battle;
@@ -53,4 +70,4 @@ for (let s = 0; s < N; s++) {
 for (const r of rows) console.log(`seed ${r.seed}: ${r.why.padEnd(5)} ${String(r.mins).padStart(5)} min · rooms ${r.rooms}${r.depth !== '' ? ` (floor ${r.depth + 1})` : ''} · low ${r.low} % · downs ${r.downs} · found C${r.found.common} F${r.found.fine} R${r.found.rare} H${r.found.heirloom}${r.coffer ? ` · coffer ${r.coffer}` : ''}`);
 const won = rows.filter((r) => r.won), med = (a) => { const b = [...a].sort((x, y) => x - y); return b.length ? b[Math.floor(b.length / 2)] : 0; };
 const g = (k) => (rows.reduce((n, r) => n + r.found[k], 0) / Math.max(1, rows.length)).toFixed(2);
-console.log(`${SITE} · a level-${HL} ${HERO} with ${SEATS.join(' + ')}: won ${won.length}/${rows.length} · median ${med(won.map((r) => r.mins))} min · a run found C${g('common')} F${g('fine')} R${g('rare')} (before its coffer)`);
+console.log(`${SITE} · a level-${HL} ${HERO} with ${SEATS.join(' + ')}${GR ? ` in ${GR} +${GU}` : ''}: won ${won.length}/${rows.length} · median ${med(won.map((r) => r.mins))} min · a run found C${g('common')} F${g('fine')} R${g('rare')} (before its coffer)`);
