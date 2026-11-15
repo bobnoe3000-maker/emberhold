@@ -49,10 +49,10 @@ export const MODES = Object.freeze({
   bout: Object.freeze(/** @type {Mode} */ ({ kind: 'bout', ...SLOT, death: 'bout', fallen: false, boon: false, get heal() { return BOUT.heal; }, get dmg() { return BOUT.dmg; } })),
   // a raid (raid.js, GDD §18 v1.97): not the story's and not the count's, no cost to a wipe, nobody Fallen, the boss always
   // home; a room won after ten waves (six before GDD v1.108, the owner: "now 6 waves to drop a gate it should be 10") on
-  // +5 % a wave (+45 % at the tenth; it was +10 % to +50 % at the sixth, which over ten would have turned back to nothing at
-  // the seventh); every foe twice the HP and 15 % harder (v1.108, the owner: "double the hp of all enemies, and they attack
+  // +1/9 a wave, +100 % at the tenth (GDD v1.109, the owner: "should also go up to 100% npc increase difficulty, not tap out
+  // below 100%": v1.108's +5 % a wave stopped at +45 %), as a slot's room climbs to +100 % over its twenty; every foe twice the HP and 15 % harder (v1.108, the owner: "double the hp of all enemies, and they attack
   // 15% harder"); a kill pays 1.25×; the loot at a raid's odds
-  raid: Object.freeze(/** @type {Mode} */ ({ kind: 'raid', ...SLOT, story: false, count: false, death: 'none', fallen: false, bossHome: true, xp: 1.25, gold: 1.25, waves: 10, foeHp: 2, foeAtk: 1.15, tide: Object.freeze({ step: 0.05, cap: 0.5 }), loot: 'raid' })),
+  raid: Object.freeze(/** @type {Mode} */ ({ kind: 'raid', ...SLOT, story: false, count: false, death: 'none', fallen: false, bossHome: true, xp: 1.25, gold: 1.25, waves: 10, foeHp: 2, foeAtk: 1.15, tide: Object.freeze({ step: 1 / 9, cap: 1.0 }), loot: 'raid' })),
   // a region boss's event (ring.js, GDD §19 v1.105; shared-play-rules decisions 3–5): not the story's or the count's, no
   // wipe (a Downed member gets up at the edge, RING.respawn), nobody Fallen, no boon carried in, the boss always home, no
   // XP, coin or loot in the fight (the pay is the tier's at the end)

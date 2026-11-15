@@ -112,7 +112,9 @@ test('a room holds its ten waves and is won, quiet for the run; the gate drops f
 });
 
 test('a run played to its end: won, its coffer paid, the boss not the story\'s, back where it set out', () => {
-  const s = company(3), ev = events(s);
+  // (two levels over the band's top: since GDD v1.108–109 (twice the HP, 15 % harder, +100 % at the tenth wave) a raid is
+  // a dungeon you've outgrown; at its top the right company wins a quarter of the Barrows' runs, two over three in four)
+  const s = company(5), ev = events(s);
   const gold0 = s.state.counters.gold, cin0 = s.state.counters.embers || 0, bosses = { ...s.state.bosses }, H = s.state.party[0];
   const hp0 = H.hp, home = s.state.party.map((m) => m.id);
   let named = 0; s.bus.on('loot', (l) => { if (s.raid && l.best && s.state.party.some((m) => m.standin && m.id === l.best)) named++; });   // (an upgrade never offered a stand-in)
@@ -120,7 +122,7 @@ test('a run played to its end: won, its coffer paid, the boss not the story\'s, 
   go(s, 'barrows');
   play(s);
   assert.equal(ev.end.length, 1); const e = ev.end[0];
-  assert.equal(e.won, true, 'the right company at the band\'s top wins it');
+  assert.equal(e.won, true, 'the right company two levels over the band\'s top wins it');
   assert.ok(e.coffer && e.coffer.gold === RAID.cofferGold * 3 && e.coffer.cinders === RAID.cofferCinders && e.coffer.item);
   assert.ok(['fine', 'rare', 'heirloom'].includes(e.coffer.item.r));
   assert.ok(s.state.counters.gold >= gold0 + e.coffer.gold && (s.state.counters.embers || 0) >= cin0 + RAID.cofferCinders);
@@ -218,6 +220,8 @@ test('a raid runs two floors at most: a longer dungeon\'s last two; its way up l
 
 test('a raid\'s foes: twice the HP and 15 % harder (GDD §18 v1.108); every other kind of play as it was', () => {
   assert.equal(MODES.raid.foeHp, 2); assert.equal(MODES.raid.foeAtk, 1.15); assert.equal(MODES.raid.waves, 10);
+  // the climb: +100 % at the tenth wave (v1.109), never turned back before it (nine steps from the first wave's nothing)
+  { const T = MODES.raid.tide; let t = 0; for (let w = 2; w <= MODES.raid.waves; w++) { assert.ok(t < T.cap - 1e-9, `still climbing before wave ${w}`); t = Math.min(T.cap, t + T.step); } assert.ok(Math.abs(t - 1) < 1e-9, `+100 % at the tenth: ${t}`); }
   for (const k of ['slot', 'camp', 'tower', 'bout', 'event']) { assert.equal(MODES[k].foeHp, 1, k); assert.equal(MODES[k].foeAtk, 1, k); }
   // in a run: a first-wave foe's HP is at least twice its kind's at its level (the tide is nothing yet; the premium only adds)
   const s = company(3); go(s, 'barrows');
