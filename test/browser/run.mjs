@@ -330,6 +330,25 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await b.close();
   }
 }
+// 5a. the Kingstone's hour line (GDD §19) only out in the open (the owner, 2026-11-15, from a raid: "The kingstone banner
+// is showing in a raid and hiding other banners"): on the Fens' overland in its window, never in a dungeon
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const seen = {};
+    for (const [k, q] of [['overland', 'scene=overland&region=fens'], ['dungeon', 'scene=dungeon&site=barrows']]) {
+      const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+      const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+      await p.goto(`${base}/index.html?dev&notitle&ring=on&${q}`); await p.waitForFunction(() => !!globalThis.__sim, null, { timeout: 60000 * SLOW });
+      await p.evaluate(() => { const s = globalThis.__sim; s.state.created = true; for (const m of s.state.party) m.level = 15; });
+      await p.waitForTimeout(2500);
+      seen[k] = { on: await p.evaluate(() => document.getElementById('ringLine').classList.contains('on')), errs: errs.length };
+      await ctx.close();
+    }
+    await b.close();
+    check('the Kingstone\'s hour line: on the Fens\' overland in its window, never in a dungeon (a raid\'s or a hall\'s banners hold that place)', seen.overland.on && !seen.dungeon.on && !seen.overland.errs && !seen.dungeon.errs, JSON.stringify(seen));
+  }
+}
 // 5b. the first-open cards (docs/first-steps-plan.md §3; the flows run with them off): each service's card the first time
 // it opens, ringing its row, and none the second time
 {

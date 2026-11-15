@@ -128,9 +128,12 @@ export function createRing({ sim, params, dev = false }) {
       bar.classList.add('on');
     } else bar.classList.remove('on');
     // the hour's line and the way in
-    const c = clock(), band = H && H.level >= RING.minLevel && S.created;
+    // only out in the open and not in a fight (the owner, 2026-11-15, from a raid: "The kingstone banner is showing in a raid
+    // and hiding other banners"): in a dungeon, a raid, the Bowl or any fight, the room's own banners (the raid's, a hall's
+    // boss bar, the wave pill) hold that place, and the stones are a walk away anyway
+    const c = clock(), band = H && H.level >= RING.minLevel && S.created, open = w.kind !== 'dungeon' && !w.arena && !sim.raid && !sim.battle;
     let txt = '';
-    if (band && !inRing) {
+    if (band && !inRing && open) {
       if (c.open) txt = paidFor(S, c.id) ? `The Kingstone stands · <b>stood against this hour</b>` : `The Kingstone stands at the old stones · <b>${mmss(c.left)}</b> left`;
       else if (c.soon) txt = `The Kingstone stands at ${c.at} · <b>${mmss(c.until)}</b>`;
       if (c.soon && announced !== c.id) { announced = c.id; say(`The old stones are stirring · the Kingstone stands at ${c.at}`, 3600); }
