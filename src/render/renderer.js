@@ -609,6 +609,30 @@ export function createRenderer(canvas, sim, input) {
   // game's own not drawn)
   /** @type {null | ((now: number) => { only?: boolean, figures: { actor: string, x: number, y: number, dir?: number, clip?: string, t?: number, at?: number, seed?: number, team?: number }[] })} */
   let stageFn = null;
+  // Melee spread (the owner, 2026-11-15: "melee combats still sit very close - put a little bit more default buffer/
+  // distance between - there should be no real change to combat effects or outcomes.. its just visual distance"): a
+  // fighter and the foes at its blade are DRAWN apart, each pushed back along the line between them by up to SPREAD_K a
+  // tile while they stand within SPREAD_R (the sim keeps them ~3.4 apart: drawn ~4.2), eased in and out, the sum held
+  // to SPREAD_MAX. Presentation only: the sim's places, reaches and blows are untouched (WeakMap by unit, never on it).
+  const SPREAD_R = 4.2, SPREAD_K = 0.4, SPREAD_MAX = 0.6, spread = new WeakMap(); let spreadT = 0;
+  /** this frame's spread: the party's side (u, x, y) against the foes' @param {any[]} ours @param {any[]} theirs @param {number} now */
+  function spreadFrame(ours, theirs, now) {
+    const dt = spreadT ? Math.min(0.1, Math.max(0, (now - spreadT) / 1000)) : 0.016; spreadT = now;
+    const want = new Map();
+    for (const a of ours) for (const b of theirs) {
+      const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy); if (d >= SPREAD_R || d < 0.01) continue;
+      const k = Math.min(SPREAD_K, (SPREAD_R - d) * 0.5), ux = dx / d, uy = dy / d;
+      const wa = want.get(a.u) || { x: 0, y: 0 }, wb = want.get(b.u) || { x: 0, y: 0 };
+      wa.x -= ux * k; wa.y -= uy * k; wb.x += ux * k; wb.y += uy * k; want.set(a.u, wa); want.set(b.u, wb);
+    }
+    const ease = 1 - Math.exp(-dt * 6);
+    for (const q of [...ours, ...theirs]) {
+      const w = want.get(q.u) || { x: 0, y: 0 }, l = Math.hypot(w.x, w.y); if (l > SPREAD_MAX) { w.x *= SPREAD_MAX / l; w.y *= SPREAD_MAX / l; }
+      const o = spread.get(q.u) || { x: 0, y: 0 }; o.x += (w.x - o.x) * ease; o.y += (w.y - o.y) * ease; spread.set(q.u, o);
+    }
+  }
+  /** a unit's drawn offset from where the sim has it (0 when it has none) @param {any} u */
+  const spreadOf = (u) => (u && spread.get(u)) || { x: 0, y: 0 };
   let lastCam = { ox: 0, oy: 0, rx: 0, ry: 0 }, lastDrawn = 0;   // (lastDrawn: the frame's clock, so npcAt knows a drawn position is current)
   /** @type {((draws: any[], view: { hx: number, hy: number, nvw: number, ix: number, iy: number }) => void) | null} */
   let heard = null;                                   // a listener for each frame's figures (the sound); reads, never writes
@@ -641,13 +665,23 @@ export function createRenderer(canvas, sim, input) {
     const lerp = (u, k) => (u['p' + k] === undefined ? u[k] : u['p' + k] + (u[k] - u['p' + k]) * alpha);   // between 20 Hz steps
     const lookOf = (u, fade = 0) => ({ flash: u.flash > 0 ? 0.32 : 0, fade });
     const GHOST = { ghost: 1 };
+    // the melee spread (above): who stands at whose blade this frame, drawn apart a little
+    if (sim.battle) {
+      const ours = [], theirs = [], out = (u) => !u || u.down || u.dead || u.hp <= 0 || u.x === undefined;
+      if (!out(H) && !hLeap) ours.push({ u: H, x: ix, y: iy });
+      if (!(sim.battle.bout && sim.battle.bout.alone)) party.slice(1).forEach((m) => { if (!out(m) && !leapOf(m, now) && !moveOf(m, now)) ours.push({ u: m, x: lerp(m, 'x'), y: lerp(m, 'y') }); });
+      for (const m of sim.world.allies || []) if (!out(m)) ours.push({ u: m, x: lerp(m, 'x'), y: lerp(m, 'y') });
+      for (const e of sim.world.enemies || []) if (!out(e) && e.kind !== 'lantern') theirs.push({ u: e, x: lerp(e, 'x'), y: lerp(e, 'y') });
+      spreadFrame(ours, theirs, now);
+    } else spreadT = 0;
     // the hero
     const hAtl = H.actor && H.actor !== 'hero_knight' ? memberAtlas(H, H.actor) : heroAtlas;
     if (hAtl) {                                       // (until its atlas is in, the hero isn't drawn, as a companion isn't: the old paper doll read as a pink stand-in)
       const heroAtlas = hAtl;
       const tn = talkingTo && !p.moving && (sim.world.npcs || []).find((n) => n.id === talkingTo);   // in a conversation: face them
       const a = pickAnim(H, heroAtlas, { now, x: ix, y: iy, moving: p.moving && !hLeap, faceX: hLeap ? hLeap.fx : tn ? tn.x - ix : H.fx, faceY: hLeap ? hLeap.fy : tn ? tn.y - iy : H.fy, facing: H.act > 0 || !!tn || !!hLeap, dead: H.down, stride: STRIDE.hero });
-      draws.push({ d: ix + iy + 0.01, fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy, look: lookOf(H, H.down ? 0.35 : hLeap && hLeap.fade ? hLeap.fade : 0), team: 1, atl: heroAtlas, a, u: H, ...(hLeap ? { air: hLeap.lift, mv: hLeap.pose } : {}) });
+      const hs = hLeap ? { x: 0, y: 0 } : spreadOf(H), HP = hs.x || hs.y ? project(ix + hs.x, iy + hs.y, pz) : P;   // (drawn apart at a blade; the camera stays on the sim's place)
+      draws.push({ d: ix + hs.x + iy + hs.y + 0.01, fx: ox + HP.sx, fy: oy + HP.sy, h: pz * ZH, k: ix + hs.x + iy + hs.y, look: lookOf(H, H.down ? 0.35 : hLeap && hLeap.fade ? hLeap.fade : 0), team: 1, atl: heroAtlas, a, u: H, ...(hLeap ? { air: hLeap.lift, mv: hLeap.pose } : {}) });
     }
     // companions: their sim positions (they follow you, or fight on their own). Not in a bout in the Bowl the hero fights
     // alone: they're off the sand, as the rival's own company is (the owner, 2026-11-14: "Individual fights we should hide
@@ -657,7 +691,7 @@ export function createRenderer(canvas, sim, input) {
       if (benched) return;
       const atl = memberAtlas(m, m.actor || MEMBER_LOOK[m.cls]); if (!atl || m.x === undefined) return;
       const lp = leapOf(m, now) || moveOf(m, now);                 // (a Vault in flight: render/leap.js; a hop, a dash: render/moves.js)
-      const mx = lp && lp.at ? lp.at.x : lerp(m, 'x'), my = lp && lp.at ? lp.at.y : lerp(m, 'y'), f = fol[i] || (fol[i] = {}); f.x = mx; f.y = my;
+      const ms = lp ? { x: 0, y: 0 } : spreadOf(m), mx = lp && lp.at ? lp.at.x : lerp(m, 'x') + ms.x, my = lp && lp.at ? lp.at.y : lerp(m, 'y') + ms.y, f = fol[i] || (fol[i] = {}); f.x = mx; f.y = my;
       const cz = heightAt(sim.world, Math.floor(mx), Math.floor(my)), cp = project(mx, my, cz);
       const a = pickAnim(m, atl, { now, x: mx, y: my, moving: m.moving && !lp, faceX: lp ? lp.fx : m.fx, faceY: lp ? lp.fy : m.fy, facing: m.act > 0 || !m.moving || !!lp, dead: m.down, sit: m.sitting && !m.moving, stride: STRIDE.hero, seed: 0.37 * (i + 1) });
       const up = raisedAt.get(m), rl = raisedLook(up === undefined ? undefined : (now - up) / 1000);   // just raised (fx.js)
@@ -668,7 +702,7 @@ export function createRenderer(canvas, sim, input) {
     // kit, as the Bowl's rivals are drawn but ringed as friends
     for (const m of sim.world.allies || []) {
       const atl = memberAtlas(m, m.actor || MEMBER_LOOK[m.cls]); if (!atl || m.x === undefined) continue;
-      const rx = lerp(m, 'x'), ry = lerp(m, 'y'), rz = heightAt(sim.world, Math.floor(rx), Math.floor(ry)), rp = project(rx, ry, rz);
+      const as = spreadOf(m), rx = lerp(m, 'x') + as.x, ry = lerp(m, 'y') + as.y, rz = heightAt(sim.world, Math.floor(rx), Math.floor(ry)), rp = project(rx, ry, rz);
       const a = pickAnim(m, atl, { now, x: rx, y: ry, moving: m.moving, faceX: m.fx, faceY: m.fy, facing: m.act > 0 || !m.moving, dead: m.down, stride: STRIDE.hero, seed: (m.id * 0.37) % 1 });
       draws.push({ d: rx + ry, fx: ox + rp.sx, fy: oy + rp.sy, h: rz * ZH, k: rx + ry, look: lookOf(m, m.down ? 0.35 : 0), team: m.down ? 0 : 1, atl, a, uid: m.id, u: m });
     }
@@ -733,7 +767,7 @@ export function createRenderer(canvas, sim, input) {
       }
       if (e.rival) {                                                              // a rival company's member (the Bowl, battle.js startBout): a person, its own look and kit
         const atl = memberAtlas(e, e.actor || MEMBER_LOOK[e.cls]); if (!atl) continue;
-        const rx = lerp(e, 'x'), ry = lerp(e, 'y'), rz = heightAt(sim.world, Math.floor(rx), Math.floor(ry)), rp = project(rx, ry, rz);
+        const es = spreadOf(e), rx = lerp(e, 'x') + es.x, ry = lerp(e, 'y') + es.y, rz = heightAt(sim.world, Math.floor(rx), Math.floor(ry)), rp = project(rx, ry, rz);
         const a = pickAnim(e, atl, { now, x: rx, y: ry, moving: e.moving, faceX: e.fx, faceY: e.fy, facing: e.act > 0 || !e.moving, dead: e.down, stride: STRIDE.hero, seed: (e.id * 0.37) % 1 });
         draws.push({ d: rx + ry, fx: ox + rp.sx, fy: oy + rp.sy, h: rz * ZH, k: rx + ry, look: lookOf(e, e.down ? 0.35 : 0), team: e.down ? 0 : 2, atl, a, uid: e.id, u: e, foe: true });
         continue;
@@ -741,7 +775,7 @@ export function createRenderer(canvas, sim, input) {
       const skelAtlas = enemyAtlas(e.kind);
       if (!skelAtlas) continue;
       const undead = UNDEAD_LOOK.has(skelAtlas.name);
-      const exi = lerp(e, 'x'), eyi = lerp(e, 'y');
+      const es = spreadOf(e), exi = lerp(e, 'x') + es.x, eyi = lerp(e, 'y') + es.y;   // (the melee spread: drawn apart from the blade at it)
       const ez = heightAt(sim.world, Math.floor(exi), Math.floor(eyi));
       const ep = project(exi, eyi, ez), ex = ox + ep.sx, ey = oy + ep.sy;
       if (ex < -60 || ex > nvw + 60 || ey < -40 || ey > nvh + 120) continue;      // offscreen
@@ -1366,7 +1400,7 @@ export function createRenderer(canvas, sim, input) {
       const w = sim.world; if (!w.enemies || !w.enemies.length) return null;
       const dpr = vw / window.innerWidth, nx = (sxPx * dpr) / S, ny = (syPx * dpr) / S;
       let best = null, bd = 26;
-      for (const e of w.enemies) { if (e.hp <= 0) continue; const z = heightAt(w, Math.floor(e.x), Math.floor(e.y)), P = project(e.x, e.y, z);
+      for (const e of w.enemies) { if (e.hp <= 0) continue; const o = spreadOf(e), z = heightAt(w, Math.floor(e.x), Math.floor(e.y)), P = project(e.x + o.x, e.y + o.y, z);   // (where it's drawn: the melee spread)
         const d = Math.hypot(lastCam.rx + P.sx - nx, lastCam.ry + P.sy - 24 - ny); if (d < bd) { bd = d; best = e; } }
       return best;
     },
