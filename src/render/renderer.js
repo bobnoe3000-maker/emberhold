@@ -28,7 +28,7 @@ import { createSkillFX, LUM_LOOKS, LUM_HOLDS } from './skillfx.js';
 import { siteOpen, bossAt } from '../sim/sites.js';
 import { shrineKind } from '../sim/shrines.js';
 import { WARDENS } from '../sim/tower.js';
-import { familyOf, BOSSES, halved, bossAway, BOSS_BACK } from '../sim/battle.js';
+import { familyOf, BOSSES, halved, roomBossAway, BOSS_BACK } from '../sim/battle.js';
 import { DEATH_T } from '../sim/battle.js';
 import { statsFor } from '../sim/party.js';
 import { shotOf, abilityMods } from '../sim/items.js';
@@ -1140,7 +1140,7 @@ export function createRenderer(canvas, sim, input) {
   sim.bus.on('bossFlood', ({ level }) => { banner = level ? { text: 'A bell · the water rises', sub: bossLine.bells[1], until: clock() + 2000, small: true } : { text: 'The water goes down', until: clock() + 1800, small: true }; });
   sim.bus.on('bossKindle', ({ id }) => { banner = { text: `${bossName(id)} kindles the dead`, sub: bossLine.kindle[1], until: clock() + 2000, small: true }; });
   sim.bus.on('bossDown', (e) => { if (e.x !== undefined) jolt('bossDown', e.x, e.y); else jolt('bossDown', sim.state.player.x, sim.state.player.y); });
-  sim.bus.on('bossDown', ({ name, first, tower, raid }) => { if (raid) { banner = { text: `${name} falls`, until: clock() + 2600 }; return; } const back = `the hall stands empty · back in ${Math.round(BOSS_BACK / 60)} min`; banner = { text: `${name} falls`, sub: tower ? `a landing · the satchel is banked${first ? ' · something was left behind' : ''}` : first ? `${back} · something was left behind` : back, until: clock() + 3200 }; });
+  sim.bus.on('bossDown', ({ name, first, tower, raid }) => { if (raid) { banner = { text: `${name} falls`, until: clock() + 2600 }; return; } const back = `back in ${Math.round(BOSS_BACK / 60)} min · the room fights on`; banner = { text: `${name} falls`, sub: tower ? `a landing · the satchel is banked${first ? ' · something was left behind' : ''}` : first ? `${back} · something was left behind` : back, until: clock() + 3200 }; });
   sim.bus.on('tideTurned', () => { banner = { text: 'The room falls back', sub: 'the tide turns: the next climb starts here', until: clock() + 2200, small: true }; });
   sim.bus.on('battle', (b) => { if (b.on && sim.raid) { const R = sim.raid; banner = { text: sim.battle && sim.battle.boss ? bossName(sim.battle.boss) : `Level ${b.level} room`, sub: sim.battle && sim.battle.boss ? 'a raid' : gateRoom() ? `a raid · hold ${R.waves} waves to drop the gate` : `a raid · hold ${R.waves} waves`, until: clock() + 1800 }; return; }
     if (b.on) banner = sim.world.site === 'mere_tower' ? { text: 'The Mere Tower', sub: `the stair hall · wave ${(sim.state.tower || {}).wave + 1}`, until: clock() + 1600 } : { text: `Level ${b.level} room`, sub: gateRoom() ? `${dangerWord(b.level)} · hold ${sim.world.gate.waves} waves to drop the gate` : dangerWord(b.level), until: clock() + (gateRoom() ? 2200 : 1100) }; });
@@ -1169,13 +1169,12 @@ export function createRenderer(canvas, sim, input) {
   const DANGER = [['#f0c880', 'even match'], ['#ffc060', 'a step up'], ['#ff9a50', 'dangerous'], ['#ff5a4a', 'deadly']];
   const dangerOf = (lv) => DANGER[Math.max(0, Math.min(3, lv - sim.state.party[0].level))];
   const dangerColor = (lv) => dangerOf(lv)[0], dangerWord = (lv) => dangerOf(lv)[1];
-  // a boss away (sim battle.js bossAway, GDD v1.73): standing in his hall, its pill says who holds it and when he's back,
-  // a game-time clock (it stands still while the game is closed)
+  // a boss away (sim battle.js roomBossAway, GDD v1.73): in his room, who holds it and when he's back, a game-time clock (it
+  // stands still while the game is closed); under the wave pill while the room fights on (v1.117), else a pill of its own
   function hallAway() {
-    const w = sim.world; if (!w || w.kind !== 'dungeon' || !w.level || !w.level.descentRoom) return null;
-    const pl = sim.state.player, c = w.level.cells.get(Math.floor(pl.x) + ',' + Math.floor(pl.y));
-    if (!c || c.room !== w.level.descentRoom.id) return null;
-    const a = bossAway(sim.state, w.site, w.depth); if (!a) return null;
+    const w = sim.world; if (!w || w.kind !== 'dungeon' || !w.level || sim.raid) return null;   // (a raid's bosses are always home)
+    const pl = sim.state.player, c = sim.battle ? null : w.level.cells.get(Math.floor(pl.x) + ',' + Math.floor(pl.y));
+    const a = roomBossAway(sim.state, w, sim.battle ? sim.battle.room : c ? c.room : -1); if (!a) return null;
     const s = Math.ceil(a.left), m = Math.floor(s / 60);
     return { name: BOSSES[a.id].name, clock: `${m}:${String(s % 60).padStart(2, '0')}` };
   }
@@ -1188,8 +1187,6 @@ export function createRenderer(canvas, sim, input) {
     octx.fillStyle = 'rgba(14,10,18,0.82)'; octx.strokeStyle = dc; octx.lineWidth = Math.max(1, k);
     octx.beginPath(); octx.roundRect(px - tw / 2, py - 13 * k, tw, 19 * k, 9 * k); octx.fill(); octx.stroke();
     octx.fillStyle = dc; octx.fillText(txt, px, py + 1 * k);
-    octx.font = `italic ${Math.round(11 * k)}px Georgia, 'Times New Roman', serif`; octx.fillStyle = 'rgba(220,206,186,0.85)';
-    octx.fillText('the hall stands empty till then', px, py + 19 * k);
   }
   function drawBattle(ox, oy, ix, iy, pz, now) {
     const k = vw / window.innerWidth, w = sim.world, b = sim.battle, party = sim.state.party;
@@ -1207,14 +1204,14 @@ export function createRenderer(canvas, sim, input) {
       // …and, from the second wave, how far the tide has lifted the foes (GDD §7.1: each wave of a visit is tougher)
       const T = b.tower && sim.state.tower, sat = T ? `  ·  ${T.satchel.gold}g ${T.satchel.cinders}✦` : '';   // (the Mere Tower: its wave, its strength, the satchel at risk)
       const G = gateRoom() ? sim.world.gate : null, held = G ? Math.min(G.waves, b.between ? b.wave : Math.max(0, b.wave - 1)) : 0;   // (the gate: waves held this visit)
-      const A = b.quiet && !T ? hallAway() : null;   // (the boss just fell: his hall's timer, v1.73)
+      const A = !T && !b.boss ? hallAway() : null;   // (his room's boss away: his timer under the pill, v1.73 / v1.117)
       const R = sim.raid;   // (a raid: its own count, raid.js)
       // the party's endurance (the owner, 2026-11-15, mana's step 2): the heals its healers can still pay for, ♥ ×N, while a
       // wave is on; nothing when nobody has a heal in play (skills.js healsLeft)
       let hl = -1; for (const m of sim.state.party) { if (m.down || m.fallen) continue; const n = healsLeft(m, sim.state.trials, (q, a) => abilityMods(q, a.name).cost); if (n >= 0) hl = Math.max(0, hl) + n; }
       const heals = hl >= 0 && !b.quiet && !b.between ? `  ·  ♥ ×${hl}` : '';
       const txt = R ? (b.boss ? `RAID  ·  ${bossName(b.boss).toUpperCase()}` : b.quiet ? `RAID  ·  ROOM WON  ·  ${R.rooms} WON` : `RAID  ·  ROOM LV ${b.level}  ·  WAVE ${b.wave}/${R.waves}${b.tide > 0.005 ? `  ·  FOES +${Math.round(b.tide * 100)}%` : ''}${heals}`)
-        : A ? `${A.name.toUpperCase()}  ·  BACK IN ${A.clock}` : `${T ? 'MERE TOWER' : `ROOM LV ${b.level}`}  ·  WAVE ${b.wave}${b.tide > 0.005 ? `  ·  FOES +${Math.round(b.tide * 100)}%` : ''}${G ? `  ·  GATE ${held}/${G.waves}` : ''}${sat}${heals}`, dc = T ? '#c8b0ff' : dangerColor(b.level);
+        : `${T ? 'MERE TOWER' : `ROOM LV ${b.level}`}  ·  WAVE ${b.wave}${b.tide > 0.005 ? `  ·  FOES +${Math.round(b.tide * 100)}%` : ''}${G ? `  ·  GATE ${held}/${G.waves}` : ''}${sat}${heals}`, dc = T ? '#c8b0ff' : dangerColor(b.level);
       octx.font = `700 ${Math.round(11 * k)}px ui-monospace, Menlo, monospace`; octx.textAlign = 'center';
       // under the HUD row (hudB: the phone's safe area included), centred, but never under the minimap
       const tw = octx.measureText(txt).width + 18 * k, mmL = vw - (MM_CSS + 2 * MM_PAD + MM_RIGHT + safeR + 8) * k;
@@ -1226,6 +1223,12 @@ export function createRenderer(canvas, sim, input) {
       }
       // a boss's bar under the pill: its name, its health, and a shield while it's guarded (battle.js BOSSES)
       const boss = (w.enemies || []).find((e) => e.boss && e.hp > 0 && !e.dead);
+      if (A && !boss && !b.bout && !b.ring) {                // (or, while he's away, when he's back: the room fights on, v1.117)
+        const t2 = `${A.name}  ·  back in ${A.clock}`;
+        octx.font = `600 ${Math.round(12 * k)}px Georgia, 'Times New Roman', serif`;
+        octx.fillStyle = 'rgba(0,0,0,0.7)'; octx.fillText(t2, px + k, py + 21 * k + k);
+        octx.fillStyle = '#e8d8b8'; octx.fillText(t2, px, py + 21 * k);
+      }
       if (boss && !b.ring) {
         const bw = Math.min(vw * 0.38, 150 * k, 2 * (mmL - px)), bh = 7 * k, bx0 = px - bw / 2, by0 = py + 24 * k, f = boss.hp / boss.maxHp;   // (clear of the minimap on the right)
         const guarded = halved(boss, w.enemies || []);

@@ -150,7 +150,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const heroes = createHeroes({ state, bus, getWorld: () => world, seed: baseSeed, waiting: () => (raidOn ? raidOn.party.slice(1) : []) });   // (a raid: the company waiting is still paid at dawn)
   const dev = createDev({ state, bus });                  // the menu's Developer tools: they mark the game a dev game (dev.js)
   // room battles (battle.js): waves, party AI, damage, XP / gold, defeat → back to town
-  const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town', 'temple'), hallWanted: (site, d) => quests.wantsHall(site, d),
+  const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town', 'temple'),
     onDrop: (src, ilv, x, y) => dropHere(src, { ilv, x, y }),
     raidRun: () => raidOn, onRaidLost: () => leaveRaid('wipe'),
     ringHere: (c) => ringHeld(c), onRingReach: (c, i) => ringReach(c, i),

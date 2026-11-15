@@ -325,9 +325,11 @@ export const familyOf = (w, room) => {
   const S = siteOf(w.site); return FAMILIES[(S.families && S.families[w.depth || 0]) || S.family] || FAMILIES.ashbound;
 };
 // A boss away (GDD v1.73, the owner: "after the boss is defeated.. regular npcs can still spawn. Show the timer for when
-// the boss will reappear"): a boss put down is gone for BOSS_BACK seconds of game time (state.bossBack: id → state.t he's back),
-// and his hall stands empty meanwhile, no waves; then he holds it again. A story boss (`once`) comes back too: only his
-// first fall counts for the story (state.bosses, bossDown's `first`) and pays his heirloom.
+// the boss will reappear"): a boss put down is gone for BOSS_BACK seconds of game time (state.bossBack: id → state.t he's back).
+// His room fights on meanwhile as any room does, the floor's own foes in waves (v1.117, the owner, 2026-11-15: "Every Boss
+// room, when boss is defeated regular NPCs should still spawn"; it had stood empty), the waves going on straight after he
+// falls; his time up, his next wave is his again (spawnWave). A story boss (`once`) comes back too: only his first fall
+// counts for the story (state.bosses, bossDown's `first`) and pays his heirloom.
 export const BOSS_BACK = 30 * 60;
 /** the hall's boss while he's away: { id, left } (seconds), or null @param {any} state @param {string} site @param {number} depth */
 export function bossAway(state, site, depth) { return bossGone(state, site && bossAt(site, depth || 0)); }
@@ -335,6 +337,13 @@ export function bossAway(state, site, depth) { return bossGone(state, site && bo
 export function bossGone(state, id) {
   const at = id && state.bossBack ? state.bossBack[id] : 0;
   return id && at > state.t ? { id, left: at - state.t } : null;
+}
+/** a room's own boss while he's away (a floor's hall's, or a side room's: sideBoss): { id, left }, or null; the room's
+ *  timer (v1.117: the room fights on meanwhile) @param {any} state @param {any} w @param {number} room */
+export function roomBossAway(state, w, room) {
+  if (!w || w.kind !== 'dungeon' || !w.level || room === undefined || room < 0) return null;
+  const hall = !!w.level.descentRoom && w.level.descentRoom.id === room;
+  return bossGone(state, hall ? bossAt(w.site, w.depth || 0) : sideBoss(w, room));
 }
 /** the boss a side room holds (v1.102, the Fens authored: Brother Teague in his cell off the Drowned Abbey's cloister):
  *  an authored floor's offshoot names its own (plans.js `boss`); a floor's hall's is bossAt's. null for any other room
@@ -398,7 +407,7 @@ const COS_HALF = { 40: 0.9397, 60: 0.8660 };   // cos of half a fan's arc (detma
 // the mode's waves on its tide and is then won, quiet for the run (raidRoom); a hall's boss is always home; a kill pays
 // its xp and gold (stand-ins earn no XP: theirs isn't the player's); nobody is Fallen, and a wipe is onRaidLost, without
 // a wipe's cost (the owner: "no penalty for loss").
-export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat, onDrop = () => {}, moveHero, hallWanted = () => false, raidRun = () => /** @type {any} */ (null), onRaidLost = () => {},
+export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat, onDrop = () => {}, moveHero, raidRun = () => /** @type {any} */ (null), onRaidLost = () => {},
   ringHere = (/** @type {any} */ _c) => false, onRingReach = (/** @type {any} */ _c, /** @type {number} */ _i) => {} }) {   // (the Kingstone in the map: core.js ringNow, GDD §19)
   const mode = () => modeOf(battle, raidRun());   // (this fight's rules: modes.js)
   let rng = mulberry32(streamSeed(seed, 0xb477));
@@ -529,6 +538,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     };
     if (b.tower) { spawnTower(w, b, spot); return; }            // the Mere Tower's own waves (below)
     if (b.camp) { spawnCamp(w, b); return; }                     // a spawn point's band (below)
+    if (!b.boss && b.hallBoss && !raidRun() && !bossGone(state, b.hallBoss)) { b.boss = b.hallBoss; b.bossUp = false; }   // (his time up mid-visit: his wave next, v1.117)
     if (b.boss && !b.bossUp) {                                   // the hall opens with its boss and an escort (no tide yet)
       const B = BOSSES[b.boss], [bx, by] = spot();
       const boss = foe(w, b.boss, lvl, bx, by, 1 + PREMIUM * Math.max(0, lvl - 3), false, F, B);
@@ -626,10 +636,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     for (const m of state.party) { m.downs = 0; m.stood = 0; m.buff = null; m.ward = 0; }   // a new room visit
     const hall = w.level.descentRoom && w.level.descentRoom.id === room, bid = hall ? bossAt(w.site, w.depth || 0) : sideBoss(w, room);   // (a side room's own: Teague's cell)
     battle = { room, t0: state.t, lastBlow: null, level: (w.roomLevels && w.roomLevels.get(room)) || 1 + (w.depth || 0), wave: 0, lull: 1.2, cells, grid: { x0, y0, gw, gh, walk }, fields: new Map(),
-      tide: 0, boss: bid && (modeOf(null, raidRun()).bossHome || !bossGone(state, bid)) ? bid : null, bossUp: false, quiet: false, lastSlain: null,
+      tide: 0, boss: bid && (modeOf(null, raidRun()).bossHome || !bossGone(state, bid)) ? bid : null, hallBoss: bid || null, bossUp: false, quiet: false, lastSlain: null,
       hazards: [], flood: 0, edge: null, size: (w.level.rooms.find((r) => r.id === room) || {}).size || 'large' };       // the ground hazard (hazards.js); the room's size (SIZE_CAP)
     if (w.site === TOWER.site) {                                 // the Mere Tower's stair hall: its own climb, carried on where it was (tower.js)
-      const T = towerOf(state); Object.assign(battle, { tower: true, level: TOWER.level, wave: T.wave, boss: null, quiet: T.atLanding, between: T.wave > 0, tide: towerTough(Math.max(1, T.wave)) - 1 });   // (between: the last wave was paid for already)
+      const T = towerOf(state); Object.assign(battle, { tower: true, level: TOWER.level, wave: T.wave, boss: null, hallBoss: null, quiet: T.atLanding, between: T.wave > 0, tide: towerTough(Math.max(1, T.wave)) - 1 });   // (between: the last wave was paid for already)
     }
     w.enemies = []; w.projectiles = [];
     rng = mulberry32(streamSeed(seed ^ (room * 7919 + (w.depth || 0) * 104729), 0xb477));
@@ -1085,11 +1095,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (ci) { state.counters.embers = (state.counters.embers || 0) + ci; bus.emit('combat', { t: 'cinders', x: e.x, y: e.y, amount: ci }); }
     bus.emit('countersChanged', { ...state.counters });
     bus.emit('combat', { t: 'xp', x: e.x, y: e.y, amount: share });
-    if (e.boss) bossGone(e);
+    if (e.boss) bossCleared(e);
     if (e.boss && !M.story) { if (battle) battle.quiet = true; bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first: false, x: e.x, y: e.y, lvl: e.lvl, raid: true, room: battle ? battle.room : null }); }   // (a raid's: not the story's, no time away)
-    else if (e.boss) { const first = !(state.bosses || {})[e.boss]; (state.bosses ||= {})[e.boss] = ((state.bosses || {})[e.boss] || 0) + 1; if (battle) battle.quiet = true;
-      (state.bossBack ||= {})[e.boss] = state.t + BOSS_BACK;   // (gone for BOSS_BACK: his hall empty till then)
-      bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first, x: e.x, y: e.y, lvl: e.lvl }); }   // (core.js pays its heirloom / loot; the room goes quiet)
+    else if (e.boss) { const first = !(state.bosses || {})[e.boss]; (state.bosses ||= {})[e.boss] = ((state.bosses || {})[e.boss] || 0) + 1; if (battle) { battle.boss = null; if ((getWorld().npcs || []).some((n) => n.found && n.boss === e.boss)) battle.quiet = true; }   // (one he held waits there to be spoken to: quiet for that)
+      (state.bossBack ||= {})[e.boss] = state.t + BOSS_BACK;   // (gone for BOSS_BACK: his room's waves the floor's own till then, v1.117)
+      bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first, x: e.x, y: e.y, lvl: e.lvl }); }   // (core.js pays its heirloom / loot; the room fights on)
     else if (battle) battle.lastSlain = { x: e.x, y: e.y };
     if (e.elite && !e.boss) onDrop('elite', e.lvl, e.x, e.y);           // elites often carry gear
     bus.emit('slain', { kind: e.kind, elite: !!e.elite, lvl: e.lvl });   // (quests count elites)
@@ -1126,7 +1136,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // The count (lamps.js): an Ashbound put down frees its soul; a lamp's keeper falling breaks the lamp, and every bound foe
   // still standing in the room lies down (freed, not beaten: no XP, no coin); a harvester drops its cage where it falls.
   // a boss down: what it called up goes with it (the Toadking's mud, the Abbess's water), and Teague's cage breaks
-  function bossGone(e) {
+  function bossCleared(e) {
     if (!battle) return;
     battle.hazards = []; if (battle.flood) { battle.flood = 0; bus.emit('bossFlood', { id: e.boss, level: 0 }); }
     const w = getWorld(), c = e.cage && (w.enemies || []).find((o) => o.id === e.cage && o.hp > 0 && !o.dead);
@@ -2153,8 +2163,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     // (a hall where a found companion still waits, his captor fallen, is quiet: the Company left him there
     // (npcs.js placeFound); and for the rest of the visit once he's walked out of it with you)
     const R = raidRun();
-    const side = R ? null : sideBoss(w, room);   // (a side room whose boss is away stands empty, as a hall does)
-    const waiting = R ? R.won.has(`${w.depth || 0}:${room}`) : (!!side && !!bossGone(state, side)) || hallHere(w, room) && (w.freedHall === room || (w.npcs || []).some((n) => n.found && (state.bosses || {})[n.boss]) || (!!bossAway(state, w.site, w.depth) && !hallWanted(w.site || 'barrows', w.depth || 0)));   // (or its boss away: the hall empty till he's back, unless a quest asks you to hold it)
+    // (a boss away no longer empties his room: it fights on with the floor's own foes till he's back, v1.117)
+    const waiting = R ? R.won.has(`${w.depth || 0}:${room}`) : hallHere(w, room) && (w.freedHall === room || (w.npcs || []).some((n) => n.found && (state.bosses || {})[n.boss]));
     if (!battle && inDungeon && !w.arena && room >= 0 && w.level.entrance && room !== w.level.entrance.id && alive(H) && !waiting) startBattle(w, room);   // (the Bowl's sand: only a bout, bowl.js)
     if (!battle && onLand && alive(H)) {                            // a spawn point on the overland: within its reach and full (camps.js)
       const list = campsOf(w.region), h = campNear(list, p.x, p.y, 'reach');
