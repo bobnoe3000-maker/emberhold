@@ -2228,6 +2228,8 @@ Bowl's board shows them), as it cracks, as stones fall. The tells drawn on the g
 they wind, white as they land (Luminati, `world.js`). The end card: how it ended, the tier (its word beside its colour),
 the pay, your hero's part, and the companies ranked by their share; **Leave**.
 
+![The Ring at 430 px: the sweep's fan filling under the Kingstone; then the stones falling, three companies in](img/ring/kingstone.jpg)
+
 **19.9 Measured** (`tools/balance/regionboss.mjs`: the right party in starter kit at 18, the window's draw picked for the
 head count; piloted: the hero moved out of a tell after a 0.5 s look; autobattle: left alone; blind: nobody steps out,
 the AI companies included):
