@@ -33,8 +33,13 @@ const CSS = `
 #compassBtn svg { width: 26px; height: 26px; }
 #compassBtn.on { background: rgba(60,40,24,0.95); border-color: #d8a040; box-shadow: 0 0 0 3px rgba(216,160,64,.25), 0 2px 10px rgba(0,0,0,.5); }
 #compassMenu { position: fixed; right: calc(12px + var(--safe-r, env(safe-area-inset-right, 0px))); top: calc(var(--hud-l1, 30px) + 174px); z-index: 5; width: 292px; max-width: calc(100vw - var(--party-side, 0px) - 24px); background: rgba(16,12,22,0.96);
-  border: 1px solid rgba(214,170,98,0.45); border-radius: 12px; padding: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.6); font-family: Georgia, serif; display: none; }
-#compassMenu.on { display: block; }
+  border: 1px solid rgba(214,170,98,0.45); border-radius: 12px; padding: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.6); font-family: Georgia, serif; display: none;
+  max-height: calc(100dvh - var(--hud-l1, 30px) - 174px - 12px - env(safe-area-inset-bottom, 0px)); flex-direction: column; }
+#compassMenu.on { display: flex; }
+/* a long list scrolls under its heading (the owner, 2026-11-15: "If the compass list is too long let me drag to scroll up and
+   down in the list"): the panel stops above the screen's foot and its rows scroll by a drag, the page and the world staying
+   put (the scroller is the list, not the panel, so the panel's notch above it isn't clipped) */
+#compassMenu .list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
 #compassMenu:before { content: ''; position: absolute; right: 16px; top: -7px; width: 12px; height: 12px; background: rgba(16,12,22,0.96);
   border-left: 1px solid rgba(214,170,98,0.45); border-top: 1px solid rgba(214,170,98,0.45); transform: rotate(45deg); }
 #compassMenu .hd { font: 10.5px ui-monospace, Menlo, monospace; letter-spacing: 2px; color: #a08a6a; text-transform: uppercase; padding: 4px 6px 8px; }
@@ -80,11 +85,11 @@ export function createCompass(sim, { partyPanel, inSquare, questTitle = () => ''
   function openMenu() {
     rows = sim.destinations({ inSquare: inSquare() })     // the tracked quest's row (quests.js) is named by its title
       .map((o) => (o.id === 'quest' ? { ...o, label: esc(questTitle(o.quest) || 'Quest'), sub: `quest · ${o.sub || 'next step'}` } : o));
-    menu.innerHTML = `<div class="hd">${place()}</div>` + (rows.length ? rows.map((o, i) => `${o.sep ? '<div class="sep"></div>' : ''}
+    menu.innerHTML = `<div class="hd">${place()}</div><div class="list">` + (rows.length ? rows.map((o, i) => `${o.sep ? '<div class="sep"></div>' : ''}
       <div class="opt${o.off ? ' off' : ''}" data-i="${i}"><div class="ic"><svg viewBox="0 0 24 24">${ICONS[o.icon] || ICONS.next}</svg></div>
         <div class="tx"><b>${o.label}</b><span>${o.sub}</span></div>
         ${o.level ? `<em class="lv ${lvClass(o.level)}">LV ${o.level}</em>` : o.levelRange ? `<em class="lv g">LV ${o.levelRange}</em>` : o.off ? '' : '<span class="go">›</span>'}</div>`).join('')
-      : '<div class="empty">nowhere to go from here</div>');
+      : '<div class="empty">nowhere to go from here</div>') + '</div>';
     menu.classList.add('on'); btn.classList.add('on');
   }
   function closeMenu() { menu.classList.remove('on'); btn.classList.remove('on'); }

@@ -480,6 +480,10 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('quest: Track / untrack are commands the sim takes', untracked === null && (await p.evaluate(() => globalThis.__sim.state.tracked)) === 'vale_long_way_round');
     await p.locator('#journal .x').tap(); await p.locator('#compassBtn').tap();
     const rows = await p.locator('#compassMenu .opt b').allTextContents();
+    // a long list scrolls inside a panel that ends on the screen (the owner, 2026-11-15: "If the compass list is too long let
+    // me drag to scroll up and down in the list"): the panel's foot above the screen's, its rows in a scroller of their own
+    const fit = await p.evaluate(() => { const M = document.getElementById('compassMenu'), L = M.querySelector('.list'); return { bottom: Math.round(M.getBoundingClientRect().bottom), vh: innerHeight, scroll: L ? getComputedStyle(L).overflowY : '', rows: L ? L.querySelectorAll('.opt').length : 0 }; });
+    check('compass: the list ends on the screen and scrolls when it runs long', fit.bottom <= fit.vh && fit.scroll === 'auto' && fit.rows === rows.length, JSON.stringify(fit));
     check('quest: the compass leads with it, and no page errors', rows[0] === 'The Long Way Round' && errs.length === 0, rows.join(' | ') + (errs.length ? ' · ' + errs.join(' | ') : ''));
     // pick it: the walk leaves town and carries on across the Vale without another tap (a journey, sim/core.js)
     await p.locator('#compassMenu .opt').first().tap();
