@@ -38,7 +38,8 @@ const enter = () => { sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())
 enter();
 
 const got = {}, add = (src, r) => { got[src] ||= { common: 0, fine: 0, rare: 0, heirloom: 0 }; got[src][r] = (got[src][r] || 0) + 1; };
-sim.bus.on('loot', (l) => add(l.src, l.item.r));
+let scrolls = 0;
+sim.bus.on('loot', (l) => { if (l.item.base === 'homeward') { scrolls++; return; } add(l.src, l.item.r); });   // (a Homeward Scroll counted apart: items.js SCROLL_DROP)
 const STAY = 4;
 let waves = 0, here = 0, chests = 0, visits = 1, wipes = 0, wasBattle = false;
 sim.bus.on('wave', (w) => { if (w.cleared) { waves++; here++; } });
@@ -72,5 +73,5 @@ while (sim.state.t < END) {
 }
 const per = (n) => (n / HOURS).toFixed(1), tot = { common: 0, fine: 0, rare: 0, heirloom: 0 };
 for (const g of Object.values(got)) for (const k of Object.keys(tot)) tot[k] += g[k] || 0;
-console.log(`L${HL} · floor ${DEPTH + 1} · ${HOURS} h · seed ${seed}: per hour ${per(tot.common)} common, ${per(tot.fine)} fine, ${per(tot.rare)} rare, ${per(sim.state.counters.gold || 0)} gold`
+console.log(`L${HL} · floor ${DEPTH + 1} · ${HOURS} h · seed ${seed}: per hour ${per(tot.common)} common, ${per(tot.fine)} fine, ${per(tot.rare)} rare, ${per(sim.state.counters.gold || 0)} gold, ${per(scrolls)} homeward scrolls`
   + ` · by source ${Object.entries(got).map(([s, g]) => `${s} ${per(g.common + g.fine + g.rare)}`).join(', ')} · ${per(waves)} waves, ${per(chests)} chests, ${visits} visits, ${wipes} wipes`);

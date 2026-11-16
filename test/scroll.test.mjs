@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
-import { BASES, SCROLL_PRICE } from '../src/sim/items.js';
+import { BASES, SCROLL_PRICE, SCROLL_DROP } from '../src/sim/items.js';
 import { createLoot } from '../src/sim/loot.js';
 import { createBus } from '../src/sim/bus.js';
 
@@ -41,8 +41,10 @@ test('reading one in a dungeon takes the party to the town square and spends it;
 test('a scroll turns up beside the drops now and then, on its own stream; it survives a save', () => {
   const state = { counters: { gold: 0, embers: 0, lootN: 0, uidN: 0 }, bag: [], party: [{ id: 'you', cls: 'fighter', level: 3, gear: {} }] };
   const loot = createLoot({ state, bus: createBus(), seed: 7 });
-  for (let i = 0; i < 400; i++) { loot.drop('elite', { ilv: 3, x: 0, y: 0 }); state.bag = state.bag.filter((it) => it.base === 'homeward'); }
-  const n = state.bag.length; assert.ok(n >= 6 && n <= 30, `${n} scrolls in 400 elites (4 % odds)`);
+  // (a scroll is rolled when the gear isn't: at most SCROLL_DROP.elite of the elites; a fifth of 4 % since 2026-11-16)
+  const N = 4000;
+  for (let i = 0; i < N; i++) { loot.drop('elite', { ilv: 3, x: 0, y: 0 }); state.bag = state.bag.filter((it) => it.base === 'homeward'); }
+  const n = state.bag.length, p = SCROLL_DROP.elite; assert.ok(n >= 1 && n <= N * p * 1.5, `${n} scrolls in ${N} elites (${p * 100} % odds)`);
   const sim = createSim(20260807, undefined, { scene: 'town' }); sim.tick(); sim.state.counters.gold = 300; run(sim, { type: 'buyScroll' });
   const snap = JSON.parse(JSON.stringify(sim.snapshot())), back = createSim(20260807, undefined, { scene: 'town' }); back.restore(snap);
   assert.equal(scrolls(back).length, 1);

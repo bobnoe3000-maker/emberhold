@@ -43,6 +43,7 @@ function walk(site, seed) {
   sim.bus.on('combat', (c) => { if (c.t === 'xp') xp += c.amount || 0; });
   sim.bus.on('bossDown', (e) => { if (e.id === lastBoss && S.depth === last) done = true; });
   sim.bus.on('defeat', () => wipes++);
+  let scrolls = 0; sim.bus.on('loot', (l) => { if (l.item && l.item.base === 'homeward') scrolls++; });   // (Homeward Scrolls found: items.js SCROLL_DROP)
   sim.bus.on('shrineOffer', (o) => { if (o.will !== 'none') sim.commands.push({ type: 'useShrine', tx: o.tx, ty: o.ty }); });
   sim.bus.on('levelChanged', () => { if (sim.world.kind === 'dungeon') { lv = lvOf(S.depth); build(lv); } });
   // the gate a room wins, still up (this checkout's gates: a floor's several, or its one)
@@ -68,7 +69,7 @@ function walk(site, seed) {
     if (S.tick % 200 === 0) { stuck = Math.abs(p.x - lx) + Math.abs(p.y - ly) < 0.5 && !sim.battle ? stuck + 1 : 0; lx = p.x; ly = p.y; if (stuck > 30) break; }
   }
   const mins = S.t / 60;
-  return { done, why: done ? 'done' : stuck > 30 ? 'stuck' : 'time', mins, waves, gates, xpHour: Math.round(xp / (S.t / 3600)), wipes, floor: deepest + 1, fightShare: fought / S.t };
+  return { done, why: done ? 'done' : stuck > 30 ? 'stuck' : 'time', mins, waves, gates, xpHour: Math.round(xp / (S.t / 3600)), wipes, floor: deepest + 1, fightShare: fought / S.t, scrolls };
 }
 
 const med = (a) => { const b = [...a].sort((x, y) => x - y); return b.length ? b[Math.floor(b.length / 2)] : 0; };
@@ -77,7 +78,7 @@ for (const site of SITE_LIST) {
   const rows = [];
   for (let s = 0; s < N; s++) {
     const r = walk(site, 20261116 + s * 7919); rows.push(r);
-    console.log(`${site} seed ${s}: ${r.why.padEnd(5)} ${r.mins.toFixed(1).padStart(6)} min · floor ${r.floor} · ${r.waves} waves · ${r.gates} gates · ${r.xpHour} XP/h · fighting ${Math.round(100 * r.fightShare)} % · wipes ${r.wipes}`);
+    console.log(`${site} seed ${s}: ${r.why.padEnd(5)} ${r.mins.toFixed(1).padStart(6)} min · floor ${r.floor} · ${r.waves} waves · ${r.gates} gates · ${r.xpHour} XP/h · fighting ${Math.round(100 * r.fightShare)} % · wipes ${r.wipes} · scrolls ${r.scrolls}`);
   }
   const ok = rows.filter((r) => r.done);
   console.log(`${site} (${SITES[site].floors} floors, levels ${SITES[site].base}+): done ${ok.length}/${rows.length} · median ${med(ok.map((r) => r.mins)).toFixed(1)} min · ${med(rows.map((r) => r.waves))} waves · ${med(rows.map((r) => r.gates))} gates · ${med(rows.map((r) => r.xpHour))} XP/h · wipes ${rows.reduce((n, r) => n + r.wipes, 0)}`);

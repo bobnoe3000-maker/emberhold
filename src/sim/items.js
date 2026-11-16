@@ -118,8 +118,10 @@ export const BASES = {
 /** a thing you use (a scroll), not gear @param {any} it */
 export const isUsable = (it) => !!(it && BASES[it.base] && BASES[it.base].use);
 export const SCROLL_PRICE = 300;                          // Wendel's, always in stock (smith.js buyScroll)
-// how often a Homeward Scroll turns up besides the gear (loot.js), by source: rare loot, on its own stream
-export const SCROLL_DROP = { chest: 0.03, elite: 0.04, boss: 0.15, bossAgain: 0.05 };
+// how often a Homeward Scroll turns up besides the gear (loot.js), by source: rare loot, on its own stream. (The owner,
+// 2026-11-16: "Reduce the drop rate of home scrolls to 20% of current": chest 0.03, elite 0.04, boss 0.15, a boss
+// again 0.05, each a fifth now; Wendel's still sells them, SCROLL_PRICE)
+export const SCROLL_DROP = { chest: 0.006, elite: 0.008, boss: 0.03, bossAgain: 0.01 };
 // what each class starts in (Common, item level = the member's level) — the kit the model wears
 export const STARTER = {
   fighter: { weapon: 'sword', off: 'roundshield', helm: 'greathelm', armor: 'plate', boots: 'sabatons' },
