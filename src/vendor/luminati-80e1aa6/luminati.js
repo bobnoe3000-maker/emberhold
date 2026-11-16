@@ -18587,10 +18587,10 @@ var Lm = (e, t, n) => "#" + new P(e).lerp(new P(t), n).getHexString(), Rm = wi.m
 		horizon: Lm(ym(e.horizon, n ? .6 : .45), "#9a8a74", .35 * (1 - t)),
 		bottom: bm(ym(e.bottom, .55), .8),
 		sun: n ? Lm(ym(e.sun, .35), "#e0a878", .45) : ym(e.sun, .25),
-		sunI: e.sunI * (n ? .8 : .86),
+		sunI: e.sunI * (n ? .92 : .96),
 		hemiSky: Lm(ym(e.hemiSky, n ? .7 : .5), "#4c4e5a", .75 * t),
-		hemiGround: bm(ym(e.hemiGround, .4), .8),
-		hemiI: e.hemiI * (n ? 1.08 : 1),
+		hemiGround: ym(e.hemiGround, .4),
+		hemiI: e.hemiI * (n ? 1.2 : 1.1),
 		...t > .5 ? {
 			sun: ym(e.sun, .75),
 			horizon: Lm(e.horizon, "#2c2830", .5)
@@ -18639,7 +18639,7 @@ Jt((e) => {
 		return i.each((e, r, o) => {
 			i.set(e, r, n(t, (c[o] - l) / Math.max(.001, u - l))), i.hf[o] = a.height[o];
 		}), { normal: 2.2 };
-	}, a = t([
+	}, a = (e) => e.map((e) => "#" + new P(e).multiplyScalar(1.55).lerp(new P("#8e877c"), .2).getHexString()), o = t([
 		"#0c0b0e",
 		"#141318",
 		"#1c1a20",
@@ -18647,26 +18647,26 @@ Jt((e) => {
 		"#2f2b33",
 		"#3b363d",
 		"#4a4348"
-	]), o = t([
+	]), s = t([
 		"#3a3532",
 		"#4e4743",
 		"#625a54"
-	]), s = t(["#3a1a10", "#5a2814"]), c = t(["#2c4a4c", "#3e6662"]);
+	]), c = t(["#3a1a10", "#5a2814"]), l = t(["#2c4a4c", "#3e6662"]);
 	return {
 		slag_brick: {
 			px: [32, 32],
 			normalScale: .6,
 			gen: (t, i) => {
-				let l = e.genStoneBrick(t, i), u = e.field(t.w, t.h, 4, 4, i.seed + 41, { oct: 2 });
-				return t.each((l, d, f) => {
-					let p = r(t.get(l, d)), m = e.hash2(l, d, i.seed + 43);
+				let a = e.genStoneBrick(t, i), u = e.field(t.w, t.h, 4, 4, i.seed + 41, { oct: 2 });
+				return t.each((a, d, f) => {
+					let p = r(t.get(a, d)), m = e.hash2(a, d, i.seed + 43);
 					if (t.hf[f] <= .001) {
-						t.set(l, d, o[m < .3 ? 0 : u[f] > .6 ? 2 : 1]);
+						t.set(a, d, s[m < .3 ? 0 : u[f] > .6 ? 2 : 1]);
 						return;
 					}
-					let h = n(a, Math.min(1, p * 1.25));
-					u[f] > .84 && e.hash2(l, d >> 1, i.seed + 44) < .7 && (h = e.mixColor(h, s[+(u[f] > .92)], .32)), m > .985 && (h = c[+(m > .995)]), t.set(l, d, h);
-				}), l;
+					let h = n(o, Math.min(1, p * 1.25));
+					u[f] > .84 && e.hash2(a, d >> 1, i.seed + 44) < .7 && (h = e.mixColor(h, c[+(u[f] > .92)], .32)), m > .985 && (h = l[+(m > .995)]), t.set(a, d, h);
+				}), a;
 			}
 		},
 		roof_rust: {
@@ -18689,7 +18689,7 @@ Jt((e) => {
 		cinder_earth: {
 			px: [64, 64],
 			normalScale: .6,
-			gen: i("cracked_earth", t([
+			gen: i("cracked_earth", t(a([
 				"#121011",
 				"#1b1817",
 				"#25211f",
@@ -18698,12 +18698,12 @@ Jt((e) => {
 				"#4a413a",
 				"#5a4f46",
 				"#6c5f53"
-			]))
+			])))
 		},
 		cinder_cobble: {
 			px: [64, 64],
 			normalScale: .7,
-			gen: i("cobblestone", t([
+			gen: i("cobblestone", t(a([
 				"#141317",
 				"#1d1c21",
 				"#28262c",
@@ -18711,12 +18711,12 @@ Jt((e) => {
 				"#3f3b43",
 				"#4c4750",
 				"#5c5660"
-			]))
+			])))
 		},
 		rust_mud: {
 			px: [64, 64],
 			normalScale: .5,
-			gen: i("red_sand", t([
+			gen: i("red_sand", t(a([
 				"#200d09",
 				"#33150d",
 				"#481f11",
@@ -18724,12 +18724,12 @@ Jt((e) => {
 				"#73361c",
 				"#874424",
 				"#9a5430"
-			]))
+			])))
 		},
 		rust_rock: {
 			px: [64, 64],
 			normalScale: .65,
-			gen: i("redrock", t([
+			gen: i("redrock", t(a([
 				"#1c0e0b",
 				"#2a1510",
 				"#3a1d14",
@@ -18737,12 +18737,12 @@ Jt((e) => {
 				"#5a301e",
 				"#6a3a24",
 				"#7a4630"
-			]))
+			])))
 		},
 		ash_scrub: {
 			px: [64, 64],
 			normalScale: .5,
-			gen: i("dry_grass", t([
+			gen: i("dry_grass", t(a([
 				"#1e1c19",
 				"#2a2722",
 				"#36322b",
@@ -18750,12 +18750,12 @@ Jt((e) => {
 				"#4f483b",
 				"#5c5444",
 				"#6a604e"
-			]))
+			])))
 		},
 		ash_drift: {
 			px: [64, 64],
 			normalScale: .5,
-			gen: i("ash", t([
+			gen: i("ash", t(a([
 				"#262422",
 				"#33302d",
 				"#413d39",
@@ -18764,7 +18764,7 @@ Jt((e) => {
 				"#6f6860",
 				"#80786f",
 				"#91897e"
-			]))
+			])))
 		}
 	};
 });

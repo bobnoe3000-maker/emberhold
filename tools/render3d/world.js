@@ -544,8 +544,8 @@ const ASH_KEYFRAMES = ARID_KEYFRAMES.map((f) => {
   const night = f.night ?? 0, dusk = f.t >= 16.5 && f.t <= 19.5 ? 1 : 0;
   return { ...f,
     top: dim(mixHex(f.top, '#6c6a70', 0.45 * (1 - night)), 0.85), horizon: mixHex(grey(f.horizon, dusk ? 0.6 : 0.45), '#9a8a74', 0.35 * (1 - night)), bottom: dim(grey(f.bottom, 0.55), 0.8),
-    sun: dusk ? mixHex(grey(f.sun, 0.35), '#e0a878', 0.45) : grey(f.sun, 0.25), sunI: f.sunI * (dusk ? 0.8 : 0.86),
-    hemiSky: mixHex(grey(f.hemiSky, dusk ? 0.7 : 0.5), '#4c4e5a', 0.75 * night), hemiGround: dim(grey(f.hemiGround, 0.4), 0.8), hemiI: f.hemiI * (dusk ? 1.08 : 1),
+    sun: dusk ? mixHex(grey(f.sun, 0.35), '#e0a878', 0.45) : grey(f.sun, 0.25), sunI: f.sunI * (dusk ? 0.92 : 0.96),
+    hemiSky: mixHex(grey(f.hemiSky, dusk ? 0.7 : 0.5), '#4c4e5a', 0.75 * night), hemiGround: grey(f.hemiGround, 0.4), hemiI: f.hemiI * (dusk ? 1.2 : 1.1),
     ...(night > 0.5 ? { sun: grey(f.sun, 0.75), horizon: mixHex(f.horizon, '#2c2830', 0.5) } : {}),
     fog: f.fog * 1.1, clouds: Math.min(0.5, (f.clouds ?? 0.15) + 0.15) };
 });
@@ -576,6 +576,11 @@ registerTextureSet((K) => {
     s.each((x, y, i) => { s.set(x, y, at(R, (L[i] - lo) / Math.max(1e-3, hi - lo))); s.hf[i] = p.height[i]; });
     return { normal: 2.2 };
   };
+  // (the owner, 2026-11-16, from the phone at dawn: "Cinder reach is too dark at dawn.. check other times too": the
+  // ground ramps had been painted near charcoal, a third of the Vale's grass, and outside Ashgate's gate the world band's
+  // mean was 10–28 from dusk to dawn against the Vale's 39–66. Ash is pale; the ground lifted toward a mid ash grey
+  // (LIFT), the slag brick left dark so the town still stands black on it)
+  const LIFT = (a) => a.map((c) => { const k = new THREE.Color(c).multiplyScalar(1.55).lerp(new THREE.Color('#8e877c'), 0.2); return '#' + k.getHexString(); });
   const SLAG = P(['#0c0b0e', '#141318', '#1c1a20', '#25222a', '#2f2b33', '#3b363d', '#4a4348']), MORTAR = P(['#3a3532', '#4e4743', '#625a54']);
   const RUST = P(['#3a1a10', '#5a2814']), GLASS = P(['#2c4a4c', '#3e6662']);
   return {
@@ -598,16 +603,16 @@ registerTextureSet((K) => {
       s.each((x, y, i) => { if (N[i] > 0.6) s.set(x, y, K.mixColor(s.get(x, y), '#1a1514', Math.min(0.6, (N[i] - 0.6) * 2.2))); });
       return r;
     } },
-    cinder_earth: { px: [64, 64], normalScale: 0.6, gen: recolor('cracked_earth', P(['#121011', '#1b1817', '#25211f', '#302a27', '#3c3530', '#4a413a', '#5a4f46', '#6c5f53'])) },
-    cinder_cobble: { px: [64, 64], normalScale: 0.7, gen: recolor('cobblestone', P(['#141317', '#1d1c21', '#28262c', '#333038', '#3f3b43', '#4c4750', '#5c5660'])) },
-    rust_mud: { px: [64, 64], normalScale: 0.5, gen: recolor('red_sand', P(['#200d09', '#33150d', '#481f11', '#5e2a16', '#73361c', '#874424', '#9a5430'])) },
+    cinder_earth: { px: [64, 64], normalScale: 0.6, gen: recolor('cracked_earth', P(LIFT(['#121011', '#1b1817', '#25211f', '#302a27', '#3c3530', '#4a413a', '#5a4f46', '#6c5f53']))) },
+    cinder_cobble: { px: [64, 64], normalScale: 0.7, gen: recolor('cobblestone', P(LIFT(['#141317', '#1d1c21', '#28262c', '#333038', '#3f3b43', '#4c4750', '#5c5660']))) },
+    rust_mud: { px: [64, 64], normalScale: 0.5, gen: recolor('red_sand', P(LIFT(['#200d09', '#33150d', '#481f11', '#5e2a16', '#73361c', '#874424', '#9a5430']))) },
     // (round 2: Luminati's red rock and dry grass were the loudest things in the frame, orange and yellow; here the red
     // rock is iron-stained and dark, the scrub dried to an ash-dusted olive grey)
-    rust_rock: { px: [64, 64], normalScale: 0.65, gen: recolor('redrock', P(['#1c0e0b', '#2a1510', '#3a1d14', '#4a2618', '#5a301e', '#6a3a24', '#7a4630'])) },
-    ash_scrub: { px: [64, 64], normalScale: 0.5, gen: recolor('dry_grass', P(['#1e1c19', '#2a2722', '#36322b', '#433d33', '#4f483b', '#5c5444', '#6a604e'])) },
+    rust_rock: { px: [64, 64], normalScale: 0.65, gen: recolor('redrock', P(LIFT(['#1c0e0b', '#2a1510', '#3a1d14', '#4a2618', '#5a301e', '#6a3a24', '#7a4630']))) },
+    ash_scrub: { px: [64, 64], normalScale: 0.5, gen: recolor('dry_grass', P(LIFT(['#1e1c19', '#2a2722', '#36322b', '#433d33', '#4f483b', '#5c5444', '#6a604e']))) },
     // (round 4: Luminati's ash, near white in its drifts, beside the cinder earth read as a mosaic of pale tiles: a
     // step darker, still the lightest ground in the Reach)
-    ash_drift: { px: [64, 64], normalScale: 0.5, gen: recolor('ash', P(['#262422', '#33302d', '#413d39', '#504b46', '#5f5953', '#6f6860', '#80786f', '#91897e'])) },
+    ash_drift: { px: [64, 64], normalScale: 0.5, gen: recolor('ash', P(LIFT(['#262422', '#33302d', '#413d39', '#504b46', '#5f5953', '#6f6860', '#80786f', '#91897e']))) },
   };
 });
 

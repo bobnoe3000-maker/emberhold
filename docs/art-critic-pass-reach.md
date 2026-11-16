@@ -234,3 +234,29 @@ The `desert` biome was swapped for `ash`, with the houses, the four kit pieces, 
   moss scatter, `moss_stone` / cliff walls, hour 19.4. Only the ambient fill differs, through palette.js `KIT_TINT`.
   Confirmed in play (the Canal Locks, above). Not fixed here.
 - **Night** is still a slate-blue scene with orange points, as every land's is.
+
+## Round 5: the light by the hour (the owner, from the phone)
+
+> "Cinder reach is too dark at dawn.. check other times too"
+
+The rounds before measured each part of the day at its middle only, and two of their gate shots were taken during the
+fade-in after a trip (the arrival banner over a dimmed frame). Measured again across the whole day, sixteen points from
+dawn breaking, after another shot on the same land (tools/capture/rig.mjs, `tod` 0 … 15⁄16, world-band luminance):
+the open land outside Ashgate's gate sat at 24–28 through dawn and 10–18 from dusk to the small hours, against the
+Vale's 39–68 and 42–53. Two causes: the ground's ramps were near charcoal (the cinder earth's lightest #6c5f53, most of
+it #2x–#3x, a third of the Vale's grass), and the hour's brightness lifted only the Reach's night.
+
+- **The ground lifted toward a mid ash** (world.js `LIFT`: ×1.55 and a fifth of the way to #8e877c), the slag brick left
+  dark so the town still stands black on it; the sun and the ground's bounce less taken away in the ash sky.
+- **The hour's brightness** (hybrid.js `REACH_BRIGHT`, dawn · day · dusk · night): overland 1 · 1 · 1.08 · 2.3 →
+  1.2 · 0.78 · 1.12 · 2.6; Ashgate 1 · 1 · 1.05 · 1.35 → 1.2 · 0.9 · 1.25 · 1.35.
+
+| sample (of 16) | 0 dawn breaking | 2 | 5 noon | 9 dusk | 13 night |
+|---|---|---|---|---|---|
+| the Vale | 39 | 63 | 84 | 53 | 48 |
+| outside Ashgate's gate | 31 | 60 | 76 | 41 | 35 |
+| the Cinderworks | 39 | 76 | 95 | 62 | 44 |
+| the Cold Seam's pithead | 32 | 77 | 100 | 66 | 37 |
+| Ashgate's square | 47 | 67 | 84 | 50 | 49 |
+
+![The Reach by the hour, after](img/reach/hours-after.jpg)
