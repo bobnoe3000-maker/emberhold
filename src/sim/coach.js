@@ -15,11 +15,12 @@ import { LANDS, landId } from './regions.js';
 export const COACH = {
   thornwick: { name: 'Thornwick', land: 'vale' },
   saltmere: { name: 'Saltmere', land: 'fens' },
+  ashgate: { name: 'Ashgate', land: 'reach' },     // (v1.124: the Cinder Reach, over the range by the Wickham road)
 };
 // the coach roads, [a, b, days] both ways. Each region's milestone adds its own (world-map proposal; the Lamphall is the
 // hub: Thornwick 3, Ashgate 2, Brine Cross 2, Hollin Ford 1, the Frozen Hospice 2).
 /** @type {Array<[string, string, number]>} */
-export const ROADS = [['thornwick', 'saltmere', 1]];
+export const ROADS = [['thornwick', 'saltmere', 1], ['thornwick', 'ashgate', 2]];
 export const FARE_DAY = 10;                                // gold a day of road
 
 /** the coach stop for a land's town @param {string} land @returns {string} */

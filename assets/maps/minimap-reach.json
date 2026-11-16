@@ -1,0 +1,36 @@
+{
+ "scene": "reach",
+ "region": "reach",
+ "px": 4,
+ "x0": -6,
+ "y0": -36,
+ "w": 272,
+ "h": 314,
+ "seed": 20260807,
+ "pins": [
+  {
+   "kind": "town",
+   "id": "reach",
+   "x": 127.5,
+   "y": 140
+  },
+  {
+   "kind": "land",
+   "id": "vale",
+   "x": 146.5,
+   "y": 267
+  },
+  {
+   "kind": "site",
+   "id": "cold_seam",
+   "x": 116,
+   "y": 223.5
+  },
+  {
+   "kind": "land",
+   "id": "reach",
+   "x": 267,
+   "y": 189
+  }
+ ]
+}

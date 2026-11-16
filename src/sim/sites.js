@@ -54,6 +54,9 @@ export const SITES = {
   toadking_mound: { name: "Toadking's Mound", region: 'fens', theme: 'mire', base: 10, perFloor: 1, floors: 2, span: 3, plan: true, family: 'reedmen', families: ['toadmen', 'boathall'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 2: 'toadking' }, dress: ['mound', 'mound'], mix: 0x70ad },
   canal_locks: { name: 'The Canal Locks', region: 'fens', theme: 'sluice', themes: ['sluice', 'poison'], base: 13, perFloor: 1, floors: 2, span: 3, plan: true, family: 'lockcult', families: ['lockcult', 'harvest'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 2: 'vatwarden' }, dress: ['locks', 'vats'], mix: 0x10c5 },
   drowned_abbey: { name: 'The Drowned Abbey', region: 'fens', theme: 'water', base: 16, perFloor: 1, floors: 2, span: 3, plan: true, family: 'drowned', rooms: [5, 5], layout: 'halls', band: true, bosses: { 1: 'drowned_choir', 2: 'abbess_below' }, dress: ['abbey', 'abbey'], mix: 0xab3e },   // (Brother Teague in his cell off the cloister: plans.js, battle.js sideBoss)
+  // the Cinder Reach (GDD v1.124, world doc v1.53; docs/reach-plan.md): its first band, the Cold Seam (19–21), the
+  // Deepdelvers' played-out pithead and the goblins' warren dug through into it; the Foreman in the tally cave
+  cold_seam: { name: 'The Cold Seam', region: 'reach', theme: 'cave', base: 19, perFloor: 1, floors: 2, span: 3, plan: true, family: 'pithead', families: ['pithead', 'warren'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 2: 'foreman' }, dress: ['pithead', 'warren'], mix: 0xc01d },
   // the Mere Tower (tower.js; world doc v1.23): its landing and the stair hall, where the climb goes on; Wenna Pike's punt
   // out to it from ☰ (v1.112, core.js towerGo: from wherever the company is, and back there), from level 12 (minLevel:
   // core.js turns a company under it away). It pays no XP, so it competes with no band.

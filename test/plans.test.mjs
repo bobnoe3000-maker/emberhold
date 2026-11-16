@@ -13,7 +13,7 @@ test('plans: every plan keeps the owner\'s rules (≤ 2 floors, ≤ 5 spaces, ha
 test('plans: each floor runs entrance → rooms → its last hall, with one offshoot, and levels climb the band', () => {
   for (const p of Object.values(PLANS)) {
     if (SITES[p.site] && SITES[p.site].arena) continue;          // (the Bowl's sand: a way in and the sand, test/bowl.test.mjs)
-    assert.ok(SITES[p.site] && ['vale', 'fens'].includes(SITES[p.site].region), `${p.site} is a Vale or a Fens site`);
+    assert.ok(SITES[p.site] && ['vale', 'fens', 'reach'].includes(SITES[p.site].region), `${p.site} is a site of a land`);   // (the Reach since v1.124)
     assert.equal(p.base, SITES[p.site].base, `${p.site}: the band's base as sites.js has it`);
     p.floors.forEach((f, fi) => {
       assert.equal(f.spaces.filter((s) => s.role === 'offshoot').length, 1, `${p.site} floor ${fi + 1}: one offshoot`);

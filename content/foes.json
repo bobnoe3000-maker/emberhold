@@ -100,6 +100,10 @@
     "gulper": {
       "a": "a gulper",
       "elite": "a gulper with a boat-hook in its hide"
+    },
+    "hauler": {
+      "a": "a slag hauler",
+      "elite": "a slag hauler with a full hod"
     }
   }
 }

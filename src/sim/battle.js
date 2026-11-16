@@ -114,6 +114,12 @@ export const waveSize = (lvl) => (lvl <= 3 ? 2 : Math.min(5, 1 + Math.floor(lvl 
 // room (33 waves at 3 against 24 in a large one, 23 at 6 against 17).
 export const SIZE_CAP = { small: 4 };
 export const PREMIUM = 0.05;
+// (v1.124, the Cinder Reach) past level 18 foes carry PREMIUM_HIGH a level on top: the stat line grows by a fixed step a
+// level, so each level is a smaller share of what came before, and three levels up stopped being a wall (measured: the
+// right party at 21 held a level-24 room 12 waves standing, against the contract's defeat; at 12 → 15 it fell at wave 6)
+export const PREMIUM_HIGH = 0.06;
+/** a foe's toughness for its level: PREMIUM a level over 3, and PREMIUM_HIGH more a level over 18 @param {number} lv */
+export const premiumOf = (lv) => 1 + PREMIUM * Math.max(0, lv - 3) + PREMIUM_HIGH * Math.max(0, lv - 18);
 // The tide (GDD §7.1): each wave of a visit is `step` tougher than the last (HP and ATK), up to a
 // top (`cap`: +100 % in an ordinary room, at wave 20: a nineteenth a wave; the owner, 2026-11-11: "Room waves should be
 // 20 to reach foes at +100% not 18"). A wave at the top is followed by one back at the start,
@@ -199,6 +205,9 @@ Object.assign(ENEMIES, {
 Object.assign(ENEMIES, {
   mudtoad: { hp: 40, atk: 7.6, def: 4, crit: 5, dodge: 2, interval: 1.3, range: 2.8, speed: 3.0, xp: 10, gold: 1 },
   gulper:  { hp: 58, atk: 9.8, def: 6, crit: 6, dodge: 1, interval: 1.8, range: 4.6, speed: 2.4, xp: 15, gold: 3 },
+  // (the Cinder Reach, GDD v1.124, world doc v1.53: the slag hauler, a big man with a hod of slag on his back, the Cold
+  // Seam's elite: a brute's blow, slower to swing and to walk, harder to put down)
+  hauler:  { hp: 62, atk: 9.8, def: 6, crit: 5, dodge: 1, interval: 1.7, range: 3.0, speed: 2.6, xp: 15, gold: 3 },
 });
 export const ENEMY_KINDS = Object.keys(ENEMIES);
 /** (v1.87) the room a melee blow is struck across: every melee reach, the party's and every foe's, is this much longer than
@@ -236,6 +245,9 @@ export const FAMILIES = {
   // floors below, the reeve gives way to a gulper
   toadmen: { melee: ['mudtoad', 'reedcutter'], ranged: ['fowler', 'bogwitch'], elite: 'reedcutter', undead: () => false },
   boathall: { melee: ['mudtoad', 'reedcutter'], ranged: ['fowler', 'bogwitch'], elite: 'gulper', undead: () => false },
+  // the Cold Seam (GDD v1.124): the old pithead, where the haulers work the goblins' shift; then the warren itself
+  pithead: { melee: ['gob', 'hauler'], ranged: ['archer', 'hexer'], elite: 'hauler', undead: () => false },
+  warren: { melee: ['gob', 'bruiser'], ranged: ['archer', 'hexer'], elite: 'hauler', undead: () => false },
   lockcult: { melee: ['minion', 'harvester'], ranged: ['rogue', 'acolyte'], elite: 'harvester', undead: (k) => k === 'minion' || k === 'rogue' },
   harvest: { melee: ['fenghoul', 'harvester'], ranged: ['rogue', 'bogwitch'], elite: 'harvester', undead: (k) => k === 'rogue' },
   drowned: { melee: ['drowned', 'harvester'], ranged: ['rogue', 'cantor'], elite: 'harvester', undead: (k) => k === 'drowned' || k === 'cantor' || k === 'rogue' },
@@ -270,7 +282,12 @@ export const GOLD_DROP = 0.35;
 //           (v1.54; none down: the most hurt living one, not himself, is made whole); one he stood up pays nothing again
 //   sluice  (the Vatwarden) every SLUICE_S s a strip of the vat's sick water (hazards.js, SLUICE_R patches for SLUICE_T
 //           s) runs across the hall through the party's middle, along one axis then the other
-/** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line' | 'swarm' | 'mud' | 'cage' | 'vespers' | 'bells' | 'issue' | 'sluice', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
+//   (v1.124, the Cinder Reach: world doc v1.53)
+//   chutes  (the Foreman) every CHUTE_S s he blows the whistle for the shift change, and a load of slag comes down the
+//           old chutes onto each chalked cross: a tell (hazards.js inTell) under each of the party standing, CHUTE_R
+//           across, landing CHUTE_WIND s later as CHUTE_HURT of the max HP of whoever's still in it. The AI steps out
+//           of a tell it's seen, as it does the Kingstone's. Event 'bossChutes' { id, by, x, y, n } and the tells' own.
+/** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line' | 'swarm' | 'mud' | 'cage' | 'vespers' | 'bells' | 'issue' | 'sluice' | 'chutes', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
 export const BOSSES = {
   redhand_captain: { name: 'Captain Garrow', like: 'brute', hp: 22, atk: 2.3, def: 1.6, speed: 3.0, xp: 12, gold: 30, mech: 'call', escort: ['cutthroat', 'crossbow'], once: true, heirloom: 'garrows_due' },
   robed_stranger: { name: 'The Robed Stranger', like: 'acolyte', hp: 38, atk: 2.8, def: 2.5, xp: 12, gold: 25, mech: 'kindle', escort: ['minion', 'minion'], once: true },
@@ -291,11 +308,13 @@ export const BOSSES = {
   // high (× the companies in the Ring, ring.js hpStepOf), its plain blow slow and long (range: it's huge; body: the
   // ground it stands on, which blows reach across and nobody walks into); what kills is its three tells (ringTells)
   kingstone: { name: 'The Kingstone', like: 'golem', hp: 115, atk: 1.6, def: 1.5, speed: 1.1, xp: 0, gold: 0, mech: 'ring', escort: [], range: 5.5, body: 2.4, event: true },
+  foreman: { name: 'The Foreman', like: 'bruiser', hp: 20, atk: 2.1, def: 1.6, speed: 2.8, xp: 13, gold: 30, mech: 'chutes', escort: ['hauler', 'archer'], heirloom: 'the_whistle' },   // (Gritch, the Cold Seam's tally cave, v1.124)
   vatwarden: { name: 'The Vatwarden', like: 'harvester', hp: 20, atk: 2.2, def: 1.6, speed: 2.7, xp: 13, gold: 30, mech: 'sluice', escort: ['fenghoul', 'bogwitch'] },
   ...WARDENS,   // the Mere Tower's (tower.js): a warden every tenth wave
 };
 export const KINDLE_S = 12, LINE_R = 4, SWARM_S = 10, SWARM_MAX = 4;
 export const STALL_R = 3, ISSUE_S = 10, FELL_MAX = 6, SLUICE_S = 11, SLUICE_R = 1.5, SLUICE_T = 6, SLUICE_L = 8;
+export const CHUTE_S = 12, CHUTE_WIND = 2.4, CHUTE_R = 1.8, CHUTE_HURT = 0.32;
 export const MUD_S = 9, MUD_R = 1.8, MUD_T = 6, CAGE_HP = 0.35, CAGE_MEND = 0.025, VESPERS_S = 12, VESPERS_MEND = 0.02, BELL_S = 12, FLOOD_MAX = 4, FLOOD_STEP = 0.12;
 /** does a blow on this foe land at half? A boss whose called men still stand; an Ashbound (not a boss)
  * within LINE_R of a standing Standard @param {any} tgt @param {any[]} foes */
@@ -423,7 +442,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   const hero = () => state.party[0];
   // whose this fight's waves are: the floor's, or in the Mere Tower the block of ten the climb is in (tower.js)
   const fam = (w) => (battle && battle.tower ? FAMILIES[blockFamily(battle.wave || 1)] : battle && battle.camp ? FAMILIES[battle.camp.family] : familyOf(w, battle ? battle.room : undefined));
-  const towerK = () => towerTough(Math.max(1, battle ? battle.wave : 1)) * (1 + PREMIUM * Math.max(0, TOWER.level - 3));
+  const towerK = () => towerTough(Math.max(1, battle ? battle.wave : 1)) * premiumOf(TOWER.level);
   const alive = (u) => u && !u.down && !u.fallen && u.hp > 0;
   // ── sides (the Bowl, GDD v1.85): a member is one of the party or, in a bout, one of the rival company (battle.bout.rivals,
   // listed among w.enemies too, so the party fights them as it fights any foe). A member's allies and foes are asked of it:
@@ -520,7 +539,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (b.tide >= T.cap - 1e-9) { b.tide = 0; bus.emit('tideTurned', { room: b.room }); }
       else b.tide = Math.min(T.cap, b.tide + T.step);
     }
-    const tough = (1 + b.tide) * (1 + PREMIUM * Math.max(0, lvl - 3));
+    const tough = (1 + b.tide) * premiumOf(lvl);
     const ranged = Math.max(b.wave % 2, Math.floor(n / 3));   // one in every second wave at least: two melee foes alone never touched a kiting mage
     const F = familyOf(w, b.room);
     const kinds = Array.from({ length: n }, (_, i) => i < ranged ? F.ranged[rng() < 0.5 ? 0 : 1] : F.melee[rng() < 0.55 ? 0 : 1]);
@@ -542,8 +561,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (!b.boss && b.hallBoss && !raidRun() && !bossGone(state, b.hallBoss)) { b.boss = b.hallBoss; b.bossUp = false; }   // (his time up mid-visit: his wave next, v1.117)
     if (b.boss && !b.bossUp) {                                   // the hall opens with its boss and an escort (no tide yet)
       const B = BOSSES[b.boss], [bx, by] = spot();
-      const boss = foe(w, b.boss, lvl, bx, by, 1 + PREMIUM * Math.max(0, lvl - 3), false, F, B);
-      B.escort.forEach((k, i) => { const [ex, ey] = onFloor(w, bx + (i % 2 ? 1.4 : -1.4), by + 1 + i * 0.4, bx, by); const u = foe(w, k, lvl, ex, ey, 1 + PREMIUM * Math.max(0, lvl - 3), false, F); if (B.mech === 'vespers' && k === 'cantor') u.singer = boss.id; });
+      const boss = foe(w, b.boss, lvl, bx, by, premiumOf(lvl), false, F, B);
+      B.escort.forEach((k, i) => { const [ex, ey] = onFloor(w, bx + (i % 2 ? 1.4 : -1.4), by + 1 + i * 0.4, bx, by); const u = foe(w, k, lvl, ex, ey, premiumOf(lvl), false, F); if (B.mech === 'vespers' && k === 'cantor') u.singer = boss.id; });
       if (B.mech === 'cage') boss.cage = lantern(w, boss).id;
       b.bossUp = true; b.wave += 1;
       bus.emit('bossWave', { id: b.boss, name: B.name });
@@ -564,7 +583,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const c = b.camp, F = FAMILIES[c.family], band = bandOf(seed, c, campState(state, c.id).n);
     band.kinds.forEach((k, i) => {
       const elite = band.elite && i === band.kinds.length - 1, [x, y] = postOf(c, i), [ox, oy] = isWalkable(w, x, y) ? [x, y] : openNear(w, x, y);
-      const u = foe(w, elite ? F.elite : k, b.level, ox, oy, 1 + PREMIUM * Math.max(0, b.level - 3), elite, F);
+      const u = foe(w, elite ? F.elite : k, b.level, ox, oy, premiumOf(b.level), elite, F);
       u.spawn = 0;                                             // (already out, at their posts or the hole: no rising)
     });
     b.wave += 1;
@@ -573,7 +592,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // the Mere Tower's next wave (tower.js): a level-12 room's, TOUGH[n] strong, of its block's kind; every tenth a warden
   // and an escort of the block's. Its strength shows on the room pill as a tide would (b.tide).
   function spawnTower(w, b, spot) {
-    const next = b.wave + 1, F = FAMILIES[blockFamily(next)], prem = 1 + PREMIUM * Math.max(0, b.level - 3), tough = towerTough(next) * prem;
+    const next = b.wave + 1, F = FAMILIES[blockFamily(next)], prem = premiumOf(b.level), tough = towerTough(next) * prem;
     b.tide = towerTough(next) - 1;
     if (wardenWave(next)) {
       const id = wardenAt(next), B = BOSSES[id], [bx, by] = spot();
@@ -603,7 +622,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       crit: E.crit, dodge: E.dodge, interval: E.interval, range: B && B.range ? B.range : E.range, speed: B && B.speed ? B.speed : E.speed, bolt: E.bolt,
       xp: E.xp * (elite ? 3 : 1) * (B ? B.xp : 1), gold: E.gold * (elite ? 4 : 1) * (B ? B.gold : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 };
     if (B && B.body) { u.body = B.body; u.anchor = true; }   // (the Kingstone: ground it stands on, never shoved)
-    if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; u.swarmT = 0; u.mudT = 0; u.vesT = 0; u.bellT = 0; u.issueT = 0; u.sluiceT = 0; u.sluiceN = 0; u.mend = 0; }
+    if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; u.swarmT = 0; u.mudT = 0; u.vesT = 0; u.bellT = 0; u.issueT = 0; u.sluiceT = 0; u.sluiceN = 0; u.chuteT = 0; u.mend = 0; }
     w.enemies.push(u);
     return u;
   }
@@ -797,7 +816,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         stampT: 4, sweepT: 7, stonesT: 16, slamT: 2.5, markT: 0, mark: null, stonesAt: [...RING.stones.at], cracked: false } };
     w.enemies = []; w.projectiles = []; w.allies = [];
     rng = mulberry32(streamSeed(seed ^ Math.imul((opts.salt || 0) + 1, 0x9e3779b1), 0x41b6));   // (the Ring's own draws: its window's salt)
-    const R = battle.ring, k = foe(w, 'kingstone', RING.level, cx, cy, 1 + PREMIUM * Math.max(0, RING.level - 3), false, FAMILIES.golems, BOSSES.kingstone);
+    const R = battle.ring, k = foe(w, 'kingstone', RING.level, cx, cy, premiumOf(RING.level), false, FAMILIES.golems, BOSSES.kingstone);
     k.spawn = 0; k.cd = 1e9; k.face = Math.PI / 2; k.fx = 0; k.fy = 1; R.boss = k.id; R.base = k.maxHp;   // (it never swings a plain blow: every hit is a tell, ringTells)
     for (const m of state.party) { m.down = false; m.downs = 0; m.downT = 0; }
     bus.emit('battle', { on: true, room, level: battle.level, ring: true });
@@ -941,6 +960,24 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         }
       }
       bus.emit('tellLand', { id: t.id, kind: t.kind, x: t.x, y: t.y, r: t.r, dir: t.dir ?? null, arc: t.arc ?? null, hit });
+    }
+    battle.tells = battle.tells.filter((t) => !t.done || T - t.at < 0.6);
+  }
+  // a room's tells landing (the Foreman's loads, v1.124): whoever of the party is still in one takes its share of their max
+  // HP; it falls on the party alone (his men know where to stand)
+  function roomTells(w) {
+    const T = state.t;
+    for (const t of battle.tells) {
+      if (t.done || T < t.at) continue;
+      t.done = true; let hit = 0;
+      const by = (w.enemies || []).find((o) => o.id === t.by) || { x: t.x, y: t.y, kind: 'foreman', boss: true };   // (the load still falls after he does)
+      for (let i = 0; i < state.party.length; i++) {
+        const m = state.party[i]; if (!alive(m)) continue;
+        const a = i ? m : state.player; if (!inTell(t, a.x, a.y)) continue;
+        hit++;
+        applyHit(by, m, { dmg: Math.max(1, Math.round(statsFor(m).maxHp * t.hurt)), crit: false, raw: true }, true, w, true);
+      }
+      bus.emit('tellLand', { id: t.id, kind: t.kind, x: t.x, y: t.y, r: t.r, dir: null, arc: null, hit });
     }
     battle.tells = battle.tells.filter((t) => !t.done || T - t.at < 0.6);
   }
@@ -2098,7 +2135,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     return [fx, fy];
   }
   function bossMech(e, w, dt) {
-    const B = BOSSES[e.boss], F = fam(w), tough = battle && battle.tower ? towerK() : 1 + PREMIUM * Math.max(0, e.lvl - 3), esc = e.escort || B.escort;
+    const B = BOSSES[e.boss], F = fam(w), tough = battle && battle.tower ? towerK() : premiumOf(e.lvl), esc = e.escort || B.escort;
     if (B.mech === 'call' && e.called < 2 && e.hp < e.maxHp * (2 - e.called) / 3) {
       e.called++;
       const called = esc.map((k, i) => { const [cx, cy] = onFloor(w, e.x + (i ? 1.3 : -1.3), e.y + 0.8, e.x, e.y); return foe(w, k, e.lvl, cx, cy, tough, false, F); });
@@ -2120,6 +2157,18 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         const u = foe(w, esc[i % esc.length], e.lvl, best[0] + 0.5, best[1] + 0.5, tough, false, F); u.swarm = e.id; came.push({ id: u.id, x: u.x, y: u.y });
       }
       if (n > 0) bus.emit('bossSwarm', { id: e.boss, by: e.id, x: e.x, y: e.y, n, reached: came });
+    } else if (B.mech === 'chutes' && battle && (e.chuteT += dt) >= CHUTE_S) {
+      // the whistle: a load down the old chutes onto a cross chalked under each of the party standing (tells, landing in
+      // CHUTE_WIND s: chuteTells)
+      e.chuteT = 0;
+      if (!battle.tells) { battle.tells = []; battle.tellN = 0; }
+      const at = state.party.map((m, i) => (alive(m) ? (i ? [m.x, m.y] : [state.player.x, state.player.y]) : null)).filter(Boolean);
+      for (const [x, y] of at) {
+        const t = { id: ++battle.tellN, kind: 'load', x, y, r: CHUTE_R, from: state.t, at: state.t + CHUTE_WIND, hurt: CHUTE_HURT, by: e.id };
+        battle.tells.push(t); bus.emit('tell', { id: t.id, kind: t.kind, x, y, r: t.r, dir: null, arc: null, wind: CHUTE_WIND });
+      }
+      e.atkN = (e.atkN || 0) + 1; e.atkKind = 'heavy';            // (he blows: his heavy clip as the whistle goes)
+      bus.emit('bossChutes', { id: e.boss, by: e.id, x: e.x, y: e.y, n: at.length });
     } else if (B.mech === 'mud' && battle && (e.mudT += dt) >= MUD_S) {
       // he stamps: mud comes up under each of the party standing (hazards.js), for MUD_T s
       e.mudT = 0;
@@ -2239,6 +2288,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       // waves (a bout has none: its clock, boutTick)
       if (battle.bout) boutTick(dt);
       else if (battle.ring) ringTick(w, dt);                     // (the Ring has no waves: its clock, its tells, ringTick)
+      if (!battle.ring && battle.tells && battle.tells.length) roomTells(w);   // (the Foreman's loads: v1.124)
       else if (!foes.length && !w.enemies.some((e) => e.dead > 0 || e.spawn > 0)) {
         if (battle.wave > 0 && !battle.between) {               // a wave just fell: start the lull
           battle.between = true; battle.lull = battle.camp ? battle.camp.respawn : LULL;   // (a spawn point's next band after its respawn: twice a room's lull)

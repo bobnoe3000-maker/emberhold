@@ -47,7 +47,8 @@ for (const seed of seeds) {
   sim.state.party.forEach((m, i) => { if (i) { const [x, y] = beside[i * 2 - 1] || best; m.x = m.px = x + 0.5; m.y = m.py = y + 0.5; } });
   let fell = false, defeat = false, downs = 0, fallen = 0, low = 1, calls = 0, mech = 0;
   let who = ''; sim.bus.on('bossWave', (e) => { who = e.id; }); sim.bus.on('bossDown', () => { fell = true; }); sim.bus.on('defeat', () => { defeat = true; }); sim.bus.on('bossCall', () => calls++);
-  for (const k of ['bossMud', 'bossCage', 'bossVespers', 'bossFlood', 'bossSwarm', 'bossKindle']) sim.bus.on(k, () => mech++);
+  for (const k of ['bossChutes', 'bossMud', 'bossCage', 'bossVespers', 'bossFlood', 'bossSwarm', 'bossKindle']) sim.bus.on(k, () => mech++);
+  let loads = 0, loadHits = 0; sim.bus.on('tellLand', (e) => { if (e.kind === 'load') { loads++; loadHits += e.hit; } });   // (the Foreman's, v1.124: how many fell, how many found somebody)
   sim.bus.on('combat', (c) => { if (c.t === 'down') downs++; }); sim.bus.on('fallen', () => fallen++);
   const dealt = {}; if (process.env.DMG) sim.bus.on('combat', (c) => { if (c.t === 'hit' && !c.party) dealt[c.src] = (dealt[c.src] || 0) + c.amount; });   // DMG=1: damage a second by member
   let bossHp = 1, bossT = 0, heldT = 0; sim.bus.on('bossWave', () => {}); const bossLeft = () => { const b = (sim.world.enemies || []).find((e) => e.boss); if (b) { bossHp = b.hp / b.maxHp; if (b.hp > 0 && !b.dead) { bossT += 0.05; if (b.stun > 0 || b.frozen > 0 || b.knocked > 0) heldT += 0.05; } } };   // (held: the share of his fight a stun, freeze or knockdown held him, v1.55)
@@ -55,6 +56,6 @@ for (const seed of seeds) {
   const t0 = sim.state.t, hall = sim.world.roomLevels.get(r.id);
   for (let i = 0; i < 20 * 300 && !fell && !defeat; i++) { sim.tick(); if (!defeat) { low = Math.min(low, frac()); bossLeft(); }
     if (process.env.TRACE && i % 60 === 0 && !defeat) console.log('  ', (i / 20).toFixed(0) + 's', 'foes', (sim.world.enemies || []).filter((e) => e.hp > 0).map((e) => `${e.kind}${e.boss ? '*' : ''}:${Math.round(100 * e.hp / e.maxHp)}%@${e.x.toFixed(0)},${e.y.toFixed(0)}`).join(' '), '| party', sim.state.party.map((m) => `${m.cls}:${m.down ? 'D' : Math.round(100 * m.hp / statsFor(m).maxHp) + '%'}@${(m.x || 0).toFixed(0)},${(m.y || 0).toFixed(0)}`).join(' ')); }
-  console.log(`${site} ${who || '(no boss)'} hall L${hall} · party L${HL} seed ${seed}: ${fell ? 'BOSS DOWN' : defeat ? `DEFEAT (boss at ${Math.round(bossHp * 100)}%)` : 'still fighting'} ${(sim.state.t - t0).toFixed(0)}s · lowest ${Math.round(low * 100)}% · downs ${downs} · fallen ${fallen}${calls ? ' · calls ' + calls : ''}${mech ? ' · mechanic ×' + mech : ''}${heldT ? ` · held ${Math.round(100 * heldT / Math.max(0.05, bossT))} %` : ''}`);
+  console.log(`${site} ${who || '(no boss)'} hall L${hall} · party L${HL} seed ${seed}: ${fell ? 'BOSS DOWN' : defeat ? `DEFEAT (boss at ${Math.round(bossHp * 100)}%)` : 'still fighting'} ${(sim.state.t - t0).toFixed(0)}s · lowest ${Math.round(low * 100)}% · downs ${downs} · fallen ${fallen}${calls ? ' · calls ' + calls : ''}${mech ? ' · mechanic ×' + mech : ''}${loads ? ` · loads ${loadHits}/${loads} hit` : ''}${heldT ? ` · held ${Math.round(100 * heldT / Math.max(0.05, bossT))} %` : ''}`);
   if (process.env.DMG) console.log('  dps', Object.entries(dealt).map(([k, v]) => `${k} ${(v / Math.max(1, sim.state.t - t0)).toFixed(1)}`).join(' · '));
 }

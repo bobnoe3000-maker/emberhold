@@ -20,6 +20,8 @@ export const PLACES = {
 export const EMBERFALL = {
   vale: (x, y) => [252 + 1.4 * x, 1470 + 1.35 * (y + 36)],
   fens: (x, y) => [207 + 1.6 * x, 1887 + y],
+  // (v1.124) the Cinder Reach: Ashgate's gate on its place, Kell's Rest about on its own, 1.3 map units a tile
+  reach: (x, y) => [360 + 1.3 * (x - 132), 905 + 1.3 * (y - 140)],
 };
 
 // the game's lands (sim/regions.js) on the wall map: each one's ground, as a polygon that doesn't overlap the others
@@ -29,9 +31,11 @@ export const EMBERFALL = {
 export const LAND_AREA = {
   vale: [[120, 1420], [330, 1440], [500, 1420], [580, 1520], [620, 1720], [636, 1900], [560, 1905], [340, 1885], [120, 1900]],
   fens: [[120, 1900], [340, 1885], [560, 1905], [636, 1900], [640, 1960], [700, 2240], [120, 2240]],
+  reach: [[180, 712], [545, 712], [560, 900], [540, 1075], [180, 1075], [160, 900]],   // (v1.124: the overland's square, round Ashgate)
 };
 // the words on the fog: what's beyond the lands you can walk, and a land not open yet (where its words go on the map)
 export const FOG_WORDS = {
-  beyond: { at: [600, 1080], lines: ['The Cinder Reach, Solmere, the Tidemark,', 'the Greenwood and the Pale Heights', 'the Guild’s roads north aren’t open yet'] },
+  beyond: { at: [700, 1260], lines: ['Solmere, the Tidemark,', 'the Greenwood and the Pale Heights', 'the Guild’s roads beyond aren’t open yet'] },
   fens: { at: [372, 2090], lines: ['The Greywater Fens', 'the canal road south is shut'] },
+  reach: { at: [360, 1000], lines: ['The Cinder Reach', 'the Wickham road north is shut'] },
 };

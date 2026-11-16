@@ -192,6 +192,7 @@ export const HEIRLOOMS = {
   last_order: { base: 'amulet', name: 'The Last Order', flav: "It says: hold. It doesn't say for how long.", aff: ['atk', 'def', 'mpr'] },
   skarns_drum: { base: 'charm', name: "Skarn's Drum", flav: 'It still keeps time. Nobody comes out any more.', aff: ['atk', 'hp', 'crit'] },
   // the Fens' bosses (world doc v1.27 §3.2, §10.2)
+  the_whistle: { base: 'charm', name: 'The Whistle', flav: 'Blow it, and somebody somewhere goes back to work.', aff: ['atk', 'crit', 'hp'] },   // (the Foreman, the Cold Seam: v1.124)
   the_last_tooth: { base: 'charm', name: 'The Last Tooth', flav: "A boat for every one he'd lost. This one he kept.", aff: ['hp', 'atk', 'def'] },
   teagues_name: { base: 'ring', name: "Teague's Name", flav: 'He gave it to everyone he took.', aff: ['crit', 'atk', 'mp'] },
   vespers: { base: 'charm', name: 'Vespers', flav: 'Sung in water, heard in bone.', aff: ['mp', 'mpr', 'hpr'] },

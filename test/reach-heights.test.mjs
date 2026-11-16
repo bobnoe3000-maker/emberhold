@@ -86,14 +86,17 @@ for (const [region, L] of Object.entries(LANDS_NEW)) {
   });
 
   test(`${region}: the preview builds it, the roads out are shut with their words, and the town's gate and the overland's agree`, () => {
-    assert.ok(!(region in LANDS), 'not a land you can walk to yet');
-    assert.ok(!Object.values(SITES).some((s) => s.region === region && !s.parked), 'no open site of its own');
+    // (v1.124: the Reach is a land: the Wickham road open to the Vale, the Cold Seam's door; the Solmere road still shut)
+    const land = region === 'reach', open = land ? ['cold_seam'] : [];
+    assert.equal(region in LANDS, land, land ? 'a land since v1.124' : 'not a land you can walk to yet');
+    assert.deepEqual(Object.keys(SITES).filter((k) => SITES[k].region === region && !SITES[k].parked), open, 'its open sites');
     const sim = createSim(20260807, undefined, { scene: 'overland', region }); sim.tick();
     assert.equal(sim.world.name, L.name); assert.equal(sim.state.region, region);
     const said = []; sim.bus.on('landShut', (e) => said.push(e));
     const shut = sim.world.exits.filter((e) => e.closed);
     assert.ok(shut.length >= 1 && shut.every((e) => typeof e.shut === 'string' && e.shut.length > 20), 'every road out has its word');
-    assert.ok(!sim.world.exits.some((e) => e.to === 'dungeon'), 'no site has a door yet');
+    assert.deepEqual(sim.world.exits.filter((e) => e.to === 'dungeon').map((e) => e.site), open, 'a door for each open site, no other');
+    if (land) assert.ok(sim.world.exits.some((e) => e.region === 'vale' && e.arrive === 'reach' && !e.closed), 'the Wickham road home to the Vale');
     for (const e of shut) {
       const p = sim.state.player; p.x = p.px = (e.x0 + e.x1) / 2; p.y = p.py = (e.y0 + e.y1) / 2;
       for (let i = 0; i < 5; i++) sim.tick();

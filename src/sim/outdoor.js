@@ -786,6 +786,7 @@ function buildOverland(seed) {
     { w: 3, surface: 'track', pts: [[168, 196], [184, 226], [206, 234], [chapel[0] + 1, chapel[1] + 14]] },   // the causeway to the chapel, off the camp track
     { w: 4, surface: 'track', pts: [[161, 84], [142, 66], [122, 44], [warren[0] + 2.5, warren[1] + 7]] },      // up under the range to the warren's door (its adit faces down the track)
     { w: 5, surface: 'dirt', fens: true, pts: [[92, 206], [80, 236], [54, 250], [38, 264], [38, 274]] },   // the canal road south off the barrows road, to the Fens (M8; shut until Act I is done)
+    { w: 5, surface: 'dirt', reach: true, pts: [[142, 66], [146, 46], [150, 22], [152, -16]] },   // the Wickham road north off the warren track, past the keep's west side, over the range to the Cinder Reach (v1.124; shut until Act II is done)
   ].map((r) => ({ ...r, pts: fillet(r.pts, Math.max(8, r.w * 2)) }));
   joinRoads(o, ROADS);
   o.roads.push(...ROADS);
@@ -835,13 +836,15 @@ function buildOverland(seed) {
   const mrng = mulberry32(streamSeed(seed, 4411)), F = (id) => ENV_FOOT[id] || [-10, -10, 10, 10];
   const MASSIF = ['mountain_massif_A', 'mountain_massif_B', 'mountain_massif_C'], SHOULDER = ['mountain_A', 'mountain_B', 'mountain_A_grass_trees', 'mountain_B_grass_trees', 'mountain_C_grass_trees'];
   const GORGE = [14, 52];                                              // where the river comes down out of the range
+  const PASS = [138, 166];                                             // (v1.124) where the Wickham road goes over it: the same draws, nothing put in the pass
+  const inPass = (x0, x1) => x1 > PASS[0] && x0 < PASS[1];
   for (let x = -90, i = 0; x < 360; i++) {
     const id = MASSIF[[2, 1, 0, 2, 1, 0, 1, 2][i % 8]], f = F(id);
     if (x < GORGE[1] && x + f[2] - f[0] > GORGE[0]) { x = GORGE[1]; continue; }
-    put(o, id, x - f[0], -12 - f[3] - mrng() * 14, 'round', 0.3);
+    const my = -12 - f[3] - mrng() * 14; if (!inPass(x, x + f[2] - f[0])) put(o, id, x - f[0], my, 'round', 0.3);
     x += (f[2] - f[0]) * (0.55 + mrng() * 0.2);
   }
-  for (let x = -60; x < 330; x += 20 + mrng() * 14) { const id = pick(mrng, SHOULDER), f = F(id); if (x + f[2] > GORGE[0] && x + f[0] < GORGE[1]) continue; put(o, id, x, -6 - f[3] - mrng() * 6, 'round', 0.35); }   // shoulders before the range
+  for (let x = -60; x < 330; x += 20 + mrng() * 14) { const id = pick(mrng, SHOULDER), f = F(id); if (x + f[2] > GORGE[0] && x + f[0] < GORGE[1]) continue; const sy = -6 - f[3] - mrng() * 6; if (!inPass(x + f[0], x + f[2])) put(o, id, x, sy, 'round', 0.35); }   // shoulders before the range
   for (let y = -40; y < 320; y += 20 + mrng() * 10) { const id = pick(mrng, SHOULDER), f = F(id); put(o, id, 268 - f[0] + mrng() * 16, y, 'round', 0.35); }   // the east: lower, further out
   // the owner, 2026-11-11: "Reduce the trees in Hollow Vale by 25%". Every tree on the land (the foothills, the woods,
   // the meadow clumps, the canal road's verges; not the forest ring past the edge, the Vale's wall) is kept on a draw
@@ -932,10 +935,13 @@ function buildOverland(seed) {
   o.exits.push({ x0: warren[0], y0: warren[1] + 6, x1: warren[0] + 5, y1: warren[1] + 9, to: 'dungeon', site: 'proving_pens' });   // (v1.60) the adit's mouth, where the track ends
   o.arrivals = { default: { x: town[0] + 30.5, y: town[1] + 0.5 }, thornwick: { x: town[0] + 30.5, y: town[1] + 0.5 }, barrows: { x: barrows[0] + 1.5, y: barrows[1] + 13.5 },
     tithe_mill: { x: mill[0] - 0.5, y: mill[1] + 15.5 }, wickham_keep: { x: keep[0] + 0.5, y: keep[1] + 27.5 }, sunken_chapel: { x: chapel[0] + 1.5, y: chapel[1] + 19.5 }, ninth_milestone: { x: stone[0] + 0.5, y: stone[1] + 11.5 },
-    scrag_warren: { x: warren[0] + 4, y: warren[1] + 13.5 }, proving_pens: { x: warren[0] + 2.5, y: warren[1] + 13.5 }, fens: { x: 38.5, y: 255.5 } };
+    scrag_warren: { x: warren[0] + 4, y: warren[1] + 13.5 }, proving_pens: { x: warren[0] + 2.5, y: warren[1] + 13.5 }, fens: { x: 38.5, y: 255.5 }, reach: { x: 151.5, y: 4.5 } };
   // the canal road leaves the Vale at its south edge, for the Fens (regions.js); shut, with a word, until Act I is done
   o.exits.push({ x0: 30, y0: 263, x1: 47, y1: 271, to: 'overland', region: 'fens', arrive: 'vale_road',
     shut: "The canal road's under water past the barrows. Sister Ilse says there's a way through, when you've a reason to go." });
+  // the Wickham road leaves at its north edge over the range, for the Cinder Reach (v1.124); shut, with a word, until Act II is done
+  o.exits.push({ x0: 143, y0: -11, x1: 162, y1: -4, to: 'overland', region: 'reach', arrive: 'vale_road',
+    shut: 'The Wickham road goes north over the range to the Cinder Reach. Not yet: Sister Ilse has the Abbey\'s ledger to read first.' });
   o.spawn = o.arrivals.default;
   return o;
 }
@@ -944,9 +950,9 @@ function buildOverland(seed) {
 // Laid out on the sketch (tools/worldmap/overlands.mjs `reach`, docs/img/world/overland-reach.jpg), 260 × 260, north
 // up. Three imperial roads meet at Ashgate's east gate: the Wickham road up from the Vale, the Kell road west round the
 // north wall to Kell's Rest under the dead volcano, the Solmere road east over the Ashwater's bridge, a dead
-// beacon-tower beside each every day's march. Tracks to the sites. NOT PLAYABLE YET (regions.js has no `reach`; Act III
-// isn't built): reached only by the preview (?scene=overland&region=reach). The sites are landmarks, with no doors;
-// the roads out are shut, each with its word. Its own streams: 4441 (the scatter), 4443 (the hills), 4445 (the river).
+// beacon-tower beside each every day's march. Tracks to the sites. A land since v1.124 (regions.js `reach`, open when
+// Act II is done): the Wickham road down to the Vale, and the sites' doors as their bands are built (the Cold Seam's
+// first; the rest still landmarks). The Solmere road stays shut, with its word. Its own streams: 4441 (the scatter), 4443 (the hills), 4445 (the river).
 export const REACH = { gate: [132, 140], join: [152, 140], kells: [38, 104], yards: [64, 132], works: [176, 64], vault: [168, 30], ninth: [64, 30],
   tunnels: [74, 192], seam: [122, 212], forge: [194, 146], volcano: [14, 64], tailings: [[148, 90, 9, 7], [222, 76, 8, 6]] };
 function buildReach(seed) {
@@ -1040,9 +1046,12 @@ function buildReach(seed) {
 
   o.exits.push({ x0: gate[0] - 8, y0: gate[1] - 4, x1: gate[0] - 1, y1: gate[1] + 4, to: 'town', arrive: 'overland' });
   // the roads out: shut, each with its word (the Reach isn't joined to the other lands yet)
-  o.exits.push({ x0: 138, y0: 263, x1: 155, y1: 271, to: 'overland', closed: true, shut: "The Wickham road goes home to the Vale from here. Not yet: Ashgate's quota isn't met." });
+  o.exits.push({ x0: 138, y0: 263, x1: 155, y1: 271, to: 'overland', region: 'vale', arrive: 'reach' });   // (v1.124) down the Wickham road, home to the Vale
+  // the sites' doors (v1.124): the Cold Seam's pithead, where its track ends (the others come with their bands)
+  o.exits.push({ x0: seam[0] - 9, y0: seam[1] + 10, x1: seam[0] - 3, y1: seam[1] + 13, to: 'dungeon', site: 'cold_seam' });
   o.exits.push({ x0: 263, y0: 180, x1: 271, y1: 198, to: 'overland', closed: true, shut: 'The Solmere road runs east, straight as the day it was laid, to the dead capital. Another day.' });
-  o.arrivals = { default: { x: join[0] - 4.5, y: gate[1] + 0.5 }, ashgate: { x: join[0] - 4.5, y: gate[1] + 0.5 }, kells_rest: { x: kells[0] + 10.5, y: kells[1] + 4.5 } };
+  o.arrivals = { default: { x: join[0] - 4.5, y: gate[1] + 0.5 }, ashgate: { x: join[0] - 4.5, y: gate[1] + 0.5 }, kells_rest: { x: kells[0] + 10.5, y: kells[1] + 4.5 },
+    vale_road: { x: 146.5, y: 255.5 }, cold_seam: { x: seam[0] - 5.5, y: seam[1] + 17.5 } };
   o.spawn = o.arrivals.default;
   return o;
 }

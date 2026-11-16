@@ -211,7 +211,14 @@ console.log('the right party holds same-level rooms (L12/15):', right15Ok, right
 const solo15 = [12, 15].map((lv) => roomVisit({ lv, secs: 120 })), up15 = [roomVisit({ classes: FRC, lv: 12, rl: 15 }), roomVisit({ classes: FRC, lv: 15, rl: 18 })];
 const band15Ok = solo15.every((v) => v.defeated && v.waves <= 2) && up15.every((v) => v.defeated);
 console.log('a lone hero is down within 2 waves, and a room 3 up defeats the right party (L12/15):', band15Ok, [...solo15, ...up15].map(show).join(', '));
-const holdOk = solo1Ok && solo6Ok && rightOk && noHealOk && up3Ok && compOk && gearOk2 && right15Ok && band15Ok;
+// (v1.124) the Reach's first band, the Cold Seam: the same contract at 18 and 21
+const right21 = []; for (const seed of [20260807, 777]) for (const lv of [18, 21]) right21.push(roomVisit({ seed, classes: FRC, lv }));
+const right21Ok = right21.every((v) => v.waves >= 10 && !v.fallenEarly);
+console.log('the right party holds same-level rooms (L18/21):', right21Ok, right21.map(show).join(', '));
+const solo21 = [18, 21].map((lv) => roomVisit({ lv, secs: 120 })), up21 = [roomVisit({ classes: FRC, lv: 18, rl: 21 }), roomVisit({ classes: FRC, lv: 21, rl: 24 })];
+const band21Ok = solo21.every((v) => v.defeated && v.waves <= 2) && up21.every((v) => v.defeated);
+console.log('a lone hero is down within 2 waves, and a room 3 up defeats the right party (L18/21):', band21Ok, [...solo21, ...up21].map(show).join(', '));
+const holdOk = solo1Ok && solo6Ok && rightOk && noHealOk && up3Ok && compOk && gearOk2 && right15Ok && band15Ok && right21Ok && band21Ok;
 const rl = createSim(20260807, undefined, { scene: 'dungeon' }).world, rlv = [...rl.roomLevels.values()];
 // (2026-11-02, the Vale authored: plans.js) the Old Barrows' first floor: the Cutting and the Breach at 1, the Robbed Tomb
 // (the offshoot) and the hall a level up, at 2; the entrance safe

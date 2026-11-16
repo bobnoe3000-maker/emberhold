@@ -25,7 +25,8 @@ const INK = '#3b2f24', PAPER = '#e9dfc6', DIM = '#6e5e4a', GOLD = '#b8862e';
 
 // the ground, by world.tmat (outdoor.js G): grass, dirt, cobble, water, bank, field, marsh, pool, deck
 const GROUND = { vale: ['#b4b886', '#c9a77a', '#cfc1a2', '#8fa4a6', '#b5a17a', '#d8c27c', '#8f9a72', '#7f9196', '#8a6a48'],
-  fens: ['#9aa07a', '#b39a78', '#c2b69a', '#6f8478', '#9a8c6a', '#c8b47a', '#7f8a66', '#5f7470', '#8a6a48'] };
+  fens: ['#9aa07a', '#b39a78', '#c2b69a', '#6f8478', '#9a8c6a', '#c8b47a', '#7f8a66', '#5f7470', '#8a6a48'],
+  reach: ['#8e8a82', '#a07a5e', '#b0a594', '#6e7a80', '#8c7a66', '#b8956a', '#7a746a', '#5e6a70', '#7a5a44'] };   // (v1.124: ash, rust and red rock)
 // what a placed piece is, by its id
 const kindOf = (id) => {
   if (/_(temple|tavern|shop|smith|inn|stilttavern|stiltinn)_\d/.test(id)) return 'svc';
@@ -81,6 +82,8 @@ const SCENES = [
   scene('saltmere', { scene: 'town', region: 'fens' }, [-12, -10, 146, 130], 'fens'),
   scene('vale', { scene: 'overland', region: 'vale' }, [-6, -36, 262, 278], 'vale'),
   scene('fens', { scene: 'overland', region: 'fens' }, [-6, -36, 246, 244], 'fens'),
+  scene('ashgate', { scene: 'town', region: 'reach' }, [-22, -20, 166, 136], 'reach'),
+  scene('reach', { scene: 'overland', region: 'reach' }, [-6, -36, 266, 278], 'reach'),
 ];
 
 // the page: a canvas for the map (ground a tile a pixel-block, then the pieces), an SVG over it for the sheet's words

@@ -1,7 +1,9 @@
 # The Cinder Reach: a plan
 
-**Proposed (2026-11-16), for the owner's review.** The owner, on what's next: *"do 2 then start the Reach plan"*.
-Nothing here is built yet. The decisions for you are in [the last section](#decisions-for-the-owner).
+**Plan of record (2026-11-16).** The owner, on what's next: *"do 2 then start the Reach plan"*; then, on this plan:
+*"Act 3, go with your recommendation. Furnace Nine at 30 after on the hour, Morrow Vane escapes. Be sure to dress the
+overworld and dungeons to the theme, run critic passes in the area and new NPC models."* The decisions as taken are in
+[the last section](#decisions-for-the-owner); canon in world doc v1.53. Building in the order below, steps 1 to 3 first.
 
 The Fens end at level 18, and a company at 20 has nowhere to go. The Reach is levels **19–30** and Act III, *Quota*
 (world doc §3.3, §6). Its overland and Ashgate's town scene exist as previews (`reach-heights-overlands.md`): the roads,
@@ -173,6 +175,14 @@ Each step ends playable and checked (`npm run check`, the browser suite, the pac
 Steps 3 to 6 each come with their act chapters, so the story can be played as far as it's built.
 
 ## Decisions for the owner
+
+**Taken (2026-11-16):** 1, four bands. 2, the cut as proposed. 3, **Furnace Nine at half past every hour** (the
+Kingstone keeps the top of it). 4, **Morrow Vane escapes** at a quarter of his life. 5, the cinder hound and the
+forge-wight new, the rest recolours, and Ashgate's people as their own models. 6, still open: no trial rung in the first
+slice. 7, steps 1 to 3 first (the land, Ashgate and the Cold Seam), dressed and critiqued, then shown.
+
+The questions as they were put:
+
 
 1. **The four bands.** Four dungeons of three levels (as above, with a new boss for the Assay Yards, *the
    Weighmaster*), or three dungeons of four levels each (the Cold Seam 19–22, the Forgehall 23–26, the Cinderworks

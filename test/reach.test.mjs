@@ -15,7 +15,7 @@ const reachable = (w) => {
   return seen;
 };
 test('every chest and shrine has a walkable tile beside it that the way in reaches (Barrows floor 2, seed 20260807, had one that didn\'t)', () => {
-  for (const [seed, site] of [[20260807, 'barrows'], [777, 'barrows'], [4242, 'barrows'], [1, 'tithe_mill'], [2, 'wickham_keep'], [3, 'sunken_chapel']]) for (const depth of [0, 1, 2]) {
+  for (const [seed, site] of [[20260807, 'barrows'], [777, 'barrows'], [4242, 'barrows'], [1, 'tithe_mill'], [2, 'wickham_keep'], [3, 'sunken_chapel'], [5, 'cold_seam'], [6, 'cold_seam']]) for (const depth of [0, 1, 2]) {
     const sim = createSim(seed, undefined, { scene: 'dungeon', site }); if (depth) sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), depth, floors: [] });
     const w = sim.world, seen = reachable(w);
     for (const [k, kind] of w.props) {

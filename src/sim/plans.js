@@ -213,6 +213,44 @@ export const PLANS = {
 
   // ── Toadking's Mound (10–12): an island of boats in the reeds. The toad-men's landing and their mud below the reed
   //    beds; then the stilt-built boat houses over the water, the Toadking in his Boat Hall with Wren his prisoner.
+  // the Cinder Reach's first band (GDD v1.124, world doc v1.53, docs/reach-plan.md): the Deepdelvers' old pithead, then
+  // the warren the Scrag Warren's goblins dug on through the range into it; the Foreman in the tally cave, Tamsin held there
+  cold_seam: { site: 'cold_seam', name: 'The Cold Seam', kind: 'seam', base: 19, floors: [
+    { name: 'The Old Pithead', spaces: [
+      { id: 'the_shaft_head', name: 'The Shaft Head', role: 'entrance', x: 0, y: 0, w: 32, h: 28, shape: 'rect', lv: 0, kit: 'pithead',
+        dress: ['timbers', 'lanterns', 'crates'], note: 'The cage landing at the foot of the shaft, the cage itself long gone; the shaft\'s ladder up to the day is the way out. Timbered, dry, cold.' },
+      { id: 'the_lamp_room', name: 'The Lamp Room', role: 'room', x: 42, y: 0, w: 38, h: 30, shape: 'rect', lv: 0, kit: 'pithead', foes: 'pithead',
+        dress: ['racks', 'lanterns', 'barrels'], note: 'Where the shift took its lamps and left its tallies: the racks still hang with them, two hundred lamps, none lit. Old Brannagh kept this room.' },
+      { id: 'the_pay_office', name: 'The Pay Office', role: 'offshoot', x: 90, y: 4, w: 24, h: 22, shape: 'rect', lv: 1, kit: 'pithead', foes: 'pithead',
+        dress: ['bars', 'pay_chests', 'ledger'], note: 'The Seam\'s last wages behind the grille, in their strongboxes, never paid out: the Seam closed on a Friday.' },
+      { id: 'the_long_gallery', name: 'The Long Gallery', role: 'room', x: 28, y: 40, w: 60, h: 40, shape: 'cave', lv: 0, kit: 'pithead', foes: 'pithead',
+        dress: ['timbers', 'carts', 'rubble', 'drips'], note: 'The main gallery, timbered every few paces, the rails for the carts down its middle; a stretch of roof came in years ago and the way goes round it.' },
+      { id: 'the_winding_room', name: 'The Winding Room', role: 'descent', x: 34, y: 90, w: 50, h: 44, shape: 'rect', lv: 1, kit: 'pithead', foes: 'pithead',
+        dress: ['windlasses', 'lanterns', 'stair_down'], note: 'The winding gear for the deep shaft, its great wheel overhead; the goblins\' ladder goes down the old shaft beside it.' },
+    ], halls: [
+      { from: 'the_shaft_head', to: 'the_lamp_room', x: 32, y: 9, w: 10, h: 10 },
+      { from: 'the_lamp_room', to: 'the_pay_office', x: 80, y: 10, w: 10, h: 10 },
+      { from: 'the_lamp_room', to: 'the_long_gallery', x: 52, y: 30, w: 10, h: 10 },
+      { from: 'the_long_gallery', to: 'the_winding_room', x: 54, y: 80, w: 10, h: 10, rough: true },
+    ] },
+    { name: 'The Warren', spaces: [
+      { id: 'the_breakthrough', name: 'The Breakthrough', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'cave', lv: 1, kit: 'warren',
+        dress: ['rubble', 'lanterns', 'stair_up'], note: 'Where the goblins broke through out of the range into the cut stone: raw rock one side, the Deepdelvers\' dressed wall the other.' },
+      { id: 'the_burrow_hall', name: 'The Burrow Hall', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'cave', lv: 1, kit: 'warren', foes: 'warren',
+        dress: ['bedrolls', 'cookfires', 'sacks'], note: 'A long burrow the goblins sleep in, in shifts: the bedrolls are never cold.' },
+      { id: 'the_larder', name: 'The Larder', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'cave', lv: 2, kit: 'warren', foes: 'warren',
+        dress: ['barrels', 'bones', 'chest', 'shrine'], note: 'What the warren eats, hung and stacked; better not to look at the bottom of the pile.' },
+      { id: 'the_spoil_cut', name: 'The Spoil Cut', role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'cave', lv: 2, kit: 'warren', foes: 'warren',
+        dress: ['carts', 'rubble', 'lanterns'], note: 'Where the goblins tip what they dig, by the cartload: the old carts, stolen off the Seam\'s rails, and a heap to the roof.' },
+      { id: 'the_tally_cave', name: 'The Tally Cave', role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'cave', lv: 2, kit: 'warren', foes: 'warren', boss: 'foreman',
+        dress: ['scaffold', 'ladders', 'braziers', 'drips'], note: 'The Foreman\'s cave: the old chutes come down through its roof from the gallery above, and he has chalked his crosses on the floor under them. His tally covers the walls. Tamsin Coalbrook at the goblins\' anvil, on a chain.' },
+    ], halls: [
+      { from: 'the_breakthrough', to: 'the_burrow_hall', x: 30, y: 8, w: 10, h: 10, rough: true },
+      { from: 'the_burrow_hall', to: 'the_larder', x: 56, y: 24, w: 10, h: 10, rough: true },
+      { from: 'the_burrow_hall', to: 'the_spoil_cut', x: 110, y: 8, w: 10, h: 10, rough: true },
+      { from: 'the_spoil_cut', to: 'the_tally_cave', x: 132, y: 34, w: 10, h: 10, rough: true },
+    ] },
+  ] },
   toadking_mound: { site: 'toadking_mound', name: "Toadking's Mound", kind: 'mound', base: 10, floors: [
     { name: 'The Landing and the Mudflats', spaces: [
       { id: 'the_landing', name: 'The Landing', role: 'entrance', x: 0, y: 0, w: 34, h: 28, shape: 'cave', lv: 0, kit: 'mound',

@@ -29,11 +29,12 @@ function walked() {
 }
 
 test('the coach roads: days are symmetric and 10 gold a day', () => {
-  assert.deepEqual(Object.keys(COACH), ['thornwick', 'saltmere']);
+  assert.deepEqual(Object.keys(COACH), ['thornwick', 'saltmere', 'ashgate']);
   for (const [a, b, n] of ROADS) { assert.equal(days(a, b), n); assert.equal(days(b, a), n); assert.equal(fare(a, b), n * FARE_DAY); }
   assert.equal(days('thornwick', 'thornwick'), 0);
   assert.equal(days('thornwick', 'lamphall'), null, 'not a stop yet');
-  assert.equal(townOf('vale'), 'thornwick'); assert.equal(townOf('fens'), 'saltmere');
+  assert.equal(townOf('vale'), 'thornwick'); assert.equal(townOf('fens'), 'saltmere'); assert.equal(townOf('reach'), 'ashgate');
+  assert.equal(days('saltmere', 'ashgate'), 3, 'by Thornwick');
 });
 
 test('the towns reached: you stand in one, the coach stops there', () => {
