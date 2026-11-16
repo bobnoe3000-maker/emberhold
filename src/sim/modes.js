@@ -21,6 +21,8 @@
 //   waves     a room is won after this many waves held (0: the room's own way, a gate's or none)
 //   tide      a room's climb, { step, cap } a wave (null: the room's own, tideOf)
 //   foeHp, foeAtk  every foe's HP and attack × (a raid's: GDD §18 v1.108), its boss and his escort too
+//   foeHpEase  [from, step, floor]: foeHp less `step` a foe level past `from`, never under `floor` (null: none; a raid's
+//             from 15 up, GDD v1.128: foeHpOf)
 //   loot      'slot' (loot.js DROP at the slot's odds), 'raid' (DROP raid*, for the hero's class: core.js dropHere) or
 //             'none' (an event: nothing drops in the fight, its pay is the tier's at the end, ring.js)
 // Pure data and nothing imported: battle.js, core.js, quests.js, lore.js and raid.js read it, and nothing here reads them.
@@ -32,10 +34,12 @@
 export const BOUT = { cc: 0.5, heal: 0.75, dmg: 0.5, react: 0.8, secs: 120, draw: 0.02, call: 3, gap: 16, rest: 2.5 };
 
 /** @typedef {{ kind: 'slot' | 'camp' | 'tower' | 'bout' | 'raid' | 'event', story: boolean, count: boolean, death: 'wipe' | 'satchel' | 'none' | 'bout' | 'respawn',
- *   fallen: boolean, boon: boolean, heal: number, dmg: number, bossHome: boolean, xp: number, gold: number, waves: number, foeHp: number, foeAtk: number,
+ *   fallen: boolean, boon: boolean, heal: number, dmg: number, bossHome: boolean, xp: number, gold: number, waves: number, foeHp: number, foeAtk: number, foeHpEase: [number, number, number] | null,
  *   tide: { step: number, cap: number } | null, loot: 'slot' | 'raid' | 'none' }} Mode */
 
-const SLOT = { story: true, count: true, death: 'wipe', fallen: true, boon: true, heal: 1, dmg: 1, bossHome: false, xp: 1, gold: 1, waves: 0, foeHp: 1, foeAtk: 1, tide: null, loot: 'slot' };
+const SLOT = { story: true, count: true, death: 'wipe', fallen: true, boon: true, heal: 1, dmg: 1, bossHome: false, xp: 1, gold: 1, waves: 0, foeHp: 1, foeAtk: 1, foeHpEase: null, tide: null, loot: 'slot' };
+/** a foe's HP × in a mode, at its level (foeHp, eased past foeHpEase's level) @param {Readonly<Mode>} M @param {number} lvl */
+export const foeHpOf = (M, lvl) => { const E = M.foeHpEase; return E && lvl > E[0] ? Math.max(E[2], M.foeHp - E[1] * (lvl - E[0])) : M.foeHp; };
 /** @type {Readonly<Record<Mode['kind'], Readonly<Mode>>>} */
 export const MODES = Object.freeze({
   // single play: everything on (a dungeon's rooms, the overland's fights)
@@ -51,8 +55,11 @@ export const MODES = Object.freeze({
   // home; a room won after ten waves (six before GDD v1.108, the owner: "now 6 waves to drop a gate it should be 10") on
   // +1/9 a wave, +100 % at the tenth (GDD v1.109, the owner: "should also go up to 100% npc increase difficulty, not tap out
   // below 100%": v1.108's +5 % a wave stopped at +45 %), as a slot's room climbs to +100 % over its twenty; every foe twice the HP and 15 % harder (v1.108, the owner: "double the hp of all enemies, and they attack
-  // 15% harder"); a kill pays 1.25×; the loot at a raid's odds
-  raid: Object.freeze(/** @type {Mode} */ ({ kind: 'raid', ...SLOT, story: false, count: false, death: 'none', fallen: false, bossHome: true, xp: 1.25, gold: 1.25, waves: 10, foeHp: 2, foeAtk: 1.15, tide: Object.freeze({ step: 1 / 9, cap: 1.0 }), loot: 'raid' })),
+  // 15% harder"); a kill pays 1.25×; the loot at a raid's odds. The doubled HP eases from 15 up (GDD v1.128, the owner: "yes
+  // ease raid foe HP from 15 up"), 0.1 a foe level to ×1.2 at 22: the raids from 15 ran twice the low bands' length and
+  // were won half as often in the same gear (raid.mjs --gear fine+3, two over each top, 4 seeds: 8/16 → 12/16, the Cold
+  // Seam 24.2 → 17.8 min, the Cinderworks 19.0 → 14.5; the default kit still loses at a top level, as at 6)
+  raid: Object.freeze(/** @type {Mode} */ ({ kind: 'raid', ...SLOT, story: false, count: false, death: 'none', fallen: false, bossHome: true, xp: 1.25, gold: 1.25, waves: 10, foeHp: 2, foeAtk: 1.15, foeHpEase: Object.freeze(/** @type {[number, number, number]} */ ([14, 0.1, 1.2])), tide: Object.freeze({ step: 1 / 9, cap: 1.0 }), loot: 'raid' })),
   // a region boss's event (ring.js, GDD §19 v1.105; shared-play-rules decisions 3–5): not the story's or the count's, no
   // wipe (a Downed member gets up at the edge, RING.respawn), nobody Fallen, no boon carried in, the boss always home, no
   // XP, coin or loot in the fight (the pay is the tier's at the end)

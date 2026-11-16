@@ -51,7 +51,7 @@ import { LAMPS, lampOf, CAGE_KINDS, CAGE_PICKUP_S, CAGE_REACH, countOf, credit }
 import { HAZARD, hazardAt, openGround, edgeDistances, ageHazards, tellAt, inTell } from './hazards.js';
 import { RING, ringByCamp, hpStepOf } from './ring.js';
 import { campsOf, campNear, campUp, campState, bandOf, postOf, clearCamp, CAMP_ROOM } from './camps.js';
-import { BOUT, modeOf } from './modes.js';
+import { BOUT, modeOf, foeHpOf } from './modes.js';
 
 // class combat traits (stats are in party.js / the GDD tables; abilities in skills.js). v1.47 (the owner: "Ranged
 // combat is too close, double the current target range"): every shooter's reach is twice what it was, here, under SHOT
@@ -655,7 +655,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
    * @param {number} x @param {number} y @param {number} tough @param {boolean} elite @param {any} F @param {any} [B] */
   function foe(w, k, lvl, x, y, tough, elite, F, B = null) {
     const scale = 1 + 0.14 * (lvl - 1), atkScale = 1 + 0.12 * (lvl - 1), E = ENEMIES[B ? B.like : k], M = mode();   // (M.foeHp, foeAtk: a raid's tougher foes, modes.js)
-    const hp = Math.round(E.hp * scale * tough * (elite ? 2.5 : 1) * (B ? B.hp : 1) * M.foeHp);
+    const hp = Math.round(E.hp * scale * tough * (elite ? 2.5 : 1) * (B ? B.hp : 1) * foeHpOf(M, lvl));
     const u = { id: nextId++, kind: k, undead: B ? !!B.undead : F.undead(k), elite: elite || !!B, lvl, x, y, hp, maxHp: hp,
       atk: E.atk * atkScale * tough * (elite ? 1.3 : 1) * (B ? B.atk : 1) * M.foeAtk, def: E.def * scale * (B ? B.def : 1),
       crit: E.crit, dodge: E.dodge, interval: E.interval, range: B && B.range ? B.range : E.range, speed: B && B.speed ? B.speed : E.speed, bolt: E.bolt,
