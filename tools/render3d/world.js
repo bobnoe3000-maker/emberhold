@@ -35,6 +35,8 @@ import { RockSpikes } from '../src/engine/fx/RockSpikes.js';
 import { SpectralBells } from '../src/engine/fx/SpectralBells.js';
 import { createFxAtlas } from '../src/engine/pixel/FxSprites.js';
 import { DEFAULT_KEYFRAMES } from '../src/engine/lighting/LightingSystem.js';
+import { ARID_KEYFRAMES } from '../src/game/Climate.js';
+import { registerTextureSet, TextureLibrary } from '../src/engine/pixel/Textures.js';
 import { setFogStart } from '../src/game/AtmosphereFog.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { makeBuilding } from './buildkit.js';
@@ -338,6 +340,15 @@ const KIT_UNIT = 5, KIT_LIFT = 1.3, KIT = new Map();
 let KIT_MADE = new Map();   // (a level's: set aside with it, load())
 for (const e of ENV_LIST) if (e.build) KIT.set(e.id, e);
 for (const list of Object.values(TOWN_SETS)) for (const e of list) if (e.build) KIT.set(e.id, e);
+// the Cinder Reach's own pieces (docs/art-critic-pass-reach.md), stood by convert.js on the sim's footprints: Ashgate's
+// pithead wheel over its gate, the Cinderworks' furnace hall and stacks, the Cold Seam's headframe. 3D only: no baked
+// card (?landmarks=sprites leaves them out), and no footprint of their own (the sim's gatehouse, tower, smithy and mine)
+for (const e of [
+  { id: 'reach_gatewheel', build: 'gatewheel', style: 'reach', seed: 5, desat: 0.15, tint: [1, 0.93, 0.88], rotY: 90 },
+  { id: 'reach_stack', build: 'stack', style: 'reach', seed: 9, desat: 0.15, tint: [1, 0.93, 0.88] },
+  { id: 'reach_works', build: 'works', style: 'reach', seed: 11, desat: 0.15, tint: [1, 0.93, 0.88] },
+  { id: 'reach_pithead', build: 'pithead', style: 'reach', seed: 4, desat: 0.15, tint: [1, 0.94, 0.9] },
+]) KIT.set(e.id, e);
 const DOORS = new Set(['vale_keep_1', 'ruin', 'chapelruin_0']);
 /** a kit piece as one mesh a material (its many boxes merged: a phone draws a few calls, not sixty), lit windows in the
  * world's own glass (they light at dusk with the town's) */
@@ -479,14 +490,17 @@ const DUSKY = DEFAULT_KEYFRAMES.map((f) => {
 // Vale is olive grass and grey stone under a heavy one (daylight.js vig 0.85)
 // By day greyer and dimmer (Emberlit's day is a grey ambient: daylight.js LOOKS.day), by night as night is
 const VALE_GRADE = { saturation: 0.92, exposure: 0.9, contrast: 1.06, vignette: 0.78 };
-let graded = false;
+let graded = false, gradedReach = false;
 function gradeByHour() {
   const G = game?.postfx?.settings?.grade, n = game?.lighting?.state?.night ?? 1;
+  // (the Reach: its own grade held, the exposure the game's brightness by the hour: hybrid.js REACH_BRIGHT)
+  if (gradedReach && G) { G.exposure = (gradeOwn?.exposure ?? 1) * bright * brightHour; return; }
   if (!graded || !G) return;
   G.saturation = 0.74 + 0.18 * n; G.exposure = (0.84 + 0.06 * n) * bright * brightHour;
 }
 // brightness on top of the hour's grade, a post-tone-map multiply:
-//   · brightHour: the game's, each frame (hybrid.js BRIGHT: the Vale's day, dusk and night as the owner set them);
+//   · brightHour: the game's, each frame (hybrid.js BRIGHT: the Vale's day, dusk and night as the owner set them; the
+//     Reach's, REACH_BRIGHT, on its own grade);
 //   · bright: a further one from settings({ bright }), for tuning by captures (tools/capture/rig.mjs "bright").
 let bright = 1, brightHour = 1;
 
@@ -506,13 +520,96 @@ let gradeOwn = null;
 let skyShown = 'default';
 function skyFor(lv, region) {
   const L = game?.lighting; if (!L) return;
-  const env = lv.environment || {}, G = game.postfx?.settings?.grade;
-  if (G) { if (!gradeOwn) gradeOwn = { ...G }; Object.assign(G, gradeOwn, region === 'vale' ? VALE_GRADE : {}); gradeKeep = { sharpen: G.sharpen, grain: G.grain, chromaticAberration: G.chromaticAberration }; applyGrade(); }
-  graded = region === 'vale' && !env.interior;
+  const env = lv.environment || {}, G = game.postfx?.settings?.grade, ash = region === 'reach' && !env.interior;
+  if (G) { if (!gradeOwn) gradeOwn = { ...G }; Object.assign(G, gradeOwn, region === 'vale' ? VALE_GRADE : ash ? REACH_GRADE : {}); gradeKeep = { sharpen: G.sharpen, grain: G.grain, chromaticAberration: G.chromaticAberration }; applyGrade(); }
+  graded = region === 'vale' && !env.interior; gradedReach = ash;
+  // (the Reach: the arid climate's sky graded to ash; any other arid level, the Bowl, its own again)
+  if (env.climate === 'arid' && !env.interior) { const want = ash ? 'ash' : 'arid'; if (skyShown !== want) { L.setKeyframes(ash ? ASH_KEYFRAMES : ARID_KEYFRAMES); skyShown = want; } }
+  if (ash) reachAir();
   if (env.interior || env.climate || env.season) return;                 // (underground: the ambient's ours; a climate's sky its own)
   const want = region === 'vale' ? 'dusky' : 'default';
   L.setKeyframes(want === 'dusky' ? DUSKY : DEFAULT_KEYFRAMES); skyShown = want;   // (each outdoor level: a climate before may have set its own)
 }
+
+// ── the Cinder Reach's air (docs/art-critic-pass-reach.md) ──────────────────────────────────────────────────────────
+// Luminati's arid sky is a dry range's: a hazy blue noon, a molten golden hour, violet shade. The Reach is soot over slag
+// (world doc §3.3): its sky greyed toward ash and its horizon a dirty ochre, the sun a little weaker and whiter, the
+// ground's bounce dark, the air a little thicker; at dusk the sun warm but not molten, the shade grey not violet (the
+// critic's round 1: the dusk frame went deep red and the tailings read purple). The picture a little less saturated.
+const mixHex = (a, b, k) => '#' + new THREE.Color(a).lerp(new THREE.Color(b), k).getHexString();
+// (round 2: at dusk the frame was still red, the sun's '#ff7040' through a red haze: the sun toward a smoky amber and
+// the haze grey; by night the arid sky's saturated blue fill read as a moonlit sea: toward slate, the moon greyer. Round
+// 3: the air thinner, 1.25 → 1.1 of the arid fog: the top of a day frame had gone milky)
+const ASH_KEYFRAMES = ARID_KEYFRAMES.map((f) => {
+  const night = f.night ?? 0, dusk = f.t >= 16.5 && f.t <= 19.5 ? 1 : 0;
+  return { ...f,
+    top: dim(mixHex(f.top, '#6c6a70', 0.45 * (1 - night)), 0.85), horizon: mixHex(grey(f.horizon, dusk ? 0.6 : 0.45), '#9a8a74', 0.35 * (1 - night)), bottom: dim(grey(f.bottom, 0.55), 0.8),
+    sun: dusk ? mixHex(grey(f.sun, 0.35), '#e0a878', 0.45) : grey(f.sun, 0.25), sunI: f.sunI * (dusk ? 0.8 : 0.86),
+    hemiSky: mixHex(grey(f.hemiSky, dusk ? 0.7 : 0.5), '#4c4e5a', 0.75 * night), hemiGround: dim(grey(f.hemiGround, 0.4), 0.8), hemiI: f.hemiI * (dusk ? 1.08 : 1),
+    ...(night > 0.5 ? { sun: grey(f.sun, 0.75), horizon: mixHex(f.horizon, '#2c2830', 0.5) } : {}),
+    fog: f.fog * 1.1, clouds: Math.min(0.5, (f.clouds ?? 0.15) + 0.15) };
+});
+const REACH_GRADE = { saturation: 0.86, contrast: 1.05, vignette: 0.8 };
+// the Ashwater murky (slate over rust silt, not a mountain stream's blue); the land past the map's edge in cracked dark
+// earth (the arid climate lays it in orange dry dirt); the climate's gold dust motes as ash
+const MURK = ['#6e5440', '#4c3e33', '#30302e', '#1c1e21'], MURK_CREST = '#8c7c6a', MURK_FOAM = '#a89a88';
+function reachAir() {
+  const W = game?.world; if (!W) return;
+  const u = W.water?.uniforms;
+  if (u) { ['uC0', 'uC1', 'uC2', 'uC3'].forEach((k, i) => u[k]?.value.set(MURK[i])); u.uCrest?.value.set(MURK_CREST); u.uFoam?.value.set(MURK_FOAM); if (u.uSaturation) u.uSaturation.value = 0.8; }
+  const og = W.outerGround;
+  if (og && W.textures && !og.userData.ash) { og.material = W.textures.material('cinder_earth', { vertexColors: true, normalScale: 0.35 }); og.userData.ash = true; }
+  const d = W.emitters?.dust?.uniforms;
+  if (d) { d.uColor0?.value.set('#b4aca2').multiplyScalar(1.1); d.uColor1?.value.set('#8a847e').multiplyScalar(1.1); }
+}
+// The Reach's own textures (registered once, painted when a level names them): Ashgate's slag brick and rust tile, and
+// six of Luminati's set repainted (their relief kept, their colours through a ramp by luminance): cracked earth dark as
+// cinders, cobbles in charcoal without their moss, red sand as rust-stained mud, red rock iron-dark, dry grass ash-grey, ash a step darker.
+let reachLib = null;
+registerTextureSet((K) => {
+  const P = (a) => a.map((c) => K.parseColor(c)), at = (R, t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
+  const lum = (c) => (0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]) / 255;
+  const recolor = (src, R) => (s) => {
+    const p = (reachLib ||= new TextureLibrary({ seed: 7 })).pixels(src); if (!p) return {};
+    const { width: w, height: h } = p.color, L = new Float32Array(w * h); let lo = 1, hi = 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const l = lum(p.color.get(x, y)); L[y * w + x] = l; lo = Math.min(lo, l); hi = Math.max(hi, l); }
+    s.each((x, y, i) => { s.set(x, y, at(R, (L[i] - lo) / Math.max(1e-3, hi - lo))); s.hf[i] = p.height[i]; });
+    return { normal: 2.2 };
+  };
+  const SLAG = P(['#0c0b0e', '#141318', '#1c1a20', '#25222a', '#2f2b33', '#3b363d', '#4a4348']), MORTAR = P(['#3a3532', '#4e4743', '#625a54']);
+  const RUST = P(['#3a1a10', '#5a2814']), GLASS = P(['#2c4a4c', '#3e6662']);
+  return {
+    // black slag brick in ash-grey mortar, rust weeping here and there, a fleck of slag glass
+    slag_brick: { px: [32, 32], normalScale: 0.6, gen: (s, ctx) => {
+      const r = K.genStoneBrick(s, ctx), N = K.field(s.w, s.h, 4, 4, ctx.seed + 41, { oct: 2 });
+      s.each((x, y, i) => {
+        const l = lum(s.get(x, y)), q = K.hash2(x, y, ctx.seed + 43);
+        if (s.hf[i] <= 0.001) { s.set(x, y, MORTAR[q < 0.3 ? 0 : N[i] > 0.6 ? 2 : 1]); return; }
+        let col = at(SLAG, Math.min(1, l * 1.25));
+        if (N[i] > 0.84 && K.hash2(x, y >> 1, ctx.seed + 44) < 0.7) col = K.mixColor(col, RUST[N[i] > 0.92 ? 1 : 0], 0.32);
+        if (q > 0.985) col = GLASS[q > 0.995 ? 1 : 0];
+        s.set(x, y, col);
+      });
+      return r;
+    } },
+    // rust-red tile under drifts of soot
+    roof_rust: { px: [32, 32], normalScale: 0.7, gen: (s, ctx) => {
+      const r = K.genClayRoof(s, ctx, ['#1e0f0c', '#36180f', '#552517', '#73341e', '#8e4826', '#a65e34']), N = K.field(s.w, s.h, 3, 3, ctx.seed + 51, { oct: 3 });
+      s.each((x, y, i) => { if (N[i] > 0.6) s.set(x, y, K.mixColor(s.get(x, y), '#1a1514', Math.min(0.6, (N[i] - 0.6) * 2.2))); });
+      return r;
+    } },
+    cinder_earth: { px: [64, 64], normalScale: 0.6, gen: recolor('cracked_earth', P(['#121011', '#1b1817', '#25211f', '#302a27', '#3c3530', '#4a413a', '#5a4f46', '#6c5f53'])) },
+    cinder_cobble: { px: [64, 64], normalScale: 0.7, gen: recolor('cobblestone', P(['#141317', '#1d1c21', '#28262c', '#333038', '#3f3b43', '#4c4750', '#5c5660'])) },
+    rust_mud: { px: [64, 64], normalScale: 0.5, gen: recolor('red_sand', P(['#200d09', '#33150d', '#481f11', '#5e2a16', '#73361c', '#874424', '#9a5430'])) },
+    // (round 2: Luminati's red rock and dry grass were the loudest things in the frame, orange and yellow; here the red
+    // rock is iron-stained and dark, the scrub dried to an ash-dusted olive grey)
+    rust_rock: { px: [64, 64], normalScale: 0.65, gen: recolor('redrock', P(['#1c0e0b', '#2a1510', '#3a1d14', '#4a2618', '#5a301e', '#6a3a24', '#7a4630'])) },
+    ash_scrub: { px: [64, 64], normalScale: 0.5, gen: recolor('dry_grass', P(['#1e1c19', '#2a2722', '#36322b', '#433d33', '#4f483b', '#5c5444', '#6a604e'])) },
+    // (round 4: Luminati's ash, near white in its drifts, beside the cinder earth read as a mosaic of pale tiles: a
+    // step darker, still the lightest ground in the Reach)
+    ash_drift: { px: [64, 64], normalScale: 0.5, gen: recolor('ash', P(['#262422', '#33302d', '#413d39', '#504b46', '#5f5953', '#6f6860', '#80786f', '#91897e'])) },
+  };
+});
 
 // a prop of ours built in the page (hybrid.js: a dungeon's furniture, gsprite.js), from its canvas: stood facing the
 // camera at its tile's middle with a soft shadow, or laid under the figures when it lies on the floor (a binding circle,

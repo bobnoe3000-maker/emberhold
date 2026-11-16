@@ -170,17 +170,44 @@ test('hour: the sim\'s four parts of the day land on Luminati\'s dawn, day, dusk
   for (let t = 0; t < DAY_S; t += 37) { const h = hourOf(t); assert.ok(h >= 0 && h < 24); }
 });
 
-test('biomes: the Reach is drawn in Luminati\'s desert, the Heights in its snow and ice, the Vale in its grassland', () => {
+test('biomes: the Reach is drawn in ash and slag (Luminati\'s arid set and ours), the Heights in its snow and ice, the Vale in its grassland', () => {
   const tally = (region) => { const { level } = convertWorld(createSim(SEED, undefined, { scene: 'overland', region }).world, { region }); const t = {};
     for (const r of level.tiles) for (const ch of r) t[ch] = (t[ch] || 0) + 1;
     return { t, env: level.environment, trees: new Set(level.objects.filter((o) => o.type === 'tree').map((o) => o.opts.kind)), level }; };
   const reach = tally('reach'), heights = tally('heights'), vale = tally('vale');
-  assert.equal(reach.env.climate, 'arid'); assert.ok(!reach.t.g && !reach.t.G && reach.t.a > 0 && reach.t.e > 0 && reach.t.X > 0, JSON.stringify(reach.t));
-  assert.ok([...reach.trees].every((k) => ['juniper', 'deadwood'].includes(k)), [...reach.trees].join());
+  // (docs/art-critic-pass-reach.md: no orange sand, no green: ash, char, cracked dark earth, basalt hills, red rock in
+  // the scree's patches, a little scrub; the trees dead)
+  assert.equal(reach.env.climate, 'arid'); assert.ok(!reach.t.g && !reach.t.G && !reach.t.a && !reach.t.r && !reach.t.X, JSON.stringify(reach.t));
+  assert.ok(reach.t.A > 0 && reach.t.H > 0 && reach.t.Q > 0 && reach.t.O > 0 && reach.t.M > 0 && reach.t.M < reach.t.Q / 2 && reach.t.L > 0 && !reach.t.y, JSON.stringify(reach.t));
+  assert.ok([...reach.trees].every((k) => k === 'deadwood'), [...reach.trees].join());
   assert.equal(heights.env.season, 'winter'); assert.ok(heights.t.n > heights.t.q && heights.t.I > 0 && heights.t.N > 0 && !heights.t['~'], JSON.stringify(heights.t));
   assert.ok([...heights.trees].every((k) => ['snowpine', 'bare'].includes(k)), [...heights.trees].join());
   assert.ok(!vale.env.climate && !vale.env.season && vale.t.G > vale.t.g && vale.t.g > 0 && !vale.t.n && !vale.t.a, JSON.stringify(vale.t));   // (the Vale mostly dark grass: Emberlit's is olive)
   for (const x of [reach, heights, vale]) for (const ch of Object.keys(x.t)) assert.ok(x.level.legend[ch], `'${ch}' in the legend`);
+});
+
+test('the Reach\'s works: Ashgate\'s pithead wheel over its gate, the Cinderworks\' hall and stacks smoking, the Cold Seam\'s headframe; its houses in slag brick under rust', () => {
+  const ov = convertWorld(createSim(SEED, undefined, { scene: 'overland', region: 'reach' }).world, { region: 'reach' });
+  const ids = ov.sprites.map((q) => q.id);
+  for (const id of ['reach_gatewheel', 'reach_works', 'reach_stack', 'reach_pithead']) assert.ok(ids.includes(id), id);
+  assert.ok(!ids.includes('mine_0'), 'the Vale\'s mine is not the Cold Seam');
+  assert.ok(ids.filter((i) => i === 'reach_stack').length >= 3, 'two stacks at the works and Furnace Nine\'s');
+  assert.ok(ov.level.objects.filter((o) => o.type === 'emitter' && o.preset === 'smoke').length >= 4, 'smoke over the stacks and the hall');
+  assert.ok(ov.level.objects.some((o) => o.type === 'fire' && o.opts.kind === 'embers'), 'embers in the char');
+  const town = convertWorld(createSim(SEED, undefined, { scene: 'town', region: 'reach' }).world, { region: 'reach' }).level;
+  const houses = town.objects.filter((o) => o.type === 'house');
+  assert.ok(houses.length && houses.every((o) => ['slag_brick', 'charred_wall'].includes(o.opts.wall) && ['roof_rust', 'roof_charred'].includes(o.opts.roof)), JSON.stringify(houses.map((o) => [o.opts.wall, o.opts.roof])));
+  assert.ok(town.tiles.some((r) => r.includes('Z')) && !town.tiles.some((r) => /[kc]/.test(r)), 'its walls and streets in slag and charcoal');
+});
+
+test('dungeons: the Reach\'s kits and themes have their own stone (the Cold Seam\'s pithead and warren, the Cinderworks, the Magma Vault)', async () => {
+  const { createWorld } = await import('../src/sim/world.js'), { SITES } = await import('../src/sim/sites.js');
+  for (const [site, depth] of [['cold_seam', 0], ['cold_seam', 1], ['scrag_warren', 0]]) {
+    if (!SITES[site]) continue;                                   // (the Cold Seam is landing alongside)
+    const w = createWorld(SEED, null, depth, site), { level } = convertWorld(w, { region: 'reach' });
+    const t = new Set(level.tiles.join(''));
+    assert.ok(!t.has('x') && !t.has('m'), `${site} ${depth} (${w.kit || w.theme}): no mossy default stone: ${[...t].join('')}`);
+  }
 });
 
 test('brightness: the Vale\'s parts of the day at the owner\'s levels, eased from one to the next', () => {

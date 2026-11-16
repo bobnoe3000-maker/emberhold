@@ -1981,6 +1981,107 @@ Object.assign(TYPES, {
   },
 });
 
+// ── the Cinder Reach's works (docs/art-critic-pass-reach.md): stood in 3D by world.js (REACH_KIT) on the sim's own
+// footprints (a gatehouse, a tower, a smithy, the mine), no card of their own. Black slag brick, rust iron, soot-dark
+// timber; what burns glows day and night (an emissive, not the world's window glass, which is dark by day).
+const SLAG = () => mat(tex('field', '#2a282c', 71, '#4a443e')), IRON = () => mat(null, '#2b2624');
+const FURNACE = () => new THREE.MeshStandardMaterial({ color: '#ff8a3a', emissive: new THREE.Color('#ff5a18'), emissiveIntensity: 1.6 });
+// a winding wheel: rim, hub and eight spokes, in the XY plane (facing +z), its middle at (x, y, z)
+function windingWheel(g, x, y, z, R, m) {
+  const w = new THREE.Group(); w.position.set(x, y, z); g.add(w);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(R, R * 0.07, 5, 24), m); w.add(rim);
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.14, R * 0.14, R * 0.3, 8), m); hub.rotation.x = Math.PI / 2; w.add(hub);
+  for (let k = 0; k < 8; k++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(R * 0.06, R * 1.9, R * 0.06), m); sp.rotation.z = (k / 8) * Math.PI; w.add(sp); }
+  return w;
+}
+Object.assign(TYPES, {
+  // Ashgate's pithead wheel over its gate (world doc §3.3): a timber headframe standing on the gatehouse's two towers,
+  // the iron wheel turning over the way in, its rope down past the gate, a lantern on the cross-head. Built facing +z;
+  // world.js turns it a quarter so it spans the wall.
+  gatewheel(S, g, r) {
+    const beam = S.m.beam, iron = IRON(), H = 0.78;
+    for (const sx of [-1, 1]) {
+      const leg = box(0.06, H * 1.04, 0.06, beam, sx * 0.34, 0, 0, g); leg.rotation.z = sx * 0.28; leg.position.x = sx * 0.24;   // the A-frame's legs, leaning in
+      const st = box(0.045, H * 1.05, 0.045, beam, sx * 0.17, 0, -0.2, g); st.rotation.x = -0.38;                               // a back strut each
+    }
+    box(0.36, 0.06, 0.12, beam, 0, H, 0, g);                                                       // the cross-head
+    box(0.05, 0.05, 0.05, iron, 0, H + 0.08, 0.02, g);
+    windingWheel(g, 0, H + 0.2, 0.07, 0.2, iron);
+    box(0.012, H + 0.06, 0.012, iron, 0.2, 0.1, 0.07, g);                                          // the rope down
+    lantern(g, S, 0.2, H - 0.02, 0.1);
+  },
+  // a furnace stack: a slag-brick plinth, the shaft tapering square to its lip, three iron bands, the fire showing in
+  // its mouth (convert.js puts its smoke and sparks over it, STACK_H)
+  stack(S, g, r) {
+    const brick = SLAG(), iron = IRON();
+    box(0.46, 0.18, 0.46, brick, 0, 0, 0, g); box(0.5, 0.04, 0.5, S.m.stoneDark, 0, 0.18, 0, g);
+    const sh = new THREE.CylinderGeometry(0.13 * Math.SQRT2, 0.19 * Math.SQRT2, 1.58, 4, 1, true); sh.rotateY(Math.PI / 4); sh.translate(0, 0.22 + 0.79, 0);
+    g.add(new THREE.Mesh(sh, brick));
+    for (const [y, k] of [[0.5, 0.18], [0.95, 0.16], [1.4, 0.14]]) box(k * 2 + 0.03, 0.035, k * 2 + 0.03, iron, 0, y, 0, g);
+    box(0.32, 0.06, 0.32, iron, 0, 1.8, 0, g);                                                    // the lip
+    box(0.2, 0.02, 0.2, FURNACE(), 0, 1.845, 0, g);                                               // the fire in its mouth
+    box(0.12, 0.16, 0.02, FURNACE(), 0, 0.02, 0.235, g);                                          // the stoke-hole at its foot
+  },
+  // the Cinderworks' furnace hall (outdoor.js REACH.works): a long slag-brick hall under rust tile, open to the yard on
+  // +z where the furnace's mouth glows, its own squat stack at the back, coal heaped by the door, an anvil
+  works(S, g, r) {
+    const brick = SLAG(), iron = IRON(), w = 0.84, d = 0.66, h = 0.5;
+    box(w, h, d, brick, 0, 0, -0.04, g);
+    box(0.4, 0.42, 0.04, mat(null, '#120d0c'), -0.1, 0, d / 2 - 0.03, g);                         // the open front, dark
+    box(0.24, 0.16, 0.03, FURNACE(), -0.1, 0.04, d / 2 - 0.0, g);                                 // the furnace's mouth
+    for (const sx of [-1, 1]) box(0.05, 0.44, 0.05, iron, -0.1 + sx * 0.22, 0, d / 2 - 0.01, g);
+    box(0.5, 0.05, 0.06, iron, -0.1, 0.42, d / 2 - 0.01, g);
+    roofOver(S, g, w, d + 0.08, h, 0.75);
+    box(0.16, 0.95, 0.16, brick, 0.02, 0, -0.25, g); box(0.2, 0.04, 0.2, iron, 0.02, 0.95, -0.25, g);   // its stack (smoke: convert.js)
+    box(0.12, 0.02, 0.12, FURNACE(), 0.02, 0.985, -0.25, g);
+    const coal = new THREE.Mesh(faceted(solidCone(0.14, 0.09, 7).translate(0, 0.045, 0), r, 0.02, (ny, y, q) => tint(C3('#1a1718'), 0.9 + q * 0.3)), vmat()); coal.position.set(0.3, 0, d / 2 + 0.08); g.add(coal);
+    box(0.1, 0.06, 0.05, iron, 0.14, 0.04, d / 2 + 0.12, g); box(0.06, 0.04, 0.04, iron, 0.14, 0, d / 2 + 0.12, g);   // an anvil on its block
+    lantern(g, S, 0.36, 0.42, d / 2 + 0.01);
+  },
+  // The Cold Seam's pithead (world doc §3.3; GDD: the Reach's first dungeon): the Deepdelvers' played-out mine, a
+  // timber headframe over the shaft with its winding wheel, the engine house beside it with its stack, black spoil
+  // heaped behind, the shaft-house's door on +z (where the Vale's mine had its adit: the sim's door), rails out of it
+  // and an ore cart, lanterns.
+  pithead(S, g, r) {
+    const brick = SLAG(), iron = IRON(), beam = S.m.beam;
+    const heap = (x, z, rad, ht) => { const m = new THREE.Mesh(faceted(solidCone(rad, ht, 9, 2).translate(0, ht / 2, 0), r, rad * 0.12, (ny, y, q) => tint(C3(ny > 0.5 ? '#2c2826' : '#211e1d'), 0.9 + q * 0.3)), vmat()); m.position.set(x, 0, z); m.rotation.y = r() * 6; g.add(m); };
+    heap(-0.72, -0.62, 0.62, 0.5); heap(-0.15, -0.95, 0.42, 0.34); heap(0.55, -0.9, 0.34, 0.26);
+    for (let i = 0; i < 5; i++) { const k = rockMesh(r, 0.06 + r() * 0.05, 0.6); k.traverse((o) => { if (o.isMesh) o.material = mat(null, '#2a2624'); }); k.position.set(-1.0 + r() * 0.6, k.position.y, -0.1 + r() * 0.4); g.add(k); }
+    // the shaft-house: timber over a slag-brick footing, its door on +z
+    const sx0 = 0.05, sz0 = 0.18;
+    box(0.5, 0.12, 0.42, brick, sx0, 0, sz0, g);
+    box(0.46, 0.46, 0.38, S.m.wood, sx0, 0.12, sz0, g);
+    box(0.24, 0.42, 0.04, mat(null, '#0b0a0e'), sx0, 0.02, sz0 + 0.2, g);                         // the way down, dark (a man and a third)
+    for (const s2 of [-1, 1]) box(0.045, 0.46, 0.045, beam, sx0 + s2 * 0.14, 0, sz0 + 0.21, g);
+    box(0.34, 0.05, 0.05, beam, sx0, 0.44, sz0 + 0.21, g);
+    const rf = new THREE.Group(); rf.position.set(sx0, 0, sz0); g.add(rf); roofOver(S, rf, 0.5, 0.42, 0.58, 0.6);
+    lantern(g, S, sx0 - 0.2, 0.42, sz0 + 0.24);
+    // the headframe over it: four legs leaning in to the sheave deck, a back strut, the winding wheel
+    const hx = sx0, hz = sz0 - 0.08, top = 1.28;
+    for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const l = box(0.05, top * 1.02, 0.05, beam, hx + dx * 0.16, 0, hz + dz * 0.12, g); l.rotation.set(dz * 0.06, 0, dx * 0.08); }
+    for (const y of [0.7, 1.0]) { box(0.3, 0.035, 0.035, beam, hx, y, hz + 0.1, g); box(0.035, 0.035, 0.24, beam, hx + 0.13, y, hz, g); }
+    box(0.34, 0.05, 0.3, beam, hx, top, hz, g);
+    const strut = box(0.045, 1.25, 0.045, beam, hx, 0, hz - 0.42, g); strut.rotation.x = 0.36; strut.position.y = 0.58;
+    windingWheel(g, hx, top + 0.2, hz + 0.02, 0.2, iron);
+    // the engine house and its stack, the rope from its drum up to the wheel
+    const ex = 0.62, ez = -0.25;
+    box(0.36, 0.42, 0.34, brick, ex, 0, ez, g);
+    const er = new THREE.Group(); er.position.set(ex, 0, ez); g.add(er); roofOver(S, er, 0.36, 0.34, 0.42, 0.8, false);
+    const win = box(0.1, 0.12, 0.01, S.m.glass, ex - 0.06, 0.2, ez + 0.175, g); win.userData.glow = true;
+    box(0.1, 1.1, 0.1, brick, ex + 0.1, 0, ez - 0.1, g); box(0.13, 0.03, 0.13, iron, ex + 0.1, 1.1, ez - 0.1, g);
+    const rope = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 1), iron), a = new THREE.Vector3(ex - 0.12, 0.4, ez), b = new THREE.Vector3(hx + 0.1, top + 0.2, hz + 0.02);
+    rope.scale.z = a.distanceTo(b); rope.position.copy(a).add(b).multiplyScalar(0.5); rope.lookAt(b); g.add(rope);
+    // rails out of the shaft-house with sleepers, an ore cart; a barrel, lanterns
+    for (let i = 0; i < 6; i++) box(0.22, 0.015, 0.035, S.m.wood, sx0, 0, sz0 + 0.32 + i * 0.09, g);
+    for (const s2 of [-1, 1]) box(0.015, 0.02, 0.56, iron, sx0 + s2 * 0.07, 0.015, sz0 + 0.55, g);
+    const cart = new THREE.Group(); cart.position.set(sx0, 0.02, sz0 + 0.62); g.add(cart);
+    box(0.18, 0.1, 0.22, iron, 0, 0.03, 0, cart);
+    for (const [x, z] of [[-0.08, -0.07], [0.08, -0.07], [-0.08, 0.07], [0.08, 0.07]]) { const wh = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.02, 8), iron); wh.rotation.z = Math.PI / 2; wh.position.set(x, 0.03, z); cart.add(wh); }
+    const ore = new THREE.Mesh(faceted(new THREE.DodecahedronGeometry(0.08, 0), r, 0.03, () => tint(C3('#3a3432'), 1)), vmat()); ore.position.y = 0.14; ore.scale.y = 0.6; cart.add(ore);
+    barrel(g, S, 0.42, 0.42); barrel(g, S, 0.5, 0.36);
+    lantern(g, S, 0.36, 0.46, 0.5);
+  },
+});
 export const BUILD_TYPES = Object.keys(TYPES);
 
 export function makeBuilding(type, style, seed = 1, faceX = false) {

@@ -57,6 +57,13 @@ const GUIDE_RGB = [240, 196, 84];                             // (a quest NPC's 
 const CARRY = [0.45, 0, 0.6, 1];                              // the carry light by the part of the day (dawn, day, dusk, night)
 // the brightness outdoors, by the part of the day: the shipped look and the player's dial (render3d/bright.js)
 export { BRIGHT, brightAt } from './bright.js';
+// the Cinder Reach's on top (docs/art-critic-pass-reach.md, round 3): its ground is ash and char, a third darker than
+// the desert it was drawn in, and by night its world band fell to a mean luminance of 23 (the Vale's night is the
+// owner's 40): night lifted (×1.6 took the Cinderworks' to 31, the open ground by Ashgate's gate only to 21: ×2.3),
+// dusk a touch, day and dawn as they are (dawn, day, dusk, night)
+const REACH_BRIGHT = { overland: [1, 1, 1.08, 2.3], town: [1, 1, 1.05, 1.35] };
+/** @param {string} region @param {string} scene @param {number[]} k */
+const reachBright = (region, scene, k) => (region === 'reach' && REACH_BRIGHT[scene] ? k.map((v, i) => v * REACH_BRIGHT[scene][i]) : k);
 
 // ── a dungeon's furniture of ours (port step 3: convert.js names it by tile) ──────────────────────────────────────────
 // Built as Emberlit builds it (gsprite.js buildProps, the floor's seed), the same variant on the same tile, and the
@@ -306,7 +313,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         // (hit), at the size it hits (a sim tile is half a unit: no ×√2, what's drawn is what's hit)
         tells: tellsOf(sim, origin),
         blast: c.blast ? { x: (c.blast.x - origin.x) / 2, z: (c.blast.y - origin.y) / 2, k: c.blast.k } : null,   // (a fire landing's light: renderer.js blasts)
-        bright: sim.world.kind === 'dungeon' || arena ? 1 : brightAt(brightFor(sim.world.region || 'vale', sim.state.scene, dial), c.t ?? sim.state.t),   // (bright.js: the shipped look × the player's dial)
+        bright: sim.world.kind === 'dungeon' || arena ? 1 : brightAt(reachBright(sim.world.region || 'vale', sim.state.scene, brightFor(sim.world.region || 'vale', sim.state.scene, dial)), c.t ?? sim.state.t),   // (bright.js: the shipped look × the player's dial)
         draw: globalThis.__lumDraw !== false,                   // (dev, tools/capture/rig.mjs: frames stepped and not drawn while a shot settles)
         // the fights' light: Emberlit's fx.js drawn on black into its emissive plane (native px), for Luminati to lay over its
         // picture as light, placed as Emberlit composites its window (CSS px: the plane's origin and a native px's size).

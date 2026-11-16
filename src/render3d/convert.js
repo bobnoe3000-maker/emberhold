@@ -18,7 +18,7 @@
 // §5; the overlands lose a few tiles of their edges).
 // Pure: reads the world, writes nothing to it (presentation only, AGENTS.md rule 2).
 import { ENV_FOOT } from '../sim/envfoot.js';
-import { G } from '../sim/outdoor.js';
+import { G, REACH } from '../sim/outdoor.js';
 import { FLOOR_Z } from '../sim/level.js';
 import { PROP_LIGHT } from '../render/gsprite.js';
 import { KIT_TINT } from '../render/palette.js';
@@ -54,6 +54,15 @@ export const LEGEND = {
   n: { top: 'snow_top', side: 'snow_side', walkable: true }, h: { top: 'snow_path', side: 'snow_side', walkable: true },
   R: { top: 'frost_cobble', side: 'stone_wall', walkable: true }, i: { top: 'ice_top', side: 'ice_cliff', walkable: true },
   I: { top: 'ice_top', side: 'ice_cliff', walkable: false }, N: { top: 'snow_top', side: 'snow_side', walkable: false },
+  // the Cinder Reach (world doc §3.3; docs/art-critic-pass-reach.md): ash and char, cracked dark earth, black basalt and
+  // slag, red rock in patches, rust-stained banks; Ashgate's slag brick (cinder_earth, cinder_cobble, rust_mud and
+  // slag_brick, rust_rock, ash_scrub and ash_drift are ours, painted by world.js reachTextures; the rest Luminati's arid set)
+  A: { top: 'ash_drift', side: 'basalt_cliff', walkable: true }, H: { top: 'scorched', side: 'basalt_cliff', walkable: true },
+  K: { top: 'basalt', side: 'basalt_cliff', walkable: true }, O: { top: 'basalt', side: 'basalt_cliff', walkable: false },
+  Q: { top: 'cinder_earth', side: 'basalt_cliff', walkable: true }, M: { top: 'rust_rock', side: 'redrock_cliff', walkable: true },
+  L: { top: 'ash_scrub', side: 'basalt_cliff', walkable: true },
+  J: { top: 'rust_mud', side: 'basalt_cliff', walkable: true }, V: { top: 'cinder_cobble', side: 'slag_brick', walkable: true },
+  Z: { top: 'cinder_cobble', side: 'slag_brick', walkable: false },
   // a dungeon's own stone (port step 3, by its kit): dressed walls, bare rock underfoot, standing water
   B: { top: 'crag', side: 'stone_brick', walkable: false }, U: { top: 'crag', side: 'cliff', walkable: true },
   P: { top: 'riverbed', side: 'cliff', walkable: true },
@@ -89,7 +98,9 @@ const HOUSES = [
 const REGION_LOOK = {
   vale: {},
   fens: { wall: 'wood_planks_dark', upperWall: '', roof: 'roof_thatch' },
-  reach: { wall: 'stone_brick', upperWall: 'brick', roof: 'roof_slate' },
+  // (the Reach critic, round 1: its houses read as the Heights' blue-slate cottages; Ashgate's are black slag brick under
+  // rust tile, the odd roof gone to soot, a timber upper storey dark with it: world doc §3.3)
+  reach: { wall: 'slag_brick', upperWall: '', roof: 'roof_rust', roofs: ['roof_rust', 'roof_rust', 'roof_rust', 'roof_charred'], uppers: ['', '', 'wood_planks_dark'], stone: 'charred_wall' },
   heights: { wall: 'stone_brick', upperWall: '', roof: 'roof_slate' },
 };
 const TREES = { oak: 'oak', autumn: 'autumn', birch: 'birch', pine: 'pine', dead: 'deadwood', alder: 'oak', willow: 'birch', carr: 'oak' };   // (carr, a living alder thicket, was deadwood: bare trees out on the marsh, against §3.6: the foliage critic, round 3)
@@ -99,7 +110,7 @@ const TREES = { oak: 'oak', autumn: 'autumn', birch: 'birch', pine: 'pine', dead
 // a mountain's footprint is raised in, and `env` the level's light (Luminati's arid day; its winter).
 //   grassland: the Vale and the Fens, as before;  desert: the Cinder Reach (dry earth, cracked pans, red sand, scree,
 //   red rock, junipers and the dead);  snow: the Pale Heights (snow, trodden paths, frozen water, snow pines, bare trees).
-/** @type {Record<string, { ground: Record<string, string>, water?: string, turf: (h: number) => string, trees: Record<string, string>, stone: string, mountain: string, env: Record<string, any> }>} */
+/** @type {Record<string, { ground: Record<string, string>, water?: string, turf: (h: number, i: number, j: number) => string, scree?: (i: number, j: number) => string, trees: Record<string, string>, stone: string, mountain: string, wall?: string, env: Record<string, any> }>} */
 export const BIOMES = {
   grassland: { ground: {}, turf: (h) => (h < 12 ? 'G' : h < 16 ? 'f' : 'g'), trees: {}, stone: '', mountain: 'x', env: {} },
   // the Hollow Vale's: mostly Luminati's dark grass (Emberlit's Vale is olive; its bright grass is a summer's), a little bright
@@ -108,9 +119,32 @@ export const BIOMES = {
     trees: { oak: 'juniper', autumn: 'juniper', birch: 'deadwood', pine: 'juniper', deadwood: 'deadwood' }, stone: 'redrock', mountain: 'X', env: { climate: 'arid' } },
   snow: { ground: { '.': 'h', c: 'R', F: 'n', G: 'n', d: 'q', s: 'n' }, water: 'I', turf: (h) => (h < 82 ? 'n' : h < 93 ? 'h' : 'q'),   // (no green: Luminati's turf is a summer's)
     trees: { oak: 'bare', autumn: 'bare', birch: 'bare', pine: 'snowpine', deadwood: 'bare' }, stone: 'snow', mountain: 'N', env: { season: 'winter' } },
+  // the Cinder Reach (world doc §3.3: "black hills of slag … someone has lit the furnaces again"; the critic pass,
+  // docs/art-critic-pass-reach.md). The desert read as the Sahara: orange sand everywhere, green junipers. Here the open
+  // ground is ash in drifts over char and cracked dark earth, black basalt breaking through, a thin fringe of dry scrub
+  // between (in broad patches, value noise, not a checkerboard of tiles); the roads cracked dark earth, the town's cobbles
+  // charcoal, the banks rust-stained; the scree patches (outdoor.js G.SCREE) red rock and cracked earth; the hills basalt;
+  // the trees dead; the rocks black, red where the ground is. Luminati's arid climate stays (its set-piece kit, the
+  // textures, the dust), its sky graded to ash (world.js ASH_KEYFRAMES).
+  ash: { ground: { '.': 'Q', c: 'V', s: 'J', F: 'Q', G: 'H', m: 'K' }, turf: (h, i, j) => ashTurf(h, i, j), scree: (i, j) => (vnoise(i, j, 'r', 4) < 0.32 ? 'M' : 'Q'),
+    trees: { oak: 'deadwood', autumn: 'deadwood', birch: 'deadwood', pine: 'deadwood', juniper: 'deadwood', deadwood: 'deadwood' }, stone: 'basalt', mountain: 'O', wall: 'Z',
+    env: { climate: 'arid', dust: true } },
 };
 /** the biome a region draws in */
-export const BIOME_OF = { vale: 'vale', fens: 'grassland', reach: 'desert', heights: 'snow' };
+export const BIOME_OF = { vale: 'vale', fens: 'grassland', reach: 'ash', heights: 'snow' };
+/** smooth value noise in 0..1 over a level's tiles, `cell` tiles a lattice step (presentation: a hash, no sim stream) */
+function vnoise(i, j, s, cell) {
+  const x = i / cell, y = j / cell, x0 = Math.floor(x), y0 = Math.floor(y), sm = (t) => t * t * (3 - 2 * t), u = sm(x - x0), v = sm(y - y0);
+  const f = (a, b) => (hash(s, a, b) % 1000) / 1000, a = f(x0, y0), b = f(x0 + 1, y0), c = f(x0, y0 + 1), d = f(x0 + 1, y0 + 1);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+/** the Reach's open ground by tile: ash, a fringe of scrub, char, cracked earth, ash again, basalt breaking through */
+// (round 2: in an order of value, light to dark, so each patch meets the next a step darker, not white on black; broad
+// patches with a little edge: tile-sized specks of white ash on char read as a mosaic at the game's camera)
+function ashTurf(h, i, j) {
+  const t = 0.75 * vnoise(i, j, 'a', 10) + 0.25 * vnoise(i, j, 'b', 4) + (h / 100 - 0.5) * 0.03;
+  return t < 0.4 ? 'A' : t < 0.48 ? 'L' : t < 0.6 ? 'Q' : t < 0.7 ? 'H' : t < 0.8 ? 'Q' : 'K';
+}
 // our ground (outdoor.js G: grass dirt cobble water bank field marsh pool deck, the Reach's and the Heights' scree and
 // snow) as Luminati's tile and height (snow as its pale sand: Luminati's snow stone is The Bells of Evermere's own)
 const GROUND = [['g', '2'], ['.', '2'], ['c', '2'], ['~', '0'], ['s', '1'], ['F', '2'], ['G', '2'], ['o', '0'], ['b', '2'], ['d', '2'], ['s', '2']];
@@ -153,6 +187,15 @@ function frame({ name, W, D, environment, tiles, heights, objects, spawn }) {
 }
 
 // ── towns and overlands ─────────────────────────────────────────────────────────────────────────────────────────────
+// The Reach's industry (outdoor.js buildReach): a tower within reach of the Cinderworks or the Magma Vault's mouth is a
+// furnace stack, not a wall tower or a road's beacon (a `_stack_` id, should the sim name them, is one anywhere); the
+// works' smithy is its furnace hall. STACK_H: the stack's lip over the ground, Luminati's units (buildkit.js stack, 1.86
+// kit units × world.js KIT_UNIT); SMOKE: its smoke, sootier and heavier than a chimney's.
+const STACK_H = 9.3, VENTS = 24;
+const SMOKE = { color: '#5a5450', colorEnd: '#8e8884', size: [0.7, 1.0], sizeEnd: 5.5, life: [5, 8.5], alpha: 0.55, velocity: [0, 1.1, 0] };
+const near = (s, at, r) => at && Math.abs(s.x - at[0]) < r && Math.abs(s.y - at[1]) < r;
+const stackAt = (region, w, s) => region === 'reach' && w.kind === 'overland' && (/_stack_/.test(s.id) || (/_tower_\d/.test(s.id) && (near(s, REACH.works, 16) || near(s, REACH.vault, 16))));
+const worksAt = (w, s) => w.kind === 'overland' && near(s, REACH.works, 3);
 function outdoor(w, region) {
   // the map, its approach roads (a town's exits lie past its edge) and a margin; never past the grid the sim built
   let bx0 = 0, by0 = 0, bx1 = w.W, by1 = w.H;
@@ -168,8 +211,9 @@ function outdoor(w, region) {
     for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const t = GROUND[tm(x0 + 2 * i + dx, y0 + 2 * j + dy)] ? tm(x0 + 2 * i + dx, y0 + 2 * j + dy) : 0; n.set(t, (n.get(t) || 0) + 1); }
     const t = [...n.keys()].sort((a, b) => n.get(b) - n.get(a) || (RANK[GROUND[b][0]] ?? 0) - (RANK[GROUND[a][0]] ?? 0))[0];
     let c = GROUND[t][0], hh = GROUND[t][1];
-    if (c === 'g') c = B.turf(hash('g', i, j) % 100);         // (the open ground: the region's turf, scrub or snow)
+    if (c === 'g') c = B.turf(hash('g', i, j) % 100, i, j);   // (the open ground: the region's turf, scrub or snow)
     else if ((c === '~' || c === 'o') && B.water) { c = B.water; hh = '1'; }   // (the Heights' water frozen over: ice, at the bank's height)
+    else if (c === 'd' && B.scree) c = B.scree(i, j);          // (the Reach's scree patches: red rock and cracked earth)
     else c = B.ground[c] ?? c;
     tiles[j][i] = c; heights[j][i] = hh;
   }
@@ -190,11 +234,15 @@ function outdoor(w, region) {
       if (cur < h) { tiles[j][i] = ch; heights[j][i] = h.toString(36); }
     }
   };
-  const gates = [], timber = PALISADE.has(region);
+  const gates = [], timber = PALISADE.has(region), stoneWall = B.wall || 'k';
+  // a tower out on the Reach's roads, away from any wall, is a dead beacon (outdoor.js beacons): our kit's drum tower
+  // (town.json reach_tower_1) stood on the ground, not a block of slag brick raised under it (round 1: a black slab)
+  const walls = region === 'reach' && w.kind === 'overland' ? w.structs.filter((q) => /_curtainy?_\d|_gatehousey?_\d/.test(q.id)) : [];
+  const beacon = (s) => walls.length > 0 && /_tower_\d/.test(s.id) && !stackAt(region, w, s) && !walls.some((q) => Math.abs(q.x - s.x) < 14 && Math.abs(q.y - s.y) < 14);
   for (const s of w.structs) {
-    if (/_curtainy?_\d/.test(s.id)) raise(s, timber ? 3 : 6, timber ? 'E' : 'k');
-    else if (/_tower_\d/.test(s.id)) raise(s, timber ? 3 : 8, timber ? 'E' : 'k');
-    else if (/_gatehousey?_\d/.test(s.id)) { raise(s, timber ? 3 : 8, timber ? 'E' : 'k'); gates.push(s); }
+    if (/_curtainy?_\d/.test(s.id)) raise(s, timber ? 3 : 6, timber ? 'E' : stoneWall);
+    else if (/_tower_\d/.test(s.id)) { if (!stackAt(region, w, s) && !beacon(s)) raise(s, timber ? 3 : 8, timber ? 'E' : stoneWall); }   // (a Cinderworks stack, a beacon: ours, below)
+    else if (/_gatehousey?_\d/.test(s.id)) { raise(s, timber ? 3 : 8, timber ? 'E' : stoneWall); gates.push(s); }
     else if (/^mountain_/.test(s.id)) raise(s, /massif/.test(s.id) ? 16 : 11, B.mountain, true);
   }
   // the roads through a gate stay open (the sim walks them)
@@ -205,27 +253,50 @@ function outdoor(w, region) {
       if (Math.abs(x - g.x) > 8 || Math.abs(y - g.y) > 16) continue;
       for (let ox = -r.w / 2; ox <= r.w / 2; ox += 1) for (let oy = -r.w / 2; oy <= r.w / 2; oy += 1) {
         const i = Math.floor((x + ox - x0) / 2), j = Math.floor((y + oy - y0) / 2);
-        if (i >= 0 && j >= 0 && i < W && j < D) { tiles[j][i] = 'c'; heights[j][i] = '2'; }
+        if (i >= 0 && j >= 0 && i < W && j < D) { tiles[j][i] = B.ground.c || 'c'; heights[j][i] = '2'; }
       }
     }
   }
   const raised = (x, z) => { const i = Math.floor(x), j = Math.floor(z); return i < 0 || j < 0 || i >= W || j >= D || heights[j][i] !== '2'; };
-  const look = REGION_LOOK[region] || {};
+  const look = REGION_LOOK[region] || {}, reach = region === 'reach';
+  // a furnace stack (our kit's, world.js REACH_KIT 'reach_stack': STACK_H units to its lip): its smoke, a few sparks
+  // and, by night, the glow of its lip
+  const stack = (x, z, h) => {
+    sprites.push({ id: 'reach_stack', x, z });
+    add({ type: 'emitter', x, z, preset: 'smoke', dy: STACK_H, size: [0.6, 0.4, 0.6], count: 26, params: SMOKE });
+    add({ type: 'emitter', x, z, preset: 'embers', dy: STACK_H - 0.2, size: [0.4, 0.2, 0.4], count: 10, params: { life: [1.2, 2.6], velocity: [0, 1.8, 0] } });
+    if (h % 2 === 0) add({ type: 'light', x, z, dy: STACK_H + 0.4, color: '#ff7a30', intensity: 4, distance: 6, flicker: 0.2, nightOnly: true });
+  };
+  // the Cinderworks' furnace hall (ours, 'reach_works'), its mouth glowing on the yard, embers and smoke over its roof
+  const works = (s, p) => {
+    sprites.push({ id: 'reach_works', x: p.cx, z: p.cz });
+    add({ type: 'fire', x: r2(p.cx + 0.6), z: r2(p.cz + p.d - 0.6), opts: { kind: 'embers', size: 0.9, smoke: false, light: true, seed: hash('w', s.x) % 997 } });
+    add({ type: 'emitter', x: r2(p.cx + 0.1), z: r2(p.cz - 1.25), preset: 'smoke', dy: 5.1, size: [0.6, 0.3, 0.6], count: 20, params: SMOKE });   // (over its own stack: buildkit.js works)
+  };
   for (const s of w.structs) {
     const id = s.id, p = foot(s);
     // (the palisade: ours, on its bank; inside a town a card, the owner's choice: from inside, the model shows its shaded
     // face and its tower reads as a block: docs/vale-landmarks-proposal.md §8)
     if (timber && p && inside(p.cx, p.cz, -4) && /_curtainy?_\d|_tower_\d|_gatehousey?_\d/.test(id)) { sprites.push({ id, x: X(s.x), z: Z(s.y), ...(w.hub ? { card: true } : {}) }); continue; }
+    // the Reach's own pieces (our kit, world.js REACH_KIT): Ashgate's pithead wheel over its gate, the Cinderworks'
+    // furnace hall and its stacks, the Cold Seam's headframe in place of the Vale's mine (on the sim's footprints)
+    if (reach && /_gatehousey?_\d/.test(id) && p) { sprites.push({ id: 'reach_gatewheel', x: p.cx, z: p.cz }); continue; }
+    if (reach && p && stackAt(region, w, s)) { stack(p.cx, p.cz, hash(id, s.x, s.y)); continue; }
+    if (p && beacon(s)) { if (inside(p.cx, p.cz)) sprites.push({ id, x: X(s.x), z: Z(s.y) }); continue; }
     if (!p || !inside(p.cx, p.cz) || /_curtainy?_\d|_tower_\d|_gatehousey?_\d|^mountain_|^ug_/.test(id)) {
       if (/^ug_flowers/.test(id) && (B === BIOMES.grassland || B === BIOMES.vale) && p && inside(p.cx, p.cz) && !raised(p.cx, p.cz)) tiles[Math.floor(p.cz)][Math.floor(p.cx)] = 'f';
       continue;
     }
+    if (reach && id === 'mine_0') { sprites.push({ id: 'reach_pithead', x: X(s.x), z: Z(s.y) }); continue; }
+    if (reach && worksAt(w, s) && /_smith_/.test(id)) { works(s, p); continue; }
+    if (reach && /^(wheat|pumpkins)_/.test(id)) continue;      // (Ashgate's fields are the sim's generic town's: nothing grows green in the Reach)
     const house = HOUSES.find(([re]) => re.test(id));
     if (house && /^(vale|fens|reach|heights)_/.test(id) && !/_stilt|_punt|_cistern|_eeltrap/.test(id)) {
-      const svc = services.get(id);
+      const svc = services.get(id), hh = hash(id, s.x, s.y), { roofs, uppers, stone, ...lk } = look;
+      const mine = { ...lk, ...(roofs ? { roof: roofs[hh % roofs.length] } : {}), ...(uppers && (house[1].stories || 1) > 1 ? { upperWall: uppers[(hh >>> 4) % uppers.length] } : {}) };
       add({ type: 'house', x: p.cx, z: p.cz, rotation: 0, ...(svc ? { name: svc.name } : {}), light: !!svc || hash(id, s.x) % 3 === 0,
         opts: { width: r2(clamp(p.w * 0.82, 3, 8)), depth: r2(clamp(p.d * 0.72, 2.5, 6)), chimney: true, shutters: true, doorHood: false, woodpile: false,
-          gableFront: false, sign: false, upperWall: '', ...house[1], ...(/_temple_|_smith_/.test(id) ? { ...look, wall: 'stone_brick' } : look), seed: hash(id, s.x, s.y) % 997 } });
+          gableFront: false, sign: false, upperWall: '', ...house[1], ...(/_temple_|_smith_/.test(id) ? { ...mine, wall: stone || 'stone_brick' } : mine), seed: hh % 997 } });
       continue;
     }
     const m = /^([a-z]+)_\d/.exec(id), kind = m && m[1];
@@ -235,8 +306,10 @@ function outdoor(w, region) {
       add({ type: 'tree', x: p.cx, z: p.cz, collider: false, opts: { kind: tk, height: r2(clamp(Math.max(p.w, p.d) * 0.62, 2.6, 6.2)), seed: h % 997 } });
     } else if (/^rock_/.test(id)) {
       // (a rock on snow is basalt showing through it: the land's own snow stone, white on white, hid the rocks that stand
-      // where a pine would have on the Heights' snow: level-design-rules.md §3.6, the foliage critic)
-      const onSnow = B.stone === 'snow' && tm(Math.floor(s.x), Math.floor(s.y)) === G.SNOW, stone = onSnow ? 'basalt' : B.stone;
+      // where a pine would have on the Heights' snow: level-design-rules.md §3.6, the foliage critic. In the Reach a rock
+      // is black slag, red only where the ground is red rock: round 1's one in five red read as orange boulders everywhere)
+      const onSnow = B.stone === 'snow' && tm(Math.floor(s.x), Math.floor(s.y)) === G.SNOW;
+      const stone = onSnow ? 'basalt' : reach && tiles[Math.floor(p.cz)]?.[Math.floor(p.cx)] === 'M' ? 'redrock' : B.stone;
       const size = onSnow ? clamp(Math.max(p.w, p.d) * 0.3, 0.4, 0.8) : clamp(Math.max(p.w, p.d) * 0.55, 0.6, 1.6);   // (and small: stones through the snow, not boulders: round 3)
       add({ type: 'rock', x: p.cx, z: p.cz, opts: { size: r2(size), ...(stone ? { stone } : {}), seed: hash(id, s.x) % 97 } });
     }
@@ -294,6 +367,17 @@ function outdoor(w, region) {
   // map (the owner, 2026-11-02: "The edge of the map falls off a cliff, and is blank. The old maps were surrounded by
   // trees, boulders or other impassable objects". An overland is cropped to 256 of ours, and its forest ring in the
   // sim's margin fell outside the crop; the outer scenery had been kept to town-sized maps)
+  // the Reach's vents: embers smouldering in the char out on the open ground (a few, spread: each a little smoke and a
+  // glow, no light of its own; Luminati culls their particles far from the camera)
+  if (reach && w.kind === 'overland') {
+    let n = 0;
+    for (let j = 2; j < D - 2 && n < VENTS; j++) for (let i = 2; i < W - 2 && n < VENTS; i++) {
+      if (tiles[j][i] !== 'H' || heights[j][i] !== '2' || hash('vent', i, j) % 60) continue;
+      if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => !/[AHKLQ]/.test(tiles[j + b][i + a]) || heights[j + b][i + a] !== '2')) continue;   // (out in the open, off the roads)
+      add({ type: 'fire', x: r2(i + 0.5), z: r2(j + 0.5), opts: { kind: 'embers', size: r2(0.4 + (hash('vs', i, j) % 4) * 0.08), smoke: hash('vk', i, j) % 3 === 0, light: false, seed: hash('vf', i, j) % 997 } });
+      n++;
+    }
+  }
   const town = W * D <= 96 * 96;
   const level = frame({ name: w.name || 'Emberfall', W, D, tiles, heights, objects, spawn: { x: W / 2, z: D / 2, facing: 'down' },
     environment: { timeOfDay: 17.9, border: 'forest', outerScenery: true, godRays: town, interior: false, ...B.env } });
@@ -369,7 +453,23 @@ const KIT_LOOK = {
   bailey: { floor: ['c', 'd'], wall: 'B', hour: 18.9 }, barracks: { floor: ['c', 'k'], wall: 'B', hour: 19.6 }, cellar: { floor: ['U', 'd'], wall: 'x', hour: 20.8 },
   nave: { floor: ['k', 'm'], wall: 'C', hour: 21.0 }, cultcut: { floor: ['d', 'U'], wall: 'x', hour: 19.0 }, binding: { floor: ['k', 'm'], wall: 'W', hour: 22.6 },
 };
-const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KIT_LOOK.cellar, nave: KIT_LOOK.nave, cinder: KIT_LOOK.cultcut, chasm: { floor: ['U', 'm'], wall: 'x', hour: 22.8 } };
+// the Cinder Reach's (docs/art-critic-pass-reach.md; GDD §3: the Cold Seam's kits, plans.js): the pithead, a played-out
+// Deepdelver mine, cracked dark earth and black rock, warm lamplight; the warren the goblins dug from it, raw earth
+// walls and a dirt floor; and, for the Reach's sites to come (level.js THEMES), the Cinderworks in slag brick over
+// scorched basalt, the Magma Vault black rock lit hot. (Their stone is Luminati's arid set and ours, world.js
+// reachTextures: a legend that names the arid set loads its kit.)
+Object.assign(KIT_LOOK, {
+  // (round 3: the pithead first in cinder earth under basalt walls, and underground's dim violet fill took both to black,
+  // a mean luminance of 15 against the warren's 23: its floor now packed earth and rock, its walls the Deepdelvers' cut
+  // stone, its dug rooms raw earth. The works and the vault keep their dark stone: their hazard and their fires light them)
+  pithead: { floor: ['d', 'U'], wall: 'W', cave: 'D', hour: 19.4 }, warren: { floor: ['d', 'Q'], wall: 'D', cave: 'D', hour: 19.1 },
+  ember: { floor: ['U', 'H'], wall: 'Z', cave: 'O', hour: 18.7 }, lava: { floor: ['U', 'K'], wall: 'O', cave: 'O', hour: 18.3 },
+});
+const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KIT_LOOK.cellar, nave: KIT_LOOK.nave, cinder: KIT_LOOK.cultcut, chasm: { floor: ['U', 'm'], wall: 'x', hour: 22.8 },
+  warren: KIT_LOOK.warren, ember: KIT_LOOK.ember, lava: KIT_LOOK.lava };
+/** the fill's tint underground for the Reach's kits and themes (palette.js KIT_TINT holds the Vale's and the Fens'):
+ *  the lamps' warmth in the mine, the furnaces' in the works and the vault */
+const AMB_TINT = { pithead: [1.08, 0.97, 0.86], warren: [1.04, 0.96, 0.88], ember: [1.16, 0.9, 0.78], lava: [1.22, 0.86, 0.72] };
 const DEFAULT_LOOK = { floor: ['k', 'm'], wall: 'x', hour: 19.4 };
 /** an overland prop of ours (gsprite.js), a spawn point's dressing (sim/camps.js) */
 const OVERLAND_OURS = new Set(['tent', 'carcass', 'burrow', 'rack', 'banner', 'standard', 'bedroll', 'reeds', 'boat', 'bound', 'urns', 'candles', 'saint']);   // (v1.68: every land's spawn points' dressing)
@@ -416,7 +516,7 @@ const AMB_BASE = [0.379, 0.324, 0.449];
 /** the ambient a floor's kit wants: Luminati's hemisphere light's sky and ground colours (linear) and intensity */
 export function ambientOf(kit) {
   // (the tint squared: at its own strength every floor read one navy; the dig wants its warmth, the gallery its cold)
-  const t = (KIT_TINT[kit] || [1, 1, 1]).map((v) => v * v), c = (k) => AMB_BASE.map((v, i) => r2(v * t[i] * k));
+  const t = (KIT_TINT[kit] || AMB_TINT[kit] || [1, 1, 1]).map((v) => v * v), c = (k) => AMB_BASE.map((v, i) => r2(v * t[i] * k));
   // (the owner on the phone, 2026-11-02: "The dungeons are too dark". At Emberlit's own brightness a room's floor away
   // from the braziers was lost on a phone; the fill is nearly doubled and the lamps reach further: lamps is Luminati's
   // point lights ×, a brazier a pool of orange at 1)
@@ -545,7 +645,7 @@ function dungeon(w, o = {}) {
   const level = frame({ name: w.siteName || 'The Old Barrows', W, D, tiles, heights, objects, spawn: { x: X(sp.x), z: Z(sp.y), facing: 'up' },
     // (black beyond the walls, as Emberlit's: a backdrop colour, which the fog takes too, so the far rooms fade to it)
     environment: { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: true, backdrop: '#040306' } });
-  const amb = ambientOf(w.kit);
+  const amb = ambientOf(w.kit || (AMB_TINT[w.theme] ? w.theme : w.kit));
   return { level, sprites, ambient: /c/.test(o.dlook || '') ? coolAmbient(amb) : amb, origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D } };
 }
 
