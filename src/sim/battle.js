@@ -575,7 +575,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     // the tide: a step up from the last wave, to the top; after the top, back to the start
     if (b.wave > 0) {
       const T = mode().tide || tideOf(w, b.room);                // (a raid's rooms climb on its own tide)
-      if (b.tide >= T.cap - 1e-9) { b.tide = 0; bus.emit('tideTurned', { room: b.room }); }
+      if (b.tide >= T.cap - 1e-9) { if (!T.hold) { b.tide = 0; bus.emit('tideTurned', { room: b.room }); } }   // (a raid's holds at its top: modes.js)
       else b.tide = Math.min(T.cap, b.tide + T.step);
     }
     const tough = (1 + b.tide) * premiumOf(lvl);

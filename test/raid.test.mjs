@@ -222,8 +222,11 @@ test('a raid runs two floors at most: a longer dungeon\'s last two; its way up l
 
 test('a raid\'s foes: twice the HP and 15 % harder (GDD §18 v1.108); every other kind of play as it was', () => {
   assert.equal(MODES.raid.foeHp, 2); assert.equal(MODES.raid.foeAtk, 1.15); assert.equal(MODES.raid.waves, 10);
-  // the climb: +100 % at the tenth wave (v1.109), never turned back before it (nine steps from the first wave's nothing)
-  { const T = MODES.raid.tide; let t = 0; for (let w = 2; w <= MODES.raid.waves; w++) { assert.ok(t < T.cap - 1e-9, `still climbing before wave ${w}`); t = Math.min(T.cap, t + T.step); } assert.ok(Math.abs(t - 1) < 1e-9, `+100 % at the tenth: ${t}`); }
+  // the climb: +100 % at the fifth wave (v1.129; the tenth before), four steps from the first wave's nothing, and held
+  // there to the tenth, never turned back to the start
+  { const T = MODES.raid.tide; let t = 0; const at = [0];
+    for (let w = 2; w <= MODES.raid.waves; w++) { t = t >= T.cap - 1e-9 ? (T.hold ? t : 0) : Math.min(T.cap, t + T.step); at.push(t); }
+    assert.deepEqual(at.map((x) => Math.round(x * 100)), [0, 25, 50, 75, 100, 100, 100, 100, 100, 100]); assert.ok(T.hold); }
   for (const k of ['slot', 'camp', 'tower', 'bout', 'event']) { assert.equal(MODES[k].foeHp, 1, k); assert.equal(MODES[k].foeAtk, 1, k); }
   // in a run: a first-wave foe's HP is at least twice its kind's at its level (the tide is nothing yet; the premium only adds)
   const s = company(3); go(s, 'barrows');
