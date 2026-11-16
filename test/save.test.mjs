@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { migrate, metaOf, SAVE_VERSION, SLOTS } from '../src/persist/save.js';
 import { createSim } from '../src/sim/core.js';
 
-test('three game slots, save v52', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 52); });
+test('three game slots, save v53', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 53); });
 test('a v3 save migrates with its meta; junk is refused', () => {
   const data = createSim(7).snapshot();
   const m = migrate({ version: 3, savedAt: 5, data });

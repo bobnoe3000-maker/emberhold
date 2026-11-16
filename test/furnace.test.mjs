@@ -75,11 +75,11 @@ test('it feeds on the fallen: one who gets up at the edge, not raised, gives it 
 test('the Kingstone doesn\'t feed', () => { assert.ok(!RING.feeds); assert.equal(FURNACE.heirloom, 'quota'); assert.ok(items.HEIRLOOMS.quota); });
 
 test('save v52: a class anyone had at 24 keeps its level-24 trial; the rest as they were', () => {
-  assert.equal(SAVE_VERSION, 52);
+  assert.equal(SAVE_VERSION >= 52, true);
   const data = { trials: ['fighter', 'fighter12'], party: [{ cls: 'fighter', level: 26 }, { cls: 'cleric', level: 20 }], bench: [{ cls: 'rogue', level: 24 }] };
   assert.deepEqual(trials24For(data).trials, ['fighter', 'fighter12', 'fighter24', 'rogue24']);
   assert.deepEqual(trials24For({ party: [] }).trials, []);
   const s = createSim(SEED, undefined, { scene: 'town' }); const snap = JSON.parse(JSON.stringify(s.snapshot()));
   snap.party[0].level = 25; snap.trials = []; const m = migrate({ version: 51, savedAt: 1, data: snap });
-  assert.equal(m.version, 52); assert.ok(m.data.trials.includes(snap.party[0].cls + '24'));
+  assert.equal(m.version, SAVE_VERSION); assert.ok(m.data.trials.includes(snap.party[0].cls + '24'));
 });

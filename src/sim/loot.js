@@ -67,10 +67,13 @@ export function createLoot({ state, bus, seed }) {
   }
 
   // a found item into the bag; if the bag is full, salvaged at once for its fee (SALVAGE_GOLD) when the purse covers it,
-  // else left where it fell (GDD §8 v1.107: a full bag is no way round the fee)
-  /** @returns {{ salvaged: number, fee: number, left: boolean }} */
+  // else left where it fell (GDD §8 v1.107: a full bag is no way round the fee). An heirloom is never salvaged or left
+  // (there's one of each, most found once): held for the company (state.held) until the bag has room (release; GDD
+  // v1.127, the owner: "yes guard heirlooms when the bag is full")
+  /** @returns {{ salvaged: number, fee: number, left: boolean, held?: boolean }} */
   function keep(item) {
     if (fits([item])) { toBag(item); return { salvaged: 0, fee: 0, left: false }; }
+    if (item.r === 'heirloom') { (state.held ||= []).push(item); return { salvaged: 0, fee: 0, left: false, held: true }; }
     const fee = SALVAGE_GOLD[item.r] || 0;
     if ((C.gold || 0) < fee) return { salvaged: 0, fee: 0, left: true };
     C.gold -= fee; C.embers = (C.embers || 0) + SALVAGE[item.r];
@@ -97,8 +100,8 @@ export function createLoot({ state, bus, seed }) {
     C.uidN = (C.uidN || 0) + 1;
     const classes = own ? [own] : [...new Set(state.party.map((m) => m.cls))];
     const item = rollItem(rng, { ilv: Math.max(1, ilv), rarity, classes, uid: 'i' + C.uidN, own: !!own });
-    const { salvaged, fee, left } = keep(item);
-    bus.emit('loot', { item, x, y, src, best: salvaged || left ? null : bestFor(item), salvaged, fee, left });
+    const { salvaged, fee, left, held } = keep(item);
+    bus.emit('loot', { item, x, y, src, best: salvaged || left || held ? null : bestFor(item), salvaged, fee, left, held: !!held });
     scroll(src, n, x, y);
     bus.emit('countersChanged', { ...C });
     return item;
@@ -108,8 +111,8 @@ export function createLoot({ state, bus, seed }) {
   function grant(id, { ilv, x, y, src, cls }) {
     C.uidN = (C.uidN || 0) + 1;
     const item = makeHeirloom(id, Math.max(1, ilv), 'i' + C.uidN, cls);   // (cls: a warden's heirloom is made for a class in the party)
-    const { salvaged, fee, left } = keep(item);
-    bus.emit('loot', { item, x, y, src, best: salvaged || left ? null : bestFor(item), salvaged, fee, left, heirloom: id });
+    const { salvaged, fee, left, held } = keep(item);
+    bus.emit('loot', { item, x, y, src, best: salvaged || left || held ? null : bestFor(item), salvaged, fee, left, held: !!held, heirloom: id });
     bus.emit('countersChanged', { ...C });
     return item;
   }
@@ -117,9 +120,16 @@ export function createLoot({ state, bus, seed }) {
   // an item found off the field (an expedition's, expeditions.js): into the bag, or its cinders if the bag is full
   /** @returns {{ salvaged: number, fee: number, left: boolean }} salvaged: the cinders, fee: the gold it took (0: in the bag); left: the bag was full and the purse short */
   function give(item, src) {
-    const { salvaged, fee, left } = keep(item);
-    bus.emit('loot', { item, x: 0, y: 0, src, best: salvaged || left ? null : bestFor(item), salvaged, fee, left, away: true });
+    const { salvaged, fee, left, held } = keep(item);
+    bus.emit('loot', { item, x: 0, y: 0, src, best: salvaged || left || held ? null : bestFor(item), salvaged, fee, left, held: !!held, away: true });
     return { salvaged, fee, left };
+  }
+  // the held heirlooms into the bag, the first that fits each time there's room (core.js calls it each tick while any is
+  // held: an item salvaged, sold, worn or used makes the room)
+  function release() {
+    const H = state.held; if (!H || !H.length || !fits([H[0]])) return;
+    const item = H.shift(); toBag(item);
+    bus.emit('loot', { item, x: 0, y: 0, src: 'held', best: bestFor(item), salvaged: 0, fee: 0, left: false, held: false, released: true });
   }
   const refuse = (reason) => { bus.emit('gearRefused', { reason }); return true; };
   const changed = (m) => {
@@ -156,5 +166,5 @@ export function createLoot({ state, bus, seed }) {
     }
     return false;
   }
-  return { drop, grant, give, command, bestFor };
+  return { drop, grant, give, release, command, bestFor };
 }

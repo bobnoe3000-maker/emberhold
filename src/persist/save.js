@@ -156,6 +156,8 @@
 //       Older data: every class someone in the company had at level 24 counts as done (trials24For), so nobody loses an
 //       ability they had (the 24s were unlocked by level until now), as v26 did for the 12s. The ring record's window
 //       ids may end ':30' (Furnace Nine's, sim/ring.js); the shape is the same.
+//   v53: `held`, the heirlooms found while the bag was full (sim/loot.js keep/release; GDD v1.127): kept for the company
+//       and put in the bag once it has room, never salvaged or left. Absent when none; older data has none.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -167,7 +169,7 @@ import { reachedOf } from '../sim/coach.js';
 import { SITES, bossAt } from '../sim/sites.js';
 import { withFrame43 } from '../sim/appearance.js';
 
-export const SAVE_VERSION = 52;   // (v52: the level-24 trials, trials24For; v51: the Kingstone's record, `ring`; v50: a lamp's souls 16 / 12, the count's difference taken off; v49: the Fens' dungeons authored, two floors each; v48: raids, `raid`; v47: the Bowl's two ladders, bowl.team / bowl.solo; v46: the Bowl's board, bowl.picks / refresh; v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
+export const SAVE_VERSION = 53;   // (v53: held heirlooms; v52: the level-24 trials, trials24For; v51: the Kingstone's record, `ring`; v50: a lamp's souls 16 / 12, the count's difference taken off; v49: the Fens' dungeons authored, two floors each; v48: raids, `raid`; v47: the Bowl's two ladders, bowl.team / bowl.solo; v46: the Bowl's board, bowl.picks / refresh; v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
 /** v40 and older (v41: the floors' gates): an old save comes back with the gates it has been through open, as far as the save
  * tells: every floor whose hall's boss is down (sites.js bossAt; state.bosses), and every floor above the one it was made
  * on. A generated hall with no boss, passed and left: its gate stands (its twenty waves again). @param {any} data */

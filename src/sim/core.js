@@ -113,6 +113,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     },
     counters: { wood: 0, stone: 0, gold: 0, embers: 0, lootN: 0, uidN: 0 },
     bag: [],                          // the party bag (loot.js): items not worn, shared by everyone
+    held: [],                         // heirlooms found with the bag full, held till it has room (loot.js release; v53)
     sitesEntered: new Set(),          // dungeon sites ever entered (compass: "nearest unexplored")
     revealed: new Set(),              // hidden sites found (sites.js): a chapter's reward, or the Chronicle's
     secrets: {},                      // (v31) a secret site's seal: { [site]: sealed until state.t } (sites.js SECRET_REST)
@@ -478,7 +479,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       const P = payOf(tier, H.level, xpToNext(H.level), baseSeed, ringOn.salt ^ (H.id | 0), res.how === 'won', G);
       for (const m of state.party) if (!m.fallen) gainXp(m, Math.round(xpToNext(m.level) * G.pay[P.tier].xp), () => bus.emit('levelUp', { id: m.id, name: m.name, level: m.level }));
       state.counters.gold = (state.counters.gold || 0) + P.gold; state.counters.embers = (state.counters.embers || 0) + P.cinders;
-      const owned = [...state.bag, ...[...state.party, ...state.bench].flatMap((m) => Object.values(m.gear || {}))].some((it) => it && it.r === 'heirloom' && it.name === HEIRLOOMS[G.heirloom].name);
+      const owned = [...state.bag, ...(state.held || []), ...[...state.party, ...state.bench].flatMap((m) => Object.values(m.gear || {}))].some((it) => it && it.r === 'heirloom' && it.name === HEIRLOOMS[G.heirloom].name);
       const p = state.player, item = P.heirloom && !owned ? loot.grant(G.heirloom, { ilv: G.level, x: p.x, y: p.y, src: 'ring', cls: H.cls })
         : P.item ? loot.drop('raidCoffer', { ilv: G.level, x: p.x, y: p.y, own: H.cls, rarity: P.item }) : null;
       pay = { tier: P.tier, xp: P.xp, gold: P.gold, cinders: P.cinders, item: item ? { name: item.name, r: item.r, base: item.base, ilv: item.ilv } : null };
@@ -549,7 +550,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     if (e.room != null) raidOn.won.add(`${state.depth}:${e.room}`);   // (his room won for the run: a side room's boss, Teague's, isn't there to fall twice)
     if (state.depth < SITES[raidOn.site].floors - 1 || raidOn.done) return;
     const R = raidOn, r = raidOf(state), H = state.party[0];
-    const holds = (name) => [...state.bag, ...[...R.party, ...state.bench].flatMap((m) => Object.values(m.gear || {}))].some((it) => it && it.r === 'heirloom' && it.name === name);
+    const holds = (name) => [...state.bag, ...(state.held || []), ...[...R.party, ...state.bench].flatMap((m) => Object.values(m.gear || {}))].some((it) => it && it.r === 'heirloom' && it.name === name);
     const c = cofferOf(baseSeed, R.n, R.site, r.dry, holds);
     state.counters.gold = (state.counters.gold || 0) + c.gold; state.counters.embers = (state.counters.embers || 0) + c.cinders;
     const item = c.heirloom ? loot.grant(c.heirloom, { ilv: c.ilv, x: e.x, y: e.y, src: 'coffer', cls: H.cls }) : loot.drop('raidCoffer', { ilv: c.ilv, x: e.x, y: e.y, own: H.cls, rarity: c.rarity });
@@ -824,6 +825,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     const cmds = commands.drain();
     if (cmds.length) bus.emit('commands', { tick: state.tick, cmds });   // the session recorder (replay.js) logs these
     for (const cmd of cmds) applyCommand(cmd);
+    if (state.held && state.held.length) loot.release();   // (a held heirloom into the bag once it has room: loot.js)
     followPath();
     if (p.want || p.path) p.steer = 0;
     if (!state.party[0].down) integrate(); else p.vx = p.vy = 0;
@@ -907,6 +909,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       ...(state.dev ? { dev: true } : {}),   // (v34) a dev game: the menu's Developer tools were used (dev.js); absent otherwise, so no other save changes
       tavern: { ...state.tavern }, wageDay: state.wageDay, innDay: state.innDay,   // asked around (and when), the last dawn paid, the last inn night
       bag: state.bag.map((it) => ({ ...it })),
+      ...(state.held && state.held.length ? { held: state.held.map((it) => ({ ...it })) } : {}),   // (v53: absent when none, so no other save changes)
       mods: [...world.mods.entries()],   // [ "x,y", {cleared}|{opened} ]
       hp: [...world.hp.entries()],
       discovered: [...world.discovered],
@@ -987,6 +990,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     state.wageDay = Number.isInteger(data.wageDay) ? data.wageDay : today;     // v13 and older: wages start at the next dawn
     state.innDay = Number.isFinite(data.innDay) ? data.innDay : -1e9;
     state.bag = (data.bag ?? []).map((it) => refreshItem({ ...it }));
+    state.held = (Array.isArray(data.held) ? data.held : []).filter((it) => it && it.r === 'heirloom').map((it) => refreshItem({ ...it }));   // (v53: heirlooms only)
     for (const m of [...state.party, ...state.bench]) for (const s of Object.keys(m.gear || {})) if (m.gear[s]) m.gear[s] = refreshItem({ ...m.gear[s] });   // st from (base, ilv, rarity): the current formula
     state.sitesEntered = new Set((data.sitesEntered ?? []).filter((k) => SITES[k]));
     state.secrets = {}; for (const [k, v] of Object.entries(data.secrets ?? {})) if (SITES[k] && SITES[k].secret && Number.isFinite(v)) state.secrets[k] = v;   // (v31)

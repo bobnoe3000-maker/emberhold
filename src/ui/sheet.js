@@ -518,7 +518,9 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
     toast.style.borderColor = 'rgba(214,170,98,0.45)'; toast.innerHTML = `<div class="s" style="margin:0;color:#efe4cf">${text}</div>`;
     toast.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, 2200);
   }
-  sim.bus.on('loot', ({ item, src, best, salvaged, fee, left }) => {
+  sim.bus.on('loot', ({ item, src, best, salvaged, fee, left, held, released }) => {
+    if (held) { showToastText(`Bag full · ${item.name} is held for you: make room and it goes in the bag`); return; }
+    if (released) showToastText(`${item.name} is in the bag now`);
     if (salvaged) { showToastText(`Bag full · ${item.name} salvaged for ✦${salvaged} (${fee} gold)`); return; }
     if (left) { showToastText(`Bag full · ${item.name} left behind (salvaging it costs ${SALVAGE_GOLD[item.r]} gold)`); return; }
     fresh.add(item.uid);
