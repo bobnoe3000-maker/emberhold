@@ -24,6 +24,7 @@ const CAST = [
   ['town', 'npc_dace', 'Dace'], ['town', 'npc_pim', 'Pim'], ['town', 'npc_orla', 'Orla'], ['town', 'npc_agnes', 'Agnes'], ['town', 'npc_kindler', 'Kindler'],   // (Saltmere's, and the Kindler)
   ['town', 'npc_dagny', 'Dagny'], ['town', 'npc_hob', 'Hob'], ['town', 'npc_gunnar', 'Gunnar'], ['town', 'npc_brannagh', 'Brannagh'], ['town', 'npc_mother_coke', 'Mother Coke'],
   ['town', 'npc_bel', 'Bel'], ['town', 'npc_haldor', 'Haldor'], ['town', 'npc_pellam', 'Pellam'], ['town', 'npc_wynn', 'Wynn'],   // (Ashgate's, v1.124)
+  ['town', 'npc_nan_ruddock', 'Nan Ruddock'], ['town', 'npc_clerk', 'Assay clerk'],   // (Kell's Rest's, reach-plan.md the build sheet)
   ['town', 'npc_tobin', 'Tobin'], ['town', 'npc_ned', 'Ned'], ['town', 'npc_hester', 'Hester'],   // (v1.48: by the Vale's dungeons' ways in)
 ];
 

@@ -27,6 +27,30 @@
    "y": 223.5
   },
   {
+   "kind": "site",
+   "id": "assay_yards",
+   "x": 72,
+   "y": 134
+  },
+  {
+   "kind": "site",
+   "id": "forgehall",
+   "x": 194.5,
+   "y": 153.5
+  },
+  {
+   "kind": "site",
+   "id": "cinderworks",
+   "x": 175.5,
+   "y": 72.5
+  },
+  {
+   "kind": "site",
+   "id": "ninth_vault",
+   "x": 65,
+   "y": 36.5
+  },
+  {
    "kind": "land",
    "id": "reach",
    "x": 267,

@@ -29,5 +29,21 @@
     "journal": "Go into {site} and open {n} of its chests.",
     "ready": "Hand it in at the Lantern Guild's board, inside the Drowned Eel in Saltmere.",
     "done": "Whatever was in them is Saltmere's now, which is to say Pim's."
+  },
+  "reach": {
+    "titles": ["Up from Below", "Salvage", "What the Seam Kept", "Fetch and Carry"],
+    "hooks": [
+      { "by": "Wynn Sallow, the Exchange", "text": "\"Whatever's in the chests in {site}, I'll weigh it. On the honest scales, even. Bring it up.\"" },
+      { "by": "Hob", "text": "\"There are chests in {site} nobody's opened in years. That's a waste. Open {n}. Don't tell me what was in them.\"" },
+      { "by": "Dagny Coalbrook, for the moot", "text": "\"The moot would like to know what the Assay keeps in {site}. The moot would like somebody else to go and look.\"" },
+      { "by": "The Lantern Guild", "text": "\"Recovery job. The Guild takes its cut of what comes up, and you keep your boots.\"" },
+      { "by": "Bel Ruddle, the Slag & Bellows", "text": "\"Bring up whatever's in {site}'s chests and sell it in Ashgate. Then drink some of it here. Everybody wins, mostly me.\"" },
+      { "by": "Haldor, the Ashgate Forge", "text": "\"If there's iron in those chests in {site}, it's old iron, and old iron's better. Bring it. I'll tell you what it was.\"" }
+    ],
+    "brief": { "one": "Open a chest in {site}", "many": "Open {n} chests in {site}" },
+    "label": "Chests opened in {site}",
+    "journal": "Go into {site} and open {n} of its chests.",
+    "ready": "Hand it in at the Lantern Guild's board, inside the Slag & Bellows in Ashgate.",
+    "done": "Wynn weighed what came up. On which scales, he wouldn't say."
   }
 }

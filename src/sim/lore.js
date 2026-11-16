@@ -46,9 +46,22 @@ export const FRAGMENTS = {
   frag_fens_novice_letter: { set: 'fens', order: 8, site: 'drowned_abbey', floor: 1, via: 'chest' },
   frag_fens_day_book: { set: 'fens', order: 9, site: 'drowned_abbey', floor: 1, via: 'hall' },           // in the Choir (v1.102: the first floor's hall)
   frag_fens_last_hour: { set: 'fens', order: 10, site: 'drowned_abbey', floor: 2, via: 'boss' },         // the Abbess Below's
+  // the Reach set (world doc §7, v1.54): twelve, from the four band dungeons; the charter, the quota, the forge, the furnace
+  frag_reach_charter_roll: { set: 'reach', order: 1, site: 'cold_seam', floor: 1, via: 'chest' },        // (the pay office's)
+  frag_reach_lamp_tally: { set: 'reach', order: 2, site: 'cold_seam', floor: 1, via: 'shrine' },
+  frag_reach_chute_plate: { set: 'reach', order: 3, site: 'cold_seam', floor: 2, via: 'boss' },          // the Foreman's, off the tally cave's wall
+  frag_reach_weigh_ticket: { set: 'reach', order: 4, site: 'assay_yards', floor: 1, via: 'chest' },
+  frag_reach_quota_order: { set: 'reach', order: 5, site: 'assay_yards', floor: 1, via: 'hall' },        // in the counting house, the first floor's hall
+  frag_reach_throne_weight: { set: 'reach', order: 6, site: 'assay_yards', floor: 2, via: 'boss' },      // the Weighmaster's
+  frag_reach_binding_of_oruth: { set: 'reach', order: 7, site: 'forgehall', floor: 1, via: 'chest' },
+  frag_reach_pattern_shelf: { set: 'reach', order: 8, site: 'forgehall', floor: 1, via: 'shrine' },
+  frag_reach_apron_plate: { set: 'reach', order: 9, site: 'forgehall', floor: 2, via: 'boss' },          // Oruth's, when he lies down
+  frag_reach_night_rota: { set: 'reach', order: 10, site: 'cinderworks', floor: 1, via: 'chest' },
+  frag_reach_vanes_ledger: { set: 'reach', order: 11, site: 'cinderworks', floor: 1, via: 'boss' },      // left when he runs (his fall, for the story: battle.js `fled`)
+  frag_reach_renewal: { set: 'reach', order: 12, site: 'cinderworks', floor: 2, via: 'boss' },           // the Stoker's, in the Magma Vault
 };
 /** a whole set reveals its hidden site (sites.js; world doc §7) */
-export const SET_REVEALS = { vale: 'ninth_milestone', fens: 'reedholm_undercroft' };
+export const SET_REVEALS = { vale: 'ninth_milestone', fens: 'reedholm_undercroft', reach: 'ninth_vault' };
 /** the fragments of each set, in reading order */
 export const SETS = /** @type {Record<string, string[]>} */ ({});
 for (const [id, f] of Object.entries(FRAGMENTS)) (SETS[f.set] ||= []).push(id);

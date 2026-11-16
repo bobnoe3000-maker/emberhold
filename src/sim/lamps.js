@@ -22,6 +22,7 @@ export const LAMPS = {
   // the Abbey's roll, "three hundred and twelve professed" (world doc v1.27 §3.2), walks as the drowned; the choir-lamp
   // holds the Abbess's own chapter (312 before)
   choir_lamp: { name: "The Abbey's choir-lamp", keeper: 'abbess_below', souls: 12 },
+  furnace_nine: { name: 'Furnace Nine', keeper: 'stoker', souls: 18 },   // (v1.126: the night shift, Act III's end; its forty working hands walk in the Cinderworks, the lamp holds the shift's last)
 };
 /** the lamp a boss carries, if any @param {string} boss */
 export const lampOf = (boss) => Object.keys(LAMPS).find((id) => LAMPS[id].keeper === boss) || null;

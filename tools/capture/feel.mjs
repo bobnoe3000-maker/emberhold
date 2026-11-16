@@ -45,7 +45,7 @@ await p.evaluate(async ({ site, depth }) => {
   if (depth) sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), scene: 'dungeon', site, depth });
   for (let i = 0; i < 4; i++) globalThis.__frame(16);
   const hall = sim.world.level.descentRoom, lv = Math.max(1, sim.world.roomLevels.get(hall.id) || 1);
-  sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };
+  sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1, fighter24: 1, rogue24: 1, mage24: 1, cleric24: 1, shaman24: 1 };
   sim.state.party = ['fighter', 'rogue', 'cleric'].map((c, i) => { const m = i ? makeMember('c' + i, ['Wren', 'Tam'][i - 1], c, lv) : makeHero({ cls: c }); m.level = lv; m.attrs = null; m.autoAttrs = true; autoAllocate(m); m.gear = starterKit(m); m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp; return m; });
   const P = sim.state.player; P.x = P.px = hall.cx + 0.5; P.y = P.py = hall.cy + 0.5;
   sim.state.party.forEach((m, i) => { if (m !== P) { m.x = m.px = P.x + (i === 1 ? 1.2 : -1.2); m.y = m.py = P.y + 1; } });

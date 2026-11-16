@@ -1,0 +1,39 @@
+{
+  "id": "brannagh_last_wages",
+  "kind": "errand",
+  "title": "The Last Wages",
+  "giver": "old_brannagh",
+  "region": "reach",
+  "level": [
+    19,
+    60
+  ],
+  "summary": "The Cold Seam closed on a Friday, and its last shift was never paid. The wages are still in the pay office's strongboxes. Old Brannagh wants them out.",
+  "steps": [
+    {
+      "id": "pay_office",
+      "journal": "The Cold Seam's first floor, the old pithead: open two of its chests. The pay office's are the ones with the grille.",
+      "objectives": [
+        {
+          "type": "loot",
+          "site": "cold_seam",
+          "count": 2,
+          "floor": 1,
+          "label": "Chests opened in the Cold Seam"
+        }
+      ]
+    }
+  ],
+  "ready": "The Cold Seam's last wages, forty years late. Take them to Old Brannagh.",
+  "done": "Brannagh paid out the last shift's wages to whoever was left, and to their children.",
+  "rewards": {
+    "share": 0.3,
+    "lv": 19,
+    "gold": 200
+  },
+  "dialogue": {
+    "file": "ashgate",
+    "offer": "brannagh_wages_offer",
+    "turnin": "brannagh_wages_turnin"
+  }
+}

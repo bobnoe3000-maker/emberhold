@@ -1,0 +1,42 @@
+{
+  "id": "trial24_fighter",
+  "kind": "trial",
+  "title": "Tempered",
+  "giver": "haldor",
+  "region": "reach",
+  "level": [
+    1,
+    60
+  ],
+  "trial": "fighter",
+  "trialLv": 24,
+  "summary": "Haldor says a blade isn't finished until it's held something. A fighter of yours should hold the Assay's counting house, ten waves, and not give an inch.",
+  "steps": [
+    {
+      "id": "counting",
+      "journal": "The Assay Yards: the counting house, the first floor's hall. Hold it ten waves.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "assay_yards",
+          "count": 10,
+          "hall": true,
+          "floor": 1,
+          "label": "Waves held in the counting house"
+        }
+      ]
+    }
+  ],
+  "ready": "The counting house held ten waves. Go back to Haldor at the Ashgate Forge.",
+  "done": "Haldor says your fighters are tempered. He says it to the blade.",
+  "rewards": {
+    "share": 0.3,
+    "lv": 24,
+    "gold": 240
+  },
+  "dialogue": {
+    "file": "ashgate",
+    "offer": "haldor_trial_offer",
+    "turnin": "haldor_trial_turnin"
+  }
+}

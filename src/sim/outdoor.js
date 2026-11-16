@@ -449,8 +449,11 @@ function buildTown(seed, region) {
   // the services and hide nobody; a spot is left bare if anything is there.
   for (const [id, x, y] of [['birch_1', 60, 20], ['birch_1', 80, 30], ['autumn_2', 96, 44], ['birch_1', 22, 60], ['autumn_2', 36, 86]])
     if (fits(o, id, x, y, 0)) put(o, id, x, y, 'round', 0.35);
-  // outside: farms on the fields
-  put(o, B('farm'), 140, 34); put(o, B('farmx'), 144, 104);
+  // outside: farms on the fields (the Reach's: nothing grows in the ash, so its ore sheds and the slag tipped by them,
+  // v1.126; the art pass, docs/art-critic-pass-reach.md, found Ashgate's outskirts the Vale's farms, beasts and wheat)
+  const ASH = R === 'reach';
+  if (ASH) { put(o, B('workshop'), 140, 34); put(o, B('workshopx'), 144, 104); }
+  else { put(o, B('farm'), 140, 34); put(o, B('farmx'), 144, 104); }
 
   // trees: orchards and gardens in the walls' front corners, woods beyond the back walls, the ring
   const inside = (x, y) => x > WX0 + 4 && x < WX1 - 4 && y > WY0 + 4 && y < WY1 - 4;
@@ -464,10 +467,15 @@ function buildTown(seed, region) {
   forestRing(o, rng, 10);
   bound(o, () => 'fence');                                         // the fields' fences first: the beasts graze round them
   { const fr = mulberry32(streamSeed(seed, 4417));                // the farms' beasts, the houses' doorsteps
-    herd(o, fr, ['cow_1', 'cow_2', 'cow_3'], 160, 34, 4, 6); herd(o, fr, ['sheep_1', 'sheep_2'], 142, 66, 5, 6);
-    herd(o, fr, ['hens_1'], 136, 58, 2, 3); herd(o, fr, ['hay_1', 'hay_2', 'pumpkins_1'], 154, 52, 3, 4); herd(o, fr, ['pumpkins_1', 'hay_1'], 152, 116, 2, 3);
+    if (ASH) {   // the sheds' yards: slag tipped, ore in crates, the sacks and barrels of a working yard
+      herd(o, fr, ['rock_C', 'rock_E', 'resource_stone'], 160, 34, 4, 6); herd(o, fr, ['rock_D', 'rock_C'], 142, 66, 4, 6);
+      herd(o, fr, ['crate_A_small', 'barrel'], 136, 58, 2, 3); herd(o, fr, ['crate_A_big', 'sack', 'barrel'], 154, 52, 3, 4); herd(o, fr, ['resource_stone', 'rock_E'], 152, 116, 2, 3);
+    } else {
+      herd(o, fr, ['cow_1', 'cow_2', 'cow_3'], 160, 34, 4, 6); herd(o, fr, ['sheep_1', 'sheep_2'], 142, 66, 5, 6);
+      herd(o, fr, ['hens_1'], 136, 58, 2, 3); herd(o, fr, ['hay_1', 'hay_2', 'pumpkins_1'], 154, 52, 3, 4); herd(o, fr, ['pumpkins_1', 'hay_1'], 152, 116, 2, 3);
+    }
     dress(o, fr, (x, y) => hypot(x - o.hub.x, y - o.hub.y) < o.hub.r); }
-  wheat(o);
+  if (!ASH) wheat(o);
   // the undergrowth: the walls' verges (in and out), the gardens, flower patches; never the square
   undergrowth(o, -10, -10, 150, 130, 3, (x, y) => {
     if (hypot(x - o.hub.x, y - o.hub.y) < o.hub.r + 4) return -1;
@@ -972,6 +980,7 @@ function buildReach(seed) {
     { w: 6, surface: 'dirt', imperial: true, pts: [join, [join[0], 102], [64, 102], [kells[0] + 12, kells[1]]] },   // the Kell road, round the north wall
     { w: 4, surface: 'track', pts: [[join[0], 120], [168, 90], [works[0] - 1, works[1] + 10]] },                     // up to the Cinderworks
     { w: 3, surface: 'track', pts: [[works[0] - 6, works[1] + 6], [166, 50], door(vault, 9)] },                      // on up to the Magma Vault's mouth, under Furnace Nine
+    { w: 3, surface: 'track', pts: [[166, 46], [156, 30], [150, 20]] },                                                // (v1.126) to the furnace yard beside it, Furnace Nine's ground (camps.js reach_mouth)
     { w: 3, surface: 'track', pts: [[150, 182], [108, 188], [82, 212], [tunnels[0] + 2.5, tunnels[1] + 8]] },        // west to the Slag Tunnels' adit, up to its mouth from below
     { w: 3, surface: 'track', pts: [[148, 226], [132, 230], [seam[0] - 6, seam[1] + 12]] },                          // to the Cold Seam's pithead
     { w: 3, surface: 'track', pts: [[190, 165], [forge[0] + 0.5, forge[1] + 8]] },                                   // to the Forgehall's door
@@ -1018,9 +1027,12 @@ function buildReach(seed) {
   // has them; a range past the north and west edges; the low hills round the Slag Tunnels
   const mrng = mulberry32(streamSeed(seed, 4443)), F = (id) => ENV_FOOT[id] || [-10, -10, 10, 10];
   put(o, 'mountain_massif_C', volcano[0], volcano[1], 'round', 0.3);
-  const keepOut = [gate, kells, yards, works, vault, ninth, tunnels, seam, forge];
+  const keepOut = [gate, kells, yards, works, vault, ninth, tunnels, seam, forge, ...campsOf('reach').map((c) => [c.x, c.y])];   // (and the spawn points' ground, v1.126)
   const sights = [[gate[0], gate[1]], [join[0] - 5, join[1]], kells, yards, works, vault, tunnels, seam, forge];   // (and where you arrive)
-  const clear = (x, y, r = 18) => !keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < r) && !inFrontOf(sights, x, y, 40, 22);
+  // (and a region boss's ground, the Vault's mouth, open over its whole arena as the Fens' old stones are: Furnace Nine's
+  // fight at 70 % open ground, the ruin and the works' heaps in it, wiped five companies in one window of three; v1.126)
+  const ring = campsOf('reach').find((c) => c.ring), inRing = (x, y, m = 2) => !!ring && hypot(x - ring.x, y - ring.y) < ring.arena + m;
+  const clear = (x, y, r = 18) => !keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < r) && !inFrontOf(sights, x, y, 40, 22) && !inRing(x, y);
   for (const [x, y] of [[40, 30], [86, 36], [106, 54], [118, 22], [28, 6], [62, 4], [92, 8], [80, 66], [140, 30], [36, 182], [58, 200], [100, 204], [30, 224]]) {
     const id = mrng() < 0.5 ? 'mountain_A' : 'mountain_B', jx = x + (mrng() - 0.5) * 6, jy = y + (mrng() - 0.5) * 6;
     if (clear(jx, jy, 20) && !inFrontOf(sights, jx, jy, 72, 28) && fits(o, id, jx, jy, -1)) put(o, id, jx, jy, 'round', 0.35);   // (a hill is tall: a deeper wedge)
@@ -1041,17 +1053,26 @@ function buildReach(seed) {
     return rng() < 0.03 ? pick(rng, RED) : null;
   });
   forestRing(o, rng, 6, ['rock_E', 'rock_C', 'dead_1', 'rock_D'], ['dead_1', 'dead_2', 'rock_A', 'rock_B']);
-  undergrowth(o, -10, -10, 270, 270, 5, (x, y) => (keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 12) ? -1 : fbm(x * 0.07, y * 0.07, o.seed + 63) > 0.62 ? 0.4 : 0.05),
+  undergrowth(o, -10, -10, 270, 270, 5, (x, y) => (keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 12) || inRing(x, y, 0) ? -1 : fbm(x * 0.07, y * 0.07, o.seed + 63) > 0.62 ? 0.4 : 0.05),
     { low: ['ug_grass_1', 'ug_grass_2'], solid: ['rock_A', 'rock_B'], foot: ['ug_grass_2'] });
 
   o.exits.push({ x0: gate[0] - 8, y0: gate[1] - 4, x1: gate[0] - 1, y1: gate[1] + 4, to: 'town', arrive: 'overland' });
   // the roads out: shut, each with its word (the Reach isn't joined to the other lands yet)
   o.exits.push({ x0: 138, y0: 263, x1: 155, y1: 271, to: 'overland', region: 'vale', arrive: 'reach' });   // (v1.124) down the Wickham road, home to the Vale
-  // the sites' doors (v1.124): the Cold Seam's pithead, where its track ends (the others come with their bands)
+  // the sites' doors (v1.124): the Cold Seam's pithead, where its track ends
   o.exits.push({ x0: seam[0] - 9, y0: seam[1] + 10, x1: seam[0] - 3, y1: seam[1] + 13, to: 'dungeon', site: 'cold_seam' });
+  // (v1.126) the rest of Act III's: the Yards' gate where the track comes in, the Forgehall's door, the Cinderworks'
+  // yard under its stacks (the Magma Vault is its second floor: the mouth up the track is Furnace Nine's, ring.js), and
+  // the Ninth Vault's ruin up the volcano's flank, shut until the Chronicle's reach set finds it (sites.js siteOpen)
+  o.exits.push({ x0: yards[0] + 6, y0: yards[1], x1: yards[0] + 10, y1: yards[1] + 4, to: 'dungeon', site: 'assay_yards' });
+  o.exits.push({ x0: forge[0] - 3, y0: forge[1] + 6, x1: forge[0] + 4, y1: forge[1] + 9, to: 'dungeon', site: 'forgehall' });
+  o.exits.push({ x0: works[0] - 4, y0: works[1] + 7, x1: works[0] + 3, y1: works[1] + 10, to: 'dungeon', site: 'cinderworks' });
+  o.exits.push({ x0: ninth[0] - 2, y0: ninth[1] + 5, x1: ninth[0] + 4, y1: ninth[1] + 8, to: 'dungeon', site: 'ninth_vault' });
   o.exits.push({ x0: 263, y0: 180, x1: 271, y1: 198, to: 'overland', closed: true, shut: 'The Solmere road runs east, straight as the day it was laid, to the dead capital. Another day.' });
   o.arrivals = { default: { x: join[0] - 4.5, y: gate[1] + 0.5 }, ashgate: { x: join[0] - 4.5, y: gate[1] + 0.5 }, kells_rest: { x: kells[0] + 10.5, y: kells[1] + 4.5 },
-    vale_road: { x: 146.5, y: 255.5 }, cold_seam: { x: seam[0] - 5.5, y: seam[1] + 17.5 } };
+    vale_road: { x: 146.5, y: 255.5 }, cold_seam: { x: seam[0] - 5.5, y: seam[1] + 17.5 },
+    assay_yards: { x: yards[0] + 12.5, y: yards[1] - 6.5 }, forgehall: { x: forge[0] + 0.5, y: forge[1] + 13.5 }, cinderworks: { x: works[0] - 0.5, y: works[1] + 14.5 },
+    ninth_vault: { x: ninth[0] - 0.5, y: ninth[1] + 13.5 } };
   o.spawn = o.arrivals.default;
   return o;
 }

@@ -32,7 +32,8 @@
 // bench) is level 6 or more and the company hasn't done it; handed in, it teaches that class its
 // level-6 ability (state.trials, skills.js), every member of the class, for good. (M8, slice 9) A second trial
 // (`trialLv: 12`) teaches the level-12 one, in the Fens: offered once someone of the class is 12 and the class's
-// first trial is done; it sets state.trials[cls + '12'] (skills.js trialKey).
+// first trial is done; it sets state.trials[cls + '12'] (skills.js trialKey). (v1.54) A third (`trialLv: 24`) in the Reach
+// teaches the level-24 one: offered once someone of the class is 24 and its 12 is done; state.trials[cls + '24'].
 
 import { gainXp, levelShare } from './party.js';
 import { FRAGMENTS } from './lore.js';
@@ -205,14 +206,80 @@ export const QUESTS = {
   // Wickham road to Ashgate's Charter-Reeve (a word with Dagny, who takes it in); then Dagny's niece in the Cold Seam,
   // held by the Foreman in the tally cave (Tamsin is freed with him: npcs.js `found`, heroes.js FOUND)
   ch3_the_wickham_road: {
-    kind: 'chapter', giver: 'sister_ilse', turnin: 'dagny_coalbrook', region: 'reach', level: [18, 30], after: ['ch2_the_last_office'],
+    kind: 'chapter', giver: 'sister_ilse', turnin: 'dagny_coalbrook', region: 'reach', level: [18, 60], after: ['ch2_the_last_office'],
     steps: [{ id: 'dagny', objectives: [{ type: 'meet', npc: 'dagny_coalbrook', region: 'reach', count: 1 }] }],
     rewards: { share: 0.35, lv: 19, gold: 420 },
   },
   ch3_short_shift: {
-    kind: 'chapter', giver: 'dagny_coalbrook', region: 'reach', level: [19, 30], after: ['ch3_the_wickham_road'],
+    kind: 'chapter', giver: 'dagny_coalbrook', region: 'reach', level: [19, 60], after: ['ch3_the_wickham_road'],
     steps: [{ id: 'foreman', objectives: [{ type: 'boss', site: 'cold_seam', boss: 'foreman', count: 1 }] }],   // (one who fell before counts: settle)
     rewards: { share: 0.5, lv: 21, gold: 480 },
+  },
+  // (v1.54, world doc §6 "As told") the rest of Act III: Hob's way into the Yards (a word with the Assay's clerk at the gate,
+  // then the Weighmaster; the rolls go to Dagny); Mother Coke's ancestor put back to sleep; Morrow Vane, who runs (his
+  // fall, for the story: battle.js `fled`); and Tamsin's: the Stoker, Furnace Nine's lamp, the empty mould, back to Dagny.
+  // (Act III runs to 60, the XP table's end: a company past 30 can still finish what it started; Acts I and II stop at 30.)
+  ch3_paid_by_weight: {
+    kind: 'chapter', giver: 'hob', turnin: 'dagny_coalbrook', region: 'reach', level: [22, 60], after: ['ch3_short_shift'],
+    steps: [{ id: 'pass', objectives: [{ type: 'meet', npc: 'assay_clerk', site: 'assay_yards', count: 1 }] },
+      { id: 'weighmaster', objectives: [{ type: 'boss', site: 'assay_yards', boss: 'weighmaster', count: 1 }] }],
+    rewards: { share: 0.45, lv: 23, gold: 520 },
+  },
+  ch3_gone_back_to_work: {
+    kind: 'chapter', giver: 'mother_coke', region: 'reach', level: [25, 60], after: ['ch3_paid_by_weight'],
+    steps: [{ id: 'oruth', objectives: [{ type: 'boss', site: 'forgehall', boss: 'oruth', count: 1 }] }],
+    rewards: { share: 0.5, lv: 26, gold: 580 },
+  },
+  ch3_night_shift: {
+    kind: 'chapter', giver: 'dagny_coalbrook', region: 'reach', level: [28, 60], after: ['ch3_gone_back_to_work'],
+    steps: [{ id: 'vane', objectives: [{ type: 'boss', site: 'cinderworks', boss: 'morrow_vane', count: 1 }] }],
+    rewards: { share: 0.5, lv: 28, gold: 620 },
+  },
+  ch3_quota: {
+    kind: 'chapter', giver: 'tamsin', turnin: 'dagny_coalbrook', region: 'reach', level: [30, 60], after: ['ch3_night_shift'],
+    steps: [{ id: 'stoker', objectives: [{ type: 'boss', site: 'cinderworks', boss: 'stoker', count: 1 }] }],
+    rewards: { share: 0.6, lv: 30, gold: 700 },
+  },
+  // Tamsin's chain, Showing Off (world doc v1.54 §5): the Assay's stamps off the Yards' guard-captains, the imperial
+  // patterns in the Forgehall's pattern store, the Cult's spare moulds cracked on the Magma Vault's floor
+  tamsin_the_stamp: {
+    kind: 'companion', giver: 'tamsin', companion: 'tamsin', region: 'reach', level: [22, 60],
+    steps: [{ id: 'yards', objectives: [{ type: 'elites', site: 'assay_yards', count: 3 }] }],
+    rewards: { share: 0.35, lv: 23, gold: 260 },
+  },
+  tamsin_the_patterns: {
+    kind: 'companion', giver: 'tamsin', companion: 'tamsin', region: 'reach', level: [25, 60], after: ['tamsin_the_stamp'],
+    steps: [{ id: 'patterns', objectives: [{ type: 'loot', site: 'forgehall', count: 2, floor: 1 }] }],
+    rewards: { share: 0.3, lv: 25, gold: 300 },
+  },
+  tamsin_spoiled_casting: {
+    kind: 'companion', giver: 'tamsin', companion: 'tamsin', region: 'reach', level: [29, 60], after: ['tamsin_the_patterns'],
+    steps: [{ id: 'vault', objectives: [{ type: 'waves', site: 'cinderworks', count: 5, floor: 2 }] }],
+    rewards: { share: 0.45, lv: 29, gold: 360 },
+  },
+  // Gunnar Slagg's shame (world doc v1.54 §3.3): the lease out of the Assay's counting house; the Slagborn who went over to
+  // the Forgehall, their leaders put down so the rest can come home
+  gunnar_the_lease: {
+    kind: 'errand', giver: 'gunnar_slagg', region: 'reach', level: [22, 60],
+    steps: [{ id: 'counting', objectives: [{ type: 'loot', site: 'assay_yards', count: 2, floor: 1 }] }],
+    rewards: { share: 0.3, lv: 22, gold: 240 },
+  },
+  gunnar_the_row: {
+    kind: 'errand', giver: 'gunnar_slagg', region: 'reach', level: [25, 60], after: ['gunnar_the_lease'],
+    steps: [{ id: 'renegades', objectives: [{ type: 'elites', site: 'forgehall', count: 3 }] }],
+    rewards: { share: 0.35, lv: 26, gold: 300 },
+  },
+  // Old Brannagh's shrine (world doc v1.54 §3.3): the Cold Seam's last wages out of the pay office; the Flame carried down
+  // to the night pens and held while the shift comes out
+  brannagh_last_wages: {
+    kind: 'errand', giver: 'old_brannagh', region: 'reach', level: [19, 60],
+    steps: [{ id: 'pay_office', objectives: [{ type: 'loot', site: 'cold_seam', count: 2, floor: 1 }] }],
+    rewards: { share: 0.3, lv: 19, gold: 200 },
+  },
+  brannagh_counted_in: {
+    kind: 'errand', giver: 'old_brannagh', region: 'reach', level: [28, 60], after: ['brannagh_last_wages'],
+    steps: [{ id: 'pens', objectives: [{ type: 'waves', site: 'cinderworks', count: 6, floor: 1 }] }],
+    rewards: { share: 0.4, lv: 28, gold: 320 },
   },
   // the level-12 trials (world doc v1.30 §5; docs/m8-plan.md slice 9): in the Fens, at 12, after the class's first
   trial_the_long_watch: {                            // Osric: a fighter holds a hall ten waves, as the Watch holds a post
@@ -242,6 +309,33 @@ export const QUESTS = {
   },
   // Wren's chain, What's Owed (world doc v1.29 §5): her marker off the Locks' harvesters, her caches in the Sickpools,
   // and the Cult's boat at the Abbey burned while the company holds the first floor's hall
+  // the level-24 trials (world doc v1.54 §3.3; the owner: "Yes a class trial at 24 in the reach"): taught in Ashgate,
+  // fought in the Assay Yards (22–24) and the Forgehall's first floor (25), once the class's 12 is done
+  trial24_fighter: {                                 // Haldor: a blade's tempered by holding; the counting house, ten waves
+    kind: 'trial', giver: 'haldor', trial: 'fighter', trialLv: 24, region: 'reach', level: [1, 60],
+    steps: [{ id: 'counting', objectives: [{ type: 'waves', site: 'assay_yards', count: 10, hall: true, floor: 1 }] }],
+    rewards: { share: 0.3, lv: 24, gold: 240 },
+  },
+  trial24_rogue: {                                   // Hob: five of the guard-captains' passes, lifted
+    kind: 'trial', giver: 'hob', trial: 'rogue', trialLv: 24, region: 'reach', level: [1, 60],
+    steps: [{ id: 'yards', objectives: [{ type: 'elites', site: 'assay_yards', count: 5 }] }],
+    rewards: { share: 0.3, lv: 24, gold: 240 },
+  },
+  trial24_mage: {                                    // Tamsin: by the assay furnace, ask the iron
+    kind: 'trial', giver: 'tamsin', companion: 'tamsin', trial: 'mage', trialLv: 24, region: 'reach', level: [1, 60],
+    steps: [{ id: 'furnace', objectives: [{ type: 'waves', site: 'assay_yards', count: 8, floor: 2 }] }],
+    rewards: { share: 0.3, lv: 24, gold: 240 },
+  },
+  trial24_cleric: {                                  // Old Brannagh: the cage store, the night shift counted out
+    kind: 'trial', giver: 'old_brannagh', trial: 'cleric', trialLv: 24, region: 'reach', level: [1, 60],
+    steps: [{ id: 'cages', objectives: [{ type: 'waves', site: 'assay_yards', count: 6, floor: 2 }] }],
+    rewards: { share: 0.3, lv: 24, gold: 240 },
+  },
+  trial24_shaman: {                                  // Mother Coke: the fortieth verse, sung in the Forgehall
+    kind: 'trial', giver: 'mother_coke', trial: 'shaman', trialLv: 24, region: 'reach', level: [1, 60],
+    steps: [{ id: 'forge', objectives: [{ type: 'waves', site: 'forgehall', count: 6, floor: 1 }] }],
+    rewards: { share: 0.3, lv: 24, gold: 240 },
+  },
   wren_the_marker: {
     kind: 'companion', giver: 'wren', companion: 'wren', region: 'fens', level: [1, 30],
     steps: [{ id: 'locks', objectives: [{ type: 'elites', site: 'canal_locks', count: 3 }] }],
@@ -270,7 +364,8 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
   const defOf = (id) => (Object.prototype.hasOwnProperty.call(QUESTS, id) ? QUESTS[id] : extraDef(id));
   const inst = (id) => state.quests[id] || null;
   const withUs = (id) => [...state.party, ...(state.bench || [])].some((m) => m.id === id);
-  const trialOpen = (cls, lv = TRIAL_LEVEL) => { const T = state.trials || {}; return !T[trialKey(cls, lv)] && (lv <= TRIAL_LEVEL || !!T[cls]) && [...state.party, ...(state.bench || [])].some((m) => m.cls === cls && m.level >= lv); };
+  // a trial's rung: not done, the rung below done (the 12 after the 6, the 24 after the 12), someone of the class at its level
+  const trialOpen = (cls, lv = TRIAL_LEVEL) => { const T = state.trials || {}, below = lv >= 24 ? trialKey(cls, 12) : cls; return !T[trialKey(cls, lv)] && (lv <= TRIAL_LEVEL || !!T[below]) && [...state.party, ...(state.bench || [])].some((m) => m.cls === cls && m.level >= lv); };
   const gates = (id) => { const d = QUESTS[id], lv = state.party[0].level; return !!d && lv >= d.level[0] && lv <= d.level[1] && (d.after || []).every((a) => inst(a) && inst(a).st === QS.DONE) && (!d.companion || withUs(d.companion)) && (!d.trial || trialOpen(d.trial, d.trialLv)); };
   const takerOf = (d) => d.turnin || d.giver;         // who hands out the reward
   /** @param {string} id */

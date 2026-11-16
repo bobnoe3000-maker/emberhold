@@ -152,6 +152,10 @@
 //       hero's record of it ({ paid: the windows it was paid for, the last 48; won; best }, sim/ring.js). Older data has
 //       none and reads as a fresh record (restoreRing); nothing else changes. A save made in the Ring is the world it set
 //       out from (as the Bowl's): the levels, HP and MP it walked in with (core.js snapshot), and that window paid.
+//   v52: the level-24 trials (sim/skills.js trialKey, GDD v1.126; taught in the Cinder Reach): trials gains `<cls>24`.
+//       Older data: every class someone in the company had at level 24 counts as done (trials24For), so nobody loses an
+//       ability they had (the 24s were unlocked by level until now), as v26 did for the 12s. The ring record's window
+//       ids may end ':30' (Furnace Nine's, sim/ring.js); the shape is the same.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -163,7 +167,7 @@ import { reachedOf } from '../sim/coach.js';
 import { SITES, bossAt } from '../sim/sites.js';
 import { withFrame43 } from '../sim/appearance.js';
 
-export const SAVE_VERSION = 51;   // (v51: the Kingstone's record, `ring`; v50: a lamp's souls 16 / 12, the count's difference taken off; v49: the Fens' dungeons authored, two floors each; v48: raids, `raid`; v47: the Bowl's two ladders, bowl.team / bowl.solo; v46: the Bowl's board, bowl.picks / refresh; v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
+export const SAVE_VERSION = 52;   // (v52: the level-24 trials, trials24For; v51: the Kingstone's record, `ring`; v50: a lamp's souls 16 / 12, the count's difference taken off; v49: the Fens' dungeons authored, two floors each; v48: raids, `raid`; v47: the Bowl's two ladders, bowl.team / bowl.solo; v46: the Bowl's board, bowl.picks / refresh; v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
 /** v40 and older (v41: the floors' gates): an old save comes back with the gates it has been through open, as far as the save
  * tells: every floor whose hall's boss is down (sites.js bossAt; state.bosses), and every floor above the one it was made
  * on. A generated hall with no boss, passed and left: its gate stands (its twenty waves again). @param {any} data */
@@ -204,7 +208,7 @@ export function metaOf(data) {
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object' || !raw.data) return null;
   if (raw.version === SAVE_VERSION) return raw;
-  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); if (raw.version < 31) data = bandsFor(data); if (raw.version < 32) data = questsFor32(data); if (raw.version < 33) data = plansFor33(data); if (raw.version < 36) data = ladderFor36(data); if (raw.version < 41) data = gatesFor41(data); if (raw.version < 43) data = looksFor43(data); if (raw.version < 49) data = plansFor49(data); if (raw.version >= 19 && raw.version < 50) data = lampsFor50(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
+  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); if (raw.version < 31) data = bandsFor(data); if (raw.version < 32) data = questsFor32(data); if (raw.version < 33) data = plansFor33(data); if (raw.version < 36) data = ladderFor36(data); if (raw.version < 41) data = gatesFor41(data); if (raw.version < 43) data = looksFor43(data); if (raw.version < 49) data = plansFor49(data); if (raw.version >= 19 && raw.version < 50) data = lampsFor50(data); if (raw.version < 52) data = trials24For(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
   return null;                       // unknown / newer / un-migratable
 }
 
@@ -327,6 +331,14 @@ export function trials12For(data) {
   const had = (lv) => [...new Set(company.filter((m) => m.level >= lv).map((m) => m.cls))];
   const trials = Array.isArray(data.trials) ? [...data.trials] : had(6);
   for (const c of had(12)) if (!trials.includes(c + '12')) trials.push(c + '12');
+  return { ...data, trials };
+}
+
+/** v51 → v52: a class anyone in the company had at 24 keeps its level-24 ability (see v52 above) @param {any} data */
+export function trials24For(data) {
+  const company = [...(Array.isArray(data.party) ? data.party : []), ...(Array.isArray(data.bench) ? data.bench : [])].filter((m) => m && typeof m.cls === 'string');
+  const trials = Array.isArray(data.trials) ? [...data.trials] : [];
+  for (const c of new Set(company.filter((m) => m.level >= 24).map((m) => m.cls))) if (!trials.includes(c + '24')) trials.push(c + '24');
   return { ...data, trials };
 }
 

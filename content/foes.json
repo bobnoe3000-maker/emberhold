@@ -1,5 +1,5 @@
 {
-  "$comment": "What the defeat screen calls each foe (world doc \u00a78 bestiary). The kinds are the sim's (src/sim/battle.js ENEMY_KINDS); a test keeps the two in step. Bosses use their own names (battle.js BOSSES).",
+  "$comment": "What the defeat screen calls each foe (world doc §8 bestiary). The kinds are the sim's (src/sim/battle.js ENEMY_KINDS); a test keeps the two in step. Bosses use their own names (battle.js BOSSES).",
   "foes": {
     "minion": {
       "a": "an Ashbound minion"
@@ -104,6 +104,30 @@
     "hauler": {
       "a": "a slag hauler",
       "elite": "a slag hauler with a full hod"
+    },
+    "assay_guard": {
+      "a": "an Assay guard",
+      "elite": "an Assay sergeant"
+    },
+    "assay_xbow": {
+      "a": "an Assay crossbowman",
+      "elite": "an Assay marksman"
+    },
+    "renegade": {
+      "a": "a Slagborn renegade",
+      "elite": "a renegade with his clan-braids cut"
+    },
+    "forgewight": {
+      "a": "a forge-wight",
+      "elite": "a forge-wight with one of Oruth’s blades"
+    },
+    "cinderhound": {
+      "a": "a cinder hound",
+      "elite": "a cinder hound the size of a pony"
+    },
+    "furnacepriest": {
+      "a": "a furnace-priest",
+      "elite": "a furnace-priest with a full censer"
     }
   }
 }

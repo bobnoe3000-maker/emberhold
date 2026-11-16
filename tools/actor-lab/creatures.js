@@ -627,6 +627,155 @@ function goblin(o = {}) {
   return { root: root3, clips };
 }
 
+// ── the cinder hound (the Reach's first new silhouette: reach-plan.md, the build sheet) ───────────────────────────────
+// The Slag Tunnels' hounds: a lean dog the size of a pony's foal, long in the leg, deep in the chest, tucked at the belly,
+// its hide gone to a black crust of ash and cracked over the fire in it, the seams lit; a long wedge of a head, ears laid
+// back, the mouth open and lit inside; an ember-tipped tail held out behind. Fast: it lopes. The quadruped's rig (the
+// rat's bones, its own proportions), its clips keyed in code.
+function hound(o = {}) {
+  const R = new Rig(o.seed || 71);
+  const hide = new THREE.Color(o.hide || '#3a3430'), hideHi = new THREE.Color(o.hideHi || '#6a625a'), hideLo = new THREE.Color('#161210');   // (round H1: brown-black all over; ash on its back now)
+  const hideC = (p, n) => (n.y > 0.6 ? mixC(hide, hideHi, (n.y - 0.6) * 2.5) : n.y < -0.3 ? hideLo : hide);
+  const crack = new THREE.Color('#ffb060'), maw = new THREE.Color('#ff8a3a'), tooth = new THREE.Color('#d8cdb4'), claw = new THREE.Color('#1a1614');
+  const root = R.bone('root', null, V(0, 0.5, 0)), pelvis = R.bone('pelvis', root, V(0, 0.52, -0.28)), chest = R.bone('chest', root, V(0, 0.54, 0.22));
+  const neck = R.bone('neck', chest, V(0, 0.6, 0.36)), head = R.bone('head', neck, V(0, 0.72, 0.46)); R.bone('jaw', head, V(0, 0.67, 0.52));
+  let tp = pelvis; const tail = [V(0, 0.56, -0.44), V(0, 0.58, -0.58), V(0, 0.56, -0.72)];
+  tail.forEach((p, i) => { tp = R.bone(`tail${i + 1}`, tp, p); });
+  for (const s of [1, -1]) {
+    const sh = R.bone(`armU${s}`, chest, V(0.11 * s, 0.5, 0.26)), el = R.bone(`armL${s}`, sh, V(0.11 * s, 0.27, 0.24)); R.bone(`paw${s}`, el, V(0.11 * s, 0.04, 0.27));
+    const hip = R.bone(`legU${s}`, pelvis, V(0.12 * s, 0.5, -0.3)), kn = R.bone(`legL${s}`, hip, V(0.12 * s, 0.3, -0.24)); R.bone(`foot${s}`, kn, V(0.12 * s, 0.1, -0.38));
+  }
+  // the body: a deep chest, a tucked belly, narrow haunches; a crust of ash plates down the back
+  const cy = (z) => 0.52 + 0.03 * Math.max(0, z) - 0.02 * Math.max(0, -z - 0.1);
+  const prof = [[-0.4, 0], [-0.38, 0.07], [-0.32, 0.11], [-0.2, 0.115], [-0.06, 0.1], [0.08, 0.13], [0.2, 0.15], [0.3, 0.13], [0.36, 0.08], [0.39, 0]];
+  const along = (z, pts) => { for (let i = 0; i < pts.length - 1; i++) { const [z0, a] = pts[i], [z1, b] = pts[i + 1]; if (z <= z1) { const k = Math.max(0, Math.min(1, (z - z0) / (z1 - z0))); return k < 0.5 ? [[a, 1 - k], [b, k]] : [[b, k], [a, 1 - k]]; } } return [[pts[pts.length - 1][1], 1]]; };
+  const bodyW = R.skin((p) => along(p.z, [[-0.3, 'pelvis'], [-0.12, 'pelvis'], [0.0, 'root'], [0.1, 'root'], [0.2, 'chest'], [0.32, 'chest']]));
+  R.part(hull(prof, 24, cy, 1.25), bodyW, hideC);
+  // the crust: shards of ash on the flanks and haunches (round H1: a row of plates down the back read as boards)
+  for (let i = 0; i < 14; i++) { const h = hash3(i, 3, 1, 9), h2 = hash3(i, 5, 2, 9), z = -0.3 + h * 0.58, sd = i % 2 ? 1 : -1, a = 0.5 + 0.7 * h2, r = 0.12 + 0.03 * (z > 0 ? 1 : 0);
+    R.part(new THREE.IcosahedronGeometry(0.035 + 0.015 * h2, 0).scale(1.3, 0.5, 1).rotateZ(-a * sd).translate(Math.sin(a) * r * sd, cy(z) + Math.cos(a) * r * 1.2, z), bodyW, hideLo); }   // (round H2: lighter, they read as a piebald's patches)
+  // the hackles: a ridge of jagged ash spines from the nape down the shoulders, raised, their tips lit (the hound's read
+  // from the game's camera: a dog's back gone to a row of coals)
+  for (let i = 0; i < 7; i++) { const z = 0.3 - i * 0.075, h = hash3(i, 7, 3, 9), len = (0.13 - i * 0.012) * (0.85 + 0.3 * h), at = V((h - 0.5) * 0.03, cy(z) + 0.145 + (z > 0.1 ? 0.03 : 0), z);
+    const tip = at.clone().add(V((h - 0.5) * 0.04, len, -len * 0.55));
+    R.part(limb(at, tip, 0.03, 0.004, 5), z > 0.2 ? 'chest' : bodyW, hideLo); R.part(limb(at.clone().lerp(tip, 0.7), tip, 0.011, 0.002, 4), z > 0.2 ? 'chest' : bodyW, crack, true); }
+  // the cracks: lit seams over the ribs and the haunches, slightly proud of the hide
+  const seam = (a, b, bone) => R.part(limb(a, b, 0.012, 0.009, 4), bone, crack, true);
+  for (const s of [1, -1]) {
+    seam(V(0.15 * s, 0.6, 0.22), V(0.155 * s, 0.48, 0.17), bodyW); seam(V(0.155 * s, 0.48, 0.17), V(0.14 * s, 0.42, 0.24), bodyW);
+    seam(V(0.14 * s, 0.6, 0.06), V(0.13 * s, 0.47, 0.0), bodyW); seam(V(0.11 * s, 0.58, -0.22), V(0.115 * s, 0.46, -0.3), bodyW);
+    seam(V(0.115 * s, 0.46, -0.3), V(0.1 * s, 0.4, -0.24), bodyW);
+    seam(V(0.15 * s, 0.56, 0.12), V(0.14 * s, 0.5, 0.06), bodyW); seam(V(0.12 * s, 0.6, -0.1), V(0.125 * s, 0.52, -0.14), bodyW); seam(V(0.11 * s, 0.4, 0.24), V(0.11 * s, 0.3, 0.24), `armU${s}`); seam(V(0.12 * s, 0.42, -0.26), V(0.12 * s, 0.34, -0.25), `legU${s}`);
+  }
+  for (let i = 0; i < 5; i++) seam(V(0.02 * (i % 2 ? 1 : -1), cy(-0.25 + i * 0.13) + 0.115 + (i > 2 ? 0.03 : 0), -0.25 + i * 0.13), V(-0.02 * (i % 2 ? 1 : -1), cy(-0.2 + i * 0.13) + 0.115 + (i > 2 ? 0.03 : 0), -0.2 + i * 0.13), bodyW);   // (down the spine)
+  // the neck and head: a long wedge, the ears laid back, the eyes slits of fire, the mouth open and lit
+  R.part(limb(V(0, 0.58, 0.3), V(0, 0.7, 0.44), 0.075, 0.06, 8), 'neck', hideC);
+  R.part(blob(V(0, 0.735, 0.47), [0.075, 0.07, 0.085], [10, 8]), 'head', hideC);
+  R.part(limb(V(0, 0.73, 0.5), V(0, 0.69, 0.66), 0.055, 0.03, 8), 'head', hideC);
+  R.part(blob(V(0, 0.695, 0.665), [0.022, 0.018, 0.016], [6, 4]), 'head', claw);                              // the nose
+  R.part(blob(V(0, 0.675, 0.56), [0.035, 0.02, 0.07], [8, 5]), 'head', maw, true);                            // the lit mouth
+  for (const s of [1, -1]) {
+    R.part(blob(V(0.045 * s, 0.755, 0.53), [0.018, 0.008, 0.012], [6, 4]), 'head', crack, true);             // the eyes, slits
+    R.part(new THREE.ConeGeometry(0.035, 0.12, 5).rotateX(-1.1).rotateZ(-0.3 * s).translate(0.05 * s, 0.8, 0.42), 'head', hideC);   // the ears, laid back
+    R.part(limb(V(0.03 * s, 0.68, 0.62), V(0.03 * s, 0.655, 0.625), 0.008, 0.002, 3), 'head', tooth);
+    seam(V(0.06 * s, 0.76, 0.45), V(0.04 * s, 0.73, 0.58), 'head');                                           // (a crack over the brow)
+  }
+  R.part(blob(V(0, 0.645, 0.55), [0.03, 0.016, 0.07], [8, 5]), 'jaw', hideC);
+  for (const s of [1, -1]) R.part(limb(V(0.025 * s, 0.65, 0.6), V(0.025 * s, 0.672, 0.605), 0.007, 0.002, 3), 'jaw', tooth);
+  // the tail: held out, its tip a coal
+  const tl = [V(0, 0.55, -0.36), ...tail], tb = ['pelvis', 'tail1', 'tail2'];
+  for (let i = 0; i < tl.length - 1; i++) R.part(limb(tl[i], tl[i + 1], 0.035 - i * 0.008, 0.028 - i * 0.008, 6), tb[i], hideC);
+  R.part(blob(tail[2], [0.025, 0.025, 0.04], [6, 4]), 'tail3', crack, true);
+  // the legs: long and lean, a knob at each joint, the paws small
+  for (const s of [1, -1]) {
+    R.part(limb(V(0.11 * s, 0.56, 0.24), V(0.11 * s, 0.27, 0.24), 0.05, 0.03), `armU${s}`, hideC);
+    R.part(limb(V(0.11 * s, 0.27, 0.24), V(0.11 * s, 0.04, 0.27), 0.028, 0.022), `armL${s}`, hide);
+    R.part(blob(V(0.11 * s, 0.025, 0.29), [0.03, 0.022, 0.045], [6, 4]), `paw${s}`, hide);
+    R.part(blob(V(0.12 * s, 0.47, -0.28), [0.06, 0.09, 0.08], [8, 6]), `legU${s}`, hideC);                   // the haunch
+    R.part(limb(V(0.12 * s, 0.44, -0.28), V(0.12 * s, 0.3, -0.24), 0.045, 0.03), `legU${s}`, hideC);
+    R.part(limb(V(0.12 * s, 0.3, -0.24), V(0.12 * s, 0.1, -0.38), 0.028, 0.022), `legL${s}`, hide);             // (the hock, back)
+    R.part(limb(V(0.12 * s, 0.1, -0.38), V(0.12 * s, 0.02, -0.33), 0.022, 0.02), `foot${s}`, hide);
+    R.part(blob(V(0.12 * s, 0.02, -0.3), [0.028, 0.02, 0.04], [6, 4]), `foot${s}`, hide);
+  }
+  { const hb = [R.bones.indexOf(R.by.get('head')), R.bones.indexOf(R.by.get('jaw'))], hc = V(0, 0.72, 0.5), K = 1.3, up = V(0, 0.03, 0.02);   // (round H1: the head small and hung under the chest from the front)
+    for (const q of R.parts) if (hb.includes(q.bone)) q.geo.translate(-hc.x, -hc.y, -hc.z).scale(K, K, K).translate(hc.x + up.x, hc.y + up.y, hc.z + up.z);
+    for (const n of ['head', 'jaw']) { const b = R.by.get(n); b.userData.at.sub(hc).multiplyScalar(K).add(hc).add(up); }
+    R.by.get('head').position.copy(R.by.get('head').userData.at).sub(R.by.get('neck').userData.at); R.by.get('jaw').position.copy(R.by.get('jaw').userData.at).sub(R.by.get('head').userData.at); }
+  const root3 = R.mesh(o.glow || '#ff7a20', 1.5);
+  const legs = (t, A = 1) => {                                  // a lope: the fore pair and the hind pair, half a beat apart
+    const q = {};
+    for (const s of [1, -1]) for (const [u, l, ph] of [[`armU${s}`, `armL${s}`, s > 0 ? 0 : 0.12], [`legU${s}`, `legL${s}`, s > 0 ? 0.5 : 0.62]]) {
+      const sw = S(t + ph), lift = Math.max(0, C(t + ph)), fore = u.startsWith('arm');
+      q[u] = qe(-0.7 * A * sw, 0, 0); q[l] = qe((fore ? 1.0 : -1.0) * A * lift, 0, 0);
+    }
+    return q;
+  };
+  const tailK = (t, a = 0.2, k = 1) => ({ tail1: qe(0.15, a * S(k * t), 0), tail2: qe(0.1, a * S(k * t - 0.15), 0), tail3: qe(0, a * S(k * t - 0.3), 0) });
+  const clips = [
+    clip(R, 'Idle', 3.0, (t) => { const br = S(t * 6), lk = bell(0.4, 0.5, 0.75, t), turn = S((t - 0.4) / 0.35 * 0.5 + 0.25) * lk;
+      return { q: { ...tailK(t, 0.25, 2), chest: qe(0.02 * br, 0.1 * turn, 0), neck: qe(-0.1 + 0.03 * br, 0.3 * turn, 0), head: qe(0.05, 0.3 * turn, 0), jaw: qe(0.25 + 0.12 * Math.max(0, S(t * 12)), 0, 0) }, p: { root: V(0, 0.004 * br, 0) } }; }),   // (panting, a look round)
+    clip(R, 'Walk', 0.4, (t) => ({ q: { ...legs(t), ...tailK(t, 0.15, 1), root: qe(0.08 * S(t), 0, 0), neck: qe(0.06 * S(t * 2), 0, 0), jaw: qe(0.3, 0, 0) }, p: { root: V(0, 0.03 * Math.abs(S(t)), 0) } })),
+    clip(R, 'Attack', 0.55, (t) => { const w = bell(0, 0.15, 0.3, t), k = bell(0.2, 0.42, 0.8, t); return { q: { ...tailK(t, 0.3, 2), root: qe(-0.1 * w + 0.12 * k, 0, 0), neck: qe(0.3 * k - 0.3 * w, 0, 0), head: qe(-0.2 * k, 0, 0), jaw: qe(0.2 + 0.8 * bell(0.18, 0.36, 0.5, t), 0, 0), armU1: qe(-0.5 * k, 0, 0), 'armU-1': qe(-0.5 * k, 0, 0) }, p: { root: V(0, 0.02 * w - 0.03 * k, 0.2 * k - 0.04 * w) } }; }),   // (a lunge and a bite)
+    clip(R, 'Attack2', 0.5, (t) => { const k = bell(0.1, 0.35, 0.8, t); return { q: { ...tailK(t, 0.25), neck: qe(0.15 * k, 0.5 * k, 0), head: qe(0, 0.4 * k, 0.3 * k), jaw: qe(0.2 + 0.7 * bell(0.15, 0.3, 0.45, t), 0, 0), chest: qe(0, 0.2 * k, 0) }, p: { root: V(0.03 * k, 0, 0.08 * k) } }; }),   // (a snap, the head turned)
+    clip(R, 'Heavy', 0.9, (t) => { const c = bell(0, 0.25, 0.38, t), j = bell(0.3, 0.55, 0.85, t); return { q: { ...legs(0.25, 0.8 * j), ...tailK(t, 0.4), root: qe(0.2 * c - 0.35 * j + 0.2 * bell(0.6, 0.75, 0.95, t), 0, 0), jaw: qe(0.2 + 0.8 * j, 0, 0), legU1: qe(0.6 * c, 0, 0), 'legU-1': qe(0.6 * c, 0, 0) }, p: { root: V(0, -0.06 * c + 0.22 * j, 0.45 * ease(0.3, 0.75, t)) } }; }),   // (it crouches and springs)
+    clip(R, 'Hit', 0.4, (t) => { const k = bell(0, 0.25, 1, t); return { q: { ...tailK(t, 0.5, 2), neck: qe(-0.3 * k, 0.3 * k, 0), head: qe(-0.2 * k, 0, 0), jaw: qe(0.4 * k, 0, 0) }, p: { root: V(0, 0, -0.06 * k) } }; }),
+    clip(R, 'Death', 1.0, (t) => { const k = ease(0, 0.6, t); return { q: { root: qe(0, 0, 1.5 * k), neck: qe(0.3 * k, 0, 0), jaw: qe(0.5 * k, 0, 0), armU1: qe(-0.5 * k, 0, 0), 'armU-1': qe(0.3 * k, 0, 0), legU1: qe(0.4 * k, 0, 0), 'legU-1': qe(-0.3 * k, 0, 0), ...tailK(0, 0) }, p: { root: V(0, -0.36 * k, 0) } }; }),
+    clip(R, 'Cast', 1.0, (t) => { const k = bell(0.1, 0.4, 0.9, t); return { q: { ...tailK(t, 0.2), neck: qe(-0.9 * k, 0, 0), head: qe(-0.4 * k, 0, 0), jaw: qe(0.2 + 0.6 * k, 0, 0), root: qe(-0.1 * k, 0, 0) }, p: { root: V(0, 0.02 * k, 0) } }; }),   // (a howl, the muzzle up)
+  ];
+  return { root: root3, clips };
+}
+
+// ── Furnace Nine (the Reach's region boss: reach-plan.md, the build sheet) ───────────────────────────────────────────
+// The furnace that learned to feed itself, walked out of the Magma Vault: a squat iron furnace-body on stubby legs, its
+// grated mouth lit, its stack for a head (two slots of fire in it for eyes), smoke over the stack, molten seams down the
+// iron where the plates have split; arms of riveted pipe with tongs for hands. On the golem's bones and KayKit's rig
+// (the variant's creature.rig), drawn twice its size (renderer.js BIG) as the Kingstone is: four men tall.
+function furnace(o = {}) {
+  const R = new Rig(o.seed || 83); R.crease = (32 * Math.PI) / 180;
+  const iron = new THREE.Color(o.iron || '#3a3634'), ironHi = new THREE.Color('#5a544e'), ironLo = new THREE.Color('#1e1a18'), rust = new THREE.Color('#6a3a22');
+  const ironC = (p, n) => (n.y > 0.5 ? mixC(iron, ironHi, (n.y - 0.5) * 2) : n.y < -0.4 ? ironLo : p.y < 0.4 && hash3(Math.round(p.x * 10), Math.round(p.y * 10), Math.round(p.z * 10), 5) > 0.7 ? rust : iron);   // (round N1: rust everywhere read as red trousers; at its feet only)
+  const fire = new THREE.Color('#ffb050'), grate = new THREE.Color('#141210'), smoke = new THREE.Color('#6a6660'), smokeHi = new THREE.Color('#8e8a84');
+  R.bone('root', null, V(0, 0.62, 0)); R.bone('spine', R.by.get('root'), V(0, 0.84, 0)); R.bone('chest', R.by.get('spine'), V(0, 1.22, 0.02)); R.bone('head', R.by.get('chest'), V(0, 1.5, 0.05));
+  for (const s of [1, -1]) {
+    const u = R.bone(`armU${s}`, R.by.get('chest'), V(0.5 * s, 1.3, 0)), l = R.bone(`armL${s}`, u, V(0.62 * s, 0.98, 0.05)); R.bone(`fist${s}`, l, V(0.62 * s, 0.66, 0.12));
+    const h = R.bone(`legU${s}`, R.by.get('root'), V(0.24 * s, 0.56, 0)), k = R.bone(`legL${s}`, h, V(0.26 * s, 0.3, 0.03)); R.bone(`foot${s}`, k, V(0.26 * s, 0.08, 0.04));
+  }
+  // the body: a plinth ring at the hips, the furnace's belly (a barrel of plates, banded), its shoulders
+  R.part(new THREE.CylinderGeometry(0.46, 0.5, 0.22, 14).translate(0, 0.62, 0), 'root', ironC);
+  R.part(new THREE.CylinderGeometry(0.56, 0.52, 0.66, 14).translate(0, 1.04, 0.02), 'chest', ironC);
+  R.part(new THREE.CylinderGeometry(0.3, 0.56, 0.2, 14).translate(0, 1.46, 0.02), 'chest', ironC);
+  for (const y of [0.78, 1.0, 1.3]) R.part(new THREE.TorusGeometry(y < 0.85 ? 0.5 : 0.56, 0.03, 5, 22).rotateX(Math.PI / 2).translate(0, y, 0.02), y < 0.85 ? 'root' : 'chest', ironLo);
+  for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; if (Math.abs(a - Math.PI / 2) < 0.5) continue; R.part(blob(V(Math.cos(a) * 0.57, 1.15, Math.sin(a) * 0.57 + 0.02), [0.025, 0.025, 0.025], [5, 4]), 'chest', ironHi); }   // rivets
+  // the mouth: a frame, the fire in it, a grate of bars across it
+  R.part(new THREE.BoxGeometry(0.58, 0.42, 0.08).translate(0, 1.02, 0.54), 'chest', ironLo);   // (round N1: the mouth half again as big: it's what reads of it)
+  R.part(new THREE.BoxGeometry(0.5, 0.34, 0.04).translate(0, 1.02, 0.56), 'chest', fire, true);
+  for (let i = -2; i <= 2; i++) R.part(new THREE.BoxGeometry(0.035, 0.38, 0.04).translate(i * 0.1, 1.02, 0.59), 'chest', grate);
+  // the seams: split plates, molten
+  for (const [x, y0, y1, z] of [[0.4, 0.84, 1.26, 0.37], [-0.46, 0.86, 1.28, 0.3], [0.16, 1.22, 1.36, 0.53], [-0.26, 0.78, 0.94, 0.5], [0.52, 0.9, 1.2, -0.1], [-0.3, 0.9, 1.25, -0.45]]) R.part(limb(V(x, y0, z), V(x * 0.95, y1, z * 1.02), 0.018, 0.014, 4), 'chest', fire, true);
+  // the stack: its head, two slots of fire for eyes, a lip at its top lit from inside, smoke over it
+  R.part(new THREE.CylinderGeometry(0.17, 0.2, 0.62, 12).translate(0, 1.82, 0.0), 'head', ironC);
+  R.part(new THREE.TorusGeometry(0.19, 0.04, 6, 14).rotateX(Math.PI / 2).translate(0, 2.13, 0), 'head', ironLo);
+  R.part(new THREE.CylinderGeometry(0.15, 0.15, 0.02, 12).translate(0, 2.12, 0), 'head', fire, true);
+  for (const s of [1, -1]) R.part(new THREE.BoxGeometry(0.08, 0.035, 0.03).rotateZ(0.25 * s).translate(0.07 * s, 1.74, 0.19), 'head', fire, true);
+  R.part(new THREE.TorusGeometry(0.2, 0.03, 5, 14).rotateX(Math.PI / 2).translate(0, 1.6, 0), 'head', ironLo);
+  for (const [x, y, z, r] of [[0.02, 2.3, -0.08, 0.15], [-0.05, 2.5, -0.26, 0.21]]) R.part(blob(V(x, y, z), [r, r * 0.8, r], [8, 6]), 'head', (p, n) => (n.y > 0.3 ? smokeHi : smoke));
+  // the arms: riveted pipe, the elbows knuckled, tongs for hands
+  for (const s of [1, -1]) {
+    R.part(blob(V(0.5 * s, 1.34, 0), [0.2, 0.15, 0.19], [8, 6]), `armU${s}`, ironC); R.part(new THREE.TorusGeometry(0.17, 0.03, 5, 12).rotateZ(Math.PI / 2).translate(0.56 * s, 1.34, 0), `armU${s}`, ironLo);   // (round N1: its shoulders as big as its fists' work)
+    R.part(limb(V(0.5 * s, 1.3, 0), V(0.62 * s, 0.98, 0.05), 0.09, 0.08, 8), `armU${s}`, ironC);
+    R.part(blob(V(0.62 * s, 0.98, 0.05), [0.1, 0.1, 0.1], [7, 5]), `armL${s}`, ironLo);
+    R.part(limb(V(0.62 * s, 0.98, 0.05), V(0.62 * s, 0.68, 0.12), 0.09, 0.1, 8), `armL${s}`, ironC);
+    R.part(blob(V(0.62 * s, 0.64, 0.13), [0.13, 0.1, 0.13], [7, 5]), `fist${s}`, ironC); for (const d of [-1, 1]) R.part(limb(V((0.62 + 0.06 * d) * s, 0.6, 0.14), V((0.62 + 0.1 * d) * s, 0.42, 0.22), 0.05, 0.035, 5), `fist${s}`, ironLo);
+  }
+  // the legs: short and thick, a stove's feet
+  for (const s of [1, -1]) {
+    R.part(limb(V(0.24 * s, 0.56, 0), V(0.26 * s, 0.3, 0.03), 0.12, 0.11, 8), `legU${s}`, ironC);
+    R.part(limb(V(0.26 * s, 0.3, 0.03), V(0.26 * s, 0.1, 0.04), 0.11, 0.12, 8), `legL${s}`, ironC);
+    R.part(new THREE.BoxGeometry(0.26, 0.1, 0.34).translate(0.26 * s, 0.05, 0.08), `foot${s}`, ironLo);
+  }
+  return { root: R.mesh(o.glow || '#ff8a30', 1.6), clips: [] };   // (its clips are KayKit's: the variant's rig)
+}
+
 // ── Gritch, called the Foreman (world doc v1.53 §3.3; docs/art-critic-pass-reach-cast.md) ────────────────────────────────
 // A hill goblin of the Scrag Warren who dug through into the Cold Seam and found the last Deepdelver foreman's brass
 // lamp-hat and his whistle. The hat is the read: a miner's hard hat made for a man's head, sat down on a goblin's to the
@@ -1136,7 +1285,7 @@ const gulper = (o = {}) => toad({ ...o, gulper: true });
 // the bosses: the rat and the spider grown into kings and queens (their own colours, their own parts: king(), queen())
 const ratking = (o = {}) => rat({ fur: '#3a342e', belly: '#5a5048', furTop: '#544c44', eyes: '#ff3818', seed: 17, ...o, king: true });
 const spiderqueen = (o = {}) => spider({ body: '#1e1622', band: '#6a4864', mark: '#e2d8c2', eyes: '#78c038', seed: 37, ...o, queen: true });
-const KINDS = { rat, spider, beetle, goblin, wraith, golem, toad, gulper, ratking, spiderqueen };
+const KINDS = { rat, spider, beetle, goblin, wraith, golem, toad, gulper, ratking, spiderqueen, hound, furnace };
 export const CREATURE_KINDS = Object.keys(KINDS);
 
 // ── the humanoids on KayKit's rig (the owner, 2026-11-10: "goblin and other humanoids NPCs should use the same rigging,

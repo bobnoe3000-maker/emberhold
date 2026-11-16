@@ -1,0 +1,14 @@
+{
+  "id": "assay_clerk",
+  "name": "Davy Pruett",
+  "role": [
+    "townsfolk"
+  ],
+  "town": "ashgate",
+  "region": "reach",
+  "look": "npc_clerk",
+  "portrait": "npc_clerk",
+  "dialogue": "kellsrest",
+  "knot": "clerk_hub",
+  "note": "A junior clerk of the Kell Assay at Kell's Rest, who sells nothing and says too much (world doc §3.3, v1.54). Hob's pass comes through him; met at the Yards' way in. Paid by Weight's first step."
+}

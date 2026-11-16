@@ -101,7 +101,7 @@ export function createStage({ sim, renderer, params, setPaused }) {
     const classes = [...new Set([...(fx.cls ? [fx.cls] : fx.skills.map(classOf).filter(Boolean)), ...(fx.with || (plain ? ['fighter', 'rogue', 'cleric'] : ['fighter', 'cleric']))])].slice(0, 3);
     // (at least the level the chosen skills open at, and the room with it)
     const lv = Math.max(fx.lv, ...Object.values(SKILLS).flat().filter((q) => want.has(q.id)).map((q) => q.lv));   // (Math.max of fx.lv alone: a plain fight)
-    sim.state.trials = Object.fromEntries(Object.keys(SKILLS).flatMap((c) => [[c, 1], [c + '12', 1]]));
+    sim.state.trials = Object.fromEntries(Object.keys(SKILLS).flatMap((c) => [[c, 1], [c + '12', 1], [c + '24', 1]]));
     sim.state.party = classes.map((c, i) => {
       const m = i ? makeMember('stage' + i, ['Wren', 'Tam'][i - 1], c, lv) : makeHero({ cls: c });
       m.level = lv; m.attrs = null; m.autoAttrs = true; autoAllocate(m); m.gear = starterKit(m);

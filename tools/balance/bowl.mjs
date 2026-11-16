@@ -35,7 +35,7 @@ function bout(a, ga, b, gb, seed) {
   let theirs = makeCompany({ id: 'them', manner: b }, LV, gb);
   if (ALONE) theirs = theirs.slice(0, 1);
   ours.forEach((m, i) => { m.id = 'p' + i; m.main = i === 0; delete m.trials; });
-  st.party = ours; st.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };
+  st.party = ours; st.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1, fighter24: 1, rogue24: 1, mage24: 1, cleric24: 1, shaman24: 1 };
   p.x = p.px = room.cx + 0.5; p.y = p.py = room.cy + 0.5;
   const bus = createBus();
   const battle = createBattle({ state: st, bus, getWorld: () => w, seed, isWalkable, onDefeat() {}, moveHero(dx, dy) { if (isWalkable(w, p.x + dx, p.y + dy)) { p.x += dx; p.y += dy; } } });

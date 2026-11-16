@@ -38,7 +38,7 @@ test('the bosses are baked tall (73 px, 114 × 133 cells), so they load without 
   for (const a of lab('bake.json').actors.filter((x) => x.out.startsWith('boss_'))) {
     assert.equal(a.px, 73, a.out);
     const m = JSON.parse(readFileSync(`assets/actors/${a.out}.json`, 'utf8'));
-    assert.deepEqual([m.cw, m.ch], [114, 133], a.out);
+    assert.deepEqual([m.cw, m.ch], [114, Math.ceil(133 * (a.tall || 1))], a.out);   // (a boss taller than a man's cell, `tall`: Oruth, Furnace Nine, its cell as much taller)
     assert.ok(Math.abs(1.3 * 88 / m.cw - 1) <= 0.04, `${a.out}: would still be upscaled at load`);
   }
 });

@@ -1,0 +1,10 @@
+{
+  "id": "frag_reach_night_rota",
+  "region": "reach",
+  "set": "reach",
+  "order": 10,
+  "title": "The Night Rota",
+  "text": "Furnace Nine. Night shift: eleven. Day shift: none. The furnace does not want a day shift.",
+  "note": "In a chest in the Cinderworks, under the Assay's rota, which has the same numbers on it.",
+  "where": "The Cinderworks"
+}

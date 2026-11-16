@@ -1,0 +1,39 @@
+{
+  "id": "tamsin_the_stamp",
+  "kind": "companion",
+  "title": "The Assay's Stamp",
+  "giver": "tamsin",
+  "region": "reach",
+  "level": [
+    22,
+    60
+  ],
+  "companion": "tamsin",
+  "summary": "The Assay stamps its mark on everything it weighs. Its guard-captains at the Yards carry the stamps. Tamsin wants three, so she knows the mark when she sees it.",
+  "steps": [
+    {
+      "id": "yards",
+      "journal": "The Assay Yards at Kell's Rest: the guard-captains lead every fifth lot. Put down three of them.",
+      "objectives": [
+        {
+          "type": "elites",
+          "site": "assay_yards",
+          "count": 3,
+          "label": "Guard-captains in the Assay Yards"
+        }
+      ]
+    }
+  ],
+  "ready": "Three of the Assay's stamps. Give them to Tamsin.",
+  "done": "Tamsin knows the Assay's mark by feel now. She says it's badly cut.",
+  "rewards": {
+    "share": 0.35,
+    "lv": 23,
+    "gold": 260
+  },
+  "dialogue": {
+    "file": "tamsin",
+    "offer": "tamsin_stamp_offer",
+    "turnin": "tamsin_stamp_turnin"
+  }
+}

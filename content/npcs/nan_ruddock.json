@@ -1,0 +1,14 @@
+{
+  "id": "nan_ruddock",
+  "name": "Nan Ruddock",
+  "role": [
+    "townsfolk"
+  ],
+  "town": "ashgate",
+  "region": "reach",
+  "look": "npc_nan_ruddock",
+  "portrait": "npc_nan_ruddock",
+  "dialogue": "kellsrest",
+  "knot": "nan_hub",
+  "note": "Garrow's quartermaster once; holds the Assay Yards' gate with what's left of the Redhand, because the Assay pays on time (world doc §3.3, §5, v1.54). Met at the Yards' way in."
+}

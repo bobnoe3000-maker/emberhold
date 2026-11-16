@@ -23,14 +23,15 @@ import { NPCS } from '../sim/npcs.js';
 export const CHAPTERS = Object.keys(QUESTS).filter((id) => QUESTS[id].kind === 'chapter');
 
 /** @param {any} state @param {(id: string) => number} status the sim's quest status (quests.js)
- * @returns {{ kind: 'next' | 'level' | 'end', id?: string, giver?: string, town?: string, level?: number, region?: string } | null} */
+ * @returns {{ kind: 'next' | 'level' | 'end', id?: string, giver?: string, town?: string, level?: number, region?: string, found?: boolean } | null}
+ * (found: the giver is a found companion, Tamsin for Quota, talked to from her card rather than in a town: content/story.json `nextFound`) */
 export function storyStatus(state, status) {
   for (const id of CHAPTERS) {
     const st = status(id);
     if (st === QS.DONE) continue;
     if (st === QS.ACTIVE || st === QS.READY) return null;
     const d = QUESTS[id];
-    if (st === QS.AVAILABLE) return { kind: 'next', id, giver: d.giver, town: LANDS[(NPCS[d.giver] || d).region || 'vale'].town };
+    if (st === QS.AVAILABLE) return { kind: 'next', id, giver: d.giver, town: LANDS[(NPCS[d.giver] || d).region || 'vale'].town, ...(NPCS[d.giver] && NPCS[d.giver].found && FOUND[d.giver] ? { found: true } : {}) };
     if ((d.after || []).every((a) => status(a) === QS.DONE)) return { kind: 'level', id, level: d.level[0] };
     return null;
   }
@@ -42,7 +43,7 @@ export function storyStatus(state, status) {
  * @returns {{ id: string, n?: number, of?: number, cls?: string, giver?: string, town?: string }[]} */
 export function openLeads(state, status, region = 'vale') {
   if (region === 'fens') return fensLeads(state, status);
-  if (region === 'reach') return reachLeads(state);
+  if (region === 'reach') return reachLeads(state, status);
   const out = [], has = (s, k) => (s instanceof Set ? s.has(k) : Array.isArray(s) ? s.includes(k) : !!(s && s[k]));
   const bosses = state.bosses || {}, entered = state.sitesEntered, revealed = state.revealed, company = [...state.party, ...(state.bench || [])];
   if (bosses.redhand_captain && FOUND.brannoc && !company.some((m) => m.id === 'brannoc')) out.push({ id: 'brannoc' });
@@ -73,16 +74,22 @@ function fensLeads(state, status) {
 }
 
 // the Reach (world doc v1.53 §3.3; the first slice, v1.124): the Foreman and Tamsin at the Cold Seam, the board
-function reachLeads(state) {
+// (v1.54) and Tamsin's chain, the Reach's Chronicle and the Ninth Vault, the trials at 24
+function reachLeads(state, status) {
   const out = [], bosses = state.bosses || {}, company = [...state.party, ...(state.bench || [])];
+  const has = (x, k) => (x instanceof Set ? x.has(k) : Array.isArray(x) ? x.includes(k) : !!(x && x[k]));
   if (!bosses.foreman) out.push({ id: 'foreman' });
   else if (FOUND.tamsin && !company.some((m) => m.id === 'tamsin')) out.push({ id: 'tamsin' });
-  out.push({ id: 'reachboard' });
+  if (['tamsin_the_stamp', 'tamsin_the_patterns', 'tamsin_spoiled_casting'].some((q) => status(q) === QS.AVAILABLE)) out.push({ id: 'showingoff' });
+  const reach = SETS.reach || [], found = reach.filter((f) => has(state.fragments, f)).length;
+  if (!has(state.revealed, 'ninth_vault') && found < reach.length) out.push({ id: 'reachchronicle', n: found, of: reach.length });
+  if (has(state.revealed, 'ninth_vault') && !has(state.sitesEntered, 'ninth_vault')) out.push({ id: 'ninthvault' });
+  out.push(...trialLeads(status, 24), { id: 'reachboard' });
   return out;
 }
 
-// a class trial on offer (someone of the class at its level, the one before it done: quests.js), the 6s in the Vale and
-// the 12s in the Fens; who teaches it, and in which town they stand
+// a class trial on offer (someone of the class at its level, the one before it done: quests.js), the 6s in the Vale,
+// the 12s in the Fens and the 24s in the Reach; who teaches it, and in which town they stand
 function trialLeads(status, lv) {
   return Object.keys(QUESTS).filter((id) => QUESTS[id].trial && (QUESTS[id].trialLv || 6) === lv && status(id) === QS.AVAILABLE)
     .map((id) => { const d = QUESTS[id]; return { id: 'trial', cls: d.trial, giver: d.giver, town: LANDS[(NPCS[d.giver] || d).region || 'vale'].town }; });

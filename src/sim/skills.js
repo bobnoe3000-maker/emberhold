@@ -8,7 +8,7 @@
 // lands past the Fens). Nothing is chosen between: every skill is learned in its turn. A skill opens at its level; the
 // level-6 abilities (`trial`) also want that class's trial done by the company (state.trials, quests.js; M5,
 // docs/m5-plan.md §6): done once, every member of the class knows it. (M8, slice 9) The level-12 ones want the class's
-// second trial, taught in the Fens: state.trials[cls + '12']. A member takes LOADOUT (4) abilities into a fight
+// second trial, taught in the Fens: state.trials[cls + '12']; (v1.54) the level-24 ones the third, in the Reach: cls + '24'. A member takes LOADOUT (4) abilities into a fight
 // (`loadout`, heroes.js setLoadout; until it sets them, the first four of its order: inPlay); its passives always work.
 // Skill points: one at every even level, derived (never stored), like attribute points; into abilities or passives.
 // Ranks 1–5: +10 % power per rank; ranks 3 and 5 each take 1 MP off the cost.
@@ -59,7 +59,7 @@ export const SKILLS = {
     { id: 'second_wind', name: 'Second Wind', lv: 12, trial: true, mp: 25, kind: 'heal', heal: 0.25, text: 'heal 25 % of max HP' },
     { id: 'vault', name: 'Vault', lv: 15, mp: 14, kind: 'leap', power: 1.5, splash: 0.6, sr: 1.8, knock: 0.8, min: 3, max: 8, crouch: 0.5, air: 0.8, text: 'leap to a foe 3–8 tiles off that is striking an ally (or any, with none in reach; never off a boss): 1.5× on it, 0.6× round it, knocked down 0.8 s' },
     { id: 'earthshatter', name: 'Earthshatter', lv: 21, mp: 22, kind: 'slam', power: 1.2, radius: 3.75, knock: 1.2, spikes: 0.5, min: 2, crouch: 0.38, hop: 0.42, text: 'two or more foes round you: 1.2× to every foe within 3¾ tiles, knocked down 1.2 s; then spikes of rock, 0.5×' },
-    { id: 'whirling_blades', name: 'Whirling Blades', lv: 24, mp: 24, kind: 'blades', power: 0.45, radius: 3.75, every: 0.6, dur: 5, text: 'three swords circle you for 5 s: 0.45× to every foe within 3¾ tiles every 0.6 s' },
+    { id: 'whirling_blades', name: 'Whirling Blades', lv: 24, trial: true, mp: 24, kind: 'blades', power: 0.45, radius: 3.75, every: 0.6, dur: 5, text: 'three swords circle you for 5 s: 0.45× to every foe within 3¾ tiles every 0.6 s' },
   ],
   rogue: [
     { id: 'backstab', name: 'Backstab', lv: 1, mp: 10, kind: 'strike', power: 1.6, crit: 25, text: '1.6×, +25 % crit chance' },
@@ -68,7 +68,7 @@ export const SKILLS = {
     { id: 'venom', name: 'Venom', lv: 12, trial: true, mp: 20, kind: 'strike', power: 0.8, poison: 0.35, pdur: 6, text: '0.8×, then poison: 0.35× ATK a second for 6 s' },
     { id: 'fan_of_knives', name: 'Fan of Knives', lv: 15, mp: 12, kind: 'fan', power: 1.0, len: 6, arc: 60, pair: true, text: 'five knives in a 60° fan, 6 tiles: 1.0× to every foe they find (two or more)' },
     { id: 'shadowstep', name: 'Shadowstep', lv: 21, mp: 18, kind: 'step', power: 1.4, reach: 8, hide: 1.5, dash: 0.3, text: 'behind the most hurt shooter within 8 tiles: 1.4×, a sure crit; foes lose you 1.5 s' },
-    { id: 'caltrops', name: 'Caltrops', lv: 24, mp: 16, kind: 'field', field: 'caltrops', radius: 2.5, dur: 6, power: 0.25, slowK: 0.5, reach: 10, min: 2, text: 'a field on a knot of foes for 6 s: slowed by half, 0.25× a second' },
+    { id: 'caltrops', name: 'Caltrops', lv: 24, trial: true, mp: 16, kind: 'field', field: 'caltrops', radius: 2.5, dur: 6, power: 0.25, slowK: 0.5, reach: 10, min: 2, text: 'a field on a knot of foes for 6 s: slowed by half, 0.25× a second' },
   ],
   mage: [
     { id: 'firebolt', name: 'Firebolt', lv: 1, mp: 12, kind: 'strike', power: 1.8, text: '1.8× at range' },
@@ -77,7 +77,7 @@ export const SKILLS = {
     { id: 'arcane_ward', name: 'Arcane Ward', lv: 12, trial: true, mp: 25, kind: 'ward', ward: 0.3, text: 'shield the most hurt ally for 30 % of their max HP' },
     { id: 'gather', name: 'Gather', lv: 15, mp: 14, kind: 'gather', power: 0.3, radius: 5, pull: 1.5, slow: 1, text: 'every foe within 5 tiles of a knot pulled 1.5 tiles in: 0.3×, slowed 1 s' },
     { id: 'glacial_tomb', name: 'Glacial Tomb', lv: 21, mp: 26, kind: 'tomb', power: 1.0, radius: 3, freeze: 2.5, text: 'a knot of foes frozen 2.5 s (or a boss or elite winding up); 1.0× as the ice breaks' },
-    { id: 'blizzard', name: 'Blizzard', lv: 24, mp: 28, kind: 'field', field: 'blizzard', radius: 2.5, dur: 6, power: 0.3, slowK: 0.7, reach: 14, min: 2, text: 'a storm on a knot of foes for 6 s: 0.3× a second, slowed 30 %' },
+    { id: 'blizzard', name: 'Blizzard', lv: 24, trial: true, mp: 28, kind: 'field', field: 'blizzard', radius: 2.5, dur: 6, power: 0.3, slowK: 0.7, reach: 14, min: 2, text: 'a storm on a knot of foes for 6 s: 0.3× a second, slowed 30 %' },
   ],
   cleric: [
     { id: 'mend', name: 'Mend', lv: 1, mp: 12, kind: 'mend', heal: 0.22, text: 'heal the most hurt ally for 22 % of their max HP' },
@@ -86,7 +86,7 @@ export const SKILLS = {
     { id: 'turn_undead', name: 'Turn Undead', lv: 12, trial: true, mp: 30, kind: 'nova', power: 1.6, radius: 3.75, slow: 0, undead: true, text: '1.6× to every Ashbound within 3¾ tiles (not the living)' },
     { id: 'sanctuary', name: 'Sanctuary', lv: 15, mp: 22, kind: 'field', field: 'sanctuary', radius: 3, dur: 4, heal: 0.04, every: 0.5, ward: 0.1, text: 'a circle under the hurt for 4 s: 4 % of max HP back every 0.5 s, and a ward of 10 % as they step in' },
     { id: 'judgement', name: 'Judgement', lv: 21, mp: 28, kind: 'judge', ring: 0.5, power: 2.2, radius: 3, delay: 0.8, undeadK: 1.5, reach: 8, text: 'six pillars round a foe, 0.5× within 3 tiles, then the great pillar on it: 2.2×; the Ashbound ×1.5' },
-    { id: 'revive', name: 'Revive', lv: 24, mp: 30, kind: 'revive', kneel: 1.2, hp: 0.4, text: 'kneels 1.2 s and raises a Downed member at 40 % HP; once a room visit (never the Slain)' },
+    { id: 'revive', name: 'Revive', lv: 24, trial: true, mp: 30, kind: 'revive', kneel: 1.2, hp: 0.4, text: 'kneels 1.2 s and raises a Downed member at 40 % HP; once a room visit (never the Slain)' },
   ],
   shaman: [
     { id: 'spirit_drain', name: 'Spirit Drain', lv: 1, mp: 9, kind: 'strike', power: 0.7, drain: 0.12, ddur: 8, dmax: 5, text: '0.7× at range, then a stacking drain: 0.12× ATK a second for 8 s, up to 5 stacks; it mends the most hurt ally' },
@@ -95,7 +95,7 @@ export const SKILLS = {
     { id: 'hex', name: 'Hex', lv: 12, trial: true, mp: 22, kind: 'hex', debuff: 0.2, radius: 3.5, dur: 8, text: 'the foes in a knot (or a boss or elite alone): −20 % ATK and DEF for 8 s' },
     { id: 'binding_roots', name: 'Binding Roots', lv: 15, mp: 14, kind: 'roots', power: 0.4, radius: 3, root: 2.5, pair: true, text: 'a knot of foes on foot closing on the party: rooted 2.5 s, 0.4×' },
     { id: 'thunder_drum', name: 'Thunder Drum', lv: 21, mp: 18, kind: 'drum', power: 0.6, radius: 3.75, push: 2, stun: 1, text: 'round an ally under half HP: foes within 3¾ tiles knocked back 2 tiles, 0.6×, dazed 1 s' },
-    { id: 'spirit_totem', name: 'Spirit Totem', lv: 24, mp: 22, kind: 'field', field: 'totem', radius: 4, dur: 8, every: 1.5, pull: 1, guard: 2.5, guardK: 0.2, text: 'a spirit post by the party for 8 s: every 1.5 s it draws the foes within 4 tiles a tile in; the party within 2.5 take 20 % less' },
+    { id: 'spirit_totem', name: 'Spirit Totem', lv: 24, trial: true, mp: 22, kind: 'field', field: 'totem', radius: 4, dur: 8, every: 1.5, pull: 1, guard: 2.5, guardK: 0.2, text: 'a spirit post by the party for 8 s: every 1.5 s it draws the foes within 4 tiles a tile in; the party within 2.5 take 20 % less' },
   ],
 };
 // The passives (GDD §5.1 v1.56): every third skill on the ladder, at 9, 18 and 27; always at work, no MP, no turn. Like an
@@ -150,7 +150,7 @@ export const ladderOf = (cls) => [...skillsOf(cls), ...passivesOf(cls)].sort((a,
 /** an ability or a passive of the class @param {string} cls @param {string} id @returns {any} */
 export const skillDef = (cls, id) => skillsOf(cls).find((s) => s.id === id) || passivesOf(cls).find((s) => s.id === id) || null;
 /** the state.trials key of a class's trial at an ability's level: `cleric` (the 6), `cleric12` @param {string} cls @param {number} lv */
-export const trialKey = (cls, lv) => (lv >= 12 ? cls + '12' : cls);
+export const trialKey = (cls, lv) => (lv >= 24 ? cls + '24' : lv >= 12 ? cls + '12' : cls);   // (v1.54: the 24s, taught in the Reach)
 /** can m use s? its level, and for a trial ability, the class's trial at that level done (state.trials)
  * @param {any} m @param {{lv:number, trial?: boolean}} s @param {Record<string, number> | null | undefined} trials */
 export const unlocked = (m, s, trials) => (m.level || 1) >= s.lv && (!s.trial || !!(trials && trials[trialKey(m.cls, s.lv)]));

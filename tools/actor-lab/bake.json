@@ -6248,6 +6248,808 @@
         "contrast": 1.15
       },
       "px": 73
+    },
+    {
+      "out": "enemy_assay_guard",
+      "variant": "RA1",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "attack",
+          "clip": "1H_Melee_Attack_Chop",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "1H_Melee_Attack_Slice_Horizontal",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "2H_Melee_Attack_Chop",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5,
+          "to": 0.8
+        },
+        {
+          "key": "hit",
+          "clip": "Hit_A",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death_A",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        }
+      ],
+      "gain": 0.6,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.15
+      }
+    },
+    {
+      "out": "enemy_assay_xbow",
+      "variant": "RA2",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "attack",
+          "clip": "2H_Ranged_Shoot",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 2
+        },
+        {
+          "key": "attack2",
+          "clip": "2H_Ranged_Shoot",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 2
+        },
+        {
+          "key": "heavy",
+          "clip": "2H_Ranged_Shoot",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 4
+        },
+        {
+          "key": "hit",
+          "clip": "Hit_A",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death_A",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        }
+      ],
+      "gain": 0.6,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.15
+      }
+    },
+    {
+      "out": "enemy_renegade",
+      "variant": "RA3",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "attack",
+          "clip": "2H_Melee_Attack_Chop",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "2H_Melee_Attack_Slice",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "2H_Melee_Attack_Spin",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5,
+          "to": 0.85
+        },
+        {
+          "key": "hit",
+          "clip": "Hit_A",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death_A",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        }
+      ],
+      "gain": 0.6,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.15
+      }
+    },
+    {
+      "out": "enemy_forgewight",
+      "variant": "RA4",
+      "glow": 3,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_D_Skeletons",
+          "frames": 10,
+          "fps": 8
+        },
+        {
+          "key": "attack",
+          "clip": "1H_Melee_Attack_Chop",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "1H_Melee_Attack_Slice_Diagonal",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "1H_Melee_Attack_Jump_Chop",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5
+        },
+        {
+          "key": "hit",
+          "clip": "Hit_A",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death_C_Skeletons",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        },
+        {
+          "key": "spawn",
+          "clip": "Spawn_Ground_Skeletons",
+          "frames": 8,
+          "fps": 14,
+          "once": true
+        }
+      ],
+      "gain": 0.62,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.12
+      }
+    },
+    {
+      "out": "enemy_furnacepriest",
+      "variant": "RA5",
+      "glow": 3,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "attack",
+          "clip": "Spellcast_Shoot",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "Spellcast_Shoot",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "Spellcast_Long",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5
+        },
+        {
+          "key": "hit",
+          "clip": "Hit_A",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death_A",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        }
+      ],
+      "gain": 0.6,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.15
+      }
+    },
+    {
+      "out": "creature_cinderhound",
+      "variant": "CR10",
+      "glow": 3,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 12,
+          "fps": 3
+        },
+        {
+          "key": "walk",
+          "clip": "Walk",
+          "frames": 10,
+          "fps": 14
+        },
+        {
+          "key": "attack",
+          "clip": "Attack",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "Attack2",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "Heavy",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 7
+        },
+        {
+          "key": "hit",
+          "clip": "Hit",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        }
+      ],
+      "gain": 1,
+      "grade": {
+        "desat": 0.1,
+        "contrast": 1.15
+      }
+    },
+    {
+      "out": "boss_weighmaster",
+      "variant": "RB1",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "attack",
+          "clip": "1H_Melee_Attack_Chop",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "1H_Melee_Attack_Slice_Horizontal",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "2H_Melee_Attack_Chop",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5,
+          "to": 0.8
+        },
+        {
+          "key": "hit",
+          "clip": "Hit_A",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death_A",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        }
+      ],
+      "gain": 0.6,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.15
+      },
+      "px": 73
+    },
+    {
+      "out": "boss_oruth",
+      "variant": "RB2",
+      "glow": 3,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_D_Skeletons",
+          "frames": 10,
+          "fps": 8
+        },
+        {
+          "key": "attack",
+          "clip": "2H_Melee_Attack_Chop",
+          "frames": 7,
+          "fps": 14,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "2H_Melee_Attack_Slice",
+          "frames": 7,
+          "fps": 14,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "2H_Melee_Attack_Spin",
+          "frames": 10,
+          "fps": 12,
+          "once": true,
+          "impact": 5,
+          "to": 0.85
+        },
+        {
+          "key": "hit",
+          "clip": "Hit_A",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death_C_Skeletons",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        },
+        {
+          "key": "spawn",
+          "clip": "Spawn_Ground_Skeletons",
+          "frames": 8,
+          "fps": 14,
+          "once": true
+        }
+      ],
+      "gain": 0.62,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.12
+      },
+      "px": 73,
+      "tall": 1.3
+    },
+    {
+      "out": "boss_morrow_vane",
+      "variant": "RB3",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "attack",
+          "clip": "1H_Melee_Attack_Stab",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "1H_Melee_Attack_Slice_Horizontal",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "2H_Melee_Attack_Chop",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5,
+          "to": 0.8
+        },
+        {
+          "key": "hit",
+          "clip": "Hit_A",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death_A",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        }
+      ],
+      "gain": 0.6,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.15
+      },
+      "px": 73
+    },
+    {
+      "out": "boss_stoker",
+      "variant": "RB4",
+      "glow": 3,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "attack",
+          "clip": "2H_Melee_Attack_Chop",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "2H_Melee_Attack_Slice",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "2H_Melee_Attack_Spin",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5,
+          "to": 0.85
+        },
+        {
+          "key": "hit",
+          "clip": "Hit_A",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death_A",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        }
+      ],
+      "gain": 0.6,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.15
+      },
+      "px": 73
+    },
+    {
+      "out": "boss_furnace_nine",
+      "variant": "CR11",
+      "glow": 3,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 5
+        },
+        {
+          "key": "walk",
+          "clip": "Walk",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "attack",
+          "clip": "Attack",
+          "frames": 7,
+          "fps": 13,
+          "once": true,
+          "impact": 4
+        },
+        {
+          "key": "attack2",
+          "clip": "Attack2",
+          "frames": 7,
+          "fps": 13,
+          "once": true,
+          "impact": 4
+        },
+        {
+          "key": "heavy",
+          "clip": "Heavy",
+          "frames": 10,
+          "fps": 10,
+          "once": true,
+          "impact": 5
+        },
+        {
+          "key": "hit",
+          "clip": "Hit",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death",
+          "frames": 8,
+          "fps": 8,
+          "once": true
+        }
+      ],
+      "gain": 1,
+      "grade": {
+        "desat": 0.1,
+        "contrast": 1.15
+      },
+      "px": 73,
+      "tall": 2.4
+    },
+    {
+      "out": "npc_nan_ruddock",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Use_Item",
+          0.45
+        ]
+      },
+      "variant": "N27",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_B",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 10,
+          "fps": 8,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 8,
+          "fps": 7,
+          "once": true,
+          "to": 0.7
+        }
+      ]
+    },
+    {
+      "out": "npc_clerk",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Use_Item",
+          0.45
+        ]
+      },
+      "variant": "N28",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_B",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 10,
+          "fps": 8,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 8,
+          "fps": 7,
+          "once": true,
+          "to": 0.7
+        }
+      ]
     }
   ]
 }

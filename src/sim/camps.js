@@ -18,7 +18,7 @@ import { hypot } from './detmath.js';
 /**
  * @typedef {{ id: string, region: string, kind: 'camp' | 'nest', name: string, x: number, y: number, reach: number,
  *   arena: number, level: number, family: string, band: string[], min?: number, elite: number, respawn: number,
- *   posts?: [number, number][], face?: [number, number], hole?: [number, number], dress?: [string, number, number][] }} Camp
+ *   posts?: [number, number][], face?: [number, number], hole?: [number, number], dress?: [string, number, number][], ring?: string }} Camp
  */
 // (the owner, 2026-11-10: "increase the chase radius, I have to get right on top, and respawn should be half as fast as
 // in the dungeons. Same radius and respawn rate change for the rat nest": reach 7 → 12 and 5 → 10, the arenas with them;
@@ -79,6 +79,27 @@ export const CAMPS = [
   { id: 'fens_graves', region: 'fens', kind: 'camp', name: 'The drowned graves', x: 204, y: 168, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 17,
     family: 'wraiths', band: ['wraith', 'wraith', 'wraith'], elite: 0.25, respawn: RESPAWN, posts: [[-2.6, 0.4], [2.6, 0.6], [0, -2.8]], face: [0, 0],
     dress: [['saint', 0, -4.6], ['urns', -4.4, -2.4], ['candles', -3.0, 3.2], ['brokenpillar', 4.6, -2.0], ['urns', 4.2, 3.0], ['bones', -1.2, 4.4], ['candles', 2.0, -4.4]] },
+  // the Reach's (19–30, v1.126; docs/reach-plan.md): the cinder hounds' den in the old spoil west of Ashgate's wall (the
+  // Cold Seam's band, 19–21: level 20); the renegades' camp in the black slag hills, men who walked off the shift and
+  // didn't stop (the Yards' band, 22–24: level 23); the haulers' road, bound haulers still pulling their carts on the old
+  // south road past the Ashwater's bend, toward a furnace that's cold (the Forgehall's band, 25–27: level 26; by the river
+  // first, where the walk in met the water and the fight never started); the Vault's mouth, furnace-priests keeping the
+  // way down to Furnace Nine, where it burns again at half past the hour once it's broken (the Cinderworks' band, 28–30:
+  // level 29; ring.js FURNACE: on the furnace yard west of the Vault's ruin, its track's end, the one camp a road comes to,
+  // as nobody walks that track but to it; under the Cinderworks' stacks first, where its arena was 70 % open ground)
+  { id: 'reach_den', region: 'reach', kind: 'nest', name: "The hounds' den", x: 86, y: 158, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 20,
+    family: 'works', band: ['cinderhound', 'cinderhound', 'cinderhound'], min: 2, elite: 0.25, respawn: RESPAWN, hole: [0, 1.2],
+    dress: [['burrow', 0, 0], ['bones', 2.4, 1.8], ['bones', -3.2, -1.4], ['spoil', 4.2, -2.6], ['boulder', -4.4, 2.8], ['spoil', -2.2, -4.2]] },
+  { id: 'reach_renegades', region: 'reach', kind: 'camp', name: "The renegades' camp", x: 100, y: 32, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 23,
+    family: 'yards', band: ['renegade', 'renegade', 'renegade'], elite: 0.25, respawn: RESPAWN, posts: [[-2.4, 0.6], [2.2, 1.0], [0.2, -2.4]], face: [0, 0],
+    dress: [['cookfire', 0, 0], ['tent', -4.4, -3.4], ['bedroll', -1.6, 3.8], ['sacks', 4.6, 2.2], ['rack', 4.4, -2.4], ['boulder', -5.0, 1.8]] },
+  { id: 'reach_haulers', region: 'reach', kind: 'camp', name: "The haulers' road", x: 180, y: 212, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 26,
+    family: 'pithead', band: ['hauler', 'hauler', 'hauler'], elite: 0.25, respawn: RESPAWN, posts: [[-2.6, 0.4], [2.6, 0.4], [0, -2.6]], face: [0, 0],
+    dress: [['cart', 0, 0], ['cart', -4.2, -3.0], ['chains', 3.8, -3.2], ['spoil', 4.6, 2.6], ['crates', -4.4, 2.6], ['bones', 1.4, 4.2]] },
+  { id: 'reach_mouth', region: 'reach', kind: 'camp', name: "The Vault's mouth", x: 148, y: 12, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 29,
+    family: 'works', band: ['furnacepriest', 'cinderhound', 'furnacepriest'], elite: 0.25, respawn: RESPAWN, posts: [[-2.4, 0.6], [2.2, 1.0], [0.2, -2.4]], face: [0, 0],
+    ring: 'furnace_nine',   // (Furnace Nine's ground, ring.js FURNACE: at half past, once it's broken, it burns here in their place)
+    dress: [['brazier', -4.2, -2.6], ['brazier', 4.4, -2.8], ['chains', 5.0, 1.8], ['bones', -4.8, 2.2], ['spoil', 3.6, 4.6], ['urns', -3.0, -4.6]] },
 ];
 export const CAMP_BY = Object.fromEntries(CAMPS.map((c) => [c.id, c]));
 /** a land's spawn points @param {string} region */

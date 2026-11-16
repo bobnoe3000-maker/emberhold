@@ -16,7 +16,7 @@ const at = (arr, u) => arr[Math.max(0, Math.min(arr.length - 1, Math.floor(u * a
 
 /** a quest def the Journal can show, from a sim job (null until the words have loaded) @param {any} job */
 export function boardWords(job) {
-  const t = job && words[job.tpl], w = t && (job.region === 'fens' && t.fens ? t.fens : t); if (!w) return null;
+  const t = job && words[job.tpl], w = t && (job.region !== 'vale' && t[job.region] ? t[job.region] : t); if (!w) return null;   // (a land's own words: the Fens', the Reach's)
   // a Fens job's site, in a sentence ("the Canal Locks", "Toadking's Mound": M8, Saltmere's board)
   const site = job.site && SITES[job.site] ? SITES[job.site].name.replace(/^The /, 'the ') : '';
   const fill = (/** @type {string} */ s) => s.replace('{n}', String(job.n)).replace(/\{site\}/g, site).replace('{floor}', w.ordinals ? w.ordinals[Math.max(0, Math.min(w.ordinals.length - 1, job.floor - 1))] : String(job.floor));

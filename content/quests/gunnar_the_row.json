@@ -1,0 +1,41 @@
+{
+  "id": "gunnar_the_row",
+  "kind": "errand",
+  "title": "The Row",
+  "giver": "gunnar_slagg",
+  "region": "reach",
+  "level": [
+    25,
+    60
+  ],
+  "after": [
+    "gunnar_the_lease"
+  ],
+  "summary": "Some of the Slagborn went over to the Forgehall when Oruth woke, and fight for whoever lit it. Their leaders keep the rest there. Gunnar wants the rest home.",
+  "steps": [
+    {
+      "id": "renegades",
+      "journal": "The Forgehall of Oruth: the renegades' leaders come with every fifth lot. Put down three.",
+      "objectives": [
+        {
+          "type": "elites",
+          "site": "forgehall",
+          "count": 3,
+          "label": "Renegade leaders in the Forgehall"
+        }
+      ]
+    }
+  ],
+  "ready": "Three of the renegades' leaders are down. Tell Gunnar Slagg.",
+  "done": "The Slagborn are walking home in ones and twos. Gunnar is drinking where the row can see him.",
+  "rewards": {
+    "share": 0.35,
+    "lv": 26,
+    "gold": 300
+  },
+  "dialogue": {
+    "file": "ashgate",
+    "offer": "gunnar_row_offer",
+    "turnin": "gunnar_row_turnin"
+  }
+}

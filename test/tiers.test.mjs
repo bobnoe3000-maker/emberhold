@@ -11,7 +11,7 @@ import { SKILLS, PASSIVES, ladderOf, passiveVal, inPlay, priorityOf, unlocked, p
 import { migrate, SAVE_VERSION } from '../src/persist/save.js';
 import { ccTime, BOSS_CC, CC_IMMUNE, MELEE_GAP } from '../src/sim/battle.js';
 
-const SEED = 20261108, TRIALS = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };
+const SEED = 20261108, TRIALS = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1, fighter24: 1, rogue24: 1, mage24: 1, cleric24: 1, shaman24: 1 };   // (the 24s, taught in the Reach: v1.54)
 const D = (o, a) => Math.hypot(o.x - a.x, o.y - a.y);
 function inRoom(party, lv, site = 'canal_locks') {
   const sim = createSim(SEED, undefined, { scene: 'dungeon', site }); sim.state.party = party; sim.state.trials = { ...TRIALS };
@@ -51,7 +51,7 @@ test('the ladder: the first ability at 1, a new skill every 3 levels, every thir
     const L = ladderOf(cls);
     assert.deepEqual(L.map((s) => s.lv), [1, 3, 6, 9, 12, 15, 18, 21, 24, 27], cls);
     assert.deepEqual(L.filter((s) => s.passive).map((s) => s.lv), [9, 18, 27], cls);
-    assert.deepEqual(L.filter((s) => s.trial).map((s) => s.lv), [6, 12], `${cls}: the trials' two`);
+    assert.deepEqual(L.filter((s) => s.trial).map((s) => s.lv), [6, 12, 24], `${cls}: the trials' three`);
     const m = makeMember('x', 'X', cls, 27); assert.equal(priorityOf(m).length, 7, 'every ability in the order');
     for (const s of L) { assert.ok(unlocked(m, s, TRIALS), `${s.id} learned at 27`); if (s.lv > 1) assert.ok(!unlocked({ ...m, level: s.lv - 1 }, s, TRIALS), `${s.id} not before ${s.lv}`); }
   }

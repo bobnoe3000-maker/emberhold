@@ -154,7 +154,7 @@ function downStairs(sim) { const t = sim.world.stairsAt, p = sim.state.player; p
 function roomVisit({ seed = 20260807, classes = ['fighter'], lv = 1, rl = lv, gear = lv, rarity = 'common', secs = 300 }) {
   const sim = createSim(seed, undefined, { scene: 'dungeon' });
   while (sim.state.depth < ASHBOUND_FLOOR - 1) downStairs(sim);
-  sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1 };   // the contract's runs assume the class trials done, as they assume gear at level (M5)
+  sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, fighter24: 1, rogue24: 1, mage24: 1, cleric24: 1 };   // the contract's runs assume the class trials done, as they assume gear at level (M5)
   sim.state.party = classes.map((c, i) => {
     const m = i ? makeMember('c' + i, 'C' + i, c, lv) : makeHero({ cls: c }); m.level = lv; m.attrs = null; m.autoAttrs = true; autoAllocate(m);
     for (const sl of Object.keys(m.gear)) if (STARTER[c][sl]) m.gear[sl] = makeItem(STARTER[c][sl], gear, rarity, { uid: `${i}${sl}` });
@@ -218,7 +218,14 @@ console.log('the right party holds same-level rooms (L18/21):', right21Ok, right
 const solo21 = [18, 21].map((lv) => roomVisit({ lv, secs: 120 })), up21 = [roomVisit({ classes: FRC, lv: 18, rl: 21 }), roomVisit({ classes: FRC, lv: 21, rl: 24 })];
 const band21Ok = solo21.every((v) => v.defeated && v.waves <= 2) && up21.every((v) => v.defeated);
 console.log('a lone hero is down within 2 waves, and a room 3 up defeats the right party (L18/21):', band21Ok, [...solo21, ...up21].map(show).join(', '));
-const holdOk = solo1Ok && solo6Ok && rightOk && noHealOk && up3Ok && compOk && gearOk2 && right15Ok && band15Ok && right21Ok && band21Ok;
+// (v1.126) the rest of Act III: the Yards, the Forgehall and the Cinderworks, the same contract at 24, 27 and 30
+const right30 = []; for (const seed of [20260807, 777]) for (const lv of [24, 27, 30]) right30.push(roomVisit({ seed, classes: FRC, lv }));
+const right30Ok = right30.every((v) => v.waves >= 10 && !v.fallenEarly);
+console.log('the right party holds same-level rooms (L24/27/30):', right30Ok, right30.map(show).join(', '));
+const solo30 = [24, 27, 30].map((lv) => roomVisit({ lv, secs: 120 })), up30 = [24, 27, 30].map((lv) => roomVisit({ classes: FRC, lv, rl: lv + 3 }));
+const band30Ok = solo30.every((v) => v.defeated && v.waves <= 2) && up30.every((v) => v.defeated);
+console.log('a lone hero is down within 2 waves, and a room 3 up defeats the right party (L24/27/30):', band30Ok, [...solo30, ...up30].map(show).join(', '));
+const holdOk = solo1Ok && solo6Ok && rightOk && noHealOk && up3Ok && compOk && gearOk2 && right15Ok && band15Ok && right21Ok && band21Ok && right30Ok && band30Ok;
 const rl = createSim(20260807, undefined, { scene: 'dungeon' }).world, rlv = [...rl.roomLevels.values()];
 // (2026-11-02, the Vale authored: plans.js) the Old Barrows' first floor: the Cutting and the Breach at 1, the Robbed Tomb
 // (the offshoot) and the hall a level up, at 2; the entrance safe

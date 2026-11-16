@@ -1,0 +1,42 @@
+{
+  "id": "ch3_night_shift",
+  "kind": "chapter",
+  "title": "Night Shift",
+  "giver": "dagny_coalbrook",
+  "region": "reach",
+  "level": [
+    28,
+    60
+  ],
+  "after": [
+    "ch3_gone_back_to_work"
+  ],
+  "summary": "The rolls name the Cinderworks. The night shift is held in pens there, and the Assay's factor, Morrow Vane, keeps the furnace hall. Dagny wants them home.",
+  "steps": [
+    {
+      "id": "vane",
+      "journal": "North up the track among the slag heaps to the Cinderworks. Morrow Vane is in the furnace hall, the first floor's hall.",
+      "objectives": [
+        {
+          "type": "boss",
+          "site": "cinderworks",
+          "boss": "morrow_vane",
+          "count": 1,
+          "label": "Morrow Vane"
+        }
+      ]
+    }
+  ],
+  "ready": "Morrow Vane ran, and bolted the door behind him. Tell Dagny Coalbrook in Ashgate.",
+  "done": "Vane is a day ahead on the Solmere road, with the vessel. He left his ledger behind.",
+  "rewards": {
+    "share": 0.5,
+    "lv": 28,
+    "gold": 620
+  },
+  "dialogue": {
+    "file": "dagny",
+    "offer": "dagny_night_offer",
+    "turnin": "dagny_night_turnin"
+  }
+}

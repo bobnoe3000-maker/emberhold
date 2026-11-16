@@ -6778,5 +6778,966 @@
    }
   },
   "height": 0.86
+ },
+ {
+  "id": "RA1",
+  "cls": "Reach",
+  "label": "Assay guard \u00b7 the Kell Assay's grey and brass, the scale-and-pick badge (the knight)",
+  "model": "Knight",
+  "show": [
+   "1H_Sword",
+   "Badge_Shield",
+   "Knight_Helmet"
+  ],
+  "wear": {
+   "chest": "assaybadge"
+  },
+  "swatches": [
+   {
+    "tile": [
+     3,
+     0
+    ],
+    "to": [
+     "#8e9096",
+     "#2a2c30"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     0
+    ],
+    "to": [
+     "#c89a40",
+     "#3e2c10"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#4e4e54",
+     "#16161a"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#5a4a36",
+     "#1e160e"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     1
+    ],
+    "to": [
+     "#585a60",
+     "#1a1c20"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#3a3634",
+     "#121010"
+    ]
+   }
+  ],
+  "face": "assay_guard"
+ },
+ {
+  "id": "RA2",
+  "cls": "Reach",
+  "label": "Assay crossbowman \u00b7 the same grey and brass, a heavy crossbow (the hooded rogue)",
+  "model": "Rogue_Hooded",
+  "show": [
+   "2H_Crossbow"
+  ],
+  "wear": {
+   "chest": "assaybadge"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#7e8086",
+     "#24262a"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#5a5c62",
+     "#1a1c20"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#3e3a36",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2e2a26",
+     "#0e0c0a"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#4a3e30",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#b08a40",
+     "#3a2a10"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#b08a40",
+     "#3a2a10"
+    ]
+   }
+  ],
+  "face": "assay_xbow",
+  "pose": [
+   "2H_Ranged_Aiming",
+   0.5
+  ]
+ },
+ {
+  "id": "RA3",
+  "cls": "Reach",
+  "label": "Slagborn renegade \u00b7 the black slag hills (dwarf-folk, soot-black and rust, braids hacked short, a war-pick)",
+  "model": "Barbarian",
+  "show": [],
+  "hold": {
+   "handslot.r": "warpick"
+  },
+  "wear": {
+   "head": "beardcut"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#3a2e2a",
+     "#100c0a"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#6a3a24",
+     "#22100a"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#5a4a3a",
+     "#1e1810"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     1
+    ],
+    "to": [
+     "#7a3a22",
+     "#2a120a"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     1
+    ],
+    "to": [
+     "#7a3a22",
+     "#2a120a"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#3a3430",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2a2624",
+     "#0c0a0a"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#241e1a",
+     "#0a0806"
+    ]
+   }
+  ],
+  "face": "renegade",
+  "pose": [
+   "2H_Melee_Idle",
+   0.5
+  ],
+  "height": 0.82,
+  "frame": {
+   "reach": {
+    "lowerleg": 0.7,
+    "foot": 0.72,
+    "lowerarm": 0.92,
+    "wrist": 0.92
+   },
+   "scale": {
+    "hips": [
+     1.16,
+     1,
+     1.12
+    ],
+    "head": [
+     0.9,
+     1.04,
+     0.92
+    ]
+   }
+  }
+ },
+ {
+  "id": "RA4",
+  "cls": "Reach",
+  "label": "Forge-wight \u00b7 the Forgehall (an Ashbound in forge leathers: apron and gauntlets, a hot sledge, the binding's fire in its eyes and through its ribs)",
+  "model": "Skeleton_Warrior",
+  "show": [],
+  "hold": {
+   "handslot.r": "forgehammer"
+  },
+  "wear": {
+   "hips": "apron",
+   "chest": "embercracks",
+   "lowerarm.l": "gauntlet",
+   "lowerarm.r": "gauntlet"
+  },
+  "hide": [
+   "Skeleton_Warrior_Helmet",
+   "Skeleton_Warrior_Cloak"
+  ],
+  "recolor": "brightness(0.62) sepia(0.45) saturate(1.2)",
+  "eyes": "0xff7a20",
+  "skull": true
+ },
+ {
+  "id": "RA5",
+  "cls": "Reach",
+  "label": "Cult furnace-priest \u00b7 the Cinderworks (the acolyte's charcoal and ember, a leather apron over it, a lit censer)",
+  "model": "Mage",
+  "show": [
+   "Mage_Cape"
+  ],
+  "hold": {
+   "handslot.r": "censer"
+  },
+  "wear": {
+   "hips": "apron"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#3a3034",
+     "#141012"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#c8642a",
+     "#5a200a"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#2a2226",
+     "#0e0a0c"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2a2226",
+     "#0e0a0c"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#5a5048",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     2
+    ],
+    "to": [
+     "#5a5048",
+     "#1e1a16"
+    ]
+   }
+  ],
+  "face": "furnacepriest",
+  "height": 1
+ },
+ {
+  "id": "RB1",
+  "cls": "Boss",
+  "label": "The Weighmaster \u00b7 the quota office (the Assay's chief weigher: well-fed, a good grey coat, black over-sleeves, a brass scale-pan on a chain swung like a flail)",
+  "model": "Barbarian",
+  "show": [],
+  "hold": {
+   "handslot.r": "scalepan"
+  },
+  "wear": {
+   "chest": "assaybadge",
+   "lowerarm.l": "sleeveguard",
+   "lowerarm.r": "sleeveguard"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#8a8c92",
+     "#26282c"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#5e6066",
+     "#1a1c20"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#b8903c",
+     "#3e2c10"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     1
+    ],
+    "to": [
+     "#2a2626",
+     "#0c0a0a"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     1
+    ],
+    "to": [
+     "#2a2626",
+     "#0c0a0a"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a4a50",
+     "#16161a"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#33302e",
+     "#100e0e"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#1e1a18",
+     "#0a0808"
+    ]
+   }
+  ],
+  "face": "weighmaster",
+  "height": 1.0,
+  "frame": {
+   "scale": {
+    "chest": 1.18,
+    "head": 0.86
+   }
+  }
+ },
+ {
+  "id": "RB2",
+  "cls": "Boss",
+  "label": "Oruth the Forgemaster \u00b7 the Forgehall (the empire's bound forgemaster, the clans' ancestor: a huge Ashbound dwarf, an ash beard, a forge-apron, the great hammer, the binding's shackles, ember eyes)",
+  "model": "Skeleton_Warrior",
+  "show": [],
+  "hold": {
+   "handslot.r": "greathammer"
+  },
+  "wear": {
+   "hips": "apron",
+   "chest": "embercracks",
+   "head": "beardash",
+   "lowerarm.l": "shackle",
+   "lowerarm.r": "shackle"
+  },
+  "hide": [
+   "Skeleton_Warrior_Cloak"
+  ],
+  "recolor": "brightness(0.58) sepia(0.55) saturate(1.1)",
+  "eyes": "0xff7a20",
+  "skull": true,
+  "height": 1.2,
+  "frame": {
+   "reach": {
+    "lowerleg": 0.72,
+    "foot": 0.74
+   },
+   "scale": {
+    "hips": [
+     1.25,
+     1,
+     1.18
+    ],
+    "head": [
+     0.88,
+     1.0,
+     0.9
+    ],
+    "chest": 1.12
+   }
+  }
+ },
+ {
+  "id": "RB3",
+  "cls": "Boss",
+  "label": "Morrow Vane \u00b7 the Assay's factor, the furnace hall (courteous and lean: a long dark coat, gloves, the ledger under his arm, a sword-cane)",
+  "model": "Rogue",
+  "show": [
+   "Rogue_Cape"
+  ],
+  "hold": {
+   "handslot.r": "swordcane",
+   "handslot.l": "book"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2a2a32",
+     "#0c0c10"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#3a3a44",
+     "#121216"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2a2828",
+     "#0c0a0a"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#1a1818",
+     "#080606"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#1e1c1e",
+     "#0a080a"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#8a8c94",
+     "#2a2c30"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#8a8c94",
+     "#2a2c30"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#2a2a32",
+     "#0c0c10"
+    ]
+   }
+  ],
+  "face": "morrow_vane",
+  "height": 0.98
+ },
+ {
+  "id": "RB4",
+  "cls": "Boss",
+  "label": "The Stoker \u00b7 Furnace Nine's keeper (a senior furnace-priest: heavy, a long leather apron, a soot mask, the furnace rake, a great censer at his belt)",
+  "model": "Mage",
+  "show": [],
+  "hold": {
+   "handslot.r": "poker"
+  },
+  "wear": {
+   "hips": [
+    "apron",
+    "bigcenser"
+   ],
+   "head": "facemask"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2e282a",
+     "#0e0a0c"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#c8642a",
+     "#5a200a"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#2a2226",
+     "#0e0a0c"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2a2226",
+     "#0e0a0c"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#5a5048",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     2
+    ],
+    "to": [
+     "#5a5048",
+     "#1e1a16"
+    ]
+   }
+  ],
+  "face": "stoker",
+  "height": 1.0,
+  "frame": {
+   "scale": {
+    "chest": 1.15,
+    "head": 0.88
+   }
+  }
+ },
+ {
+  "id": "CR10",
+  "cls": "Creature",
+  "label": "Cinder hound \u00b7 the Slag Tunnels' den (a lean ash-crusted hound, its cracks and mouth lit; creatures.js hound)",
+  "creature": {
+   "kind": "hound"
+  },
+  "height": 0.8
+ },
+ {
+  "id": "CR11",
+  "cls": "Boss",
+  "label": "Furnace Nine \u00b7 the Magma Vault's mouth, the Reach's region boss (a walking furnace: its grated mouth lit, a stack for a head, smoke; creatures.js furnace, drawn twice its size)",
+  "creature": {
+   "kind": "furnace",
+   "rig": {
+    "model": "Skeleton_Warrior",
+    "clips": {
+     "Idle": "2H_Melee_Idle",
+     "Walk": "Walking_C",
+     "Attack": "Unarmed_Melee_Attack_Punch_A",
+     "Attack2": "Unarmed_Melee_Attack_Punch_B",
+     "Heavy": "2H_Melee_Attack_Chop",
+     "Hit": "Hit_B",
+     "Death": "Death_B",
+     "Cast": "Taunt_Longer"
+    }
+   }
+  },
+  "height": 2
+ },
+ {
+  "id": "N27",
+  "cls": "NPC",
+  "label": "Nan Ruddock \u00b7 the Redhand's sergeant on the Assay Yards' gate (hard-faced, the Company's red, a kettle hat, a halberd)",
+  "model": "Barbarian",
+  "show": [],
+  "hold": {
+   "handslot.r": "halberd"
+  },
+  "wear": {
+   "head": "kettle"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#8a2a20",
+     "#3a100c"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#5a4028",
+     "#241a10"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#3a3430",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#3a2a1e",
+     "#120c08"
+    ]
+   }
+  ],
+  "face": "nan_ruddock",
+  "height": 0.97
+ },
+ {
+  "id": "N28",
+  "cls": "NPC",
+  "label": "An Assay clerk \u00b7 Kell's Rest (nervous, ink on his fingers and his cheek, spectacles, the ledger he shouldn't be carrying)",
+  "model": "Rogue",
+  "show": [],
+  "hold": {
+   "handslot.r": "book"
+  },
+  "wear": {
+   "head": "specs",
+   "chest": "assaybadge"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#5e6066",
+     "#1a1c20"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#c8bea8",
+     "#5a5244"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#3e3a36",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2e2420",
+     "#0e0a08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#2a2a3a",
+     "#0c0c14"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#5e6066",
+     "#1a1c20"
+    ]
+   }
+  ],
+  "face": "clerk",
+  "height": 0.9,
+  "frame": {
+   "bend": {
+    "spine": [
+     0.15,
+     0,
+     0
+    ],
+    "head": [
+     0.1,
+     0,
+     0
+    ]
+   }
+  }
  }
 ]

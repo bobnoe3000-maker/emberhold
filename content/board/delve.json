@@ -31,5 +31,22 @@
     "ready": "Hand it in at the Lantern Guild's board, inside the Drowned Eel in Saltmere.",
     "done": "The Guild's map of the place got a little longer, and a little wetter.",
     "ordinals": ["first", "second", "third", "fourth", "fifth", "sixth"]
+  },
+  "reach": {
+    "titles": ["Go Deeper", "The Lower Road", "Down the Ladder", "Under the Ash"],
+    "hooks": [
+      { "by": "Old Brannagh, the Shrine", "text": "\"Take a lamp and go all the way down in {site}. Somebody should know what's at the bottom. I used to.\"" },
+      { "by": "Dagny Coalbrook, for the moot", "text": "\"The moot wants a map of {site}. The moot wants a lot of things. This one it's paying for.\"" },
+      { "by": "The Lantern Guild", "text": "\"Survey job: get down to the floor named and come back to say so. The Guild keeps the map.\"" },
+      { "by": "Hob", "text": "\"I sell maps. I've never sold one of {site} past the first floor. Go and make me a liar.\"" },
+      { "by": "Mother Coke", "text": "\"There's a verse that goes all the way down {site}. Nobody's sung the end of it. Go and find out how it goes.\"" },
+      { "by": "Haldor, the Ashgate Forge", "text": "\"The deeper the seam, the better the iron. Go down {site} and tell me what the deep floors are made of.\"" }
+    ],
+    "brief": { "one": "Reach the {floor} floor of {site}", "many": "Reach the {floor} floor of {site}" },
+    "label": "Floor reached in {site}",
+    "journal": "Go into {site} and get down to its {floor} floor.",
+    "ready": "Hand it in at the Lantern Guild's board, inside the Slag & Bellows in Ashgate.",
+    "done": "The Guild's map of the place got a little longer, and a little blacker.",
+    "ordinals": ["first", "second", "third", "fourth", "fifth", "sixth"]
   }
 }

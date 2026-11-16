@@ -16,6 +16,9 @@
 // DOM only: reads sim state and events, pushes commands.
 
 import { RING, paidFor } from '../sim/ring.js';
+/** where each region boss stands, for the news (v1.126: Furnace Nine's at the Vault's mouth) */
+const WHERE = { kingstone: { place: 'the old stones', land: 'the Greywater Fens', dir: 'north-east of Saltmere', stir: 'The old stones are stirring', verb: 'stands' },
+  furnace_nine: { place: 'the Vault’s mouth', land: 'the Cinder Reach', dir: 'up the track north of the Cinderworks', stir: 'The Vault’s mouth glows', verb: 'burns' } };
 import { CAMP_BY } from '../sim/camps.js';
 import { BOSSES } from '../sim/battle.js';
 import { SITES } from '../sim/sites.js';
@@ -89,7 +92,7 @@ const KEEP = 150;   // lines kept
 const LOW = 196;    // the chat's least height (px): three lines and the box to type in, a little over the cards
 
 /**
- * @param {{ sim: any, partyPanel: any, ring: { clock: () => any }, chat: import('../net/chat.js').Chat, questTitle?: (id: string) => string }} o
+ * @param {{ sim: any, partyPanel: any, ring: { clock: (f?: (G: any) => boolean) => any }, chat: import('../net/chat.js').Chat, questTitle?: (id: string) => string }} o
  */
 export function createChatDock({ sim, partyPanel, ring, chat, questTitle = (id) => id }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
@@ -246,15 +249,16 @@ export function createChatDock({ sim, partyPanel, ring, chat, questTitle = (id) 
 
   // ── the world's news ───────────────────────────────────────────────────────────────────────────────────────────────
   const S = () => sim.state;
-  // "Walk there", at once: to just outside the old stones' reach on your side (the World map's walk), or why not
-  function toStones() {
-    const w = sim.world, H = S().party[0], C = CAMP_BY[RING.camp];
-    if (!H || H.level < RING.minLevel) return `The Kingstone takes a company from level ${RING.minLevel}.`;
-    if (sim.battle && sim.battle.ring) return 'You’re at the stones.';
-    if (w.kind !== 'overland' || w.region !== RING.region) return w.kind === 'dungeon' ? 'Climb out first: the stones are in the Greywater Fens.' : (w.region || S().region) !== RING.region ? 'The stones are in the Greywater Fens, north-east of Saltmere.' : 'Take the road out first.';
+  // "Walk there", at once: to just outside the boss's ground on your side (the World map's walk), or why not
+  /** @param {typeof RING} G */
+  function toStones(G = RING) {
+    const w = sim.world, H = S().party[0], C = CAMP_BY[G.camp], W = WHERE[G.id] || WHERE.kingstone;
+    if (!H || H.level < G.minLevel) return `${G.name} takes a company from level ${G.minLevel}.`;
+    if (sim.battle && sim.battle.ring) return `You’re at ${W.place}.`;
+    if (w.kind !== 'overland' || w.region !== G.region) return w.kind === 'dungeon' ? `Climb out first: ${W.place} are in ${W.land}.`.replace('mouth are', 'mouth is') : (w.region || S().region) !== G.region ? `${W.place[0].toUpperCase()}${W.place.slice(1)} ${G.id === 'kingstone' ? 'are' : 'is'} in ${W.land}, ${W.dir}.` : 'Take the road out first.';
     const P = S().player, dx = P.x - C.x, dy = P.y - C.y, dd = Math.hypot(dx, dy) || 1, k = Math.min(dd, C.reach + 3) / dd, s = sim.spotNear(C.x + dx * k, C.y + dy * k);
     if (!s) return 'No way there from here.';
-    sim.commands.push({ type: 'goto', tx: s.tx, ty: s.ty, near: 0, then: null, label: 'The old stones' });
+    sim.commands.push({ type: 'goto', tx: s.tx, ty: s.ty, near: 0, then: null, label: W.place[0].toUpperCase() + W.place.slice(1) });
     return '';
   }
   const mmss = (/** @type {number} */ t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
@@ -263,9 +267,11 @@ export function createChatDock({ sim, partyPanel, ring, chat, questTitle = (id) 
   const siteOfBoss = (/** @type {string} */ id) => { for (const s of Object.values(SITES)) if (Object.values(s.bosses || {}).includes(id)) return s.name; return ''; };
   setInterval(() => {
     if (!S().created) return;
-    const c = ring.clock();
-    if (c && c.soon && soonFor !== c.id) { soonFor = c.id; event('world', `The old stones are stirring · the Kingstone stands at ${c.at}`, { sub: `the Greywater Fens · from level ${RING.minLevel} · fought at ${RING.level}`, act: 'Walk there', run: toStones }); }
-    if (c && c.open && openFor !== c.id) { openFor = c.id; if (!paidFor(S(), c.id)) event('world', 'The Kingstone stands at the old stones', { sub: `${mmss(c.left)} left · up to five companies`, act: 'Walk there', run: toStones }); }
+    // (a boss the hero could fight: of its band, and Furnace Nine only once broken)
+    const H = S().party[0], mine = (/** @type {typeof RING} */ G) => !!(H && H.level >= G.minLevel && (!G.lamp || (S().lampsBroken || []).includes(G.lamp)));
+    const c = ring.clock(mine), G = (c && c.G) || RING, W = WHERE[G.id] || WHERE.kingstone;
+    if (c && mine(G) && c.soon && soonFor !== c.id) { soonFor = c.id; event('world', `${W.stir} · ${G.name} ${W.verb} at ${c.at}`, { sub: `${W.land} · from level ${G.minLevel} · fought at ${G.level}`, act: 'Walk there', run: () => toStones(G) }); }
+    if (c && mine(G) && c.open && openFor !== c.id) { openFor = c.id; if (!paidFor(S(), c.id)) event('world', `${G.name} ${W.verb} at ${W.place}`, { sub: `${mmss(c.left)} left · up to five companies`, act: 'Walk there', run: () => toStones(G) }); }
     const back = S().bossBack || {}, t = S().t;
     for (const [id, at] of Object.entries(back)) if (at > t) away.set(id, at);
     for (const [id, at] of away) if (at <= t) { away.delete(id); if (BOSSES[id]) event('world', `${BOSSES[id].name} holds the hall again`, { sub: siteOfBoss(id) }); }

@@ -1,0 +1,56 @@
+{
+  "id": "ch3_paid_by_weight",
+  "kind": "chapter",
+  "title": "Paid by Weight",
+  "giver": "hob",
+  "turnin": "dagny_coalbrook",
+  "region": "reach",
+  "level": [
+    22,
+    60
+  ],
+  "after": [
+    "ch3_short_shift"
+  ],
+  "summary": "Hob can get you through the Assay Yards' gate at Kell's Rest, for a price: a pass, through a clerk who talks. The night shift's rolls are kept in the quota office, under the Yards.",
+  "steps": [
+    {
+      "id": "pass",
+      "journal": "Go west to the Assay Yards at Kell's Rest. Find Davy Pruett, the Assay's clerk, by the yard gate: Hob's pass comes through him.",
+      "objectives": [
+        {
+          "type": "meet",
+          "npc": "assay_clerk",
+          "site": "assay_yards",
+          "count": 1,
+          "label": "Talk to Davy Pruett at the Yards' gate"
+        }
+      ]
+    },
+    {
+      "id": "weighmaster",
+      "journal": "Down through the cellars to the quota office, the second floor's hall. The Weighmaster keeps it, and the rolls.",
+      "objectives": [
+        {
+          "type": "boss",
+          "site": "assay_yards",
+          "boss": "weighmaster",
+          "count": 1,
+          "label": "The Weighmaster"
+        }
+      ]
+    }
+  ],
+  "ready": "The Weighmaster is down and the night shift's rolls are yours. Take them to Dagny Coalbrook in Ashgate.",
+  "done": "Dagny read the rolls standing up. Every name on them was sent to the Cinderworks.",
+  "rewards": {
+    "share": 0.45,
+    "lv": 23,
+    "gold": 520
+  },
+  "dialogue": {
+    "file": "ashgate",
+    "offer": "hob_weight_offer",
+    "turnin": "dagny_weight_turnin"
+  }
+}

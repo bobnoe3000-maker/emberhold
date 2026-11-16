@@ -19,7 +19,8 @@
     "ready": { "type": "string", "minLength": 1, "maxLength": 120 },
     "done": { "type": "string", "minLength": 1, "maxLength": 120 },
     "ordinals": { "type": "array", "minItems": 6, "items": { "type": "string", "minLength": 1, "maxLength": 12 } },
-    "fens": { "$ref": "#/definitions/words", "description": "Saltmere's board (M8): the same template in the Fens' voice; {site} takes the job's site's name (sim board.js picks it)" }
+    "fens": { "$ref": "#/definitions/words", "description": "Saltmere's board (M8): the same template in the Fens' voice; {site} takes the job's site's name (sim board.js picks it)" },
+    "reach": { "$ref": "#/definitions/words", "description": "Ashgate's board (v1.54): the same template in the Reach's voice; {site} as the Fens'" }
   },
   "definitions": {
     "words": {

@@ -31,5 +31,22 @@
     "ready": "Hand it in at the Lantern Guild's board, inside the Drowned Eel in Saltmere.",
     "done": "The hall stood empty for a night. In the Fens, that counts.",
     "ordinals": ["first", "second", "third", "fourth", "fifth", "sixth"]
+  },
+  "reach": {
+    "titles": ["Hold the Hall", "The Hall at the Bottom", "Last Room Standing", "Hall Watch"],
+    "hooks": [
+      { "by": "Haldor, the Ashgate Forge", "text": "\"A hall in {site} wants holding. Hold it. Then come and tell me which of your edges gave first.\"" },
+      { "by": "Widow Pellam, Deepdelver's Rest", "text": "\"Hold the hall in {site} a while. There are boots by my door waiting for somebody to come up the road.\"" },
+      { "by": "The Lantern Guild", "text": "\"Hall job: find the hall, stand in it, don't leave until the count's done. The Guild pays by the wave.\"" },
+      { "by": "Dagny Coalbrook, for the moot", "text": "\"The moot asks for somebody to hold a hall in {site}. The moot asks politely, which means it's frightened.\"" },
+      { "by": "Old Brannagh, the Shrine", "text": "\"The halls in {site} are where the count goes wrong. Stand in one, and let me count a while.\"" },
+      { "by": "Gunnar Slagg", "text": "\"Hold a hall in {site}. Somebody should hold something in the Reach. I didn't.\"" }
+    ],
+    "brief": { "one": "Hold a wave in a hall of {site}, {floor} floor on", "many": "Hold {n} waves in a hall of {site}, {floor} floor on" },
+    "label": "Waves held in a hall of {site}",
+    "journal": "Go to the {floor} floor of {site} or deeper, find its hall (at the stairs, or the last room), and hold {n} waves there.",
+    "ready": "Hand it in at the Lantern Guild's board, inside the Slag & Bellows in Ashgate.",
+    "done": "The hall stood empty for a night. In the Reach, that's news.",
+    "ordinals": ["first", "second", "third", "fourth", "fifth", "sixth"]
   }
 }

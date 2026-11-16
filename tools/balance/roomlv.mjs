@@ -30,7 +30,7 @@ const pti = args.indexOf('--part'), PART = pti >= 0 ? args.splice(pti, 2)[1] : '
 const fl = args.indexOf('--floor'), FLOOR_ARG = fl >= 0 ? +args.splice(fl, 2)[1] : null;
 // --size small|medium|large: fight in the first room of that size (level.js ROOM_SIZES); large by default, the contract's arena (an older checkout's rooms have no size: its first room)
 const zi = args.indexOf('--size'), SIZE = zi >= 0 ? args.splice(zi, 2)[1] : 'large';
-const ni = args.indexOf('--no-trials'), TRIALS = ni >= 0 ? (args.splice(ni, 1), {}) : { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };
+const ni = args.indexOf('--no-trials'), TRIALS = ni >= 0 ? (args.splice(ni, 1), {}) : { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1, fighter24: 1, rogue24: 1, mage24: 1, cleric24: 1, shaman24: 1 };
 const hi = args.indexOf('--hero'), HERO = hi >= 0 ? args.splice(hi, 2)[1] : null;
 const ri = args.indexOf('--rogue'), ROGUE = ri >= 0 ? args.splice(ri, 2)[1] : null;
 // --fresh: the hires fight at the level they're hired at (half the hero's, rounded up: GDD §6.2 v1.11), not

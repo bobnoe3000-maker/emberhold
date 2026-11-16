@@ -54,12 +54,12 @@ test('every site builds each floor in its band; the last floor has no stairs dow
   }
 });
 
-test('one dungeon a level: the open bands run 1–21 in seven, each level in exactly one; the room rule by rank', () => {
+test('one dungeon a level: the open bands run 1–30 in ten, each level in exactly one; the room rule by rank', () => {
   const bands = SITE_IDS.filter((id) => SITES[id].band);
-  assert.deepEqual(bands, ['barrows', 'wickham_keep', 'sunken_chapel', 'toadking_mound', 'canal_locks', 'drowned_abbey', 'cold_seam']);
+  assert.deepEqual(bands, ['barrows', 'wickham_keep', 'sunken_chapel', 'toadking_mound', 'canal_locks', 'drowned_abbey', 'cold_seam', 'assay_yards', 'forgehall', 'cinderworks']);
   for (const id of bands) { assert.ok(SITES[id].plan, `${id}: authored (the Vale 2026-11-02, the Fens v1.102)`); assert.equal(SITES[id].floors, 2, `${id}: two floors, the owner's rule`); }
   for (const id of bands) assert.equal(bandTop(SITES[id]), SITES[id].base + 2, `${id}: a band of three levels`);
-  for (let lv = 1; lv <= 21; lv++) {
+  for (let lv = 1; lv <= 30; lv++) {
     const at = bands.filter((id) => SITES[id].base <= lv && lv <= bandTop(SITES[id]));
     assert.equal(at.length, 1, `level ${lv}: ${at}`);
     assert.ok(!SITES[at[0]].hidden && !SITES[at[0]].parked, `level ${lv}: ${at[0]} is open`);
@@ -72,7 +72,7 @@ test('one dungeon a level: the open bands run 1–21 in seven, each level in exa
   assert.deepEqual([0, 1, 2].map((r) => roomLevelAt('drowned_abbey', 0, r, 3)), [17, 17, 16]);   // the Abbey's three ranked rooms
   assert.deepEqual([0, 1].map((r) => roomLevelAt('barrows', 0, r, 2)), [1, 1]);                  // under three: no room before the hall is raised
   // the flat ones: the secrets at their land's top, the Tower at 12
-  for (const [id, lv] of [['ninth_milestone', 9], ['reedholm_undercroft', 18], ['mere_tower', 12]]) for (const r of [0, 1, 3]) assert.equal(roomLevelAt(id, 0, r, 4), lv, id);
+  for (const [id, lv] of [['ninth_milestone', 9], ['reedholm_undercroft', 18], ['mere_tower', 12], ['ninth_vault', 30]]) for (const r of [0, 1, 3]) assert.equal(roomLevelAt(id, 0, r, 4), lv, id);
   for (const id of ['ninth_milestone', 'reedholm_undercroft']) assert.ok(SITES[id].secret && SITES[id].hidden && SITES[id].flat, `${id}: its land's secret`);
 });
 
@@ -152,5 +152,5 @@ test('the Drowned Abbey: two authored floors of five spaces (v1.102), 16–18; e
   assert.equal(SITES.drowned_abbey.floors, 2); assert.ok(SITES.drowned_abbey.plan); assert.deepEqual(SITES.drowned_abbey.rooms, [5, 5]);
   assert.deepEqual(Object.fromEntries(SITE_IDS.filter((id) => !SITES[id].parked).map((id) => [id, levelBand(id)])), {
     barrows: '1–3', wickham_keep: '4–6', sunken_chapel: '7–9', proving_pens: '4', ninth_milestone: '9',
-    toadking_mound: '10–12', canal_locks: '13–15', drowned_abbey: '16–18', mere_tower: '12', reedholm_undercroft: '18', cold_seam: '19–21' });
+    toadking_mound: '10–12', canal_locks: '13–15', drowned_abbey: '16–18', mere_tower: '12', reedholm_undercroft: '18', cold_seam: '19–21', assay_yards: '22–24', forgehall: '25–27', cinderworks: '28–30', ninth_vault: '30' });
 });

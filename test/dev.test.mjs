@@ -48,7 +48,7 @@ test('every skill unlocked: each class\'s level-6 and level-12 abilities open at
   assert.ok(unlocked(h, six, sim.state.trials) && unlocked(h, twelve, sim.state.trials), 'after: both open at level 12');
   const lone = makeMember('c9', 'Low', 'rogue', 2);   // (a skill at 3 since v1.56: before it)
   for (const s of skillsOf('rogue').slice(1)) assert.ok(!unlocked(lone, s, sim.state.trials), `${s.id} still wants its level`);
-  for (const c of ['fighter', 'rogue', 'mage', 'cleric', 'shaman']) assert.ok(sim.state.trials[c] && sim.state.trials[c + '12'], c);
+  for (const c of ['fighter', 'rogue', 'mage', 'cleric', 'shaman']) assert.ok(sim.state.trials[c] && sim.state.trials[c + '12'] && sim.state.trials[c + '24'], c);   // (the 24s too, v1.54)
 });
 
 test('they mark the game a dev game: kept in the save, refused by the verifier; an untouched game\'s save is as it was', () => {

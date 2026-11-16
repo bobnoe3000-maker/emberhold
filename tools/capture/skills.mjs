@@ -44,7 +44,7 @@ if (!base) {
 // the party at 15, every trial done, in the Breach at level 15; the first cast of each skill noted
 async function stagePage(classes) {
   const sim = globalThis.__sim, { makeHero, makeMember, statsFor } = await import('/src/sim/party.js'), { autoAllocate } = await import('/src/sim/attributes.js'), { starterKit } = await import('/src/sim/items.js');
-  sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };
+  sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1, fighter24: 1, rogue24: 1, mage24: 1, cleric24: 1, shaman24: 1 };
   const third = classes[0] === 'mage';
   sim.state.party = classes.map((c, i) => { const m = i ? makeMember('c' + i, ['Wren', 'Tam'][i - 1], c, 15) : makeHero({ cls: c }); m.level = 15; m.attrs = null; m.autoAttrs = true; autoAllocate(m); m.gear = starterKit(m); m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp;
     if (third && c === 'rogue') m.off = ['backstab']; if (third && c === 'fighter') m.hp = Math.round(m.hp * 0.3); return m; });

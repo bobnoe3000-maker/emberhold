@@ -36,7 +36,7 @@ const rows = [];
 for (let s = 0; s < N; s++) {
   const seed = 20261114 + s * 7919;
   const sim = createSim(seed, undefined, { scene: 'town' }), S = sim.state, H = S.party[0];
-  S.created = true; S.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };
+  S.created = true; S.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1, fighter24: 1, rogue24: 1, mage24: 1, cleric24: 1, shaman24: 1 };
   for (const L of Object.values(LANDS)) if (L.opens) S.quests[L.opens] = { st: QS.DONE, step: 0, n: [] };   // (every land open)
   H.cls = HERO; H.level = HL; H.xp = 0; H.attrs = null; attrs.autoAllocate(H);
   { const twin = makeRival({ id: 'hero', name: H.name, cls: HERO, level: HL, grade: RAID.grade }); H.gear = twin.gear; H.skills = twin.skills; }   // (the hero built as a stand-in is: kit and skills by the raid's grade)

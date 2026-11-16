@@ -29,5 +29,21 @@
     "journal": "Go into {site} and put down {n} of the elites that come with every fifth wave.",
     "ready": "Hand it in at the Lantern Guild's board, inside the Drowned Eel in Saltmere.",
     "done": "Something big stopped walking about in the reeds."
+  },
+  "reach": {
+    "titles": ["The Big Ones", "Bounty, Ashgate", "Knock the Top Off", "Brass Collars"],
+    "hooks": [
+      { "by": "Dagny Coalbrook, for the moot", "text": "\"Every fifth lot in {site} has somebody bigger leading it. The moot would like fewer of those. The moot is unanimous, for once.\"" },
+      { "by": "Gunnar Slagg", "text": "\"Put down the ones in front in {site}. The ones behind will think twice. I'd have liked someone to make me think twice.\"" },
+      { "by": "Mother Coke", "text": "\"There's a verse about the ones who lead in {site}. It ends badly for them. Make it true.\"" },
+      { "by": "The Lantern Guild", "text": "\"Bounty, posted by the Guild on behalf of a party who'd rather not be named. You can guess.\"" },
+      { "by": "Hob", "text": "\"The big ones in {site} carry things. Passes, keys, purses. Put them down and I'll know a man who wants what they carried.\"" },
+      { "by": "Bel Ruddle, the Slag & Bellows", "text": "\"A round on the house for every big one out of {site}. Not your round. The moot's. They don't know yet.\"" }
+    ],
+    "brief": { "one": "Put down one of the elites in {site}", "many": "Put down {n} elites in {site}" },
+    "label": "Elites put down in {site}",
+    "journal": "Go into {site} and put down {n} of the elites that come with every fifth wave.",
+    "ready": "Hand it in at the Lantern Guild's board, inside the Slag & Bellows in Ashgate.",
+    "done": "Something heavy stopped walking about in the Reach. Mother Coke sang about it."
   }
 }

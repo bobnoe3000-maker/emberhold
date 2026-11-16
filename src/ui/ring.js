@@ -10,11 +10,13 @@
 //     toasts as companies come in, as it cracks, as stones fall;
 //   - the end card from `ringResult`: how it ended, the tier (its word beside its colour), the pay, the companies' parts
 //     ranked, and **Close**.
-// A dev query (localhost) holds a window open: ?dev&ring=on. DOM only: reads sim state and events, pushes commands. Every
+// (v1.126) Furnace Nine's the same, at half past, at the Vault's mouth in the Cinder Reach, once the company has broken it:
+// the clock says whichever window is open, else the next. A dev query (localhost) holds a window open: ?dev&ring=on
+// (the Kingstone's), ?dev&ring=furnace (Furnace Nine's). DOM only: reads sim state and events, pushes commands. Every
 // word is written here; names are content/arena.json's (a company by its player's, as the Bowl's board shows them).
 
 import { swallow } from './actorart.js';
-import { RING, windowAt, paidFor } from '../sim/ring.js';
+import { RING, FURNACE, windowAt, paidFor } from '../sim/ring.js';
 
 const CSS = `
 #ringLine { position: fixed; left: calc(10px + env(safe-area-inset-left, 0px)); top: calc(var(--hud-b, 44px) + 6px); z-index: 4; display: none; pointer-events: none; max-width: calc(100vw - 150px);
@@ -50,6 +52,12 @@ const CSS = `
 #ringCard ol li.you { color: #ffd8a0; font-weight: 600; }
 #ringCard button { width: 100%; min-height: 46px; border-radius: 10px; font: 600 15px Georgia, serif; background: linear-gradient(#ff9a50, #b4461c); color: #1a0c06; border: 1px solid #ffc890; }
 `;
+/** where each stands, and what its tells are called, in the lines and toasts */
+const PLACE = { kingstone: 'the old stones', furnace_nine: 'the Vault’s mouth' };
+const WORDS = {
+  kingstone: { cracked: 'The Kingstone cracks · its blows come faster', stones: 'Stones fall · find the clear', stir: 'The old stones are stirring' },
+  furnace_nine: { cracked: 'Furnace Nine roars white · its blows come faster', stones: 'The vents open · find the clear', stir: 'The Vault’s mouth glows', fed: 'Furnace Nine feeds on the fallen · it burns hotter' },
+};
 const TIER = { gold: 'Gold', silver: 'Silver', bronze: 'Bronze' }, RW = { common: 'Common', fine: 'Fine', rare: 'Rare', heirloom: 'Heirloom' };
 const mmss = (s) => { s = Math.max(0, Math.ceil(s)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 
@@ -60,17 +68,23 @@ export function createRing({ sim, params, dev = false }) {
   const line = mk('div', 'ringLine'), bar = mk('div', 'ringBar'), toast = mk('div', 'ringToast');
   const card = mk('div', 'ringCard'); card.setAttribute('role', 'dialog'); card.setAttribute('aria-label', 'The Kingstone: the end'); swallow(card);
   bar.innerHTML = '<div class="top"><span>The Kingstone</span><small></small></div><div class="hp"><i></i><em></em></div><div class="sub"></div>';
+  const barName = /** @type {HTMLElement} */ (bar.querySelector('.top span'));
   const barTop = /** @type {HTMLElement} */ (bar.querySelector('.top small')), barHp = /** @type {HTMLElement} */ (bar.querySelector('.hp i')), barSub = /** @type {HTMLElement} */ (bar.querySelector('.sub'));
-  const held = dev && params && params.get('ring') === 'on';      // (localhost: a window held open, for tests and captures)
+  const heldAs = dev && params ? params.get('ring') : null, held = heldAs === 'on' ? RING : heldAs === 'furnace' ? FURNACE : null;   // (localhost: a window held open, for tests and captures)
   /** @type {Record<string, any>} */ let by = {};
   fetch('./content/arena.json').then((r) => r.json()).then((d) => { by = Object.fromEntries(d.companies.map((c) => [c.id, c])); }).catch(() => {});
   const who = (id) => (by[id] && (by[id].player || by[id].name)) || 'A company';
 
-  /** the hour as the device has it (sim/ring.js windowAt) */
-  function clock() {
-    const n = new Date(), c = { y: n.getFullYear(), mo: n.getMonth() + 1, d: n.getDate(), h: n.getHours(), m: n.getMinutes(), s: n.getSeconds() };
-    const w = windowAt(held ? { ...c, m: 0, s: 0 } : c), nx = new Date(n.getTime() + w.until * 1000);
-    return { ...w, at: `${String(nx.getHours()).padStart(2, '0')}:00` };   // (the next hour's, the Date's own: past midnight too)
+  /** a region boss's window as the device's clock has it (sim/ring.js windowAt) @param {typeof RING} G @param {Date} n */
+  function clockFor(G, n) {
+    const c = { y: n.getFullYear(), mo: n.getMonth() + 1, d: n.getDate(), h: n.getHours(), m: n.getMinutes(), s: n.getSeconds() };
+    const w = windowAt(held === G ? { ...c, m: G.offset / 60, s: 0 } : c, G), nx = new Date(n.getTime() + w.until * 1000);
+    return { ...w, G, at: `${String(nx.getHours()).padStart(2, '0')}:${String(nx.getMinutes()).padStart(2, '0')}` };   // (the next one's, the Date's own: past midnight too)
+  }
+  /** the window that matters now: an open one (only one is, at a time), else the next to open @param {(G: typeof RING) => boolean} [mine] whose to consider */
+  function clock(mine = () => true) {
+    const n = new Date(), all = [RING, FURNACE].filter(mine).map((G) => clockFor(G, n));
+    return all.find((w) => w.open) || all.sort((a, b) => a.until - b.until)[0] || clockFor(RING, n);
   }
   let toastT = 0;
   const say = (text, ms = 2800) => { toast.textContent = text; toast.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('on'), ms); };
@@ -81,9 +95,11 @@ export function createRing({ sim, params, dev = false }) {
   let names = /** @type {string[]} */ ([]);
   sim.bus.on('ringStarted', () => { names = []; card.classList.remove('on'); });   // (its banner says it stands: renderer.js bossLine)
   sim.bus.on('ring', (e) => {
-    if (e.t === 'arrive') { names.push(who(e.company)); say(`${who(e.company)}'s company comes in · it stirs harder (${e.n} of ${RING.maxParties})`); }
-    else if (e.t === 'cracked') say('The Kingstone cracks · its blows come faster', 3000);
-    else if (e.t === 'stones') say('Stones fall · find the clear', 2000);
+    const G = (sim.battle && sim.battle.ring && sim.battle.ring.cfg) || RING, W = WORDS[G.id] || WORDS.kingstone;
+    if (e.t === 'arrive') { names.push(who(e.company)); say(`${who(e.company)}'s company comes in · it stirs harder (${e.n} of ${G.maxParties})`); }
+    else if (e.t === 'cracked') say(W.cracked, 3000);
+    else if (e.t === 'stones') say(W.stones, 2000);
+    else if (e.t === 'fed' && W.fed) say(W.fed, 2400);
   });
   sim.bus.on('ringLeft', () => { card.classList.remove('on'); });
 
@@ -94,10 +110,11 @@ export function createRing({ sim, params, dev = false }) {
     const me = r.parts.find((q) => q.id === r.you) || null;
     card.textContent = '';
     const add = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; card.appendChild(e); return e; };
-    add('div', 'kind', 'The Kingstone');
-    add('h2', '', won ? 'It falls back into the ring' : left ? 'You walked out on it' : 'The window shuts');
-    add('p', '', won ? `It went down in ${mmss(r.secs)}, ${r.parties} companies round it. It stands again at the next hour.`
-      : left ? 'Out of the stones before the end: nothing paid for this hour.' : `It was still standing when the hour's quarter ran out. A minute there pays Bronze.`);
+    const furnace = r.boss === 'furnace_nine';
+    add('div', 'kind', r.name || 'The Kingstone');
+    add('h2', '', won ? (furnace ? 'It goes out' : 'It falls back into the ring') : left ? 'You walked out on it' : 'The window shuts');
+    add('p', '', won ? `It went down in ${mmss(r.secs)}, ${r.parties} companies round it. ${furnace ? 'It lights again at half past the next hour.' : 'It stands again at the next hour.'}`
+      : left ? `Out of ${furnace ? 'the Vault’s mouth' : 'the stones'} before the end: nothing paid for this window.` : `It was still standing when the window's quarter hour ran out. A minute there pays Bronze.`);
     add('div', `tier ${r.tier || 'none'}`, r.tier ? `${TIER[r.tier]} tier` : 'No tier');
     const nums = add('div', 'nums', null);
     const kv = (k, v) => { const d = document.createElement('div'); d.append(`${k} `); const b = document.createElement('b'); b.textContent = v; d.append(b); nums.appendChild(d); };
@@ -122,8 +139,9 @@ export function createRing({ sim, params, dev = false }) {
       barHp.style.width = `${(share * 100).toFixed(1)}%`;
       const top = `${Math.ceil(share * 100)} %${R.cracked ? ' · cracked' : ''} · ${mmss(R.secs - R.t)}`;
       if (barTop.textContent !== top) barTop.textContent = top;
-      const p = S.party[0], up = p.down ? Math.max(0, RING.respawn - (p.downT || 0)) : 0;
-      const sub = `${R.parties} of ${RING.maxParties} companies${p.down ? ` · <b>down: up at the edge in ${Math.ceil(up)} s</b>` : ''}`;
+      const G = R.cfg || RING; if (barName.textContent !== G.name) barName.textContent = G.name;
+      const p = S.party[0], up = p.down ? Math.max(0, G.respawn - (p.downT || 0)) : 0;
+      const sub = `${R.parties} of ${G.maxParties} companies${p.down ? ` · <b>down: up at the edge in ${Math.ceil(up)} s</b>` : ''}`;
       if (sub !== lastSub) { barSub.innerHTML = sub; lastSub = sub; }
       bar.classList.add('on');
     } else bar.classList.remove('on');
@@ -131,20 +149,24 @@ export function createRing({ sim, params, dev = false }) {
     // only out in the open and not in a fight (the owner, 2026-11-15, from a raid: "The kingstone banner is showing in a raid
     // and hiding other banners"): in a dungeon, a raid, the Bowl or any fight, the room's own banners (the raid's, a hall's
     // boss bar, the wave pill) hold that place, and the stones are a walk away anyway
-    const c = clock(), band = H && H.level >= RING.minLevel && S.created, open = w.kind !== 'dungeon' && !w.arena && !sim.raid && !sim.battle;
+    // (whose: a boss the hero is of its band for, and Furnace Nine only once it's been broken)
+    const mine = (G) => !!(H && S.created && H.level >= G.minLevel && (!G.lamp || (S.lampsBroken || []).includes(G.lamp)));
+    const c = clock(mine), G = c.G, band = mine(G), open = w.kind !== 'dungeon' && !w.arena && !sim.raid && !sim.battle;
     let txt = '';
     // once the company has stood against this hour's Kingstone, nothing to say until the next one stirs (the owner, 2026-11-15:
     // "The kingstone banner wont go away"): it stayed for the rest of the quarter hour, over the HUD; the World map's card
     // still says it
     if (band && !inRing && open) {
-      if (c.open) txt = paidFor(S, c.id) ? '' : `The Kingstone stands at the old stones · <b>${mmss(c.left)}</b> left`;
-      else if (c.soon) txt = `The Kingstone stands at ${c.at} · <b>${mmss(c.until)}</b>`;
-      if (c.soon && announced !== c.id) { announced = c.id; say(`The old stones are stirring · the Kingstone stands at ${c.at}`, 3600); }
+      const verb = G === FURNACE ? 'burns' : 'stands';
+      if (c.open) txt = paidFor(S, c.id) ? '' : `${G.name} ${verb} at ${PLACE[G.id]} · <b>${mmss(c.left)}</b> left`;
+      else if (c.soon) txt = `${G.name} ${verb} at ${c.at} · <b>${mmss(c.until)}</b>`;
+      if (c.soon && announced !== c.id) { announced = c.id; say(`${(WORDS[G.id] || WORDS.kingstone).stir} · ${G.name} ${verb} at ${c.at}`, 3600); }
     }
     if (txt !== lastLine) { line.innerHTML = txt; lastLine = txt; }
     line.classList.toggle('on', !!txt && !(R && !R.over));
     // the window told to the sim, once each (it keeps it: the stones hold the Kingstone while it lasts)
-    if (c.open && told !== c.id && S.created) { told = c.id; sim.commands.push({ type: 'ringOpen', window: c.id, left: Math.floor(c.left) }); }
+    const any = clock();   // (any boss's open window, whoever the hero is: the sim keeps it, its gates are its own)
+    if (any.open && told !== any.id && S.created) { told = any.id; sim.commands.push({ type: 'ringOpen', window: any.id, left: Math.floor(any.left) }); }
     requestAnimationFrame(watch);
   })();
   return { clock, get cardOpen() { return card.classList.contains('on'); } };

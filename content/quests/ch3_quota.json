@@ -1,0 +1,43 @@
+{
+  "id": "ch3_quota",
+  "kind": "chapter",
+  "title": "Quota",
+  "giver": "tamsin",
+  "turnin": "dagny_coalbrook",
+  "region": "reach",
+  "level": [
+    30,
+    60
+  ],
+  "after": [
+    "ch3_night_shift"
+  ],
+  "summary": "The night shift went down into the Magma Vault, under the Cinderworks, to Furnace Nine. Tamsin wants to go after them, and break the lamp that's keeping them.",
+  "steps": [
+    {
+      "id": "stoker",
+      "journal": "Down into the Magma Vault, the Cinderworks' second floor. The Stoker keeps Furnace Nine's lamp in its hall.",
+      "objectives": [
+        {
+          "type": "boss",
+          "site": "cinderworks",
+          "boss": "stoker",
+          "count": 1,
+          "label": "The Stoker"
+        }
+      ]
+    }
+  ],
+  "ready": "Furnace Nine's lamp is broken and the night shift is free. The mould on the casting floor was empty. Tell Dagny.",
+  "done": "Dagny counted the night shift home. The vessel is gone, a day ahead on the Solmere road. Act III is done.",
+  "rewards": {
+    "share": 0.6,
+    "lv": 30,
+    "gold": 700
+  },
+  "dialogue": {
+    "file": "tamsin",
+    "offer": "tamsin_quota_offer",
+    "turnin": "dagny_quota_turnin"
+  }
+}

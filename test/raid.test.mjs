@@ -46,7 +46,7 @@ function play(s, mins = 40) {
 }
 
 test('the dungeons a raid goes to: the band dungeons, in band order', () => {
-  assert.deepEqual(RAID_SITES, ['barrows', 'wickham_keep', 'sunken_chapel', 'toadking_mound', 'canal_locks', 'drowned_abbey', 'cold_seam']);   // (v1.124: the Reach's first)
+  assert.deepEqual(RAID_SITES, ['barrows', 'wickham_keep', 'sunken_chapel', 'toadking_mound', 'canal_locks', 'drowned_abbey', 'cold_seam', 'assay_yards', 'forgehall', 'cinderworks']);   // (v1.124: the Reach's first; v1.126 the rest)
 });
 
 test('setting out: refused below the band, in a land not open, mid-fight; three a day, spent on setting out', () => {

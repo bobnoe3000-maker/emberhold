@@ -43,6 +43,19 @@ VAR frag_fens_drain_order = 0
 VAR frag_fens_novice_letter = 0
 VAR frag_fens_day_book = 0
 VAR frag_fens_last_hour = 0
+VAR frag_reach_count = 0
+VAR frag_reach_charter_roll = 0
+VAR frag_reach_lamp_tally = 0
+VAR frag_reach_chute_plate = 0
+VAR frag_reach_weigh_ticket = 0
+VAR frag_reach_quota_order = 0
+VAR frag_reach_throne_weight = 0
+VAR frag_reach_binding_of_oruth = 0
+VAR frag_reach_pattern_shelf = 0
+VAR frag_reach_apron_plate = 0
+VAR frag_reach_night_rota = 0
+VAR frag_reach_vanes_ledger = 0
+VAR frag_reach_renewal = 0
 VAR count_lamps = 0
 VAR count_souls = 0
 
@@ -104,6 +117,7 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 + { q_vale_first_page == 1 } [About the first page… #mark: quest active] -> ilse_page_active
 + { frag_vale_count > 0 } [Read me the Chronicle.] -> ilse_read
 + { frag_fens_count > 0 } [Read me what we found in the Fens.] -> ilse_read_fens
++ { frag_reach_count > 0 } [Read me what we found in the Reach.] -> ilse_read_reach
 + { count_souls > 0 } [You keep a count?] -> ilse_count
 + [What are you writing?] -> ilse_writing
 + [What should I look for?] -> ilse_look
@@ -267,6 +281,58 @@ Ilse takes it in both hands, tilts it to the light, and reads it twice without m
     "And my order wrote the names." She doesn't look up. "The rolls were copied out fair at Reedholm, in the Undercroft. Mother Agnes has the key. She's had it forty years. Ask her. Tell her I sent you, and that I'm sorry."
 - else:
     "There are gaps. The Locks, the Mound, the vats, the Abbey. The Fens kept their papers wet, but they kept them."
+}
+-> ilse_topics
+
+// ── the Reach set (world doc v1.54 §7): the charter, the quota, the forge, the furnace ──
+== ilse_read_reach ==
+{ frag_reach_charter_roll == 1:
+    "The clans' charter. The seams of the Reach, to work and hold; ore to the Throne's foundries at the agreed weight. What the foundries burn is the Throne's business."
+    "Business. That's the word they chose."
+}
+{ frag_reach_lamp_tally == 1:
+    "A lamp tally from the Seam. Two hundred out, two hundred in. The night shift not entered on the clans' rolls: the night shift is the foundry's."
+}
+{ frag_reach_chute_plate == 1:
+    "A chute plate. Ore by the upper road; cargo by night, by the lower. The clans to keep off the lower road."
+}
+{ frag_reach_weigh_ticket == 1:
+    "A weigh-ticket. Pale iron, forty hundredweight, assayed true. Fuel for the melt: see the quota office."
+}
+{ frag_reach_quota_order == 1:
+    "The quota order. Furnaces one to twelve, four thousand souls this year. The clans' charter renewed if the quota is met."
+    She puts the pen down for that one.
+}
+{ frag_reach_throne_weight == 1:
+    "A weight. One soul, Throne measure." She lifts it, and sets it down again. "It's heavier than it should be. I keep picking it up to check."
+}
+{ frag_reach_binding_of_oruth == 1:
+    "Oruth's binding. Bound at his anvil by his own leave, to work until countermanded. His clan to be told he went to the Throne."
+}
+{ frag_reach_pattern_shelf == 1:
+    "The pattern shelf. Lamp patterns, forty to a shelf, each to hold one. The Forgemaster signed every casting."
+    "So the Fens' lamps were cast here. Every one. The Abbey just filled them."
+}
+{ frag_reach_apron_plate == 1:
+    "Oruth's apron-plate. Bound to the work, until countermanded. Nobody ever countermanded anything. That's the whole Chronicle, in one line."
+}
+{ frag_reach_night_rota == 1:
+    "The night rota. Furnace Nine: night shift eleven, day shift none. The furnace doesn't want a day shift."
+}
+{ frag_reach_vanes_ledger == 1:
+    "Furnace nine requires eleven more souls per week to meet quota. Copied out fair, and under it, in a newer hand: as before."
+    "He read the Throne's books and did what they said. That's all he did. That's what I can't forgive."
+}
+{ frag_reach_renewal == 1:
+    "The last of it, off the Stoker. The charter renewed for another hundred years. The Deepdelvers did not ask what the furnaces burn. We did not tell them."
+}
+{
+- frag_reach_count == 12:
+    Ilse lays the Reach's twelve under the Fens' ten and the Vale's ten. Three lines now. The last is the longest.
+    "The Vale's dead were tithed. The Fens' were steeped and shipped up the canal in lamps. And the lamps were cast in the Reach, and filled by quota, and the clans held the charter and never asked."
+    "The quota office kept a strongroom: the Ninth Vault, up the old track on the dead mountain. The books will be there. Read them for me. I'm not sure I can."
+- else:
+    "There are gaps. The Seam, the Yards, the Forgehall, the Cinderworks. The Reach kept its papers dry. It would."
 }
 -> ilse_topics
 

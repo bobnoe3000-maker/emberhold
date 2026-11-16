@@ -24,11 +24,16 @@ const trialSkill = (cls, lv = 6) => SKILLS[cls].find((s) => s.trial && s.lv === 
 // (M8, slice 9; world doc v1.30) the second trials, at 12, taught for the Fens
 const TRIALS12 = { fighter: ['trial_the_long_watch', 'osric_hale'], rogue: ['trial_dead_water', 'wren'], mage: ['trial_lamp_oil', 'pim_rushlight'], cleric: ['trial_vigil', 'mother_agnes'], shaman: ['trial_the_old_water', 'col'] };
 
-test('two trial abilities per class, the level-6 and level-12 ones, each wanting its own trial', () => {
+const TRIALS24 = { fighter: 'haldor', rogue: 'hob', mage: 'tamsin', cleric: 'old_brannagh', shaman: 'mother_coke' };
+test('three trial abilities per class, the level-6, level-12 and level-24 ones, each wanting its own trial', () => {
   assert.deepEqual(TRIAL_CLASSES, ['fighter', 'rogue', 'mage', 'cleric', 'shaman']);
   for (const cls of TRIAL_CLASSES) {
     const A = trialSkill(cls), B = trialSkill(cls, 12), m = makeMember('x', 'X', cls, 12);
-    assert.deepEqual(SKILLS[cls].filter((s) => s.trial).map((s) => s.lv), [6, 12]);
+    assert.deepEqual(SKILLS[cls].filter((s) => s.trial).map((s) => s.lv), [6, 12, 24]);
+    const C = trialSkill(cls, 24), m24 = makeMember('y', 'Y', cls, 24), done12 = { [cls]: 1, [cls + '12']: 1 };   // (v1.54: the Reach's)
+    assert.ok(!unlocked(m24, C, done12), `${C.name}: not with the 12 only`); assert.ok(unlocked(m24, C, { ...done12, [cls + '24']: 1 }));
+    assert.ok(!unlocked({ ...m24, level: 23 }, C, { ...done12, [cls + '24']: 1 }), 'nor before level 24');
+    const q24 = 'trial24_' + cls; assert.deepEqual([QUESTS[q24].trial, QUESTS[q24].trialLv, QUESTS[q24].giver], [cls, 24, TRIALS24[cls]]);
     assert.ok(!unlocked(m, A, {}), `${A.name}: not without the trial`); assert.ok(unlocked(m, A, { [cls]: 1 }));
     assert.ok(!unlocked({ ...m, level: 5 }, A, { [cls]: 1 }), 'nor before level 6');
     assert.ok(!unlocked(m, B, { [cls]: 1 }), `${B.name}: not with the first trial only`); assert.ok(unlocked(m, B, { [cls]: 1, [cls + '12']: 1 }));

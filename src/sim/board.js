@@ -20,7 +20,8 @@
 //
 // Each town's board posts its own land's jobs (M8): Thornwick's the Old Barrows', Saltmere's the Fens' sites
 // (fensOffers). A posting belongs to the town it went up in (state.board.region; older saves: the Vale), and a Fens
-// job's id ends _fens, so it rebuilds alone. The Vale's postings draw exactly as they did.
+// job's id ends _fens, so it rebuilds alone. The Vale's postings draw exactly as they did. (v1.54) Ashgate's posts the
+// Reach's (the Cold Seam, the Assay Yards, the Forgehall, the Cinderworks), its ids ending _reach, on a stream of its own.
 
 import { mulberry32, streamSeed, STREAM } from './rng.js';
 import { DAY_S } from './heroes.js';
@@ -107,7 +108,7 @@ export function boardOffers(seed, day, lv, half = 0) {
 // base + floor − 1, its hall a level up (floor 1's hall base + 1, floor 2's the band's top)
 const siteFloorLv = (S, f) => (S.band ? S.base + (f - 1) : S.base + S.perFloor * (f - 1));
 const siteHallLv = (S, f) => (S.plan && S.band ? S.base + f : S.band ? siteFloorLv(S, f) : siteFloorLv(S, f) + Math.floor(((S.rooms ? S.rooms[1] : 6) - 2) / 2));
-const landSites = (region) => SITE_IDS.filter((id) => SITES[id].region === region && SITES[id].band && !SITES[id].hidden && !SITES[id].parked);
+const landSites = (region) => SITE_IDS.filter((id) => SITES[id].region === region && SITES[id].band && !SITES[id].hidden && !SITES[id].parked).sort((a, b) => SITES[a].base - SITES[b].base);   // (by band: the Reach's sites aren't listed in order, v1.54)
 /** @type {Record<string, (S: any, rng: () => number, lv: number) => ({ s: Size, target: number } | null)>} */
 const LAND_SIZE = {
   hold: (S, rng, lv) => ({ s: { n: 3 + ((rng() * 4) | 0), floor: 0 }, target: Math.max(S.base, Math.min(lv, siteHallLv(S, S.floors))) }),
@@ -120,8 +121,8 @@ const LAND_SIZE = {
 const LAND_EFFORT = { hold: (s) => s.n, retrieve: (s) => 2 * s.n, bounty: (s) => 5 * s.n, delve: (s) => 3 * (s.floor - 1) + 1, warden: (s) => s.n + 2 * (s.floor - 1) + 1 };
 /** a land's posting @param {number} seed @param {number} day @param {number} lv @param {number} half @param {string} region @returns {Job[]} */
 function landOffers(seed, day, lv, half, region) {
-  const fens = region === 'fens';
-  const rng = mulberry32(streamSeed(seed ^ Math.imul(day + 1, 0x9e3779b1) ^ (half ? 0x5d0c4e17 : 0) ^ (fens ? 0x7e55 : 0), STREAM.BOARD));
+  const fens = region === 'fens', reach = region === 'reach', tail = fens ? '_fens' : reach ? '_reach' : '';
+  const rng = mulberry32(streamSeed(seed ^ Math.imul(day + 1, 0x9e3779b1) ^ (half ? 0x5d0c4e17 : 0) ^ (fens ? 0x7e55 : reach ? 0x2eac4 : 0), STREAM.BOARD));
   const all = landSites(region), at = all.findIndex((id) => SITES[id].base <= lv && lv <= bandTop(SITES[id]));
   const yours = at >= 0 ? at : lv < SITES[all[0]].base ? 0 : all.length - 1, sites = yours > 0 ? [all[yours], all[yours], all[yours - 1]] : [all[yours]];
   const pool = [...TEMPLATES];
@@ -130,10 +131,10 @@ function landOffers(seed, day, lv, half, region) {
   for (const tpl of pool) {
     if (jobs.length >= (lv >= 4 ? 4 : 3)) break;
     const site = sites[(rng() * sites.length) | 0], S = SITES[site], got = LAND_SIZE[tpl](S, rng, lv); if (!got) continue;
-    const { s, target } = got, slot = jobs.length, skulls = skullsFor(target, lv), company = companyFor(tpl, target, lv) || (fens && target >= lv - 1);
+    const { s, target } = got, slot = jobs.length, skulls = skullsFor(target, lv), company = companyFor(tpl, target, lv) || ((fens || reach) && target >= lv - 1);
     /** @type {[number, number]} */ const pick = [rng(), rng()];
     const objective = { ...BOARD[tpl].objective(s), site };
-    jobs.push({ id: `board_${day}${half ? 'd' : ''}_${lv}_${slot}${fens ? '_fens' : ''}`, tpl, day, half, lv, slot, n: s.n, floor: s.floor, skulls, company, pick,
+    jobs.push({ id: `board_${day}${half ? 'd' : ''}_${lv}_${slot}${tail}`, tpl, day, half, lv, slot, n: s.n, floor: s.floor, skulls, company, pick,
       kind: /** @type {'board'} */ ('board'), giver: 'lantern_guild', region, site, level: /** @type {[number, number]} */ ([lv, lv]),
       steps: [{ id: 'job', objectives: [objective] }], rewards: rewardFor(LAND_EFFORT[tpl](s), lv, skulls) });
   }
@@ -141,21 +142,21 @@ function landOffers(seed, day, lv, half, region) {
 }
 /** a land's posting @param {number} seed @param {number} day @param {number} lv @param {number} half @param {string} [region] */
 export function offersIn(seed, day, lv, half, region = 'vale') {
-  if (region !== 'fens') return boardOffers(seed, day, lv, half);
-  const key = `${seed}_${day}_${lv}_${half}_fens`; if (cache.has(key)) return cache.get(key);
-  const jobs = landOffers(seed, day, lv, half, 'fens'); if (cache.size > 64) cache.clear(); cache.set(key, jobs); return jobs;
+  if (region !== 'fens' && region !== 'reach') return boardOffers(seed, day, lv, half);
+  const key = `${seed}_${day}_${lv}_${half}_${region}`; if (cache.has(key)) return cache.get(key);
+  const jobs = landOffers(seed, day, lv, half, region); if (cache.size > 64) cache.clear(); cache.set(key, jobs); return jobs;
 }
-const ID = /^board_(\d+)(d?)_(\d+)_(\d)(_fens)?$/;
+const ID = /^board_(\d+)(d?)_(\d+)_(\d)(?:_(fens|reach))?$/;
 /** a job from its id alone (null if it isn't one) @param {number} seed @param {string} id */
 export function jobOf(seed, id) {
   const m = ID.exec(String(id)); if (!m) return null;
-  return offersIn(seed, +m[1], +m[3], m[2] ? 1 : 0, m[5] ? 'fens' : 'vale')[+m[4]] || null;
+  return offersIn(seed, +m[1], +m[3], m[2] ? 1 : 0, m[5] || 'vale')[+m[4]] || null;
 }
 
 /** @param {{ state: any, bus: any, getWorld: () => any, seed: number, quests: any }} o */
 export function createBoard({ state, bus, getWorld, seed, quests }) {
   if (!state.board) state.board = { day: -1, lv: 1, half: 0, region: 'vale' };
-  const here = () => (getWorld().region === 'fens' ? 'fens' : 'vale');
+  const here = () => { const r = getWorld().region; return r === 'fens' || r === 'reach' ? r : 'vale'; };
   const day = () => Math.floor(state.t / DAY_S);
   const half = () => ((state.t % DAY_S) >= DAY_S / 2 ? 1 : 0);                 // dusk starts the day's second half
   const inTown = () => getWorld().kind === 'town' && (getWorld().services || []).some((v) => v.kind === 'tavern');   // (the board hangs in the tavern: a waystation's too, M8)
@@ -196,7 +197,7 @@ export function createBoard({ state, bus, getWorld, seed, quests }) {
   function restore(data) {
     const b = data?.board, d = b && Number.isInteger(b.day) ? b.day : -1, lv = b && Number.isInteger(b.lv) ? b.lv : 1, h = b && b.half === 1 ? 1 : 0;   // v15 and older: no half (dawn)
     const due = d >= 0 && (d < day() || (d === day() && h <= half()));
-    const region = b && b.region === 'fens' ? 'fens' : 'vale';                   // (M8; before, every posting was the Vale's)
+    const region = b && (b.region === 'fens' || b.region === 'reach') ? b.region : 'vale';   // (M8; before, every posting was the Vale's; v1.54 the Reach's)
     state.board = due && lv >= 1 && lv <= state.party[0].level ? { day: d, lv, half: h, region } : { day: -1, lv: 1, half: 0, region: 'vale' };   // v8 and older: none yet
   }
   const nextDawn = () => DAY_S - (state.t % DAY_S);                          // seconds of play until the next dawn (the wage)

@@ -4,7 +4,7 @@
 // src/story/adapter.js from the sim (sim/npcs.js varsFor: with_tamsin 0 / 1, her niece with you, party or bench;
 // core.js boss_<id>; quests.js: q_ = −1 locked · 0 available · 1 active · 2 ready · 3 done, and s_ = the step, read
 // before this conversation counts: The Wickham Road is a word with her, so it's ready by the time she reads the letter).
-// Flags: met_dagny. Act III, chapters 1–2.
+// Flags: met_dagny. Act III: she takes in chapters 1, 3 and 6, and gives 2 and 5 (v1.54: Act III as told, world doc §6).
 
 VAR hero_name = ""
 VAR hero_class = ""
@@ -19,6 +19,12 @@ VAR boss_foreman = 0
 VAR q_ch3_the_wickham_road = -1
 VAR s_ch3_the_wickham_road = 0
 VAR q_ch3_short_shift = -1
+VAR q_ch3_paid_by_weight = -1
+VAR q_ch3_night_shift = -1
+VAR q_ch3_quota = -1
+VAR boss_morrow_vane = 0
+VAR boss_stoker = 0
+VAR frag_reach_count = 0
 
 == dagny_hub ==
 { q_ch3_the_wickham_road == 1 || q_ch3_the_wickham_road == 2: -> dagny_road_meet }
@@ -63,6 +69,9 @@ You give her Sister Ilse's letter. She reads it standing up, fast, and then the 
 { q_ch3_short_shift == 1 && with_tamsin == 0: "The Cold Seam. South, off the Wickham road, the old pithead. Bring her up. Tell her I said. She won't come if you say it was your idea." }
 { q_ch3_short_shift == 3 && with_tamsin == 1: "Tamsin. Wipe your face. No, the other side. Both sides." }
 { q_ch3_short_shift == 3 && with_tamsin == 0: "Tamsin's still down the Seam? Then she's mending something, and she'll come up when it's mended. Go and fetch her. Tell her it's broken up here." }
+{ q_ch3_paid_by_weight == 1: "Hob's sent you to the Yards. Hob sends everyone somewhere. This time he's right. Don't tell him." }
+{ q_ch3_night_shift == 3 && q_ch3_quota < 2: "The pens are empty. They didn't come home. They went down. Tamsin says she knows where. Tamsin always knows where." }
+{ q_ch3_quota == 3: "Forty-one home. I've counted them three times. I'll count them again tonight." }
 -> dagny_topics
 
 == dagny_greet_fallen ==
@@ -73,6 +82,12 @@ You give her Sister Ilse's letter. She reads it standing up, fast, and then the 
 + { q_ch3_short_shift == 2 } [The Foreman's down. #mark: quest ready] -> dagny_shift_turnin
 + { q_ch3_short_shift == 0 } [What's wrong at the Cold Seam? #mark: quest] -> dagny_shift_offer
 + { q_ch3_short_shift == 1 } [About the Cold Seam… #mark: quest active] -> dagny_shift_active
++ { q_ch3_paid_by_weight == 2 } [The night shift's rolls. #mark: quest ready] -> dagny_weight_turnin
++ { q_ch3_night_shift == 2 } [Morrow Vane ran. #mark: quest ready] -> dagny_night_turnin
++ { q_ch3_night_shift == 0 } [The rolls name the Cinderworks. #mark: quest] -> dagny_night_offer
++ { q_ch3_night_shift == 1 } [About the Cinderworks… #mark: quest active] -> dagny_night_active
++ { q_ch3_quota == 2 } [Furnace Nine's lamp is broken. #mark: quest ready] -> dagny_quota_turnin
++ { frag_reach_count == 12 } [The Reach's Chronicle is whole.] -> dagny_set
 + [The night shift?] -> dagny_night_shift
 + [What's the charter-moot?] -> dagny_moot
 + [Tell me about Ashgate.] -> dagny_ashgate
@@ -122,3 +137,49 @@ You tell her about the tally cave: the chutes, the whistle, the chalk crosses, a
 == dagny_bye ==
 {&"Mind the step. Everything in Ashgate's a step."|Dagny has gone back to her sums.|"If the moot asks, you were never here. If the Assay asks, the same."}
 -> END
+
+// ── Act III, chapter 3: Paid by Weight (content/quests/ch3_paid_by_weight.json, given by Hob): the rolls come to her ──
+== dagny_weight_turnin ==
+You put the night shift's rolls on her table. She reads them standing up, as she reads everything, and then sits down, which she never does.
+"Names. Ours and the Slagborn's, the same column. Hired at Kell's Rest, weighed at the Yards, and sent on." She turns the last page. "Every one of them sent to the Cinderworks. Not one of them quit." # quest: turnin ch3_paid_by_weight
+"The moot can argue about it now. It'll have something real to argue about. That'll frighten it."
+-> dagny_topics
+
+// ── Act III, chapter 5: Night Shift (content/quests/ch3_night_shift.json) ──
+== dagny_night_offer ==
+"The rolls name the Cinderworks. The Assay holds them in pens there, by the furnace hall, till the furnace wants them. The man who keeps the hall is the Assay's factor. Morrow Vane."
+"Gunnar says he's very polite. Gunnar says it as if it were the worst thing he knows about him."
++ [We'll open the pens. #mark: quest]
+    "North, up the track among the slag heaps. The furnace hall, the first floor. Vane will be there. Bring them home. Bring me him, if you can. I'd like to be polite back." # quest: accept ch3_night_shift
+    { boss_morrow_vane == 1: "You've been? And he's gone? Then come and tell me how." }
+    -> dagny_topics
++ [Not yet.]
+    "No. They've been in the pens a month. One more day." She doesn't believe it either.
+    -> dagny_topics
+
+== dagny_night_active ==
+"The Cinderworks, up the track. The furnace hall, and the pens beside it. Morrow Vane."
+-> dagny_topics
+
+== dagny_night_turnin ==
+You tell her how it went: Vane fighting beside the Assay's men, never once rude, and then, at the end, the door at the back of the hall, and the bolt going home on the other side.
+"A day ahead, then. On the Solmere road." Dagny's fingers move on the table, doing a sum. "With whatever they've been melting my miners into." # quest: turnin ch3_night_shift
+"He left his ledger. Of course he did. A man like that always leaves the paperwork for somebody else."
+-> dagny_topics
+
+// ── Act III, chapter 6: Quota (content/quests/ch3_quota.json, given by Tamsin): Act III ends a day behind ──
+== dagny_quota_turnin ==
+They come up the track behind you: the night shift, what's left of it, blinking at the day. Dagny counts them in at the gate with her fingers, one at a time, and doesn't stop when the count goes wrong.
+"Forty-one. There were more on the rolls." She keeps counting anyway. Then she stops.
+"And the thing they were feeding? Tamsin says the mould was empty. Cast and gone. On the Solmere road, a day ahead of you, with a polite man." # quest: turnin ch3_quota
+"Write to your Sister in Thornwick. Tell her it's on the Solmere road. She'll know what to be frightened of. I don't, and I'd rather not learn."
+"We got them home. Most of them. The moot will call that a win. Let it. I'll know."
+-> dagny_topics
+
+// ── the Reach's Chronicle, whole (world doc v1.54 §7) ──
+== dagny_set ==
+She reads the twelve through, slowly: the charter, the quota, the forge, the furnace. At the last one she puts her hand flat on the page.
+"So the clans didn't ask. Not us. Our great-grandmothers. It comes to the same, at the moot."
+"The quota office kept a strongroom, up the old track on the dead mountain's flank. The Ninth Vault. If the books are anywhere, they're there. Go and read them. Somebody from Ashgate should, and it can't be me. I'd never stop."
+-> dagny_topics
+

@@ -32,6 +32,10 @@ const ROWS = [
   { name: 'The Spider Queen (boss)', key: 'spiderqueen', spec: { kind: 'spiderqueen' }, height: 0.8 * 1.3, cy: 0.45, half: 1.15, yaw: -0.6, shots: SHOTS },
   // (the Cinder Reach, world doc v1.53: Gritch, called the Foreman, a goblin in a dead foreman's brass lamp-hat; docs/art-critic-pass-reach-cast.md)
   { name: 'Gritch, the Foreman (boss) · front', key: 'foremanf', spec: VAR.goblin_foreman, height: 0.86 * 1.3, cy: 0.58, half: 0.62, yaw: 0.3, shots: [['Idle', [0.3]], ['Attack', [0.4]], ['Cast', [0.5]]] },
+  { name: 'Cinder hound · front', key: 'houndf', spec: { kind: 'hound' }, height: 0.8, cy: 0.4, half: 0.45, yaw: 0.5, shots: [['Idle', [0.3]], ['Attack', [0.4]], ['Cast', [0.5]]] },
+  { name: 'Cinder hound', key: 'hound', spec: { kind: 'hound' }, height: 0.8, cy: 0.4, half: 0.6, yaw: -0.7, shots: SHOTS },
+  { name: 'Furnace Nine (region boss) · front', key: 'furnacef', spec: VAR.furnace, height: 2.0, cy: 1.15, half: 1.3, yaw: 0.45, shots: [['Idle', [0.3]], ['Heavy', [0.42]], ['Death', [0.99]]] },
+  { name: 'Furnace Nine (region boss)', key: 'furnace', spec: VAR.furnace, height: 2.0, cy: 1.15, half: 1.4, yaw: -0.5, shots: SHOTS },
   { name: 'Gritch, the Foreman (boss)', key: 'foreman', spec: VAR.goblin_foreman, height: 0.86 * 1.3, cy: 0.55, half: 0.8, yaw: -0.5, shots: SHOTS },
 ].filter((r) => !arg('only') || arg('only').split(',').includes(r.key));
 // --clips Attack,Heavy [--frames N]: each row through those clips instead, N moments of each (default 6), for reading a

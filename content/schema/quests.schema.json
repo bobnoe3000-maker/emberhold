@@ -478,9 +478,10 @@
     "trialLv": {
       "enum": [
         6,
-        12
+        12,
+        24
       ],
-      "description": "(M8) the trial's level: 6 teaches the class's level-6 ability, 12 its level-12 one (after the 6's trial)"
+      "description": "(M8) the trial's level: 6 teaches the class's level-6 ability, 12 its level-12 one (after the 6's trial); (v1.54) 24 its level-24 one, in the Reach (after the 12's)"
     }
   }
 }

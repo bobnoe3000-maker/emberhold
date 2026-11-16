@@ -25,7 +25,7 @@ const events = (sim, names) => { const ev = []; for (const e of names) sim.bus.o
 // (v1.48, one dungeon a level: GDD §3) a land's board sends you to the dungeon whose band holds your level, now and then
 // the one below; a floor is at its band's base + floor − 1 and its hall keeps that level; waves, chests and elites are
 // wanted at your level within the dungeon's band
-const BANDS = { vale: ['barrows', 'wickham_keep', 'sunken_chapel'], fens: ['toadking_mound', 'canal_locks', 'drowned_abbey'] };
+const BANDS = { vale: ['barrows', 'wickham_keep', 'sunken_chapel'], fens: ['toadking_mound', 'canal_locks', 'drowned_abbey'], reach: ['cold_seam', 'assay_yards', 'forgehall', 'cinderworks'] };
 const yoursAt = (region, lv) => { const all = BANDS[region], i = all.findIndex((id) => SITES[id].base <= lv && lv <= SITES[id].base + 2); return i >= 0 ? i : lv < SITES[all[0]].base ? 0 : all.length - 1; };
 // (2026-11-02) an authored band's floor hall is a level up from its floor's first rooms (plans.js): floor 1's at base + 1
 const placeLv = (j) => { const S = SITES[j.site]; return j.tpl === 'warden' && S.plan ? S.base + j.floor : j.tpl === 'delve' || j.tpl === 'warden' ? S.base + j.floor - 1 : Math.max(S.base, Math.min(j.lv, S.base + 2)); };
@@ -231,3 +231,34 @@ test('Saltmere\'s board posts the Fens\' jobs; Thornwick\'s the Vale\'s', async 
   const words = Object.fromEntries(TEMPLATES.map((t) => [t, JSON.parse(readFileSync(`content/board/${t}.json`, 'utf8'))]));
   for (const t of TEMPLATES) { const f = words[t].fens; assert.ok(f, `${t} has the Fens' words`); assert.ok(/\{site\}/.test(f.journal) && /Drowned Eel/.test(f.ready), t); }
 });
+
+// (v1.54) Ashgate's board: the Reach's jobs, its ids ending _reach, in the Reach's four band dungeons (the Ninth Vault, a
+// secret, never), each by the band rule; the Reach's own words, posted by Ashgate's people; the Fens' and the Vale's
+// postings draw as they did
+const CANON_REACH = ['Dagny Coalbrook', 'Bel Ruddle', 'Old Brannagh', 'Lantern Guild', 'Haldor', 'Wynn Sallow', 'Hob', 'Gunnar Slagg', 'Mother Coke', 'Widow Pellam'];
+test('Ashgate\'s board posts the Reach\'s jobs, in its own words', async () => {
+  const { offersIn } = await import('../src/sim/board.js');
+  const sites = new Set();
+  for (let lv = 19; lv <= 30; lv++) for (let d = 0; d < 12; d++) for (const h of [0, 1]) {
+    const jobs = offersIn(SEED, d, lv, h, 'reach');
+    assert.ok(jobs.length >= 3, `L${lv} day ${d}`);
+    for (const j of jobs) {
+      assert.match(j.id, /_reach$/); assert.equal(j.region, 'reach'); assert.deepEqual(jobOf(SEED, j.id), j, 'the id rebuilds the job');
+      const S = SITES[j.site]; assert.equal(S.region, 'reach'); assert.ok(!S.hidden && !S.secret && S.band, `${j.site} is open, a band`);
+      checkPlace(j, 'reach'); sites.add(j.site);
+    }
+  }
+  assert.deepEqual([...sites].sort(), [...BANDS.reach].sort(), 'every band dungeon of the Reach, in its turn');
+  assert.notDeepEqual(offersIn(SEED, 3, 21, 0, 'reach').map((j) => j.tpl), [], 'a posting');
+  const sim = createSim(SEED, undefined, { scene: 'town', region: 'reach' }); setLv(sim, 20); sim.tick();
+  const offers = sim.board.offers(); assert.ok(offers.length && offers.every((j) => j.region === 'reach'), 'Ashgate\'s board is the Reach\'s');
+  const back = createSim(1); back.restore(JSON.parse(JSON.stringify(sim.snapshot()))); assert.equal(back.state.board.region, 'reach', 'the posting\'s land survives a save');
+  push(sim, { type: 'boardAccept', id: offers[0].id }); assert.equal(sim.quests.status(offers[0].id), QS.ACTIVE);
+  for (const t of TEMPLATES) {
+    const f = JSON.parse(readFileSync(`content/board/${t}.json`, 'utf8')).reach; assert.ok(f, `${t} has the Reach's words`);
+    assert.ok(/\{site\}/.test(f.journal) && /Slag & Bellows/.test(f.ready), t);
+    for (const x of [f.brief.one, f.brief.many, f.journal, f.label, f.ready, f.done, ...f.titles, ...f.hooks.map((q) => q.text)]) assert.ok(!/\{(?!n\}|floor\}|site\})/.test(x), `${t} (reach): unknown slot in "${x}"`);
+    for (const q of f.hooks) { const c = CANON_REACH.find((n) => q.by.includes(n)); assert.ok(c && world.includes(c), `${t} (reach): "${q.by}" isn't canon`); }
+  }
+});
+

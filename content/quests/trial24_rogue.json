@@ -1,0 +1,40 @@
+{
+  "id": "trial24_rogue",
+  "kind": "trial",
+  "title": "Light Fingers",
+  "giver": "hob",
+  "region": "reach",
+  "level": [
+    1,
+    60
+  ],
+  "trial": "rogue",
+  "trialLv": 24,
+  "summary": "Hob wants five of the Assay guard-captains' passes, lifted off them in the Yards. A rogue of yours will learn something about getting close.",
+  "steps": [
+    {
+      "id": "yards",
+      "journal": "The Assay Yards: put down five of the guard-captains who lead every fifth lot.",
+      "objectives": [
+        {
+          "type": "elites",
+          "site": "assay_yards",
+          "count": 5,
+          "label": "Guard-captains in the Assay Yards"
+        }
+      ]
+    }
+  ],
+  "ready": "Five passes, no questions. Take them to Hob by the well in Ashgate.",
+  "done": "Hob sold four of the passes back to the Assay. He kept one for you.",
+  "rewards": {
+    "share": 0.3,
+    "lv": 24,
+    "gold": 240
+  },
+  "dialogue": {
+    "file": "ashgate",
+    "offer": "hob_trial_offer",
+    "turnin": "hob_trial_turnin"
+  }
+}

@@ -186,7 +186,7 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
   let devSaid = '';
   function devDo(cmds, say) { if (!devApply) return; devApply(cmds); devSaid = say(); draw(); }
   function Developer() {
-    const S = sim.state, all = TRIAL_CLASSES.length * 2, done = TRIAL_CLASSES.reduce((n, c) => n + (S.trials[c] ? 1 : 0) + (S.trials[c + '12'] ? 1 : 0), 0);
+    const S = sim.state, all = TRIAL_CLASSES.length * 3, done = TRIAL_CLASSES.reduce((n, c) => n + (S.trials[c] ? 1 : 0) + (S.trials[c + '12'] ? 1 : 0) + (S.trials[c + '24'] ? 1 : 0), 0);
     const pts = (m) => { const a = pendingPoints(m), k = pendingSkillPoints(m); return a || k ? `${a ? `${a} stat point${a > 1 ? 's' : ''}` : ''}${a && k ? ' · ' : ''}${k ? `${k} skill point${k > 1 ? 's' : ''}` : ''} to spend` : 'no points to spend'; };
     const open = (m) => ladderOf(m.cls).filter((q) => unlocked(m, q, S.trials)).length, carried = (m) => ladderOf(m.cls).length;   // (abilities and passives: the ladder, skills.js)
     const up = (m, n) => devDo(Array.from({ length: Math.min(n, DEV_LEVEL_MAX - m.level) }, () => ({ type: 'devLevel', id: m.id })),
@@ -206,7 +206,7 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
       <div class="devnote">A level comes as one fought for does: 3 stat points, a skill point at every even level, the HP it brings. A dev game never counts as verified progress once saves go online.</div>
       <div class="devsaid" role="status">${devSaid}</div>
       <button disabled=${done >= all || !S.created} onClick=${() => devDo([{ type: 'devUnlockSkills' }], () => 'Every skill unlocked: each opens at its level (6, 12)')}>
-        Unlock every skill<small>${done >= all ? 'done: every class’s level-6 and level-12 trials' : `every class’s trials, as if done (${done} of ${all} now): each skill opens at its level`}</small></button>
+        Unlock every skill<small>${done >= all ? 'done: every class’s level-6, 12 and 24 trials' : `every class’s trials, as if done (${done} of ${all} now): each skill opens at its level`}</small></button>
       ${S.created && S.party.map((m) => html`<div key=${m.id}>
         <div class="devwho">${m.name}<small>${(CLASSES[m.cls] || CLASSES.fighter).label} · level ${m.level} · ${pts(m)} · ${open(m)} of ${carried(m)} skills open</small></div>
         <div class="row">

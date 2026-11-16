@@ -137,6 +137,8 @@ there's one at 24 (decision 6).
 
 ## The region boss: Furnace Nine
 
+**Built (GDD v1.126):** at half past every hour, at the Vault's mouth (camps.js `reach_mouth`, the furnace yard west of the ruin), from level 25 once broken; it feeds on the fallen (2 % a fallen member who isn't raised); heirloom *Quota*; 2–5 companies win in 5.0–6.4 min (tools/balance/regionboss.mjs --boss furnace_nine).
+
 As the Kingstone is the Fens': once the story has broken Furnace Nine, it **relights on its own** (*"It learned to
 feed itself"*). The first 15 minutes of every hour it burns in the Magma Vault's hall, and companies from level 25
 can go down and break it again. Its mechanic (the development plan's region-boss table): it vents lava where it's marked, and it **feeds on
@@ -173,6 +175,63 @@ Each step ends playable and checked (`npm run check`, the browser suite, the pac
 9. **Art pass**: the Reach's kit in 3D, the critic passes, captures.
 
 Steps 3 to 6 each come with their act chapters, so the story can be played as far as it's built.
+
+## The build sheet (2026-11-16, the owner: "Ok do all of this. Yes a class trial at 24 in the reach")
+
+Every id the rest of Act III is built against, fixed before the work is split, so the sim, the story, the models and the
+looks meet. Canon for the names is world doc §3.3 (v1.53, and v1.54 for what this adds).
+
+**Sites** (sim/sites.js; doors on the Reach's overland, outdoor.js `REACH`):
+
+| id | name | levels | floors (plan kits) | families | bosses |
+|---|---|---|---|---|---|
+| `assay_yards` | The Assay Yards | 22–24 | 2 (`yards`, `quota`) | `yards`, `quota` | floor 2 `weighmaster` |
+| `forgehall` | The Forgehall of Oruth | 25–27 | 2 (`forge`, `deepforge`) | `forge`, `deepforge` | floor 2 `oruth` |
+| `cinderworks` | The Cinderworks | 28–30 | 2 (`works`, `vault`: the Magma Vault) | `works`, `vault` | floor 1 `morrow_vane`, floor 2 `stoker` |
+| `ninth_vault` | The Ninth Vault | 30 (secret) | 1 (`strongroom`) | `ashbound` | its vault, `the_quota_ledgers` |
+
+**Foe kinds** (battle.js ENEMIES; art: renderer.js ENEMY_ACTOR → the actor in brackets):
+`assay_guard` (melee; the KayKit knight in the Assay's grey and brass: `enemy_assay_guard`), `assay_xbow` (a crossbow;
+the KayKit rogue/crossbowman in grey and brass: `enemy_assay_xbow`), `renegade` (melee; a Slagborn, the barbarian
+short and broad, braids and soot: `enemy_renegade`), `forgewight` (melee, undead; an Ashbound skeleton in forge leathers
+and a hammer, its eyes and cracks lit: `enemy_forgewight`, new silhouette 2), `cinderhound` (melee, fast; the shared
+quadruped, big, ember-cracked: `creature_cinderhound`, new silhouette 1), `furnacepriest` (a caster; the Cult acolyte in
+a leather apron with a lit censer: `enemy_furnacepriest`). Kept: `hauler`, `gob`, the Redhand's `cutthroat` / `brute` /
+`crossbow`, the Ashbound's `warrior` / `minion` / `rogue` / `mage`.
+
+**Families:** `yards` (assay_guard, cutthroat · assay_xbow, crossbow · elite brute: Nan Ruddock's Redhand on the gate),
+`quota` (assay_guard, hauler · assay_xbow · elite hauler), `forge` (forgewight, renegade · mage · elite forgewight),
+`deepforge` (forgewight, warrior · mage · elite forgewight), `works` (assay_guard, cinderhound · furnacepriest,
+assay_xbow · elite cinderhound), `vault` (cinderhound, warrior · furnacepriest · elite cinderhound).
+
+**Bosses** (battle.js BOSSES; art `boss_<id>`):
+- `weighmaster`, the Weighmaster (mech `scales`): every so often he weighs the company, and the one with the most life
+  left takes his hardest blow, told on the ground first. Heirloom `short_weight`.
+- `oruth`, Oruth the Forgemaster (mech `anvil`): he goes to his anvil and forges; unspoiled, the piece goes to his
+  wights (one of them rises re-armed and stronger); enough damage while he works spoils it. Heirloom `oruths_last_commission`.
+- `morrow_vane`, Morrow Vane (mech `flee`): fights with the Assay's men; at a quarter of his life he runs and is gone,
+  which counts as his fall for the story. No heirloom; he leaves his ledger (a Chronicle fragment).
+- `stoker`, the Stoker, Furnace Nine's keeper, a Cult furnace-priest (mech `vents`): slag vents where the floor glows
+  first. Furnace Nine's lamp (lamps.js `furnace_nine`) breaks with him and the night shift goes free.
+- `furnace_nine`, Furnace Nine, the region boss (ring.js, its window at half past every hour, from level 25), at the
+  Magma Vault's mouth on the overland: vents, and it feeds on the fallen. Heirloom `quota`.
+
+**Kell's Rest:** a landmark village on the overland with its people standing in it (no services yet: a second town in a
+land is a bigger change, noted for later). **Spawn points** (camps.js, one a band): `reach_den` the cinder hounds' den
+(the old Slag Tunnels' adit, a nest, 20), `reach_renegades` the renegades' camp in the black slag hills (23),
+`reach_haulers` the haulers' road on the Cinderworks' track (26), `reach_wagon` the Assay's ore wagon on the Kell road,
+the Redhand guarding it (29).
+
+**People** (content/npcs; art `npc_<id>`): Kell's Rest's `nan_ruddock` (the Redhand's sergeant on the Yards' gate, met
+outside it), `assay_clerk` (`npc_clerk`, a nervous Assay clerk at Kell's Rest who sells nothing and says too much).
+
+**Story** (quests.js + content/quests + Ink): `ch3_paid_by_weight` (Hob; the Weighmaster), `ch3_gone_back_to_work`
+(Mother Coke; Oruth), `ch3_night_shift` (Dagny; Morrow Vane), `ch3_quota` (Tamsin; the Stoker, Furnace Nine's lamp: Act
+III ends). Tamsin's chain: `tamsin_*`. Side quests: `gunnar_*` (his shame), `brannagh_*` (the shrine). The Reach's
+Chronicle set: twelve fragments `frag_reach_*`, the set revealing `ninth_vault`. **The class trials at 24** (the owner):
+one a class in the Reach, each teaching that class's level-24 ability (skills.js `trialKey` → `<cls>24`):
+`trial24_fighter` (Haldor), `trial24_rogue` (Hob), `trial24_mage` (Tamsin), `trial24_cleric` (Old Brannagh),
+`trial24_shaman` (Mother Coke).
 
 ## Decisions for the owner
 

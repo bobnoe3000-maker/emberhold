@@ -55,6 +55,16 @@ export const DRESS = {
   // the goblins dug through into it (raw rock, their fires and their spoil)
   pithead:  { rooms: ['cellar', 'storehouse', 'cave'], decor: ['lantern', 'crates', 'sacks'], obstacles: ['boulder', 'spoil', 'stalagmite'], pools: 1, pool: 'still' },
   warren:   { rooms: ['cave', 'camp', 'cave'], decor: ['spoil', 'bones', 'sacks'], obstacles: ['stalagmite', 'boulder', 'spoil'] },
+  // (v1.126) the Assay Yards (the yards and the counting house; the cellars and the quota office), the Forgehall (its
+  // anvil hall; the deep forges), the Cinderworks (the works; the Magma Vault), the Ninth Vault's strongroom
+  yards:    { rooms: ['storehouse', 'barracks', 'bailey'], decor: ['crates', 'barrels', 'lantern'], obstacles: ['pillar', 'spoil', 'brokenpillar'] },
+  quota:    { rooms: ['cellar', 'storehouse', 'barracks'], decor: ['chains', 'barrels', 'lantern'], obstacles: ['pillar', 'pillar', 'brokenpillar'] },
+  forge:    { rooms: ['muster', 'colonnade', 'storehouse'], decor: ['rack', 'chains', 'brazier'], obstacles: ['pillar', 'brokenpillar', 'spoil'] },
+  deepforge:{ rooms: ['muster', 'binding', 'colonnade'], decor: ['chains', 'rack', 'brazier'], obstacles: ['pillar', 'bound', 'brokenpillar'] },
+  works:    { rooms: ['storehouse', 'camp', 'barracks'], decor: ['crates', 'sacks', 'chains'], obstacles: ['pillar', 'spoil', 'gibbet'] },
+  vault:    { rooms: ['cave', 'binding', 'cave'], decor: ['chains', 'brazier', 'bones'], obstacles: ['stalagmite', 'boulder', 'spoil'] },
+  // (obstacles stand: never a decor piece, crates or a rack, which the room rule would count in every kit's rooms)
+  strongroom: { rooms: ['muster', 'storehouse', 'muster'], decor: ['urns', 'candles', 'crates'], obstacles: ['pillar', 'pillar', 'brokenpillar'] },
 };
 // An authored room (plans.js), dressed for what it was (the dressing pass: docs/vale-dungeon-dressing.md). Its plan's
 // `dress` names the pieces; each name is a small recipe here, placed by the room's own axes: u along its length, v
@@ -82,10 +92,12 @@ export const DRESS_CAP = { urns: 4, bones: 4, well: 1, hen_cart: 1, map_table: 1
 /** what stands out on an authored room's floor, by its place (not the kit's whole list: a gibbet in the stables and the
  *  gate-warden's chapel, a monolith in the legion's vault, said nothing) */
 const PLAN_OB = { dig: ['spoil', 'brokenpillar'], gallery: ['pillar', 'brokenpillar'], muster: ['pillar'], bailey: ['pillar'], barracks: ['pillar'], cellar: ['stalagmite', 'boulder'], nave: ['pillar', 'brokenpillar'], cultcut: ['brokenpillar', 'spoil'], binding: ['pillar'],
-  mound: ['reeds'], locks: ['pillar'], vats: ['pillar'], abbey: ['pillar', 'brokenpillar'], pithead: ['boulder', 'spoil'], warren: ['stalagmite', 'boulder'] };   // (v1.124: the Cold Seam)   // (v1.102: the Fens authored)
+  mound: ['reeds'], locks: ['pillar'], vats: ['pillar'], abbey: ['pillar', 'brokenpillar'], pithead: ['boulder', 'spoil'], warren: ['stalagmite', 'boulder'],
+  yards: ['pillar', 'spoil'], quota: ['pillar'], forge: ['pillar', 'brokenpillar'], deepforge: ['pillar'], works: ['pillar', 'spoil'], vault: ['stalagmite', 'boulder'], strongroom: ['pillar'] };   // (v1.126)   // (v1.124: the Cold Seam)   // (v1.102: the Fens authored)
 const DOOR_LIGHT = { dig: 'lantern', gallery: 'candles', muster: 'torch', bailey: 'torch', barracks: 'torch', cellar: 'lantern', nave: 'candelabra', cultcut: 'candles', binding: 'candles',
-  mound: 'lantern', locks: 'lantern', vats: 'lantern', abbey: 'candelabra', pithead: 'lantern', warren: 'torch' };   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
-const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave' };
+  mound: 'lantern', locks: 'lantern', vats: 'lantern', abbey: 'candelabra', pithead: 'lantern', warren: 'torch',
+  yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra' };   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
+const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave', yards: 'storehouse', quota: 'cellar', forge: 'muster', deepforge: 'binding', works: 'storehouse', vault: 'cave', strongroom: 'muster' };
 const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', crates: 'crates', sacks: 'sacks', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', skulls: 'bones', bones: 'bones', barrels: 'barrels' };
 function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, count }) {
   // every piece through the room's caps (CAP): a recipe can't stand a second well or a fifth torch

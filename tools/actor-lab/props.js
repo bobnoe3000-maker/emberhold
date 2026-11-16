@@ -649,6 +649,106 @@ export const PROPS = {
   beardbraids: () => greatBeard({ name: 'Beard_Braids', hair: 0x4a4440, len: 0.8, braids: true }),   // Gunnar's, iron-grey, braided, his rings gone dull
   beardrust: () => greatBeard({ name: 'Beard_Rust', hair: 0x7e3a1e, len: 0.75, braids: true }),       // a Slagborn picker's
   beardchestnut: () => greatBeard({ name: 'Beard_Chestnut', hair: 0x6e3e24, len: 0.85 }),            // a Deepdelver miner's
+  beardash: () => greatBeard({ name: 'Beard_Ash', hair: 0x8a8278, len: 1.15, braids: true }),          // Oruth's, ash-grey, three centuries in the forge
+  beardcut: () => greatBeard({ name: 'Beard_Cut', hair: 0x2e2620, len: 0.45, braids: true }),         // a renegade's, the clan's braids hacked short
+
+  // ── the rest of Act III (reach-plan.md "The build sheet"; docs/art-critic-pass-reach-cast.md) ──
+  // the Kell Assay's badge (the chest's space, on the breast): a brass disc, a scale-beam over a pick
+  assaybadge: () => {
+    const g = new THREE.Group(); g.name = 'Assay_Badge';
+    const brass = mat(0xd0a048, 0.85, 0.32), dark = mat(0x3a2a10, 0.6, 0.5);
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.03, 18), brass); disc.rotation.x = Math.PI / 2; disc.position.set(0, 0.06, 0.43); g.add(disc);
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.02, 0.012), dark); beam.position.set(0, 0.1, 0.45); g.add(beam);
+    for (const s of [-1, 1]) { const pan = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.015, 0.012), dark); pan.position.set(s * 0.07, 0.06, 0.45); g.add(pan); }
+    const pick = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.14, 0.012), dark); pick.position.set(0, 0.03, 0.45); g.add(pick);
+    return g;
+  },
+  // a renegade's war-pick (a weapon: held as the kit's are, not hanging)
+  warpick: () => { const g = PROPS.pickaxe(); g.name = 'War_Pick'; delete g.userData.hang; g.scale.setScalar(1.15); return g; },
+  // a forge-wight's sledge: an iron head as big as its skull, its striking face still hot
+  forgehammer: () => sledge({ name: 'Forge_Sledge', haft: 1.0, head: [0.48, 0.24, 0.24], hot: true }),
+  // Oruth's great hammer: the empire's forge-hammer, brass-banded, the clans' runes along its head lit
+  greathammer: () => sledge({ name: 'Oruth_Hammer', haft: 1.45, head: [0.72, 0.34, 0.34], hot: true, bands: true }),
+  // a smith's gauntlet (the lower arm's space, over the wrist): a thick leather cuff
+  gauntlet: () => { const g = new THREE.Group(); g.name = 'Smith_Gauntlet'; const c = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.26, 10), mat(0x5a3a22, 0, 0.85)); c.position.y = 0.3; g.add(c); return g; },
+  // the binding's shackle (the lower arm's space): an iron cuff at the wrist, a broken chain hanging off it
+  shackle: () => {
+    const g = new THREE.Group(); g.name = 'Binding_Shackle';
+    const iron = mat(0x4a4644, 0.8, 0.5), rust = mat(0x6a3a22, 0.4, 0.7);
+    const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.16, 10), iron); cuff.position.y = 0.3; g.add(cuff);
+    for (let k = 0; k < 5; k++) { const l = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.016, 4, 8), k % 2 ? rust : iron); l.scale.y = 1.5; l.position.set(0.14, 0.26 - k * 0.12, 0.04); if (k % 2) l.rotation.y = Math.PI / 2; g.add(l); }
+    return g;
+  },
+  // the forge-wight's lit cracks (the chest's space, over the ribcage): the binding's fire showing through the bone
+  embercracks: () => {
+    const g = new THREE.Group(); g.name = 'Ember_Cracks';
+    const hot = new THREE.MeshStandardMaterial({ color: 0xffa040, emissive: 0xe05a10, emissiveIntensity: 1.6, roughness: 0.5 });
+    const core = new THREE.Mesh(new THREE.IcosahedronGeometry(0.08, 0), hot); core.position.set(0.0, 0.05, 0.12); core.name = 'Ember_Cracks_Core'; core.userData.glow = 0xff8030; g.add(core);
+    for (const [x, y, a, l] of [[-0.12, 0.12, 0.6, 0.18], [0.1, 0.16, -0.5, 0.16], [-0.06, -0.06, -0.3, 0.14], [0.13, -0.02, 0.4, 0.15]]) {
+      const c = new THREE.Mesh(new THREE.BoxGeometry(0.025, l, 0.03), hot); c.position.set(x, y, 0.2); c.rotation.z = a; c.name = 'Ember_Cracks_Seam'; c.userData.glow = 0xff8030; g.add(c);
+    }
+    return g;
+  },
+  // a furnace-priest's censer: a pierced brass ball of coals on a chain, smoking, carried hanging (it swings in the casts)
+  censer: () => censerOf(1),
+  bigcenser: () => censerOf(1.5),
+  // the Weighmaster's scale-pan, swung on its chain like a flail (hanging)
+  scalepan: () => {
+    const g = new THREE.Group(); g.name = 'Scale_Pan'; g.userData.hang = true;
+    const brass = mat(0xd0a048, 0.85, 0.32), iron = mat(0x4a4644, 0.8, 0.5);
+    for (let k = 0; k < 6; k++) { const l = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.014, 4, 8), iron); l.scale.y = 1.5; l.position.y = 0.06 + k * 0.1; if (k % 2) l.rotation.y = Math.PI / 2; g.add(l); }
+    for (let k = 0; k < 3; k++) { const a = (k / 3) * Math.PI * 2, c = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.3, 4), iron); c.position.set(Math.cos(a) * 0.1, 0.78, Math.sin(a) * 0.1); c.rotation.set(Math.sin(a) * 0.35, 0, -Math.cos(a) * 0.35); g.add(c); }
+    const pan = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.16, 0.08, 16), brass); pan.position.y = 0.95; pan.name = 'Scale_Pan_Pan'; g.add(pan);
+    return g;
+  },
+  // a clerk's black over-sleeve (the lower arm's space): the Weighmaster keeps his coat clean
+  sleeveguard: () => { const g = new THREE.Group(); g.name = 'Sleeve_Guard'; const c = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.13, 0.36, 10), mat(0x1e1c1e, 0, 0.8)); c.position.y = 0.2; g.add(c); return g; },
+  // Morrow Vane's sword-cane: a slim blade out of a black cane, its silver knob for a hilt
+  swordcane: () => {
+    const g = new THREE.Group(); g.name = 'Sword_Cane';
+    const steel = mat(0xb8c0c8, 0.9, 0.28), black = mat(0x1a1818, 0.3, 0.4), silver = mat(0xc8ccd0, 0.9, 0.3);
+    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.3, 8), black); grip.position.y = 0.0; g.add(grip);
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), silver); knob.position.y = -0.17; g.add(knob);
+    const ferrule = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.04, 8), silver); ferrule.position.y = 0.16; g.add(ferrule);
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.055, 1.05, 0.016), steel); blade.position.y = 0.7; blade.name = 'Sword_Cane_Blade'; g.add(blade);
+    return g;
+  },
+  // the Stoker's rake: a long iron bar, hooked and red-hot at its end, for drawing the furnace (two-handed)
+  poker: () => {
+    const g = new THREE.Group(); g.name = 'Furnace_Rake';
+    const iron = mat(0x3a3836, 0.85, 0.45), wood = mat(0x5a3e24, 0, 0.8), hot = new THREE.MeshStandardMaterial({ color: 0xffa050, emissive: 0xe05a10, emissiveIntensity: 1.5, roughness: 0.5 });
+    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.4, 8), wood); grip.position.y = 0.0; g.add(grip);
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 1.6, 6), iron); bar.position.y = 0.95; g.add(bar);
+    const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.3, 6), hot); tip.position.y = 1.85; tip.name = 'Furnace_Rake_Tip'; tip.userData.glow = 0xff8030; g.add(tip);
+    const hook = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.07, 0.05), hot); hook.position.set(0.14, 1.98, 0); hook.name = 'Furnace_Rake_Hook'; hook.userData.glow = 0xff8030; g.add(hook);
+    return g;
+  },
+  // a stoker's leather mask over the mouth and nose (the head bone's space: the face's front at z ≈ 0.5), brass-riveted
+  facemask: () => {
+    const g = new THREE.Group(); g.name = 'Soot_Mask';
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.5, 0.36, 18, 1, true, -1.0, 2.0), new THREE.MeshStandardMaterial({ color: 0x2a2220, roughness: 0.9, side: THREE.DoubleSide })); m.position.set(0, 0.2, -0.02); g.add(m);
+    for (const s of [-1, 1]) { const r = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 5), mat(0xc89a48, 0.85, 0.35)); r.position.set(s * 0.32, 0.26, 0.42); g.add(r); }
+    g.traverse((o) => { if (o.isMesh) o.name = 'Soot_Mask'; });
+    return g;
+  },
+  // a Redhand halberd (Nan Ruddock's, on the Yards' gate): an ash pole, an axe-blade and a spike, a red tassel; carried upright
+  halberd: () => {
+    const g = new THREE.Group(); g.name = 'Halberd'; g.userData.hang = 'up';
+    const wood = mat(0x6a4a2a, 0, 0.8), steel = mat(0x8a9098, 0.85, 0.35), red = mat(0x9a2a20, 0, 0.8);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 2.2, 8), wood); pole.position.y = 0.3; g.add(pole);
+    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.36, 6), steel); spike.position.y = 1.58; g.add(spike);
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.32, 0.03), steel); blade.position.set(0.17, 1.26, 0); blade.name = 'Halberd_Blade'; g.add(blade);
+    const fluke = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.2, 4), steel); fluke.rotation.z = Math.PI / 2; fluke.position.set(-0.12, 1.26, 0); g.add(fluke);
+    const tassel = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.2, 8), red); tassel.position.set(0, 1.0, 0); g.add(tassel);
+    return g;
+  },
+  // a clerk's spectacles (the head bone's space): two brass-wire rounds on the eyes and a bridge
+  specs: () => {
+    const g = new THREE.Group(); g.name = 'Spectacles'; const wire = mat(0xc8a050, 0.85, 0.35);
+    for (const s of [-1, 1]) { const r = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.018, 5, 14), wire); r.position.set(s * 0.17, 0.36, 0.55); g.add(r); }
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.02, 0.02), wire); b.position.set(0, 0.38, 0.56); g.add(b);
+    return g;
+  },
   // a mill-hand's kerchief, rust-red, tied over the hair (the head bone's space, as the hood)
   kerchief: () => hoodShell({ name: 'Kerchief', cloth: 0x8a3e24, shade: 0x3a160c, open: 0.86, rz: 0.66, tip: 0.12 }),
   // a widow's black hood and veil (Widow Pellam's)
@@ -662,6 +762,28 @@ function apronOf({ name, cloth, strap, z = 0.33 }) {
   const bib = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.4, 0.04), C); bib.position.set(0, 0.32, z); bib.rotation.x = -0.08; bib.name = name + '_Bib'; g.add(bib);
   for (const x of [-0.1, 0.1]) { const sk = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.34, 0.04), C); sk.position.set(x, -0.1, z - 0.03); sk.rotation.x = 0.12; sk.name = name + '_Skirt'; g.add(sk); }
   const belt = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.06, 0.06), S); belt.position.set(0, 0.11, z + 0.02); g.add(belt);
+  return g;
+}
+// a sledge (a weapon, along +y from the grip): an ash haft, an iron head; `hot` its striking face lit, `bands` brass rings
+function sledge({ name, haft, head, hot = false, bands = false }) {
+  const g = new THREE.Group(); g.name = name;
+  const wood = mat(0x5a3e24, 0, 0.8), iron = mat(0x3a3a3e, 0.85, 0.4), brass = mat(0xc89a48, 0.85, 0.35);
+  const lit = new THREE.MeshStandardMaterial({ color: 0xffa050, emissive: 0xe05a10, emissiveIntensity: 1.5, roughness: 0.45 });
+  const h = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, haft, 8), wood); h.position.y = haft / 2 - 0.15; g.add(h);
+  const y = haft - 0.12, hd = new THREE.Mesh(new THREE.BoxGeometry(...head), iron); hd.position.y = y; hd.name = name + '_Head'; g.add(hd);
+  if (hot) for (const s of [-1, 1]) { const f = new THREE.Mesh(new THREE.BoxGeometry(0.03, head[1] * 0.8, head[2] * 0.8), lit); f.position.set(s * (head[0] / 2 + 0.01), y, 0); f.name = name + '_Face'; f.userData.glow = 0xff8030; g.add(f); }
+  if (bands) for (const x of [-head[0] * 0.28, head[0] * 0.28]) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.05, head[1] + 0.03, head[2] + 0.03), brass); b.position.set(x, y, 0); g.add(b); }
+  return g;
+}
+// a censer on its chain (hangs plumb): a pierced brass ball, its coals lit, smoke over it
+function censerOf(k) {
+  const g = new THREE.Group(); g.name = k > 1 ? 'Great_Censer' : 'Censer'; g.userData.hang = true; g.scale.setScalar(k);
+  const brass = mat(0xb08a3a, 0.85, 0.4), iron = mat(0x3a3836, 0.8, 0.5), smoke = mat(0x4a4644, 0, 1);
+  const coals = new THREE.MeshStandardMaterial({ color: 0xffa050, emissive: 0xe0501a, emissiveIntensity: 1.5, roughness: 0.6 });
+  for (let i = 0; i < 4; i++) { const l = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.012, 4, 8), iron); l.scale.y = 1.5; l.position.y = 0.06 + i * 0.09; if (i % 2) l.rotation.y = Math.PI / 2; g.add(l); }
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), brass); ball.position.y = 0.52; g.add(ball);
+  const glow = new THREE.Mesh(new THREE.SphereGeometry(0.155, 10, 8, 0, Math.PI * 2, Math.PI * 0.42, Math.PI * 0.16), coals); glow.position.y = 0.52; glow.name = g.name + '_Coals'; glow.userData.glow = 0xff8030; g.add(glow);   // (a band of slots round its waist, the coals showing)
+  for (const [x, y, z, r] of [[0.06, 0.32, 0.05, 0.07], [-0.05, 0.24, -0.02, 0.06]]) { const s = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), smoke); s.position.set(x, y, z); g.add(s); }   // (smoke rising past the chain: hanging, up is −y here)
   return g;
 }
 // a long beard (the head bone's space: the chin at y ≈ 0, the face's front at z ≈ 0.5): a full bib from the jaw down over

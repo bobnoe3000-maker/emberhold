@@ -34,7 +34,7 @@ import { statsFor } from '../sim/party.js';
 import { shotOf, abilityMods } from '../sim/items.js';
 import { healsLeft } from '../sim/skills.js';
 import { campsOf, campUp, CAMP_BY } from '../sim/camps.js';
-import { RING, paidFor } from '../sim/ring.js';
+import { RINGS, ringByCamp, paidFor } from '../sim/ring.js';
 
 const INTERACT = new Set(['chest', 'shrine', 'stairs', 'stairwell']);   // props a tap can target
 // Actor atlases (tools/actor-lab/bake.cjs) store one row per screen octant:
@@ -54,11 +54,16 @@ const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', ro
   mudtoad: 'creature_toad', gulper: 'creature_gulper',   // (v1.83) the Toadking's toads, built in code
   rat_king: 'boss_ratking', spider_queen: 'boss_spiderqueen',
   kingstone: 'creature_golem',
-  hauler: 'enemy_hauler', foreman: 'boss_foreman' };   // (v1.53) the Cold Seam's: a slag hauler, the hod on his back; Gritch, a goblin in a dead foreman's lamp-hat   // (v1.105) the Kingstone: the golem drawn twice its size (BIG), four times a man
+  hauler: 'enemy_hauler', foreman: 'boss_foreman',
+  // (the rest of Act III, reach-plan.md "The build sheet": the Assay's men, the Slagborn renegades, the forge-wights, the
+  // cinder hounds (built in code), the Cult's furnace-priests; the Reach's bosses, and Furnace Nine, the region boss)
+  assay_guard: 'enemy_assay_guard', assay_xbow: 'enemy_assay_xbow', renegade: 'enemy_renegade', forgewight: 'enemy_forgewight',
+  cinderhound: 'creature_cinderhound', furnacepriest: 'enemy_furnacepriest',
+  weighmaster: 'boss_weighmaster', oruth: 'boss_oruth', morrow_vane: 'boss_morrow_vane', stoker: 'boss_stoker', furnace_nine: 'boss_furnace_nine' };   // (v1.53) the Cold Seam's: a slag hauler, the hod on his back; Gritch, a goblin in a dead foreman's lamp-hat   // (v1.105) the Kingstone: the golem drawn twice its size (BIG), four times a man
 // the Mere Tower's wardens (sim tower.js): baked tall as the bosses are (tools/actor-lab variants W1–W10), named on the boss bar
 for (const id of Object.keys(WARDENS)) ENEMY_ACTOR[id] = 'boss_' + id.slice('warden_'.length);
-const BIG = /** @type {Record<string, number>} */ ({ kingstone: 2 });   // a kind drawn larger than its actor's model (hybrid.js: the figure's scale)
-const UNDEAD_LOOK = new Set(SKELETONS.concat(['boss_standard', 'boss_quartermaster', 'drowned_brother', 'drowned_cantor', 'boss_bellringer', 'boss_hush', 'boss_watcher', 'boss_starroom', 'boss_choir', 'boss_abbess']));   // (they rise from the ground and shamble)
+const BIG = /** @type {Record<string, number>} */ ({ kingstone: 2, furnace_nine: 1.54 });   // (Furnace Nine: baked tall as a boss, 2.6 men, drawn to the Kingstone's four)   // a kind drawn larger than its actor's model (hybrid.js: the figure's scale)
+const UNDEAD_LOOK = new Set(SKELETONS.concat(['enemy_forgewight', 'boss_oruth', 'boss_standard', 'boss_quartermaster', 'drowned_brother', 'drowned_cantor', 'boss_bellringer', 'boss_hush', 'boss_watcher', 'boss_starroom', 'boss_choir', 'boss_abbess']));   // (they rise from the ground and shamble)
 // walk-cycle length in tiles (one full loop of the baked walk clip): frames advance with
 // distance, so this sets the stride — hero/companion run (Running_A), skeleton shamble
 const STRIDE = { hero: 4.5, skel: 3.2, walk: 2.2 };   // tiles a cycle, from the baked feet: the party's run ~50 px of screen travel, the Ashbound's shuffle ~36 px;
@@ -71,7 +76,7 @@ const strideOf = (atl, fallback) => (atl && atl.meta.stride) || (atl && ACTOR_ST
 // Kingstone drawn twice the golem's size (BIG) shuffled at 2.4 steps a second, its planted feet sliding at 7× its walk
 // (the owner, 2026-11-16: "The stone king moves too fast for how big and heavy he is"; measured in Luminati, its foot
 // bones on the manual clock). Its stride at its height: twice a man's
-const ACTOR_STRIDE = /** @type {Record<string, number>} */ ({ creature_golem: 4.4 });
+const ACTOR_STRIDE = /** @type {Record<string, number>} */ ({ creature_golem: 4.4, boss_furnace_nine: 5.7 });   // (Furnace Nine on the golem's walk, 2.6 men tall as baked)
 const NO_WEATHER = Object.freeze({ kind: 'clear', k: 0 });
 // a marsh world's marsh-lights: one over each mere big enough to hold one, at its middle, with its own phase (fx.wisps)
 const WISPS = new WeakMap();
@@ -788,6 +793,7 @@ export function createRenderer(canvas, sim, input) {
       const ez = heightAt(sim.world, Math.floor(exi), Math.floor(eyi));
       const ep = project(exi, eyi, ez), ex = ox + ep.sx, ey = oy + ep.sy;
       if (ex < -60 || ex > nvw + 60 || ey < -40 || ey > nvh + 120) continue;      // offscreen
+      if (e.fled) continue;                                                      // (Vane ran: gone, no body, battle.js 'flee')
       const dead = e.hp <= 0, deadT = dead ? DEATH_T - Math.max(0, e.dead || 0) : 0;
       const a = pickAnim(e, skelAtlas, { now, x: exi, y: eyi, moving: e.moving, faceX: e.fx, faceY: e.fy, facing: true, dead, deadT, dir0: 2,
         spawnP: e.spawn > 0 && undead ? 1 - e.spawn / 0.5 : undefined, stride: (undead ? STRIDE.skel : strideOf(skelAtlas, STRIDE.walk)) * (BIG[e.kind] || 1), seed: (e.id * 0.37) % 1 });   // (a figure drawn BIG strides as far for each step: the Kingstone's feet slid at the golem's)
@@ -912,8 +918,9 @@ export function createRenderer(canvas, sim, input) {
       octx.strokeStyle = 'rgba(0,0,0,0.55)'; octx.lineWidth = Math.max(1, 0.8 * k); octx.stroke();
     }
     // the old stones (GDD §19 v1.105): a ring, lit and pulsing while the Kingstone stands, warm when it's about to (ui/ring.js's clock)
-    if (w.region === RING.region) {
-      const C = CAMP_BY.fens_stones, c = ringClock ? ringClock() : null, live = !!(c && c.open && !paidFor(sim.state, c.id)), soon = !!(c && c.soon);
+    // (v1.126: and the Vault's mouth while Furnace Nine burns, ring.js RINGS)
+    for (const G of Object.values(RINGS)) if (w.region === G.region) {
+      const C = CAMP_BY[G.camp], c = ringClock ? ringClock((/** @type {any} */ q) => q === G) : null, live = !!(c && c.open && !paidFor(sim.state, c.id)), soon = !!(c && c.soon);
       const mx = bx + (C.x - x0) / span * MM, my = by + (C.y - y0) / span * MM, r = Math.max(3, 3.6 * k), t = performance.now() / 1000;
       if (live) { octx.fillStyle = `rgba(255,122,42,${(0.25 + 0.2 * Math.sin(t * 4.5)).toFixed(3)})`; octx.beginPath(); octx.arc(mx, my, r * 2.2, 0, Math.PI * 2); octx.fill(); }
       octx.fillStyle = live ? '#ff7a2a' : soon ? '#f0c890' : 'rgba(200,184,154,0.85)'; octx.beginPath(); octx.arc(mx, my, r, 0, Math.PI * 2); octx.fill();
@@ -1121,6 +1128,11 @@ export function createRenderer(canvas, sim, input) {
   sim.bus.on('bossKindle', (e) => moment('boss_kindle', e));
   sim.bus.on('bossSwarm', (e) => moment('boss_swarm', e));
   sim.bus.on('bossVespers', (e) => moment('boss_vespers', e));
+  sim.bus.on('bossScales', ({ id }) => { banner = { text: `${bossName(id)} weighs you`, sub: bossLine.scales[1], until: clock() + 1800, small: true }; });
+  sim.bus.on('bossForge', ({ id }) => { banner = { text: `${bossName(id)} goes to his anvil`, sub: bossLine.anvil[1], until: clock() + 2000, small: true }; });
+  sim.bus.on('bossAnvil', ({ id, spoiled }) => { banner = { text: spoiled ? 'The piece is spoiled' : `${bossName(id)} arms a wight`, until: clock() + 1600, small: true }; });
+  sim.bus.on('bossFled', ({ id }) => { banner = { text: `${bossName(id)} runs`, sub: 'out by the back stair, and gone', until: clock() + 2600 }; });
+  sim.bus.on('bossVents', ({ id }) => { banner = { text: `${bossName(id)} opens the vents`, sub: bossLine.vents[1], until: clock() + 1800, small: true }; });
   sim.bus.on('bossMud', (e) => { moment('boss_mud', e); jolt('stamp', e.x, e.y); });
   sim.bus.on('bossFlood', (e) => { if (e.level > 0) { moment('boss_bells', e); jolt('bell', e.x ?? sim.state.player.x, e.y ?? sim.state.player.y); } });
   sim.bus.on('levelUp', (l) => {
@@ -1136,7 +1148,9 @@ export function createRenderer(canvas, sim, input) {
     vespers: ['sings', 'while a cantor sings, the drowned mend: silence them'], bells: ['rings the bells', 'the water comes in from the walls: keep to the middle'],
     issue: ['issues arms', 'the most broken of his ranks stands up whole: put him down first'], sluice: ['opens the sluice', 'the vat runs across the floor: step out of it'],
     ring: ['stands', 'red on the ground: get out of it before it lands'],   // (the Kingstone, GDD §19 v1.105)
-    chutes: ['blows the whistle', 'the shift\'s load comes down on the crosses: step off them'] };   // (the Foreman, v1.124)
+    chutes: ['blows the whistle', 'the shift\'s load comes down on the crosses: step off them'],
+    scales: ['weighs you', 'the one with the most life left pays: step off the pan'], anvil: ['goes to his anvil', 'strike him while he works, or a wight rises re-armed'],
+    flee: ['will not be taken', 'he runs before he falls'], vents: ['opens the vents', 'the floor glows where the slag comes up: step off it'] };   // (the Foreman, v1.124)
   sim.bus.on('bossWave', ({ id, name }) => { const B = BOSSES[id]; banner = { text: name, sub: (bossLine[B.mech] || ['', ''])[1], until: clock() + 3200 }; });   // (a mechanic with no line yet: the name alone, never a throw)
   // (named from the boss: the Mere Tower's wardens call, drum and kindle too)
   const bossName = (id) => ({ redhand_captain: 'Garrow', goblin_chief: 'Skarn', robed_stranger: 'The Stranger' })[id] || (BOSSES[id] ? BOSSES[id].name : 'The warden');
@@ -1286,7 +1300,7 @@ export function createRenderer(canvas, sim, input) {
     const b = sim.battle, k = vw / window.innerWidth;
     for (const c of campsOf(sim.world.region)) {
       // (the old stones in a window hold the Kingstone, GDD §19: its reach ringed in ember, its fight's arena as a camp's is)
-      const king = c.id === RING.camp && (!!(b && b.ring) || (sim.world.enemies || []).some((e) => e.idle === c.id && e.kind === 'kingstone'));
+      const G = ringByCamp(c.id), king = !!G && (!!(b && b.ring) || (sim.world.enemies || []).some((e) => e.idle === c.id && e.kind === G.kind));   // (Furnace Nine's mouth the same, v1.126)
       const fighting = b && (b.camp === c || (king && b.ring)), d = Math.hypot(hx - c.x, hy - c.y);
       const r = fighting ? c.arena : c.reach, a = fighting ? 0.7 : campUp(sim.state, c) || king ? Math.max(king ? 0.35 : 0, Math.min(1, (c.reach + 14 - d) / 10)) * 0.75 : 0;
       if (a <= 0.02) continue;

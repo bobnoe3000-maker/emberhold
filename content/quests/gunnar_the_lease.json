@@ -1,0 +1,39 @@
+{
+  "id": "gunnar_the_lease",
+  "kind": "errand",
+  "title": "The Lease",
+  "giver": "gunnar_slagg",
+  "region": "reach",
+  "level": [
+    22,
+    60
+  ],
+  "summary": "Gunnar Slagg sold the Slagborn's lease to the Kell Assay and never read it. The Assay keeps it in the counting house at the Yards. He'd like to read it now.",
+  "steps": [
+    {
+      "id": "counting",
+      "journal": "The Assay Yards' first floor: open two of its chests. The lease will be in one, filed under the year.",
+      "objectives": [
+        {
+          "type": "loot",
+          "site": "assay_yards",
+          "count": 2,
+          "floor": 1,
+          "label": "Chests opened in the Assay Yards"
+        }
+      ]
+    }
+  ],
+  "ready": "The Slagborn's lease, out of the Assay's chests. Take it to Gunnar Slagg.",
+  "done": "Gunnar read every line of it. The roofs were in the first one. The night shift was in the third.",
+  "rewards": {
+    "share": 0.3,
+    "lv": 22,
+    "gold": 240
+  },
+  "dialogue": {
+    "file": "ashgate",
+    "offer": "gunnar_lease_offer",
+    "turnin": "gunnar_lease_turnin"
+  }
+}

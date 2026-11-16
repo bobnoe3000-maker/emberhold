@@ -1,0 +1,42 @@
+{
+  "id": "brannagh_counted_in",
+  "kind": "errand",
+  "title": "Counted In",
+  "giver": "old_brannagh",
+  "region": "reach",
+  "level": [
+    28,
+    60
+  ],
+  "after": [
+    "brannagh_last_wages"
+  ],
+  "summary": "Old Brannagh counted the night shift out. She wants them counted in. A lamp off the Last Flame, carried down to the Cinderworks' pens, and held there.",
+  "steps": [
+    {
+      "id": "pens",
+      "journal": "The Cinderworks, the first floor or below: hold six waves with the Flame's lamp lit.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "cinderworks",
+          "count": 6,
+          "floor": 1,
+          "label": "Waves held in the Cinderworks"
+        }
+      ]
+    }
+  ],
+  "ready": "The Flame's lamp burned in the Cinderworks the whole time. Tell Old Brannagh.",
+  "done": "Brannagh has her count. It's short. She wrote down the difference too.",
+  "rewards": {
+    "share": 0.4,
+    "lv": 28,
+    "gold": 320
+  },
+  "dialogue": {
+    "file": "ashgate",
+    "offer": "brannagh_counted_offer",
+    "turnin": "brannagh_counted_turnin"
+  }
+}

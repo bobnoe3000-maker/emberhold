@@ -1,0 +1,10 @@
+{
+  "id": "frag_reach_vanes_ledger",
+  "region": "reach",
+  "set": "reach",
+  "order": 11,
+  "title": "Morrow Vane's Ledger",
+  "text": "Furnace nine requires eleven more souls per week to meet quota.",
+  "note": "Copied fair from the quota office's book into Morrow Vane's ledger; under it, in his own courteous hand: As before. M. V.",
+  "where": "The Cinderworks, the furnace hall"
+}

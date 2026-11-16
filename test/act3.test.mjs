@@ -183,3 +183,154 @@ test('the golden path: The Wickham Road on the compass alone, Ilse in Thornwick,
   assert.ok(went > 3, 'the compass led the way');
   assert.deepEqual(ev.filter((e) => e.n === 'questReward').map((e) => e.gold), [420]);
 });
+
+// ── the rest of Act III (v1.54; world doc §6 "As told") ──────────────────────
+import { unlocked, SKILLS } from '../src/sim/skills.js';
+import { SETS } from '../src/sim/lore.js';
+import { storyStatus } from '../src/ui/storystatus.js';
+const CH3 = ['ch3_the_wickham_road', 'ch3_short_shift', 'ch3_paid_by_weight', 'ch3_gone_back_to_work', 'ch3_night_shift', 'ch3_quota'];
+const doneTo = (sim, id) => { for (const q of CH3.slice(0, CH3.indexOf(id))) sim.state.quests[q] = { st: QS.DONE, step: 0, n: [] }; };
+/** Tamsin freed and with the company (the Foreman down, her word in the tally cave) */
+function withTamsin(sim) {
+  sim.state.bosses.foreman = 1; goTo(sim, 'dungeon', 'cold_seam', 1); talk(sim, 'tamsin'); effect(sim, 'companion', 'join');
+  sim.commands.push({ type: 'endTalk' }); sim.tick();
+  assert.ok(sim.state.party.some((m) => m.id === 'tamsin'), 'Tamsin with you');
+}
+
+test('Kell\'s Rest\'s two wait at the Assay Yards\' gate, apart, and answer; Davy Pruett\'s word is Paid by Weight\'s first step', () => {
+  const sim = after2(22, 'town', 'reach'); doneTo(sim, 'ch3_paid_by_weight');
+  goTo(sim, 'dungeon', 'assay_yards', 1); assert.ok(!npc(sim, 'nan_ruddock') && !npc(sim, 'assay_clerk'), 'not under the Yards');
+  goTo(sim, 'dungeon', 'assay_yards', 0);
+  const nan = npc(sim, 'nan_ruddock'), clerk = npc(sim, 'assay_clerk'), E = sim.world.level.entrance;
+  assert.ok(nan && clerk, 'both by the way in');
+  for (const n of [nan, clerk]) assert.equal(sim.world.level.cells.get(Math.floor(n.x) + ',' + Math.floor(n.y)).room, E.id);
+  assert.ok(Math.hypot(nan.x - clerk.x, nan.y - clerk.y) >= 3, 'apart: a tap picks one');
+  const ev = events(sim, ['dialogue']);
+  talk(sim, 'nan_ruddock'); assert.equal(ev.at(-1).npc, 'nan_ruddock');
+  effect(sim, 'companion', 'join'); assert.ok(!sim.state.party.some((m) => m.id === 'nan_ruddock'), 'nobody\'s companion');
+  goTo(sim, 'town', 'barrows', 0, 'reach'); talk(sim, 'hob'); effect(sim, 'quest', 'accept', 'ch3_paid_by_weight');
+  assert.equal(st(sim, 'ch3_paid_by_weight'), QS.ACTIVE);
+  goTo(sim, 'dungeon', 'assay_yards', 0); talk(sim, 'assay_clerk');
+  assert.equal(ev.at(-1).vars.s_ch3_paid_by_weight, 0, 'the Ink reads the pass still to have');
+  assert.equal(sim.state.quests.ch3_paid_by_weight.step, 1, 'then on to the Weighmaster');
+});
+
+test('Act III played on: Paid by Weight (Hob → Dagny), Gone Back to Work (Mother Coke), Night Shift (Vane runs, and it counts), Quota (Tamsin → Dagny); then it\'s over', () => {
+  const sim = after2(30, 'town', 'reach'); doneTo(sim, 'ch3_paid_by_weight');
+  withTamsin(sim);
+  const ev = events(sim, ['questReward', 'dialogue']);
+  const play = (id, giver, taker, fall, site, depth) => {
+    goTo(sim, 'town', 'barrows', 0, 'reach');
+    assert.equal(st(sim, id), QS.AVAILABLE, id);
+    talk(sim, giver); effect(sim, 'quest', 'accept', id); assert.equal(st(sim, id), QS.ACTIVE, `${id}: ${giver} gives it`);
+    if (id === 'ch3_paid_by_weight') sim.state.quests[id] = { st: QS.ACTIVE, step: 1, n: [0] };   // (the clerk's word: the test above)
+    goTo(sim, 'dungeon', site, depth); sim.state.bosses[fall.id] = 1; sim.bus.emit('bossDown', fall);
+    assert.equal(st(sim, id), QS.READY, `${id}: ${fall.id} down`);
+    goTo(sim, 'town', 'barrows', 0, 'reach');
+    if (taker !== giver) { talk(sim, giver); effect(sim, 'quest', 'turnin', id); assert.equal(st(sim, id), QS.READY, `${id}: not ${giver}'s to take in`); }
+    talk(sim, taker); effect(sim, 'quest', 'turnin', id); assert.equal(st(sim, id), QS.DONE, id);
+  };
+  play('ch3_paid_by_weight', 'hob', 'dagny_coalbrook', { id: 'weighmaster' }, 'assay_yards', 1);
+  play('ch3_gone_back_to_work', 'mother_coke', 'mother_coke', { id: 'oruth' }, 'forgehall', 1);
+  play('ch3_night_shift', 'dagny_coalbrook', 'dagny_coalbrook', { id: 'morrow_vane', fled: true }, 'cinderworks', 0);
+  play('ch3_quota', 'tamsin', 'dagny_coalbrook', { id: 'stoker' }, 'cinderworks', 1);
+  assert.deepEqual(ev.filter((e) => e.n === 'questReward').map((e) => e.gold), [520, 580, 620, 700]);
+  assert.deepEqual(storyStatus(sim.state, (id) => sim.quests.status(id)), { kind: 'end', region: 'reach' }, 'Act III is done');
+});
+
+test('the chapters wait for their bands, and Quota is Tamsin\'s: from her card, while she\'s with you', () => {
+  const sim = after2(24, 'town', 'reach'); doneTo(sim, 'ch3_gone_back_to_work');
+  assert.equal(st(sim, 'ch3_gone_back_to_work'), QS.LOCKED, '25');
+  for (const [id, lv] of [['ch3_paid_by_weight', 22], ['ch3_gone_back_to_work', 25], ['ch3_night_shift', 28], ['ch3_quota', 30]]) assert.equal(QUESTS[id].level[0], lv, id);
+  doneTo(sim, 'ch3_quota'); sim.state.party[0].level = 30;
+  sim.commands.push({ type: 'talk', npc: 'tamsin' }); sim.tick(); effect(sim, 'quest', 'accept', 'ch3_quota');
+  assert.equal(st(sim, 'ch3_quota'), QS.AVAILABLE, 'she\'s still in the Seam: no talk, no quest');
+  withTamsin(sim); goTo(sim, 'overland', 'barrows', 0, 'reach');
+  sim.commands.push({ type: 'talk', npc: 'tamsin' }); sim.tick(); effect(sim, 'quest', 'accept', 'ch3_quota');
+  assert.equal(st(sim, 'ch3_quota'), QS.ACTIVE, 'from her card, out on the land');
+});
+
+test('the side work: Tamsin\'s chain while she\'s with you, in order; Gunnar\'s and Old Brannagh\'s, counted where they ask', () => {
+  const sim = after2(29, 'town', 'reach');
+  assert.equal(st(sim, 'tamsin_the_stamp'), QS.LOCKED, 'not without her');
+  withTamsin(sim);
+  assert.equal(st(sim, 'tamsin_the_stamp'), QS.AVAILABLE); assert.equal(st(sim, 'tamsin_the_patterns'), QS.LOCKED, 'in order');
+  const run = (id, giver, site, depth, fire) => {
+    if (giver !== 'tamsin') goTo(sim, 'town', 'barrows', 0, 'reach');
+    talk(sim, giver); effect(sim, 'quest', 'accept', id); assert.equal(st(sim, id), QS.ACTIVE, id);
+    goTo(sim, 'dungeon', site, depth); fire();
+    assert.equal(st(sim, id), QS.READY, id);
+    if (giver !== 'tamsin') goTo(sim, 'town', 'barrows', 0, 'reach');
+    talk(sim, giver); effect(sim, 'quest', 'turnin', id); assert.equal(st(sim, id), QS.DONE, id);
+  };
+  const elites = (n) => () => { for (let i = 0; i < n; i++) sim.bus.emit('slain', { elite: true }); };
+  const chests = (n) => () => { for (let i = 0; i < n; i++) sim.bus.emit('looted', { kind: 'chest' }); };
+  const waves = (n) => () => { for (let i = 0; i < n; i++) sim.bus.emit('wave', { cleared: true, room: -1 }); };
+  run('tamsin_the_stamp', 'tamsin', 'assay_yards', 0, elites(3));
+  run('tamsin_the_patterns', 'tamsin', 'forgehall', 0, chests(2));
+  run('tamsin_spoiled_casting', 'tamsin', 'cinderworks', 1, waves(5));
+  run('gunnar_the_lease', 'gunnar_slagg', 'assay_yards', 0, chests(2));
+  run('gunnar_the_row', 'gunnar_slagg', 'forgehall', 0, elites(3));
+  run('brannagh_last_wages', 'old_brannagh', 'cold_seam', 0, chests(2));
+  doneTo(sim, 'ch3_quota');
+  run('brannagh_counted_in', 'old_brannagh', 'cinderworks', 0, waves(6));
+});
+
+test('the trials at 24: offered once someone of the class is 24 and its 12 is done; handed in, the class\'s level-24 ability opens', () => {
+  const sim = after2(24, 'town', 'reach'), h = sim.state.party[0];
+  h.cls = 'fighter'; sim.state.trials = { fighter: 1 };
+  const blades = SKILLS.fighter.find((s) => s.lv === 24);
+  assert.equal(st(sim, 'trial24_fighter'), QS.LOCKED, 'the 12 not done');
+  assert.ok(!unlocked(h, blades, sim.state.trials), `${blades.name}: not yet`);
+  sim.state.trials.fighter12 = 1; h.level = 23; assert.equal(st(sim, 'trial24_fighter'), QS.LOCKED, 'nobody at 24');
+  h.level = 24; assert.equal(st(sim, 'trial24_fighter'), QS.AVAILABLE);
+  assert.ok(!unlocked(h, blades, sim.state.trials), 'level 24, the 12 done: still not without the 24\'s trial');
+  const ev = events(sim, ['trialDone']);
+  talk(sim, 'haldor'); effect(sim, 'quest', 'accept', 'trial24_fighter');
+  goTo(sim, 'dungeon', 'assay_yards', 0); const hall = sim.world.level.descentRoom.id;
+  for (let i = 0; i < 10; i++) sim.bus.emit('wave', { cleared: true, room: hall });
+  assert.equal(st(sim, 'trial24_fighter'), QS.READY, 'ten waves in the counting house');
+  goTo(sim, 'town', 'barrows', 0, 'reach'); talk(sim, 'haldor'); effect(sim, 'quest', 'turnin', 'trial24_fighter');
+  assert.equal(sim.state.trials.fighter24, 1); assert.deepEqual(ev.map((e) => [e.cls, e.lv]), [['fighter', 24]]);
+  assert.ok(unlocked(sim.state.party[0], blades, sim.state.trials), `${blades.name}: open`);
+  // kept in a save; Tamsin teaches the mages' only while she's with you
+  const back = createSim(1); back.restore(snap(sim)); assert.equal(back.state.trials.fighter24, 1, 'the 24 survives a save');
+  sim.state.party[0].cls = 'mage'; sim.state.trials = { mage: 1, mage12: 1 }; assert.equal(st(sim, 'trial24_mage'), QS.LOCKED, 'not without Tamsin');   // (the hero as the save now has him: a restore makes him anew)
+  withTamsin(sim); assert.equal(st(sim, 'trial24_mage'), QS.AVAILABLE);
+});
+
+test('the Reach\'s Chronicle: twelve, in its four dungeons; the last one reveals the Ninth Vault; Vane\'s ledger is his when he runs', () => {
+  assert.equal(SETS.reach.length, 12);
+  const sim = after2(30, 'town', 'reach'), ev = events(sim, ['fragmentFound', 'setComplete']);
+  goTo(sim, 'dungeon', 'cinderworks', 0); sim.bus.emit('bossDown', { id: 'morrow_vane', fled: true });
+  assert.deepEqual(ev.filter((e) => e.n === 'fragmentFound').map((e) => e.id), ['frag_reach_vanes_ledger']);
+  sim.state.fragments.push(...SETS.reach.filter((id) => !sim.state.fragments.includes(id) && id !== 'frag_reach_renewal'));
+  goTo(sim, 'dungeon', 'cinderworks', 1); sim.bus.emit('bossDown', { id: 'stoker' });
+  assert.ok(ev.some((e) => e.n === 'setComplete' && e.set === 'reach'));
+  assert.ok(sim.state.revealed.has('ninth_vault'), 'the Ninth Vault revealed');
+});
+
+test('the Ink for the rest of the act: each offer takes its quest, each hand-in hands it in, and Pruett\'s pass reads its step', async () => {
+  const tag = (r, verb, id) => r.sent.some((c) => c.tag === 'quest' && c.args.join(' ') === `${verb} ${id}`);
+  const cases = [
+    ['ashgate', 'hob_hub', { flag_met_hob: 1, q_ch3_paid_by_weight: 0 }, ['We need to get into the Assay Yards.', "What's your price?"], 'accept', 'ch3_paid_by_weight'],
+    ['dagny', 'dagny_hub', { flag_met_dagny: 1, q_ch3_the_wickham_road: 3, q_ch3_paid_by_weight: 2 }, ["The night shift's rolls."], 'turnin', 'ch3_paid_by_weight'],
+    ['ashgate', 'coke_hub', { flag_met_coke: 1, q_ch3_gone_back_to_work: 0 }, ["The Forgehall's lit.", "We'll put him to bed."], 'accept', 'ch3_gone_back_to_work'],
+    ['ashgate', 'coke_hub', { flag_met_coke: 1, q_ch3_gone_back_to_work: 2 }, ["Oruth's asleep."], 'turnin', 'ch3_gone_back_to_work'],
+    ['dagny', 'dagny_hub', { flag_met_dagny: 1, q_ch3_the_wickham_road: 3, q_ch3_night_shift: 0 }, ['The rolls name the Cinderworks.', "We'll open the pens."], 'accept', 'ch3_night_shift'],
+    ['dagny', 'dagny_hub', { flag_met_dagny: 1, q_ch3_the_wickham_road: 3, q_ch3_night_shift: 2 }, ['Morrow Vane ran.'], 'turnin', 'ch3_night_shift'],
+    ['tamsin', 'tamsin_hub', { joined: 1, in_party: 1, q_ch3_quota: 0 }, ['The night shift went down.', "We'll go down."], 'accept', 'ch3_quota'],
+    ['dagny', 'dagny_hub', { flag_met_dagny: 1, q_ch3_the_wickham_road: 3, q_ch3_quota: 2 }, ["Furnace Nine's lamp is broken."], 'turnin', 'ch3_quota'],
+    ['ashgate', 'haldor_hub', { flag_met_haldor: 1, q_trial24_fighter: 2 }, ['The counting house held.'], 'turnin', 'trial24_fighter'],
+    ['ashgate', 'gunnar_hub', { flag_met_gunnar: 1, q_gunnar_the_lease: 0 }, ['What did you sign?', "We'll fetch it."], 'accept', 'gunnar_the_lease'],
+    ['ashgate', 'brannagh_hub', { flag_met_brannagh: 1, q_brannagh_last_wages: 2 }, ["The Seam's last wages."], 'turnin', 'brannagh_last_wages'],
+  ];
+  for (const [file, knot, vars, picks, verb, id] of cases) {
+    const r = await play(file, knot, { hero_name: 'Tam', ...vars }, picks, () => ({ ['q_' + id]: verb === 'accept' ? 1 : 3 }));
+    assert.ok(tag(r, verb, id), `${file} ${knot}: ${verb} ${id}`);
+  }
+  const pass = await play('kellsrest', 'clerk_hub', { flag_met_clerk: 0, q_ch3_paid_by_weight: 1, s_ch3_paid_by_weight: 0 }, [], () => ({ flag_met_clerk: 1, s_ch3_paid_by_weight: 1 }));
+  assert.ok(pass.lines.some((l) => /Hob sent you/.test(l)) && pass.lines.some((l) => /quota office/.test(l)), 'the pass, said whole');
+  const nan = await play('kellsrest', 'nan_hub', { flag_met_nan: 0, hero_origin: 'redhand_deserter' }, [], () => ({ flag_met_nan: 1 }));
+  assert.ok(nan.lines.some((l) => /You walked/.test(l)), 'Nan knows a deserter');
+});

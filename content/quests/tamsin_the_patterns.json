@@ -1,0 +1,43 @@
+{
+  "id": "tamsin_the_patterns",
+  "kind": "companion",
+  "title": "The Pattern Store",
+  "giver": "tamsin",
+  "region": "reach",
+  "level": [
+    25,
+    60
+  ],
+  "after": [
+    "tamsin_the_stamp"
+  ],
+  "companion": "tamsin",
+  "summary": "The imperial smiths kept their patterns in the Forgehall, shelf on shelf. Tamsin wants to read how they cast what they cast. She thinks the Assay has.",
+  "steps": [
+    {
+      "id": "patterns",
+      "journal": "The Forgehall of Oruth: open two of its chests, on the first floor or below. The pattern store's are the ones she wants.",
+      "objectives": [
+        {
+          "type": "loot",
+          "site": "forgehall",
+          "count": 2,
+          "floor": 1,
+          "label": "Chests opened in the Forgehall"
+        }
+      ]
+    }
+  ],
+  "ready": "Two chests of the Forgehall's patterns. Show Tamsin.",
+  "done": "Lamp patterns, forty to a shelf, each to hold one. Tamsin put them back very carefully.",
+  "rewards": {
+    "share": 0.3,
+    "lv": 25,
+    "gold": 300
+  },
+  "dialogue": {
+    "file": "tamsin",
+    "offer": "tamsin_patterns_offer",
+    "turnin": "tamsin_patterns_turnin"
+  }
+}

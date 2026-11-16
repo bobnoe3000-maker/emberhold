@@ -17,14 +17,15 @@ const snap = (sim) => JSON.parse(JSON.stringify(sim.snapshot()));
 const at = (sim, site, depth) => sim.restore({ ...snap(sim), scene: 'dungeon', site, depth, floors: [] });
 const events = (sim, names) => { const out = []; for (const n of names) sim.bus.on(n, (e) => out.push({ n, ...e })); return out; };
 
-test('ten in reading order a set (the Vale\'s, the Fens\'); every one lies somewhere on its floor, for any seed', () => {
-  assert.deepEqual(Object.keys(SETS), ['vale', 'fens']); assert.deepEqual(Object.keys(SET_REVEALS), ['vale', 'fens']);
+test('ten in reading order a set (the Vale\'s, the Fens\'; the Reach\'s twelve, v1.54); every one lies somewhere on its floor, for any seed', () => {
+  assert.deepEqual(Object.keys(SETS), ['vale', 'fens', 'reach']); assert.deepEqual(Object.keys(SET_REVEALS), ['vale', 'fens', 'reach']);
   for (const set of Object.keys(SETS)) {
-    assert.equal(SETS[set].length, 10); assert.deepEqual(SETS[set].map((id) => FRAGMENTS[id].order), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    const n = set === 'reach' ? 12 : 10;
+    assert.equal(SETS[set].length, n); assert.deepEqual(SETS[set].map((id) => FRAGMENTS[id].order), Array.from({ length: n }, (_, i) => i + 1));
     assert.equal(SITES[SET_REVEALS[set]].hidden, true); assert.equal(SITES[SET_REVEALS[set]].region, set, 'its own land\'s hidden site');
     assert.ok(SETS[set].every((id) => SITES[FRAGMENTS[id].site].region === set), `${set}: found in its own land`);
   }
-  for (const seed of [SEED, 7, 99991]) for (const id of [...SETS.vale, ...SETS.fens]) {
+  for (const seed of [SEED, 7, 99991]) for (const id of [...SETS.vale, ...SETS.fens, ...SETS.reach]) {
     const f = FRAGMENTS[id], sim = createSim(seed, undefined, { scene: 'dungeon', site: f.site });
     at(sim, f.site, f.floor - 1);
     const h = holderOf(seed, id, sim.world, {});
@@ -90,7 +91,7 @@ test('the Ninth Milestone\'s vault: a chest in its hall with The Last Order, onc
 // can be walked again, on a fresh floor, its vault an ordinary chest; the heirloom came once
 test('a secret site seals for SECRET_REST of play once its vault is opened, its door refusing you; then it opens again; the heirloom once', () => {
   assert.equal(SECRET_REST, 7200, 'two hours of play');
-  assert.deepEqual(Object.keys(SITES).filter((k) => SITES[k].secret), ['ninth_milestone', 'reedholm_undercroft']);
+  assert.deepEqual(Object.keys(SITES).filter((k) => SITES[k].secret), ['ninth_milestone', 'ninth_vault', 'reedholm_undercroft']);
   const sim = createSim(SEED, undefined, { scene: 'town' }); sim.tick(); sim.state.party[0].level = 9;
   const ev = events(sim, ['secretSealed', 'siteSealed', 'vaultOpened']), sealedAt = []; sim.bus.on('secretSealed', () => sealedAt.push(sim.state.t));
   sim.state.revealed.add('ninth_milestone'); at(sim, 'ninth_milestone', 0);

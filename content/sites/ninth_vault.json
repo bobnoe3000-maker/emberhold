@@ -1,0 +1,10 @@
+{
+  "id": "ninth_vault",
+  "region": "reach",
+  "name": "The Ninth Vault",
+  "levels": "30",
+  "floors": 1,
+  "hidden": true,
+  "summary": "The quota office's strongroom, up the old track on the volcano's flank. The Ashbound clerks are still keeping the books. Once its vault is opened it seals itself for a while; then it can be walked again.",
+  "shut": "A ruin on the volcano's flank, a door in its floor with nine bars across it. Nothing says what it was."
+}

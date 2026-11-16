@@ -5,7 +5,7 @@
 // path in the game that grants progress outside play, so using either marks the slot a dev game (state.dev, kept in the
 // save): a validator refuses a dev game's sessions (replay.js isDevGame), and it can never count as verified progress.
 //
-//   devUnlockSkills {}       every class's level-6 and level-12 trials done for the company (state.trials, as the
+//   devUnlockSkills {}       every class's level-6, level-12 and level-24 trials done for the company (state.trials, as the
 //                            trials' quests set them): each ability opens at its level (skills.js unlocked)
 //   devLevel        { id }   one level for a member of the party or the bench, by the sim's own way: exactly the XP the
 //                            level wants (party.js gainXp), so its 3 stat points, a skill point at every even level
@@ -30,7 +30,7 @@ export function createDev({ state, bus }) {
     switch (cmd.type) {
       case 'devUnlockSkills': {
         if (!state.created) return refuse('Make your hero first');
-        for (const c of TRIAL_CLASSES) { state.trials[c] = 1; state.trials[c + '12'] = 1; }
+        for (const c of TRIAL_CLASSES) { state.trials[c] = 1; state.trials[c + '12'] = 1; state.trials[c + '24'] = 1; }
         mark('skills'); bus.emit('partyChanged', state.party); return true;
       }
       case 'devLevel': {

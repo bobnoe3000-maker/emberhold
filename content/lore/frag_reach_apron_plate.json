@@ -1,0 +1,10 @@
+{
+  "id": "frag_reach_apron_plate",
+  "region": "reach",
+  "set": "reach",
+  "order": 9,
+  "title": "Oruth's Apron-Plate",
+  "text": "Forgemaster. Bound to the work. Until countermanded.",
+  "note": "Off Oruth's apron, when he lay down at his anvil and went back to sleep.",
+  "where": "The Forgehall of Oruth, the deep forges"
+}

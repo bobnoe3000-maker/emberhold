@@ -915,5 +915,131 @@
    "scar"
   ],
   "shape": "thick"
+ },
+ "assay_guard": {
+  "skin": "fair",
+  "hair": "crop",
+  "hairColor": "brown",
+  "brows": "straight",
+  "eyes": "narrow",
+  "iris": "grey",
+  "mouth": "line",
+  "nose": "broad",
+  "beard": "stubble"
+ },
+ "assay_xbow": {
+  "skull": "own",
+  "skin": "tan",
+  "brows": "straight",
+  "eyes": "narrow",
+  "iris": "grey",
+  "mouth": "grim"
+ },
+ "renegade": {
+  "skin": "tan",
+  "hair": "crop",
+  "hairColor": "soot",
+  "brows": "angry",
+  "eyes": "sharp",
+  "iris": "amber",
+  "mouth": "grim",
+  "nose": "broad",
+  "beard": "full",
+  "beardColor": "soot",
+  "marks": [
+   "soot",
+   "scar"
+  ],
+  "shape": "thick",
+  "expression": "fierce"
+ },
+ "furnacepriest": {
+  "skin": "olive",
+  "hair": "bald",
+  "brows": "angry",
+  "eyes": "narrow",
+  "iris": "amber",
+  "mouth": "grim",
+  "nose": "hook",
+  "marks": [
+   "soot"
+  ],
+  "shape": "oblong"
+ },
+ "weighmaster": {
+  "skin": "rose",
+  "hair": "receding",
+  "hairColor": "grey",
+  "brows": "straight",
+  "eyes": "tired",
+  "iris": "grey",
+  "mouth": "line",
+  "nose": "broad",
+  "beard": "goatee",
+  "beardColor": "grey",
+  "marks": [
+   "blush"
+  ],
+  "shape": "round"
+ },
+ "morrow_vane": {
+  "skin": "porcelain",
+  "hair": "swept",
+  "hairColor": "ash",
+  "brows": "arched",
+  "eyes": "narrow",
+  "iris": "grey",
+  "mouth": "smile",
+  "nose": "long",
+  "beard": "mustache",
+  "beardColor": "ash",
+  "shape": "thin",
+  "expression": "smug"
+ },
+ "stoker": {
+  "skin": "tan",
+  "hair": "bald",
+  "brows": "heavy",
+  "eyes": "tired",
+  "iris": "amber",
+  "mouth": "grim",
+  "nose": "broad",
+  "marks": [
+   "soot",
+   "scar"
+  ],
+  "shape": "thick",
+  "expression": "stern"
+ },
+ "nan_ruddock": {
+  "skin": "rose",
+  "hair": "crop",
+  "hairColor": "auburn",
+  "brows": "angry",
+  "eyes": "narrow",
+  "iris": "grey",
+  "mouth": "grim",
+  "nose": "broad",
+  "marks": [
+   "scar_cheek"
+  ],
+  "shape": "thick",
+  "frame": "soft",
+  "expression": "stern"
+ },
+ "clerk": {
+  "skin": "porcelain",
+  "hair": "receding",
+  "hairColor": "straw",
+  "brows": "worried",
+  "eyes": "wide",
+  "iris": "blue",
+  "mouth": "open",
+  "nose": "long",
+  "marks": [
+   "soot"
+  ],
+  "shape": "thin",
+  "expression": "surprised"
  }
 }

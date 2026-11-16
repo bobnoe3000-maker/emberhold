@@ -29,5 +29,21 @@
     "journal": "Go into {site} and hold {n} waves there, in any rooms.",
     "ready": "Hand it in at the Lantern Guild's board, inside the Drowned Eel in Saltmere.",
     "done": "Saltmere slept a little better. The eels did not care either way."
+  },
+  "reach": {
+    "titles": ["Hold the Shift", "Keep Them Below", "A Quiet Seam", "Stand Your Ground"],
+    "hooks": [
+      { "by": "Dagny Coalbrook, for the moot", "text": "\"The moot has voted to pay somebody to stand in {site} and hit things. It took a week. Please make it worth the week.\"" },
+      { "by": "Bel Ruddle, the Slag & Bellows", "text": "\"Fewer of them in {site}, more of you in here with a mug. I've done the sums. Bel.\"" },
+      { "by": "Old Brannagh, the Shrine", "text": "\"I count them going out. I'd like to count some coming back. Thin out {site} so they can.\"" },
+      { "by": "The Lantern Guild", "text": "\"Standing job, Ashgate rate: go down, hold the room, come back with the soot on. The Guild pays by the fight.\"" },
+      { "by": "Haldor, the Ashgate Forge", "text": "\"Go and blunt something in {site}. Then bring it to me. I like the work.\"" },
+      { "by": "Widow Pellam, Deepdelver's Rest", "text": "\"There are boots by my door waiting for their owners. Go and make {site} a place a man could walk home from.\"" }
+    ],
+    "brief": { "one": "Hold a wave in {site}", "many": "Hold {n} waves in {site}" },
+    "label": "Waves held in {site}",
+    "journal": "Go into {site} and hold {n} waves there, in any rooms.",
+    "ready": "Hand it in at the Lantern Guild's board, inside the Slag & Bellows in Ashgate.",
+    "done": "Ashgate slept a little better. The moot argued about whether it had."
   }
 }

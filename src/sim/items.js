@@ -194,6 +194,10 @@ export const HEIRLOOMS = {
   last_order: { base: 'amulet', name: 'The Last Order', flav: "It says: hold. It doesn't say for how long.", aff: ['atk', 'def', 'mpr'] },
   skarns_drum: { base: 'charm', name: "Skarn's Drum", flav: 'It still keeps time. Nobody comes out any more.', aff: ['atk', 'hp', 'crit'] },
   // the Fens' bosses (world doc v1.27 §3.2, §10.2)
+  short_weight: { base: 'ring', name: 'Short Weight', flav: 'He was never once out by a grain. Not in your favour.', aff: ['crit', 'atk', 'dodge'] },   // (the Weighmaster, v1.126)
+  oruths_last_commission: { base: 'amulet', name: "Oruth's Last Commission", flav: 'Ordered three hundred years ago. Delivered.', aff: ['atk', 'def', 'hp'] },   // (Oruth, v1.126)
+  the_quota_ledgers: { base: 'charm', name: 'The Quota Ledgers', flav: 'Every soul the furnaces were owed, in a clerk\'s fair hand.', aff: ['mp', 'mpr', 'crit'] },   // (the Ninth Vault, v1.126)
+  quota: { base: 'amulet', name: 'Quota', flav: 'It always asked for more.', aff: ['atk', 'hp', 'crit'] },   // (Furnace Nine, the Reach's region boss: world doc §10.2)
   the_whistle: { base: 'charm', name: 'The Whistle', flav: 'Blow it, and somebody somewhere goes back to work.', aff: ['atk', 'crit', 'hp'] },   // (the Foreman, the Cold Seam: v1.124)
   the_last_tooth: { base: 'charm', name: 'The Last Tooth', flav: "A boat for every one he'd lost. This one he kept.", aff: ['hp', 'atk', 'def'] },
   teagues_name: { base: 'ring', name: "Teague's Name", flav: 'He gave it to everyone he took.', aff: ['crit', 'atk', 'mp'] },

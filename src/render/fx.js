@@ -81,6 +81,20 @@ export const FX_STYLES = {
   // and his tally-stick, in his lamp's brass
   enemy_hauler:      { col: [214, 180, 140], attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 170, 90], heavySpark: [255, 120, 40], wide: 1.3, quake: true },
   boss_foreman:      { col: [240, 200, 120], attack: 'arc', attack2: 'stab', heavy: 'arc', spark: [255, 215, 140], wide: 1.25 },
+  // (the rest of Act III) the Assay's sword and crossbow in its brass, a renegade's pick, a forge-wight's hot sledge, a
+  // cinder hound's lit bite, a furnace-priest's censer; the Weighmaster's pan on its chain, Oruth's hammer (the room
+  // shakes), Morrow Vane's thin blade, the Stoker's red-hot rake, Furnace Nine's fists of iron
+  enemy_assay_guard: { col: [235, 205, 140], attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [250, 225, 170] },
+  enemy_assay_xbow:  { col: MUZZLE, attack: 'shot', attack2: 'shot', heavy: 'shot', spark: [255, 225, 170] },
+  enemy_renegade:    { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 200, 140], wide: 1.1 },
+  enemy_forgewight:  { col: EMBER, attack: 'arc', attack2: 'arc', heavy: 'arc', heavyCol: FIRE, spark: [255, 170, 80], heavySpark: [255, 120, 40], wide: 1.15 },
+  creature_cinderhound: { col: EMBER, attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [255, 170, 90], heavySpark: [255, 120, 40], burn: true },
+  enemy_furnacepriest: { col: EMBER, attack: 'cast', attack2: 'cast', heavy: 'cast', heavyCol: FIRE, spark: [255, 170, 80], heavySpark: [255, 120, 40] },
+  boss_weighmaster:  { col: [240, 205, 130], attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 225, 160], wide: 1.3 },
+  boss_oruth:        { col: EMBER, attack: 'arc', attack2: 'arc', heavy: 'arc', heavyCol: FIRE, spark: [255, 180, 90], heavySpark: [255, 120, 40], wide: 1.5, quake: true },
+  boss_morrow_vane:  { col: [210, 220, 240], attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [235, 240, 255], thin: true },
+  boss_stoker:       { col: EMBER, attack: 'arc', attack2: 'arc', heavy: 'stab', heavyCol: FIRE, spark: [255, 170, 80], heavySpark: [255, 120, 40], wide: 1.3 },
+  boss_furnace_nine: { col: [205, 190, 175], attack: 'arc', attack2: 'arc', heavy: 'arc', heavyCol: FIRE, spark: [255, 170, 90], heavySpark: [255, 110, 30], wide: 1.6, quake: true, burn: true },
   boss_spiderqueen:  { col: [180, 230, 120], attack: 'stab', attack2: 'stab', heavy: 'arc', spark: [210, 240, 160], wide: 1.35 },
   boss_skarn:        { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 200, 130], wide: 1.25 },
   boss_garrow:       { col: REDHAND, attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [255, 210, 170], wide: 1.15 },

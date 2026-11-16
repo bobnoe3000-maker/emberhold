@@ -1,0 +1,42 @@
+{
+  "id": "ch3_gone_back_to_work",
+  "kind": "chapter",
+  "title": "Gone Back to Work",
+  "giver": "mother_coke",
+  "region": "reach",
+  "level": [
+    25,
+    60
+  ],
+  "after": [
+    "ch3_paid_by_weight"
+  ],
+  "summary": "Whoever lit the Forgehall woke Oruth the Forgemaster, the clans' own ancestor, and he's forging for them as he was ordered to. Mother Coke wants him put back to sleep.",
+  "steps": [
+    {
+      "id": "oruth",
+      "journal": "East on the Ashwater, below the Solmere road: the Forgehall of Oruth. Down to the deep forges, the second floor, and Oruth's own anvil.",
+      "objectives": [
+        {
+          "type": "boss",
+          "site": "forgehall",
+          "boss": "oruth",
+          "count": 1,
+          "label": "Oruth the Forgemaster"
+        }
+      ]
+    }
+  ],
+  "ready": "Oruth lay down at his anvil and went back to sleep. Tell Mother Coke in Ashgate.",
+  "done": "Mother Coke sang the fortieth verse over him, and it rhymed again.",
+  "rewards": {
+    "share": 0.5,
+    "lv": 26,
+    "gold": 580
+  },
+  "dialogue": {
+    "file": "ashgate",
+    "offer": "coke_oruth_offer",
+    "turnin": "coke_oruth_turnin"
+  }
+}

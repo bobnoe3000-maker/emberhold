@@ -56,7 +56,12 @@ export const SITES = {
   drowned_abbey: { name: 'The Drowned Abbey', region: 'fens', theme: 'water', base: 16, perFloor: 1, floors: 2, span: 3, plan: true, family: 'drowned', rooms: [5, 5], layout: 'halls', band: true, bosses: { 1: 'drowned_choir', 2: 'abbess_below' }, dress: ['abbey', 'abbey'], mix: 0xab3e },   // (Brother Teague in his cell off the cloister: plans.js, battle.js sideBoss)
   // the Cinder Reach (GDD v1.124, world doc v1.53; docs/reach-plan.md): its first band, the Cold Seam (19–21), the
   // Deepdelvers' played-out pithead and the goblins' warren dug through into it; the Foreman in the tally cave
+  // (v1.126, the build sheet: docs/reach-plan.md) the Reach's other three bands and its secret
   cold_seam: { name: 'The Cold Seam', region: 'reach', theme: 'cave', base: 19, perFloor: 1, floors: 2, span: 3, plan: true, family: 'pithead', families: ['pithead', 'warren'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 2: 'foreman' }, dress: ['pithead', 'warren'], mix: 0xc01d },
+  assay_yards: { name: 'The Assay Yards', region: 'reach', theme: 'desert', base: 22, perFloor: 1, floors: 2, span: 3, plan: true, family: 'yards', families: ['yards', 'quota'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 2: 'weighmaster' }, dress: ['yards', 'quota'], mix: 0xa55a },
+  forgehall: { name: 'The Forgehall of Oruth', region: 'reach', theme: 'ember', base: 25, perFloor: 1, floors: 2, span: 3, plan: true, family: 'forge', families: ['forge', 'deepforge'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 2: 'oruth' }, dress: ['forge', 'deepforge'], mix: 0xf02e },
+  cinderworks: { name: 'The Cinderworks', region: 'reach', theme: 'ember', themes: ['ember', 'lava'], base: 28, perFloor: 1, floors: 2, span: 3, plan: true, family: 'works', families: ['works', 'vault'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 1: 'morrow_vane', 2: 'stoker' }, dress: ['works', 'vault'], mix: 0xc1d3 },
+  ninth_vault: { name: 'The Ninth Vault', region: 'reach', theme: 'chasm', base: 30, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [5, 5], layout: 'halls', flat: true, hidden: true, secret: true, vault: 'the_quota_ledgers', mix: 0x9a17 },
   // the Mere Tower (tower.js; world doc v1.23): its landing and the stair hall, where the climb goes on; Wenna Pike's punt
   // out to it from ☰ (v1.112, core.js towerGo: from wherever the company is, and back there), from level 12 (minLevel:
   // core.js turns a company under it away). It pays no XP, so it competes with no band.

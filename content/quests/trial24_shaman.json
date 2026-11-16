@@ -1,0 +1,41 @@
+{
+  "id": "trial24_shaman",
+  "kind": "trial",
+  "title": "The Fortieth Verse",
+  "giver": "mother_coke",
+  "region": "reach",
+  "level": [
+    1,
+    60
+  ],
+  "trial": "shaman",
+  "trialLv": 24,
+  "summary": "Mother Coke will teach a shaman of yours the fortieth verse, the one that stops rhyming. It wants singing in the Forgehall, where Oruth can hear it.",
+  "steps": [
+    {
+      "id": "forge",
+      "journal": "The Forgehall of Oruth, the first floor or below: hold six waves.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "forgehall",
+          "count": 6,
+          "floor": 1,
+          "label": "Waves held in the Forgehall"
+        }
+      ]
+    }
+  ],
+  "ready": "The verse is sung in the Forgehall. Tell Mother Coke.",
+  "done": "Your shamans know the fortieth verse. Mother Coke says they sing it flat.",
+  "rewards": {
+    "share": 0.3,
+    "lv": 24,
+    "gold": 240
+  },
+  "dialogue": {
+    "file": "ashgate",
+    "offer": "coke_trial_offer",
+    "turnin": "coke_trial_turnin"
+  }
+}

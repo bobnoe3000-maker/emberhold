@@ -151,7 +151,7 @@ export const GRADES = {
 };
 export const GRADE_IDS = /** @type {(keyof typeof GRADES)[]} */ (Object.keys(GRADES));
 /** every class trial done: a rival company has its tier skills (the contract's assumption for the party, too) */
-export const ALL_TRIALS = Object.freeze({ fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 });
+export const ALL_TRIALS = Object.freeze({ fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1, fighter24: 1, rogue24: 1, mage24: 1, cleric24: 1, shaman24: 1 });   // (the 24s, v1.126)
 
 /**
  * one rival: a member of the class at the level, its kit by grade, its points spent (attributes on its class's build,

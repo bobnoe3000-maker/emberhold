@@ -1,0 +1,41 @@
+{
+  "id": "trial24_cleric",
+  "kind": "trial",
+  "title": "Counted Out",
+  "giver": "old_brannagh",
+  "region": "reach",
+  "level": [
+    1,
+    60
+  ],
+  "trial": "cleric",
+  "trialLv": 24,
+  "summary": "The night shift's chains hang in the Assay's cage store. Old Brannagh wants a cleric of yours to stand there and count them out, properly, as nobody did.",
+  "steps": [
+    {
+      "id": "cages",
+      "journal": "The Assay Yards' second floor, by the cage store: hold six waves.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "assay_yards",
+          "count": 6,
+          "floor": 2,
+          "label": "Waves held under the Yards"
+        }
+      ]
+    }
+  ],
+  "ready": "The count is said in the cage store. Go back to Old Brannagh.",
+  "done": "Brannagh taught your clerics how to bring someone back in. She says it's just counting, the other way.",
+  "rewards": {
+    "share": 0.3,
+    "lv": 24,
+    "gold": 240
+  },
+  "dialogue": {
+    "file": "ashgate",
+    "offer": "brannagh_trial_offer",
+    "turnin": "brannagh_trial_turnin"
+  }
+}

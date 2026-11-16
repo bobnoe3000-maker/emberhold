@@ -19,6 +19,8 @@ import { mulberry32, streamSeed } from './rng.js';
 import { ROSTER_IDS } from './rivals.js';
 
 export const RING = {
+  id: 'kingstone', name: 'The Kingstone', kind: 'kingstone', family: 'golems',
+  offset: 0,             // its window opens this many seconds into the hour (Furnace Nine's at half past, v1.126)
   region: 'fens',
   camp: 'fens_stones',   // where it stands (camps.js): the old stones' middle, in the Fens' own map (v1.106: no Ring of its own)
   level: 18,             // the region's top: every hero fights at it (level sync, §5)
@@ -57,9 +59,33 @@ export const RING = {
   heirloom: 'kingstones_ember',
   PAID_KEEP: 48,         // window ids remembered (two days of hours)
 };
+// Furnace Nine (v1.126; world doc v1.54; docs/reach-plan.md *The region boss*; the owner: "Furnace Nine at 30 after on the
+// hour"): the Cinder Reach's, the same event a half hour on. Once the story has broken it (lamps.js `furnace_nine`, the
+// Stoker's) it relights on its own ("It learned to feed itself") and burns at the Magma Vault's mouth (camps.js
+// `reach_mouth`) for the first quarter of every second half hour. Its tells are the Kingstone's shapes (a pour where the
+// nearest stands, a knot's stamp, a sweep of slag, the vents across the ground); it **feeds on the fallen**: a member who
+// goes down and gets up at the edge, not raised where they lay, gives it `feeds` of its life back.
+export const FURNACE = {
+  ...RING, id: 'furnace_nine', name: 'Furnace Nine', kind: 'furnace_nine', family: 'works', offset: 1800,
+  region: 'reach', camp: 'reach_mouth', level: 30, minLevel: 25,
+  lamp: 'furnace_nine',  // it burns again only once the company has broken it (the Stoker's lamp)
+  hpStep: [1, 1.85, 3.3, 3.9, 4.6],   // (its own: on the Kingstone's, 4.0 / 5.0 / 6.5, five companies took 8.5–10.6 min at 30 and one ran out of time)
+  feeds: 0.02,           // of its max HP back for each one who goes down near it and isn't raised
+  feedReach: 8,          // "near it": tiles past its body
+  heirloom: 'quota',
+};
+/** every region boss, by id @type {Record<string, typeof RING>} */
+export const RINGS = { kingstone: RING, furnace_nine: FURNACE };
+/** the region boss whose ground is this spawn point, if any @param {string} campId */
+export const ringByCamp = (campId) => Object.values(RINGS).find((R) => R.camp === campId) || null;
+const two = (n) => String(n).padStart(2, '0');
+/** the suffix a window's id carries for its boss (the Kingstone's none, the hour's top; Furnace Nine's ':30') @param {typeof RING} R */
+const suffixOf = (R) => (R.offset ? ':' + two(Math.round(R.offset / 60)) : '');
+/** the region boss a window's id is for @param {string} id */
+export const ringForId = (id) => Object.values(RINGS).find((R) => (R.offset ? id.endsWith(suffixOf(R)) : !id.includes(':'))) || RING;
 
 /** a window's id, the hour it opens: 'YYYY-MM-DDTHH' @param {any} id */
-export const isWindowId = (id) => typeof id === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}$/.test(id);
+export const isWindowId = (id) => typeof id === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}(:30)?$/.test(id);   // (':30': Furnace Nine's)
 
 /** @param {any} state */
 export function ringOf(state) {
@@ -83,33 +109,36 @@ export function windowDraw(seed, id) {
   while (ids.length < n) { const c = ROSTER_IDS[Math.floor(rng() * ROSTER_IDS.length)]; if (!ids.includes(c)) ids.push(c); }
   return { n, ids, salt: h >>> 0 };
 }
-/** where the hour stands, from the clock's fields (the UI reads the device's; the sim never does): a window open in its first
- * 15 minutes (its id and the seconds it has left), or the next one's id and the seconds till it, announced in the last 10
+/** where the hour stands for a region boss, from the clock's fields (the UI reads the device's; the sim never does): a
+ * window open in its first 15 minutes (its id and the seconds it has left), or the next one's id and the seconds till it,
+ * announced in the last 10. The Kingstone's opens at the hour's top, Furnace Nine's at half past (R.offset)
  * @param {{ y: number, mo: number, d: number, h: number, m: number, s: number }} c the local date (mo 1–12) and time
+ * @param {typeof RING} [R] the boss (the Kingstone if not said)
  * @returns {{ id: string, open: boolean, left: number, soon: boolean, until: number }} */
-export function windowAt(c) {
-  const two = (n) => String(n).padStart(2, '0'), id = `${c.y}-${two(c.mo)}-${two(c.d)}T${two(c.h)}`, into = c.m * 60 + c.s;
-  if (into < RING.window) return { id, open: true, left: RING.window - into, soon: false, until: 0 };
-  const until = 3600 - into, nh = (c.h + 1) % 24;
-  // (the next hour's id: past midnight the next day's, worked out by the UI's own Date: here the hour only, as a label)
-  return { id: `${c.y}-${two(c.mo)}-${two(c.d)}T${two(nh)}`, open: false, left: 0, soon: until <= RING.announce, until };
+export function windowAt(c, R = RING) {
+  const sec = c.m * 60 + c.s, into = (sec - R.offset + 3600) % 3600, h0 = sec >= R.offset ? c.h : (c.h + 23) % 24, suf = suffixOf(R);
+  const day = `${c.y}-${two(c.mo)}-${two(c.d)}T`;
+  if (into < R.window) return { id: `${day}${two(h0)}${suf}`, open: true, left: R.window - into, soon: false, until: 0 };
+  const until = 3600 - into, nh = (h0 + 1) % 24;
+  // (the next window's id: past midnight the next day's, worked out by the UI's own Date: here the hour only, as a label)
+  return { id: `${day}${two(nh)}${suf}`, open: false, left: 0, soon: until <= R.announce, until };
 }
-/** the Kingstone's HP × for this many parties @param {number} parties */
-export const hpStepOf = (parties) => RING.hpStep[Math.max(1, Math.min(RING.maxParties, parties)) - 1];
+/** a region boss's HP × for this many parties @param {number} parties @param {typeof RING} [R] */
+export const hpStepOf = (parties, R = RING) => R.hpStep[Math.max(1, Math.min(R.maxParties, parties)) - 1];
 
 /** a hero's tier: its company's score against the Ring's average company's, the hero there a minute ('gold' | 'silver' |
  * 'bronze' | null) @param {{ score: number, stood: number }} part the company's score, the hero's time standing
  * @param {number} avg the average company's score */
-export function tierOf(part, avg) {
-  if (!part || part.stood < RING.tier.bronze) return null;
+export function tierOf(part, avg, R = RING) {
+  if (!part || part.stood < R.tier.bronze) return null;
   const k = avg > 0 ? part.score / avg : 1;
-  return k >= RING.tier.gold ? 'gold' : k >= RING.tier.silver ? 'silver' : 'bronze';
+  return k >= R.tier.gold ? 'gold' : k >= R.tier.silver ? 'silver' : 'bronze';
 }
 /** what a tier pays a hero (the draws its own: the window's salt and the hero's), before the item is made (core.js)
  * @param {'gold' | 'silver' | 'bronze'} tier @param {number} level @param {number} toNext the hero's XP to its next level
- * @param {number} seed @param {number} salt @param {boolean} won the Kingstone fell (else a minute there pays Bronze, no more) */
-export function payOf(tier, level, toNext, seed, salt, won) {
-  const t = won ? tier : 'bronze', P = RING.pay[t], rng = mulberry32(streamSeed(seed ^ salt, 0x41b7));
+ * @param {number} seed @param {number} salt @param {boolean} won the boss fell (else a minute there pays Bronze, no more) @param {typeof RING} [R] */
+export function payOf(tier, level, toNext, seed, salt, won, R = RING) {
+  const t = won ? tier : 'bronze', P = R.pay[t], rng = mulberry32(streamSeed(seed ^ salt, 0x41b7));
   const rare = P.rare && rng() < P.rare, heirloom = !!P.heirloom && rng() < P.heirloom;
   return { tier: t, xp: Math.round(toNext * P.xp), gold: P.gold * level, cinders: P.cinders, item: P.item ? (rare ? 'rare' : P.item) : null, heirloom };
 }

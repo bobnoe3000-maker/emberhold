@@ -8,8 +8,8 @@
       "text": "The Abbess is down and the choir-lamp is glass on the floor. Ilse has read the ledger twice: the Cult was mining the dead, and the buyer's mark is the Kell Assay's. The Wickham road north to the Cinder Reach is open."
     },
     "reach": {
-      "title": "Short Shift is done",
-      "text": "The Foreman is down and the Cold Seam is quiet. Dagny's moot has moved on to the night shift, and its arguing points west, at the Assay's yards under the dead mountain. The rest of Act III, Quota, comes in a later update. Until then, the Reach has work in it."
+      "title": "Act III is done",
+      "text": "Furnace Nine's lamp is broken and the night shift is home, forty-one of them, counted in at Ashgate's gate. The vessel's mould was empty: Morrow Vane is a day ahead on the Solmere road with what was cast in it. The rest of the Old Provinces comes in a later update."
     }
   },
   "leadsTitle": {
@@ -35,6 +35,10 @@
     "fensboard": "The Lantern Guild's board, at the Drowned Eel, has new Fens jobs every day.",
     "foreman": "The Cold Seam, off the Wickham road south of Ashgate: the goblins' foreman keeps the tally cave, and somebody is chained at his anvil.",
     "tamsin": "The Cold Seam: the Foreman is down, and Tamsin Coalbrook is still at the goblins' anvil in the tally cave. Go back down and bring her up.",
-    "reachboard": "The Lantern Guild's board hangs by the bellows in the Slag & Bellows, Ashgate's tavern."
-  }
+    "reachboard": "The Lantern Guild's board hangs by the bellows in the Slag & Bellows, Ashgate's tavern.",
+    "showingoff": "Tamsin has something she wants to know about the Assay's work. Ask her, from her card.",
+    "reachchronicle": "The Reach's Chronicle: {n} of {of} pages found, in the Cold Seam, the Assay Yards, the Forgehall and the Cinderworks. Sister Ilse reads them in Thornwick.",
+    "ninthvault": "The Ninth Vault is open: the quota office's strongroom, up the old track on the dead volcano's flank past Kell's Rest."
+  },
+  "nextFound": "Next: {title}. {giver} has it for you: talk to her from her card, with her in your party."
 }

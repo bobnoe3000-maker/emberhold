@@ -26,7 +26,7 @@ function walk(site, seed) {
   const S0 = SITES[site], last = S0.floors - 1, lastBoss = bossAt(site, last);
   const t = createSim(seed, undefined, { scene: 'town' }); for (const i of [0, 2]) { t.state.counters.gold = 1e9; t.commands.push({ type: 'hire', idx: i }); t.tick(); }
   const sim = createSim(seed, undefined, { scene: 'dungeon', site }), S = sim.state;
-  S.created = true; S.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };
+  S.created = true; S.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1, fighter24: 1, rogue24: 1, mage24: 1, cleric24: 1, shaman24: 1 };
   for (const L of Object.values(LANDS)) if (L.opens) S.quests[L.opens] = { st: QS.DONE, step: 0, n: [] };
   S.party.push(...t.state.party.slice(1).map((m) => ({ ...m, perks: [], hidden: null })));
   const lvOf = (d) => { const w = sim.world, L = w.level; return (L && L.descentRoom && w.roomLevels.get(L.descentRoom.id)) || S0.base + d; };

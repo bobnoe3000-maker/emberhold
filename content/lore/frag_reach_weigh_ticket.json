@@ -1,0 +1,10 @@
+{
+  "id": "frag_reach_weigh_ticket",
+  "region": "reach",
+  "set": "reach",
+  "order": 4,
+  "title": "A Weigh-Ticket",
+  "text": "Kell depot. Pale iron, forty hundredweight, assayed true. Fuel for the melt: see the quota office.",
+  "note": "In a chest in the Assay Yards, filed with this year's tickets. Nobody had noticed the date.",
+  "where": "The Assay Yards"
+}

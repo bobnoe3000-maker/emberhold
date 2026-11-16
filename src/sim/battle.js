@@ -49,7 +49,7 @@ import { siteOf, bossAt } from './sites.js';
 import { gateShutOf, gateUp } from './world.js';
 import { LAMPS, lampOf, CAGE_KINDS, CAGE_PICKUP_S, CAGE_REACH, countOf, credit } from './lamps.js';
 import { HAZARD, hazardAt, openGround, edgeDistances, ageHazards, tellAt, inTell } from './hazards.js';
-import { RING, hpStepOf } from './ring.js';
+import { RING, ringByCamp, hpStepOf } from './ring.js';
 import { campsOf, campNear, campUp, campState, bandOf, postOf, clearCamp, CAMP_ROOM } from './camps.js';
 import { BOUT, modeOf } from './modes.js';
 
@@ -117,9 +117,11 @@ export const PREMIUM = 0.05;
 // (v1.124, the Cinder Reach) past level 18 foes carry PREMIUM_HIGH a level on top: the stat line grows by a fixed step a
 // level, so each level is a smaller share of what came before, and three levels up stopped being a wall (measured: the
 // right party at 21 held a level-24 room 12 waves standing, against the contract's defeat; at 12 → 15 it fell at wave 6)
-export const PREMIUM_HIGH = 0.06;
-/** a foe's toughness for its level: PREMIUM a level over 3, and PREMIUM_HIGH more a level over 18 @param {number} lv */
-export const premiumOf = (lv) => 1 + PREMIUM * Math.max(0, lv - 3) + PREMIUM_HIGH * Math.max(0, lv - 18);
+// (v1.126) and only to 22, PREMIUM_HIGH_TO: run on to 30 it outgrew the party (the right party at 24 held 7 and 10 waves
+// standing, at 30 six; capped at 22 they hold 10–12 from 24 to 30, and a room three up still beats them by wave 8)
+export const PREMIUM_HIGH = 0.06, PREMIUM_HIGH_TO = 22;
+/** a foe's toughness for its level: PREMIUM a level over 3, and PREMIUM_HIGH more a level from 18 to 22 @param {number} lv */
+export const premiumOf = (lv) => 1 + PREMIUM * Math.max(0, lv - 3) + PREMIUM_HIGH * Math.min(PREMIUM_HIGH_TO - 18, Math.max(0, lv - 18));
 // The tide (GDD §7.1): each wave of a visit is `step` tougher than the last (HP and ATK), up to a
 // top (`cap`: +100 % in an ordinary room, at wave 20: a nineteenth a wave; the owner, 2026-11-11: "Room waves should be
 // 20 to reach foes at +100% not 18"). A wave at the top is followed by one back at the start,
@@ -208,6 +210,14 @@ Object.assign(ENEMIES, {
   // (the Cinder Reach, GDD v1.124, world doc v1.53: the slag hauler, a big man with a hod of slag on his back, the Cold
   // Seam's elite: a brute's blow, slower to swing and to walk, harder to put down)
   hauler:  { hp: 62, atk: 9.8, def: 6, crit: 5, dodge: 1, interval: 1.7, range: 3.0, speed: 2.6, xp: 15, gold: 3 },
+  // (v1.126, the build sheet in docs/reach-plan.md) the Assay's guards and crossbowmen, the Slagborn renegades, the
+  // forge-wights (Ashbound in forge leathers), the cinder hounds (fast, light, many), the Cult's furnace-priests
+  assay_guard:   { hp: 48, atk: 8.8, def: 6, crit: 6, dodge: 4, interval: 1.3, range: 2.9, speed: 3.2, xp: 13, gold: 3 },
+  assay_xbow:    { hp: 34, atk: 9.0, def: 3, crit: 10, dodge: 6, interval: 1.7, range: 13.0, speed: 3.3, xp: 12, gold: 3, bolt: 'bolt' },
+  renegade:      { hp: 52, atk: 9.2, def: 5, crit: 6, dodge: 3, interval: 1.4, range: 2.8, speed: 3.0, xp: 13, gold: 3 },
+  forgewight:    { hp: 56, atk: 9.4, def: 7, crit: 5, dodge: 2, interval: 1.5, range: 2.9, speed: 2.8, xp: 14, gold: 2 },
+  cinderhound:   { hp: 38, atk: 8.2, def: 3, crit: 8, dodge: 10, interval: 0.9, range: 2.4, speed: 4.4, xp: 12, gold: 1 },
+  furnacepriest: { hp: 34, atk: 10.4, def: 2, crit: 5, dodge: 5, interval: 2.0, range: 13.5, speed: 2.8, xp: 15, gold: 4, bolt: 'fire' },
 });
 export const ENEMY_KINDS = Object.keys(ENEMIES);
 /** (v1.87) the room a melee blow is struck across: every melee reach, the party's and every foe's, is this much longer than
@@ -248,6 +258,13 @@ export const FAMILIES = {
   // the Cold Seam (GDD v1.124): the old pithead, where the haulers work the goblins' shift; then the warren itself
   pithead: { melee: ['gob', 'hauler'], ranged: ['archer', 'hexer'], elite: 'hauler', undead: () => false },
   warren: { melee: ['gob', 'bruiser'], ranged: ['archer', 'hexer'], elite: 'hauler', undead: () => false },
+  // (v1.126) the Assay Yards, the Forgehall, the Cinderworks and the Magma Vault (the build sheet, docs/reach-plan.md)
+  yards: { melee: ['assay_guard', 'cutthroat'], ranged: ['assay_xbow', 'crossbow'], elite: 'brute', undead: () => false },
+  quota: { melee: ['assay_guard', 'hauler'], ranged: ['assay_xbow', 'assay_xbow'], elite: 'hauler', undead: () => false },
+  forge: { melee: ['forgewight', 'renegade'], ranged: ['mage', 'mage'], elite: 'forgewight', undead: (k) => k !== 'renegade' },
+  deepforge: { melee: ['forgewight', 'warrior'], ranged: ['mage', 'mage'], elite: 'forgewight', undead: () => true },
+  works: { melee: ['assay_guard', 'cinderhound'], ranged: ['furnacepriest', 'assay_xbow'], elite: 'cinderhound', undead: () => false },
+  vault: { melee: ['cinderhound', 'warrior'], ranged: ['furnacepriest', 'furnacepriest'], elite: 'cinderhound', undead: (k) => k === 'warrior' },
   lockcult: { melee: ['minion', 'harvester'], ranged: ['rogue', 'acolyte'], elite: 'harvester', undead: (k) => k === 'minion' || k === 'rogue' },
   harvest: { melee: ['fenghoul', 'harvester'], ranged: ['rogue', 'bogwitch'], elite: 'harvester', undead: (k) => k === 'rogue' },
   drowned: { melee: ['drowned', 'harvester'], ranged: ['rogue', 'cantor'], elite: 'harvester', undead: (k) => k === 'drowned' || k === 'cantor' || k === 'rogue' },
@@ -287,7 +304,19 @@ export const GOLD_DROP = 0.35;
 //           old chutes onto each chalked cross: a tell (hazards.js inTell) under each of the party standing, CHUTE_R
 //           across, landing CHUTE_WIND s later as CHUTE_HURT of the max HP of whoever's still in it. The AI steps out
 //           of a tell it's seen, as it does the Kingstone's. Event 'bossChutes' { id, by, x, y, n } and the tells' own.
-/** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line' | 'swarm' | 'mud' | 'cage' | 'vespers' | 'bells' | 'issue' | 'sluice' | 'chutes', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
+//   (v1.126, the build sheet: docs/reach-plan.md)
+//   scales  (the Weighmaster) every SCALES_S s he weighs the company: a tell under whichever member has the most life
+//           left, SCALES_R across, landing SCALES_WIND s later as SCALES_HURT of their max HP: the company that spreads the
+//           damage is the one he can't single out. 'bossScales' { id, by, tid, x, y }
+//   anvil   (Oruth) every ANVIL_S s he turns to his anvil and forges for ANVIL_T s, not walking or striking; done, one of
+//           his escort's kind rises at his side, an elite, re-armed ('bossAnvil' { id, by, tid, x, y }); hit for
+//           ANVIL_SPOIL of his max HP while he works and the piece is spoiled ('bossAnvil' { …, spoiled: true })
+//   flee    (Morrow Vane) at FLEE_AT of his life he runs: gone from the hall, which counts as his fall (his time away, the
+//           story's boss objective; 'bossDown' { …, fled: true }, after 'bossFled' { id, x, y }); he pays as if he fell
+//   vents   (the Stoker) every VENTS_S s the floor glows where slag will vent: a tell under each of the company and
+//           VENTS_MORE more about the hall, VENTS_R across, landing VENTS_WIND s later as VENTS_HURT of max HP.
+//           'bossVents' { id, by, x, y, n }
+/** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line' | 'swarm' | 'mud' | 'cage' | 'vespers' | 'bells' | 'issue' | 'sluice' | 'chutes' | 'scales' | 'anvil' | 'flee' | 'vents', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
 export const BOSSES = {
   redhand_captain: { name: 'Captain Garrow', like: 'brute', hp: 22, atk: 2.3, def: 1.6, speed: 3.0, xp: 12, gold: 30, mech: 'call', escort: ['cutthroat', 'crossbow'], once: true, heirloom: 'garrows_due' },
   robed_stranger: { name: 'The Robed Stranger', like: 'acolyte', hp: 38, atk: 2.8, def: 2.5, xp: 12, gold: 25, mech: 'kindle', escort: ['minion', 'minion'], once: true },
@@ -308,6 +337,14 @@ export const BOSSES = {
   // high (× the companies in the Ring, ring.js hpStepOf), its plain blow slow and long (range: it's huge; body: the
   // ground it stands on, which blows reach across and nobody walks into); what kills is its three tells (ringTells)
   kingstone: { name: 'The Kingstone', like: 'golem', hp: 115, atk: 1.6, def: 1.5, speed: 1.1, xp: 0, gold: 0, mech: 'ring', escort: [], range: 5.5, body: 2.4, event: true },
+  // Furnace Nine (v1.126, ring.js FURNACE): the Reach's region boss, the furnace-lamp relit and walking, slag in its belly; its
+  // tells are the Kingstone's shapes, and it feeds on the fallen (battle.js ringTick)
+  furnace_nine: { name: 'Furnace Nine', like: 'golem', hp: 115, atk: 1.6, def: 1.5, speed: 1.1, xp: 0, gold: 0, mech: 'ring', escort: [], range: 5.5, body: 2.4, event: true },
+  // (v1.126, the build sheet: docs/reach-plan.md) the Reach's other four
+  weighmaster: { name: 'The Weighmaster', like: 'brute', hp: 21, atk: 2.2, def: 1.7, speed: 2.8, xp: 13, gold: 32, mech: 'scales', escort: ['assay_guard', 'assay_xbow'], heirloom: 'short_weight' },
+  oruth: { name: 'Oruth the Forgemaster', like: 'warrior', hp: 24, atk: 2.3, def: 1.8, speed: 2.4, xp: 14, gold: 34, mech: 'anvil', escort: ['forgewight', 'forgewight'], undead: true, heirloom: 'oruths_last_commission' },
+  morrow_vane: { name: 'Morrow Vane', like: 'cutthroat', hp: 18, atk: 2.0, def: 1.5, speed: 3.0, xp: 13, gold: 40, mech: 'flee', escort: ['assay_guard', 'assay_xbow'] },
+  stoker: { name: 'The Stoker', like: 'furnacepriest', hp: 22, atk: 2.3, def: 1.7, speed: 2.6, xp: 14, gold: 36, mech: 'vents', escort: ['cinderhound', 'furnacepriest'] },
   foreman: { name: 'The Foreman', like: 'bruiser', hp: 20, atk: 2.1, def: 1.6, speed: 2.8, xp: 13, gold: 30, mech: 'chutes', escort: ['hauler', 'archer'], heirloom: 'the_whistle' },   // (Gritch, the Cold Seam's tally cave, v1.124)
   vatwarden: { name: 'The Vatwarden', like: 'harvester', hp: 20, atk: 2.2, def: 1.6, speed: 2.7, xp: 13, gold: 30, mech: 'sluice', escort: ['fenghoul', 'bogwitch'] },
   ...WARDENS,   // the Mere Tower's (tower.js): a warden every tenth wave
@@ -315,6 +352,8 @@ export const BOSSES = {
 export const KINDLE_S = 12, LINE_R = 4, SWARM_S = 10, SWARM_MAX = 4;
 export const STALL_R = 3, ISSUE_S = 10, FELL_MAX = 6, SLUICE_S = 11, SLUICE_R = 1.5, SLUICE_T = 6, SLUICE_L = 8;
 export const CHUTE_S = 12, CHUTE_WIND = 2.4, CHUTE_R = 1.8, CHUTE_HURT = 0.32;
+export const SCALES_S = 11, SCALES_WIND = 2.2, SCALES_R = 1.7, SCALES_HURT = 0.45, ANVIL_S = 18, ANVIL_T = 4, ANVIL_SPOIL = 0.05, FLEE_AT = 0.25;
+export const VENTS_S = 10, VENTS_WIND = 2.0, VENTS_R = 1.6, VENTS_HURT = 0.3, VENTS_MORE = 3;
 export const MUD_S = 9, MUD_R = 1.8, MUD_T = 6, CAGE_HP = 0.35, CAGE_MEND = 0.025, VESPERS_S = 12, VESPERS_MEND = 0.02, BELL_S = 12, FLOOD_MAX = 4, FLOOD_STEP = 0.12;
 /** does a blow on this foe land at half? A boss whose called men still stand; an Ashbound (not a boss)
  * within LINE_R of a standing Standard @param {any} tgt @param {any[]} foes */
@@ -622,7 +661,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       crit: E.crit, dodge: E.dodge, interval: E.interval, range: B && B.range ? B.range : E.range, speed: B && B.speed ? B.speed : E.speed, bolt: E.bolt,
       xp: E.xp * (elite ? 3 : 1) * (B ? B.xp : 1), gold: E.gold * (elite ? 4 : 1) * (B ? B.gold : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 };
     if (B && B.body) { u.body = B.body; u.anchor = true; }   // (the Kingstone: ground it stands on, never shoved)
-    if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; u.swarmT = 0; u.mudT = 0; u.vesT = 0; u.bellT = 0; u.issueT = 0; u.sluiceT = 0; u.sluiceN = 0; u.chuteT = 0; u.mend = 0; }
+    if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; u.swarmT = 0; u.mudT = 0; u.vesT = 0; u.bellT = 0; u.issueT = 0; u.sluiceT = 0; u.sluiceN = 0; u.chuteT = 0; u.scalesT = 0; u.anvilT = 0; u.forging = 0; u.ventsT = 0; u.mend = 0; }
     w.enemies.push(u);
     return u;
   }
@@ -689,10 +728,13 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   function idleCamps(w) {
     const list = campsOf(w.region);
     // (in a window the old stones hold the Kingstone, standing at their middle, and not their golems: GDD §19)
-    w.enemies = (w.enemies || []).filter((e) => !e.idle || list.some((c) => c.id === e.idle && (ringHere(c) ? e.kind === 'kingstone' : campUp(state, c) && e.kind !== 'kingstone')));
+    // (Furnace Nine at the Vault's mouth the same, at half past: ring.js RINGS, by the camp)
+    const bossKind = (c) => { const G = ringByCamp(c.id); return G ? G.kind : ''; };
+    w.enemies = (w.enemies || []).filter((e) => !e.idle || list.some((c) => c.id === e.idle && (ringHere(c) ? e.kind === bossKind(c) : campUp(state, c) && e.kind !== bossKind(c))));
     for (const c of list) {
       if (ringHere(c)) {
-        if (!w.enemies.some((e) => e.idle === c.id)) w.enemies.push({ id: nextId++, kind: 'kingstone', idle: c.id, elite: false, boss: 'kingstone', lvl: RING.level, x: c.x, y: c.y, px: c.x, py: c.y, hp: 1, maxHp: 1, dead: 0, spawn: 0, moving: false, fx: 0, fy: 1, dir: 2, flash: 0, body: BOSSES.kingstone.body });
+        const G = /** @type {typeof RING} */ (ringByCamp(c.id));
+        if (!w.enemies.some((e) => e.idle === c.id)) w.enemies.push({ id: nextId++, kind: G.kind, idle: c.id, elite: false, boss: G.id, lvl: G.level, x: c.x, y: c.y, px: c.x, py: c.y, hp: 1, maxHp: 1, dead: 0, spawn: 0, moving: false, fx: 0, fy: 1, dir: 2, flash: 0, body: BOSSES[G.id].body });
         continue;
       }
       if (!campUp(state, c) || w.enemies.some((e) => e.idle === c.id)) continue;   // (a nest's out at its hole too: the owner, "the rat nest should have already pre-spawned rats out, like the goblin camp")
@@ -804,24 +846,27 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // done, time standing) is kept for the tiers (ring.js tierOf); it ends when it falls or the window's time runs out.
   /** start the Ring's fight in `room` of w: the Kingstone at its middle, the AI companies to come at RING.arrive.
    *  @param {any} w @param {number} room @param {{ companies: { id: string, members: any[] }[], secs: number, salt?: number }} opts */
+  /** the region boss of the Ring being fought (ring.js RINGS; the Kingstone when none is) */
+  const RC = () => /** @type {typeof RING} */ ((battle && battle.ring && battle.ring.cfg) || RING);
   function startRing(w, room, opts) {
     if (battle) endBattle(w, 'left');
+    const RG = (opts.camp && ringByCamp(opts.camp.id)) || RING;   // (which region boss: the camp's, ring.js RINGS)
     const g = opts.camp ? campGrid(w, opts.camp) : roomGrid(w, room), cx = opts.camp ? opts.camp.x : (g.x0 + g.x1 + 1) / 2, cy = opts.camp ? opts.camp.y : (g.y0 + g.y1 + 1) / 2;
     pending = []; focusId = 0;
-    battle = { room, t0: state.t, lastBlow: null, level: RING.level, wave: 1, lull: 0, cells: g.cells, grid: g.grid, fields: new Map(),
-      tide: 0, boss: 'kingstone', bossUp: true, quiet: true, lastSlain: null, hazards: [], tells: [], flood: 0, edge: null, size: 'large',
-      ring: { cx, cy, R: opts.camp ? opts.camp.arena : Math.min(g.x1 - g.x0 + 1, g.y1 - g.y0 + 1) / 2, t: 0, secs: Math.max(60, opts.secs || RING.window), boss: 0, base: 0,
-        coming: opts.companies.slice(0, RING.maxParties - 1).map((c, i) => ({ at: RING.arrive[i], id: c.id, members: c.members, in: false })),
+    battle = { room, t0: state.t, lastBlow: null, level: RG.level, wave: 1, lull: 0, cells: g.cells, grid: g.grid, fields: new Map(),
+      tide: 0, boss: RG.id, bossUp: true, quiet: true, lastSlain: null, hazards: [], tells: [], flood: 0, edge: null, size: 'large',
+      ring: { cfg: RG, cx, cy, R: opts.camp ? opts.camp.arena : Math.min(g.x1 - g.x0 + 1, g.y1 - g.y0 + 1) / 2, t: 0, secs: Math.max(60, opts.secs || RG.window), boss: 0, base: 0,
+        coming: opts.companies.slice(0, RG.maxParties - 1).map((c, i) => ({ at: RG.arrive[i], id: c.id, members: c.members, in: false })),
         companies: [], all: [...state.party], part: new Map(), parties: 1, over: null, rest: 0, tellN: 0,
-        stampT: 4, sweepT: 7, stonesT: 16, slamT: 2.5, markT: 0, mark: null, stonesAt: [...RING.stones.at], cracked: false } };
+        stampT: 4, sweepT: 7, stonesT: 16, slamT: 2.5, markT: 0, mark: null, stonesAt: [...RG.stones.at], cracked: false } };
     w.enemies = []; w.projectiles = []; w.allies = [];
     rng = mulberry32(streamSeed(seed ^ Math.imul((opts.salt || 0) + 1, 0x9e3779b1), 0x41b6));   // (the Ring's own draws: its window's salt)
-    const R = battle.ring, k = foe(w, 'kingstone', RING.level, cx, cy, premiumOf(RING.level), false, FAMILIES.golems, BOSSES.kingstone);
+    const R = battle.ring, k = foe(w, RG.kind, RG.level, cx, cy, premiumOf(RG.level), false, FAMILIES[RG.family], BOSSES[RG.id]);
     k.spawn = 0; k.cd = 1e9; k.face = Math.PI / 2; k.fx = 0; k.fy = 1; R.boss = k.id; R.base = k.maxHp;   // (it never swings a plain blow: every hit is a tell, ringTells)
     for (const m of state.party) { m.down = false; m.downs = 0; m.downT = 0; }
     bus.emit('battle', { on: true, room, level: battle.level, ring: true });
     bus.emit('ring', { t: 'start', secs: R.secs, boss: k.id, hp: k.maxHp });
-    bus.emit('bossWave', { id: 'kingstone', name: BOSSES.kingstone.name });
+    bus.emit('bossWave', { id: RG.id, name: BOSSES[RG.id].name });
   }
   /** a spawn point's arena as a fight's ground (startCamp's): its open tiles and walkable grid @param {any} w @param {any} c */
   function campGrid(w, c) {
@@ -844,7 +889,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // giant's pace until it's RING.king.keep past its body, keeps RING.king.edge off the ring's edge, and turns at most
   // RING.king.turn a second; while it winds a tell it stands and turns to face it (ringTells: wind)
   function kingTurn(k, w, dt) {
-    const R = battle.ring, K = RING.king, live = R.all.filter(alive);
+    const R = battle.ring, K = RC().king, live = R.all.filter(alive);
     if (!live.length) { k.moving = false; return; }
     if ((R.markT -= dt) <= 0 || !R.mark || !alive(R.mark)) {
       // (the thick of those it can't reach: the healers and the bows hanging back, so it wades through the fight and drags it
@@ -897,7 +942,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     });
     R.companies.push(c.members); R.all.push(...c.members); w.allies = R.all.filter((m) => m.ally);
     const k = ringBoss(w);
-    if (k) { const was = k.maxHp, to = Math.round(R.base * hpStepOf(n + 1)); if (to > was) { k.maxHp = to; k.hp += to - was; } }
+    if (k) { const was = k.maxHp, to = Math.round(R.base * hpStepOf(n + 1, RC())); if (to > was) { k.maxHp = to; k.hp += to - was; } }
     R.parties = n + 1;
     bus.emit('ring', { t: 'arrive', company: c.id, n: R.parties, hp: k ? k.maxHp : 0 });
   }
@@ -906,7 +951,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // small circles across the ring, every 30 s and at 75 / 50 / 25 %. Under half it cracks: stamp and sweep come faster.
   function ringTells(w, k, dt) {
     const R = battle.ring, T = state.t, live = R.all.filter(alive);
-    if (!R.cracked && k.hp < k.maxHp * RING.cracked) { R.cracked = true; bus.emit('ring', { t: 'cracked' }); }
+    if (!R.cracked && k.hp < k.maxHp * RC().cracked) { R.cracked = true; bus.emit('ring', { t: 'cracked' }); }
     const push = (t) => { t.id = ++R.tellN; t.from = T; battle.tells.push(t); bus.emit('tell', { id: t.id, kind: t.kind, x: t.x, y: t.y, r: t.r, dir: t.dir ?? null, arc: t.arc ?? null, wind: t.at - T }); };
     // (one wind-up at a time: it faces the tell it winds and stands still for it, kingTurn; the swing lands with it)
     const wind = (t, x, y) => { push(t); k.act = t.at - T; k.windDir = atan2(y - k.y, x - k.x); t.swing = t.kind === 'sweep' ? 'b' : 'heavy'; if (t.kind !== 'slam') k.hold = t.at - T; };   // (it plants its feet for a stamp or a sweep; a slam it throws on the move)
@@ -914,24 +959,24 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     // its blow (v1.106: every hit of its, the plain blow too, 70 % of max HP: a hero at 30 % after one, Downed by a second
     // unhealed, the owner): a slam where whoever's nearest stands, told on the ground as the others are
     if ((R.slamT -= dt) <= 0 && k.act <= 0) {
-      const S = RING.slam, t = nearest(k, live.map(posOf));
+      const S = RC().slam, t = nearest(k, live.map(posOf));
       if (t && hypot(t.x - k.x, t.y - k.y) - (k.body || 0) < S.reach) { R.slamT = R.cracked ? S.crackedEvery : S.every; wind({ kind: 'slam', x: t.x, y: t.y, r: S.r, at: T + S.wind, hurt: S.hurt }, t.x, t.y); }
       else R.slamT = 0.5;
     }
     if ((R.stampT -= dt) <= 0 && k.act <= 0) {
-      const S = RING.stamp; R.stampT = R.cracked ? S.crackedEvery : S.every;
+      const S = RC().stamp; R.stampT = R.cracked ? S.crackedEvery : S.every;
       let best = live[0], bn = -1;
       for (const m of live) { const a = posOf(m); let n = 0; for (const o of live) { const b = posOf(o); if (hypot(a.x - b.x, a.y - b.y) < S.r) n++; } if (n > bn) { bn = n; best = m; } }
       const a = posOf(best); wind({ kind: 'stamp', x: a.x, y: a.y, r: S.r, at: T + S.wind, hurt: S.hurt }, a.x, a.y);
     }
     if ((R.sweepT -= dt) <= 0 && k.act <= 0) {
-      const S = RING.sweep; R.sweepT = R.cracked ? S.crackedEvery : S.every;
+      const S = RC().sweep; R.sweepT = R.cracked ? S.crackedEvery : S.every;
       const t = nearest(k, live.map(posOf)) || posOf(live[0]), dir = atan2(t.y - k.y, t.x - k.x);
       wind({ kind: 'sweep', x: k.x, y: k.y, r: S.len + (k.body || 0), dir, arc: S.arc, at: T + S.wind, hurt: S.hurt, throw: S.throw }, t.x, t.y);
     }
     const share = k.hp / k.maxHp, due = R.stonesAt.length && share <= R.stonesAt[0];
     if ((R.stonesT -= dt) <= 0 || due) {
-      const S = RING.stones; R.stonesT = S.every; if (due) R.stonesAt.shift();
+      const S = RC().stones; R.stonesT = S.every; if (due) R.stonesAt.shift();
       const [lo, hi] = R.cracked ? S.crackedN : S.n, n = lo + Math.floor(rng() * (hi - lo + 1)), cells = battle.cells;
       // half on the companies (where somebody stands, a step off), the rest anywhere in the ring
       for (let i = 0; i < n && cells.length; i++) {
@@ -944,7 +989,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       bus.emit('ring', { t: 'stones', n });
     }
     // its swing, timed to land as its tell does (RING.swingLead: the heavy clip's wind before its impact frame)
-    for (const t of battle.tells) if (t.swing && !t.swung && !t.done && T >= t.at - RING.swingLead) { t.swung = true; k.atkN = (k.atkN || 0) + 1; k.atkKind = t.swing; }
+    for (const t of battle.tells) if (t.swing && !t.swung && !t.done && T >= t.at - RC().swingLead) { t.swung = true; k.atkN = (k.atkN || 0) + 1; k.atkKind = t.swing; }
     // landing: whoever's still in it
     for (const t of battle.tells) {
       if (t.done || T < t.at) continue;
@@ -984,13 +1029,15 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // the Ring's clock: the companies coming, the Downed getting up, the parts kept; the end at its fall or the window's
   function ringTick(w, dt) {
     const R = battle.ring, k = ringBoss(w);
-    if (R.over) { if ((R.rest += dt) >= RING.over) R.done = true; return; }
+    if (R.over) { if ((R.rest += dt) >= RC().over) R.done = true; return; }
     R.t += dt;
-    for (const c of R.coming) if (!c.in && R.t >= c.at && R.parties < RING.maxParties && (!k || k.hp > k.maxHp * RING.joinUntil)) { c.in = true; ringArrive(w, c); }
+    for (const c of R.coming) if (!c.in && R.t >= c.at && R.parties < RC().maxParties && (!k || k.hp > k.maxHp * RC().joinUntil)) { c.in = true; ringArrive(w, c); }
     for (const m of R.all) {
       if (alive(m)) { const q = partOf(m); if (q) q.stood += dt; continue; }
       if (!m.down) continue;
-      if ((m.downT = (m.downT || 0) + dt) < RING.respawn) continue;
+      if ((m.downT = (m.downT || 0) + dt) < RC().respawn) continue;
+      // (Furnace Nine feeds on the fallen, ring.js FURNACE: one who lay near it and wasn't raised gives it back its share)
+      const G = RC(); if (G.feeds && k && k.hp > 0 && hypot(m.x - k.x, m.y - k.y) - (k.body || 0) < G.feedReach) { const n = Math.round(k.maxHp * G.feeds); k.hp = Math.min(k.maxHp, k.hp + n); bus.emit('ring', { t: 'fed', n, x: k.x, y: k.y }); }
       const s = statsFor(m), [ex, ey] = edgeSpot(w, m.ally ? m.company : 0);
       m.down = false; m.downT = 0; m.hp = s.maxHp; m.mp = Math.max(m.mp || 0, s.maxMp * 0.5); m.buff = null; m.poison = null; m.drain = null; m.hex = null; m.slow = 0; m.rooted = 0; for (const h of HOLDS) m[h] = 0;
       if (m === hero()) { const p = state.player; p.x = p.px = ex; p.y = p.py = ey; p.path = null; }
@@ -1003,7 +1050,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   }
   function ringOver(how, why) {
     const R = battle && battle.ring; if (!R || R.over) return;
-    const parts = [...R.part.values()], stood = parts.filter((q) => q.stood >= RING.tier.bronze), score = (q) => q.dmg + q.heal * 1.5;
+    const parts = [...R.part.values()], stood = parts.filter((q) => q.stood >= RC().tier.bronze), score = (q) => q.dmg + q.heal * 1.5;
     const avg = stood.length ? stood.reduce((a, q) => a + score(q), 0) / stood.length : 0;
     R.over = { how, why, t: Math.round(R.t), parties: R.parties, avg, parts: parts.map((q) => ({ ...q, score: score(q) })) };
     battle.tells = [];
@@ -1104,6 +1151,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       tgt.hp = Math.max(1, Math.round(statsFor(tgt).maxHp * SWORN_RISE)); (battle.sworn ||= []).push(tgt.id);   // Sworn: once a room visit, gets up from it
       bus.emit('combat', { t: 'rise', x: tgt.x, y: tgt.y, name: tgt.name });
     }
+    if (tgt.hp <= 0 && tgt.boss && !tgt.fled && BOSSES[tgt.boss].mech === 'flee') tgt.hp = 1;   // (Vane is never brought down: he runs, bossMech, the next tick)
     if (tgt.hp > 0) return;
     if (isParty) {
       if (battle) battle.lastBlow = { kind: by.kind || '', elite: !!by.elite, boss: by.boss || '', on: tgt.name || '' };   // (the defeat recap: who brought them down)
@@ -1141,7 +1189,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (e.boss && !M.story) { if (battle) battle.quiet = true; bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first: false, x: e.x, y: e.y, lvl: e.lvl, raid: true, room: battle ? battle.room : null }); }   // (a raid's: not the story's, no time away)
     else if (e.boss) { const first = !(state.bosses || {})[e.boss]; (state.bosses ||= {})[e.boss] = ((state.bosses || {})[e.boss] || 0) + 1; if (battle) { battle.boss = null; if ((getWorld().npcs || []).some((n) => n.found && n.boss === e.boss)) battle.quiet = true; }   // (one he held waits there to be spoken to: quiet for that)
       (state.bossBack ||= {})[e.boss] = state.t + BOSS_BACK;   // (gone for BOSS_BACK: his room's waves the floor's own till then, v1.117)
-      bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first, x: e.x, y: e.y, lvl: e.lvl }); }   // (core.js pays its heirloom / loot; the room fights on)
+      bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first, x: e.x, y: e.y, lvl: e.lvl, ...(e.fled ? { fled: true } : {}) }); }   // (core.js pays its heirloom / loot; the room fights on; Vane fled, v1.126)
     else if (battle) battle.lastSlain = { x: e.x, y: e.y };
     if (e.elite && !e.boss) onDrop('elite', e.lvl, e.x, e.y);           // elites often carry gear
     bus.emit('slain', { kind: e.kind, elite: !!e.elite, lvl: e.lvl });   // (quests count elites)
@@ -1964,7 +2012,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   /** how long a member takes to see a tell (s): a companion's or an AI company's its own, in RING.react, by its id; the
    *  hero's when you let go RING.heroReact @param {any} m @param {number} i */
   const idHash = (id) => { const t = String(id); let h = 7; for (let k = 0; k < t.length; k++) h = Math.imul(h ^ t.charCodeAt(k), 2654435761); return h >>> 0; };
-  const reactOf = (m, i) => (i === 0 && !m.ally ? RING.heroReact : RING.react[0] + (idHash(m.id) % 1000) / 1000 * (RING.react[1] - RING.react[0]));
+  const reactOf = (m, i) => { const G = RC(); return i === 0 && !m.ally ? G.heroReact : G.react[0] + (idHash(m.id) % 1000) / 1000 * (G.react[1] - G.react[0]); };
   function memberTurn(m, i, foes, w, dt, L, LU, focus) {
     if (!alive(m) || !foes.length) return;
     if (battle.bout && (battle.bout.call > 0 || battle.bout.over)) { m.moving = false; return; }   // (the Crier's call; the bout called)
@@ -2134,6 +2182,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     }
     return [fx, fy];
   }
+  /** a tell a boss puts on the ground (roomTells lands it) @param {any} e @param {string} kind */
+  function tellAt2(e, kind, x, y, r, wind, hurt) {
+    if (!battle.tells) { battle.tells = []; battle.tellN = 0; }
+    const t = { id: ++battle.tellN, kind, x, y, r, from: state.t, at: state.t + wind, hurt, by: e.id };
+    battle.tells.push(t); bus.emit('tell', { id: t.id, kind, x, y, r, dir: null, arc: null, wind });
+  }
   function bossMech(e, w, dt) {
     const B = BOSSES[e.boss], F = fam(w), tough = battle && battle.tower ? towerK() : premiumOf(e.lvl), esc = e.escort || B.escort;
     if (B.mech === 'call' && e.called < 2 && e.hp < e.maxHp * (2 - e.called) / 3) {
@@ -2169,6 +2223,39 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       }
       e.atkN = (e.atkN || 0) + 1; e.atkKind = 'heavy';            // (he blows: his heavy clip as the whistle goes)
       bus.emit('bossChutes', { id: e.boss, by: e.id, x: e.x, y: e.y, n: at.length });
+    } else if (B.mech === 'scales' && battle && (e.scalesT += dt) >= SCALES_S) {
+      // he weighs them: the heaviest pays most (whoever has the most life left, as it stands)
+      e.scalesT = 0;
+      let top = null, ti = -1; state.party.forEach((m, i) => { if (alive(m) && (!top || m.hp > top.hp)) { top = m; ti = i; } });
+      if (top) {
+        const a = ti ? top : state.player;
+        tellAt2(e, 'scales', a.x, a.y, SCALES_R, SCALES_WIND, SCALES_HURT);
+        e.atkN = (e.atkN || 0) + 1; e.atkKind = 'heavy';
+        bus.emit('bossScales', { id: e.boss, by: e.id, tid: top.id, x: a.x, y: a.y });
+      }
+    } else if (B.mech === 'anvil' && battle) {
+      // he works: at his anvil ANVIL_T s, struck hard enough the piece is spoiled; else one of his wights rises re-armed
+      if (e.forging > 0) {
+        if ((e.forging -= dt) <= 0) {
+          e.forging = 0;
+          const spoiled = e.forgeHp - e.hp >= e.maxHp * ANVIL_SPOIL;
+          if (!spoiled) { const [x, y] = onFloor(w, e.x + 1.3, e.y + 0.8, e.x, e.y), u = foe(w, esc[0], e.lvl, x, y, tough, false, F); bus.emit('bossAnvil', { id: e.boss, by: e.id, tid: u.id, x: u.x, y: u.y }); }
+          else bus.emit('bossAnvil', { id: e.boss, by: e.id, tid: null, x: e.x, y: e.y, spoiled: true });
+        }
+      } else if ((e.anvilT += dt) >= ANVIL_S) { e.anvilT = 0; e.forging = ANVIL_T; e.forgeHp = e.hp; e.atkN = (e.atkN || 0) + 1; e.atkKind = 'heavy'; bus.emit('bossForge', { id: e.boss, by: e.id, x: e.x, y: e.y, t: ANVIL_T }); }
+    } else if (B.mech === 'flee' && battle && !e.fled && e.hp > 0 && e.hp <= e.maxHp * FLEE_AT) {
+      // he runs (world doc v1.53: "the company never catches him"): gone from the hall, as good as fallen for the story
+      e.fled = true;
+      bus.emit('bossFled', { id: e.boss, x: e.x, y: e.y });
+      e.hp = 0; e.dead = DEATH_T; reward(e); if (focusId === e.id) focusId = 0;
+    } else if (B.mech === 'vents' && battle && (e.ventsT += dt) >= VENTS_S) {
+      // the floor glows where the slag will vent: under each of the company, and VENTS_MORE more about the hall
+      e.ventsT = 0;
+      const at = state.party.map((m, i) => (alive(m) ? (i ? [m.x, m.y] : [state.player.x, state.player.y]) : null)).filter(Boolean), cells = battle.cells || [];
+      for (let i = 0; i < VENTS_MORE && cells.length; i++) { const c = cells[Math.floor(rng() * cells.length)]; at.push([c[0] + 0.5, c[1] + 0.5]); }
+      for (const [x, y] of at) tellAt2(e, 'vent', x, y, VENTS_R, VENTS_WIND, VENTS_HURT);
+      e.atkN = (e.atkN || 0) + 1; e.atkKind = 'heavy';
+      bus.emit('bossVents', { id: e.boss, by: e.id, x: e.x, y: e.y, n: at.length });
     } else if (B.mech === 'mud' && battle && (e.mudT += dt) >= MUD_S) {
       // he stamps: mud comes up under each of the party standing (hazards.js), for MUD_T s
       e.mudT = 0;
@@ -2254,7 +2341,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     // (the owner, 2026-11-15: "The region boss wont show even if it is time if i am already fighting the stone giant NPCs, i have
     // to exit the ring for the boss to show"): the hour comes while the company fights the old stones' golems: they go back
     // into the stones and the Kingstone stands up among the company, its fight begun where it stands (core.js ringReach)
-    if (battle && battle.camp && !battle.ring && onLand && alive(H) && H.level >= RING.minLevel && ringHere(battle.camp)) {   // (under 10: the golems' fight goes on)
+    if (battle && battle.camp && !battle.ring && onLand && alive(H) && H.level >= (ringByCamp(battle.camp.id) || RING).minLevel && ringHere(battle.camp)) {   // (under its level, 10 or 25: the camp's own fight goes on)
       const c = battle.camp, i = campsOf(w.region).indexOf(c); endBattle(w, 'ring'); if (i >= 0) onRingReach(c, i);
     }
     if (!battle && onLand) idleCamps(w);
@@ -2344,6 +2431,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         if (battle.ring && battle.ring.over) { e.moving = false; continue; }   // (the Ring's over: the Kingstone stands still, fallen or not)
         if (e.boss) bossMech(e, w, dt);
         if (statusTick(e, w, dt)) continue;                                  // (Downed by its poison, or held)
+        if (e.forging > 0) { e.moving = false; continue; }                  // (Oruth at his anvil: v1.126)
         if (battle.ring && e.id === battle.ring.boss) { kingTurn(e, w, dt); continue; }   // (the Kingstone: its own walk and its tells)
         const slow = memberSlow(e); if (e.slow > 0) e.slow -= dt;           // Frost Nova; Caltrops, Blizzard
         const walk = (gx, gy) => (e.rooted > 0 ? (e.moving = false) : chase(e, gx, gy, e.speed * slow, dt, w));   // (a root stops its feet, not its blows)

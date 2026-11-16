@@ -1,0 +1,43 @@
+{
+  "id": "tamsin_spoiled_casting",
+  "kind": "companion",
+  "title": "Spoiled Casting",
+  "giver": "tamsin",
+  "region": "reach",
+  "level": [
+    29,
+    60
+  ],
+  "after": [
+    "tamsin_the_patterns"
+  ],
+  "companion": "tamsin",
+  "summary": "The Cult keeps spare moulds in the Magma Vault. Tamsin can crack them where they stand, if somebody holds the floor round her while she works.",
+  "steps": [
+    {
+      "id": "vault",
+      "journal": "The Magma Vault, the Cinderworks' second floor: hold five waves while Tamsin spoils the moulds.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "cinderworks",
+          "count": 5,
+          "floor": 2,
+          "label": "Waves held in the Magma Vault"
+        }
+      ]
+    }
+  ],
+  "ready": "The Cult's spare moulds are cracked through. Tell Tamsin it's done; she'll say she knows.",
+  "done": "Nobody casts anything out of those moulds again. Tamsin is insufferable about it.",
+  "rewards": {
+    "share": 0.45,
+    "lv": 29,
+    "gold": 360
+  },
+  "dialogue": {
+    "file": "tamsin",
+    "offer": "tamsin_casting_offer",
+    "turnin": "tamsin_casting_turnin"
+  }
+}

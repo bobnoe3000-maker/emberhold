@@ -1,0 +1,42 @@
+{
+  "id": "trial24_mage",
+  "kind": "trial",
+  "title": "Ask the Iron",
+  "giver": "tamsin",
+  "region": "reach",
+  "level": [
+    1,
+    60
+  ],
+  "companion": "tamsin",
+  "trial": "mage",
+  "trialLv": 24,
+  "summary": "Tamsin will show a mage of yours how to ask instead of tell. By the Assay's furnace, under the Yards, where everything's hot enough to listen.",
+  "steps": [
+    {
+      "id": "furnace",
+      "journal": "The Assay Yards' second floor, the cellars: hold eight waves.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "assay_yards",
+          "count": 8,
+          "floor": 2,
+          "label": "Waves held under the Yards"
+        }
+      ]
+    }
+  ],
+  "ready": "Eight waves under the Yards. Tell Tamsin.",
+  "done": "Your mages ask the weather now. Tamsin says it's the same as iron, only wetter.",
+  "rewards": {
+    "share": 0.3,
+    "lv": 24,
+    "gold": 240
+  },
+  "dialogue": {
+    "file": "tamsin",
+    "offer": "tamsin_trial_offer",
+    "turnin": "tamsin_trial_turnin"
+  }
+}

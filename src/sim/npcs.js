@@ -84,6 +84,11 @@ export const NPCS = {
   // Tamsin Coalbrook, Dagny's niece, a mage-smith: held at the goblins' anvil in the Cold Seam's tally cave (floor 2's
   // hall) by the Foreman, for the forge-work she can do (world doc v1.53); joins once he falls
   tamsin: { region: 'reach', found: { site: 'cold_seam', depth: 1, boss: 'foreman' }, spots: [], knot: 'tamsin_hub', flags: ['met_tamsin'] },
+  // (v1.54, world doc §3.3 "Kell's Rest's people") Kell's Rest has no square yet: its two are met at the Assay Yards' gate,
+  // in the way in (as Tobin is at the barrow mouth), and stay: Nan Ruddock with what's left of the Redhand, and Davy
+  // Pruett, the Assay's clerk, through whom Hob's pass comes (Paid by Weight)
+  nan_ruddock: { region: 'reach', found: { site: 'assay_yards', depth: 0, entrance: true }, spots: [], knot: 'nan_hub', flags: ['met_nan'] },
+  assay_clerk: { region: 'reach', found: { site: 'assay_yards', depth: 0, entrance: true }, spots: [], knot: 'clerk_hub', flags: ['met_clerk'] },
 };
 export const PARTS = 4, PART_S = DAY_S / PARTS;                  // dawn · day · dusk · night
 /** the part of the in-game day at time t (s of play) @param {number} t */
@@ -163,6 +168,7 @@ export function placeNpcs(world, isWalkable, block, part = 0) {
  * @param {any} world @param {(w: any, x: number, y: number) => boolean} isWalkable @param {(id: string) => boolean} waiting */
 export function placeFound(world, isWalkable, waiting) {
   if (world.kind !== 'dungeon' || !world.level || !world.level.descentRoom) return world;
+  const placed = [];                                             // (two in one room, Kell's Rest's at the Yards' gate: apart on screen, so a tap picks one)
   for (const [id, n] of Object.entries(NPCS)) {
     if (!n.found || n.found.site !== (world.site || 'barrows') || n.found.depth !== (world.depth || 0) || !waiting(id)) continue;
     // (a visitor by the way in stands in the entrance room, nearest its middle: no fight starts there)
@@ -175,8 +181,9 @@ export function placeFound(world, isWalkable, waiting) {
       if (n.found.entrance && world.level.spawn && hypot(q.x - world.level.spawn.x, q.y - world.level.spawn.y) < 3) continue;   // (not where you arrive: you'd stand in him)
       const clear = [[-1, -1], [0, -1], [1, -1], [-1, 0], [-1, 1]].every(([dx, dy]) => isWalkable(world, q.x + dx, q.y + dy));   // (a tile clear of the wall all round: with open's, the 3 × 3 about him)
       const key = n.found.entrance ? hypot(x - r.cx, y - r.cy) : (clear ? 0 : 1000) + x + y;
-      if (open && (!best || key < best.k || (key === best.k && x < best.x - 0.5))) best = { ...q, k: key };
+      if (open && placed.every((o) => apart(q, o)) && (!best || key < best.k || (key === best.k && x < best.x - 0.5))) best = { ...q, k: key };
     }
+    if (best) placed.push(best);
     if (best) world.npcs.push({ id, found: true, visitor: !!n.visitor, boss: n.found.boss, x: best.x, y: best.y, px: best.x, py: best.y });
   }
   return world;

@@ -36,7 +36,7 @@ import { bowlOf, settleBout, restoreBowl, freshBowl, companyOn, refreshPicks, mo
 import { RAID, freshRaid, restoreRaid, raidOf, raidSites, raidFloors, standIns, cofferOf } from './raid.js';
 import { modeOf as playOf } from './modes.js';
 import { makeCompany } from './rivals.js';
-import { RING, ringOf, restoreRing, paidFor, isWindowId, windowDraw, tierOf, payOf } from './ring.js';
+import { RING, ringOf, restoreRing, paidFor, isWindowId, windowDraw, tierOf, payOf, ringForId } from './ring.js';
 import { CAMP_ROOM } from './camps.js';
 import { xpToNext, statsFor, gainXp } from './party.js';
 import { createExpeditions } from './expeditions.js';
@@ -133,7 +133,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     bowl: freshBowl(),                // (v45, v47) the Bowl: marks, the day's bouts, a ladder each for Team and Individual (bowl.js)
     raid: freshRaid(),                // (v48) raids: the day's count, coffers since a Rare, raids won (raid.js)
     ring: { paid: [], won: 0, best: 0 },   // (v51) the Kingstone's windows stood in, its falls, the fastest (ring.js)
-    trials: {},                       // class trials the company has done: { [cls]: 1 } for the 6s, { [cls + '12']: 1 } for the 12s (quests.js; skills.js unlocks)
+    trials: {},                       // class trials the company has done: { [cls]: 1 } for the 6s, { [cls + '12']: 1 } for the 12s, { [cls + '24']: 1 } the 24s (quests.js; skills.js unlocks)
     reached: new Set(['thornwick']),  // the towns you've stood in (coach.js): where the Guild's coach will take you
   };
   clock = state;
@@ -435,20 +435,27 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   /** @type {any} */ let ringOn = null;                        // { id, salt, levels: [member, level, hp, mp][], t0, ended }
   const ringLive = () => !!(ringNow && state.t < ringNow.until);
   /** do the old stones hold the Kingstone now? (battle.js: who stands there, and what walking in starts) @param {any} c */
-  function ringHeld(c) { return c.id === RING.camp && curScene === 'overland' && curRegion === RING.region && ringLive() && !paidFor(state, ringNow.id) && !ringOn; }
+  // (v1.126: and Furnace Nine at the Vault's mouth at half past, once the company has broken it: the window's id says
+  // whose it is, ring.js ringForId)
+  const ringBoss = () => (ringNow ? ringForId(ringNow.id) : RING);
+  function ringHeld(c) {
+    const G = ringBoss(); if (!ringLive() || c.id !== G.camp || curScene !== 'overland' || curRegion !== G.region || paidFor(state, ringNow.id) || ringOn) return false;
+    return !G.lamp || (state.lampsBroken || []).includes(G.lamp);   // (Furnace Nine burns again only once it's been broken: the Stoker's lamp)
+  }
   /** walked into its reach: the fight, if the company may (else said once a window) @param {any} c @param {number} i */
   function ringReach(c, i) {
     const H = state.party[0], no = (reason) => { if (!ringNow.told) { ringNow.told = true; bus.emit('refused', { reason }); } };
     if (!state.created || H.down || H.fallen || state.away || raidOn || away) return;
-    if (H.level < RING.minLevel) { no(`The Kingstone doesn’t stir for a company under level ${RING.minLevel}`); return; }
-    ringIn(ringNow.id, Math.max(30, Math.min(RING.window, ringNow.until - state.t)), c, i);
+    const G = ringBoss();
+    if (H.level < G.minLevel) { no(`${G.name} doesn’t stir for a company under level ${G.minLevel}`); return; }
+    ringIn(ringNow.id, Math.max(30, Math.min(G.window, ringNow.until - state.t)), c, i);
   }
   function ringIn(id, secs, c, i) {
-    const D = windowDraw(baseSeed, id), r = ringOf(state);
-    ringOn = { id, salt: D.salt, levels: state.party.map((m) => [m, m.level, m.hp, m.mp]), t0: state.t, ended: false };
-    r.paid = [...r.paid.filter((q) => q !== id), id].slice(-RING.PAID_KEEP);
-    for (const m of state.party) { m.syncFrom = m.level; m.level = RING.level; if (!m.fallen) { const s = statsFor(m); m.hp = s.maxHp; m.mp = s.maxMp; m.down = false; } }   // (syncFrom: runtime, not saved; points are earned at it, attributes.js)
-    const companies = D.ids.map((cid) => ({ id: cid, members: makeCompany(cid, RING.level, 'seasoned') }));
+    const D = windowDraw(baseSeed, id), r = ringOf(state), G = ringForId(id);
+    ringOn = { id, G, salt: D.salt, levels: state.party.map((m) => [m, m.level, m.hp, m.mp]), t0: state.t, ended: false };
+    r.paid = [...r.paid.filter((q) => q !== id), id].slice(-G.PAID_KEEP);
+    for (const m of state.party) { m.syncFrom = m.level; m.level = G.level; if (!m.fallen) { const s = statsFor(m); m.hp = s.maxHp; m.mp = s.maxMp; m.down = false; } }   // (syncFrom: runtime, not saved; points are earned at it, attributes.js)
+    const companies = D.ids.map((cid) => ({ id: cid, members: makeCompany(cid, G.level, 'seasoned') }));
     battle.startRing(world, CAMP_ROOM(i), { companies, secs, salt: D.salt, camp: c });
     bus.emit('ringStarted', { window: id, secs, coming: D.n });
     bus.emit('partyChanged', state.party);
@@ -462,24 +469,24 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   bus.on('ringEnd', (res) => {
     if (!ringOn) return;
     ringSyncBack();
-    const H = state.party[0], q = res.parts.find((x) => x.id === H.id), r = ringOf(state);
+    const H = state.party[0], q = res.parts.find((x) => x.id === H.id), r = ringOf(state), G = ringOn.G || RING;
     const co = new Map(); for (const x of res.parts) co.set(x.company, (co.get(x.company) || 0) + x.score);   // (each company's score, ring.js tierOf)
     const avg = co.size ? [...co.values()].reduce((a, b) => a + b, 0) / co.size : 0;
-    const tier = res.how === 'left' || !q ? null : tierOf({ score: co.get(0) || 0, stood: q.stood }, avg);
+    const tier = res.how === 'left' || !q ? null : tierOf({ score: co.get(0) || 0, stood: q.stood }, avg, G);
     let pay = null;
     if (tier) {
-      const P = payOf(tier, H.level, xpToNext(H.level), baseSeed, ringOn.salt ^ (H.id | 0), res.how === 'won');
-      for (const m of state.party) if (!m.fallen) gainXp(m, Math.round(xpToNext(m.level) * RING.pay[P.tier].xp), () => bus.emit('levelUp', { id: m.id, name: m.name, level: m.level }));
+      const P = payOf(tier, H.level, xpToNext(H.level), baseSeed, ringOn.salt ^ (H.id | 0), res.how === 'won', G);
+      for (const m of state.party) if (!m.fallen) gainXp(m, Math.round(xpToNext(m.level) * G.pay[P.tier].xp), () => bus.emit('levelUp', { id: m.id, name: m.name, level: m.level }));
       state.counters.gold = (state.counters.gold || 0) + P.gold; state.counters.embers = (state.counters.embers || 0) + P.cinders;
-      const owned = [...state.bag, ...[...state.party, ...state.bench].flatMap((m) => Object.values(m.gear || {}))].some((it) => it && it.r === 'heirloom' && it.name === HEIRLOOMS[RING.heirloom].name);
-      const p = state.player, item = P.heirloom && !owned ? loot.grant(RING.heirloom, { ilv: RING.level, x: p.x, y: p.y, src: 'ring', cls: H.cls })
-        : P.item ? loot.drop('raidCoffer', { ilv: RING.level, x: p.x, y: p.y, own: H.cls, rarity: P.item }) : null;
+      const owned = [...state.bag, ...[...state.party, ...state.bench].flatMap((m) => Object.values(m.gear || {}))].some((it) => it && it.r === 'heirloom' && it.name === HEIRLOOMS[G.heirloom].name);
+      const p = state.player, item = P.heirloom && !owned ? loot.grant(G.heirloom, { ilv: G.level, x: p.x, y: p.y, src: 'ring', cls: H.cls })
+        : P.item ? loot.drop('raidCoffer', { ilv: G.level, x: p.x, y: p.y, own: H.cls, rarity: P.item }) : null;
       pay = { tier: P.tier, xp: P.xp, gold: P.gold, cinders: P.cinders, item: item ? { name: item.name, r: item.r, base: item.base, ilv: item.ilv } : null };
       bus.emit('countersChanged', { ...state.counters });
     }
     if (res.how === 'won') { r.won++; r.best = r.best ? Math.min(r.best, res.t) : res.t; }
     const ranked = [...res.parts].sort((a, b) => b.score - a.score).map((x) => ({ id: x.id, name: x.name, cls: x.cls, company: x.company, score: Math.round(x.score), dmg: Math.round(x.dmg), heal: Math.round(x.heal), stood: Math.round(x.stood), downs: x.downs }));
-    bus.emit('ringResult', { window: ringOn.id, how: res.how, why: res.why, secs: res.t, parties: res.parties, tier: pay ? pay.tier : null, pay, parts: ranked, you: H.id });
+    bus.emit('ringResult', { window: ringOn.id, boss: G.id, name: G.name, how: res.how, why: res.why, secs: res.t, parties: res.parties, tier: pay ? pay.tier : null, pay, parts: ranked, you: H.id });
     ringOn = null;
     bus.emit('partyChanged', state.party);
   });
@@ -672,7 +679,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     // (anywhere; the sim only remembers it, and the old stones hold the Kingstone while it lasts: ringHeld)
     if (cmd.type === 'ringOpen') {
       if (!isWindowId(cmd.window)) return;
-      const left = Math.floor(Number(cmd.left)); if (!(left > 0 && left <= RING.window)) return;
+      const left = Math.floor(Number(cmd.left)); if (!(left > 0 && left <= ringForId(cmd.window).window)) return;
       if (!ringNow || ringNow.id !== cmd.window) ringNow = { id: cmd.window, until: state.t + left };
       return;
     }
@@ -1000,7 +1007,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     // v12 and older, from before the trials: a class anyone in the company had at level 6 keeps its level-6 ability
     state.trials = {};
     const tr = Array.isArray(data.trials) ? data.trials : [...state.party, ...state.bench].filter((m) => m.level >= TRIAL_LEVEL).map((m) => m.cls);
-    for (const c of tr) if (TRIAL_CLASSES.includes(c) || (/12$/.test(c) && TRIAL_CLASSES.includes(c.slice(0, -2)))) state.trials[c] = 1;   // (cls12: the level-12 trial, M8; v25 and older: persist/save.js trials12For)
+    for (const c of tr) if (TRIAL_CLASSES.includes(c) || (/(12|24)$/.test(c) && TRIAL_CLASSES.includes(c.slice(0, -2)))) state.trials[c] = 1;   // (cls12: the level-12 trial, M8; v25 and older: persist/save.js trials12For; cls24: the Reach's, v1.54)
     state.reached = new Set(reachedOf(data, SITES));        // v27 and older: worked out (coach.js; persist/save.js reachedFor)
     quests.restore(data);                                  // v6 and older: none yet
     board.restore(data);                                   // v8 and older: none yet
