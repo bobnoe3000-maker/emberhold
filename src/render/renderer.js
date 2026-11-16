@@ -1135,14 +1135,16 @@ export function createRenderer(canvas, sim, input) {
     mud: ['stamps', 'mud comes up round your feet: step out of it'], cage: ['carries a lit cage', 'while his cage burns he mends: break it first'],
     vespers: ['sings', 'while a cantor sings, the drowned mend: silence them'], bells: ['rings the bells', 'the water comes in from the walls: keep to the middle'],
     issue: ['issues arms', 'the most broken of his ranks stands up whole: put him down first'], sluice: ['opens the sluice', 'the vat runs across the floor: step out of it'],
-    ring: ['stands', 'red on the ground: get out of it before it lands'] };   // (the Kingstone, GDD §19 v1.105)
-  sim.bus.on('bossWave', ({ id, name }) => { const B = BOSSES[id]; banner = { text: name, sub: bossLine[B.mech][1], until: clock() + 3200 }; });
+    ring: ['stands', 'red on the ground: get out of it before it lands'],   // (the Kingstone, GDD §19 v1.105)
+    chutes: ['blows the whistle', 'the shift\'s load comes down on the crosses: step off them'] };   // (the Foreman, v1.124)
+  sim.bus.on('bossWave', ({ id, name }) => { const B = BOSSES[id]; banner = { text: name, sub: (bossLine[B.mech] || ['', ''])[1], until: clock() + 3200 }; });   // (a mechanic with no line yet: the name alone, never a throw)
   // (named from the boss: the Mere Tower's wardens call, drum and kindle too)
   const bossName = (id) => ({ redhand_captain: 'Garrow', goblin_chief: 'Skarn', robed_stranger: 'The Stranger' })[id] || (BOSSES[id] ? BOSSES[id].name : 'The warden');
   sim.bus.on('bossCall', ({ id }) => { banner = { text: `${bossName(id)} calls ${id === 'redhand_captain' ? 'his men' : id === 'spider_queen' ? 'her brood' : 'for help'}`, sub: bossLine.call[1], until: clock() + 2200, small: true }; });
   sim.bus.on('bossSwarm', ({ id }) => { banner = { text: id === 'goblin_chief' ? 'Skarn drums: goblins pour out' : id === 'rat_king' ? 'The knot squeals: rats pour out' : `${bossName(id)} calls more out of the dark`, sub: bossLine.swarm[1], until: clock() + 2000, small: true }; });
   sim.bus.on('bossIssue', ({ id }) => { banner = { text: `${bossName(id)} issues arms`, sub: 'one of his ranks stands up whole', until: clock() + 1800, small: true }; });
   sim.bus.on('bossSluice', ({ id }) => { banner = { text: `${bossName(id)} opens the sluice`, sub: bossLine.sluice[1], until: clock() + 1800, small: true }; });
+  sim.bus.on('bossChutes', ({ id }) => { banner = { text: `${bossName(id)} blows the whistle`, sub: bossLine.chutes[1], until: clock() + 1800, small: true }; });
   sim.bus.on('bossMud', ({ id }) => { banner = { text: `${bossName(id)} stamps`, sub: bossLine.mud[1], until: clock() + 1800, small: true }; });
   sim.bus.on('bossCage', () => { banner = { text: "Teague's cage breaks", sub: "a soul goes free · he's only a man now", until: clock() + 2400, small: true }; });
   sim.bus.on('bossVespers', () => { banner = { text: 'Another sister stands to sing', sub: bossLine.vespers[1], until: clock() + 2000, small: true }; });
