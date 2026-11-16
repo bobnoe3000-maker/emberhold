@@ -1745,10 +1745,34 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     for (let k = 1; k < n; k++) { const x = ax + ((bx - ax) * k) / n, y = ay + ((by - ay) * k) / n; if (!fits(w, x, y, r) || roomAt(w, x, y) !== room) return false; }
     return true;
   };
+  // Back into the fight's room from outside it, along a real way (the owner's pacing check, 2026-11-16, tools/balance/
+  // pace.mjs: a rogue knocked or kited out through a door stood in the next room walking straight at its foe through
+  // the wall; the foes, leashed to the room, crowded its edge; with the hero and the cleric down, the wave never fell:
+  // Toadking's Mound, a fight four hours long). A breadth-first walk over open tiles to the room's nearest, the way
+  // kept a moment (u.back: runtime only, never saved), then followed a tile at a time; no way at all: straight, as before.
+  const BACK_N = 4000;
+  function walkBack(u, tx, ty, speed, dt, w, room) {
+    let B = u.back;
+    if (!B || B.room !== room || stepN - B.at > 40 || !B.pts.length) {
+      const sx = Math.floor(u.x), sy = Math.floor(u.y), prev = new Map([[sx + ',' + sy, '']]), Q = [[sx, sy]]; let end = null;
+      for (let h = 0; h < Q.length && h < BACK_N && !end; h++) {
+        const [x, y] = Q[h];
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = x + dx, ny = y + dy, k = nx + ',' + ny; if (prev.has(k) || !isWalkable(w, nx + 0.5, ny + 0.5)) continue;
+          prev.set(k, x + ',' + y); if (roomAt(w, nx + 0.5, ny + 0.5) === room) { end = k; break; } Q.push([nx, ny]);
+        }
+      }
+      const pts = []; for (let k = end; k && k !== sx + ',' + sy; k = /** @type {string} */ (prev.get(k))) { const c = k.indexOf(','); pts.unshift([+k.slice(0, c) + 0.5, +k.slice(c + 1) + 0.5]); }
+      B = u.back = { room, at: stepN, pts };
+    }
+    if (!B.pts.length) return stepToward(u, tx, ty, speed, dt, w);
+    const [px, py] = B.pts[0]; if (hypot(px - u.x, py - u.y) < 0.35) B.pts.shift();
+    return stepToward(u, px, py, speed, dt, w);
+  }
   // Move toward (tx, ty) inside the battle room: straight when the way is clear, else down the flow field.
   function chase(u, tx, ty, speed, dt, w) {
     const b = battle, room = b.room;
-    if (roomAt(w, u.x, u.y) !== room) return stepToward(u, tx, ty, speed, dt, w);   // still in the doorway: walk in
+    if (roomAt(w, u.x, u.y) !== room) return w.kind === 'dungeon' ? walkBack(u, tx, ty, speed, dt, w, room) : stepToward(u, tx, ty, speed, dt, w);   // outside it (the doorway, or knocked out): walk back in (out in the open, a spot's ring or the stones', straight in, as before)
     if (clearLine(w, u.x, u.y, tx, ty, room, u.rad || 0)) return stepToward(u, tx, ty, speed, dt, w, room);
     const g = b.grid, f = field(tx, ty), cx = Math.floor(u.x) - g.x0, cy = Math.floor(u.y) - g.y0;
     let best = -1, bd = cx >= 0 && cy >= 0 && cx < g.gw && cy < g.gh ? f[cy * g.gw + cx] : 65535;
