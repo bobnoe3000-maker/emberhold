@@ -205,6 +205,13 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {}, models 
   const ours = () => S.party.filter((q) => !q.standin);
   const isUp = (m, it) => !m.standin && upgradeScore(m, it) > 0.05;
   const hasUpgrade = (m) => S.bag.some((it) => isUp(m, it));
+  // the bag as shown (the owner, 2026-11-16: "gear in inventory that is an upgrade should sort first. also sort by
+  // rarity"): an upgrade for whoever's sheet it is first, the best of them first; then by rarity, heirloom down to common;
+  // else as the bag holds them. Presentation only: the sim's bag keeps its order, a slot is picked by its uid
+  const RANK = { heirloom: 3, rare: 2, fine: 1, common: 0 };
+  /** @param {any[][]} stacks @param {any} m */
+  const shown = (stacks, m) => stacks.map((st, i) => ({ st, i, up: isUp(m, st[0]) ? upgradeScore(m, st[0]) : 0, r: RANK[st[0].r] || 0 }))
+    .sort((a, b) => (b.up > 0) - (a.up > 0) || b.up - a.up || b.r - a.r || a.i - b.i).map((q) => q.st);
 
   // ── the sheet ──────────────────────────────────────────────────────────────
   const slotHtml = (it, { slot, lbl, m, n = 1, isNew = fresh.has(it && it.uid) }) => {
@@ -243,7 +250,7 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {}, models 
         <div class="col">${col(['helm', 'armor', 'boots'])}</div></div>
       <div class="stats">${stat('hp', s.maxHp, G.hp)}${stat('mp', s.maxMp, G.mp)}${stat('atk', s.atk, G.atk)}${stat('def', s.def, G.def)}${stat('crit', s.crit + '%', G.crit)}${stat('dodge', s.dodge + '%', G.dodge)}${stat('hpr', s.hpr + '/s', G.hpr)}${stat('mpr', s.mpr + '/s', G.mpr)}</div>
       ${m.standin ? `<div class="hint" style="margin-top:10px">${esc(m.name)} is on this raid with you. Their kit is their own: nothing in your bag goes to them, and nothing of theirs comes to you.</div>` : `<div class="bagh">Party bag · ${stacks.length}/${BAG_SIZE}<span class="cur">${S.counters.gold || 0} gold<i>✦ ${S.counters.embers || 0} cinders</i></span></div>
-      <div class="bag">${stacks.map((st) => slotHtml(st.find((x) => sel && x.uid === sel.uid) || st[0], { m, n: st.length, isNew: st.some((x) => fresh.has(x.uid)) })).join('')}${Array.from({ length: Math.max(0, BAG_SIZE - stacks.length) }, () => '<div class="gslot empty"></div>').join('')}</div>`}`;
+      <div class="bag">${shown(stacks, m).map((st) => slotHtml(st.find((x) => sel && x.uid === sel.uid) || st[0], { m, n: st.length, isNew: st.some((x) => fresh.has(x.uid)) })).join('')}${Array.from({ length: Math.max(0, BAG_SIZE - stacks.length) }, () => '<div class="gslot empty"></div>').join('')}</div>`}`;
     paintTabs(); if (open) firstOpen('bag');   // (the bag's card, the first time: docs/first-steps-plan.md §3)
     const fc = sheet.querySelector('canvas[data-fig]'); if (fc) drawCharacter(fc, fc.dataset.fig);
     liveFig(m, fc);

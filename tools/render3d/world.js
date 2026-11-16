@@ -186,7 +186,12 @@ const loadModel = (u) => {
 const metaOf = new Map();                                     // atlas name → its JSON (the clips' columns), once in
 const templates = new Map();                                  // atlas name → { root, clips, frame, ppu, minY } | null (building) | false
 /** a variant as a member wears it: their face and build (appearance), what they have equipped (gear) @param {any} v @param {any} look */
-const withLook = (v, look) => (!look ? v : { ...v, ...(look.appearance ? { appearance: look.appearance } : {}), ...(look.gear ? { gear: look.gear } : {}) });
+// (bare: a member's helm hidden, GDD v1.65: the model's own Helmet, Hat or Hood off too, as the creation preview's bare is; the
+// owner, 2026-11-16, "hiding helm on rogue does not work": the rogue's hood is the KayKit model's Rogue_Hooded, not a worn helm)
+const BARE = /Helmet|Hat|Hood/;
+const withLook = (v, look) => (!look ? v : { ...v, ...(look.appearance ? { appearance: look.appearance } : {}), ...(look.gear ? { gear: look.gear } : {}),
+  ...(look.bare && v.show ? { show: v.show.filter((n) => !BARE.test(n)) } : {}),
+  ...(look.bare && /_Hooded$/.test(v.model || '') ? { model: v.model.replace(/_Hooded$/, '') } : {}) });   // (the rogue's hood is the whole model, Rogue_Hooded: bare, KayKit's own Rogue, the same rig)
 // (GDD v1.65) a member with a look of their own (a.look: its appearance, a.lk its key) has a template of its own, its
 // atlas's clips and size, its face and build its own: one build a look, its copies sharing it as any figure's do
 function templateOf(name, def, look = null, lk = '') {
@@ -1821,7 +1826,7 @@ export function createPreview(canvas, o) {
       const def = c && c.actors[actor]; if (!def || dead || n !== wantN) return false;
       try {
         // (bare: the helm or hat off, while a face is being chosen: GDD v1.65)
-        const v = { ...withLook(def.v, { appearance: look, gear: o2.gear || null }), ...(o2.bare && def.v.show ? { show: def.v.show.filter((n) => !/Helmet|Hat|Hood/.test(n)) } : {}) };
+        const v = withLook(def.v, { appearance: look, gear: o2.gear || null, bare: !!o2.bare });
         if (o2.bare && v.gear) v.gear = { ...v.gear, helm: null };
         const fig = await buildFigure(v, { far: false, load: loadModel, faces: async () => cast.faces });
         if (dead || n !== wantN) return false;
