@@ -54,7 +54,7 @@ import { EXPEDITIONS, expeditionPay } from '../sim/expeditions.js';
 import { html, render } from 'htm/preact';
 import { useState } from 'preact/hooks';
 import { RESTYLE_COST, sameAppearance } from '../sim/appearance.js';
-import { LookPicker, FigurePreview, LOOK_CSS, anyLook } from './lookpicker.js';
+import { LookPicker, FigurePreview, LOOK_CSS, BODY_PARTS, anyLook } from './lookpicker.js';
 
 const CSS = SW_CSS + LOOK_CSS + `
 #hubSheet .lookstage { position: relative; height: 210px; margin: 4px 0 8px; border-radius: 12px; background: radial-gradient(ellipse at 50% 88%, rgba(216,160,64,.22), rgba(0,0,0,0) 55%), radial-gradient(ellipse at 50% 40%, #1d1726, #0b0910 72%); overflow: hidden; }
@@ -552,10 +552,10 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   const actorOf = (m) => m.actor || CLASSES[m.cls].actor;
   function leaveLook() { if (lookMount) { render(null, lookMount); lookMount = null; } }
   function LookSheet({ m, models }) {
-    const [a, setA] = useState(lookDraft), same = sameAppearance(m.appearance, a);
+    const [a, setA] = useState(lookDraft), [zoom, setZoom] = useState(false), same = sameAppearance(m.appearance, a);
     lookDraft = a;
-    return html`<div class="lookstage"><${FigurePreview} actor=${actorOf(m)} appearance=${a} models=${models} bare=${true} /></div>
-      <${LookPicker} words=${lookWords} value=${a} onChange=${setA} />
+    return html`<div class="lookstage"><${FigurePreview} actor=${actorOf(m)} appearance=${a} models=${models} bare=${true} close=${zoom} /></div>
+      <${LookPicker} words=${lookWords} value=${a} onChange=${setA} onPart=${(k) => setZoom(!BODY_PARTS.has(k))} />
       <div class="row go" data-restyle style=${same ? 'opacity:.5' : ''}><div><b>${same ? 'The look they have' : `Keep this look · ${RESTYLE_COST} gold`}</b><span>you have ${gold()} gold</span></div><div class="go-arrow">›</div></div>`;
   }
   function look(t) {

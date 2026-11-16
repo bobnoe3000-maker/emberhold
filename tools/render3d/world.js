@@ -1620,18 +1620,27 @@ export function createWorld(o) {
 // needn't be up: it reads the same assets/ (the first of createWorld's and this one's `assets` to arrive).
 /**
  * @param {HTMLCanvasElement} canvas  @param {{ assets: string, onError?: (e: any) => void, yaw?: number }} o  yaw: the turn it opens at (the gear sheet's back views)
- * @returns {{ show: (actor: string, look?: any, o?: { bare?: boolean, gear?: any }) => Promise<boolean>, attack: () => void, close: () => void, readonly actor: string }}
+ * @returns {{ show: (actor: string, look?: any, o?: { bare?: boolean, close?: boolean, gear?: any }) => Promise<boolean>, attack: () => void, close: () => void, readonly actor: string }}
  */
 export function createPreview(canvas, o) {
   if (!ASSETS) ASSETS = o.assets;
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' });
-  renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1)); renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.setPixelRatio(Math.min(3, devicePixelRatio || 1)); renderer.outputColorSpace = THREE.SRGBColorSpace;   // (a small canvas: the phone's own 3x, or the painted face blurs)
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
   const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(26, 1, 0.05, 100), turn = new THREE.Group();
   scene.add(turn);
   scene.add(new THREE.HemisphereLight(0xfff0dc, 0x2a2036, 1.35));                    // (the creation stage's dusk: warm from above, violet below)
   const key = new THREE.DirectionalLight(0xffd29a, 2.4); key.position.set(2.2, 4, 3.2); scene.add(key);
   const rim = new THREE.DirectionalLight(0x9db0ff, 1.1); rim.position.set(-3, 2.5, -2.5); scene.add(rim);
+  // the camera's framing, eased toward its aim: the whole figure, or (close) head and shoulders while a face is chosen
+  const camAt = { y: 0, d: 0, ly: 0 }, camTo = { y: 0, d: 0, ly: 0 }; let close = false, easing = false;
+  const aim = (snap) => {
+    if (!cur) return; const h = cur.h, t = Math.tan((cam.fov * Math.PI) / 360);
+    if (close) { camTo.ly = h * 0.76; camTo.y = h * 0.8; camTo.d = (h * 0.3) / t; }   // (the top half of the figure, in a 0.6 h window: the head fills a third of the canvas)
+    else { camTo.ly = h * 0.47; camTo.y = h * 0.62; camTo.d = (h * 0.62) / t; }    // (the figure about four fifths of the canvas's height)
+    if (snap) Object.assign(camAt, camTo); easing = true;
+  };
+  const place = () => { cam.position.set(0, camAt.y, camAt.d); cam.lookAt(0, camAt.ly, 0); };
   let cur = null, name = '', wantN = 0, yaw = o.yaw ?? 0.42, spin = 0, drag = null, raf = 0, dead = false, last = 0, clock = 0, act = null, nextAct = 4;
   const size = () => { const w = canvas.clientWidth || canvas.width, h = canvas.clientHeight || canvas.height; renderer.setSize(w, h, false); cam.aspect = w / Math.max(1, h); cam.updateProjectionMatrix(); };
   const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(size) : null; ro?.observe(canvas); size();
@@ -1643,6 +1652,7 @@ export function createPreview(canvas, o) {
     const dt = Math.min(0.1, last ? (now - last) / 1000 : 0); last = now; clock += dt;
     if (!drag) { yaw += spin * dt; spin *= Math.max(0, 1 - 3 * dt); }
     turn.rotation.y = yaw;
+    if (easing) { const k = 1 - Math.exp(-7 * dt); let far = 0; for (const q of ['y', 'd', 'ly']) { camAt[q] += (camTo[q] - camAt[q]) * k; far = Math.max(far, Math.abs(camTo[q] - camAt[q])); } if (far < 1e-4) { Object.assign(camAt, camTo); easing = false; } place(); }
     if (!act && clock >= nextAct) act = { k: clock % 2 < 1 ? 'attack' : 'attack2', t: 0 };
     const idle = clipOf('idle'), c = cur.fig;
     if (act) {
@@ -1668,6 +1678,7 @@ export function createPreview(canvas, o) {
     /** stand this actor: true once it's built (false: no model for it, the caller keeps its still) */
     async show(actor, look = null, o2 = {}) {
       const id = `${actor}#${look ? JSON.stringify(look) : ''}#${o2.bare ? 'bare' : ''}#${o2.gear ? JSON.stringify(o2.gear) : ''}`;
+      if (!!o2.close !== close) { close = !!o2.close; aim(false); wake(); }   // (a new framing alone: eased to, nothing rebuilt)
       if (id === name && cur) return true;
       const n = ++wantN; name = id;
       const c = await json(`${ASSETS}models/cast.json`); if (c && !cast) cast = c;
@@ -1687,9 +1698,8 @@ export function createPreview(canvas, o) {
         const h = h0 * 1.06;
         if (cur) turn.remove(cur.pin);
         const shine = []; fig.root.traverse((q) => { if (q.isMesh && q.material && q.material.userData && q.material.userData.shine) shine.push(q.material); });
-        turn.add(pin); cur = { fig, def, pin, shine };
-        const d = (h * 0.62) / Math.tan((cam.fov * Math.PI) / 360);                 // (the figure about four fifths of the canvas's height)
-        cam.position.set(0, h * 0.62, d); cam.lookAt(0, h * 0.47, 0);
+        const first = !cur; turn.add(pin); cur = { fig, def, pin, shine, h };
+        aim(first); place();
         clock = 0; act = null; nextAct = 3; wake();
         return true;
       } catch (e) { o.onError?.(e); return false; }
