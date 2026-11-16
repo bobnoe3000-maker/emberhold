@@ -2082,6 +2082,112 @@ Object.assign(TYPES, {
     lantern(g, S, 0.36, 0.46, 0.5);
   },
 });
+// ── the Reach's site doors (docs/art-critic-pass-reach.md, part 2): stood by convert.js on the sim's own footprints in
+// the Reach (the Yards' longhouse, the Forgehall's keep, the Ninth Vault's chapel ruin, the Magma Vault's barrow), each
+// door on +z at the footprint's front, a man and a third high; and the slag heaps round Furnace Nine's yard.
+const BRONZE = () => new THREE.MeshStandardMaterial({ color: '#8a6a34', roughness: 0.45, metalness: 0.6 });
+// a dark faceted heap (slag, spoil), its foot at (x, z)
+function slagHeap(g, r, x, z, rad, ht, col = '#2a2624', glow = false) {
+  const m = new THREE.Mesh(faceted(solidCone(rad, ht, 9, 2).translate(0, ht / 2, 0), r, rad * 0.14, (ny, y, q) => tint(C3(ny > 0.55 ? col : '#1e1b1a'), 0.85 + q * 0.35)), vmat());
+  m.position.set(x, 0, z); m.rotation.y = r() * 6; g.add(m);
+  if (glow) for (let k = 0; k < 3; k++) { const a = r() * 6.28, e = box(0.05 + r() * 0.04, 0.012, 0.02, FURNACE(), x + Math.cos(a) * rad * 0.55, ht * 0.3, z + Math.sin(a) * rad * 0.55, g); e.rotation.set(0.5, a, 0.3); }
+  return m;
+}
+// the Assay's sign: a balance beam with its pans over a crossed pick, on a board
+function scaleAndPick(g, x, y, z, iron, board) {
+  box(0.36, 0.2, 0.025, board, x, y, z, g);
+  const p = new THREE.Group(); p.position.set(x, y + 0.1, z + 0.02); g.add(p);
+  const pick = box(0.24, 0.018, 0.01, iron, 0, -0.01, 0, p); pick.rotation.z = 0.6; const pk2 = box(0.024, 0.06, 0.01, iron, 0.09, 0.04, 0, p); pk2.rotation.z = 0.6; void pk2;
+  box(0.012, 0.13, 0.01, iron, 0, -0.08, 0.005, p); box(0.24, 0.012, 0.01, iron, 0, 0.04, 0.005, p);
+  for (const sx of [-1, 1]) { box(0.006, 0.06, 0.006, iron, sx * 0.11, -0.02, 0.005, p); box(0.07, 0.012, 0.012, BRONZE(), sx * 0.11, -0.03, 0.005, p); }
+}
+Object.assign(TYPES, {
+  // The Assay Yards (REACH.yards; the plan's "Yard Gate: the Assay's gate in its fence, the scale-and-pick painted over
+  // it"): the counting house, two storeys of slag brick and soot-dark timber under rust tile, its great double door on
+  // +z with the Assay's scale-and-pick over it, lanterns either side, a weigh-beam on its post by the door, ore crates.
+  assayhouse(S, g, r) {
+    const brick = SLAG(), iron = IRON(), w = 1.22, d = 0.5, h1 = 0.5, h2 = 0.34;
+    box(w, h1, d, brick, 0, 0, -0.06, g);
+    box(w + 0.04, h2, d + 0.04, S.m.wood, 0, h1, -0.06, g);
+    for (let i = 0; i < 5; i++) box(0.03, h2, 0.01, S.m.beam, -w / 2 + 0.06 + i * (w - 0.12) / 4, h1, d / 2 - 0.03, g);
+    roofOver(S, g, w + 0.04, d + 0.04, h1 + h2, 0.9);
+    for (const x of [-0.42, 0.42]) { const wn = box(0.1, 0.12, 0.012, S.m.glass, x, h1 + 0.1, d / 2 - 0.03, g); wn.userData.glow = true; }
+    box(0.34, 0.48, 0.03, S.m.door, 0, 0, d / 2 - 0.05, g);                                         // the great door
+    box(0.006, 0.46, 0.035, S.m.trim, 0, 0, d / 2 - 0.045, g);
+    for (const sx of [-1, 1]) box(0.05, 0.52, 0.05, S.m.beam, sx * 0.2, 0, d / 2 - 0.03, g);
+    box(0.46, 0.05, 0.06, S.m.beam, 0, 0.5, d / 2 - 0.03, g);
+    scaleAndPick(g, 0, 0.6, d / 2 - 0.01, iron, S.m.signboard);
+    lantern(g, S, -0.28, 0.44, d / 2 + 0.02); lantern(g, S, 0.28, 0.44, d / 2 + 0.02);
+    // the weigh-beam by the door: a post, the beam, a pan on its chains
+    box(0.04, 0.5, 0.04, S.m.beam, 0.48, 0, 0.1, g); box(0.3, 0.025, 0.025, iron, 0.48, 0.5, 0.1, g);
+    box(0.004, 0.18, 0.004, iron, 0.36, 0.32, 0.1, g); box(0.1, 0.012, 0.1, BRONZE(), 0.36, 0.31, 0.1, g);
+    for (const [x, z] of [[-0.5, 0.12], [-0.42, 0.18]]) box(0.1, 0.08, 0.1, S.m.wood, x, 0, z, g);
+  },
+  // The Forgehall of Oruth (REACH.forge): the forge-hall's great doors in the hill, imperial bronze a man's height
+  // thick in a portal of black dressed stone, ajar, the forge's light in the gap; braziers either side on plinths;
+  // the black hill over and behind it.
+  forgedoor(S, g, r) {
+    // (round 2: the portal stood alone like a box before a low grey cone, its bronze cornice a slab seen from above: the
+    // hill now higher and darker, crags hugging the jambs, the cornice a thin band on the face, the stone a step lighter)
+    const stone = mat(tex('ashlar', '#3e3836', 81)), bronze = BRONZE(), iron = IRON();
+    const hill = (x, z, rad, ht) => { const geo = solidCone(rad, ht, 8, 3); geo.translate(0, ht / 2, 0); const m = new THREE.Mesh(faceted(geo, r, rad * 0.22, (ny, y, q) => tint(C3(ny > 0.5 ? '#3c3634' : '#221e1d'), 0.85 + q * 0.3)), vmat()); m.position.set(x, 0, z); m.rotation.y = r() * 6; g.add(m); };
+    hill(0, -0.35, 0.8, 1.3); hill(-0.5, -0.1, 0.45, 0.85); hill(0.52, -0.15, 0.45, 0.9); hill(0.1, -0.7, 0.6, 1.5);
+    hill(-0.56, 0.22, 0.24, 0.52); hill(0.6, 0.18, 0.24, 0.56);
+    const pz = 0.32;
+    box(0.82, 0.08, 0.3, stone, 0, 0, pz, g);                                                      // the step
+    for (const sx of [-1, 1]) box(0.16, 0.72, 0.26, stone, sx * 0.33, 0.08, pz, g);                // the jambs
+    box(0.86, 0.14, 0.3, stone, 0, 0.8, pz, g); box(0.86, 0.05, 0.03, bronze, 0, 0.84, pz + 0.16, g);   // the lintel, a bronze band on its face
+    box(0.07, 0.05, 0.02, bronze, 0, 0.88, pz + 0.16, g);                                          // the empire's seal
+    box(0.48, 0.7, 0.04, mat(null, '#0e0a08'), 0, 0.08, pz - 0.04, g);
+    box(0.06, 0.62, 0.02, FURNACE(), 0, 0.1, pz - 0.03, g);                                        // the forge's light in the gap
+    for (const sx of [-1, 1]) {                                                                     // the leaves, ajar
+      const leaf = new THREE.Group(); leaf.position.set(sx * 0.25, 0.08, pz + 0.02); leaf.rotation.y = sx * 0.28; g.add(leaf);
+      box(0.22, 0.68, 0.04, bronze, -sx * 0.11, 0, 0, leaf);
+      for (const y of [0.14, 0.34, 0.54]) box(0.2, 0.025, 0.05, iron, -sx * 0.11, y, 0, leaf);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.006, 4, 10), iron); ring.position.set(-sx * 0.17, 0.32, 0.03); leaf.add(ring);
+    }
+    for (const sx of [-1, 1]) {                                                                     // braziers on plinths
+      box(0.12, 0.26, 0.12, stone, sx * 0.56, 0, pz + 0.12, g);
+      const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.05, 0.06, 8), iron); bowl.position.set(sx * 0.56, 0.29, pz + 0.12); g.add(bowl);
+      box(0.1, 0.03, 0.1, FURNACE(), sx * 0.56, 0.31, pz + 0.12, g);
+    }
+  },
+  // The Ninth Vault (REACH.ninth; hidden): the quota office's strongroom door, hung in the dead volcano's flank at the
+  // old track's end: a face of black and rust rock, a frame of dressed stone with IX cut over it, the iron door banded and
+  // riveted, a chain across it on two posts, a lantern.
+  ninthdoor(S, g, r) {
+    const stone = mat(tex('ashlar', '#4a4440', 83)), iron = IRON();
+    const crag = (x, z, rad, ht, col) => { const geo = solidCone(rad, ht, 7, 3); geo.translate(0, ht / 2, 0); const m = new THREE.Mesh(faceted(geo, r, rad * 0.25, (ny, y, q) => tint(C3(ny > 0.55 ? col : '#241d1b'), 0.85 + q * 0.3)), vmat()); m.position.set(x, 0, z); m.rotation.y = r() * 6; g.add(m); };
+    // (round 2: the flank read grey-blue; now the volcano's own black and rust)
+    crag(0, -0.35, 0.8, 1.05, '#4a3630'); crag(-0.5, -0.05, 0.42, 0.62, '#5c3a2c'); crag(0.5, -0.1, 0.45, 0.7, '#4a3630'); crag(-0.15, -0.65, 0.5, 1.3, '#3a2c28'); crag(0.55, -0.55, 0.4, 0.9, '#5c3a2c');
+    const fz = 0.34;
+    for (const sx of [-1, 1]) box(0.1, 0.56, 0.18, stone, sx * 0.22, 0, fz, g);
+    box(0.56, 0.12, 0.2, stone, 0, 0.56, fz, g);
+    for (const [x, rz] of [[-0.035, 0.4], [0.035, -0.4]]) box(0.016, 0.07, 0.01, iron, x - 0.04, 0.62, fz + 0.1, g).rotation.z = rz;   // I
+    box(0.016, 0.07, 0.01, iron, -0.1, 0.62, fz + 0.1, g);
+    for (const rz of [0.5, -0.5]) box(0.016, 0.08, 0.01, iron, 0.06, 0.62, fz + 0.1, g).rotation.z = rz;                                   // X
+    box(0.34, 0.5, 0.05, iron, 0, 0.02, fz + 0.02, g);
+    for (const y of [0.1, 0.25, 0.4]) box(0.36, 0.03, 0.06, mat(null, '#4a3a30'), 0, y, fz + 0.02, g);
+    const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.008, 4, 12), BRONZE()); wheel.position.set(0.08, 0.26, fz + 0.06); g.add(wheel);
+    for (const sx of [-1, 1]) box(0.035, 0.24, 0.035, iron, sx * 0.32, 0, fz + 0.2, g);
+    for (let i = 0; i < 7; i++) { const t = i / 6, l = new THREE.Mesh(new THREE.TorusGeometry(0.018, 0.005, 4, 6), iron); l.position.set(-0.32 + t * 0.64, 0.2 - Math.sin(t * Math.PI) * 0.06, fz + 0.2); l.rotation.y = i % 2 ? Math.PI / 2 : 0; g.add(l); }
+    lantern(g, S, -0.38, 0.46, fz + 0.12);
+    for (let i = 0; i < 4; i++) { const k = rockMesh(r, 0.05 + r() * 0.04, 0.6); k.traverse((o) => { if (o.isMesh) o.material = mat(null, '#2e2624'); }); k.position.set(-0.6 + r() * 1.2, k.position.y, 0.3 + r() * 0.3); if (Math.abs(k.position.x) < 0.4) k.position.x += 0.5; g.add(k); }
+  },
+  // The Magma Vault's mouth (REACH.vault): a slag mound split open, the way down glowing, timber shoring in the mouth
+  vaultmouth(S, g, r) {
+    const iron = IRON();
+    slagHeap(g, r, -0.3, -0.25, 0.75, 0.62); slagHeap(g, r, 0.4, -0.3, 0.55, 0.5, '#2e2622', true); slagHeap(g, r, 0.05, -0.62, 0.6, 0.78);
+    const mz = 0.2;
+    box(0.36, 0.42, 0.3, mat(null, '#140a06'), 0.05, 0, mz - 0.1, g);
+    box(0.28, 0.06, 0.2, FURNACE(), 0.05, 0.0, mz - 0.12, g);                                       // the glow from below
+    for (const sx of [-1, 1]) box(0.045, 0.46, 0.045, S.m.beam, 0.05 + sx * 0.2, 0, mz + 0.06, g);
+    box(0.5, 0.05, 0.06, S.m.beam, 0.05, 0.46, mz + 0.06, g); box(0.5, 0.025, 0.025, iron, 0.05, 0.5, mz + 0.06, g);
+    lantern(g, S, -0.25, 0.44, mz + 0.1);
+  },
+  // a slag heap, for the ring round Furnace Nine's yard (convert.js FURNACE_YARD), a crack in it glowing
+  slagheap(S, g, r) { slagHeap(g, r, 0, 0, 0.32, 0.3 + r() * 0.1, '#302a27', true); slagHeap(g, r, 0.22, 0.12, 0.16, 0.14); },
+});
 export const BUILD_TYPES = Object.keys(TYPES);
 
 export function makeBuilding(type, style, seed = 1, faceX = false) {

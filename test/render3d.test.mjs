@@ -178,7 +178,7 @@ test('biomes: the Reach is drawn in ash and slag (Luminati\'s arid set and ours)
   // (docs/art-critic-pass-reach.md: no orange sand, no green: ash, char, cracked dark earth, basalt hills, red rock in
   // the scree's patches, a little scrub; the trees dead)
   assert.equal(reach.env.climate, 'arid'); assert.ok(!reach.t.g && !reach.t.G && !reach.t.a && !reach.t.r && !reach.t.X, JSON.stringify(reach.t));
-  assert.ok(reach.t.A > 0 && reach.t.H > 0 && reach.t.Q > 0 && reach.t.O > 0 && reach.t.M > 0 && reach.t.M < reach.t.Q / 2 && reach.t.L > 0 && !reach.t.y, JSON.stringify(reach.t));
+  assert.ok(reach.t.A > 0 && reach.t.H > 0 && reach.t.Q > 0 && reach.t['&'] > 0 && reach.t.M > 0 && reach.t.M < reach.t.Q / 2 && reach.t.L > 0 && !reach.t.y, JSON.stringify(reach.t));
   assert.ok([...reach.trees].every((k) => k === 'deadwood'), [...reach.trees].join());
   assert.equal(heights.env.season, 'winter'); assert.ok(heights.t.n > heights.t.q && heights.t.I > 0 && heights.t.N > 0 && !heights.t['~'], JSON.stringify(heights.t));
   assert.ok([...heights.trees].every((k) => ['snowpine', 'bare'].includes(k)), [...heights.trees].join());
@@ -208,6 +208,28 @@ test('dungeons: the Reach\'s kits and themes have their own stone (the Cold Seam
     const t = new Set(level.tiles.join(''));
     assert.ok(!t.has('x') && !t.has('m'), `${site} ${depth} (${w.kit || w.theme}): no mossy default stone: ${[...t].join('')}`);
   }
+});
+
+test('dungeons: every plan kit has a look of its own, the Reach\'s other bands and the Fens\' kits no longer in the default stone', async () => {
+  const { createWorld } = await import('../src/sim/world.js'), { SITES } = await import('../src/sim/sites.js');
+  const want = { assay_yards: ['Z', 'W'], forgehall: ['j', 'O'], cinderworks: ['Z', 'O'], ninth_vault: ['j'], toadking_mound: ['u', 'u'], canal_locks: ['B', 'W'], drowned_abbey: ['C', 'C'] };
+  for (const [site, walls] of Object.entries(want)) {
+    if (!SITES[site]) continue;                                   // (the Reach's sites are landing alongside)
+    walls.forEach((wall, depth) => {
+      const w = createWorld(SEED, null, depth, site), { level } = convertWorld(w, { region: SITES[site].region }), t = new Set(level.tiles.join(''));
+      assert.ok(t.has(wall), `${site} ${depth}: its walls '${wall}': ${[...t].join('')}`);
+      assert.ok(!(t.has('x') && t.has('m') && t.has('k') && !t.has(wall)), `${site} ${depth}: not the default look`);
+      for (const ch of t) assert.ok(level.legend[ch], `'${ch}' in the legend`);
+    });
+  }
+  // the hot floors' vents: ember beds, no light of their own
+  if (SITES.cinderworks) { const { level } = convertWorld(createWorld(SEED, null, 1, 'cinderworks'), { region: 'reach' }); assert.ok(level.objects.some((o) => o.type === 'fire' && o.opts.kind === 'embers' && !o.opts.light), 'the Magma Vault\'s vents'); }
+});
+
+test('the Reach\'s site doors on the overland are its own pieces, and Furnace Nine\'s yard is ringed with slag', () => {
+  const ov = convertWorld(createSim(SEED, undefined, { scene: 'overland', region: 'reach' }).world, { region: 'reach' }), ids = ov.sprites.map((q) => q.id);
+  for (const id of ['reach_assayhouse', 'reach_forgedoor', 'reach_ninthdoor', 'reach_vaultmouth', 'reach_slagheap']) assert.ok(ids.includes(id), id);
+  for (const id of ['chapelruin_0', 'ruin', 'reach_keep_1']) assert.ok(!ids.includes(id), `${id} is not a Reach door`);
 });
 
 test('brightness: the Vale\'s parts of the day at the owner\'s levels, eased from one to the next', () => {

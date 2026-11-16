@@ -86,7 +86,8 @@ export const CAMPS = [
   // first, where the walk in met the water and the fight never started); the Vault's mouth, furnace-priests keeping the
   // way down to Furnace Nine, where it burns again at half past the hour once it's broken (the Cinderworks' band, 28–30:
   // level 29; ring.js FURNACE: on the furnace yard west of the Vault's ruin, its track's end, the one camp a road comes to,
-  // as nobody walks that track but to it; under the Cinderworks' stacks first, where its arena was 70 % open ground)
+  // as nobody walks that track but to it; under the Cinderworks' stacks first, where its arena was 70 % open ground; at
+  // 148, 12 the map's top edge cut its yard in half)
   { id: 'reach_den', region: 'reach', kind: 'nest', name: "The hounds' den", x: 86, y: 158, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 20,
     family: 'works', band: ['cinderhound', 'cinderhound', 'cinderhound'], min: 2, elite: 0.25, respawn: RESPAWN, hole: [0, 1.2],
     dress: [['burrow', 0, 0], ['bones', 2.4, 1.8], ['bones', -3.2, -1.4], ['spoil', 4.2, -2.6], ['boulder', -4.4, 2.8], ['spoil', -2.2, -4.2]] },
@@ -96,7 +97,7 @@ export const CAMPS = [
   { id: 'reach_haulers', region: 'reach', kind: 'camp', name: "The haulers' road", x: 180, y: 212, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 26,
     family: 'pithead', band: ['hauler', 'hauler', 'hauler'], elite: 0.25, respawn: RESPAWN, posts: [[-2.6, 0.4], [2.6, 0.4], [0, -2.6]], face: [0, 0],
     dress: [['cart', 0, 0], ['cart', -4.2, -3.0], ['chains', 3.8, -3.2], ['spoil', 4.6, 2.6], ['crates', -4.4, 2.6], ['bones', 1.4, 4.2]] },
-  { id: 'reach_mouth', region: 'reach', kind: 'camp', name: "The Vault's mouth", x: 148, y: 12, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 29,
+  { id: 'reach_mouth', region: 'reach', kind: 'camp', name: "The Vault's mouth", x: 150, y: 22, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 29,
     family: 'works', band: ['furnacepriest', 'cinderhound', 'furnacepriest'], elite: 0.25, respawn: RESPAWN, posts: [[-2.4, 0.6], [2.2, 1.0], [0.2, -2.4]], face: [0, 0],
     ring: 'furnace_nine',   // (Furnace Nine's ground, ring.js FURNACE: at half past, once it's broken, it burns here in their place)
     dress: [['brazier', -4.2, -2.6], ['brazier', 4.4, -2.8], ['chains', 5.0, 1.8], ['bones', -4.8, 2.2], ['spoil', 3.6, 4.6], ['urns', -3.0, -4.6]] },

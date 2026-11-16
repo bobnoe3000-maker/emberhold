@@ -980,7 +980,7 @@ function buildReach(seed) {
     { w: 6, surface: 'dirt', imperial: true, pts: [join, [join[0], 102], [64, 102], [kells[0] + 12, kells[1]]] },   // the Kell road, round the north wall
     { w: 4, surface: 'track', pts: [[join[0], 120], [168, 90], [works[0] - 1, works[1] + 10]] },                     // up to the Cinderworks
     { w: 3, surface: 'track', pts: [[works[0] - 6, works[1] + 6], [166, 50], door(vault, 9)] },                      // on up to the Magma Vault's mouth, under Furnace Nine
-    { w: 3, surface: 'track', pts: [[166, 46], [156, 30], [150, 20]] },                                                // (v1.126) to the furnace yard beside it, Furnace Nine's ground (camps.js reach_mouth)
+    { w: 3, surface: 'track', pts: [[166, 46], [158, 36], [152, 30]] },                                                // (v1.126) to the furnace yard beside it, Furnace Nine's ground (camps.js reach_mouth)
     { w: 3, surface: 'track', pts: [[150, 182], [108, 188], [82, 212], [tunnels[0] + 2.5, tunnels[1] + 8]] },        // west to the Slag Tunnels' adit, up to its mouth from below
     { w: 3, surface: 'track', pts: [[148, 226], [132, 230], [seam[0] - 6, seam[1] + 12]] },                          // to the Cold Seam's pithead
     { w: 3, surface: 'track', pts: [[190, 165], [forge[0] + 0.5, forge[1] + 8]] },                                   // to the Forgehall's door

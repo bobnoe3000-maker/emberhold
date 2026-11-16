@@ -348,6 +348,12 @@ for (const e of [
   { id: 'reach_stack', build: 'stack', style: 'reach', seed: 9, desat: 0.15, tint: [1, 0.93, 0.88] },
   { id: 'reach_works', build: 'works', style: 'reach', seed: 11, desat: 0.15, tint: [1, 0.93, 0.88] },
   { id: 'reach_pithead', build: 'pithead', style: 'reach', seed: 4, desat: 0.15, tint: [1, 0.94, 0.9] },
+  // (part 2: the other sites' doors on the overland, and the slag heaps round Furnace Nine's yard)
+  { id: 'reach_assayhouse', build: 'assayhouse', style: 'reach', seed: 13, desat: 0.15, tint: [1, 0.93, 0.88] },
+  { id: 'reach_forgedoor', build: 'forgedoor', style: 'reach', seed: 17, desat: 0.12, tint: [1, 0.95, 0.9] },
+  { id: 'reach_ninthdoor', build: 'ninthdoor', style: 'reach', seed: 19, desat: 0.12, tint: [1, 0.94, 0.9] },
+  { id: 'reach_vaultmouth', build: 'vaultmouth', style: 'reach', seed: 23, desat: 0.15, tint: [1, 0.93, 0.88] },
+  { id: 'reach_slagheap', build: 'slagheap', style: 'reach', seed: 29, desat: 0.15, tint: [1, 0.93, 0.88] },
 ]) KIT.set(e.id, e);
 const DOORS = new Set(['vale_keep_1', 'ruin', 'chapelruin_0']);
 /** a kit piece as one mesh a material (its many boxes merged: a phone draws a few calls, not sixty), lit windows in the
@@ -564,16 +570,19 @@ function reachAir() {
 }
 // The Reach's own textures (registered once, painted when a level names them): Ashgate's slag brick and rust tile, and
 // six of Luminati's set repainted (their relief kept, their colours through a ramp by luminance): cracked earth dark as
-// cinders, cobbles in charcoal without their moss, red sand as rust-stained mud, red rock iron-dark, dry grass ash-grey, ash a step darker.
+// cinders, cobbles in charcoal without their moss, red sand as rust-stained mud, red rock iron-dark, dry grass ash-grey, ash a step darker;
+// and the dungeons' stone for the Reach's other sites and the Fens' kits (below).
 let reachLib = null;
 registerTextureSet((K) => {
   const P = (a) => a.map((c) => K.parseColor(c)), at = (R, t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
   const lum = (c) => (0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]) / 255;
-  const recolor = (src, R) => (s) => {
+  // (post: a touch after the ramp, per pixel, with t the pixel's place on it: the dungeons' bronze joints, glowing cracks,
+  // wet sheen and slime, below)
+  const recolor = (src, R, post = null) => (s, ctx) => {
     const p = (reachLib ||= new TextureLibrary({ seed: 7 })).pixels(src); if (!p) return {};
     const { width: w, height: h } = p.color, L = new Float32Array(w * h); let lo = 1, hi = 0;
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const l = lum(p.color.get(x, y)); L[y * w + x] = l; lo = Math.min(lo, l); hi = Math.max(hi, l); }
-    s.each((x, y, i) => { s.set(x, y, at(R, (L[i] - lo) / Math.max(1e-3, hi - lo))); s.hf[i] = p.height[i]; });
+    s.each((x, y, i) => { const t = (L[i] - lo) / Math.max(1e-3, hi - lo); s.set(x, y, at(R, t)); s.hf[i] = p.height[i]; post?.(s, x, y, i, t, ctx); });
     return { normal: 2.2 };
   };
   // (the owner, 2026-11-16, from the phone at dawn: "Cinder reach is too dark at dawn.. check other times too": the
@@ -583,6 +592,8 @@ registerTextureSet((K) => {
   const LIFT = (a) => a.map((c) => { const k = new THREE.Color(c).multiplyScalar(1.55).lerp(new THREE.Color('#8e877c'), 0.2); return '#' + k.getHexString(); });
   const SLAG = P(['#0c0b0e', '#141318', '#1c1a20', '#25222a', '#2f2b33', '#3b363d', '#4a4348']), MORTAR = P(['#3a3532', '#4e4743', '#625a54']);
   const RUST = P(['#3a1a10', '#5a2814']), GLASS = P(['#2c4a4c', '#3e6662']);
+  const BRONZE_J = P(['#6a4e24', '#8a6a34']), FORGE_M = K.parseColor('#1a1614'), FORGE_S = P(['#141212', '#1c1918', '#26221f', '#302a27', '#3c3430', '#4a403a']);
+  const EMBER = P(['#e8501a', '#ffa040']), WET = P(['#9aacb4', '#8a8a70']), SLIME = P(['#5a7a24', '#6e8e2c']);
   return {
     // black slag brick in ash-grey mortar, rust weeping here and there, a fleck of slag glass
     slag_brick: { px: [32, 32], normalScale: 0.6, gen: (s, ctx) => {
@@ -613,6 +624,29 @@ registerTextureSet((K) => {
     // (round 4: Luminati's ash, near white in its drifts, beside the cinder earth read as a mosaic of pale tiles: a
     // step darker, still the lightest ground in the Reach)
     ash_drift: { px: [64, 64], normalScale: 0.5, gen: recolor('ash', P(LIFT(['#262422', '#33302d', '#413d39', '#504b46', '#5f5953', '#6f6860', '#80786f', '#91897e']))) },
+    // ── the dungeons' stone (docs/art-critic-pass-reach.md part 2; docs/art-critic-pass-fens-dungeons.md): mid values all,
+    // as underground's dim violet fill takes dark stone to black (the pithead's round 3; round 2 here lifted the forge's
+    // flags, the mud and the Fens' flags a third)
+    // the Forgehall's floor: the empire's flags, dark warm stone, bronze in the joints
+    forge_flag: { px: [64, 64], normalScale: 0.6, gen: recolor('stone_tiles', P(['#3a3430', '#4c4440', '#5e554e', '#70665c', '#82776a', '#948878', '#a69a88']), (s, x, y, i, t) => { if (t < 0.12) s.set(x, y, BRONZE_J[(x + y) & 1]); }) },
+    // its walls: black dressed stone, a bronze course every second row of blocks
+    forge_stone: { px: [32, 32], normalScale: 0.6, gen: (s, ctx) => {
+      const r = K.genStoneBrick(s, ctx);
+      s.each((x, y, i) => { const l = lum(s.get(x, y)); s.set(x, y, s.hf[i] <= 0.001 ? (y % 16 < 8 ? BRONZE_J[1] : FORGE_M) : at(FORGE_S, Math.min(1, l * 1.2))); });
+      return r;
+    } },
+    // the deep forges and the Magma Vault: broken black rock, fire in its cracks (the cracks lit: an emissive mask)
+    magma_floor: { px: [64, 64], normalScale: 0.7, emissive: true, gen: recolor('basalt', P(['#1e1a1a', '#2a2422', '#38302c', '#463c36', '#544840', '#62564c', '#706252']), (s, x, y, i, t, ctx) => {
+      if (t < 0.16 && K.hash2(x >> 1, y >> 1, ctx.seed + 9) < 0.7) { const c = EMBER[t < 0.08 ? 1 : 0]; s.set(x, y, c); s.emissive().set(x, y, c); } }) },
+    // the Fens' (world doc §3.2): the Toadking's mud, black and olive, a wet glint; the locks' slick blue-grey flags;
+    // Vat Seven's flags stained sick green, slime in the joints; the abbey's pale cloister stone gone green-grey
+    fen_mud: { px: [64, 64], normalScale: 0.5, gen: recolor('dirt', P(['#2c271e', '#3a3428', '#4a4232', '#5a503c', '#6a5e46', '#7a6c52', '#8a7a5e']), (s, x, y, i, t, ctx) => { if (K.hash2(x, y, ctx.seed + 5) > 0.985) s.set(x, y, WET[1]); }) },
+    wet_flag: { px: [64, 64], normalScale: 0.6, gen: recolor('stone_tiles', P(['#2c3438', '#3a454a', '#4a565c', '#5a676e', '#6a7880', '#7c8a92', '#909ea4']), (s, x, y, i, t, ctx) => { if (t > 0.7 && K.hash2(x, y, ctx.seed + 5) > 0.93) s.set(x, y, WET[0]); }) },
+    sick_flag: { px: [64, 64], normalScale: 0.6, gen: recolor('stone_tiles', P(['#2c3224', '#3a422e', '#4a5438', '#5a6544', '#6a7650', '#7a865c', '#8a9668']), (s, x, y, i, t, ctx) => { if (t < 0.14 && K.hash2(x >> 1, y >> 1, ctx.seed + 7) < 0.8) s.set(x, y, SLIME[(x + y) & 1]); }) },
+    abbey_flag: { px: [64, 64], normalScale: 0.6, gen: recolor('stone_tiles', P(['#2e3430', '#3e4540', '#4f5650', '#606860', '#717970', '#838a80', '#969c90'])) },
+    // (round 2: underground's fill is a dim violet, and the charcoal cobbles of the Ashgate square read black there, the
+    // yards' world band 26 → 19 with them, the foes in Assay grey lost on it: the dungeons' cobbles a mid warm grey)
+    dun_cobble: { px: [64, 64], normalScale: 0.7, gen: recolor('cobblestone', P(['#3c3834', '#4e4944', '#625b54', '#766e65', '#8a8177', '#9e948a', '#b2a89c'])) },
   };
 });
 

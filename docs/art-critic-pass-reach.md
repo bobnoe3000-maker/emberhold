@@ -232,7 +232,7 @@ The `desert` biome was swapped for `ash`, with the houses, the four kit pieces, 
 - **The Fens' dungeons are unstyled.** Their kits (`mound`, `locks`, `vats`, `abbey`) and themes (`mire`, `sluice`,
   `water`, `poison`) have no `KIT_LOOK` or `THEME_LOOK`. Every Fens floor draws in `DEFAULT_LOOK`: stone tiles with a
   moss scatter, `moss_stone` / cliff walls, hour 19.4. Only the ambient fill differs, through palette.js `KIT_TINT`.
-  Confirmed in play (the Canal Locks, above). Not fixed here.
+  Confirmed in play (the Canal Locks, above). Fixed since: [art-critic-pass-fens-dungeons.md](./art-critic-pass-fens-dungeons.md).
 - **Night** is still a slate-blue scene with orange points, as every land's is.
 
 ## Round 5: the light by the hour (the owner, from the phone)
@@ -260,3 +260,144 @@ it #2x–#3x, a third of the Vale's grass), and the hour's brightness lifted onl
 | Ashgate's square | 47 | 67 | 84 | 50 | 49 |
 
 ![The Reach by the hour, after](img/reach/hours-after.jpg)
+
+## Part 2: the rest of the Reach (the build sheet, docs/reach-plan.md)
+
+The owner, on the build sheet: *"do all of this"*. The Reach's other three bands and its secret have plan kits:
+- `yards` and `quota` (the Assay Yards);
+- `forge` and `deepforge` (the Forgehall of Oruth);
+- `works` and `vault` (the Cinderworks and its Magma Vault);
+- `strongroom` (the Ninth Vault).
+
+They had no looks: each fell to the default's grey tiles and moss, or to a theme's (`ember`, `desert`, `chasm`). Their
+doors on the overland were other lands' pieces:
+- the Yards a generic longhouse;
+- the Forgehall a castle keep (`reach_keep_1`);
+- the Ninth Vault the Vale's chapel ruin;
+- the Magma Vault's mouth the Old Barrows' mound.
+
+Measured as before: phone frame, the first fighting room of each floor, world-band luminance, draws at the context.
+**Before** is a copy of the working tree served beside it, taken before this part's changes. Three rounds.
+
+### What changed
+
+**Dungeon looks** (convert.js `KIT_LOOK`, `AMB_TINT`; textures in world.js). A `mix` is the share of the second tile.
+`vents` are ember beds along the walls, a glow and a wisp each, with no light of their own.
+
+| Kit | Floor | Walls | Fill |
+|---|---|---|---|
+| `yards` | mid warm-grey cobbles (`dun_cobble`), cracked earth | slag brick | a day's work light |
+| `quota` | dressed flags, cobbles | the Deepdelvers' cut stone | a clerk's cool lamp |
+| `forge` | the empire's flags, bronze in their joints (`forge_flag`) | black dressed stone banded in bronze (`forge_stone`) | warm |
+| `deepforge` | rock, broken black rock with fire in its cracks (`magma_floor`, an emissive mask), 10 vents | basalt | hot |
+| `works` | cobbles, char | slag brick | furnace |
+| `vault` (the `lava` look) | rock and `magma_floor`, 14 vents | basalt | hotter |
+| `strongroom` | the empire's flags, dressed (`mix` 12 %) | black and bronze | candle-warm |
+
+- **The Ninth Vault has no kit of its own** (`dress`), so in the Reach a plan's one room kit stands in for it. The
+  Vale's Ninth Milestone keeps the chasm's halls it was approved in.
+
+**The doors on the overland** (buildkit.js, stood in 3D on the sim's own footprints). convert.js `SITE_DOORS` finds
+each by its piece and its `REACH` place. Each door is on its +z face, where the sim's other doors are.
+- **`assayhouse`:** the Assay Yards' counting house in place of the longhouse. Two storeys: slag brick under a
+  soot-dark timber upper floor and rust tile. Its great door has the Assay's scale-and-pick on a board over it,
+  lanterns either side, the weigh-beam on its post with a bronze pan, and ore crates.
+- **`forgedoor`:** the Forgehall's great doors in place of the keep. Bronze leaves stand ajar in a portal of dark
+  dressed stone with a bronze band and the empire's seal. The forge's light shows in the gap, braziers stand on
+  plinths, and the black hill rises over and round the portal.
+- **`ninthdoor`:** the Ninth Vault's strongroom door in the volcano's flank, in place of the chapel ruin. A face of
+  black and rust rock holds a dressed stone frame with IX over it, the iron door banded with a bronze wheel, a chain
+  across it on two posts, and a lantern.
+- **`vaultmouth`:** the Magma Vault's mouth in place of the barrow. A slag mound is split open, the way down glowing,
+  with timber shoring and a lantern.
+
+**Furnace Nine's yard** (camps.js `reach_mouth`, `[148, 12]`):
+- The ground inside its reach is char and cracked earth.
+- Slag heaps (`slagheap`, a crack in each glowing) ring it just past its cleared arena, with a gap to the south, the
+  way in.
+- Ten vents stand inside.
+- Only the yard's south half is inside the level's crop, so five heaps stand.
+
+**Also:**
+- The cinder hounds' den's `burrow` (the Vale's turf) is a slag heap in the Reach.
+- The lane well's roof is rust.
+- The slag hills are topped in char (`&`).
+
+### The rounds
+
+![Before and after: the Yards, the Quota Office, the Forgehall, the Deep Forges](img/reach/reach-dungeons-1.jpg)
+
+![Before and after: the Cinderworks, the Magma Vault, the Ninth Vault](img/reach/reach-dungeons-2.jpg)
+
+![Before and after on the overland: the Assay Yards, the Forgehall's doors, the Ninth Vault's door, Furnace Nine's yard (at dusk; before, the Vault's mouth)](img/reach/reach-doors.jpg)
+
+**Round 1.** Every floor its own look.
+
+*Critique:*
+- The floors are seven places now, not one:
+  - the yards' cobbles and slag brick;
+  - the Forgehall's black-and-bronze;
+  - fire in the Vault's cracks;
+  - the strongroom's warm flags.
+- But they read darker than the grey tiles they replaced. The charcoal cobbles (`cinder_cobble`, Ashgate's square's)
+  went black underground: the yards' world band 25.7 → 18.7, the works' 26.9 → 17.4. The new foes in Assay grey were
+  lost on them.
+- On the overland:
+  - the Forgehall's portal stood alone like a box before a low grey cone, its bronze cornice a slab seen from above;
+  - the Ninth Vault's flank read grey-blue;
+  - the basalt hills (part 1) stood as black stepped blobs.
+
+**Round 2:**
+- The dungeons' cobbles became a mid warm grey (`dun_cobble`), and the forge's flags and the Fens' flags were lifted.
+- The Forgehall's hill went higher and darker, with crags hugging the jambs and the cornice a thin band.
+- The flank became black and rust.
+- The hills were ash-topped.
+
+*Critique:*
+- Yards 22, works 20. The cobbles read as a yard, and the hero and the Assay's men read on them.
+- But the ash-topped hills stepped pale terrace by terrace into ziggurats.
+
+**Round 3:**
+- The hills are char-topped (`scorched`, a step lighter than their basalt sides), one form.
+- The new kits' fill went up a step (+12 %).
+
+*Critique:*
+- The yards are at 23 and the works at 21. The forge-hall's are 24, the strongroom's 25, and the hot floors' 18–19,
+  their cracks and vents doing the lighting.
+- They sit a few points under the grey tiles they replaced (26–29), as the Fens' Mound sits under them: the Reach's
+  stone is darker than the Vale's.
+
+### Measured
+
+Draws and triangles a frame, counted at the context:
+
+| Place | Before | After |
+|---|---|---|
+| The Yards (floor 1) | 149 / 286 k | 167 / 300 k |
+| The Quota Office (floor 2) | 124 / 235 k | 146 / 253 k |
+| The Forgehall (floor 1) | 163 / 282 k | 192 / 286 k |
+| The Deep Forges (floor 2) | 121 / 209 k | 159 / 209 k |
+| The Cinderworks (floor 1) | 160 / 284 k | 182 / 292 k |
+| The Magma Vault (floor 2) | 122 / 239 k | 129 / 237 k |
+| The Ninth Vault | 154 / 190 k | 151 / 192 k |
+| Overland: the Assay Yards | 166 / 645 k | 213 / 722 k |
+| Overland: the Forgehall's doors | 159 / 613 k | 165 / 701 k |
+| Overland: the Ninth Vault's door | 150 / 628 k | 157 / 637 k |
+| *The Fens' overland (part 1)* | *297 / 808 k* | |
+
+- **Textures add no draws.** Each new kit piece adds one or two draws a material.
+- **The vents** add most of the Deep Forges' +38: ten ember beds and their wisps.
+- **The rest** is the room's figures at the moment shot: the before copy's foes were the older models.
+- **The Assay Yards' overland frame** includes the Redhand's camp (its tent and its men) by the yards.
+- Every frame stays under the Fens' overland.
+
+### Not done, and asked of others
+
+- **Kell's Rest's houses** were already in the Reach's style (part 1: slag brick, rust tile, `REGION_LOOK.reach`).
+- **The four doors have no baked cards**: `?landmarks=sprites` leaves them out, as it does part 1's pieces.
+- **The camps' tents** are our green canvas, a Vale piece (gsprite.js, not this pass's files).
+- **Sim asks:**
+  - give `ninth_vault` `dress: ['strongroom']`;
+  - put each site's door exit at its struct's +y face, where the new pieces' doors stand;
+  - should Furnace Nine's yard want its north half seen, move `reach_mouth` 8–10 tiles south. The level's crop cuts the
+    land's top rows.

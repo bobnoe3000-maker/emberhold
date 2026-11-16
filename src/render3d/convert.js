@@ -22,6 +22,8 @@ import { G, REACH } from '../sim/outdoor.js';
 import { FLOOR_Z } from '../sim/level.js';
 import { PROP_LIGHT } from '../render/gsprite.js';
 import { KIT_TINT } from '../render/palette.js';
+import { SITES } from '../sim/sites.js';
+import { CAMP_BY } from '../sim/camps.js';
 
 /** the most of ours a level takes each way: 128 of Luminati's */
 export const MAX_TILES = 256;
@@ -63,6 +65,18 @@ export const LEGEND = {
   L: { top: 'ash_scrub', side: 'basalt_cliff', walkable: true },
   J: { top: 'rust_mud', side: 'basalt_cliff', walkable: true }, V: { top: 'cinder_cobble', side: 'slag_brick', walkable: true },
   Z: { top: 'cinder_cobble', side: 'slag_brick', walkable: false },
+  // the dungeons' own stone (part 2 of the Reach's pass; the Fens' kits): the Forgehall's flags and black-and-bronze
+  // walls, broken rock with fire in its cracks, the Toadking's mud and his walls of upturned hulls under reed, the locks'
+  // slick flags, Vat Seven's sick ones, the abbey's pale cloister (painted by world.js, ours)
+  S: { top: 'forge_flag', side: 'forge_stone', walkable: true }, j: { top: 'forge_flag', side: 'forge_stone', walkable: false },
+  l: { top: 'magma_floor', side: 'basalt_cliff', walkable: true }, t: { top: 'fen_mud', side: 'dirt_side', walkable: true },
+  u: { top: 'roof_thatch', side: 'wood_planks_dark', walkable: false }, w: { top: 'wet_flag', side: 'stone_wall', walkable: true },
+  z: { top: 'sick_flag', side: 'stone_wall', walkable: true }, p: { top: 'abbey_flag', side: 'stone_wall', walkable: true },
+  // (round 2: the dungeons' cobbles a mid warm grey, the charcoal ones read black underground; the slag hills' tops lighter
+  // than their sides: all basalt, they stood as black stepped blobs)
+  // (round 3: ash-topped, every step of a hill's terraces stood out pale, a ziggurat: char tops, a step lighter than the
+  // basalt sides, the hill one form)
+  '%': { top: 'dun_cobble', side: 'stone_wall', walkable: true }, '&': { top: 'scorched', side: 'basalt_cliff', walkable: false },
   // a dungeon's own stone (port step 3, by its kit): dressed walls, bare rock underfoot, standing water
   B: { top: 'crag', side: 'stone_brick', walkable: false }, U: { top: 'crag', side: 'cliff', walkable: true },
   P: { top: 'riverbed', side: 'cliff', walkable: true },
@@ -127,7 +141,7 @@ export const BIOMES = {
   // the trees dead; the rocks black, red where the ground is. Luminati's arid climate stays (its set-piece kit, the
   // textures, the dust), its sky graded to ash (world.js ASH_KEYFRAMES).
   ash: { ground: { '.': 'Q', c: 'V', s: 'J', F: 'Q', G: 'H', m: 'K' }, turf: (h, i, j) => ashTurf(h, i, j), scree: (i, j) => (vnoise(i, j, 'r', 4) < 0.32 ? 'M' : 'Q'),
-    trees: { oak: 'deadwood', autumn: 'deadwood', birch: 'deadwood', pine: 'deadwood', juniper: 'deadwood', deadwood: 'deadwood' }, stone: 'basalt', mountain: 'O', wall: 'Z',
+    trees: { oak: 'deadwood', autumn: 'deadwood', birch: 'deadwood', pine: 'deadwood', juniper: 'deadwood', deadwood: 'deadwood' }, stone: 'basalt', mountain: '&', wall: 'Z',
     env: { climate: 'arid', dust: true } },
 };
 /** the biome a region draws in */
@@ -196,6 +210,11 @@ const SMOKE = { color: '#5a5450', colorEnd: '#8e8884', size: [0.7, 1.0], sizeEnd
 const near = (s, at, r) => at && Math.abs(s.x - at[0]) < r && Math.abs(s.y - at[1]) < r;
 const stackAt = (region, w, s) => region === 'reach' && w.kind === 'overland' && (/_stack_/.test(s.id) || (/_tower_\d/.test(s.id) && (near(s, REACH.works, 16) || near(s, REACH.vault, 16))));
 const worksAt = (w, s) => w.kind === 'overland' && near(s, REACH.works, 3);
+/** the Reach's site doors on the overland (part 2): [the sim's piece, the REACH place it stands at, our kit's piece] @type {[RegExp, string, string][]} */
+const SITE_DOORS = [[/_longhouse_\d/, 'yards', 'reach_assayhouse'], [/_keep_\d/, 'forge', 'reach_forgedoor'], [/^chapelruin_0$/, 'ninth', 'reach_ninthdoor'], [/^ruin$/, 'vault', 'reach_vaultmouth']];
+/** Furnace Nine's yard (the region boss's ground, camps.js reach_mouth: the furnace yard west of the Vault's ruin, its
+ *  arena cleared of scatter): char and cracked earth to its reach, slag heaps just past its arena, vents inside them */
+const FURNACE_YARD = { heaps: 20, vents: 10 };
 function outdoor(w, region) {
   // the map, its approach roads (a town's exits lie past its edge) and a margin; never past the grid the sim built
   let bx0 = 0, by0 = 0, bx1 = w.W, by1 = w.H;
@@ -288,6 +307,11 @@ function outdoor(w, region) {
       continue;
     }
     if (reach && id === 'mine_0') { sprites.push({ id: 'reach_pithead', x: X(s.x), z: Z(s.y) }); continue; }
+    // (part 2: the other sites' doors, on the sim's own footprints: the Yards' counting house with the Assay's gate, the
+    // Forgehall's bronze doors in their hill, the Ninth Vault's strongroom door in the volcano's flank, the Magma Vault's
+    // mouth; each door on its +y face, where the sim's other doors are)
+    const door = reach && w.kind === 'overland' ? SITE_DOORS.find(([re, at]) => re.test(id) && near(s, REACH[at], 6)) : null;
+    if (door) { sprites.push({ id: door[2], x: X(s.x), z: Z(s.y) }); continue; }
     if (reach && worksAt(w, s) && /_smith_/.test(id)) { works(s, p); continue; }
     if (reach && /^(wheat|pumpkins)_/.test(id)) continue;      // (Ashgate's fields are the sim's generic town's: nothing grows green in the Reach)
     const house = HOUSES.find(([re]) => re.test(id));
@@ -317,7 +341,7 @@ function outdoor(w, region) {
       const f = p.f, horiz = f[2] - f[0] > f[3] - f[1];
       add(horiz ? { type: 'fence', x0: X(s.x + f[0]), z0: p.cz, x1: X(s.x + f[2]), z1: p.cz, opts: {} } : { type: 'fence', x0: p.cx, z0: Z(s.y + f[1]), x1: p.cx, z1: Z(s.y + f[3]), opts: {} });
     }
-    else if (/_(well|lanewell)_\d/.test(id)) add({ type: 'well', x: p.cx, z: p.cz, rotation: 0, opts: { roof: 'roof_thatch' } });
+    else if (/_(well|lanewell)_\d/.test(id)) add({ type: 'well', x: p.cx, z: p.cz, rotation: 0, opts: { roof: reach ? 'roof_rust' : 'roof_thatch' } });
     else if (/^windmill_/.test(id)) add({ type: 'windmill', x: p.cx, z: p.cz, rotation: 0, opts: { height: 7, roof: 'roof_thatch', seed: 7 } });
     else if (/^lamppost_/.test(id)) add({ type: 'lamppost', x: p.cx, z: p.cz, rotation: 0, opts: { style: 'arm' } });
     else if (/_foodstand_/.test(id)) add({ type: 'marketStall', x: p.cx, z: p.cz, rotation: 0, opts: { cloth: 'cloth_stripe', width: 3, crates: 'right', seed: 2 } });
@@ -361,6 +385,7 @@ function outdoor(w, region) {
     // own pieces as underground; the rest ours (gsprite.js: the tent, the dead cow, the burrow), stood as a dungeon's are
     else if (kind === 'cookfire') add({ type: 'campfire', x, z, rotation: 0, opts: { seat: false } });
     else if (OVERLAND_3D.has(kind)) add(DRESS_3D[kind](x, z, hash(kind, tx, ty)));
+    else if (reach && kind === 'burrow') sprites.push({ id: 'reach_slagheap', x, z });   // (the cinder hounds' den: a heap of slag, not the Vale's turf)
     else if (OVERLAND_OURS.has(kind)) sprites.push({ prop: kind, tx, ty, x, z });
   }
   // the land goes on past the edge: Luminati's forest border on the blocked ring and its outer scenery beyond, round every
@@ -376,6 +401,24 @@ function outdoor(w, region) {
       if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => !/[AHKLQ]/.test(tiles[j + b][i + a]) || heights[j + b][i + a] !== '2')) continue;   // (out in the open, off the roads)
       add({ type: 'fire', x: r2(i + 0.5), z: r2(j + 0.5), opts: { kind: 'embers', size: r2(0.4 + (hash('vs', i, j) % 4) * 0.08), smoke: hash('vk', i, j) % 3 === 0, light: false, seed: hash('vf', i, j) % 997 } });
       n++;
+    }
+  }
+  if (reach && w.kind === 'overland') {
+    const camp = CAMP_BY.reach_mouth, c = camp ? [camp.x, camp.y] : [REACH.vault[0] - 20, REACH.vault[1] - 18], r = camp ? camp.reach : 21, rim = camp ? camp.arena + 1 : r + 5;
+    // the yard's floor: char and cracked earth inside the ring (only open ground: the stack's plinth, a heap, a road stay)
+    for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+      const d = Math.hypot(x0 + 2 * i + 1 - c[0], y0 + 2 * j + 1 - c[1]);
+      if (d < r && heights[j][i] === '2' && /[AHKLQMy]/.test(tiles[j][i])) tiles[j][i] = vnoise(i, j, 'fy', 3) < 0.55 ? 'H' : 'Q';
+    }
+    // the heaps on its rim, past the cleared arena (a gap to the south, the way in), vents round its reach
+    for (let k = 0; k < FURNACE_YARD.heaps; k++) {
+      const a = (k / FURNACE_YARD.heaps) * Math.PI * 2 + 0.2, gx = c[0] + Math.cos(a) * rim, gy = c[1] + Math.sin(a) * rim;
+      if (Math.sin(a) > 0.94 || Math.hypot(gx - REACH.vault[0], gy - REACH.vault[1]) < 10) continue;   // (the way in from the south, the vault's mouth)
+      const x = X(gx), z = Z(gy); if (inside(x, z) && !raised(x, z)) sprites.push({ id: 'reach_slagheap', x, z });
+    }
+    for (let k = 0; k < FURNACE_YARD.vents; k++) {
+      const a = ((k + 0.5) / FURNACE_YARD.vents) * Math.PI * 2 + 0.2, x = X(c[0] + Math.cos(a) * (r - 1)), z = Z(c[1] + Math.sin(a) * (r - 1));
+      if (inside(x, z) && !raised(x, z)) add({ type: 'fire', x, z, opts: { kind: 'embers', size: 0.55, smoke: k % 2 === 0, light: false, seed: 300 + k } });
     }
   }
   const town = W * D <= 96 * 96;
@@ -463,13 +506,39 @@ Object.assign(KIT_LOOK, {
   // a mean luminance of 15 against the warren's 23: its floor now packed earth and rock, its walls the Deepdelvers' cut
   // stone, its dug rooms raw earth. The works and the vault keep their dark stone: their hazard and their fires light them)
   pithead: { floor: ['d', 'U'], wall: 'W', cave: 'D', hour: 19.4 }, warren: { floor: ['d', 'Q'], wall: 'D', cave: 'D', hour: 19.1 },
-  ember: { floor: ['U', 'H'], wall: 'Z', cave: 'O', hour: 18.7 }, lava: { floor: ['U', 'K'], wall: 'O', cave: 'O', hour: 18.3 },
+  // (part 2: the vault's floor broken rock with fire in its cracks, ember vents along its walls: `vents`)
+  ember: { floor: ['U', 'H'], wall: 'Z', cave: 'O', hour: 18.7 }, lava: { floor: ['U', 'l'], wall: 'O', cave: 'O', hour: 18.3, vents: 14 },
+});
+// Part 2 (the build sheet, docs/reach-plan.md; docs/art-critic-pass-reach.md): the Reach's other bands, a look a plan
+// kit. `mix`: the share of the floor in its second tile (18 % if not said); `vents`: ember beds along the walls.
+//   yards: the Assay's yards and counting house, slag brick over charcoal cobbles and cracked earth, a day's work light;
+//   quota: its cellars and the quota office, dressed stone and swept flags, a clerk's cool lamp;
+//   forge: the empire's forge-hall, dark flags with bronze in the joints, black walls banded in bronze, the forges warm;
+//   deepforge: deeper and hotter, broken rock with fire in its cracks, basalt walls, vents;
+//   works: the Cinderworks, slag brick over cobbles and char; vault: the Magma Vault (the `lava` look);
+//   strongroom: the Ninth Vault, the empire's flags and black-and-bronze walls, by candle.
+Object.assign(KIT_LOOK, {
+  yards: { floor: ['%', 'Q'], wall: 'Z', cave: 'D', hour: 19.2 }, quota: { floor: ['k', '%'], wall: 'W', cave: 'W', hour: 20.6 },
+  forge: { floor: ['S', 'U'], wall: 'j', cave: 'O', hour: 18.8 }, deepforge: { floor: ['U', 'l'], wall: 'O', cave: 'O', hour: 18.4, vents: 10 },
+  works: { floor: ['%', 'H'], wall: 'Z', cave: 'O', hour: 18.6 }, vault: KIT_LOOK.lava, strongroom: { floor: ['S', 'k'], wall: 'j', cave: 'W', hour: 20.9, mix: 12 },
+});
+KIT_LOOK.ember = KIT_LOOK.works;
+// The Fens' kits (world doc §3.2; docs/art-critic-pass-fens-dungeons.md): they drew in DEFAULT_LOOK, stone tiles and moss.
+//   mound: the Toadking's island, mud underfoot with planks laid over it, walls of upturned hulls under reed, its dug
+//     rooms earth banks turfed over;   locks: the lock-keepers' halls, slick blue-grey flags and cobbles, pale stone brick;
+//   vats: Vat Seven, flags stained sick green, slime in the joints;   abbey: the flooded cloister, pale flags gone
+//     green-grey, moss, the chapel's sandstone under moss (the Vale's nave's sister).
+Object.assign(KIT_LOOK, {
+  mound: { floor: ['t', 'b'], wall: 'u', cave: 'E', hour: 19.6, mix: 10 }, locks: { floor: ['w', 'c'], wall: 'B', cave: 'W', hour: 20.4 },
+  vats: { floor: ['z', 'w'], wall: 'W', cave: 'W', hour: 20.0 }, abbey: { floor: ['p', 'm'], wall: 'C', cave: 'C', hour: 21.2 },
 });
 const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KIT_LOOK.cellar, nave: KIT_LOOK.nave, cinder: KIT_LOOK.cultcut, chasm: { floor: ['U', 'm'], wall: 'x', hour: 22.8 },
-  warren: KIT_LOOK.warren, ember: KIT_LOOK.ember, lava: KIT_LOOK.lava };
+  warren: KIT_LOOK.warren, ember: KIT_LOOK.ember, lava: KIT_LOOK.lava, mire: KIT_LOOK.mound, sluice: KIT_LOOK.locks, poison: KIT_LOOK.vats, water: KIT_LOOK.abbey };
 /** the fill's tint underground for the Reach's kits and themes (palette.js KIT_TINT holds the Vale's and the Fens'):
- *  the lamps' warmth in the mine, the furnaces' in the works and the vault */
-const AMB_TINT = { pithead: [1.08, 0.97, 0.86], warren: [1.04, 0.96, 0.88], ember: [1.16, 0.9, 0.78], lava: [1.22, 0.86, 0.72] };
+ *  the lamps' warmth in the mine, the furnaces' in the works and the vault, the clerks' cool lamp in the cellars */
+const AMB_TINT = { pithead: [1.08, 0.97, 0.86], warren: [1.04, 0.96, 0.88], ember: [1.16, 0.9, 0.78], lava: [1.22, 0.86, 0.72],
+  // (round 3: the new kits' fill a step up, ~+12 %: the yards' world band 22 against the stone floors' 26 before)
+  yards: [1.1, 1.04, 0.98], quota: [1.02, 1.03, 1.1], forge: [1.2, 1.0, 0.88], deepforge: [1.26, 0.94, 0.8], works: [1.22, 0.96, 0.84], vault: [1.3, 0.9, 0.76], strongroom: [1.12, 1.04, 0.96] };
 const DEFAULT_LOOK = { floor: ['k', 'm'], wall: 'x', hour: 19.4 };
 /** an overland prop of ours (gsprite.js), a spawn point's dressing (sim/camps.js) */
 const OVERLAND_OURS = new Set(['tent', 'carcass', 'burrow', 'rack', 'banner', 'standard', 'bedroll', 'reeds', 'boat', 'bound', 'urns', 'candles', 'saint']);   // (v1.68: every land's spawn points' dressing)
@@ -576,7 +645,11 @@ function dungeon(w, o = {}) {
   const both = Math.abs(up.x - dn.x) < MAX_TILES - 24 && Math.abs(up.y - dn.y) < MAX_TILES - 24;
   const { x0, y0, W, D } = crop(bx0 - 2, by0 - 2, bx1 + 2, by1 + 2, both ? (up.x + dn.x) / 2 : sp.x, both ? (up.y + dn.y) / 2 : sp.y);
   const X = (x) => r2((x - x0) / 2), Z = (y) => r2((y - y0) / 2);
-  const look = KIT_LOOK[w.kit] || THEME_LOOK[w.theme] || DEFAULT_LOOK;
+  // (a plan with no kit of its own, the Ninth Vault: its rooms' one kit, in the Reach; the Vale's Ninth Milestone keeps
+  // the chasm's halls it was approved in)
+  const L0 = w.level, one = L0.plan && L0.rooms?.length ? [...new Set(L0.rooms.map((r) => r.kit).filter(Boolean))] : [];
+  const kit = w.kit || (SITES[w.site]?.region === 'reach' && one.length === 1 ? one[0] : null);
+  const look = KIT_LOOK[kit] || THEME_LOOK[w.theme] || DEFAULT_LOOK;
   const tiles = grid(W, D, look.wall), heights = grid(W, D, '6'), pools = w.pools || new Set();
   // an authored floor (plans.js) is dressed room by room: each room in its own kit's stone (the Keep's barracks in dressed
   // stone, its cellars' cave in rock), a dug room (a 'cave') walled in rock whatever its kit; the halls in the floor's
@@ -593,7 +666,7 @@ function dungeon(w, o = {}) {
       if (c && c.kind === 'floor') { floor++; if (!lk || c.room >= 0) lk = roomLook(c); }
       if (pools.has(k)) wet++;
     }
-    if (floor) { looks[j * W + i] = lk; tiles[j][i] = wet >= 2 ? 'P' : hash('d', i, j) % 100 < 18 ? lk.floor[1] : lk.floor[0]; heights[j][i] = '2'; }
+    if (floor) { looks[j * W + i] = lk; tiles[j][i] = wet >= 2 ? 'P' : hash('d', i, j) % 100 < (lk.mix ?? 18) ? lk.floor[1] : lk.floor[0]; heights[j][i] = '2'; }
   }
   // the rock beyond the walls is nothing, as Emberlit draws it: only the ring of wall round the floor stands, the rest
   // void (black), not a sea of lit wall-tops
@@ -645,7 +718,8 @@ function dungeon(w, o = {}) {
   const level = frame({ name: w.siteName || 'The Old Barrows', W, D, tiles, heights, objects, spawn: { x: X(sp.x), z: Z(sp.y), facing: 'up' },
     // (black beyond the walls, as Emberlit's: a backdrop colour, which the fog takes too, so the far rooms fade to it)
     environment: { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: true, backdrop: '#040306' } });
-  const amb = ambientOf(w.kit || (AMB_TINT[w.theme] ? w.theme : w.kit));
+  if (look.vents) vents(W, D, heights, open, add, look.vents);   // (the vault's and the deep forges' ember beds)
+  const amb = ambientOf(kit || (AMB_TINT[w.theme] ? w.theme : kit));
   return { level, sprites, ambient: /c/.test(o.dlook || '') ? coolAmbient(amb) : amb, origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D } };
 }
 
@@ -672,6 +746,18 @@ function edgeRubble(W, D, heights, open, add) {
     const size = r2(0.34 + ((h >>> 4) % 40) / 100);
     if ((h >>> 12) % 3 === 0) add({ type: 'rock', x, z, opts: { size: r2(size * 0.85), seed: (h >>> 3) % 97 } });
     else add({ type: 'debris', x, z, rotation: ((h >>> 6) % 11) * 0.5, opts: { kind: 'rubble', size, charred: false, seed: (h >>> 2) % 997 } });
+    n++;
+  }
+}
+/** ember beds along a hot floor's walls (KIT_LOOK `vents`): on a floor tile against a wall, never a corridor's or a
+ *  doorway's, spread by a hash; a glow and a wisp, no light of their own (Luminati shares twelve, the braziers need them) */
+function vents(W, D, heights, open, add, max) {
+  let n = 0;
+  for (let j = 1; j < D - 1 && n < max; j++) for (let i = 1; i < W - 1 && n < max; i++) {
+    if (heights[j][i] !== '2' || hash('vt', i, j) % 37) continue;
+    const wl = (di, dj) => !open(i + di, j + dj), e = wl(1, 0), w_ = wl(-1, 0), s = wl(0, 1), nn = wl(0, -1);
+    if ((e && w_) || (s && nn) || !(e || w_ || s || nn)) continue;
+    add({ type: 'fire', x: r2(i + 0.5), z: r2(j + 0.5), opts: { kind: 'embers', size: r2(0.35 + (hash('vz', i, j) % 4) * 0.06), smoke: hash('vs', i, j) % 3 === 0, light: false, seed: hash('vf', i, j) % 997 } });
     n++;
   }
 }
