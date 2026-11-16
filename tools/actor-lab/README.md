@@ -120,7 +120,7 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
   in `faces.js` lists every choice; `node faces.cjs` draws them. The atlas bakes a simplified
   face (dot eyes, no marks: what reads at 56 px); the portrait the full one.
 - `wear` — `{ bone: prop }` puts a code-built prop on a body bone instead of a hand (`N5`, Bess Hale:
-  `{"hips": "apron"}`, her leather apron).
+  `{"hips": "apron"}`, her leather apron). A list wears several on one bone (`MN2`: `{"head": ["lampcap", "beardchestnut"]}`).
 - Carried props with `userData.hang` (the lantern, hammer, egg basket, key ring and carter's whip in
   `props.js`) **hang plumb**: every sampled pose turns them so they point straight down from the grip
   (a prop built along −y, the whip, stands up), keeping the figure's yaw. A rigid prop stuck out like a
@@ -147,6 +147,9 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
   where the 4 × 4 average washed them into the bone. Not the face kit: a skull has sockets, not eyes and brows.
 - `hide` — kit meshes left off (`E2`, the minion: `["Skeleton_Minion_Cloak"]`, its collar hid the jaw; it wears
   the `rag` prop on the chest bone instead).
+- `frame` — a variant's own proportions after the heroic pass: `reach` lengthens a segment, `scale` grows a bone (a
+  number, or `[x, y, z]` in the bone's axes: the Reach's dwarf-folk, hips wider and deeper), `bend` turns one
+  (`docs/art-critic-pass-reach-cast.md`).
 - `height` — (art pass 8) fit the figure by its body alone, held things left out, to `px` × `height`
   (the townsfolk: 0.85 for Nell to 1.02 for Jory, Brannoc 1.06). Without it the whole figure, props and
   all, fills `px`, as for the heroes and foes; a book or whip held high shrank the person under it.

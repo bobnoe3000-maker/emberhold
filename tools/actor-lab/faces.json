@@ -683,5 +683,237 @@
    "freckles"
   ],
   "frame": "soft"
+ },
+ "dagny": {
+  "skin": "rose",
+  "hair": "braid",
+  "hairColor": "grey",
+  "brows": "heavy",
+  "browColor": "ash",
+  "eyes": "sharp",
+  "iris": "grey",
+  "mouth": "line",
+  "nose": "broad",
+  "marks": [
+   "wrinkles"
+  ],
+  "shape": "thick",
+  "frame": "soft",
+  "expression": "stern"
+ },
+ "hob": {
+  "skin": "fair",
+  "hair": "short",
+  "hairColor": "soot",
+  "brows": "arched",
+  "eyes": "narrow",
+  "iris": "hazel",
+  "mouth": "smirk",
+  "nose": "long"
+ },
+ "gunnar": {
+  "skin": "tan",
+  "hair": "receding",
+  "hairColor": "ash",
+  "brows": "worried",
+  "eyes": "tired",
+  "iris": "brown",
+  "mouth": "frown",
+  "nose": "broad",
+  "beard": "full",
+  "beardColor": "#4a4440",
+  "marks": [
+   "wrinkles",
+   "blush"
+  ],
+  "shape": "round",
+  "expression": "sad"
+ },
+ "brannagh": {
+  "skin": "fair",
+  "hair": "bun",
+  "hairColor": "white",
+  "tieColor": "#5a4a3a",
+  "brows": "thin",
+  "browColor": "white",
+  "eyes": "tired",
+  "iris": "blue",
+  "mouth": "line",
+  "nose": "long",
+  "marks": [
+   "wrinkles",
+   "soot"
+  ],
+  "shape": "thin",
+  "frame": "soft"
+ },
+ "mother_coke": {
+  "skin": "tan",
+  "hair": "long",
+  "hairColor": "white",
+  "brows": "heavy",
+  "browColor": "white",
+  "eyes": "narrow",
+  "iris": "amber",
+  "mouth": "smirk",
+  "nose": "hook",
+  "marks": [
+   "wrinkles",
+   "soot",
+   "earring"
+  ],
+  "shape": "pear",
+  "frame": "soft"
+ },
+ "bel": {
+  "skin": "rose",
+  "hair": "bun",
+  "hairColor": "auburn",
+  "tieColor": "#c8bca0",
+  "brows": "straight",
+  "eyes": "round",
+  "iris": "brown",
+  "mouth": "grin",
+  "nose": "snub",
+  "marks": [
+   "freckles",
+   "blush"
+  ],
+  "shape": "round",
+  "frame": "soft",
+  "expression": "happy"
+ },
+ "haldor": {
+  "skin": "rose",
+  "hair": "bald",
+  "brows": "heavy",
+  "browColor": "copper",
+  "eyes": "sharp",
+  "iris": "blue",
+  "mouth": "smirk",
+  "nose": "broad",
+  "beard": "full",
+  "beardColor": "copper",
+  "marks": [
+   "soot",
+   "earring"
+  ],
+  "shape": "thick",
+  "expression": "smug"
+ },
+ "pellam": {
+  "skin": "porcelain",
+  "hair": "bun",
+  "hairColor": "soot",
+  "brows": "thin",
+  "eyes": "tired",
+  "iris": "grey",
+  "mouth": "frown",
+  "nose": "long",
+  "shape": "thin",
+  "frame": "soft"
+ },
+ "wynn": {
+  "skin": "fair",
+  "hair": "swept",
+  "hairColor": "flax",
+  "brows": "straight",
+  "eyes": "narrow",
+  "iris": "grey",
+  "mouth": "smirk",
+  "nose": "long",
+  "shape": "oblong"
+ },
+ "miner_a": {
+  "skin": "tan",
+  "hair": "short",
+  "hairColor": "soot",
+  "brows": "heavy",
+  "eyes": "tired",
+  "iris": "brown",
+  "mouth": "grim",
+  "nose": "broad",
+  "beard": "stubble",
+  "marks": [
+   "soot"
+  ]
+ },
+ "miner_b": {
+  "skin": "rose",
+  "hair": "bald",
+  "brows": "heavy",
+  "eyes": "narrow",
+  "iris": "grey",
+  "mouth": "line",
+  "nose": "broad",
+  "beard": "full",
+  "beardColor": "chestnut",
+  "marks": [
+   "soot"
+  ],
+  "shape": "thick"
+ },
+ "miner_c": {
+  "skin": "fair",
+  "hair": "long",
+  "hairColor": "brown",
+  "brows": "straight",
+  "eyes": "round",
+  "iris": "green",
+  "mouth": "line",
+  "nose": "snub",
+  "marks": [
+   "soot",
+   "freckles"
+  ],
+  "frame": "soft"
+ },
+ "miner_d": {
+  "skin": "umber",
+  "hair": "crop",
+  "hairColor": "black",
+  "brows": "heavy",
+  "eyes": "sharp",
+  "iris": "amber",
+  "mouth": "grin",
+  "nose": "broad",
+  "beard": "full",
+  "beardColor": "copper",
+  "marks": [
+   "soot"
+  ],
+  "shape": "thick"
+ },
+ "tamsin": {
+  "skin": "rose",
+  "hair": "topknot",
+  "hairColor": "copper",
+  "brows": "heavy",
+  "eyes": "sharp",
+  "iris": "amber",
+  "mouth": "smirk",
+  "nose": "snub",
+  "marks": [
+   "freckles",
+   "soot"
+  ],
+  "shape": "thick",
+  "frame": "soft"
+ },
+ "hauler": {
+  "skin": "tan",
+  "hair": "bald",
+  "brows": "angry",
+  "eyes": "tired",
+  "iris": "brown",
+  "mouth": "grim",
+  "nose": "broad",
+  "beard": "stubble",
+  "beardColor": "soot",
+  "marks": [
+   "soot",
+   "scar"
+  ],
+  "shape": "thick"
  }
 }

@@ -4971,5 +4971,1812 @@
    "kind": "spiderqueen"
   },
   "height": 0.8
+ },
+ {
+  "id": "N18",
+  "cls": "NPC",
+  "label": "Charter-Reeve Dagny Coalbrook \u00b7 Ashgate (a Deepdelver: short and broad, grey braids, the charter-reeve's chain, a slate work-coat, the charter)",
+  "model": "Barbarian",
+  "show": [],
+  "hold": {
+   "handslot.r": "charter"
+  },
+  "wear": {
+   "chest": "chain"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#3e4a5a",
+     "#141a22"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#5a5650",
+     "#1e1c1a"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#a8843e",
+     "#3e2c10"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     1
+    ],
+    "to": [
+     "#3e2e22",
+     "#140e0a"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     1
+    ],
+    "to": [
+     "#3e2e22",
+     "#140e0a"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#5a4632",
+     "#1e160e"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#33302e",
+     "#100e0e"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#3a2a1e",
+     "#120c08"
+    ]
+   }
+  ],
+  "face": "dagny",
+  "height": 0.8,
+  "frame": {
+   "reach": {
+    "lowerleg": 0.7,
+    "foot": 0.72,
+    "lowerarm": 0.92,
+    "wrist": 0.92
+   },
+   "scale": {
+    "hips": [
+     1.16,
+     1,
+     1.12
+    ],
+    "head": [
+     0.9,
+     1.04,
+     0.92
+    ]
+   }
+  }
+ },
+ {
+  "id": "N19",
+  "cls": "NPC",
+  "label": "Hob \u00b7 a fixer, by Ashgate's well (wiry, hooded, a bottle-green coat gone shiny, brass buttons)",
+  "model": "Rogue",
+  "show": [],
+  "gear": {
+   "helm": {
+    "base": "hood",
+    "r": "common",
+    "up": 0
+   }
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#3a5a44",
+     "#122018"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#4e4440",
+     "#1a1614"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#3a3634",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2e2420",
+     "#0e0a08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#3a2e26",
+     "#120e0a"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#8a6a34",
+     "#2e2010"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#b08a40",
+     "#3a2a10"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#3a3432",
+     "#121010"
+    ]
+   }
+  ],
+  "face": "hob",
+  "height": 0.96,
+  "frame": {
+   "bend": {
+    "spine": [
+     0.12,
+     0,
+     0
+    ],
+    "head": [
+     -0.1,
+     0.15,
+     0
+    ]
+   }
+  }
+ },
+ {
+  "id": "N20",
+  "cls": "NPC",
+  "label": "Gunnar Slagg \u00b7 the Slagborn headman (heavy, a braided beard, a good wine-red coat gone to seed, a mug he hides)",
+  "model": "Barbarian",
+  "show": [],
+  "hold": {
+   "handslot.r": "mug"
+  },
+  "wear": {
+   "head": "beardbraids"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#6a2e2a",
+     "#220e0c"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#4a3e34",
+     "#18120e"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#8a6a34",
+     "#2e200e"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     1
+    ],
+    "to": [
+     "#3a2a20",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     1
+    ],
+    "to": [
+     "#3a2a20",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#5a4a3a",
+     "#1e1810"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#3a3430",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2e2420",
+     "#0e0a08"
+    ]
+   }
+  ],
+  "face": "gunnar",
+  "height": 0.82,
+  "frame": {
+   "reach": {
+    "lowerleg": 0.7,
+    "foot": 0.72,
+    "lowerarm": 0.92,
+    "wrist": 0.92
+   },
+   "scale": {
+    "hips": [
+     1.16,
+     1,
+     1.12
+    ],
+    "head": [
+     0.9,
+     1.04,
+     0.92
+    ],
+    "chest": 1.08
+   },
+   "bend": {
+    "head": [
+     0.18,
+     0,
+     0
+    ]
+   }
+  }
+ },
+ {
+  "id": "N21",
+  "cls": "NPC",
+  "label": "Old Brannagh \u00b7 keeps the Shrine of the Last Flame (old, stooped, a plain shawl, the Seam's lit lamp)",
+  "model": "Mage",
+  "show": [
+   "Mage_Cape"
+  ],
+  "hold": {
+   "handslot.r": "minerlamp"
+  },
+  "swatches": [
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#5a5048",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     2
+    ],
+    "to": [
+     "#5a5048",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#6a645a",
+     "#24221e"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#4a4038",
+     "#1a1612"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#5a524a",
+     "#1e1c18"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#4a4038",
+     "#1a1612"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#3a2e24",
+     "#120e0a"
+    ]
+   },
+   {
+    "tile": [
+     4,
+     0
+    ],
+    "to": [
+     "#3a2e24",
+     "#120e0a"
+    ]
+   }
+  ],
+  "face": "brannagh",
+  "height": 0.86,
+  "frame": {
+   "bend": {
+    "spine": [
+     0.32,
+     0,
+     0
+    ],
+    "chest": [
+     0.12,
+     0,
+     0
+    ],
+    "head": [
+     -0.36,
+     0,
+     0
+    ]
+   }
+  }
+ },
+ {
+  "id": "N22",
+  "cls": "NPC",
+  "label": "Mother Coke \u00b7 the Slagborn's wise-woman (very old, very short, soot-black, strings of beads and charms, a stick)",
+  "model": "Mage",
+  "show": [],
+  "hold": {
+   "handslot.r": "crook"
+  },
+  "wear": {
+   "chest": "beads"
+  },
+  "swatches": [
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#5a5048",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     2
+    ],
+    "to": [
+     "#5a5048",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2e2a28",
+     "#0e0c0c"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#6a2e1e",
+     "#24100a"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#3a3430",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#3a3430",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2a2420",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     4,
+     0
+    ],
+    "to": [
+     "#6a2e1e",
+     "#24100a"
+    ]
+   }
+  ],
+  "face": "mother_coke",
+  "height": 0.72,
+  "frame": {
+   "reach": {
+    "lowerleg": 0.7,
+    "foot": 0.72,
+    "lowerarm": 0.92,
+    "wrist": 0.92
+   },
+   "scale": {
+    "hips": [
+     1.16,
+     1,
+     1.12
+    ],
+    "head": [
+     0.9,
+     1.04,
+     0.92
+    ]
+   },
+   "bend": {
+    "spine": [
+     0.4,
+     0,
+     0
+    ],
+    "chest": [
+     0.18,
+     0,
+     0
+    ],
+    "head": [
+     -0.45,
+     0,
+     0
+    ]
+   }
+  }
+ },
+ {
+  "id": "N23",
+  "cls": "NPC",
+  "label": "Bel Ruddle \u00b7 keeps the Slag & Bellows (broad, sleeves rolled, a linen apron, a mug for the board)",
+  "model": "Barbarian",
+  "show": [],
+  "hold": {
+   "handslot.r": "mug"
+  },
+  "wear": {
+   "hips": "linenapron"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#7a4a2e",
+     "#2a160c"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#5a4434",
+     "#1e140e"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#c8a888",
+     "#6a4a38"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     1
+    ],
+    "to": [
+     "#4a3426",
+     "#180e08"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     1
+    ],
+    "to": [
+     "#4a3426",
+     "#180e08"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#5a4434",
+     "#1e140e"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#3e3632",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#3a2a1e",
+     "#120c08"
+    ]
+   }
+  ],
+  "face": "bel",
+  "height": 0.97
+ },
+ {
+  "id": "N24",
+  "cls": "NPC",
+  "label": "Haldor Ironmonger \u00b7 the Ashgate Forge (a Deepdelver: short and broad, a great copper beard, leather apron, hammer)",
+  "model": "Barbarian",
+  "show": [],
+  "hold": {
+   "handslot.r": "hammer"
+  },
+  "wear": {
+   "hips": "apron",
+   "head": "beardcopper"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#3a3a3e",
+     "#121214"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#4a3e34",
+     "#18120e"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#6a5a4a",
+     "#221c16"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     1
+    ],
+    "to": [
+     "#3a2a20",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     1
+    ],
+    "to": [
+     "#3a2a20",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#5a4a3a",
+     "#1e1810"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2e2a28",
+     "#0e0c0c"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2e2420",
+     "#0e0a08"
+    ]
+   }
+  ],
+  "face": "haldor",
+  "height": 0.8,
+  "frame": {
+   "reach": {
+    "lowerleg": 0.7,
+    "foot": 0.72,
+    "lowerarm": 0.92,
+    "wrist": 0.92
+   },
+   "scale": {
+    "hips": [
+     1.16,
+     1,
+     1.12
+    ],
+    "head": [
+     0.9,
+     1.04,
+     0.92
+    ]
+   }
+  }
+ },
+ {
+  "id": "N25",
+  "cls": "NPC",
+  "label": "Widow Pellam \u00b7 lets the beds at Deepdelver's Rest (a black hood and plain dark dress, the keys)",
+  "model": "Mage",
+  "show": [],
+  "hold": {
+   "handslot.r": "keys"
+  },
+  "wear": {
+   "head": "widowhood"
+  },
+  "swatches": [
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#5a5048",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     2
+    ],
+    "to": [
+     "#5a5048",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2a2628",
+     "#0c0a0c"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#3a3436",
+     "#121012"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#3a3436",
+     "#121012"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#2a2420",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2a2420",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     4,
+     0
+    ],
+    "to": [
+     "#5a4a3a",
+     "#1e1810"
+    ]
+   }
+  ],
+  "face": "pellam",
+  "height": 0.92
+ },
+ {
+  "id": "N26",
+  "cls": "NPC",
+  "label": "Wynn Sallow \u00b7 keeps the Ashgate Exchange (a clerk: shirt-sleeves and red garters, a waistcoat, the Assay's scales)",
+  "model": "Rogue",
+  "show": [],
+  "hold": {
+   "handslot.r": "scales"
+  },
+  "wear": {
+   "upperarm.l": "garter",
+   "upperarm.r": "garter"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#3a3440",
+     "#121016"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#c8bea8",
+     "#5a5244"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#4a4440",
+     "#1a1816"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2e2420",
+     "#0e0a08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#d0c4ac",
+     "#6a5e4c"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#8a6a34",
+     "#2e2010"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#b08a40",
+     "#3a2a10"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#c8bea8",
+     "#5a5244"
+    ]
+   }
+  ],
+  "face": "wynn",
+  "height": 0.94
+ },
+ {
+  "id": "MN1",
+  "cls": "NPC",
+  "label": "Ashgate crowd \u00b7 a miner off the shift (soot, a leather cap, a pick)",
+  "model": "Rogue",
+  "show": [],
+  "hold": {
+   "handslot.r": "pickaxe"
+  },
+  "wear": {
+   "head": "minercap"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#4a5058",
+     "#16181c"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#3a3634",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2e2420",
+     "#0e0a08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#3a2e26",
+     "#120e0a"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#5a4430",
+     "#1e140c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3828",
+     "#1a120a"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   }
+  ],
+  "face": "miner_a",
+  "height": 0.95
+ },
+ {
+  "id": "MN2",
+  "cls": "NPC",
+  "label": "Ashgate crowd \u00b7 a Deepdelver miner (short and broad, a lamp-cap, his flame lamp lit)",
+  "model": "Barbarian",
+  "show": [],
+  "hold": {
+   "handslot.r": "minerlamp"
+  },
+  "wear": {
+   "head": [
+    "lampcap",
+    "beardchestnut"
+   ]
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#46423e",
+     "#161412"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#4a3e34",
+     "#18120e"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#5a524a",
+     "#1e1c18"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     1
+    ],
+    "to": [
+     "#3a2a20",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     1
+    ],
+    "to": [
+     "#3a2a20",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2e2a28",
+     "#0e0c0c"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2e2420",
+     "#0e0a08"
+    ]
+   }
+  ],
+  "face": "miner_b",
+  "height": 0.79,
+  "frame": {
+   "reach": {
+    "lowerleg": 0.7,
+    "foot": 0.72,
+    "lowerarm": 0.92,
+    "wrist": 0.92
+   },
+   "scale": {
+    "hips": [
+     1.16,
+     1,
+     1.12
+    ],
+    "head": [
+     0.9,
+     1.04,
+     0.92
+    ]
+   }
+  }
+ },
+ {
+  "id": "MN3",
+  "cls": "NPC",
+  "label": "Ashgate crowd \u00b7 a mill-hand off the works (a rust kerchief, a sooty dress, a coal pail)",
+  "model": "Mage",
+  "show": [],
+  "hold": {
+   "handslot.r": "pail"
+  },
+  "wear": {
+   "head": "kerchief"
+  },
+  "swatches": [
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#5a5048",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     2
+    ],
+    "to": [
+     "#5a5048",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#5a4e44",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#7a3a24",
+     "#2a120a"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#4a423a",
+     "#181614"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#3a3430",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2e2420",
+     "#0e0a08"
+    ]
+   },
+   {
+    "tile": [
+     4,
+     0
+    ],
+    "to": [
+     "#3a2e24",
+     "#120e0a"
+    ]
+   }
+  ],
+  "face": "miner_c",
+  "height": 0.9
+ },
+ {
+  "id": "MN4",
+  "cls": "NPC",
+  "label": "Ashgate crowd \u00b7 a Slagborn slag-picker (short and broad, a braided beard, a rust apron, a sledge)",
+  "model": "Barbarian",
+  "show": [],
+  "hold": {
+   "handslot.r": "hammer"
+  },
+  "wear": {
+   "head": "beardrust"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#6a3a24",
+     "#22100a"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#3a3430",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#4a423a",
+     "#181614"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     1
+    ],
+    "to": [
+     "#2e2622",
+     "#0e0a08"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     1
+    ],
+    "to": [
+     "#2e2622",
+     "#0e0a08"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#3a3430",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#33302c",
+     "#100e0c"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2a2420",
+     "#0c0a08"
+    ]
+   }
+  ],
+  "face": "miner_d",
+  "height": 0.8,
+  "frame": {
+   "reach": {
+    "lowerleg": 0.7,
+    "foot": 0.72,
+    "lowerarm": 0.92,
+    "wrist": 0.92
+   },
+   "scale": {
+    "hips": [
+     1.16,
+     1,
+     1.12
+    ],
+    "head": [
+     0.9,
+     1.04,
+     0.92
+    ]
+   }
+  }
+ },
+ {
+  "id": "CP3",
+  "cls": "Companion",
+  "label": "Tamsin Coalbrook \u00b7 mage-smith (a Deepdelver, young: a smith's leather apron over a mage's soot-dark coat, singed sleeves; her hammer is her focus, a hot billet in the tongs)",
+  "model": "Mage",
+  "show": [
+   "Mage_Cape",
+   "Mage_Hat"
+  ],
+  "hold": {
+   "handslot.r": "emberhammer",
+   "handslot.l": "tongs"
+  },
+  "wear": {
+   "hips": "apron"
+  },
+  "swatches": [
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#4a3c38",
+     "#16100e"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#5a5048",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     2
+    ],
+    "to": [
+     "#5a5048",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#3a3036",
+     "#100c0e"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#a8522a",
+     "#3a160a"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#8a3a20",
+     "#2a0e06"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#3a2a20",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#3a2a1e",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     4,
+     0
+    ],
+    "to": [
+     "#b08a40",
+     "#3a2a10"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     2
+    ],
+    "to": [
+     "#2a2420",
+     "#0c0a08"
+    ]
+   }
+  ],
+  "face": "tamsin",
+  "height": 0.86,
+  "frame": {
+   "reach": {
+    "lowerleg": 0.84,
+    "foot": 0.86
+   },
+   "scale": {
+    "hips": [
+     1.08,
+     1,
+     1.06
+    ],
+    "head": [
+     0.95,
+     1.02,
+     0.96
+    ]
+   }
+  }
+ },
+ {
+  "id": "RE1",
+  "cls": "Reach",
+  "label": "Slag hauler \u00b7 the Cold Seam (the barbarian, big and sooty, a hod of slag on his back, a coal shovel)",
+  "model": "Barbarian",
+  "show": [],
+  "hold": {
+   "handslot.r": "shovel"
+  },
+  "wear": {
+   "chest": "hod"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#5a5450",
+     "#1c1a18"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#6a4a30",
+     "#22160c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#7a5a3a",
+     "#28180e"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     1
+    ],
+    "to": [
+     "#2e2622",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     1
+    ],
+    "to": [
+     "#2e2622",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#6a4a30",
+     "#22160c"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#3e3a36",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2e2620",
+     "#0e0a08"
+    ]
+   }
+  ],
+  "face": "hauler",
+  "pose": [
+   "2H_Melee_Idle",
+   0.5
+  ],
+  "height": 1.1
+ },
+ {
+  "id": "CR9",
+  "cls": "Boss",
+  "label": "Gritch, called the Foreman \u00b7 the Cold Seam's tally cave (a hill goblin in a dead Deepdelver foreman's brass lamp-hat, his waistcoat and whistle, a tally-stick; creatures.js goblin, foreman)",
+  "creature": {
+   "kind": "goblin",
+   "foreman": true,
+   "rig": {
+    "model": "Skeleton_Warrior",
+    "clips": {
+     "Idle": "Unarmed_Idle",
+     "Walk": "Running_B",
+     "Attack": "Unarmed_Melee_Attack_Punch_A",
+     "Attack2": "Unarmed_Melee_Attack_Punch_B",
+     "Heavy": "Dualwield_Melee_Attack_Chop",
+     "Hit": "Hit_A",
+     "Death": "Death_A",
+     "Cast": "Taunt"
+    }
+   }
+  },
+  "height": 0.86
  }
 ]

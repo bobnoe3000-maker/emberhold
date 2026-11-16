@@ -1,0 +1,14 @@
+{
+  "id": "mother_coke",
+  "name": "Mother Coke",
+  "role": [
+    "townsfolk"
+  ],
+  "town": "ashgate",
+  "region": "reach",
+  "look": "npc_mother_coke",
+  "portrait": "npc_mother_coke",
+  "dialogue": "ashgate",
+  "knot": "coke_hub",
+  "note": "The Slagborn's wise-woman, who knows the clans' songs about Oruth and says he was never meant to be woken (world doc §3.3, v1.53). Toward the gate by day, by the Exchange at dusk."
+}

@@ -1,0 +1,14 @@
+{
+  "id": "hob",
+  "name": "Hob",
+  "role": [
+    "townsfolk"
+  ],
+  "town": "ashgate",
+  "region": "reach",
+  "look": "npc_hob",
+  "portrait": "npc_hob",
+  "dialogue": "ashgate",
+  "knot": "hob_hub",
+  "note": "A fixer: passes, doors, the right guard on the right night. No other name (world doc §3.3, v1.53). Stands by the well."
+}

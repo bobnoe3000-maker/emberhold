@@ -77,6 +77,10 @@ export const FX_STYLES = {
   creature_toad:     { col: [214, 196, 140], attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [224, 206, 160], heavySpark: [150, 120, 70], wide: 1.15 },
   creature_gulper:   { col: [226, 150, 140], attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [236, 190, 170], heavySpark: [150, 120, 70], wide: 1.45, quake: true },
   boss_ratking:      { col: [230, 205, 180], attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [240, 220, 200], wide: 1.3 },
+  // (v1.53) the Cold Seam's: the slag hauler's coal shovel swung, its heavy a load tipped (the room shakes); Gritch's claws
+  // and his tally-stick, in his lamp's brass
+  enemy_hauler:      { col: [214, 180, 140], attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 170, 90], heavySpark: [255, 120, 40], wide: 1.3, quake: true },
+  boss_foreman:      { col: [240, 200, 120], attack: 'arc', attack2: 'stab', heavy: 'arc', spark: [255, 215, 140], wide: 1.25 },
   boss_spiderqueen:  { col: [180, 230, 120], attack: 'stab', attack2: 'stab', heavy: 'arc', spark: [210, 240, 160], wide: 1.35 },
   boss_skarn:        { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 200, 130], wide: 1.25 },
   boss_garrow:       { col: REDHAND, attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [255, 210, 170], wide: 1.15 },
@@ -94,6 +98,7 @@ export const FX_STYLES = {
   // Brannoc's sword in old iron; Wren's twin knives in Saltmere's sea-teal, her bows and crossbows (her ranged looks, baked
   // as the rogue's); each warden in the colours of their bake (tools/actor-lab variants W1–W10)
   hero_brannoc:      { col: [200, 214, 240], attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 236, 205], wide: 1.15 },
+  hero_tamsin:       { col: EMBER, attack: 'cast', attack2: 'cast', heavy: 'cast', heavyCol: FIRE, spark: [255, 180, 100], heavySpark: [255, 130, 50] },   // (v1.53) the Ember out of her hammer
   hero_wren:         { col: [110, 232, 214], attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [205, 250, 240], thin: true },
   hero_wren_bow:     { col: [110, 232, 214], spark: [205, 250, 240] },
   hero_wren_longbow: { col: [110, 232, 214], spark: [205, 250, 240] },

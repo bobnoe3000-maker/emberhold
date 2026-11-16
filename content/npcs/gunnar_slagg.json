@@ -1,0 +1,14 @@
+{
+  "id": "gunnar_slagg",
+  "name": "Gunnar Slagg",
+  "role": [
+    "townsfolk"
+  ],
+  "town": "ashgate",
+  "region": "reach",
+  "look": "npc_gunnar",
+  "portrait": "npc_gunnar",
+  "dialogue": "ashgate",
+  "knot": "gunnar_hub",
+  "note": "The Slagborn headman, who sold the clan's lease to the Kell Assay for enough to roof every house in the row (world doc §3.3, v1.53). On the square at dawn; at Deepdelver's Rest from noon, where the row won't see him drink."
+}

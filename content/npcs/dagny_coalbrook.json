@@ -1,0 +1,14 @@
+{
+  "id": "dagny_coalbrook",
+  "name": "Dagny Coalbrook",
+  "role": [
+    "giver"
+  ],
+  "town": "ashgate",
+  "region": "reach",
+  "look": "npc_dagny",
+  "portrait": "npc_dagny",
+  "dialogue": "dagny",
+  "knot": "dagny_hub",
+  "note": "Charter-Reeve of Ashgate, a Deepdelver, short and broad and grey in the braid; holds the charter-moot in the Slag & Bellows' back room since the moot-hall roof came in (world doc §3.3, v1.53). Stands at the tavern's door. Takes in The Wickham Road; gives Short Shift."
+}

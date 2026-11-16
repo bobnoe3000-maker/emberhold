@@ -200,6 +200,20 @@ export const QUESTS = {
     steps: [{ id: 'abbess', objectives: [{ type: 'boss', site: 'drowned_abbey', boss: 'abbess_below', count: 1 }] }],
     rewards: { share: 0.55, lv: 18, gold: 400 },
   },
+  // Act III, Quota (world doc v1.53 §3.3, §6; docs/reach-plan.md "The story: Act III"), its first two as the Reach's
+  // first slice is built (v1.124): Ilse reads the buyer's mark as the Kell Assay's and sends the company north by the
+  // Wickham road to Ashgate's Charter-Reeve (a word with Dagny, who takes it in); then Dagny's niece in the Cold Seam,
+  // held by the Foreman in the tally cave (Tamsin is freed with him: npcs.js `found`, heroes.js FOUND)
+  ch3_the_wickham_road: {
+    kind: 'chapter', giver: 'sister_ilse', turnin: 'dagny_coalbrook', region: 'reach', level: [18, 30], after: ['ch2_the_last_office'],
+    steps: [{ id: 'dagny', objectives: [{ type: 'meet', npc: 'dagny_coalbrook', region: 'reach', count: 1 }] }],
+    rewards: { share: 0.35, lv: 19, gold: 420 },
+  },
+  ch3_short_shift: {
+    kind: 'chapter', giver: 'dagny_coalbrook', region: 'reach', level: [19, 30], after: ['ch3_the_wickham_road'],
+    steps: [{ id: 'foreman', objectives: [{ type: 'boss', site: 'cold_seam', boss: 'foreman', count: 1 }] }],   // (one who fell before counts: settle)
+    rewards: { share: 0.5, lv: 21, gold: 480 },
+  },
   // the level-12 trials (world doc v1.30 §5; docs/m8-plan.md slice 9): in the Fens, at 12, after the class's first
   trial_the_long_watch: {                            // Osric: a fighter holds a hall ten waves, as the Watch holds a post
     kind: 'trial', giver: 'osric_hale', trial: 'fighter', trialLv: 12, region: 'fens', level: [1, 30],

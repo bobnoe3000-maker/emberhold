@@ -1,0 +1,15 @@
+{
+  "id": "wynn_sallow",
+  "name": "Wynn Sallow",
+  "role": [
+    "merchant",
+    "townsfolk"
+  ],
+  "town": "ashgate",
+  "region": "reach",
+  "look": "npc_wynn",
+  "portrait": "npc_wynn",
+  "dialogue": "ashgate",
+  "knot": "wynn_hub",
+  "note": "Keeps the Ashgate Exchange, with the Deepdelvers' scales and the Assay's both on the counter (world doc §3.3, v1.53). At the Exchange by day, the Slag & Bellows by night."
+}

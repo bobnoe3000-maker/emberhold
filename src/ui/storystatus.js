@@ -6,9 +6,11 @@
 // (content/story.json); this only picks which ones apply.
 //   next   the next chapter is offered: who gives it
 //   level  the next chapter waits for a level
-//   end    the last act told is over and the next isn't open yet (Act III: a later update); `region` says whose words
-// Every chapter names its region (Act I the Vale, Act II the Fens), and its giver stands in a town: 'next' names the
-// giver's (Act II opens with Ilse, in Thornwick). The leads listed are the ones open where the company stands.
+//   end    the last chapter told is done and the next isn't written yet (v1.124: Act III's first two, the rest of it a
+//          later update); `region` says whose words
+// Every chapter names its region (Act I the Vale, Act II the Fens, Act III the Reach), and its giver stands in a town:
+// 'next' names the giver's (Acts II and III open with Ilse, in Thornwick). The leads listed are the ones open where the
+// company stands.
 // (no status while a chapter is active or ready: its own card in the Journal says what to do)
 
 import { QUESTS, QS } from '../sim/quests.js';
@@ -40,6 +42,7 @@ export function storyStatus(state, status) {
  * @returns {{ id: string, n?: number, of?: number, cls?: string, giver?: string, town?: string }[]} */
 export function openLeads(state, status, region = 'vale') {
   if (region === 'fens') return fensLeads(state, status);
+  if (region === 'reach') return reachLeads(state);
   const out = [], has = (s, k) => (s instanceof Set ? s.has(k) : Array.isArray(s) ? s.includes(k) : !!(s && s[k]));
   const bosses = state.bosses || {}, entered = state.sitesEntered, revealed = state.revealed, company = [...state.party, ...(state.bench || [])];
   if (bosses.redhand_captain && FOUND.brannoc && !company.some((m) => m.id === 'brannoc')) out.push({ id: 'brannoc' });
@@ -66,6 +69,15 @@ function fensLeads(state, status) {
   if (!has(state.revealed, 'reedholm_undercroft') && found < fens.length) out.push({ id: 'fenschronicle', n: found, of: fens.length });
   if (has(state.revealed, 'reedholm_undercroft') && !has(state.sitesEntered, 'reedholm_undercroft')) out.push({ id: 'undercroft' });
   out.push(...trialLeads(status, 12), { id: 'tower' }, { id: 'fensboard' });
+  return out;
+}
+
+// the Reach (world doc v1.53 §3.3; the first slice, v1.124): the Foreman and Tamsin at the Cold Seam, the board
+function reachLeads(state) {
+  const out = [], bosses = state.bosses || {}, company = [...state.party, ...(state.bench || [])];
+  if (!bosses.foreman) out.push({ id: 'foreman' });
+  else if (FOUND.tamsin && !company.some((m) => m.id === 'tamsin')) out.push({ id: 'tamsin' });
+  out.push({ id: 'reachboard' });
   return out;
 }
 

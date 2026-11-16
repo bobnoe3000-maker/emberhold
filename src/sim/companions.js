@@ -92,7 +92,7 @@ export const DRINK_DAYS = 2;
 // the old tavern traits (v13 saves) and the perk each one now is: they were only words before
 export const TRAIT_PERK = { Stubborn: 'stubborn', 'Keen-eyed': 'keen_eyed', 'Light-footed': 'light_footed', Hardy: 'hardy', Greedy: 'greedy', Devout: 'devout' };
 // found companions: no rank, no wage, their own perks (world doc §5)
-export const FOUND_PERKS = { brannoc: ['bodyguard', 'hardy'], wren: ['skirmisher', 'smoke_artist'] };
+export const FOUND_PERKS = { brannoc: ['bodyguard', 'hardy'], wren: ['skirmisher', 'smoke_artist'], tamsin: ['kindler', 'stubborn'] };   // (Tamsin, a mage-smith: her Firebolt spreads like a forge's sparks, and she's hard to knock off her feet)
 
 /** is it a Guild hire (paid, ranked)? @param {any} m */
 export const hired = (m) => !!m && Object.prototype.hasOwnProperty.call(RANKS, m.rank);

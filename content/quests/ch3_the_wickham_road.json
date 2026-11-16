@@ -1,0 +1,43 @@
+{
+  "id": "ch3_the_wickham_road",
+  "kind": "chapter",
+  "title": "The Wickham Road",
+  "giver": "sister_ilse",
+  "turnin": "dagny_coalbrook",
+  "region": "reach",
+  "level": [
+    18,
+    30
+  ],
+  "after": [
+    "ch2_the_last_office"
+  ],
+  "summary": "The buyer's mark in the Abbey's ledger is a pair of scales over a pick: the Kell Assay's, in the Cinder Reach. Sister Ilse is sending you north to Ashgate, to the Charter-Reeve.",
+  "steps": [
+    {
+      "id": "dagny",
+      "journal": "Take the Wickham road north out of the Vale, over the range to Ashgate, and find Charter-Reeve Dagny Coalbrook at the Slag & Bellows.",
+      "objectives": [
+        {
+          "type": "meet",
+          "npc": "dagny_coalbrook",
+          "region": "reach",
+          "count": 1,
+          "label": "Talk to Dagny Coalbrook in Ashgate"
+        }
+      ]
+    }
+  ],
+  "ready": "You've found Dagny Coalbrook at the Slag & Bellows. Give her Ilse's letter.",
+  "done": "Dagny read Ilse's letter standing up. The Assay holds the Slagborn's lease, and her night shift doesn't come home.",
+  "rewards": {
+    "share": 0.35,
+    "lv": 19,
+    "gold": 420
+  },
+  "dialogue": {
+    "file": "ilse",
+    "offer": "ilse_ch3_road_offer",
+    "turnin": "dagny_road_meet"
+  }
+}

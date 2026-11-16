@@ -53,7 +53,8 @@ const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', ro
   firebeetle: 'creature_firebeetle', gob: 'creature_goblin', wraith: 'creature_wraith', golem: 'creature_golem',   // (v1.59) the bestiary, built in code
   mudtoad: 'creature_toad', gulper: 'creature_gulper',   // (v1.83) the Toadking's toads, built in code
   rat_king: 'boss_ratking', spider_queen: 'boss_spiderqueen',
-  kingstone: 'creature_golem' };   // (v1.105) the Kingstone: the golem drawn twice its size (BIG), four times a man
+  kingstone: 'creature_golem',
+  hauler: 'enemy_hauler', foreman: 'boss_foreman' };   // (v1.53) the Cold Seam's: a slag hauler, the hod on his back; Gritch, a goblin in a dead foreman's lamp-hat   // (v1.105) the Kingstone: the golem drawn twice its size (BIG), four times a man
 // the Mere Tower's wardens (sim tower.js): baked tall as the bosses are (tools/actor-lab variants W1–W10), named on the boss bar
 for (const id of Object.keys(WARDENS)) ENEMY_ACTOR[id] = 'boss_' + id.slice('warden_'.length);
 const BIG = /** @type {Record<string, number>} */ ({ kingstone: 2 });   // a kind drawn larger than its actor's model (hybrid.js: the figure's scale)
@@ -252,7 +253,9 @@ export function createRenderer(canvas, sim, input) {
   // ten or more a frame; ours had its nine named townsfolk). Unnamed villagers (npc_villager_1–4) stroll from one
   // open spot of the square or the high street to another, wait a while, and go on. Presentation only: the sim
   // knows nothing of them, they're never tapped or saved, and their walk is the renderer's own (a seeded LCG).
-  const CROWD_N = 8, CROWD_SPEED = 1.3, crowds = new WeakMap(), CROWD_LOOK = { flash: 0, dissolve: 0 };   // passers-by never x-ray through a wall: a hidden one is just out of sight
+  const CROWD_N = 8, CROWD_SPEED = 1.3, crowds = new WeakMap(), CROWD_LOOK = { flash: 0, dissolve: 0 };
+  // (v1.53) a town's passers-by in its region's people: Ashgate's miners and mill-hands in the Reach, villagers elsewhere
+  const crowdLook = (world) => (world.region === 'reach' ? 'npc_miner_' : 'npc_villager_');   // passers-by never x-ray through a wall: a hidden one is just out of sight
   function crowdOf(world) {
     let c = crowds.get(world); if (c) return c;
     c = [];
@@ -265,7 +268,7 @@ export function createRenderer(canvas, sim, input) {
         if (isWalkable(world, x, y) && isWalkable(world, x + 0.6, y) && isWalkable(world, x, y + 0.6)) spots.push([x, y]);
       }
       for (let i = 0; i < CROWD_N && spots.length > 2; i++) { const [x, y] = spots[(rnd() * spots.length) | 0];
-        c.push({ x, y, tx: x, ty: y, wait: rnd() * 4000, look: 'npc_villager_' + (1 + (i % 4)), fx: 0, fy: 1, moving: false, u: { fidgetN: 0, lookN: 0, h: i * 977, seed: rnd(), next: 1e15, near: false } }); }
+        c.push({ x, y, tx: x, ty: y, wait: rnd() * 4000, look: crowdLook(world) + (1 + (i % 4)), fx: 0, fy: 1, moving: false, u: { fidgetN: 0, lookN: 0, h: i * 977, seed: rnd(), next: 1e15, near: false } }); }
       c.spots = spots; c.rnd = rnd; c.last = 0;
     } else if (world.arena) {
       // the Bowl's crowd (the Quarry Ring, convert.js arena): on the far ledges, still, facing the sand; on the near side

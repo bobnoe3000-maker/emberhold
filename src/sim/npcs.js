@@ -66,6 +66,24 @@ export const NPCS = {
   tobin_hask: { region: 'vale', found: { site: 'barrows', depth: 0, entrance: true }, spots: [], knot: 'tobin_hub', flags: ['met_tobin'] },
   ned_fallow: { region: 'vale', found: { site: 'wickham_keep', depth: 0, entrance: true }, spots: [], knot: 'ned_hub', flags: ['met_ned'] },
   hester_lowe: { region: 'vale', found: { site: 'sunken_chapel', depth: 0, entrance: true }, spots: [], knot: 'hester_hub', flags: ['met_hester'] },
+  // (v1.124, Act III; world doc v1.53 §3.3 "Ashgate's people") Ashgate is Thornwick's hub in slag-brick (outdoor.js
+  // buildTown), so its people stand on Thornwick's tested spots, one for one: Dagny at the Slag & Bellows' door (the
+  // moot's in its back room), Hob at the well, Old Brannagh on the Shrine's step; Wynn at the Exchange, Haldor at his
+  // forge (both at the Bellows by night), Bel out at the carts by day and behind her bar from dusk, Gunnar at the Rest
+  // from noon where the row won't see him, Widow Pellam on the square at dawn with the boots, Mother Coke toward the gate.
+  // `kin`: found companions whose being with you she may read (with_<id>: Dagny asks after her niece)
+  dagny_coalbrook: { region: 'reach', spots: [['tavern', [10, 1]]], knot: 'dagny_hub', flags: ['met_dagny'], kin: ['tamsin'] },
+  hob: { region: 'reach', spots: [['hub', [11, 7]]], knot: 'hob_hub', flags: ['met_hob'] },
+  old_brannagh: { region: 'reach', spots: [['temple', [-2, 10]]], knot: 'brannagh_hub', flags: ['met_brannagh'] },
+  wynn_sallow: { region: 'reach', folk: true, spots: [['shop', [2, 9]], ['tavern', [10, 7]]], day: [0, 0, 0, 1], knot: 'wynn_hub', flags: ['met_wynn'] },
+  haldor: { region: 'reach', folk: true, spots: [['smith', [7, 2]], ['tavern', [12, 16]]], day: [0, 0, 0, 1], knot: 'haldor_hub', flags: ['met_haldor'] },
+  bel_ruddle: { region: 'reach', folk: true, spots: [['hub', [14, 15]], ['tavern', [6, 10]]], day: [0, 0, 1, 1], knot: 'bel_hub', flags: ['met_bel'] },
+  gunnar_slagg: { region: 'reach', folk: true, spots: [['hub', [8, 17]], ['inn', [10, 9]]], day: [0, 1, 1, 1], knot: 'gunnar_hub', flags: ['met_gunnar'] },
+  widow_pellam: { region: 'reach', folk: true, spots: [['inn', [-1, 5]], ['hub', [1, 22]]], day: [1, 0, 0, 0], knot: 'pellam_hub', flags: ['met_pellam'] },
+  mother_coke: { region: 'reach', folk: true, spots: [['hub', [21, 14]], ['shop', [1, 14]]], day: [0, 0, 1, 1], knot: 'coke_hub', flags: ['met_coke'] },
+  // Tamsin Coalbrook, Dagny's niece, a mage-smith: held at the goblins' anvil in the Cold Seam's tally cave (floor 2's
+  // hall) by the Foreman, for the forge-work she can do (world doc v1.53); joins once he falls
+  tamsin: { region: 'reach', found: { site: 'cold_seam', depth: 1, boss: 'foreman' }, spots: [], knot: 'tamsin_hub', flags: ['met_tamsin'] },
 };
 export const PARTS = 4, PART_S = DAY_S / PARTS;                  // dawn · day · dusk · night
 /** the part of the in-game day at time t (s of play) @param {number} t */
@@ -217,6 +235,7 @@ export function createTalk({ state, bus, getWorld, walkTo, canStand, moreVars = 
       party_size: state.party.filter((m) => !m.fallen).length, fallen_name: fallen ? fallen.name : '', day_part: partOf(state.t) };
     for (const f of NPCS[id].flags) v['flag_' + f] = state.flags[f] || 0;
     if (NPCS[id].found) { v.joined = withParty(id) ? 1 : 0; v.in_party = state.party.some((m) => m.id === id) ? 1 : 0; }
+    for (const k of NPCS[id].kin || []) v['with_' + k] = withParty(k) ? 1 : 0;   // (Dagny: is her niece with you?)
     return { ...v, ...moreVars(id) };
   }
 

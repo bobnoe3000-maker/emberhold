@@ -19,6 +19,7 @@ VAR q_ch1_the_standard = -1
 VAR boss_standard = 0
 VAR q_ch2_fog_on_the_canal = -1
 VAR q_ch2_the_last_office = -1
+VAR q_ch3_the_wickham_road = -1
 VAR q_trial_last_rites = -1
 VAR frag_vale_count = 0
 VAR frag_vale_standing_order = 0
@@ -74,7 +75,9 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 { q_ch1_the_standard == 3 && q_ch2_fog_on_the_canal < 1: "I've written to Reedholm about the shard. Twice. The second letter was mostly apologising for the first." }
 { q_ch2_fog_on_the_canal == 1: "Dace Pike, at the Drowned Eel in Saltmere. Give him my letter. He'll read it slowly. Let him." }
 { q_ch2_fog_on_the_canal == 3 && q_ch2_the_last_office < 2: "Reedholm writes that you're keeping Saltmere busy. Orla writes that you're keeping the Mother busy. I like Orla's letters better." }
-{ q_ch2_the_last_office == 3: "I've copied the Abbey's ledger for Reedholm. I've kept the copy I made first. I'm still not a fool." }
+{ q_ch2_the_last_office == 3 && q_ch3_the_wickham_road < 1: "I've copied the Abbey's ledger for Reedholm. I've kept the copy I made first. I'm still not a fool." }
+{ q_ch3_the_wickham_road == 1: "The Wickham road, north, over the range. Dagny Coalbrook, in Ashgate. Give her my letter. She won't read it slowly. She'll read it standing up." }
+{ q_ch3_the_wickham_road == 3: "Dagny writes. Four lines, every week, all of them about the Assay. I've started to look forward to them, which worries me." }
 { frag_vale_count >= 3 && frag_vale_count < 10: "The Vale's set has more gaps than words. I've read what we have four times. It doesn't get kinder." }
 { frag_vale_count == 10: "The Vale's set is whole. All ten. I've copied it for Reedholm and kept the copy I made first, because I'm not a fool." }
 -> ilse_topics
@@ -91,6 +94,8 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 + { q_ch2_the_last_office == 2 } [The Abbess Below is down. This was under the lamp. #mark: quest ready] -> ilse_ch2_turnin
 + { q_ch2_fog_on_the_canal == 0 } [What about the shard? #mark: quest] -> ilse_ch2_offer
 + { q_ch2_fog_on_the_canal == 1 } [About Saltmere… #mark: quest active] -> ilse_ch2_active
++ { q_ch3_the_wickham_road == 0 } [Where is the Kell Assay? #mark: quest] -> ilse_ch3_road_offer
++ { q_ch3_the_wickham_road == 1 } [About Ashgate… #mark: quest active] -> ilse_ch3_road_active
 + { q_vale_first_page == 2 } [I found this in the barrows. #mark: quest ready] -> ilse_page_turnin
 + { q_trial_last_rites == 2 } [The rites are said, in the chapel. #mark: quest ready] -> ilse_trial_turnin
 + { q_trial_last_rites == 0 } [Is there anything you'd teach a cleric? #mark: quest] -> ilse_trial_offer
@@ -326,3 +331,20 @@ She reads it once, and puts it down, and reads it again, with the shard beside i
 "I'm going to write to Reedholm. Then I'm going to sit here for a while, and not write anything. Then you're going to need to go to the Reach."
 -> ilse_topics
 
+// ── Act III, chapter 1: The Wickham Road (content/quests/ch3_the_wickham_road.json): north to Ashgate, to the
+//    Charter-Reeve, who takes it in ──
+== ilse_ch3_road_offer ==
+Ilse has the ledger open at the last page, and a map of the Provinces under it that she has plainly been arguing with.
+"The Kell Assay. An assay house: they weigh ore and tell you what it's worth, and take a share for telling you. Their yards are at Kell's Rest, in the Cinder Reach. North, over the range, by the Wickham road."
+"I wrote to Ashgate. The Deepdelvers hold it by charter, so it has a Charter-Reeve, and the Charter-Reeve is a Dagny Coalbrook. She answered in four words." Ilse turns the letter round. It says: *Send someone who fights.*
++ [We'll go north. #mark: quest]
+    She writes a second letter, reads it twice, and folds a tracing of the mark inside it, scales over a pick. "Give her this. Then do what she says. I suspect everyone does." # quest: accept ch3_the_wickham_road
+    "The Wickham road leaves the Vale at its north edge, past the Keep, and climbs. Ashgate's on the far side. You'll know it by the wheel over the gate."
+    -> ilse_topics
++ [Not yet.]
+    "No. The Reach has been black for three hundred years. It can stay black a while longer." She looks at the letter. "Four words. I've never had a letter that worried me more per word."
+    -> ilse_topics
+
+== ilse_ch3_road_active ==
+"The Wickham road, north past the Keep and over the range. Ashgate, the wheel over the gate. Dagny Coalbrook, the Charter-Reeve. My letter, and the mark."
+-> ilse_topics

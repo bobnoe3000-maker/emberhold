@@ -109,7 +109,7 @@ export async function build(v, o) {
   }
   for (const [bone, file] of Object.entries(v.attach || {})) { const w = await load(`./models/${file}`); findNode(root, bone)?.add(w.scene); }
   for (const [bone, name] of Object.entries(v.hold || {})) { const p = PROPS[name](); p.position.y = 0.033; p.userData.held = true; findNode(root, bone)?.add(p); }   // sits like the kits' 1H weapons
-  for (const [bone, name] of Object.entries(v.wear || {})) findNode(root, bone)?.add(PROPS[name]());   // worn on a body bone (the smith's apron)
+  for (const [bone, name] of Object.entries(v.wear || {})) for (const n of [].concat(name)) findNode(root, bone)?.add(PROPS[n]());   // worn on a body bone (the smith's apron; a list: a miner's cap and his beard)
   for (const n of v.hide || []) root.traverse((m) => { if (m.name === n) m.visible = false; });   // a kit mesh left off (the minion's cloak: skeleton-skull proposal)
   // a skeleton's skull (skeleton-skull proposal): its eyes, cranium and jaw tagged for the part pass, so albSkull can
   // draw the sockets the 4 × 4 average washed into the bone (the face kit's tags: eye red, skull as skin, jaw as hair)
@@ -122,11 +122,15 @@ export async function build(v, o) {
 }
 // a variant's own frame (M8, the fen ghoul; `body` is the body-kit mock-up's): `frame: { reach: { bone: k }, scale: { bone: k }, bend: { bone: [x, y, z] } }`,
 // after the heroic pass: reach lengthens a segment as the heroic pass does, scale grows a bone (and what hangs off it),
-// bend turns a bone by radians on top of the clip's pose (a hunch: the spine and chest bowed forward)
+// bend turns a bone by radians on top of the clip's pose (a hunch: the spine and chest bowed forward). A scale may be
+// [x, y, z], in the bone's own axes: the dwarf-folk's breadth (the Reach's Deepdelvers and Slagborn, docs/art-critic-pass-
+// reach-cast.md), the hips wider and deeper and the head given its own width back
+const _sc = new THREE.Vector3();
 export function applyFrame(root, body) {
   root.traverse((b) => { if (!b.isBone) return;
-    const base = b.name.replace(/\.?(l|r)$/, '');
-    if (body.scale && body.scale[base]) b.scale.multiplyScalar(body.scale[base]);
+    const base = b.name.replace(/\.?(l|r)$/, ''), sc = body.scale && body.scale[base];
+    if (Array.isArray(sc)) b.scale.multiply(_sc.set(sc[0], sc[1], sc[2]));
+    else if (sc) b.scale.multiplyScalar(sc);
     if (body.reach && body.reach[base]) b.position.multiplyScalar(body.reach[base]);
     if (body.bend && body.bend[base]) { const [x, y, z] = body.bend[base]; b.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z))); } });
 }

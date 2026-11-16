@@ -14,7 +14,8 @@ const town = () => { const s = createSim(SEED, undefined, { scene: 'town' }); s.
 test('a new game: the next chapter is Maudry\'s', () => {
   const sim = town();
   assert.deepEqual(CHAPTERS, ['ch1_smoke_over_the_vale', 'ch1_the_diggers', 'ch1_ember_in_the_fist', 'ch1_the_standard',
-    'ch2_fog_on_the_canal', 'ch2_the_locks', 'ch2_the_sickpools', 'ch2_the_bells', 'ch2_the_rolls', 'ch2_the_last_office']);
+    'ch2_fog_on_the_canal', 'ch2_the_locks', 'ch2_the_sickpools', 'ch2_the_bells', 'ch2_the_rolls', 'ch2_the_last_office',
+    'ch3_the_wickham_road', 'ch3_short_shift']);
   assert.deepEqual(storyStatus(sim.state, status(sim)), { kind: 'next', id: 'ch1_smoke_over_the_vale', giver: 'maudry_fenn', town: 'Thornwick' });
 });
 
@@ -51,14 +52,14 @@ test('the owner\'s save (the Stranger down, level 11): The Standard is next, fro
   for (const id of ['toadking', 'wren', 'choir', 'owed', 'tower', 'fensboard']) assert.ok(C.leads[id], id);
 });
 
-test('Act II: a chapter given in Saltmere says so; both acts done, the end is the Fens\' words; the Fens\' leads follow Wren', () => {
+test('Act II: a chapter given in Saltmere says so; every chapter told, the end is the Reach\'s words; the Fens\' leads follow Wren', () => {
   const sim = town(), S = sim.state;
   for (const id of ['ch1_smoke_over_the_vale', 'ch1_the_diggers', 'ch1_ember_in_the_fist', 'ch1_the_standard', 'ch2_fog_on_the_canal']) S.quests[id] = { st: 3, step: 0, n: [] };
   S.party[0].level = 12; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'level', id: 'ch2_the_locks', level: 13 }, 'the Locks\' band starts at 13 (v1.48)');
   S.party[0].level = 13;
   assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch2_the_locks', giver: 'dace_pike', town: 'Saltmere' });
   for (const id of CHAPTERS) S.quests[id] = { st: 3, step: 0, n: [] };
-  assert.deepEqual(storyStatus(S, status(sim)), { kind: 'end', region: 'fens' });
+  assert.deepEqual(storyStatus(S, status(sim)), { kind: 'end', region: 'reach' }, 'the last chapter told is the Reach\'s (v1.124: Act III\'s first two)');
   S.bosses = {}; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['toadking', 'choir', 'fenschronicle', 'tower', 'fensboard']);
   S.bosses = { toadking: 1 }; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['wren', 'choir', 'fenschronicle', 'tower', 'fensboard']);
   assert.deepEqual(openLeads(S, status(sim), 'fens').find((l) => l.id === 'fenschronicle'), { id: 'fenschronicle', n: 0, of: 10 });
@@ -72,4 +73,20 @@ test('a second trial on offer is a Fens lead, with its teacher\'s town', () => {
   assert.deepEqual(openLeads(S, status(sim), 'fens').find((l) => l.id === 'trial'), { id: 'trial', cls: 'cleric', giver: 'mother_agnes', town: 'Saltmere' });
   S.trials.cleric12 = 1; assert.equal(openLeads(S, status(sim), 'fens').find((l) => l.id === 'trial'), undefined, 'done');
   assert.equal(openLeads(S, status(sim), 'vale').find((l) => l.id === 'trial'), undefined, 'not a Vale lead');
+});
+
+test('Act III (v1.124): after Act II, Ilse in Thornwick sends the company north; Dagny gives the next in Ashgate; the Reach\'s leads follow the Foreman and Tamsin', () => {
+  const sim = town(), S = sim.state;
+  for (const id of CHAPTERS.slice(0, 10)) S.quests[id] = { st: 3, step: 0, n: [] };
+  S.party[0].level = 17; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'level', id: 'ch3_the_wickham_road', level: 18 });
+  S.party[0].level = 18; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch3_the_wickham_road', giver: 'sister_ilse', town: 'Thornwick' });
+  S.quests.ch3_the_wickham_road = { st: 3, step: 0, n: [] };
+  assert.deepEqual(storyStatus(S, status(sim)), { kind: 'level', id: 'ch3_short_shift', level: 19 });
+  S.party[0].level = 19; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch3_short_shift', giver: 'dagny_coalbrook', town: 'Ashgate' });
+  S.bosses = {}; assert.deepEqual(openLeads(S, status(sim), 'reach').map((l) => l.id), ['foreman', 'reachboard']);
+  S.bosses = { foreman: 1 }; assert.deepEqual(openLeads(S, status(sim), 'reach').map((l) => l.id), ['tamsin', 'reachboard']);
+  S.bench = [{ id: 'tamsin' }]; assert.deepEqual(openLeads(S, status(sim), 'reach').map((l) => l.id), ['reachboard'], 'she\'s with you');
+  const C = JSON.parse(readFileSync(new URL('../content/story.json', import.meta.url), 'utf8'));
+  for (const id of ['foreman', 'tamsin', 'reachboard']) assert.ok(C.leads[id], id);
+  assert.ok(C.end.reach.title && C.end.reach.text && C.leadsTitle.reach);
 });

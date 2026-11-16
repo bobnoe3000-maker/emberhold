@@ -1,0 +1,42 @@
+{
+  "id": "ch3_short_shift",
+  "kind": "chapter",
+  "title": "Short Shift",
+  "giver": "dagny_coalbrook",
+  "region": "reach",
+  "level": [
+    19,
+    30
+  ],
+  "after": [
+    "ch3_the_wickham_road"
+  ],
+  "summary": "The Scrag Warren's goblins have dug through into the Cold Seam's old workings. Dagny's niece Tamsin went down after the Seam's records and didn't come up.",
+  "steps": [
+    {
+      "id": "foreman",
+      "journal": "Go down the Cold Seam, off the Wickham road south of Ashgate, through the old pithead to the goblins' warren. Their foreman keeps the tally cave.",
+      "objectives": [
+        {
+          "type": "boss",
+          "site": "cold_seam",
+          "boss": "foreman",
+          "count": 1,
+          "label": "The Foreman"
+        }
+      ]
+    }
+  ],
+  "ready": "The Foreman is down and his whistle is quiet. Go back to Dagny Coalbrook at the Slag & Bellows in Ashgate.",
+  "done": "The Foreman is down and the tally cave is quiet. Dagny bought the moot a round, which the moot says has never happened.",
+  "rewards": {
+    "share": 0.5,
+    "lv": 21,
+    "gold": 480
+  },
+  "dialogue": {
+    "file": "dagny",
+    "offer": "dagny_shift_offer",
+    "turnin": "dagny_shift_turnin"
+  }
+}

@@ -63,10 +63,11 @@ class Rig {
     root.add(this.bones[0]); root.updateMatrixWorld(true);
     const body = make(this.parts.filter((q) => !q.glow), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 }));
     body.name = 'Body'; root.add(body); body.bind(skeleton);
-    const eyes = this.parts.filter((q) => q.glow);
-    if (eyes.length) {
-      const m = make(eyes, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.4, emissive: new THREE.Color(glowColour), emissiveIntensity: glowK }));   // (over ~1.6 it burns out white and loses its colour)
-      m.name = 'Eyes'; m.userData.glow = true; root.add(m); m.bind(skeleton);
+    // (a part's glow: true, the eyes' colour; or a colour of its own, a mesh a colour: the Foreman's lamp beside his eyes)
+    const glows = new Map(); for (const q of this.parts) if (q.glow) { const k = q.glow === true ? glowColour : q.glow; if (!glows.has(k)) glows.set(k, []); glows.get(k).push(q); }
+    for (const [colour, eyes] of glows) {
+      const m = make(eyes, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.4, emissive: new THREE.Color(colour), emissiveIntensity: glowK }));   // (over ~1.6 it burns out white and loses its colour)
+      m.name = colour === glowColour ? 'Eyes' : 'Eyes_Lamp'; m.userData.glow = true; root.add(m); m.bind(skeleton);
     }
     root.traverse((o) => { if (o.isMesh) o.frustumCulled = false; });
     return root;
@@ -598,6 +599,7 @@ function goblin(o = {}) {
     for (let f = 0; f < 4; f++) { const x = (0.07 + (f - 1.5) * 0.017) * s, b = V(x, 0.016, 0.09), e = V(x * 1.06, 0.01, 0.132 - Math.abs(f - 1.2) * 0.007);
       R.part(limb(b, e, 0.011, 0.008, 4), `foot${s}`, skinC); R.part(limb(e, e.clone().add(V(0, -0.005, 0.014)), 0.007, 0.001, 4), `foot${s}`, nail); }
   }
+  if (o.foreman) foremanKit(R, o);
   // (round S2: from the game's camera the head read a quarter of it, the reference's is a third: the head and all on it a
   // tenth bigger about its middle, the jaw's bone with it)
   { const hb = [R.bones.indexOf(R.by.get('head')), R.bones.indexOf(R.by.get('jaw'))], hc = V(0, 0.59, 0.1), K = 1.12;
@@ -623,6 +625,47 @@ function goblin(o = {}) {
     clip(R, 'Cast', 0.9, (t) => { const k = bell(0.05, 0.3, 0.85, t), h = Math.max(0, S(t * 4)); return { q: { ...crouch(1 - 0.3 * k), ...ready, spine: qe(0.2 - 0.3 * k, 0, 0), head: qe(-0.2 - 0.5 * k, 0.1 * S(t * 2), 0), jaw: qe(0.6 * k * (0.5 + 0.5 * h), 0, 0), 'armU-1': qe(-0.45 - 2.2 * k, 0, -0.18 - 0.4 * k), armU1: qe(-0.45 - 2.2 * k, 0, 0.18 + 0.4 * k), armL1: qe(-0.55 + 0.3 * k, 0, 0), 'armL-1': qe(-0.55 + 0.3 * k, 0, 0) }, p: { root: V(0, -0.035 + 0.04 * k * h, 0) } }; }),   // (a jeer: both claws up, the head back, cackling)
   ];
   return { root: root3, clips };
+}
+
+// ── Gritch, called the Foreman (world doc v1.53 §3.3; docs/art-critic-pass-reach-cast.md) ────────────────────────────────
+// A hill goblin of the Scrag Warren who dug through into the Cold Seam and found the last Deepdelver foreman's brass
+// lamp-hat and his whistle. The hat is the read: a miner's hard hat made for a man's head, sat down on a goblin's to the
+// brow, his ears out under its brim, its lamp lit on the front. A dead man's waistcoat too wide for him, brass-buttoned;
+// the whistle on a cord at his breast; a tally-stick in his fist, notched with a count that never adds up.
+function foremanKit(R, o) {
+  const brass = new THREE.Color(o.brass || '#a07a34'), brassHi = new THREE.Color('#d0a24c'), brassLo = new THREE.Color('#4e3818');
+  const brassC = (p, n) => (n.y > 0.55 ? mixC(brass, brassHi, (n.y - 0.55) * 2.4) : n.y < -0.3 ? brassLo : brass);
+  const vest = new THREE.Color(o.vest || '#2c2a30'), vestHi = new THREE.Color('#44404a'), vestC = (p, n) => (n.y > 0.5 ? vestHi : vest);
+  const cord = new THREE.Color('#2a1c12'), wood = new THREE.Color('#8a6a40'), notch = new THREE.Color('#3a2a18'), iron = new THREE.Color('#2a2826');
+  // the hat: a dome round the skull and down to the brow, a brim all round, broader at the peak; a ridge over the crown
+  // (the head's centre ~0.625 up, its skull 0.11 round: the hat's half again as wide, sat low)
+  const hc = V(0, 0.655, 0.075), HR = o.hatR || 0.145, h0 = R.parts.length;
+  R.part(blob(hc, [HR, HR * 0.86, HR * 1.04], [14, 9]).translate(0, 0, 0), 'head', brassC);
+  R.part(new THREE.CylinderGeometry(HR * 1.16, HR * 1.2, 0.012, 22).translate(0, 0.64, 0.075), 'head', brassC);   // the brim (round F2: narrower, a hard hat's, not a sun hat's)
+  R.part(new THREE.CylinderGeometry(HR * 0.5, HR * 0.6, 0.012, 14, 1, false, -1.0, 2.0).scale(1.5, 1, 1.7).translate(0, 0.638, 0.19), 'head', brassC);   // the peak, out over the brow
+  R.part(new THREE.TorusGeometry(HR * 0.98, 0.007, 5, 22, Math.PI).rotateY(Math.PI / 2).scale(0.25, 1, 1.02).translate(0, 0.655, 0.075), 'head', brassC);   // the crown's ridge, front to back
+  R.part(new THREE.TorusGeometry(HR * 1.01, 0.006, 5, 24).rotateX(Math.PI / 2).translate(0, 0.665, 0.075), 'head', iron);   // a band round it
+  for (const [x, y, z] of [[0.09, 0.74, 0.16], [-0.12, 0.71, 0.11]]) R.part(blob(V(x, y, z), [0.022, 0.012, 0.02], [6, 4]), 'head', brassLo);   // (dents)
+  // the lamp on its front: a brass can, a lit glass, a bracket down to the brim
+  const lamp = V(0, 0.735, 0.225);
+  R.part(new THREE.CylinderGeometry(0.036, 0.03, 0.06, 12).rotateX(Math.PI / 2).translate(lamp.x, lamp.y, lamp.z), 'head', brassC);
+  R.part(new THREE.CylinderGeometry(0.04, 0.04, 0.008, 12).rotateX(Math.PI / 2).translate(lamp.x, lamp.y, lamp.z + 0.03), 'head', brassC);
+  R.part(new THREE.CylinderGeometry(0.03, 0.03, 0.01, 12).rotateX(Math.PI / 2).translate(lamp.x, lamp.y, lamp.z + 0.034), 'head', new THREE.Color('#ffe2a0'), o.lampGlow || '#ffc060');
+  R.part(new THREE.BoxGeometry(0.018, 0.05, 0.03).translate(0, 0.7, 0.2), 'head', brassC);
+  // (round F1: square on his head, its brim hid his face from the game's camera: pushed back, a foreman's way, so the
+  // brim rides up off his brow and his eyes show under it)
+  for (const q of R.parts.slice(h0)) q.geo.translate(0, -0.62, -0.08).rotateX(-(o.hatTilt ?? 0.4)).translate(0, 0.62, 0.08);
+  // the waistcoat: a dead man's, too wide, open over the belly, brass buttons down one side
+  R.part(blob(V(0, 0.448, 0.028), [0.092, 0.066, 0.07], [9, 7]), 'chest', vestC);
+  for (const y of [0.47, 0.445, 0.42]) R.part(blob(V(0.022, y, 0.096), [0.008, 0.008, 0.005], [6, 4]), 'chest', brassC);
+  // the whistle on its cord, at the breast
+  R.part(limb(V(-0.045, 0.505, 0.095), V(0.0, 0.43, 0.118), 0.004, 0.004, 4), 'chest', cord);
+  R.part(limb(V(0.045, 0.505, 0.095), V(0.0, 0.43, 0.118), 0.004, 0.004, 4), 'chest', cord);
+  R.part(new THREE.CylinderGeometry(0.013, 0.011, 0.05, 10).rotateZ(Math.PI / 2 - 0.3).translate(0.008, 0.42, 0.122), 'chest', brassC);
+  // the tally-stick in his right fist, notched
+  const at = V(-0.168, 0.226, 0.09), a = at.clone().add(V(0.0, -0.01, 0.02)), b = at.clone().add(V(0.01, -0.04, 0.2));
+  R.part(limb(a, b, 0.011, 0.01, 6), 'hand-1', wood);
+  for (let k = 1; k <= 5; k++) { const p = a.clone().lerp(b, 0.25 + k * 0.13); R.part(limb(p.clone().add(V(0, 0.004, -0.002)), p.clone().add(V(0, -0.004, 0.002)), 0.0125, 0.0125, 6), 'hand-1', notch); }
 }
 
 // ── the graveyard wraith (the floating shroud) ─────────────────────────────────────────────────────────────────────────

@@ -1,0 +1,15 @@
+{
+  "id": "bel_ruddle",
+  "name": "Bel Ruddle",
+  "role": [
+    "innkeeper",
+    "townsfolk"
+  ],
+  "town": "ashgate",
+  "region": "reach",
+  "look": "npc_bel",
+  "portrait": "npc_bel",
+  "dialogue": "ashgate",
+  "knot": "bel_hub",
+  "note": "Keeps the Slag & Bellows, where the Guild's board hangs by the bellows that work the fire (world doc §3.3, v1.53). Out at the carts on the square by day, behind her bar from dusk."
+}

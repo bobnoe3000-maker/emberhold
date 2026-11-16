@@ -1,0 +1,15 @@
+{
+  "id": "widow_pellam",
+  "name": "Widow Pellam",
+  "role": [
+    "innkeeper",
+    "townsfolk"
+  ],
+  "town": "ashgate",
+  "region": "reach",
+  "look": "npc_pellam",
+  "portrait": "npc_pellam",
+  "dialogue": "ashgate",
+  "knot": "pellam_hub",
+  "note": "Lets the beds at Deepdelver's Rest and keeps the miners' boots by the door (world doc §3.3, v1.53). On the square at dawn, at the Rest after."
+}

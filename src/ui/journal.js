@@ -134,8 +134,8 @@ const KIND = { chapter: 'Chapter', companion: 'Companion', trial: 'Trial', board
 export const isMain = (def) => !!def && def.kind === 'chapter';
 const SIDE_KINDS = ['errand', 'bounty', 'trial', 'companion', 'board'];
 const PLURAL = { errand: 'Errands', bounty: 'Bounties', trial: 'Trials', companion: 'Companions', board: 'Board' };
-/** the acts by the region their chapters are told in (Act I the Vale, Act II the Fens: storystatus.js) */
-const ACT = { vale: 'Act I · The Hollow Vale', fens: 'Act II · The Greywater Fens' };
+/** the acts by the region their chapters are told in (Act I the Vale, Act II the Fens, Act III the Reach: storystatus.js) */
+const ACT = { vale: 'Act I · The Hollow Vale', fens: 'Act II · The Greywater Fens', reach: 'Act III · The Cinder Reach' };
 const KIND_CHIPS_AT = 5;                         // the side quests' kind chips show once there are this many to sort
 
 /** the lines a quest shows now: its step text (or its "go back" text) and its objectives with counts
@@ -225,7 +225,7 @@ function MainTab({ sim, defOf, npcName, story, view, row, repaint }) {
   return out;
 }
 
-const SET_NAME = { vale: 'The Hollow Vale', fens: 'The Greywater Fens' };
+const SET_NAME = { vale: 'The Hollow Vale', fens: 'The Greywater Fens', reach: 'The Cinder Reach' };
 /** the Chronicle (world doc §7): the count, then each set with its tally, found fragments in full, missing ones as a place */
 function Chronicle({ sim, lore }) {
   const found = new Set(sim.state.fragments || []), c = sim.state.count || { lamps: 0, souls: 0 };

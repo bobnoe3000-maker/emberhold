@@ -660,6 +660,13 @@ function facePicture(f) {
     if (m === 'scar_cheek') { g.strokeStyle = hex(toned(skin, '#d07a70', 0.45, 1.05)); g.lineWidth = 0.012 * ky; g.beginPath(); g.moveTo(...P(-0.32, 0.36)); g.lineTo(...P(-0.2, 0.24)); g.stroke(); }
     if (m === 'freckles') { g.fillStyle = hex(toned(skin, '#6a2a10', 0.5, 0.74)); for (const sd of [-1, 1]) for (const [x, y] of [[0.2, 0.33], [0.25, 0.31], [0.29, 0.34], [0.23, 0.36], [0.27, 0.28], [0.32, 0.31]]) { g.beginPath(); g.arc(...P(sd * x, y), 0.006 * kx, 0, Math.PI * 2); g.fill(); } }
     if (m === 'wrinkles') { g.strokeStyle = hex(skin.clone().multiplyScalar(0.74)); g.lineWidth = 0.007 * ky; for (const y of [0.74, 0.79]) { g.beginPath(); g.moveTo(...P(-0.15, y)); g.quadraticCurveTo(...P(0, y + 0.012), ...P(0.15, y)); g.stroke(); } }
+    // soot (the Cinder Reach's miners and mill-hands): a smear across one cheek and up over the brow, the skin darkened
+    // toward coal, soft-edged, the eyes left clear
+    if (m === 'soot') for (const [x, y, rx, ry, a] of [[-0.24, 0.3, 0.13, 0.07, 0.55], [0.2, 0.62, 0.16, 0.06, 0.4], [0.3, 0.36, 0.06, 0.05, 0.35], [-0.05, 0.08, 0.1, 0.05, 0.3]]) {
+      const [px, py] = P(x, y), R = Math.max(rx * kx, ry * ky), q = g.createRadialGradient(px, py, 0, px, py, R), c = hex(toned(skin, '#1a1410', 0.8, 0.35));
+      q.addColorStop(0, c + Math.round(a * 255).toString(16).padStart(2, '0')); q.addColorStop(1, c + '00');
+      g.save(); g.translate(px, py); g.scale(rx * kx / R, ry * ky / R); g.translate(-px, -py); g.fillStyle = q; g.fillRect(px - R, py - R, 2 * R, 2 * R); g.restore();
+    }
     if (m === 'warpaint') { g.fillStyle = 'rgba(232,226,214,0.9)'; g.beginPath(); g.moveTo(...P(0.12, 0.54)); g.lineTo(...P(0.16, 0.54)); g.lineTo(...P(0.3, 0.26)); g.lineTo(...P(0.26, 0.26)); g.closePath(); g.fill();   // a stripe down through the right eye
       g.beginPath(); g.moveTo(...P(0.12, 0.38)); g.lineTo(...P(0.32, 0.38)); g.lineTo(...P(0.32, 0.36)); g.lineTo(...P(0.12, 0.36)); g.closePath(); g.fill(); }
   }

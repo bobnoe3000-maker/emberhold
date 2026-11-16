@@ -1,0 +1,14 @@
+{
+  "id": "old_brannagh",
+  "name": "Old Brannagh",
+  "role": [
+    "priest"
+  ],
+  "town": "ashgate",
+  "region": "reach",
+  "look": "npc_brannagh",
+  "portrait": "npc_brannagh",
+  "dialogue": "ashgate",
+  "knot": "brannagh_hub",
+  "note": "Keeps the Shrine of the Last Flame, a lamp never let go out; the Cold Seam's lamp woman before it closed, who still counts the shift in and out (world doc §3.3, v1.53). On the Shrine's step."
+}

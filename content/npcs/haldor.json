@@ -1,0 +1,15 @@
+{
+  "id": "haldor",
+  "name": "Haldor Ironmonger",
+  "role": [
+    "smith",
+    "townsfolk"
+  ],
+  "town": "ashgate",
+  "region": "reach",
+  "look": "npc_haldor",
+  "portrait": "npc_haldor",
+  "dialogue": "ashgate",
+  "knot": "haldor_hub",
+  "note": "A Deepdelver; the Ashgate Forge, and the best upgrades in the Provinces, which he will tell you himself (world doc §3.3, v1.53). At the forge by day, the Slag & Bellows by night."
+}

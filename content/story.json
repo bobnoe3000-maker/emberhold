@@ -5,10 +5,18 @@
   "end": {
     "fens": {
       "title": "Act II is done",
-      "text": "The Abbess is down and the choir-lamp is glass on the floor. Ilse has read the ledger twice: the Cult was mining the dead, and the buyer's mark is the Kell Assay's. The road up to the Cinder Reach, and Act III, opens in a later update. Until then, the Fens and the Vale still have work in them."
+      "text": "The Abbess is down and the choir-lamp is glass on the floor. Ilse has read the ledger twice: the Cult was mining the dead, and the buyer's mark is the Kell Assay's. The Wickham road north to the Cinder Reach is open."
+    },
+    "reach": {
+      "title": "Short Shift is done",
+      "text": "The Foreman is down and the Cold Seam is quiet. Dagny's moot has moved on to the night shift, and its arguing points west, at the Assay's yards under the dead mountain. The rest of Act III, Quota, comes in a later update. Until then, the Reach has work in it."
     }
   },
-  "leadsTitle": { "vale": "Still in the Vale", "fens": "Still in the Fens" },
+  "leadsTitle": {
+    "vale": "Still in the Vale",
+    "fens": "Still in the Fens",
+    "reach": "Still in the Reach"
+  },
   "leads": {
     "brannoc": "Wickham Keep: someone is still chained in the Old Cellars' last hall, where Captain Garrow kept him. Go down and see.",
     "standard": "The Sunken Chapel: the Standard of the Third Legion still stands over the binding in its crypt, and holds the barrows road with it.",
@@ -24,6 +32,9 @@
     "fenschronicle": "The Fens' Chronicle: {n} of {of} pages found, at the Mound, the Locks and their vats, and the Abbey. Sister Ilse reads them in Thornwick.",
     "undercroft": "The Reedholm Undercroft is open: the binding clergy's copy-room, under the priory past the Abbey. The key's on the nail by the door.",
     "tower": "The Mere Tower: the ferry at Saltmere's quay crosses to it. Climb it as far as you can.",
-    "fensboard": "The Lantern Guild's board, at the Drowned Eel, has new Fens jobs every day."
+    "fensboard": "The Lantern Guild's board, at the Drowned Eel, has new Fens jobs every day.",
+    "foreman": "The Cold Seam, off the Wickham road south of Ashgate: the goblins' foreman keeps the tally cave, and somebody is chained at his anvil.",
+    "tamsin": "The Cold Seam: the Foreman is down, and Tamsin Coalbrook is still at the goblins' anvil in the tally cave. Go back down and bring her up.",
+    "reachboard": "The Lantern Guild's board hangs by the bellows in the Slag & Bellows, Ashgate's tavern."
   }
 }

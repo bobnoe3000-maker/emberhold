@@ -21,7 +21,12 @@ test('Thornwick\'s people stand in Thornwick: the named on tiles you walk round,
   assert.deepEqual(sim.world.npcs.map((n) => n.id).sort(), Object.keys(NPCS).filter((k) => NPCS[k].region === 'vale' && !NPCS[k].found).sort(), 'all nine (a found companion waits in his dungeon)');
   for (const n of sim.world.npcs) assert.equal(isWalkable(sim.world, n.x, n.y), !!n.folk, `${n.id}: ${n.folk ? 'a walker' : 'solid'}`);
   const again = town().world.npcs; assert.deepEqual(again.map((n) => [n.id, n.x, n.y]), sim.world.npcs.map((n) => [n.id, n.x, n.y]));   // the same spots every time
-  for (const region of ['reach', 'heights']) assert.equal(town(region).world.npcs.length, 0);
+  assert.equal(town('heights').world.npcs.length, 0);
+  // (v1.124, Act III) Ashgate's nine stand in Ashgate, every one placed (Thornwick's spots, one for one); Tamsin waits in the Cold Seam
+  const ash = town('reach').world.npcs;
+  assert.deepEqual(ash.map((n) => n.id).sort(), Object.keys(NPCS).filter((k) => NPCS[k].region === 'reach' && !NPCS[k].found).sort());
+  assert.equal(ash.length, 9);
+  for (const n of ash) assert.equal(isWalkable(town('reach').world, n.x, n.y), !!n.folk, `${n.id}: ${n.folk ? 'a walker' : 'solid'}`);
   // (M8, Act II) Saltmere's own four stand in Saltmere; Wren and the Kindler wait in their dungeons
   assert.deepEqual(town('fens').world.npcs.map((n) => n.id).sort(), ['dace_pike', 'mother_agnes', 'pim_rushlight', 'sister_orla']);
   assert.equal(createSim(1, undefined, { scene: 'overland' }).world.npcs.length, 0);
@@ -179,10 +184,11 @@ test('a townsperson you\'re talking to waits; Osric and Ilse answer where they s
 
 // ── room to be told apart, and strolls (a tap picks one person; the square has life in it) ──
 import { apart } from '../src/sim/npcs.js';
-const townAt = (part, seed = 20260807) => { const t = createSim(seed, undefined, { scene: 'overland' }); t.state.t = part * PART_S; const d = JSON.parse(JSON.stringify(t.snapshot())); const c = createSim(seed, undefined, { scene: 'town' }); c.restore({ ...d, scene: 'town', player: { x: 0, y: 0 } }); return c; };
-test('everyone keeps apart on screen, at every part of the day, strolls included (Col and Jory stood by Maudry\'s door)', () => {
-  for (const seed of [20260807, 7, 99991]) for (let part = 0; part < 4; part++) {
-    const n = townAt(part, seed).world.npcs;
+const townAt = (part, seed = 20260807, region = 'vale') => { const t = createSim(seed, undefined, { scene: 'overland', region }); t.state.t = part * PART_S; const d = JSON.parse(JSON.stringify(t.snapshot())); const c = createSim(seed, undefined, { scene: 'town', region }); c.restore({ ...d, scene: 'town', region, player: { x: 0, y: 0 } }); return c; };
+test('everyone keeps apart on screen, at every part of the day, strolls included (Col and Jory stood by Maudry\'s door; Ashgate\'s too)', () => {
+  for (const region of ['vale', 'reach']) for (const seed of [20260807, 7, 99991]) for (let part = 0; part < 4; part++) {
+    const n = townAt(part, seed, region).world.npcs;
+    if (region === 'reach') assert.equal(n.length, 9, `Ashgate, seed ${seed} part ${part}: everyone placed`);
     for (let i = 0; i < n.length; i++) for (let j = i + 1; j < n.length; j++) {
       const A = n[i].folk ? n[i].roam.flat() : [n[i]], B = n[j].folk ? n[j].roam.flat() : [n[j]];
       assert.ok(A.every((a) => B.every((b) => apart(a, b))), `seed ${seed} part ${part}: ${n[i].id} and ${n[j].id} can overlap`);

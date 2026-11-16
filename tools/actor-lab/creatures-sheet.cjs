@@ -7,7 +7,7 @@ const { serve, CHROME, GL } = require('./render.cjs');
 const arg = (k) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : null; };
 const OUT = arg('out') || (process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : path.join(__dirname, 'out', 'creatures.jpg'));
 // (the humanoids' specs as the cast has them, variants.json: on KayKit's rig)
-const VAR = Object.fromEntries(JSON.parse(fs.readFileSync(path.join(__dirname, 'variants.json'), 'utf8')).filter((v) => v.creature).map((v) => [v.creature.kind + (v.creature.seed ? v.creature.seed : ''), v.creature]));
+const VAR = Object.fromEntries(JSON.parse(fs.readFileSync(path.join(__dirname, 'variants.json'), 'utf8')).filter((v) => v.creature).map((v) => [v.creature.kind + (v.creature.seed ? v.creature.seed : '') + (v.creature.foreman ? '_foreman' : ''), v.creature]));
 const SHOTS = [['Idle', [0.3]], ['Walk', [0, 0.25, 0.5, 0.75]], ['Attack', [0.45]], ['Heavy', [0.55]], ['Cast', [0.5]], ['Hit', [0.25]], ['Death', [0.99]]];
 // height: as the game stands it (the variant's, in men; a boss's ×1.3, as the renderer draws a boss); cy, half: the
 // camera's aim and half-height, in men
@@ -30,6 +30,9 @@ const ROWS = [
   { name: 'Gulper', key: 'gulper', spec: { kind: 'gulper' }, height: 0.9, cy: 0.4, half: 0.8, yaw: -0.6, shots: SHOTS },
   { name: 'The Rat King (boss)', key: 'ratking', spec: { kind: 'ratking' }, height: 0.75 * 1.3, cy: 0.42, half: 1.05, yaw: -1.0, shots: SHOTS },
   { name: 'The Spider Queen (boss)', key: 'spiderqueen', spec: { kind: 'spiderqueen' }, height: 0.8 * 1.3, cy: 0.45, half: 1.15, yaw: -0.6, shots: SHOTS },
+  // (the Cinder Reach, world doc v1.53: Gritch, called the Foreman, a goblin in a dead foreman's brass lamp-hat; docs/art-critic-pass-reach-cast.md)
+  { name: 'Gritch, the Foreman (boss) · front', key: 'foremanf', spec: VAR.goblin_foreman, height: 0.86 * 1.3, cy: 0.58, half: 0.62, yaw: 0.3, shots: [['Idle', [0.3]], ['Attack', [0.4]], ['Cast', [0.5]]] },
+  { name: 'Gritch, the Foreman (boss)', key: 'foreman', spec: VAR.goblin_foreman, height: 0.86 * 1.3, cy: 0.55, half: 0.8, yaw: -0.5, shots: SHOTS },
 ].filter((r) => !arg('only') || arg('only').split(',').includes(r.key));
 // --clips Attack,Heavy [--frames N]: each row through those clips instead, N moments of each (default 6), for reading a
 // motion (the wraith's arms, 2026-11-10); the 'beside a man' cell stays first

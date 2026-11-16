@@ -30,8 +30,10 @@ A broad man behind the Eel's counter is writing in a book with a pencil he has t
 
 // ── Fog on the Canal (content/quests/ch2_fog_on_the_canal.json): Ilse sent you; he knows who to ask ──
 == dace_fog_meet ==
-{ flag_met_dace == 0: A broad man behind the Eel's counter is writing in a book with a pencil he has to lick every third word. # flag: set met_dace }
-You give him Sister Ilse's letter. He reads it twice, slowly, with his finger, and puts it in the book.
+// (the first line says nothing to the sim: the story waits after a line with effects and comes back with the sim's
+// variables, and by then this meeting has counted, so coming back to the first line would start over from the hub)
+{ flag_met_dace == 0: A broad man behind the Eel's counter is writing in a book with a pencil he has to lick every third word. | Dace looks up from the book. }
+You give him Sister Ilse's letter. He reads it twice, slowly, with his finger, and puts it in the book. # flag: set met_dace
 "Dace Pike. Ilse writes a good letter. Too many words, but all the right ones."
 "Robed men, boats at night, up the canal toward your Vale. Aye. Nobody in Saltmere's seen where they tie up. Nobody but Wren, and Wren owes everybody."
 "She owed the Toadking last. He's a bandit out in the reeds with a mound of stolen boats, and when you can't pay him he keeps you. He's kept her a month." He turns the book round so you can see her line. It's long.

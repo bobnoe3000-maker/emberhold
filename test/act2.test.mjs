@@ -151,7 +151,7 @@ test('the chapters run in order, each from its giver to its taker; the last goes
     talk(sim, taker); effect(sim, 'quest', 'turnin', id); assert.equal(st(sim, id), QS.DONE, id);
     assert.equal(ev.at(-1).xp, questXp(QUESTS[id].rewards, lv), `${id}: a share of a level, at the hero's (or the level it's written for)`);
   }
-  assert.deepEqual(storyStatus(sim.state, (id) => sim.quests.status(id)), { kind: 'end', region: 'fens' });
+  assert.deepEqual(storyStatus(sim.state, (id) => sim.quests.status(id)), { kind: 'next', id: 'ch3_the_wickham_road', giver: 'sister_ilse', town: 'Thornwick' }, 'Act II over: Ilse sends the company north (v1.124)');
   assert.deepEqual(ev.map((e) => e.gold), [220, 260, 280, 300, 320, 400]);
 });
 
