@@ -6,8 +6,9 @@
 // harvester carries one caught soul in a lantern-cage; it drops the cage where it falls, and a touch breaks it.
 //
 // The count is two durable integers on the game slot, added to only by these rules: **lamps** broken (a cage counts)
-// and **souls** freed (each Ashbound put down, each cage, every soul a broken lamp held). The living and beasts never
-// count: they were never bound. No command touches it (the replay validator will write the leaderboard, the Freed).
+// and **souls** freed by the company's own hand (each cage, every soul a broken lamp held; v1.119: an Ashbound put down
+// goes free by itself and isn't counted, as it ran to 170–560 an hour of fighting). The living and beasts never count:
+// they were never bound. No command touches it (the replay validator will write the leaderboard, the Freed).
 // state.count = { lamps, souls }; state.lampsBroken = [lamp ids] (a lamp counts once, though its keeper's echo comes
 // back on the next visit). Save v19 (persist/save.js): older saves credit the Standard's lamp if he fell.
 // Events: 'lampBroken' { id, name, first, freed, x, y } · 'cageBroken' { tx, ty, x, y, by?, auto? } · 'countChanged' { lamps, souls }.

@@ -1153,14 +1153,16 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       bus.emit('bossCage', { id: 'teague', x: e.x, y: e.y }); bus.emit('combat', { t: 'freed', x: e.x, y: e.y });
       return;
     }
-    if (e.undead) tally({ souls: 1 });
+    // (v1.119, the owner, on the count running to 12,247: "Breaking cages frees too many souls", then "Ill go with your
+    // suggestion"): the count is what the company frees by its own hand, a cage broken or a lamp; one of the bound put down
+    // goes free by itself (world doc §2.1) and isn't counted, nor the line a broken lamp lays down
     const lamp = e.boss ? lampOf(e.boss) : null;
     if (lamp) {
       const bound = (w.enemies || []).filter((o) => o !== e && o.undead && o.hp > 0 && !o.dead);
       for (const o of bound) { o.hp = 0; o.dead = DEATH_T; if (focusId === o.id) focusId = 0; bus.emit('combat', { t: 'freed', x: o.x, y: o.y }); }
       const broken = countOf(state) && state.lampsBroken, first = mode().count && !broken.includes(lamp);   // (a raid's lamp breaks in the fight, never in the story)
       if (first) broken.push(lamp);
-      tally({ lamps: first ? 1 : 0, souls: bound.length + (first ? LAMPS[lamp].souls : 0) });
+      tally({ lamps: first ? 1 : 0, souls: first ? LAMPS[lamp].souls : 0 });
       bus.emit('lampBroken', { id: lamp, name: LAMPS[lamp].name, first, freed: bound.length, held: first ? LAMPS[lamp].souls : 0, x: e.x, y: e.y });
     }
     if (CAGE_KINDS.has(e.kind) && e.elite && w.kind === 'dungeon') {   // the band's elite: its cage, on the floor where it fell (or the nearest free tile)

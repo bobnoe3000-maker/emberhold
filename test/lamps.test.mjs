@@ -25,11 +25,12 @@ const fight = (sim, secs, until) => { for (let i = 0; i < secs * 20 && !until();
 const vats = (sim) => { down(sim); assert.equal(sim.state.depth, 1); };
 const room = (sim, size) => { const L = sim.world.level, open = L.rooms.filter((q) => q.id !== L.entrance.id && (!L.descentRoom || q.id !== L.descentRoom.id)), r = open.find((q) => !size || q.size === size) || open[0], p = sim.state.player; p.x = p.px = r.cx + 0.5; p.y = p.py = r.cy + 0.5; };
 
-test('an Ashbound put down frees a soul; the living never count', () => {
+// (v1.119) the count is what the company frees by its own hand: an Ashbound put down goes free by itself, uncounted
+test('an Ashbound put down adds nothing to the count (it goes free by itself); nor do the living', () => {
   const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'barrows' }); party(sim, 6); sim.tick(); down(sim); room(sim);   // (v1.48: the barrows' second floor is the Ashbound's; the first, the diggers')
   const slain = []; sim.bus.on('slain', (e) => slain.push(e.kind));
   fight(sim, 60, () => slain.length >= 6);
-  assert.ok(slain.length >= 6); assert.equal(sim.state.count.souls, slain.length, `the barrows' dead: ${slain.join(',')}`); assert.equal(sim.state.count.lamps, 0);
+  assert.ok(slain.length >= 6); assert.deepEqual(sim.state.count, { lamps: 0, souls: 0 }, `the barrows' dead, uncounted: ${slain.join(',')}`);
   const keep = createSim(SEED, undefined, { scene: 'dungeon', site: 'wickham_keep' }); party(keep, 4); keep.tick(); room(keep);   // (the Keep's first floor: the Redhand, living; v1.48, the Mill is parked)
   const living = []; keep.bus.on('slain', (e) => living.push(e.kind));
   fight(keep, 60, () => living.length >= 4);
@@ -47,7 +48,7 @@ test('the Standard falls: his lamp breaks once (16 souls, 240 before v50), and t
   const lb = ev.find(([k]) => k === 'lampBroken'); assert.ok(lb, 'the lamp broke'); const L = lb[1];
   assert.equal(L.id, 'third_legion'); assert.ok(L.first); assert.equal(L.held, LAMPS.third_legion.souls);
   assert.equal(sim.state.count.lamps, 1); assert.deepEqual(sim.state.lampsBroken, ['third_legion']);
-  assert.equal(sim.state.count.souls - before.souls, 1 + L.freed + LAMPS.third_legion.souls, 'his own soul (he is Ashbound too), the line he held, and the 16 in the lamp');
+  assert.equal(sim.state.count.souls - before.souls, LAMPS.third_legion.souls, 'the 16 in the lamp (v1.119: not his own, nor the line he held: they go free by themselves)');
   assert.ok((sim.world.enemies || []).every((e) => !e.undead || e.hp <= 0), 'every bound foe in the hall lies down');
   // a second time (his echo, the next visit): the line lies down again, but the lamp counts once
   const again = createSim(1); again.restore(JSON.parse(JSON.stringify(sim.snapshot())));

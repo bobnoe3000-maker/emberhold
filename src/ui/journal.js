@@ -230,7 +230,7 @@ const SET_NAME = { vale: 'The Hollow Vale', fens: 'The Greywater Fens' };
 function Chronicle({ sim, lore }) {
   const found = new Set(sim.state.fragments || []), c = sim.state.count || { lamps: 0, souls: 0 };
   return html`<div class="count"><div><b>${c.lamps}</b>${c.lamps === 1 ? 'lamp' : 'lamps'} broken</div><div><b>${c.souls}</b>${c.souls === 1 ? 'soul' : 'souls'} freed</div>
-    <div class="nt">Kept by Sister Ilse. A soul for each of the bound put down and each cage broken, and every soul a broken lamp held. The living never count: they were never bound.</div></div>
+    <div class="nt">Kept by Sister Ilse. A soul for each cage broken, and every soul a broken lamp held. The bound you put down go free by themselves; the living never count: they were never bound.</div></div>
   ${Object.entries(SETS).map(([set, ids]) => { const n = ids.filter((id) => found.has(id)).length; return html`<div key=${set} class="list" style="padding-top:4px">
     <div class="set">${SET_NAME[set] || set}<span>${n} of ${ids.length} found</span></div>
     <div class="prog" style="margin:0 2px"><span class="bar"><i style=${`width:${Math.round((100 * n) / ids.length)}%`}></i></span><span>${Math.round((100 * n) / ids.length)}%</span></div>

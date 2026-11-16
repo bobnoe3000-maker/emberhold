@@ -66,7 +66,7 @@ export function createHud(sim) {
   // the one harvester in a lot with a full cage (lamps.js: the elite, every fifth wave; the others' cages are empty and dark)
   sim.bus.on('wave', (e) => { if (e && e.elite && CAGE_KINDS.has(e.elite)) show('A harvester comes in with a full cage, lit · put it down to free its soul', 3200, 'cage'); });
   sim.bus.on('cageDropped', () => show('A full cage falls · the company will break it when the fighting stops', 2600, 'cage'));   // (lamps.js: or tap it)
-  sim.bus.on('cageBroken', (e) => { const c = sim.state.count; show(`${e && e.auto && e.by ? `${e.by} breaks the cage` : 'The cage breaks'} · a soul goes free · ${c.souls} freed`, 2600, 'cage'); });
+  sim.bus.on('cageBroken', (e) => { show(`${e && e.auto && e.by ? `${e.by} breaks the cage` : 'The cage breaks'} · a soul goes free`, 2600, 'cage'); });   // (the total is the Chronicle's: v1.119)
   sim.bus.on('fallen', (f) => show(`${f.name} is slain: out of the fight until raised · at the temple in town, or a shrine below`, 3200));
   sim.bus.on('benched', (b) => show(`${b.name} waits on the bench at the inn`, 2200));
   // the dead on the barrows road (sim road.js): a line as you come near, and when a rank goes (content/road/)
