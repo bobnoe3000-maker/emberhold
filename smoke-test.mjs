@@ -1,7 +1,7 @@
 // Headless proof the sim core has zero DOM deps and is deterministic, now over a
 // generated dungeon level (rooms + corridors + walls + abyss).
 import { createSim, TICK_DT } from './src/sim/core.js';
-import { resourceAt, materialAt, heightAt, isWalkable, propAt } from './src/sim/world.js';
+import { resourceAt, materialAt, heightAt, isWalkable, propAt, hallGate } from './src/sim/world.js';
 import { THEME_KEYS } from './src/sim/level.js';
 import { mulberry32, streamSeed, STREAM } from './src/sim/rng.js';
 import { rollRecipe } from './src/assetforge/doll.js';
@@ -221,6 +221,7 @@ console.log('room levels (entrance safe; floor 1\'s rooms at 1, its offshoot and
 
 // Tap to move: tap a far room → the hero paths there; tap a distant chest → walks up and loots it.
 const tw = createSim(20260807, undefined, { scene: 'dungeon' }), twp = tw.state.player;
+tw.state.gates.add(hallGate(tw.world).id); tw.world.gateShut = null;   // (the floor's gates down: a chest behind one is walked to; the gates are tested below and in test/gate.test.mjs)
 const twRoom = tw.world.level.rooms.find((q) => tw.world.roomLevels.get(q.id) === 1);
 tw.commands.push({ type: 'tap', tx: twRoom.cx, ty: twRoom.cy });
 for (let t = 0; t < 20 * 30 && (t === 0 || twp.path); t++) tw.tick();
@@ -235,9 +236,10 @@ console.log('tap to move (walk a path; walk up to a chest and loot it):', walked
 // Compass travel: context-sensitive destinations, and a pick auto-walks the party there.
 const cDun = createSim(20260807, undefined, { scene: 'dungeon' }); cDun.tick();
 const dd = cDun.destinations(), ids = dd.map((o) => o.id);
-// the floor's gate (GDD §3.3b) stands before the last hall: the compass points at it, and at the stairs once it's down
+// the floor's gates (GDD §3.3b v1.118: a gate a room) stand before its rooms: the compass points at one, and at the
+// stairs once they're down (the last hall's gate open opens the floor)
 const gateRow = ids.includes('gate') && !ids.includes('stairs-down');
-cDun.state.gates.add(cDun.world.gate.id); cDun.world.gateShut = null; cDun.world._openCache = null;
+cDun.state.gates.add(hallGate(cDun.world).id); cDun.world.gateShut = null; cDun.world._openCache = null;
 const idsOpen = cDun.destinations().map((o) => o.id);
 const nextRoom = dd.find((o) => o.id === 'next-room');
 cDun.commands.push({ type: 'goto', ...nextRoom });
