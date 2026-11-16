@@ -64,7 +64,13 @@ const STRIDE = { hero: 4.5, skel: 3.2, walk: 2.2 };   // tiles a cycle, from the
 // a Walking_A figure (townsfolk, the Redhand, the robes) carries its own measured `stride` in its atlas JSON (actor-lab
 // lab.js strideOf, art pass 6: 1.97–2.33), 2.2 when it has none. They had the run's 4.5, so their feet skated 2×. The
 // goblins run (Running_A/B, measured the same way: 3.0–3.2): their short legs barely parted in a walk, and read as skating.
-const strideOf = (atl, fallback) => (atl && atl.meta.stride) || fallback;
+const strideOf = (atl, fallback) => (atl && atl.meta.stride) || (atl && ACTOR_STRIDE[atl.name]) || fallback;
+// a model built in code carries no measured stride (the bake measures the KayKit walks only, actor-lab lab.js strideOf), so
+// it took a man's 2.2: the golem stands twice a man's height, so its legs cycled twice as fast as its body moved, and the
+// Kingstone drawn twice the golem's size (BIG) shuffled at 2.4 steps a second, its planted feet sliding at 7× its walk
+// (the owner, 2026-11-16: "The stone king moves too fast for how big and heavy he is"; measured in Luminati, its foot
+// bones on the manual clock). Its stride at its height: twice a man's
+const ACTOR_STRIDE = /** @type {Record<string, number>} */ ({ creature_golem: 4.4 });
 const NO_WEATHER = Object.freeze({ kind: 'clear', k: 0 });
 // a marsh world's marsh-lights: one over each mere big enough to hold one, at its middle, with its own phase (fx.wisps)
 const WISPS = new WeakMap();

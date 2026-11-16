@@ -94,8 +94,12 @@ test('every hit of its takes 70 % of max HP: a hero left at 30 %, a second unhea
   land(); assert.ok(H.down, 'a second, unhealed: Downed');
   // its own walk: it moves, turns no faster than RING.king.turn a second, and never plays a plain blow
   let walked = 0, lx = k.x, ly = k.y, lf = k.face, worst = 0;
-  for (let i = 0; i < 20 * 60; i++) { s.tick(); walked += Math.hypot(k.x - lx, k.y - ly); lx = k.x; ly = k.y; let d = k.face - lf; d -= 2 * Math.PI * Math.round(d / (2 * Math.PI)); worst = Math.max(worst, Math.abs(d)); lf = k.face; }
+  // (v1.122, the owner: "The stone king moves too fast for how big and heavy he is": it plants to swing, never walking
+  // while a blow winds up or lands, and walks at a giant's pace)
+  let swungWalking = 0, top = 0;
+  for (let i = 0; i < 20 * 60; i++) { s.tick(); const st = Math.hypot(k.x - lx, k.y - ly); walked += st; top = Math.max(top, st * 20); if (st > 1e-6 && k.act > 0) swungWalking++; lx = k.x; ly = k.y; let d = k.face - lf; d -= 2 * Math.PI * Math.round(d / (2 * Math.PI)); worst = Math.max(worst, Math.abs(d)); lf = k.face; }
   assert.ok(walked > 8, `it walks (${walked.toFixed(1)} tiles in a minute)`); assert.ok(worst <= RING.king.turn / 20 + 1e-9, 'it turns slowly');
+  assert.equal(swungWalking, 0, 'it stands to swing'); assert.ok(top <= k.speed * RING.king.pace + 1e-9 && top < 1.3, `a giant's pace: ${top.toFixed(2)} tiles a second at most`);
   assert.ok(Math.hypot(k.x - C.x, k.y - C.y) <= C.arena - RING.king.edge, 'and keeps inside the stones');
 });
 

@@ -40,7 +40,7 @@ export const RING = {
   stones: { every: 30, wind: 2.4, r: 2.5, n: [6, 10], crackedN: [10, 14], hurt: 0.7, at: [0.75, 0.5, 0.25] },
   cracked: 0.5,          // under half: it cracks, and its tells come faster
   // how it moves (battle.js kingTurn): a giant's walk to the thick of the fight, turning slowly; its swing's lead on a tell
-  king: { pace: 1.4, turn: 1.5, keep: 2.5, edge: 3, retarget: 6 },
+  king: { pace: 1.1, turn: 1.2, keep: 2.5, edge: 3, retarget: 6 },   // (v1.122: 1.4 and 1.5 before; a giant walks slower, turns slower)
   swingLead: 0.45,
   // the AI's eye for a tell: how long before a member steps out (s), a companion's and the hero's when you let go
   react: [0.4, 0.9], heroReact: 0.8,

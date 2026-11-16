@@ -838,7 +838,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const at = posOf(R.mark), want = k.act > 0 && k.windDir !== undefined ? k.windDir : atan2(at.y - k.y, at.x - k.x);   // (facing what it winds, else its mark)
     let d = want - k.face; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
     const step = K.turn * dt; k.face += Math.max(-step, Math.min(step, d)); k.fx = cos(k.face); k.fy = sin(k.face);
-    if ((k.hold = Math.max(0, (k.hold || 0) - dt)) > 0 || k.rooted > 0) { k.moving = false; return; }   // (it stands for a stamp's or a sweep's wind-up)
+    // (it stands for a stamp's or a sweep's wind-up, and for every blow: the owner, 2026-11-16, "The stone king moves too
+    // fast for how big and heavy he is". Measured in Luminati on the manual clock, a 20 s stretch of his fight: he swung
+    // while walking a third of it, his feet in the blow's pose while his body slid on, a planted foot sliding at 3.4×
+    // his own pace. A body that heavy plants to swing)
+    if ((k.hold = Math.max(0, (k.hold || 0) - dt)) > 0 || k.rooted > 0 || k.act > 0) { k.moving = false; return; }
     // where it walks: toward its mark, never nearer the edge than K.edge
     let gx = at.x, gy = at.y; const ex = gx - R.cx, ey = gy - R.cy, ed = hypot(ex, ey), lim = R.R - K.edge - (k.body || 0);
     if (ed > lim) { gx = R.cx + (ex / ed) * lim; gy = R.cy + (ey / ed) * lim; }
