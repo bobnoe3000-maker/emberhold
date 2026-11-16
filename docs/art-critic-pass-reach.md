@@ -249,7 +249,7 @@ it #2x–#3x, a third of the Vale's grass), and the hour's brightness lifted onl
 - **The ground lifted toward a mid ash** (world.js `LIFT`: ×1.55 and a fifth of the way to #8e877c), the slag brick left
   dark so the town still stands black on it; the sun and the ground's bounce less taken away in the ash sky.
 - **The hour's brightness** (hybrid.js `REACH_BRIGHT`, dawn · day · dusk · night): overland 1 · 1 · 1.08 · 2.3 →
-  1.2 · 0.78 · 1.12 · 2.6; Ashgate 1 · 1 · 1.05 · 1.35 → 1.2 · 0.9 · 1.25 · 1.35.
+  1.2 · 0.68 · 1.12 · 2.6 (noon 0.78 → 0.68 after the Cold Seam's shots: the open ash went milky at 100; now 65–92); Ashgate 1 · 1 · 1.05 · 1.35 → 1.2 · 0.9 · 1.25 · 1.35.
 
 | sample (of 16) | 0 dawn breaking | 2 | 5 noon | 9 dusk | 13 night |
 |---|---|---|---|---|---|

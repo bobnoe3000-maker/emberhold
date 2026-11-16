@@ -61,7 +61,7 @@ export { BRIGHT, brightAt } from './bright.js';
 // the desert it was drawn in, and by night its world band fell to a mean luminance of 23 (the Vale's night is the
 // owner's 40): night lifted (×1.6 took the Cinderworks' to 31, the open ground by Ashgate's gate only to 21: ×2.3),
 // dusk a touch, day and dawn as they are (dawn, day, dusk, night)
-const REACH_BRIGHT = { overland: [1.2, 0.78, 1.12, 2.6], town: [1.2, 0.9, 1.25, 1.35] };
+const REACH_BRIGHT = { overland: [1.2, 0.68, 1.12, 2.6], town: [1.2, 0.9, 1.25, 1.35] };
 /** @param {string} region @param {string} scene @param {number[]} k */
 const reachBright = (region, scene, k) => (region === 'reach' && REACH_BRIGHT[scene] ? k.map((v, i) => v * REACH_BRIGHT[scene][i]) : k);
 
