@@ -25,6 +25,8 @@ import { createTowerCard } from './ui/tower.js';
 import { createBowl } from './ui/bowl.js';
 import { createPartyUp } from './ui/partyup.js';
 import { createRing } from './ui/ring.js';
+import { createChatDock } from './ui/chatdock.js';
+import { createChat } from './net/chat.js';
 import { createAway } from './ui/away.js';
 import { createDefeat } from './ui/defeat.js';
 import { createGuildTerms } from './ui/guildterms.js';
@@ -139,6 +141,7 @@ const ring = createRing({ sim, params, dev: DEV });
 renderer.ringClock = () => ring.clock();   // (the minimap's old stones, lit while the Kingstone stands)   // the Kingstone (GDD §19 v1.105): the hour's line, Enter the Ring at the old stones, its bar and end card
 createDefeat({ sim });                // a wipe: what happened, before you wake at the Shrine (ui/defeat.js)
 createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare(), questTitle: (id) => journal.title(id) });   // compass travel (docs/compass-mockup.html)
+const chatDock = createChatDock({ sim, partyPanel, ring, chat: createChat(), questTitle: (id) => journal.title(id) });   // swipe the cards left: the chat, World and Company news (ui/chatdock.js)
 const gearSheet = createGearSheet(sim, { partyPanel, openTerms: () => guildTerms.open(), models: !WORLD_OFF && !/sprites/.test(params.get('figures') || '') });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)
 hud.onWage(() => { if (sim.world.kind !== 'town') return false; townMenu.openHire(); return true; });   // the wage line under the gold
 if (DEV) globalThis.__gear = gearSheet;
@@ -223,7 +226,7 @@ else document.getElementById('bootSplash')?.remove();
 let awaySecs = saved && !PREVIEW ? Math.max(0, (Date.now() - (saved.savedAt || Date.now())) / 1000) : 0, hiddenAt = 0;
 function catchUp(secs = awaySecs) { awaySecs = 0; if (secs >= AWAY_MIN && sim.state.created && !PREVIEW) away.run(secs); }
 if (!BOOT) renderer.ready.then(() => catchUp());
-if (DEV) globalThis.__ui = { title, brightness, creation, partyScreen, slots, cinema, dialogue, journal, worldMap, firstSteps, bowl, partyUp, ring, gearSheet };
+if (DEV) globalThis.__ui = { title, brightness, creation, partyScreen, slots, cinema, dialogue, journal, worldMap, firstSteps, bowl, partyUp, ring, gearSheet, chatDock };
 
 
 // tap: a named person → talk; a service → its menu; an enemy → focus; anything else → walk there (and use a chest /

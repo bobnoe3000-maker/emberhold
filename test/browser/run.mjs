@@ -358,6 +358,35 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('the Kingstone\'s hour line: on the Fens\' overland in its window, never in a dungeon (a raid\'s or a hall\'s banners hold that place), gone once stood against', seen.overland.on && !seen.dungeon.on && !seen.paid.on && !seen.overland.errs && !seen.dungeon.errs && !seen.paid.errs, JSON.stringify(seen));
   }
 }
+// 5a2. the chat dock (ui/chatdock.js; the owner, 2026-11-16: "build the chat dock, event buttons act at once"): a swipe left
+// on the cards shows the chat; the Kingstone's line is there in its window and its Walk there sets the company walking at
+// once; the handle drags it wide (under the HUD); a swipe right brings the cards back; a tap on a card still opens its sheet
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&notitle&ring=on&scene=overland&region=fens`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__ui && !!document.querySelector('#party .card'), null, { timeout: 60000 * SLOW });
+    await p.evaluate(() => { const s = globalThis.__sim; s.state.created = true; for (const m of s.state.party) m.level = 15; });
+    await p.waitForTimeout(2500);
+    const r = await p.locator('#party .card').nth(1).boundingBox();
+    await p.mouse.move(r.x + r.width - 5, r.y + 40); await p.mouse.down(); for (let x = r.x + r.width - 5; x > 20; x -= 25) await p.mouse.move(x, r.y + 42); await p.mouse.up();
+    await p.waitForTimeout(700);
+    const a = await p.evaluate(() => ({ shown: globalThis.__ui.chatDock.shown, king: [...document.querySelectorAll('#chatDock .ev')].some((e) => /Kingstone stands/.test(e.textContent)), offline: /online play/.test(document.querySelector('#chatDock .log').textContent) }));
+    await p.locator('#chatDock .act').first().click(); await p.waitForTimeout(300);
+    const walk = await p.evaluate(() => ({ btn: document.querySelector('#chatDock .act').textContent, going: !!document.getElementById('walkChip') && getComputedStyle(document.getElementById('walkChip')).display !== 'none' }));
+    const g = await p.locator('#chatDock .grab').boundingBox(); await p.mouse.move(g.x + g.width / 2, g.y + 10); await p.mouse.down(); for (let y = g.y + 10; y > 100; y -= 40) await p.mouse.move(g.x + g.width / 2, y); await p.mouse.up();
+    await p.waitForTimeout(800);
+    const wide = await p.evaluate(() => ({ big: globalThis.__ui.chatDock.big, top: Math.round(document.getElementById('chatDock').getBoundingClientRect().top), hud: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hud-b')) }));
+    const d = await p.locator('#chatDock .log').boundingBox(); await p.mouse.move(d.x + 30, d.y + d.height - 20); await p.mouse.down(); for (let x = d.x + 30; x < 370; x += 25) await p.mouse.move(x, d.y + d.height - 18); await p.mouse.up();
+    await p.waitForTimeout(700);
+    const back = await p.evaluate(() => globalThis.__ui.chatDock.shown);
+    await p.locator('#party .card').nth(1).tap(); await p.waitForTimeout(700);
+    const sheet = await p.evaluate(() => !!document.querySelector('#gearSheet.on'));
+    await b.close();
+    check('the chat dock: a swipe on the cards shows it, the Kingstone\'s line walks the company there at once, it opens wide under the HUD, a swipe right brings the cards back, a card\'s tap still opens its sheet', a.shown && a.king && a.offline && walk.btn === 'On the way' && wide.big && wide.top > wide.hud && wide.top < 300 && !back && sheet && !errs.length, JSON.stringify({ a, walk, wide, back, sheet, errs }));
+  }
+}
 // 5b. the first-open cards (docs/first-steps-plan.md §3; the flows run with them off): each service's card the first time
 // it opens, ringing its row, and none the second time
 {

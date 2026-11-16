@@ -1,0 +1,435 @@
+<title>Emberfall Chat Dock</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Cormorant+Garamond:wght@600;700&display=swap">
+<style>
+/* Layout: one phone frame, the fight on a canvas filling it; HUD over the top; the dock at the bottom is a two-page
+   carousel (party tiles | chat). The chat page has a handle that drags it up to cover most of the frame, translucent so
+   the fight shows through. Single dark look by choice: it is the game's own screen. */
+:root {
+  --night: #0b0d1a;        /* the dungeon dark, page ground */
+  --ink: #12101c;          /* panels */
+  --panel: rgba(16, 13, 26, 0.92);
+  --glass: rgba(14, 11, 24, 0.80);
+  --gold: #e7c27a;         /* the game's HUD gold */
+  --gold-dim: #8a7448;
+  --bone: #e9dfcb;         /* body text */
+  --muted: #9a93a6;
+  --hp: #5aa35c; --mp: #4a72d0; --foe: #d24a3c;
+  --world: #f0c880;        /* world events */
+  --raid: #9fd0ff; --loot: #ffb070;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  --serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: #07080f; color: var(--bone); font-family: var(--mono); margin: 0; }
+.page { min-height: 100%; display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; align-items: flex-start;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px; box-sizing: border-box; }
+@media (max-width: 460px) { .page { padding-left: 0; padding-right: 0; padding-block: 0; } .phone { border-radius: 0 !important; border: 0 !important; } }
+
+/* the phone */
+.phone { position: relative; width: min(390px, 100vw); height: min(844px, 100dvh); border-radius: 34px; overflow: hidden;
+  background: var(--night); border: 1px solid #262338; box-shadow: 0 30px 80px rgba(0,0,0,.6); user-select: none; -webkit-user-select: none; }
+@media (max-width: 460px) { .phone { height: 100dvh; } }
+canvas#fight { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+
+/* HUD */
+.hud { position: absolute; left: 0; right: 0; top: 0; padding: 14px 14px 0; pointer-events: none; }
+.row1 { display: flex; gap: 10px; align-items: flex-start; }
+.menu { width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--gold-dim); display: grid; place-items: center; color: var(--gold); background: var(--glass); font-size: 18px; }
+.where { flex: 1; min-width: 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
+.where b { color: var(--bone); font-weight: 600; }
+.where .tod { color: var(--loot); }
+.gold { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.gold b { color: var(--bone); }
+.gold i { color: var(--loot); font-style: normal; }
+.mid { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; }
+.pillwrap { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.pill { border: 1.5px solid var(--gold); border-radius: 99px; padding: 5px 12px; font-size: 11px; font-weight: 700; color: var(--gold); background: rgba(14,10,18,.82); letter-spacing: .04em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.bossline { font-family: var(--serif); font-size: 16px; font-weight: 700; color: #e8d8b8; text-shadow: 0 1px 2px #000; font-variant-numeric: tabular-nums; }
+.mini { width: 104px; height: 96px; border: 1px solid #3a3550; background: rgba(10,9,18,.75); position: relative; flex: none; }
+.mini span { position: absolute; background: #3d3657; border: 1px solid #5a4f7a; font-size: 9px; color: var(--gold); display: grid; place-items: center; }
+
+/* the toast for an event that arrives with the chat out of sight */
+.toast { position: absolute; left: 14px; right: 14px; top: 150px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--gold-dim);
+  background: var(--panel); font-size: 12px; color: var(--world); opacity: 0; transform: translateY(-6px); transition: opacity .25s, transform .25s; pointer-events: none; }
+.toast.on { opacity: 1; transform: none; }
+.toast small { display: block; color: var(--muted); margin-top: 2px; font-size: 10.5px; }
+
+/* the dock */
+.dock { position: absolute; left: 0; right: 0; bottom: 0; height: var(--dockH, 196px); transition: height .32s cubic-bezier(.2,.8,.2,1); }
+.dock.dragging { transition: none; }
+.dots { position: absolute; left: 0; right: 0; top: -26px; height: 26px; display: flex; justify-content: center; align-items: center; gap: 6px; pointer-events: auto; }
+.dot { height: 26px; min-width: 44px; padding: 0 8px; border: 0; background: none; color: var(--muted); font: 600 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.dot::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #4b4560; }
+.dot.on { color: var(--gold); }
+.dot.on::before { background: var(--gold); }
+.badge { min-width: 16px; height: 16px; border-radius: 8px; background: var(--foe); color: #fff; font-size: 9.5px; display: none; place-items: center; padding: 0 4px; letter-spacing: 0; }
+.badge.on { display: inline-grid; }
+.viewport { position: absolute; inset: 0; overflow: hidden; }
+.track { display: flex; width: 200%; height: 100%; transform: translateX(var(--tx, 0%)); transition: transform .3s cubic-bezier(.2,.8,.2,1); }
+.track.dragging { transition: none; }
+.pg { width: 50%; height: 100%; touch-action: pan-y; position: relative; }
+
+/* party tiles */
+.party { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 8px 8px 14px; height: 100%; box-sizing: border-box; background: linear-gradient(transparent, rgba(5,5,10,.9) 30%); }
+.card { border: 1px solid #2c2840; background: var(--ink); border-radius: 4px; padding: 8px 7px; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.card.lead { border-color: var(--gold-dim); }
+.top { display: flex; gap: 6px; align-items: center; min-width: 0; }
+.face { width: 34px; height: 34px; border: 1px solid #3a3550; flex: none; display: grid; place-items: center; font-family: var(--serif); font-size: 18px; color: var(--gold); background: #1d1930; }
+.nm { min-width: 0; }
+.nm b { display: block; font-size: 12px; letter-spacing: .12em; color: var(--bone); }
+.nm i { display: block; font-style: normal; font-size: 9px; letter-spacing: .14em; color: var(--muted); }
+.bar { height: 9px; background: #262238; position: relative; }
+.bar > div { position: absolute; inset: 0 auto 0 0; }
+.bar span { position: absolute; right: 3px; top: -2px; font-size: 8.5px; color: #fff; font-variant-numeric: tabular-nums; }
+.stats { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 1px 4px; font-size: 9px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stats b { color: var(--bone); font-weight: 500; text-align: right; }
+.hint { position: absolute; right: 10px; bottom: 2px; font-size: 9.5px; color: var(--gold-dim); letter-spacing: .08em; pointer-events: none; animation: nudge 2.4s ease-in-out infinite; }
+@keyframes nudge { 0%, 60%, 100% { transform: none; opacity: .75 } 30% { transform: translateX(-6px); opacity: 1 } }
+
+/* chat */
+.chat { height: 100%; display: flex; flex-direction: column; background: var(--glass); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); border-top: 1px solid var(--gold-dim); box-sizing: border-box; }
+.chat.clear { background: rgba(14,11,24,.55); }
+.chat.solid { background: rgba(14,11,24,.95); }
+.grab { height: 30px; flex: none; display: grid; place-items: center; cursor: ns-resize; touch-action: none; }
+.grab::before { content: ""; width: 42px; height: 4px; border-radius: 2px; background: var(--gold-dim); }
+.head { display: flex; align-items: center; gap: 4px; padding: 0 8px 6px; flex: none; }
+.tabs { display: flex; gap: 2px; flex: 1; min-width: 0; }
+.tab { height: 30px; padding: 0 10px; border: 1px solid transparent; border-radius: 15px; background: none; color: var(--muted); font: 600 10.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+.tab.on { color: var(--gold); border-color: var(--gold-dim); background: rgba(231,194,122,.08); }
+.ib { width: 34px; height: 30px; border: 1px solid #3a3550; border-radius: 8px; background: none; color: var(--muted); font: 600 11px var(--mono); cursor: pointer; display: grid; place-items: center; }
+.glance { display: none; gap: 6px; padding: 0 10px 8px; flex: none; }
+.chat.big .glance { display: flex; }
+.gl { flex: 1; min-width: 0; font-size: 9.5px; color: var(--muted); }
+.gl b { color: var(--bone); font-weight: 600; letter-spacing: .08em; }
+.gl .bar { height: 5px; margin-top: 3px; }
+.log { flex: 1; min-height: 0; overflow-y: auto; padding: 0 10px 6px; display: flex; flex-direction: column; gap: 5px; scrollbar-width: thin; touch-action: pan-y; overscroll-behavior: contain; }
+.msg { font-size: 12px; line-height: 1.45; color: var(--bone); overflow-wrap: anywhere; }
+.msg .who { color: #b9b1ff; font-weight: 600; }
+.msg .lv { color: var(--muted); font-size: 10px; }
+.msg.me .who { color: var(--hp); }
+.msg.co .who { color: #7fd1b4; }
+.ev { border-left: 2px solid var(--world); padding: 4px 0 4px 8px; color: var(--world); font-size: 11.5px; line-height: 1.45; display: flex; gap: 8px; align-items: flex-start; }
+.ev.raid { border-color: var(--raid); color: var(--raid); }
+.ev.loot { border-color: var(--loot); color: var(--loot); }
+.ev .t { flex: 1; min-width: 0; }
+.ev small { display: block; color: var(--muted); font-size: 10px; }
+.act { flex: none; height: 28px; padding: 0 10px; border-radius: 14px; border: 1px solid currentColor; background: none; color: inherit; font: 600 10.5px var(--mono); cursor: pointer; }
+.ts { color: #5f5876; font-size: 9.5px; margin-right: 5px; font-variant-numeric: tabular-nums; }
+.newer { position: absolute; left: 50%; transform: translateX(-50%); bottom: 58px; height: 28px; padding: 0 12px; border-radius: 14px; border: 1px solid var(--gold-dim); background: var(--panel); color: var(--gold); font: 600 10.5px var(--mono); display: none; cursor: pointer; }
+.newer.on { display: block; }
+form { display: flex; gap: 6px; padding: 6px 8px 10px; flex: none; }
+input#say { flex: 1; min-width: 0; height: 40px; border-radius: 10px; border: 1px solid #3a3550; background: rgba(8,7,14,.85); color: var(--bone); padding: 0 10px; font: 13px var(--mono); }
+input#say:focus { outline: none; border-color: var(--gold-dim); }
+button.send { height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--gold-dim); background: rgba(231,194,122,.1); color: var(--gold); font: 700 11px var(--mono); letter-spacing: .08em; cursor: pointer; }
+button:focus-visible, .tab:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* notes beside the phone */
+.notes { width: min(380px, 100%); font-family: Georgia, serif; color: #cfc6b4; line-height: 1.55; font-size: 14.5px; padding-inline: 4px; box-sizing: border-box; }
+@media (max-width: 460px) { .notes { padding: 20px 16px 40px; } }
+.notes h1 { font-family: var(--serif); color: var(--gold); font-size: 30px; margin: 0 0 6px; text-wrap: balance; }
+.notes h2 { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold-dim); margin: 22px 0 6px; }
+.notes ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.notes .ctl { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.notes button { height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--gold-dim); background: none; color: var(--gold); font: 600 11px var(--mono); cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .track, .dock, .toast { transition: none !important; } .hint { animation: none; } }
+</style>
+
+<div class="page">
+  <div class="phone" id="phone">
+    <canvas id="fight"></canvas>
+
+    <div class="hud">
+      <div class="row1">
+        <div class="menu" aria-hidden="true">☰</div>
+        <div class="where"><b>depth 2</b><br><span class="tod">◒ Dusk</span> · −872 · dawn 27m</div>
+        <div class="gold">gold <b id="gold">43135</b> <i>✦</i> <b>138</b></div>
+      </div>
+      <div class="mid">
+        <div class="pillwrap">
+          <div class="pill" id="pill">ROOM LV 18 · WAVE 7 · FOES +36%</div>
+          <div class="bossline" id="boss">The Abbess Below · back in 21:29</div>
+        </div>
+        <div class="mini" aria-hidden="true">
+          <span style="left:44px;top:6px;width:22px;height:18px">18</span>
+          <span style="left:26px;top:34px;width:44px;height:16px">17</span>
+          <span style="left:74px;top:30px;width:22px;height:22px">18</span>
+          <span style="left:4px;top:34px;width:18px;height:16px"></span>
+          <span style="left:72px;top:58px;width:26px;height:30px"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <div class="dock" id="dock">
+      <div class="dots" role="tablist" aria-label="Dock">
+        <button class="dot on" id="dotParty" role="tab" aria-selected="true">Party</button>
+        <button class="dot" id="dotChat" role="tab" aria-selected="false">Chat <span class="badge" id="badge">0</span></button>
+      </div>
+      <div class="viewport">
+        <div class="track" id="track">
+          <section class="pg" id="pgParty" aria-label="Party">
+            <div class="party" id="party"></div>
+            <div class="hint" id="hint">‹ swipe for chat</div>
+          </section>
+          <section class="pg" aria-label="Chat">
+            <div class="chat" id="chat">
+              <div class="grab" id="grab" title="Drag up to open the chat wide; tap to toggle" aria-label="Resize chat" role="button" tabindex="0"></div>
+              <div class="head">
+                <div class="tabs" role="tablist" aria-label="Channels">
+                  <button class="tab on" data-ch="all">All</button>
+                  <button class="tab" data-ch="world">World</button>
+                  <button class="tab" data-ch="chat">Chat</button>
+                  <button class="tab" data-ch="company">Company</button>
+                </div>
+                <button class="ib" id="see" title="How much of the fight shows through" aria-label="See-through">◐</button>
+              </div>
+              <div class="glance" id="glance" aria-label="The fight at a glance"></div>
+              <div class="log" id="log" aria-live="polite"></div>
+              <button class="newer" id="newer">↓ newer</button>
+              <form id="form" autocomplete="off">
+                <input id="say" maxlength="140" placeholder="Say something to the Fens…" aria-label="Message">
+                <button class="send" type="submit">SEND</button>
+              </form>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="notes">
+    <h1>The chat dock</h1>
+    <p>A working mockup. The fight is a stand-in drawn on a canvas, but it runs the whole time: waves come and fall, health moves, and the HUD keeps counting behind the chat.</p>
+    <h2>Try it</h2>
+    <ul>
+      <li><b>Swipe left</b> on the party tiles to show the chat. Swipe right to get the tiles back. The <b>Party · Chat</b> dots above do the same with a tap.</li>
+      <li><b>Drag the handle</b> at the top of the chat up to open it over most of the screen, down to close it again. A tap on the handle toggles it.</li>
+      <li>Opened wide, the chat shows the company's health in a strip at its top, so a fight going wrong is never out of sight.</li>
+      <li><b>◐</b> sets how much of the fight shows through: clear, dim or solid.</li>
+      <li>World events arrive every few seconds in gold, with a button where there's something to do. With the chat out of sight they show as a short notice and a count on the Chat dot.</li>
+    </ul>
+    <h2>Make things happen</h2>
+    <div class="ctl">
+      <button id="fireEv">A world event now</button>
+      <button id="fireMsg">A player speaks</button>
+    </div>
+    <h2>Questions for you</h2>
+    <ul>
+      <li>Channels: All, World, Chat, Company. More, fewer, or a Guild one later?</li>
+      <li>Should a world event's button act at once (walk to the stones, join the raid), or open its card first?</li>
+      <li>Opened wide, should the chat stop at the HUD (as here) or cover it?</li>
+    </ul>
+  </aside>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const phone = $('phone'), cv = $('fight'), cx = cv.getContext('2d');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ── the company (a stand-in for the game's party cards) ─────────────────────────
+  const party = [
+    { name: 'TOBIN', cls: 'SHAMAN', face: 'T', hp: 337, max: 337, mp: 288, mmax: 288, atk: 69.5, def: 51, crt: '12%', ddg: '9%', col: '#6c8f4a' },
+    { name: 'PIKE', cls: 'FIGHTER', face: 'P', hp: 681, max: 706, mp: 16, mmax: 61, atk: 86.5, def: 132.6, crt: '26.5%', ddg: '7.4%', col: '#a0543c', lead: true },
+    { name: 'MERROW', cls: 'MAGE', face: 'M', hp: 340, max: 340, mp: 468, mmax: 468, atk: 112.7, def: 38.6, crt: '11%', ddg: '8%', col: '#5a4aa0' },
+  ];
+  const partyEl = $('party'), glance = $('glance');
+  partyEl.innerHTML = party.map((m, i) => `<div class="card${m.lead ? ' lead' : ''}">
+    <div class="top"><div class="face">${m.face}</div><div class="nm"><b>${m.name}</b><i>${m.cls}</i></div></div>
+    <div class="bar"><div id="hp${i}" style="background:var(--hp)"></div><span id="hpt${i}"></span></div>
+    <div class="bar"><div id="mp${i}" style="background:var(--mp)"></div><span id="mpt${i}"></span></div>
+    <div class="stats"><span>ATK</span><b>${m.atk}</b><span>DEF</span><b>${m.def}</b><span>CRT</span><b>${m.crt}</b><span>DDG</span><b>${m.ddg}</b></div></div>`).join('');
+  glance.innerHTML = party.map((m, i) => `<div class="gl"><b>${m.name}</b> <span id="glt${i}"></span><div class="bar"><div id="glb${i}" style="background:var(--hp)"></div></div></div>`).join('');
+  function drawParty() {
+    party.forEach((m, i) => {
+      $('hp' + i).style.width = (100 * m.hp / m.max).toFixed(1) + '%'; $('hpt' + i).textContent = `${Math.round(m.hp)}/${m.max}`;
+      $('mp' + i).style.width = (100 * m.mp / m.mmax).toFixed(1) + '%'; $('mpt' + i).textContent = `${Math.round(m.mp)}/${m.mmax}`;
+      const f = m.hp / m.max; $('glb' + i).style.width = (100 * f).toFixed(1) + '%'; $('glb' + i).style.background = f < .35 ? 'var(--foe)' : 'var(--hp)';
+      $('glt' + i).textContent = Math.round(f * 100) + '%';
+    });
+  }
+
+  // ── the fight behind (a stand-in: an isometric room, the company, waves of the drowned) ──
+  let W = 0, H = 0, dpr = 1;
+  function size() { const r = phone.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1); W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+  addEventListener('resize', size); size();
+  const TW = 34, TH = 17, iso = (x, y) => [W / 2 + (x - y) * TW / 2, H * 0.42 + (x + y) * TH / 2];
+  const pillars = [[-4, -3], [3, -5], [-6, 2], [5, 1], [-2, 5], [4, 6]];
+  const units = party.map((m, i) => ({ x: [-0.8, 0.4, 1.2][i], y: [-0.4, 0.8, -0.6][i], col: m.col, m, cd: Math.random(), hit: 0 }));
+  let foes = [], floats = [], wave = 7, lull = 1.2, foesUp = 36;
+  function spawn() {
+    wave++; foesUp = Math.round(wave * 5.1);
+    const n = 3 + (wave % 3);
+    for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, r = 6 + Math.random() * 1.5; foes.push({ x: Math.cos(a) * r, y: Math.sin(a) * r, hp: 1, cd: Math.random(), rise: 0.6, hit: 0 }); }
+    $('pill').textContent = `ROOM LV 18 · WAVE ${wave} · FOES +${foesUp}%`;
+  }
+  function step(dt) {
+    if (!foes.length) { lull -= dt; if (lull <= 0) { spawn(); lull = 2; } }
+    for (const f of foes) {
+      if (f.rise > 0) { f.rise -= dt; continue; }
+      let best = units[0], bd = 1e9; for (const u of units) { const d = Math.hypot(u.x - f.x, u.y - f.y); if (d < bd) { bd = d; best = u; } }
+      if (bd > 1.1) { f.x += (best.x - f.x) / bd * dt * 1.6; f.y += (best.y - f.y) / bd * dt * 1.6; }
+      else if ((f.cd -= dt) <= 0) { f.cd = 1.3; const n = 18 + Math.round(Math.random() * 30); best.m.hp = Math.max(best.m.max * 0.15, best.m.hp - n); best.hit = .2; floats.push({ x: best.x, y: best.y, t: 0, txt: String(n), c: '#ff8a7a' }); }
+    }
+    for (const u of units) {
+      u.hit = Math.max(0, u.hit - dt);
+      const live = foes.filter((f) => f.rise <= 0); if (!live.length) { u.m.hp = Math.min(u.m.max, u.m.hp + u.m.max * 0.08 * dt); u.m.mp = Math.min(u.m.mmax, u.m.mp + 6 * dt); continue; }
+      if ((u.cd -= dt) <= 0) {
+        u.cd = 0.9 + Math.random() * .5; let t = live[0], td = 1e9; for (const f of live) { const d = Math.hypot(u.x - f.x, u.y - f.y); if (d < td) { td = d; t = f; } }
+        if (u.m.cls === 'SHAMAN' && Math.random() < .35) { const low = party.reduce((a, b) => (a.hp / a.max < b.hp / b.max ? a : b)); const n = 60 + Math.round(Math.random() * 40); low.hp = Math.min(low.max, low.hp + n); const lu = units.find((q) => q.m === low); floats.push({ x: lu.x, y: lu.y, t: 0, txt: '+' + n, c: '#8fe08f' }); u.m.mp = Math.max(0, u.m.mp - 14); continue; }
+        if (td > 3.5 && u.m.cls === 'FIGHTER') continue;
+        t.hp -= 0.34 + Math.random() * .25; t.hit = .18; const n = 120 + Math.round(Math.random() * 320); floats.push({ x: t.x, y: t.y, t: 0, txt: String(n), c: '#fff2d0' });
+        if (u.m.cls === 'MAGE') u.m.mp = Math.max(0, u.m.mp - 9);
+      }
+    }
+    const before = foes.length; foes = foes.filter((f) => f.hp > 0); if (before && !foes.length) { lull = 2; const g = $('gold'); g.textContent = String(+g.textContent + 40 + wave * 3); }
+    for (const f of floats) f.t += dt; floats = floats.filter((f) => f.t < 1.1);
+  }
+  function fig(x, y, col, ring, hit, lift = 0) {
+    const [sx, sy] = iso(x, y);
+    cx.fillStyle = 'rgba(0,0,0,.4)'; cx.beginPath(); cx.ellipse(sx, sy, 11, 5, 0, 0, 7); cx.fill();
+    if (ring) { cx.strokeStyle = '#e7c27a'; cx.lineWidth = 2; cx.beginPath(); cx.ellipse(sx, sy, 14, 6.5, 0, 0, 7); cx.stroke(); }
+    cx.fillStyle = hit > 0 ? '#ffffff' : col; cx.fillRect(sx - 6, sy - 24 + lift, 12, 18);
+    cx.fillStyle = hit > 0 ? '#ffffff' : '#d8b89a'; cx.beginPath(); cx.arc(sx, sy - 29 + lift, 6, 0, 7); cx.fill();
+  }
+  function hpbar(x, y, f, col) { const [sx, sy] = iso(x, y); cx.fillStyle = 'rgba(8,6,12,.8)'; cx.fillRect(sx - 11, sy - 46, 22, 5); cx.fillStyle = col; cx.fillRect(sx - 10, sy - 45, 20 * Math.max(0, f), 3); }
+  function draw() {
+    cx.fillStyle = '#0b0d1a'; cx.fillRect(0, 0, W, H);
+    for (let y = -8; y <= 8; y++) for (let x = -8; x <= 8; x++) {
+      const [sx, sy] = iso(x, y), d = Math.hypot(x, y) / 9, a = Math.max(0, 1 - d * d);
+      const v = ((x * 7 + y * 13) & 3) * 3;
+      cx.fillStyle = `rgba(${30 + v},${38 + v},${68 + v},${0.25 + 0.75 * a})`;
+      cx.beginPath(); cx.moveTo(sx, sy - TH / 2); cx.lineTo(sx + TW / 2, sy); cx.lineTo(sx, sy + TH / 2); cx.lineTo(sx - TW / 2, sy); cx.closePath(); cx.fill();
+      cx.strokeStyle = `rgba(10,12,24,${0.6 * a})`; cx.stroke();
+    }
+    const things = [...pillars.map(([x, y]) => ({ x, y, k: 'p' })), ...units.map((u) => ({ ...u, k: 'u', u })), ...foes.map((f) => ({ x: f.x, y: f.y, k: 'f', f }))].sort((a, b) => a.x + a.y - (b.x + b.y));
+    for (const t of things) {
+      if (t.k === 'p') { const [sx, sy] = iso(t.x, t.y); cx.fillStyle = '#141a30'; cx.fillRect(sx - 7, sy - 70, 14, 70); cx.fillStyle = '#1d2440'; cx.fillRect(sx - 7, sy - 70, 5, 70); }
+      else if (t.k === 'u') { fig(t.x, t.y, t.u.col, true, t.u.hit); hpbar(t.x, t.y, t.u.m.hp / t.u.m.max, '#5aa35c'); }
+      else { const f = t.f, lift = f.rise > 0 ? f.rise * 30 : 0; cx.globalAlpha = f.rise > 0 ? 1 - f.rise : 1; fig(f.x, f.y, '#2f5a5c', false, f.hit, lift); cx.globalAlpha = 1; if (f.rise <= 0) hpbar(f.x, f.y, f.hp, '#d24a3c'); }
+    }
+    cx.font = '700 13px IBM Plex Mono, monospace'; cx.textAlign = 'center';
+    for (const f of floats) { const [sx, sy] = iso(f.x, f.y); cx.globalAlpha = 1 - f.t / 1.1; cx.fillStyle = '#000'; cx.fillText(f.txt, sx + 1, sy - 52 - f.t * 26 + 1); cx.fillStyle = f.c; cx.fillText(f.txt, sx, sy - 52 - f.t * 26); }
+    cx.globalAlpha = 1;
+    const g = cx.createRadialGradient(W / 2, H * .45, H * .15, W / 2, H * .45, H * .7); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(4,4,10,.85)'); cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+  }
+  let bossLeft = 21 * 60 + 29, last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    step(reduce ? dt * 0.5 : dt); draw(); drawParty();
+    bossLeft = Math.max(0, bossLeft - dt); const s = Math.ceil(bossLeft); $('boss').textContent = `The Abbess Below · back in ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // ── the dock: a two-page carousel (party | chat), swiped sideways ──────────────────
+  const dock = $('dock'), track = $('track'), chat = $('chat');
+  let pageIx = 0, unread = 0;
+  const DOCK = 196;
+  function setPage(i) {
+    pageIx = i; track.style.setProperty('--tx', i ? '-50%' : '0%');
+    $('dotParty').classList.toggle('on', !i); $('dotChat').classList.toggle('on', !!i);
+    $('dotParty').setAttribute('aria-selected', String(!i)); $('dotChat').setAttribute('aria-selected', String(!!i));
+    if (i) { unread = 0; badge(); $('hint').hidden = true; scrollEnd(); } else setHeight(DOCK);
+  }
+  $('dotParty').onclick = () => setPage(0); $('dotChat').onclick = () => setPage(1);
+  let sw = null;
+  track.addEventListener('pointerdown', (e) => { if (e.target.closest('.grab, input, button, .log') && e.target.closest('.grab, input, button')) return; sw = { x: e.clientX, y: e.clientY, id: e.pointerId, on: false, t: performance.now() }; });
+  addEventListener('pointermove', (e) => {
+    if (!sw || e.pointerId !== sw.id) return;
+    const dx = e.clientX - sw.x, dy = e.clientY - sw.y;
+    if (!sw.on) { if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2) { sw.on = true; track.classList.add('dragging'); try { track.setPointerCapture(e.pointerId); } catch {} } else if (Math.abs(dy) > 12) { sw = null; return; } else return; }
+    const w = track.parentElement.clientWidth, base = pageIx ? -w : 0, x = Math.max(-w, Math.min(0, base + dx));
+    track.style.setProperty('--tx', `${(x / (2 * w)) * 100}%`);
+  });
+  const endSwipe = (e) => {
+    if (!sw || e.pointerId !== sw.id) return; const on = sw.on, dx = e.clientX - sw.x, v = dx / Math.max(1, performance.now() - sw.t); sw = null;
+    track.classList.remove('dragging'); if (!on) return;
+    if (pageIx === 0 && (dx < -60 || v < -0.45)) setPage(1); else if (pageIx === 1 && (dx > 60 || v > 0.45)) setPage(0); else setPage(pageIx);
+  };
+  addEventListener('pointerup', endSwipe); addEventListener('pointercancel', endSwipe);
+
+  // ── the chat's height: dragged on its handle between the dock's and most of the screen ──
+  const grab = $('grab'), tall = () => Math.round(phone.clientHeight - 196);   // (stops under the wave pill, the boss line and the minimap)
+  let hNow = DOCK;
+  function setHeight(h, live) { hNow = Math.max(DOCK, Math.min(tall(), h)); dock.style.setProperty('--dockH', hNow + 'px'); chat.classList.toggle('big', hNow > DOCK + 120); if (!live) scrollEnd(); }
+  let gd = null;
+  grab.addEventListener('pointerdown', (e) => { e.stopPropagation(); gd = { y: e.clientY, h: hNow, moved: false, id: e.pointerId }; grab.setPointerCapture(e.pointerId); dock.classList.add('dragging'); });
+  grab.addEventListener('pointermove', (e) => { if (!gd || e.pointerId !== gd.id) return; const d = gd.y - e.clientY; if (Math.abs(d) > 4) gd.moved = true; setHeight(gd.h + d, true); });
+  const endGrab = (e) => { if (!gd || e.pointerId !== gd.id) return; dock.classList.remove('dragging'); const mid = (DOCK + tall()) / 2;
+    if (!gd.moved) setHeight(hNow > mid ? DOCK : tall()); else setHeight(hNow > (gd.h > mid ? tall() - 90 : DOCK + 90) ? tall() : DOCK); gd = null; };
+  grab.addEventListener('pointerup', endGrab); grab.addEventListener('pointercancel', endGrab);
+  grab.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setHeight(hNow > DOCK ? DOCK : tall()); } });
+  const looks = ['', 'clear', 'solid']; let look = 0;
+  $('see').onclick = () => { chat.classList.remove(looks[look]); look = (look + 1) % 3; if (looks[look]) chat.classList.add(looks[look]); $('see').textContent = ['◐', '○', '●'][look]; };
+
+  // ── the log: world events (written for the mockup) and players ─────────────────────
+  const log = $('log'); let ch = 'all';
+  const stamp = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  function atEnd() { return log.scrollHeight - log.scrollTop - log.clientHeight < 30; }
+  function scrollEnd() { requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; $('newer').classList.remove('on'); }); }
+  log.addEventListener('scroll', () => { if (atEnd()) $('newer').classList.remove('on'); });
+  $('newer').onclick = scrollEnd;
+  function show(el) { el.hidden = !(ch === 'all' || el.dataset.ch === ch); }
+  function add(el, chn) {
+    el.dataset.ch = chn; const stick = atEnd(); show(el); log.appendChild(el);
+    while (log.children.length > 120) log.firstChild.remove();
+    if (stick) scrollEnd(); else if (!el.hidden) $('newer').classList.add('on');
+  }
+  function say(who, lv, text, kind = '') {
+    const d = document.createElement('div'); d.className = 'msg ' + kind;
+    const ts = document.createElement('span'); ts.className = 'ts'; ts.textContent = stamp();
+    const w = document.createElement('span'); w.className = 'who'; w.textContent = who;
+    const l = document.createElement('span'); l.className = 'lv'; l.textContent = lv ? ` L${lv}` : '';
+    d.append(ts, w, l, document.createTextNode(': ' + text));   // (said as text, never as HTML)
+    add(d, kind === 'co' ? 'company' : 'chat');
+    if (pageIx !== 1 && kind !== 'me') { unread++; badge(); }
+  }
+  function event(e) {
+    const d = document.createElement('div'); d.className = 'ev ' + (e.kind || '');
+    const t = document.createElement('div'); t.className = 't'; t.textContent = e.text;
+    if (e.sub) { const s = document.createElement('small'); s.textContent = e.sub; t.appendChild(s); }
+    d.appendChild(t);
+    if (e.act) { const b = document.createElement('button'); b.className = 'act'; b.textContent = e.act; b.onclick = () => { b.textContent = e.done || 'On the way'; b.disabled = true; }; d.appendChild(b); }
+    add(d, 'world');
+    if (pageIx !== 1) { unread++; badge(); toast(e); }
+  }
+  function badge() { const b = $('badge'); b.textContent = String(Math.min(unread, 99)); b.classList.toggle('on', unread > 0); }
+  let tt = 0;
+  function toast(e) { const t = $('toast'); t.textContent = e.text; if (e.sub) { const s = document.createElement('small'); s.textContent = e.sub; t.appendChild(s); } t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 3200); }
+  document.querySelectorAll('.tab').forEach((b) => b.onclick = () => { document.querySelectorAll('.tab').forEach((q) => q.classList.toggle('on', q === b)); ch = b.dataset.ch; for (const el of log.children) show(el); scrollEnd(); });
+  $('form').addEventListener('submit', (e) => { e.preventDefault(); const v = $('say').value.trim(); if (!v) return; say('You', 20, v, 'me'); $('say').value = ''; scrollEnd(); });
+
+  const EVENTS = [
+    { text: 'The old stones are stirring · the Kingstone stands at 16:00', sub: 'the Greywater Fens · from level 10', act: 'Walk there' },
+    { text: 'Haldis is raising a raid on the Canal Locks', sub: 'one seat open · a healer wanted · Haldis L19', kind: 'raid', act: 'Join', done: 'Asked' },
+    { text: 'Osric found the Abbess’s Bell · Heirloom', sub: 'the Drowned Abbey, its third floor', kind: 'loot' },
+    { text: 'The Bowl’s day tourney draws in 10 minutes', sub: 'eight companies · the purse 2,400 gold', act: 'Watch', done: 'Watching' },
+    { text: 'The Kingstone stands at the old stones · 15:00 left', sub: 'three companies at the stones', act: 'Walk there' },
+    { text: 'Brannoc’s company broke the Third Legion’s standard-lamp', sub: 'Wickham Keep · 16 souls go free' },
+    { text: 'Wren is raising a raid on Wickham Keep', sub: 'two seats · any class · Wren L14', kind: 'raid', act: 'Join', done: 'Asked' },
+    { text: 'Tamsin found the Quartermaster’s Ledger-Blade · Heirloom', sub: 'the Old Barrows, its second floor', kind: 'loot' },
+  ];
+  const TALK = [
+    ['Bryn', 18, 'anyone for the Kingstone at :00? we have 2'], ['Corra', 20, 'abbess below is back in 20, camping her room'],
+    ['Edda', 16, 'gates are 10 waves now? much nicer'], ['Bryn', 18, 'need a cleric, fighter + mage here'],
+    ['Lisle', 12, 'where do I find the Sickpools harvesters'], ['Corra', 20, 'Lisle: the reed beds east of Saltmere, look for the cages'],
+    ['Haldis', 19, 'raid seat still open, Canal Locks'], ['Edda', 16, 'gg on the tourney Osric'],
+  ];
+  const CO = [['Pike', 0, 'Mana’s low. I’ll hold the line.'], ['Tobin', 0, 'The spirits are with us.'], ['Merrow', 0, 'Keep them off me a moment.']];
+  // a start: some history, so the log opens in a working state
+  [EVENTS[3], EVENTS[5]].forEach((e) => { const d = document.createElement('div'); d.className = 'ev ' + (e.kind || ''); const t = document.createElement('div'); t.className = 't'; t.textContent = e.text; const s = document.createElement('small'); s.textContent = e.sub; t.appendChild(s); d.appendChild(t); add(d, 'world'); });
+  for (const [w, l, t] of TALK.slice(0, 3)) { const d = document.createElement('div'); d.className = 'msg'; d.innerHTML = `<span class="ts">${stamp()}</span><span class="who"></span><span class="lv"> L${l}</span>`; d.querySelector('.who').textContent = w; d.append(': ' + t); add(d, 'chat'); }
+  let ei = 0, ti = 3, ci = 0;
+  const nextEvent = () => event(EVENTS[ei++ % EVENTS.length]);
+  const nextTalk = () => { if (Math.random() < .25) { const [w, l, t] = CO[ci++ % CO.length]; say(w, l, t, 'co'); } else { const [w, l, t] = TALK[ti++ % TALK.length]; say(w, l, t); } };
+  setInterval(nextEvent, 9000); setTimeout(nextEvent, 3500);
+  setInterval(nextTalk, 4200);
+  $('fireEv').onclick = nextEvent; $('fireMsg').onclick = nextTalk;
+  addEventListener('resize', () => { if (hNow > DOCK) setHeight(tall()); });
+})();
+</script>
