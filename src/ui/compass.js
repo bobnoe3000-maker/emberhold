@@ -131,6 +131,8 @@ export function createCompass(sim, { partyPanel, inSquare, questTitle = () => ''
     const bar = document.getElementById('hubBar');
     const barH = bar && bar.classList.contains('on') ? bar.getBoundingClientRect().height + 8 : 0;
     const qt = document.getElementById('questTrack'), qtH = qt && qt.classList.contains('on') ? qt.getBoundingClientRect().height + 8 : 0;   // over the quest tracker (journal.js)
+    // (the chat dock, ui/chatdock.js: showing, partyPanel.height() is its height, so the chip stands over it, never on
+    // its handle; opened wide, the chip steps aside till it closes, the walk going on: chatdock.js body.chatWide)
     chip.style.bottom = `${Math.round((partyPanel ? partyPanel.height() : 0) + barH + qtH + 12)}px`;
     requestAnimationFrame(watch);
   })();

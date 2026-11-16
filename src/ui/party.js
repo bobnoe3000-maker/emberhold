@@ -159,6 +159,8 @@ export function createPartyPanel(sim) {
   const side = () => (isLand() ? Math.round(el.getBoundingClientRect().right) : 0);
   const mark = () => document.documentElement.style.setProperty('--party-side', `${side()}px`);
   mark(); window.addEventListener('resize', mark); if (land && land.addEventListener) land.addEventListener('change', mark);
-  return { el, height: () => (isLand() ? 0 : el.getBoundingClientRect().height), side, refresh: () => { sig = ''; draw(); },
+  // (the chat dock, ui/chatdock.js, in the cards' place and a little taller: what stacks over the cards stacks over it)
+  let reserve = () => 0;
+  return { el, height: () => (isLand() ? 0 : Math.max(el.getBoundingClientRect().height, reserve())), side, reserveFor: (/** @type {() => number} */ fn) => { reserve = fn; }, refresh: () => { sig = ''; draw(); },
     onCard: (fn) => { onCard = fn; }, badge: (fn) => { badge = fn; draw(); } };
 }

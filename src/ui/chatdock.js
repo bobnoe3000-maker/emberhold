@@ -82,6 +82,7 @@ const CSS = `
 #dockDots b { min-width: 14px; height: 14px; border-radius: 7px; background: #c8402c; color: #fff; font: 700 9px/14px ui-monospace, Menlo, monospace; text-align: center; padding: 0 3px; display: none; }
 #dockDots b.on { display: block; }
 #dockDots.off { display: none; }
+body.chatWide #walkChip { display: none !important; }   /* (opened wide: the walk chip steps aside, the walk going on) */
 @media (prefers-reduced-motion: reduce) { #party, #chatDock { transition: none; } }
 `;
 const KEEP = 150;   // lines kept
@@ -121,9 +122,11 @@ export function createChatDock({ sim, partyPanel, ring, chat, questTitle = (id) 
     else { dock.style.left = '0'; dock.style.right = '0'; dock.style.width = ''; }
     dots.style.left = `${Math.round(r.left + r.width / 2)}px`; dots.style.top = `${Math.round(r.top - 14)}px`;
     dots.classList.toggle('off', shown);
-    dock.classList.toggle('big', big);
+    dock.classList.toggle('big', big); document.body.classList.toggle('chatWide', big && shown);
   }
   addEventListener('resize', layout); setInterval(layout, 600); layout();
+  // showing, the cards' height is the chat's (collapsed): the walk chip, Step out and the quest tracker stand over it
+  partyPanel.reserveFor(() => (shown ? LOW : 0));
 
   // ── the two pages: a swipe on the cards, a swipe on the chat; the back button; the dots say which ──────────────────
   let unread = 0;

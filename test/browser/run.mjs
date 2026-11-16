@@ -374,17 +374,18 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.waitForTimeout(700);
     const a = await p.evaluate(() => ({ shown: globalThis.__ui.chatDock.shown, king: [...document.querySelectorAll('#chatDock .ev')].some((e) => /Kingstone stands/.test(e.textContent)), offline: /online play/.test(document.querySelector('#chatDock .log').textContent) }));
     await p.locator('#chatDock .act').first().click(); await p.waitForTimeout(300);
-    const walk = await p.evaluate(() => ({ btn: document.querySelector('#chatDock .act').textContent, going: !!document.getElementById('walkChip') && getComputedStyle(document.getElementById('walkChip')).display !== 'none' }));
+    // (the walk chip stands over the chat, never on its handle: the first run of this check found it there)
+    const walk = await p.evaluate(() => { const c = document.getElementById('walkChip'); return { btn: document.querySelector('#chatDock .act').textContent, going: !!c && getComputedStyle(c).display !== 'none', clear: !!c && c.getBoundingClientRect().bottom <= document.querySelector('#chatDock .grab').getBoundingClientRect().top }; });
     const g = await p.locator('#chatDock .grab').boundingBox(); await p.mouse.move(g.x + g.width / 2, g.y + 10); await p.mouse.down(); for (let y = g.y + 10; y > 100; y -= 40) await p.mouse.move(g.x + g.width / 2, y); await p.mouse.up();
     await p.waitForTimeout(800);
-    const wide = await p.evaluate(() => ({ big: globalThis.__ui.chatDock.big, top: Math.round(document.getElementById('chatDock').getBoundingClientRect().top), hud: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hud-b')) }));
+    const wide = await p.evaluate(() => ({ big: globalThis.__ui.chatDock.big, top: Math.round(document.getElementById('chatDock').getBoundingClientRect().top), hud: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hud-b')), chip: getComputedStyle(document.getElementById('walkChip')).display }));
     const d = await p.locator('#chatDock .log').boundingBox(); await p.mouse.move(d.x + 30, d.y + d.height - 20); await p.mouse.down(); for (let x = d.x + 30; x < 370; x += 25) await p.mouse.move(x, d.y + d.height - 18); await p.mouse.up();
     await p.waitForTimeout(700);
     const back = await p.evaluate(() => globalThis.__ui.chatDock.shown);
     await p.locator('#party .card').nth(1).tap(); await p.waitForTimeout(700);
     const sheet = await p.evaluate(() => !!document.querySelector('#gearSheet.on'));
     await b.close();
-    check('the chat dock: a swipe on the cards shows it, the Kingstone\'s line walks the company there at once, it opens wide under the HUD, a swipe right brings the cards back, a card\'s tap still opens its sheet', a.shown && a.king && a.offline && walk.btn === 'On the way' && wide.big && wide.top > wide.hud && wide.top < 300 && !back && sheet && !errs.length, JSON.stringify({ a, walk, wide, back, sheet, errs }));
+    check('the chat dock: a swipe on the cards shows it, the Kingstone\'s line walks the company there at once, its walk chip stands clear of the handle, it opens wide under the HUD (the chip stepping aside), a swipe right brings the cards back, a card\'s tap still opens its sheet', a.shown && a.king && a.offline && walk.btn === 'On the way' && walk.going && walk.clear && wide.big && wide.chip === 'none' && wide.top > wide.hud && wide.top < 300 && !back && sheet && !errs.length, JSON.stringify({ a, walk, wide, back, sheet, errs }));
   }
 }
 // 5b. the first-open cards (docs/first-steps-plan.md §3; the flows run with them off): each service's card the first time
