@@ -17,10 +17,13 @@ const CAST = [
   ['party', 'hero_rogue_bow', 'Bow'], ['party', 'hero_rogue_longbow', 'Longbow'], ['party', 'hero_rogue_xbow', 'Crossbow'],   // (the rogue's ranged looks)
   ['party', 'hero_rogue_hxbow', 'Hand xbow'], ['party', 'hero_mage', 'Mage'], ['party', 'hero_cleric', 'Cleric'], ['party', 'hero_shaman', 'Shaman'], ['party', 'hero_brannoc', 'Brannoc'],
   ['party', 'hero_wren', 'Wren'],   // (M8, Act II: the Fens' found companion)
+  ['party', 'hero_tamsin', 'Tamsin'],   // (v1.124, Act III: the Reach's found companion)
   ['party', 'hero_wren_bow', 'Wren bow'], ['party', 'hero_wren_longbow', 'Wren long'], ['party', 'hero_wren_xbow', 'Wren xbow'], ['party', 'hero_wren_hxbow', 'Wren hxbow'],   // (her ranged looks)
   ['town', 'npc_maudry', 'Maudry'], ['town', 'npc_osric', 'Osric'], ['town', 'npc_ilse', 'Ilse'], ['town', 'npc_wendel', 'Wendel'], ['town', 'npc_bess', 'Bess'],
   ['town', 'npc_col', 'Col'], ['town', 'npc_jory', 'Jory'], ['town', 'npc_nell', 'Nell'], ['town', 'npc_hedda', 'Hedda'],
   ['town', 'npc_dace', 'Dace'], ['town', 'npc_pim', 'Pim'], ['town', 'npc_orla', 'Orla'], ['town', 'npc_agnes', 'Agnes'], ['town', 'npc_kindler', 'Kindler'],   // (Saltmere's, and the Kindler)
+  ['town', 'npc_dagny', 'Dagny'], ['town', 'npc_hob', 'Hob'], ['town', 'npc_gunnar', 'Gunnar'], ['town', 'npc_brannagh', 'Brannagh'], ['town', 'npc_mother_coke', 'Mother Coke'],
+  ['town', 'npc_bel', 'Bel'], ['town', 'npc_haldor', 'Haldor'], ['town', 'npc_pellam', 'Pellam'], ['town', 'npc_wynn', 'Wynn'],   // (Ashgate's, v1.124)
   ['town', 'npc_tobin', 'Tobin'], ['town', 'npc_ned', 'Ned'], ['town', 'npc_hester', 'Hester'],   // (v1.48: by the Vale's dungeons' ways in)
 ];
 
