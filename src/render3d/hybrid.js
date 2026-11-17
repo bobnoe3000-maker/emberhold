@@ -312,6 +312,9 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         // the Kingstone's tells (battle.js ringTells: battle.tells), each its share wound (p) and, landed, its flash fading
         // (hit), at the size it hits (a sim tile is half a unit: no ×√2, what's drawn is what's hit)
         tells: tellsOf(sim, origin),
+        // (the Reach's bosses, renderer.js puffs: a burst of Luminati's particles each, once: Oruth's hammer's sparks, a
+        // wight re-armed, a spoiled piece's smoke, a vent's slag)
+        puffs: c.puffs && c.puffs.length ? c.puffs.map((q) => ({ kind: q.kind, x: (q.x - origin.x) / 2, z: (q.y - origin.y) / 2 })) : null,
         blast: c.blast ? { x: (c.blast.x - origin.x) / 2, z: (c.blast.y - origin.y) / 2, k: c.blast.k } : null,   // (a fire landing's light: renderer.js blasts)
         bright: sim.world.kind === 'dungeon' || arena ? 1 : brightAt(reachBright(sim.world.region || 'vale', sim.state.scene, brightFor(sim.world.region || 'vale', sim.state.scene, dial)), c.t ?? sim.state.t),   // (bright.js: the shipped look × the player's dial)
         draw: globalThis.__lumDraw !== false,                   // (dev, tools/capture/rig.mjs: frames stepped and not drawn while a shot settles)

@@ -47,6 +47,9 @@ const C = {
   lvl: [255, 214, 120], lvlHot: [255, 246, 214], issue: [235, 196, 130], issueHot: [255, 238, 196], call: [255, 92, 70], callHot: [255, 196, 168],
   kindle: [255, 128, 34], kindleHot: [255, 214, 140], drum: [255, 170, 90], dust: [200, 168, 120], sing: [130, 225, 235], singHot: [214, 248, 255],
   bell: [170, 205, 255], bellHot: [226, 238, 255], mud: [214, 170, 96], line: [236, 214, 150], cage: [190, 150, 255], cageHot: [236, 220, 255],
+  // (the Reach's, docs/art-critic-pass-reach-fx.md) the Weighmaster's brass; Oruth's forge, his work white-hot, a spoiled
+  // piece's dull smoke (light can't darken: the smoke as the forge's last glow catches it); the Stoker's slag
+  brass: [240, 196, 100], brassHot: [255, 240, 196], forge: [255, 120, 30], forgeHot: [255, 222, 150], soot: [140, 112, 92], slag: [255, 104, 24], slagHot: [255, 214, 130],
   // a foe's warning: Luminati's enemy marker (its rim 2.6, 0.34, 0.12), and white as the blow lands
   warn: [255, 70, 28], warnHot: [255, 236, 214],
   // the proposed statuses: the stun's stars, a root's green, a knocked-down figure's dust
@@ -57,7 +60,10 @@ const LIFE = { shield_wall: 0.95, second_wind: 1.2, backstab: 0.6, smoke_step: 1
   arcane_ward: 0.95, spirit_drain: 0.8, ancestors_breath: 1.3, hex: 1.4 };
 /** the fight's other moments: a foe's warning, a ward breaking, a level gained, each boss's mechanic (a warning's life is
  *  its own: to the blow or the shot's landing, and a flash) */
-const MORE = { warn: 0.6, ward_break: 0.7, level_up: 1.8, boss_issue: 1.3, boss_call: 1.1, boss_kindle: 1.4, boss_swarm: 1.2, boss_vespers: 1.3, boss_bells: 1.6, boss_mud: 0.8 };
+const MORE = { warn: 0.6, ward_break: 0.7, level_up: 1.8, boss_issue: 1.3, boss_call: 1.1, boss_kindle: 1.4, boss_swarm: 1.2, boss_vespers: 1.3, boss_bells: 1.6, boss_mud: 0.8,
+  // (the Reach's: Oruth at his anvil for the event's own t (battle.js ANVIL_T), a wight re-armed, a piece spoiled; the
+  // Weighmaster weighing, his pan landing; the Stoker's slag venting)
+  boss_forge: 4, boss_arm: 1.3, boss_spoil: 1.5, boss_scales: 0.9, boss_pan: 0.8, boss_vent: 0.7 };
 export const FIGHT_MOMENTS = Object.freeze(Object.keys(MORE));
 /** the tiers' moments (GDD §5.1 v1.55, docs/skill-trees-proposal.md: the owner reviewed them on the page), life s */
 const PROPOSED = { earthshatter: 1.0, whirling_blades: 5, glacial_tomb: 0.9, blizzard: 6, binding_roots: 0.7 };
@@ -73,6 +79,11 @@ export const LUM_LOOKS = Object.freeze(['frost_nova', 'turn_undead', 'mend', 'bl
 export const LUM_HOLDS = Object.freeze(['stun']);
 /** the skills with a moment of their own here (for checks: with LUM_LOOKS, every class skill has one) */
 export const SKILL_MOMENTS = Object.freeze([...Object.keys(LIFE), ...Object.keys(PROPOSED)]);
+/** Oruth's hammer at his anvil (boss_forge): the first blow this far into his work, then one every `every` s. The
+ *  renderer lights the room on the same beat and Luminati throws its sparks (renderer.js forgeBeat) */
+export const FORGE_BEAT = Object.freeze({ first: 0.35, every: 0.6 });
+/** where his work is from where he stands (tiles): a step toward the camera, in front of him, never behind him */
+export const FORGE_AT = Object.freeze({ dx: 0.7, dy: 0.5 });
 /** a heavy blow's warning ring, tiles (Emberlit's, and Luminati's from it: hybrid.js) */
 export const WARN_R = Object.freeze({ heavy: 1.4, boss: 1.7 });
 const ease = (u) => 1 - (1 - u) * (1 - u), clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -448,7 +459,118 @@ export function createSkillFX(P) {
       under(Cq); { const u = ease(clamp01(t / 0.35)); ring(Cq, 0.4 + 1.8 * u, 1.1 * (1 - u), 1.8); } flush(C.mud);
       for (const q of R) { const u = ease(clamp01((t - 0.1) / 0.5)); if (u <= 0) continue; under(q); ring(q, 0.4 + 1.2 * u, 0.8 * k, 1.3); flush(C.mud); }
     },
+
+    // ── the Reach's (docs/art-critic-pass-reach-fx.md) ───────────────────────────────────────────────────────────────
+    // Oruth at his anvil ('bossForge', for its t): the forge's glow on the floor where he works and up his front, the anvil
+    // drawn in its heat (its face, horn, heel and waist), the piece on it white-hot and cooling between blows; a blow every
+    // FORGE_BEAT.every s, a flash and a spray of sparks thrown up off the face, falling; heat going up off it. Followed while
+    // he works, and ended early when the work is (renderer.js 'bossAnvil'). Luminati lights the room and throws sparks of
+    // its own on the same beat (renderer.js forgeBeat).
+    boss_forge(ctx) {
+      const { t, Cq, seed, e } = ctx, life = e.life || MORE.boss_forge, g = clamp01(t / 0.3) * clamp01((life - t) / 0.3);
+      if (g <= 0) return;
+      const A = anvilOf(Cq), ax = A.sx, ay = A.sy, fy = ay - 11;              // (fy: the anvil's face, a knee high)
+      const n = t < FORGE_BEAT.first ? -1 : Math.floor((t - FORGE_BEAT.first) / FORGE_BEAT.every), since = n < 0 ? 9 : t - FORGE_BEAT.first - n * FORGE_BEAT.every;
+      const heat = 0.5 + 0.5 * Math.exp(-since * 4), flick = 0.9 + 0.1 * Math.sin(t * 23 + seed);
+      under(A); pool(A, 1.15, 0.5 * g * heat * flick, 0, 1.1); ring(A, 0.75, 0.35 * g * heat, 1.2); flush(C.forge, 1.1);
+      over(Cq, 0.35); disc(Cq.sx + 3, Cq.sy - 26, 15, 0.22 * g * heat, 1.8); flush(C.forge);   // his front, lit by his work
+      over(A, 0.2);
+      seg(ax - 8, fy, ax + 6, fy, 0.75 * g, 0.75 * g, 0.7); seg(ax + 6, fy, ax + 12, fy + 2, 0.6 * g, 0.15 * g, 0.4);   // its face and horn
+      seg(ax - 9, fy + 1, ax - 7, fy + 3, 0.5 * g, 0.3 * g);                                                           // its heel
+      seg(ax - 2, fy + 2, ax - 2, ay - 2, 0.4 * g, 0.2 * g, 0.9); seg(ax - 6, ay - 1, ax + 3, ay - 1, 0.35 * g, 0.35 * g, 0.5);   // its waist, its foot
+      flush(C.forge, 1.2);
+      over(A, 0.3); disc(ax - 1, fy - 1, 3.4, 1.4 * g * heat, 1); seg(ax - 5, fy - 1, ax + 3, fy - 1, 1.1 * g * heat, 1.1 * g * heat, 0.6); flush(C.forgeHot, 1.2);   // the piece
+      if (n >= 0 && since < 0.16) { const u = since / 0.16; over(A, 0.4); star(ax - 1, fy - 2, 9 + 6 * u, 1.5 * (1 - u)); disc(ax - 1, fy - 2, 6 * (1 - u) + 2, 1.1 * (1 - u), 1.2); flush(C.forgeHot, 1.3); }
+      over(A, 0.5);                                                            // the sparks of this blow and the one before
+      for (let b = n - 1; b <= n; b++) {
+        if (b < 0) continue;
+        const tb = t - FORGE_BEAT.first - b * FORGE_BEAT.every, sd = seed + b * 31;
+        for (let i = 0; i < 12; i++) {
+          const life2 = 0.35 + 0.35 * rnd(sd, i + 5); if (tb > life2) continue;
+          const a = -Math.PI / 2 + (rnd(sd, i) - 0.5) * 2.6, sp = 60 + 70 * rnd(sd, i + 9), vx = Math.cos(a) * sp, vy = Math.sin(a) * sp * 0.8, f = 1 - tb / life2, t0 = Math.max(0, tb - 0.04);
+          const x1 = ax - 1 + vx * tb, y1 = fy - 2 + vy * tb + 260 * tb * tb; if (y1 > ay + 4) continue;
+          seg(ax - 1 + vx * t0, fy - 2 + vy * t0 + 260 * t0 * t0, x1, y1, 0.25 * f, 1.25 * f);
+        }
+      }
+      flush(C.forgeHot, 1.1);
+      over(A, 0.3); for (let i = 0; i < 5; i++) { const v = (t * 0.8 + i / 5) % 1; disc(ax - 1 + Math.sin(i * 2.3 + t * 2) * 4 * v, fy - 4 - v * 26, 1.3, 0.7 * g * (1 - v) * heat, 1); } flush(C.forge);   // the heat going up
+    },
+    // the work done ('bossAnvil'): a streak of the forge's heat from his anvil to where a wight rises re-armed, and there a
+    // column of forge-fire, flames round its feet, a ring out over the floor, its new blade's glint, sparks thrown off
+    boss_arm(ctx) {
+      const { t, k, Cq, Tq, seed } = ctx, A = anvilOf(Cq), ax = A.sx, ay = A.sy - 12;
+      if (t < 0.32 && Math.hypot(ax - Tq.sx, ay - Tq.sy) > 6) { const f = 1 - t / 0.32, u = clamp01(t / 0.2), hx = ax + (Tq.sx - ax) * u, hy = ay + (Tq.sy - 20 - ay) * u; over(Tq, 0.3); seg(ax, ay, hx, hy, 0.2 * f, 1.2 * f, 1); disc(hx, hy, 3, 1.2 * f, 1); flush(C.forgeHot); }
+      const s = clamp01((t - 0.12) / 0.25); if (s <= 0) return;
+      under(Tq); ring(Tq, 0.3 + 1.1 * ease(s), 1.1 * k, 1.6); pool(Tq, 0.7 * s, 0.6 * k, 0, 1.2); flush(C.forge, 1.1);
+      over(Tq, 0.4); column(Tq.sx, Tq.sy, 58 * s, 4, 1.1 * k); flush(C.forge, 1.05);
+      over(Tq, 0.5);
+      for (let i = 0; i < 8; i++) { const a = (i / 8) * TAU + rnd(seed, i) * 0.5, [x, y] = on(Tq, 0.5 * s, a), h = (10 + 10 * rnd(seed, i + 3)) * s * (0.7 + 0.3 * Math.sin(t * 22 + i)); for (let j = 0; j <= 6; j++) { const v = j / 6; disc(x + Math.sin(t * 17 + i + v * 4) * 1.5, y - v * h, 1.3, 1.0 * k * (1 - v * 0.8), 1); } }
+      flush(C.forge, 1.1);
+      if (t > 0.3 && t < 0.7) { const f = 1 - (t - 0.3) / 0.4; over(Tq, 0.8); star(Tq.sx + 9, Tq.sy - 30, 8 + 6 * f, 1.4 * f); flush(C.forgeHot, 1.3); }   // the blade, new from the anvil
+      over(Tq, 0.6);
+      for (let i = 0; i < 14; i++) {
+        const a = rnd(seed, i + 20) * TAU, sp = 40 + 60 * rnd(seed, i + 30), tt = t - 0.15, life2 = 0.5 + 0.4 * rnd(seed, i + 40); if (tt <= 0 || tt > life2) continue;
+        const f = 1 - tt / life2, x = Tq.sx + Math.cos(a) * sp * tt, y = Tq.sy - 18 + Math.sin(a) * sp * 0.5 * tt - 70 * tt + 220 * tt * tt; seg(x - Math.cos(a) * 3, y + 2, x, y, 0.2 * f, 1.1 * f);
+      }
+      flush(C.forgeHot);
+    },
+    // the piece spoiled ('bossAnvil' spoiled): a dull crack of red off the anvil, a puff of smoke going up, caught in the
+    // forge's last glow and dimming, the piece's embers falling dead (Luminati's own dark smoke goes up with it: renderer.js
+    // puffs)
+    boss_spoil(ctx) {
+      const { t, k, Cq, seed } = ctx, A = anvilOf(Cq), ax = A.sx, ay = A.sy, fy = ay - 11;
+      if (t < 0.2) { const f = 1 - t / 0.2; over(A, 0.4); disc(ax, fy, 9 + 8 * (1 - f), 1.1 * f, 1.3); seg(ax - 7, fy - 3, ax + 6, fy + 2, 0.9 * f, 0.4 * f, 0.5); flush(C.forge, 1.1); }
+      over(A, 0.6);
+      for (let i = 0; i < 12; i++) {
+        const v = clamp01((t - i * 0.03) / 1.25); if (v <= 0 || v >= 1) continue; const a = rnd(seed, i) * TAU, r = 3 + 10 * v * rnd(seed, i + 4);
+        disc(ax + Math.cos(a) * r + Math.sin(t * 2 + i) * 2, fy - 4 - v * (30 + 14 * rnd(seed, i + 8)) + Math.sin(a) * r * 0.4, 4 + 8 * v, 0.5 * (1 - v) * (1 - v * 0.4), 2);
+      }
+      flush(C.soot, 1.2);
+      over(A, 0.4);
+      for (let i = 0; i < 8; i++) { const tt = t - 0.05, life2 = 0.6 + 0.5 * rnd(seed, i + 12); if (tt <= 0 || tt > life2) continue; const f = 1 - tt / life2; disc(ax + (rnd(seed, i + 14) - 0.5) * 14 + (rnd(seed, i + 15) - 0.5) * 20 * tt, fy + 60 * tt * tt + 10 * tt, 1.2, 0.9 * f * f, 1); }
+      flush(C.ember);
+      under(A); ring(A, 0.35 + 0.7 * ease(clamp01(t / 0.5)), 0.5 * k, 1.3); flush(C.soot, 0.8);
+    },
+    // the Weighmaster weighs ('bossScales'): his pan raised, a brass glint over him, the weighing thrown in a thread of
+    // brass to the one with the most life left, and a balance's beam over their head, tipping (the pan itself comes down in
+    // Luminati, over the tell: world.js placePans)
+    boss_scales(ctx) {
+      const { t, k, Cq, Tq } = ctx;
+      if (t < 0.4) { const f = 1 - t / 0.4; over(Cq, 0.8); star(Cq.sx + 6, Cq.sy - 58, 8 + 4 * f, 1.3 * f); flush(C.brassHot, 1.2); }
+      if (t < 0.6 && Math.hypot(Cq.sx - Tq.sx, Cq.sy - Tq.sy) > 6) {
+        const f = 1 - t / 0.6, u = clamp01(t / 0.3); over(Tq, 0.3);
+        for (let i = 0; i <= 30; i++) { const v = (i / 30) * u; disc(Cq.sx + 6 + (Tq.sx - Cq.sx - 6) * v, Cq.sy - 56 + (Tq.sy - 54 - (Cq.sy - 56)) * v - 22 * Math.sin(v * Math.PI), 0.9, 0.7 * f, 1); }
+        flush(C.brass, 1.1);
+      }
+      const s = clamp01((t - 0.15) / 0.2); if (s <= 0) return;
+      const x = Tq.sx, y = Tq.sy - 62, tip = Math.sin(t * 7) * 2.5 * k, a = k * s;   // the beam over them, tipping
+      over(Tq, 0.9); seg(x, y - 6, x, y, 0.9 * a, 0.9 * a); seg(x - 9, y + tip, x + 9, y - tip, 1.0 * a, 1.0 * a, 0.5);
+      for (const [px, py] of [[x - 9, y + tip], [x + 9, y - tip]]) { seg(px, py, px, py + 5, 0.6 * a, 0.6 * a); seg(px - 3, py + 6, px + 3, py + 6, 0.9 * a, 0.9 * a); }
+      flush(C.brassHot, 1.1);
+    },
+    // the pan lands ('tellLand' scales): a brass flash off its rim, a ring thrown out over the floor from the pan's edge,
+    // dust kicked up round it
+    boss_pan(ctx) {
+      const { t, k, Tq, e, seed } = ctx, RR = e.r || 1.7;
+      if (t < 0.18) { const f = 1 - t / 0.18; over(Tq, 0.7); star(Tq.sx + RR * EX * 0.7, Tq.sy - 6, 12 + 6 * (1 - f), 1.5 * f); disc(Tq.sx, Tq.sy - 4, 10, 0.5 * f, 1.5); flush(C.brassHot, 1.3); }
+      under(Tq); { const u = ease(clamp01(t / 0.35)); ring(Tq, RR * (0.95 + 0.6 * u), 1.2 * (1 - u), 1.8); } ring(Tq, RR * 0.95, 0.7 * k, 1.3); flush(C.brass, 1.2);
+      over(Tq, 0.5);
+      for (let i = 0; i < 14; i++) { const a = (i / 14) * TAU + rnd(seed, i) * 0.4, u = ease(clamp01(t / 0.6)), [x, y] = on(Tq, RR * (1 + 0.35 * u), a, 3 + 9 * u * rnd(seed, i + 7)); disc(x, y, 2.5 + 3 * u, 0.3 * k, 2); }
+      flush(C.dust, 1.1);
+    },
+    // a vent lets go ('tellLand' vent): slag spurts up out of the floor, a ring of it, gobs thrown up and falling back
+    boss_vent(ctx) {
+      const { t, k, Tq, seed } = ctx, s = clamp01(t / 0.12);
+      over(Tq, 0.4); column(Tq.sx, Tq.sy, 34 * s * (1 - clamp01((t - 0.25) / 0.45)), 3.5, 1.2 * k); flush(C.slag, 1.1);
+      under(Tq); ring(Tq, 0.4 + 1.1 * ease(clamp01(t / 0.35)), 1.1 * k, 1.6); pool(Tq, 0.9, 0.5 * k * k, 0, 1.2); flush(C.slag);
+      over(Tq, 0.6);
+      for (let i = 0; i < 10; i++) { const a = rnd(seed, i) * TAU, sp = 20 + 30 * rnd(seed, i + 3), tt = t - 0.04; if (tt <= 0) continue;
+        const x = Tq.sx + Math.cos(a) * sp * tt, y = Tq.sy - 6 + Math.sin(a) * sp * 0.5 * tt - 90 * tt + 240 * tt * tt; if (y > Tq.sy + 4) continue; disc(x, y, 1.4, 1.2 * k, 1); }
+      flush(C.slagHot, 1.1);
+    },
   };
+  /** Oruth's anvil on the screen, from where he stands (FORGE_AT: in front of him; its depth a sim x + y, as a figure's) */
+  const anvilOf = (Cq) => ({ sx: Cq.sx + (FORGE_AT.dx - FORGE_AT.dy) * 8, sy: Cq.sy + (FORGE_AT.dx + FORGE_AT.dy) * 4, h: Cq.h, key: Cq.key + FORGE_AT.dx + FORGE_AT.dy });
   // the firebolt in flight: a roaring head over the ordinary bolt's trail, embers shed behind it (renderer boltFx)
   function fireHead(pts, key, footY, baseH, now) {
     const h = pts[pts.length - 1]; if (!h) return;
@@ -563,6 +685,8 @@ export function createSkillFX(P) {
      *  moment's { id: 'ward_break' | 'level_up' | 'boss_…', by, foeBy (the one it starts from is a foe), tid, ally, x, y,
      *  tx, ty, reached } @param {any} e @param {number} now */
     moment(e, now) { this.event(e, now); },
+    /** a moment ended before its time (Oruth's work, done or spoiled: 'bossAnvil') @param {string} id @param {number} by */
+    end(id, by) { for (let i = live.length - 1; i >= 0; i--) if (live[i].e.id === id && live[i].e.by === by) live.splice(i, 1); },
     /** a foe's wind-up cut (battle.js 'interrupt': a stun, a freeze, a knockdown): its warning goes, the blow never comes @param {number} by */
     cut(by) { for (let i = live.length - 1; i >= 0; i--) if (live[i].e.id === 'warn' && live[i].e.by === by) live.splice(i, 1); },
     /** every moment under way and every aura, this frame. units: the figures drawn ({ u, foe, sx, sy, h, key }), for
