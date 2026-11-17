@@ -35,6 +35,7 @@ import { RockSpikes } from '../src/engine/fx/RockSpikes.js';
 import { SpectralBells } from '../src/engine/fx/SpectralBells.js';
 import { createFxAtlas } from '../src/engine/pixel/FxSprites.js';
 import { registerPresets } from '../src/engine/fx/Particles.js';
+import { globalUniforms } from '../src/engine/render/GlobalUniforms.js';
 import { DEFAULT_KEYFRAMES } from '../src/engine/lighting/LightingSystem.js';
 import { ARID_KEYFRAMES } from '../src/game/Climate.js';
 import { registerTextureSet, TextureLibrary } from '../src/engine/pixel/Textures.js';
@@ -271,10 +272,11 @@ function figureFor(key, name, T) {
 // mouth and eyes), found once, skinned each frame.
 const STACK_EVERY = 0.14, STACK_SPARK = 5;                    // (a puff a seventh of a second; a spark every fifth)
 registerPresets({
-  // the stack's smoke: soot, lit by the world (a burst, as Luminati's deathPoof: its pool and program)
+  // the stack's smoke: grey, lit by the world, its colour white-balanced as it's let go (greyPuff); rising, swelling and
+  // leaning off downwind (a burst, as Luminati's deathPoof: its pool and program)
   emberStackSmoke: { mode: 'burst', motion: 'emit', texture: 'smoke', blending: 'normal', variants: 1, lit: 1, pulse: 0, tumble: 0, aspect: 1, streak: 0, fade: [0.05, 0.6], twinkle: 0, blink: 0, nightVisibility: 0,
-    count: 1, life: [3.6, 5.2], size: [0.45, 0.7], sizeEnd: 4, spawnSize: [0.3, 0.05, 0.3], velocity: [0.1, 1.1, 0.05], velocityVariance: [0.16, 0.2, 0.16],
-    burstSpeed: [0.05, 0.25], burstUp: [0, 0.2], gravity: 0.12, drag: 0.35, windInfluence: 0.55, spin: [0.1, 0.4], color: '#5c5753', colorEnd: '#7a7876', alpha: 0.58 },
+    count: 1, life: [3.6, 5.2], size: [0.55, 0.85], sizeEnd: 3.8, spawnSize: [0.3, 0.05, 0.3], velocity: [0.1, 1.45, 0.05], velocityVariance: [0.16, 0.2, 0.16],
+    burstSpeed: [0.05, 0.25], burstUp: [0, 0.2], gravity: 0.12, drag: 0.35, windInfluence: 0.85, spin: [0.1, 0.4], color: '#7e7974', alpha: 0.64 },
   // a spark up out of it (Luminati's hitSpark's pool: a streak)
   emberStackSpark: { mode: 'burst', motion: 'emit', texture: 'streak', blending: 'additive', variants: 1, lit: 0, pulse: 0, tumble: 0, aspect: 4, streak: 0.04, fade: [0, 0.3], twinkle: 0, blink: 0, nightVisibility: 0,
     count: 1, life: [0.5, 1.0], size: [0.04, 0.06], sizeEnd: 0.4, spawnSize: [0.18, 0.05, 0.18], burstSpeed: [0.2, 0.6], burstUp: [1.6, 2.6], gravity: -1.5, drag: 0.6, windInfluence: 0.3,
@@ -313,10 +315,30 @@ function stackOf(root) {
   return best;
 }
 const _stack = new THREE.Vector3();
+// Smoke grey under any light (docs/art-critic-pass-reach-fx.md, rounds 4–7). The smoke is lit: Luminati's particle
+// shader takes its colour × (amb + sun × 0.75), amb its own grey-blue by the night. Underground that "sun" is the rooms'
+// warm key ((1.1, 0.56, 0.52) in the Old Barrows): the smoke went red-brown, the room's violet air over it, and it read
+// purple. Each puff is let go white-balanced against the light it's let go in: STACK_GREY of the light's hue taken off
+// (a quarter kept, so at dusk it takes the dusk as the works' chimney smoke beside it does), its brightness kept (Rec. 709
+// luma), so it sits dark in a dark room and dims at night as everything round it does, but stays smoke. Its colour is a
+// burst's own, written as it's let go (Particles.burst: the resolved preset's _color, cached per preset), so the cached
+// config's colour is set before each puff: nothing made, no program (STACK_GAIN: no channel more than doubled under a
+// light that has next to none of it).
+const STACK_GREY = 0.75, STACK_GAIN = 2, NO_OVERRIDES = Object.freeze({});
+let stackP = null, stackCfg = null, stackBase = null;
+const greyGain = (t, L) => (t > 1e-3 ? Math.min(STACK_GAIN, 1 + STACK_GREY * (L / t - 1)) : 1);
+function greyPuff(P) {
+  if (stackP !== P) { stackP = P; stackCfg = P._burstConfig ? P._burstConfig('emberStackSmoke', NO_OVERRIDES) : null; stackBase = stackCfg ? stackCfg._color.clone() : null; }
+  if (!stackCfg) return;
+  const s = globalUniforms.uSunColor.value, n = globalUniforms.uNight.value;   // (the shader's own: Particles.js, a lit burst)
+  const r = 0.42 - 0.36 * n + s.r * 0.75, g = 0.45 - 0.37 * n + s.g * 0.75, b = 0.52 - 0.37 * n + s.b * 0.75, L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  stackCfg._color.setRGB(stackBase.r * greyGain(r, L), stackBase.g * greyGain(g, L), stackBase.b * greyGain(b, L));
+}
 /** the stack breathing, dt s of it (placeFigure, a furnace stood this frame) */
 function puffStack(f, dt) {
   const P = game?.particles; if (!P || !f.stack) return;
   f.puff += dt; if (f.puff < STACK_EVERY) return;
+  greyPuff(P);
   const { mesh, idx } = f.stack;
   _stack.fromBufferAttribute(mesh.geometry.attributes.position, idx); mesh.applyBoneTransform(idx, _stack); _stack.applyMatrix4(mesh.matrixWorld);
   for (; f.puff >= STACK_EVERY; f.puff -= STACK_EVERY) { P.burst('emberStackSmoke', _stack, 1); if (++f.puffN % STACK_SPARK === 0) P.burst('emberStackSpark', _stack, 1); }

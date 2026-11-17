@@ -1,10 +1,11 @@
 // reachfx.test.mjs — the Cinder Reach's bosses' looks (docs/art-critic-pass-reach-fx.md): Oruth at his anvil, a wight
 // re-armed, a spoiled piece, the Weighmaster's weighing and his pan landing, the Stoker's vents letting go each draw a
 // moment of their own; Oruth's work ends when the sim says so; the Reach's camps pitch a tent of their own canvas; the
-// Reach's kit pieces have baked cards and no footprint of their own.
+// Reach's kit pieces have baked cards and no footprint of their own; Furnace Nine's atlas has a still of its smoke.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { createSkillFX, FIGHT_MOMENTS, FORGE_BEAT } from '../src/render/skillfx.js';
 import { buildProps } from '../src/render/gsprite.js';
 import { ENV_FOOT } from '../src/sim/envfoot.js';
@@ -53,4 +54,25 @@ test("the Reach's kit pieces have cards, and no footprint of their own", () => {
     assert.ok(A[id] && A[id].w > 0 && A[id].h > 0, `${id} baked (town-reach)`);
     assert.ok(!(id in ENV_FOOT), `${id}: no footprint the sim collides with`);
   }
+});
+
+// Furnace Nine's still smoke (docs/art-critic-pass-reach-fx.md, the furnace's round 4): its atlas a moment of the world's
+// puffs, translucent, under the old blobs' top (the figure as big as it was); the game's model none (its smoke is the
+// world's particles). (The kit needs the lab's three: tools/actor-lab `npm i`; without it this check is skipped.)
+const lab = (() => { try { createRequire(new URL('../tools/actor-lab/package.json', import.meta.url)).resolve('three'); return true; } catch { return false; } })();
+test('Furnace Nine\'s still smoke: the bake\'s alone, translucent puffs inside the figure\'s old box', { skip: !lab && 'the actor lab isn\'t installed' }, async () => {
+  const bake = JSON.parse(readFileSync(new URL('../tools/actor-lab/bake.json', import.meta.url), 'utf8')).actors.find((a) => a.out === 'boss_furnace_nine');
+  const cast = JSON.parse(readFileSync(new URL('../assets/models/cast.json', import.meta.url), 'utf8')).actors.boss_furnace_nine;
+  assert.equal(bake.creature && bake.creature.smoke, true, 'the bake asks for it');
+  assert.ok(!('smoke' in cast.v.creature), 'the game\'s model is built without it');
+  const { buildCreature } = await import('../tools/actor-lab/creatures.js');
+  const meshes = (m) => { const n = []; m.root.traverse((o) => { if (o.isSkinnedMesh) n.push(o); }); return n; };
+  const top = (m) => Math.max(...meshes(m).map((o) => { o.geometry.computeBoundingBox(); return o.geometry.boundingBox.max.y; }));
+  const plain = await buildCreature({ kind: 'furnace' }), still = await buildCreature({ kind: 'furnace', smoke: true });
+  assert.ok(!meshes(plain).some((o) => o.userData.soft), 'no smoke mesh in the world\'s');
+  const smoke = meshes(still).find((o) => o.userData.soft);
+  assert.ok(smoke && smoke.material.transparent && !smoke.material.depthWrite, 'a translucent mesh of its own');
+  const C = smoke.geometry.attributes.color, a = new Set(); for (let i = 0; i < C.count; i++) a.add(Math.round(C.getW(i) * 100));
+  assert.equal(C.itemSize, 4); assert.ok([...a].every((v) => v > 0 && v < 100) && a.size === 3, `three puffs, each its own opacity (${[...a]})`);
+  assert.equal(top(still), top(plain), 'the same top: fitted to its box, the figure as big as it was');
 });

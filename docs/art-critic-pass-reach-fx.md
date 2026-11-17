@@ -63,15 +63,15 @@ The red tell stays, since red means "get out" in every fight. Over it:
 
 ### C. Furnace Nine's smoke (`creatures.js` `furnace`; `world.js` `puffStack`)
 
-The two solid grey blobs are gone (`smoke: true` in the creature spec puts them back for a still card). The figure
-stays the same size: its size is fitted to its box (`figure.js` `fitPpu`), so a zero-area triangle keeps the old
-top. The stack now breathes:
+The two solid grey blobs are gone (its atlas has a still of the new smoke instead: see
+[Furnace Nine's loose ends](#furnace-nines-loose-ends)). The figure stays the same size: its size is fitted to its box
+(`figure.js` `fitPpu`), so a zero-area triangle keeps the old top. The stack now breathes:
 
 - **Where.** The emitter is the stack's lip: the highest vertex of its fire, skinned each frame
   (`applyBoneTransform`), so it follows the clips.
-- **Smoke.** One lit smoke particle every 0.14 s (`emberStackSmoke`: soot grey, 3.6 to 5.2 s, swelling ×4). Each is
-  a burst left where it was let go, to rise, swell and go with the wind. An emitter's particles would follow it
-  rigidly instead.
+- **Smoke.** One lit smoke particle every 0.14 s (`emberStackSmoke`: grey, 3.6 to 5.2 s, swelling ×3.8 as of the loose
+  ends' round 7, its colour white-balanced as it's let go: `greyPuff`). Each is a burst left where it was let go, to
+  rise, swell and go with the wind. An emitter's particles would follow it rigidly instead.
 - **Sparks.** One every fifth puff.
 - **Pools.** Both share pools Luminati already has, so there is no new program:
   - the smoke shares `deathPoof`'s pool (smoke, normal blending, lit);
@@ -163,12 +163,133 @@ up):
 - Round 2 (`#6e5e54`) turned pink under the room's violet fill.
 - Round 3 (`#5c5753` → `#7a7876`, the shipped colour) reads as a grey plume leaning off the stack.
 
-Its own fight is outdoors at the Vault's mouth, where Luminati's wind takes it (`windInfluence` 0.55). That can't be
-staged from a fresh slot: the window opens only once the Stoker's lamp is broken.
+Rounds 4 to 7 are the loose ends' (below): grey under any light, and outdoors.
+
+## Furnace Nine's loose ends
+
+The first pass left three: its baked atlas still had the solid blobs, indoors the smoke read purple, and nobody had
+seen it outdoors.
+
+### 1. A still of the smoke in its atlas (`bake.json` `creature`; `creatures.js` `Rig.soft`; `lab.js` `downSoft`)
+
+**Which images.** Furnace Nine has an atlas and nothing else. `bake.json` gives it no portrait and no
+character-window figure, as it gives no boss one, and nothing in the UI draws a boss's portrait. The atlas is the
+one still: `?figures=sprites`, and what the game falls back to if its model can't be drawn.
+
+**Only the bake.** The furnace's `bake.json` entry has `"creature": { "smoke": true }`. `bake.cjs` lays it over the
+variant's creature spec for the bake alone. `models.mjs` takes the variant's own spec, so `cast.json` and the game's
+model are unchanged (`test/reachfx.test.mjs` holds both).
+
+**The smoke.** `smoke: true` builds the world's puffs caught in a moment:
+- Three puffs off the lip, each higher, bigger, thinner and further back on the wind than the last, with gaps
+  between them and two sparks among them.
+- Each puff is two to four lobes. Each lobe is a shell over a heart of the same opacity (0.74, 0.64 and 0.54, low to
+  high), so a lobe is thick in the middle and thin at its rim, and thicker again where lobes overlap.
+- The lobes are a mesh of their own: `Smoke`, translucent, writing no depth (`Rig.soft`).
+- All of it sits under the old blobs' top, so the figure keeps its box and its size. Round 1 had a lobe 0.011 over
+  that top, and every pixel of the figure moved. The test now holds the top.
+
+**The bake.** The atlas's alpha is a mask: a pixel is solid or it isn't, and solid pixels are outlined in ink.
+- A pixel the smoke alone covers is kept where its mean opacity beats a 4 × 4 Bayer threshold. The hearts come out
+  solid and the rims a stipple the world shows through.
+- No ink is drawn round the smoke.
+- A figure with no soft part takes the old path. `hero_knight`, `creature_golem` and `boss_ratking` bake
+  byte-identical with and without the change.
+
+**Measured** (`bake.cjs boss_furnace_nine`, 27 s):
+- The cells are 114 × 320 as before, and the JSON is the same but for the images' hash.
+- Against a bake of the same code without the smoke:
+  - idle, walk, attack and heavy differ only over the stack's lip (0 pixels below it);
+  - attack2, hit and death differ by a few hundred pixels below it, where the stack tips and its smoke falls beside it.
+- Opaque pixels in the atlas: 2 559 709 → 2 472 711 (the blobs' area less the puffs').
+
+**Rounds:**
+1. One opacity a lobe (0.62, 0.46, 0.32): a sparse checker, the puffs half the blobs' size.
+2. A heart in each lobe, the lobes bigger: still a mesh.
+3. Opacities 0.74, 0.64 and 0.54, and lighter tops (`#b4b0aa`): solid hearts, stippled rims. Shipped.
+
+![Furnace Nine's atlas, the stack's top at ×2: the solid blobs before; after, three translucent puffs off the lip, stippled where thin, no ink round them](img/reach-fx/furnace-atlas.jpg)
+
+### 2. Grey under any light (`world.js` `greyPuff`)
+
+**Why it read purple.** Luminati's particle shader lights a lit burst as its colour × (amb + sun × 0.75), amb its
+own grey-blue by the night.
+- Underground the scene's sun is off (`convert.js` `ambientOf`: sun 0), but the uniform the particles read is not.
+  It is a warm key: (1.11, 0.56, 0.52) in the Old Barrows and the Forgehall alike.
+- So the shader turned `#5c5753` red-brown (`#61413c`). The room's violet air over it made it purple: the smoke
+  added red and blue over green to what was behind it.
+
+**The fix.** Each puff is let go white-balanced against the light it's let go in:
+- `STACK_GREY` (0.75) of the light's hue is taken off. A quarter is kept, so at dusk the smoke takes the dusk as the
+  works' chimney smoke beside it does.
+- Its brightness is kept (Rec. 709 luma), so it sits dark in a dark room and dims at night as everything round it
+  does.
+- `STACK_GAIN` (2): no channel is more than doubled under a light that has next to none of it (the night's blue).
+- Nothing is allocated. The burst's colour is the cached preset config's (Luminati's `_burstConfig`, a private
+  method). It is set before each puff. Without that method the smoke keeps its preset's colour.
+
+The sparks are untouched: unlit, additive, warm.
+
+### 3. Outdoors, where it stands (`furnace-smoke.mjs --where mouth`)
+
+**How it's reached.** The Reach's overland with `?dev&ring=furnace`, its lamp broken (`state.lampsBroken`), the
+window told to the sim, and the hero five tiles south of it. At level 1 it doesn't stir for him, so it stands.
+
+**A dev hook bug.** In the first quarter of an hour, `?dev&ring=furnace` told the sim the Kingstone's window, which
+was really open and first in the list. The mouth went back to its furnace-priests, whose camp fight wiped the hero
+home to Ashgate. `ring.js` `clock()` now takes the held window first (localhost only).
+
+**What was wrong outdoors:**
+- At dusk the smoke was a small dark cap on the stack. Lit `#57443f`, it was as bright as the ground behind it,
+  (100, 80, 80).
+- The Cinderworks' chimney smoke in the same frame read far stronger than the boss's.
+- The wind is Luminati's: (1, 0.35) at strength 1, indoors too. At `windInfluence` 0.55 the plume leaned 5 px.
+
+**Rounds:**
+4. Neutralise 85 % of the light's hue. Grey indoors, but dimmer: the light's luma is 0.67.
+5. `#78736e`, `windInfluence` 0.55 → 0.85. It leans.
+6. Bigger (0.55 to 0.85, ×4.5), alpha 0.64, `STACK_GREY` 0.75. It reads outdoors, but as a cloud capping the stack.
+7. More rise (1.1 → 1.45 a second) and less swell (×3.8). It trails up and off the stack downwind. Shipped
+   (`#7e7974`).
+
+### Measured (the loose ends)
+
+At +2.5 s, the frame drawn with Luminati's particles and without, over the stack (`furnace-smoke.mjs`, numbers-*.json):
+- **add**: what the smoke adds to red, green and blue there;
+- **violet**: its red and blue over its green (> 0 purple);
+- **lit**: the shader's own colour for the last puff;
+- **lean**: how far right of the furnace the smoke lies, CSS px.
+
+| | before: add | violet | lit | lean | after: add | violet | lit | lean |
+|---|---|---|---|---|---|---|---|---|
+| The Old Barrows (Stage) | 10.5, 5.1, 6.0 | +3.1 | `#61413c` | 5.5 | 18.4, 23.3, 22.8 | −2.7 | `#70625d` | 10.3 |
+| The Forgehall (Stage) | 24.8, 13.4, 11.7 | +4.9 | `#61413c` | 13.5 | 33.8, 35.4, 31.3 | −2.8 | `#70625d` | 19.4 |
+| The Vault's mouth, dusk | −22.6, −10.9, −2.1 | −1.5 | `#57443f` | 5.4 | −7.0, 11.5, 17.7 | −6.1 | `#6c635e` | 12.0 |
+| The Vault's mouth, night | −24.3, −8.8, −0.2 | −3.5 | `#1e2028` | −5.6 | 0.2, 10.3, 7.6 | −6.4 | `#302f31` | 7.3 |
+
+What the numbers say:
+- **Indoors.** Before, the smoke added red and blue over green: purple. After, it adds the three about evenly: grey,
+  a little cool under the rooms' air.
+- **Outdoors.** Before, the smoke was a dark warm cap, darker than the ground in every channel. After, it lightens the
+  red ground's green and blue: it reads grey against it.
+- **Colour.** The shader's own colour went from red-brown (HSL saturation 0.24) to a grey with a quarter of the light
+  left in it (0.09). At dusk it went 0.16 → 0.07, and at night 0.14 → 0.02.
+- **Lean.** The plume lies further downwind in every scene, about twice as far.
+
+**Cost.** Unchanged: the same particles, the same two pools.
+
+| The Old Barrows' Stage, median of 30 frames | frame: draws | frame: triangles | the furnace's share |
+|---|---|---|---|
+| before | 91 · 85 empty | 226 196 · 217 620 empty | 6 draws, 8 576 triangles |
+| after | 91 · 85 empty | 226 196 · 217 620 empty | 6 draws, 8 576 triangles |
+| the Forgehall, before and after | 96 · 90 empty | 220 130 · 211 554 empty | 6 draws, 8 576 triangles |
+
+![Indoors, +0 … 2.5 s: before, the smoke lit red under the rooms' violet air reads purple; after, a grey plume leaning off downwind (the Old Barrows, the Forgehall)](img/reach-fx/furnace-smoke-rooms.jpg)
+![At the Vault's mouth, +0 … 2.5 s, dusk and night: before, a small dark cap; after, grey smoke trailing off downwind](img/reach-fx/furnace-mouth.jpg)
+![The whole phone frame at the game's zoom, dusk: before and after](img/reach-fx/furnace-mouth-play.jpg)
 
 ## Not done
 
-- **The furnace's baked atlas** (`assets/actors/boss_furnace_nine`: `?figures=sprites`, its portrait and
-  character-window figure) still has its smoke blobs. A still card's smoke can't drift. A re-bake would drop them;
-  put `smoke: true` in its creature spec first if the card should keep them.
-- **Furnace Nine outdoors** is not captured. See the last round.
+- **At night at the Vault's mouth**, the furnace's body reads cream, near white, before and after. That is its
+  figure's light at night, not the smoke's, and was left as it was.
+- **A fight at the mouth** wasn't captured. The hero stands at level 1, and the smoke is the same in a fight.

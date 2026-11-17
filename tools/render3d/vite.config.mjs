@@ -11,10 +11,13 @@
 //   · the Japanese and Chinese font slices left out (the game is in English).
 import { defineConfig } from 'vite';
 import { resolve, sep } from 'node:path';
+import { realpathSync } from 'node:fs';
 
 const LUM = process.env.LUMINATI, OUT = process.env.EMBER_OUT;
 if (!LUM || !OUT) throw new Error('tools/render3d/vite.config.mjs is run by tools/render3d/build.mjs');
-const SRC = resolve(LUM, 'src'), EMBER = resolve(LUM, 'ember3d');
+// (SRC by its real path: the ids vite transforms are real paths, and a checkout reached through a symlink (a worktree's
+// tools/render3d/.work/luminati linked to the main checkout's) matched none of the tags, and the build shipped without them)
+const SRC = realpathSync(resolve(LUM, 'src')), EMBER = resolve(LUM, 'ember3d');
 const TAGS = [
   ['game/GroundDetail.js', 'new Foliage({ sprite, instances: list, name: n,', 'new Foliage({ sprite, instances: globalThis.__emberGround ? globalThis.__emberGround.foliage(list) : list, name: n,'],
   ['game/World.js', 'if (env.dust !== false) {', 'if (env.dust !== false && globalThis.__emberGround?.dust !== false) {'],

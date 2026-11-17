@@ -28,12 +28,16 @@ class Rig {
   /** crease: the angle (radians) past which two faces meet in a hard edge; under it the surface is shaded smooth (the
    *  rig's own by default: a chiselled golem's lower) */
   part(geo, bone, colour, glow = false, crease = this.crease) { this.parts.push({ geo: geo.index ? geo.toNonIndexed() : geo, bone: typeof bone === 'function' ? bone : this.bones.indexOf(this.by.get(bone)), colour, glow, crease }); }
+  /** a translucent part, `alpha` its opacity: smoke (a mesh of its own, 'Smoke', userData.soft, drawn after the solid and
+   *  writing no depth, so lobes laid over each other thicken where they overlap and thin to their edges) */
+  soft(geo, bone, colour, alpha) { this.part(geo, bone, colour); this.parts[this.parts.length - 1].soft = alpha; }
   /** a weight function for a part bent across bones: (p) → [[bone, w], [bone, w]] by where the vertex is */
   skin(fn) { return (p) => fn(p).map(([b, w]) => [this.bones.indexOf(this.by.get(b)), w]); }
   mesh(glowColour, glowK = 1.6) {
-    const make = (parts, mat) => {
+    const make = (parts, mat, alpha = false) => {
       let n = 0; for (const q of parts) n += q.geo.attributes.position.count;
-      const pos = new Float32Array(n * 3), col = new Float32Array(n * 3), si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
+      const CN = alpha ? 4 : 3;                                    // (a soft part's colour carries its opacity: three.js's vertex alphas)
+      const pos = new Float32Array(n * 3), col = new Float32Array(n * CN), si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
       let o = 0; const p = new THREE.Vector3(), nm = new THREE.Vector3(), c = new THREE.Color();
       const nrm = new Float32Array(n * 3);
       for (const q of parts) {
@@ -46,23 +50,28 @@ class Rig {
           p.fromBufferAttribute(P, v); nm.fromBufferAttribute(N, v);
           if (typeof q.colour === 'function') c.copy(q.colour(p, nm)); else c.copy(q.colour);
           // (a hand-painted mottle, smooth over the surface: a vertex's shade by where it is, so the faces that share it agree)
-          if (!q.glow && this.mottle) c.multiplyScalar(1 - this.mottle + 2 * this.mottle * hash3(Math.round(p.x * 60), Math.round(p.y * 60), Math.round(p.z * 60), 3));
-          pos.set([p.x, p.y, p.z], o * 3); col.set([c.r, c.g, c.b], o * 3); nrm.set([nm.x, nm.y, nm.z], o * 3);
+          if (!q.glow && !q.soft && this.mottle) c.multiplyScalar(1 - this.mottle + 2 * this.mottle * hash3(Math.round(p.x * 60), Math.round(p.y * 60), Math.round(p.z * 60), 3));
+          pos.set([p.x, p.y, p.z], o * 3); col.set(alpha ? [c.r, c.g, c.b, q.soft] : [c.r, c.g, c.b], o * CN); nrm.set([nm.x, nm.y, nm.z], o * 3);
           if (typeof q.bone === 'function') { const w = q.bone(p), a = w[0], b = w[1] || [0, 0]; si.set([a[0], b[0], 0, 0], o * 4); sw.set([a[1], b[1], 0, 0], o * 4); }
           else { si.set([q.bone, 0, 0, 0], o * 4); sw.set([1, 0, 0, 0], o * 4); }
           o++;
         }
       }
       const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, CN));
       g.setAttribute('skinIndex', new THREE.BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
       g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
       return new THREE.SkinnedMesh(g, mat);
     };
     const root = new THREE.Group(), skeleton = new THREE.Skeleton(this.bones);
     root.add(this.bones[0]); root.updateMatrixWorld(true);
-    const body = make(this.parts.filter((q) => !q.glow), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 }));
+    const body = make(this.parts.filter((q) => !q.glow && !q.soft), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 }));
     body.name = 'Body'; root.add(body); body.bind(skeleton);
+    const softs = this.parts.filter((q) => q.soft);
+    if (softs.length) {
+      const m = make(softs, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0, transparent: true, depthWrite: false }), true);
+      m.name = 'Smoke'; m.userData.soft = true; root.add(m); m.bind(skeleton);
+    }
     // (a part's glow: true, the eyes' colour; or a colour of its own, a mesh a colour: the Foreman's lamp beside his eyes)
     const glows = new Map(); for (const q of this.parts) if (q.glow) { const k = q.glow === true ? glowColour : q.glow; if (!glows.has(k)) glows.set(k, []); glows.get(k).push(q); }
     for (const [colour, eyes] of glows) {
@@ -760,11 +769,26 @@ function furnace(o = {}) {
   R.part(new THREE.TorusGeometry(0.2, 0.03, 5, 14).rotateX(Math.PI / 2).translate(0, 1.6, 0), 'head', ironLo);
   // (its smoke was two grey blobs here, solid, carried round with its head: the owner, "smoke as solid geometry that
   // doesn't drift". The world breathes it now, particles let go from the fire at the lip, rising and drifting: world.js
-  // puffStack; `smoke: true` in the variant's creature spec puts them back, for a still card. Its size is fitted to its box, smoke and all
-  // (figure.js fitPpu): a point where the higher blob's top was, a triangle with no area, keeps the box, and the figure
-  // as big as it was)
-  if (o.smoke) for (const [x, y, z, r] of [[0.02, 2.3, -0.08, 0.15], [-0.05, 2.5, -0.26, 0.21]]) R.part(blob(V(x, y, z), [r, r * 0.8, r], [8, 6]), 'head', (p, n) => (n.y > 0.3 ? smokeHi : smoke));
-  else { const top = new THREE.BufferGeometry(); top.setAttribute('position', new THREE.Float32BufferAttribute([-0.05, 2.5 + 0.21 * 0.8, -0.26, -0.05, 2.5 + 0.21 * 0.8, -0.26, -0.05, 2.5 + 0.21 * 0.8, -0.26], 3)); R.part(top, 'head', smoke); }
+  // puffStack. Its size is fitted to its box, smoke and all (figure.js fitPpu): a point where the higher blob's top was,
+  // a triangle with no area, keeps the box, and the figure as big as it was)
+  { const top = new THREE.BufferGeometry(); top.setAttribute('position', new THREE.Float32BufferAttribute([-0.05, 2.5 + 0.21 * 0.8, -0.26, -0.05, 2.5 + 0.21 * 0.8, -0.26, -0.05, 2.5 + 0.21 * 0.8, -0.26], 3)); R.part(top, 'head', smoke); }
+  // `smoke: true` (a still: bake.json's creature, for its atlas): the puffs as the world's are caught in a moment, three
+  // let go one after another off the lip, each higher, bigger, thinner and further back on the wind than the last, gaps
+  // between them, and two sparks among them. Each puff a few translucent lobes (R.soft), each lobe a shell over a heart
+  // of the same opacity, so it's thick in the middle and thin at its rim, and thicker again where lobes overlap (the bake
+  // stipples what's thin and draws no ink round it: lab.js bakeAtlas), all under the old blobs' top
+  if (o.smoke) {
+    const PUFFS = [   // [centre, lobes as [dx, dy, dz, r], each lobe's opacity, colour low → high]
+      [V(0.01, 2.235, -0.02), [[0, 0, 0, 0.08], [0.05, 0.025, -0.02, 0.06]], 0.74, 0],
+      [V(-0.04, 2.385, -0.13), [[0, 0, 0, 0.115], [0.085, 0.03, 0, 0.085], [-0.075, 0.035, 0.02, 0.08], [0.01, 0.06, -0.04, 0.07]], 0.64, 0.5],
+      [V(-0.08, 2.535, -0.27), [[0, 0, 0, 0.13], [0.1, 0.025, -0.02, 0.1], [-0.095, 0.035, 0.03, 0.095], [0.01, 0.04, -0.05, 0.08]], 0.54, 1],
+    ];
+    for (const [c, lobes, a, k] of PUFFS) {
+      const lo = mixC(smoke, smokeHi, 0.25 + k * 0.5), hi = mixC(smokeHi, new THREE.Color('#b4b0aa'), k), col = (p, n) => (n.y > 0.2 ? hi : lo);
+      for (const [dx, dy, dz, r] of lobes) for (const s of [1, 0.6]) R.soft(blob(V(c.x + dx, c.y + dy, c.z + dz), [r * s, r * s * 0.85, r * s], [8, 6]), 'head', col, a);
+    }
+    for (const [x, y, z, r] of [[0.06, 2.315, -0.07, 0.016], [-0.12, 2.47, -0.2, 0.013]]) R.part(blob(V(x, y, z), [r, r, r], [5, 4]), 'head', fire, true);
+  }
   // the arms: riveted pipe, the elbows knuckled, tongs for hands
   for (const s of [1, -1]) {
     R.part(blob(V(0.5 * s, 1.34, 0), [0.2, 0.15, 0.19], [8, 6]), `armU${s}`, ironC); R.part(new THREE.TorusGeometry(0.17, 0.03, 5, 12).rotateZ(Math.PI / 2).translate(0.56 * s, 1.34, 0), `armU${s}`, ironLo);   // (round N1: its shoulders as big as its fists' work)

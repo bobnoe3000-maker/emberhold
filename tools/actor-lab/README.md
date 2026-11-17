@@ -135,6 +135,11 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
 - `px` in a `bake.json` actor (art pass 9) bakes that actor at its own figure height: the bosses at 73
   (56 × 1.3, 114 × 133 cells), so the renderer draws them 1:1 rather than nearest-upscaling a 56 px atlas.
   `bake.cjs` reopens the lab at that height; `BAKE_PX` scales everyone alike.
+- `creature` in a `bake.json` actor is laid over its variant's creature spec for the bake alone (`models.mjs`, and so
+  the game's model, takes the variant's own). Furnace Nine's `{ "smoke": true }` gives its atlas a still of the smoke the
+  world lets go as particles: three puffs off the stack, translucent (`creatures.js` `Rig.soft`, a mesh of its own). A
+  figure with soft parts bakes their coverage as a 4 × 4 Bayer stipple of their opacity, with no ink round them, and is
+  otherwise baked exactly as before (`lab.js` `downSoft`); a figure without is untouched.
 - `swatches` — `[{ tile: [col, row], to: [light, dark] }]` repaints whole swatches of the kit's
   8 × 4 gradient-swatch texture by the swatch's own luminance, so its gradient survives and only
   the parts that use that swatch change. The cleric's off-white vestments are the Mage's robe

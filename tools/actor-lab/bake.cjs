@@ -12,6 +12,9 @@ const DIR = __dirname, OUT = process.env.BAKE_OUT || path.join(DIR, '..', '..', 
   if (!fs.existsSync(path.join(DIR, 'models', 'Knight.glb'))) throw new Error('models missing — run: sh fetch-assets.sh');
   const spec = JSON.parse(fs.readFileSync(path.join(DIR, 'bake.json')));
   const vars = Object.fromEntries(JSON.parse(fs.readFileSync(path.join(DIR, 'variants.json'))).map((v) => [v.id, v]));
+  // an actor's variant as it bakes: bake.json's `creature` laid over the variant's creature spec (Furnace Nine's still
+  // smoke, `smoke: true`: the atlas's alone; the game's model is the variant's own, models.mjs → cast.json)
+  const varOf = (a) => { const v = vars[a.variant]; return a.creature && v.creature ? { ...v, creature: { ...v.creature, ...a.creature } } : v; };
   const srv = await serve(DIR), port = srv.address().port;
   const b = await chromium.launch({ executablePath: CHROME, args: GL });
   const p = await (await b.newContext({ viewport: { width: 300, height: 300 } })).newPage();
@@ -34,17 +37,17 @@ const DIR = __dirname, OUT = process.env.BAKE_OUT || path.join(DIR, '..', '..', 
     if (pick.length && !pick.includes(a.out)) continue;
     await lab(pxOf(a), a.tall || 1);
     if (a.portrait) {                                      // head-and-shoulders portrait for the windows (lab.js renderPortrait)
-      const v = vars[a.variant];
+      const v = varOf(a);
       png(`${a.out}.face.png`, await p.evaluate(async (v) => await window.renderPortrait(v), v));
       console.log(`${a.out}: portrait ${a.out}.face.png`);
     }
     if (a.figure) {                                        // the whole figure for the character window (lab.js renderFigure)
-      png(`${a.out}.fig.png`, await p.evaluate(async ([v, o]) => await window.renderFigure(v, o), [vars[a.variant], a.figure]));
+      png(`${a.out}.fig.png`, await p.evaluate(async ([v, o]) => await window.renderFigure(v, o), [varOf(a), a.figure]));
       console.log(`${a.out}: figure ${a.out}.fig.png (${a.figure.pose.join(' ')})`);
     }
     if (portraitsOnly) continue;
     if (only) {
-      const v = vars[a.variant], f = path.join(OUT, `${a.out}.json`), meta = JSON.parse(fs.readFileSync(f));
+      const v = varOf(a), f = path.join(OUT, `${a.out}.json`), meta = JSON.parse(fs.readFileSync(f));
       const r = await p.evaluate(async ([v, clips]) => await window.bakeAnchors(v, clips), [v, a.clips]);
       if (r.frames !== meta.frames) throw new Error(`${a.out}: clips changed since the last full bake`);
       delete meta.anchors; if (Object.keys(r.anchors).length) meta.anchors = r.anchors;
@@ -52,7 +55,7 @@ const DIR = __dirname, OUT = process.env.BAKE_OUT || path.join(DIR, '..', '..', 
       fs.writeFileSync(f, JSON.stringify({ ...rest, ...(r.stride ? { stride: r.stride } : {}), clips, source }) + '\n');
       console.log(`${a.out}: anchors ${Object.keys(r.anchors).join('+') || 'none'}, stride ${r.stride} ${JSON.stringify(r.info)}`); continue;
     }
-    const v = { ...vars[a.variant], eyes: vars[a.variant].eyes ? parseInt(vars[a.variant].eyes) : undefined };
+    const v = { ...varOf(a), eyes: varOf(a).eyes ? parseInt(varOf(a).eyes) : undefined };
     const t0 = Date.now(), r = await p.evaluate(async ([v, clips, g]) => await window.bakeAtlas(v, clips, g), [{ ...v, ...(a.grade || {}) }, a.clips, a.gain ?? spec.albedoGain ?? 1]);   // per-actor gain / grade overrides
     // img: the images' own hash. The game fetches them at a version of this JSON's text (renderer atlasMeta), and a
     // re-bake that changes only pixels (2026-10-03: Old Skarn's ears) left the JSON, and so the cached images, as they were
