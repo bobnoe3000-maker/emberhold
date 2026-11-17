@@ -715,7 +715,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const frags = await p.evaluate(() => globalThis.__sim.state.fragments);
     await p.locator('#journalBtn').tap(); await p.locator('#journal .tabs button', { hasText: 'Chronicle' }).tap();
     const text = await p.locator('#journal .frag').first().innerText().catch(() => ''), missing = await p.locator('#journal .frag.missing').count();
-    check('chronicle: its chest gives Standing Order 14, and the Chronicle shows it (and the Vale\'s nine still missing, and the Fens\' ten), no page errors', frags.length === 1 && /Standing Order 14/.test(text) && /Third Legion/.test(text) && missing === 19 && errs.length === 0, `${text.split('\n')[0]} · missing ${missing}` + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    check('chronicle: its chest gives Standing Order 14, and the Chronicle shows it (and the Vale\'s nine still missing, the Fens\' ten and the Reach\'s twelve), no page errors', frags.length === 1 && /Standing Order 14/.test(text) && /Third Legion/.test(text) && missing === 31 && errs.length === 0, `${text.split('\n')[0]} · missing ${missing}` + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }
 }
@@ -898,7 +898,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const card = await p.locator('#raid').innerText(), back = await p.evaluate((home) => { const s = globalThis.__sim; return { kind: s.world.kind, same: JSON.stringify(s.state.party.map((m) => m.id)) === JSON.stringify(home), weak: s.state.party.some((m) => m.weakUntil > s.state.t) }; }, home);
     const goldAfter = await p.evaluate(() => globalThis.__sim.state.counters.gold);
     check('raids: Party Up lists the band dungeons (those not reached say why), the lobby fills the seats asked for, Set out takes the hero and those two into the dungeon, and a wipe brings the company home at no cost',
-      rows.length === 7 && /* (the Cold Seam, v1.124) */ rows.filter((r) => !r.off).map((r) => r.t).join() === 'The Old Barrows,Wickham Keep' && rows.slice(2).every((r) => /level|open/.test(r.why))
+      rows.length === 10 && /* (the Reach's four, v1.124–v1.125; the Ninth Vault is secret, no raid) */ rows.filter((r) => !r.off).map((r) => r.t).join() === 'The Old Barrows,Wickham Keep' && rows.slice(2).every((r) => /level|open/.test(r.why))
         && lobby.length === 3 && out.kind === 'dungeon' && out.site === 'wickham_keep' && !out.open && out.party[1][1] === 'fighter' && out.party[2][1] === 'cleric' && out.party.slice(1).every((m) => m[2]) && lobby[1] === out.party[1][0]
         && theirs.bag === 0 && theirs.views.join() === 'Gear,Stats' && !theirs.acts.includes('unequip') && theirs.give.every((t) => !t.includes('Give to')) && theirs.cards.every((c) => !c.up && !c.pts)
         && /The raid is lost/.test(card) && /costs nothing/.test(card) && back.kind === 'town' && back.same && !back.weak && goldAfter >= gold && errs.length === 0,
