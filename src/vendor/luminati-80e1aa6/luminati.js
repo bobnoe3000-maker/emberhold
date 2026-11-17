@@ -22814,14 +22814,14 @@ function l_(e, t) {
 	}, v = () => {
 		a.position.set(0, u.y, u.d), a.lookAt(0, u.ly, 0);
 	}, y = null, b = "", x = 0, S = t.yaw ?? .42, C = 0, w = null, T = 0, E = !1, D = 0, ee = 0, O = null, te = 4, k = () => {
-		let t = e.clientWidth || e.width, r = e.clientHeight || e.height;
-		n.setSize(t, r, !1), a.aspect = t / Math.max(1, r), a.updateProjectionMatrix();
+		let t = e.clientWidth, r = e.clientHeight;
+		t && r && (n.setSize(t, r, !1), a.aspect = t / r, a.updateProjectionMatrix());
 	}, ne = typeof ResizeObserver < "u" ? new ResizeObserver(k) : null;
 	ne?.observe(e), k();
 	let A = (e) => y && y.def.clips && y.def.clips[e], re = -1, ie = -1;
 	function ae(t) {
 		if (T = 0, E || !y) return;
-		(e.clientWidth !== re || e.clientHeight !== ie) && (re = e.clientWidth, ie = e.clientHeight, k());
+		e.clientWidth && e.clientHeight && (e.clientWidth !== re || e.clientHeight !== ie) && (re = e.clientWidth, ie = e.clientHeight, k());
 		let r = Math.min(.1, D ? (t - D) / 1e3 : 0);
 		if (D = t, ee += r, w || (S += C * r, C *= Math.max(0, 1 - 3 * r)), s.rotation.y = S, g) {
 			let e = 1 - Math.exp(-7 * r), t = 0;

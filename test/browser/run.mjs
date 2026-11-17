@@ -1904,7 +1904,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
 {
   const b = await launch(chromium, 'chromium');
   if (b) {
-    const ctx = await b.newContext({ viewport: { width: 390, height: 760 } }), p = await ctx.newPage(), errs = [];
+    const ctx = await b.newContext({ viewport: { width: 390, height: 760 }, deviceScaleFactor: 2 }), p = await ctx.newPage(), errs = [];   // (2×: the figure's canvas grew by the pixel ratio each resize)
     p.on('pageerror', (e) => errs.push(e.message));
     await p.addInitScript(() => {
       const L = /** @type {any} */ (globalThis).__gl = [], g = HTMLCanvasElement.prototype.getContext;
@@ -1922,16 +1922,20 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       await sleep(300); G.__gear.open(0);   // (opened again while the new scene loads)
       let during = 0; while (G.__renderer.transiting && performance.now() < end) { during = Math.max(during, liveFigs().length); await sleep(50); }
       let back = false; while (performance.now() < end) { const l = liveFigs(); if (l.length === 1 && l[0].c.isConnected && l[0].c.style.visibility !== 'hidden') { back = true; break; } await sleep(250); }
+      // a tab away and back (the owner, 2026-11-17: "the game keeps crashing after i click the skills tab"): the figure's
+      // canvas, out of the page, kept its size (it was sized from its own buffer, × the pixel ratio each time: 6750 px)
+      const fc = liveFigs()[0]?.c, w0 = fc ? fc.width : 0, tab = (v) => document.querySelector(`#gearSheet button[data-view="${v}"]`).click();
+      tab('skills'); await sleep(1500); const wAway = fc ? fc.width : 0; tab('gear'); await sleep(1500); const wBack = fc ? fc.width : 0;
       const orphans = figs().filter((q) => !q.lost && !q.c.isConnected).length, made = figs().length;
       G.__gear.close();
       const pm = await import('./src/render3d/preview.js'), drawn = await pm.portraitOf(s.state.party[0].actor || 'hero_barbarian', null);   // (a portrait: its renderer made)
       const madeP = G.__gl.filter((q) => q.c.className !== 'gl' && !q.c.isConnected).length;
       await sleep(6000);   // (its renderer idle 4 s, then let go)
       const portraits = G.__gl.filter((q) => q.c.className !== 'gl' && !q.c.isConnected), portraitsLive = portraits.filter((q) => !q.lost).length;
-      return { during, back, orphans, made, drawn: !!drawn, madeP, portraits: portraits.length, portraitsLive, figsLive: liveFigs().length, kind: s.world.kind };
+      return { during, back, w0, wAway, wBack, orphans, made, drawn: !!drawn, madeP, portraits: portraits.length, portraitsLive, figsLive: liveFigs().length, kind: s.world.kind };
     }, SLOW);
-    check('memory: the character window\'s live figure (its own WebGL context) isn\'t made while a scene change builds, even opened as it loads; it stands once the world has settled; none is left running unowned; closed, it\'s let go; and the portraits\' renderer lets its context go once idle, no page errors',
-      r.kind === 'overland' && r.during === 0 && r.back && r.orphans === 0 && r.figsLive === 0 && r.drawn && r.madeP >= 1 && r.portraitsLive === 0 && errs.length === 0, JSON.stringify(r) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    check('memory: the character window\'s live figure (its own WebGL context) isn\'t made while a scene change builds, even opened as it loads; it stands once the world has settled; a tab away and back leaves its canvas the size it was; none is left running unowned; closed, it\'s let go; and the portraits\' renderer lets its context go once idle, no page errors',
+      r.kind === 'overland' && r.during === 0 && r.back && r.w0 > 0 && r.wAway === r.w0 && r.wBack === r.w0 && r.orphans === 0 && r.figsLive === 0 && r.drawn && r.madeP >= 1 && r.portraitsLive === 0 && errs.length === 0, JSON.stringify(r) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }
 }

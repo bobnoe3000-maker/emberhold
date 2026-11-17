@@ -1906,13 +1906,17 @@ export function createPreview(canvas, o) {
   };
   const place = () => { cam.position.set(0, camAt.y, camAt.d); cam.lookAt(0, camAt.ly, 0); };
   let cur = null, name = '', wantN = 0, yaw = o.yaw ?? 0.42, spin = 0, drag = null, raf = 0, dead = false, last = 0, clock = 0, act = null, nextAct = 4;
-  const size = () => { const w = canvas.clientWidth || canvas.width, h = canvas.clientHeight || canvas.height; renderer.setSize(w, h, false); cam.aspect = w / Math.max(1, h); cam.updateProjectionMatrix(); };
+  // sized to its box in CSS px; never from canvas.width, its buffer already × the pixel ratio: a canvas taken out of the page
+  // (the sheet's tabs re-render it away: Gear → Skills) has no box, and sizing it from its buffer tripled it each time, 750
+  // → 2250 → 6750 px a side, gigabytes with antialiasing (the owner, 2026-11-17: "the game keeps crashing after i click the
+  // skills tab"). Out of the page, or not laid out yet, it's left as it is until it has a box again.
+  const size = () => { const w = canvas.clientWidth, h = canvas.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); };
   const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(size) : null; ro?.observe(canvas); size();
   const clipOf = (k) => cur && cur.def.clips && cur.def.clips[k];
   let cw = -1, ch = -1;
   function frame(now) {
     raf = 0; if (dead || !cur) return;
-    if (canvas.clientWidth !== cw || canvas.clientHeight !== ch) { cw = canvas.clientWidth; ch = canvas.clientHeight; size(); }   // (moved into a box, or made before it was in one: framed to the box it's in)
+    if (canvas.clientWidth && canvas.clientHeight && (canvas.clientWidth !== cw || canvas.clientHeight !== ch)) { cw = canvas.clientWidth; ch = canvas.clientHeight; size(); }   // (moved into a box, or made before it was in one: framed to the box it's in)
     const dt = Math.min(0.1, last ? (now - last) / 1000 : 0); last = now; clock += dt;
     if (!drag) { yaw += spin * dt; spin *= Math.max(0, 1 - 3 * dt); }
     turn.rotation.y = yaw;
