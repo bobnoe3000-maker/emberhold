@@ -7,24 +7,31 @@
 //
 // The towns you've reached are `state.reached` (core.js, saved since v28): a Set of COACH ids, added to whenever you
 // stand in a town. ROADS is the coach's graph in days; a trip is the shortest path on it.
+// (v1.130) A land can have more than one: Kell's Rest is the Reach's second (outdoor.js TOWNS). The town you're in is
+// `state.town` (core.js, saved since v54), one of its land's stops; the land's own (townOf) unless you walked or rode
+// into another.
 
 import { LANDS, landId } from './regions.js';
 
-/** the coach's stops: each a land's town (regions.js LANDS[land].town), by id
+/** the coach's stops: each a land's town (regions.js LANDS[land].town, or a second one: outdoor.js TOWNS), by id
  * @type {Record<string, { name: string, land: import('./regions.js').LandId }>} */
 export const COACH = {
   thornwick: { name: 'Thornwick', land: 'vale' },
   saltmere: { name: 'Saltmere', land: 'fens' },
   ashgate: { name: 'Ashgate', land: 'reach' },     // (v1.124: the Cinder Reach, over the range by the Wickham road)
+  kells_rest: { name: "Kell's Rest", land: 'reach' },   // (v1.130: the Reach's waystation, west by the Kell road)
 };
 // the coach roads, [a, b, days] both ways. Each region's milestone adds its own (world-map proposal; the Lamphall is the
 // hub: Thornwick 3, Ashgate 2, Brine Cross 2, Hollin Ford 1, the Frozen Hospice 2).
 /** @type {Array<[string, string, number]>} */
-export const ROADS = [['thornwick', 'saltmere', 1], ['thornwick', 'ashgate', 2]];
+export const ROADS = [['thornwick', 'saltmere', 1], ['thornwick', 'ashgate', 2], ['ashgate', 'kells_rest', 1]];
 export const FARE_DAY = 10;                                // gold a day of road
 
 /** the coach stop for a land's town @param {string} land @returns {string} */
 export const townOf = (land) => { const L = LANDS[landId(land)]; return Object.keys(COACH).find((k) => COACH[k].name === L.town) || 'thornwick'; };
+/** a town in a land: `town` when it's one of that land's stops, else the land's own (a save's, an exit's, a stale one
+ * after crossing to another land) @param {any} town @param {string} land @returns {string} */
+export const townIn = (town, land) => (typeof town === 'string' && Object.prototype.hasOwnProperty.call(COACH, town) && COACH[town].land === landId(land) ? town : townOf(land));
 
 /** days on the coach between two stops: the shortest path over ROADS (integer days; relaxed in array order, so the
  * answer is the same on every engine), or null when no road joins them @param {string} a @param {string} b */
@@ -56,7 +63,7 @@ export function reachedOf(data, sites) {
  * and the hero standing, to a town reached in an open land, for its fare. Refusals say why ('refused'); nonsense is
  * ignored. Goes: the fare off the gold, 'coach' { from, to, days, fare }, then the trip (core.js travel).
  * @param {{ state: any, bus: any, getWorld: () => any, landOpen: (id: string) => boolean, inBattle: () => boolean,
- *   go: (land: string) => void }} ctx
+ *   go: (land: string, town: string) => void }} ctx
  */
 export function createCoach({ state, bus, getWorld, landOpen, inBattle, go }) {
   /** @param {any} cmd */
@@ -64,7 +71,7 @@ export function createCoach({ state, bus, getWorld, landOpen, inBattle, go }) {
     if (cmd.type !== 'coach') return false;
     const to = typeof cmd.to === 'string' && Object.prototype.hasOwnProperty.call(COACH, cmd.to) ? cmd.to : null, w = getWorld(), p = state.player;
     if (!to || w.kind !== 'town' || !LANDS[state.region]) return true;
-    const from = townOf(state.region);
+    const from = townIn(state.town, state.region);   // (v1.130: the town you're in, a land's second too)
     if (from === to || inBattle() || state.party[0].down || state.party[0].fallen) return true;
     const refuse = (/** @type {string} */ reason) => { bus.emit('refused', { reason }); return true; };
     const dx = p.x - (w.hub ? w.hub.x : 0), dy = p.y - (w.hub ? w.hub.y : 0);
@@ -77,7 +84,7 @@ export function createCoach({ state, bus, getWorld, landOpen, inBattle, go }) {
     state.counters.gold -= f;
     bus.emit('coach', { from, to, days: n, fare: f });
     bus.emit('countersChanged', { ...state.counters });
-    go(COACH[to].land);
+    go(COACH[to].land, to);
     return true;
   }
   return { command };

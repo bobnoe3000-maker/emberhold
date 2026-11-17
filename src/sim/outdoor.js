@@ -333,12 +333,12 @@ function herd(o, rng, ids, cx, cy, n, spread) {
   }
 }
 const DOORSTEP = ['barrel', 'crate_A_small', 'sack', 'planter_1', 'planter_1', 'pumpkins_1', 'hay_2', 'bucket_water'];
-function dress(o, rng, keepOut) {
+function dress(o, rng, keepOut, kinds = DOORSTEP) {   // (kinds: Kell's Rest's, nothing green)
   for (const st of o.structs.slice()) {
     if (!/_(house|housex|cottage|cottagex|longhouse|longhousex)_\d$/.test(st.id)) continue;
     const f = ENV_FOOT[st.id]; if (!f) continue;
     for (let k = 0, n = 1 + Math.floor(rng() * 2), t = 0; k < n && t < 10; t++) {
-      const onX = rng() < 0.5, id = pick(rng, DOORSTEP);
+      const onX = rng() < 0.5, id = pick(rng, kinds);
       const x = onX ? st.x + f[2] + 0.9 : st.x + f[0] + 0.8 + rng() * (f[2] - f[0] - 1.6), y = onX ? st.y + f[1] + 0.8 + rng() * (f[3] - f[1] - 1.6) : st.y + f[3] + 0.9;
       if (keepOut(x, y) || !fits(o, id, x, y, 0.15)) continue;
       put(o, id, x, y, 'rect', 0.1); k++;
@@ -383,12 +383,14 @@ export const REGIONS = {
 // the ground), the same in every town, not at its roof's top. A roof that changes (art critic pass 14: the shop and
 // the inn came down a storey) moves no plaque, so the menu reads alike in every town (test/town.test.mjs). These are
 // the heights the plaques were laid out at (the roofs' tops before that pass).
+/** each region's own town's id (coach.js COACH; the Heights' a preview's) */
+const TOWN_ID = { vale: 'thornwick', fens: 'saltmere', reach: 'ashgate', heights: 'frosthold' };
 const SIGN_TOP = { temple: 23.5, tavern: 15.1, shop: 13.4, smith: 11.1, inn: 18.7 };
 const WAY_SIGN_TOP = { temple: 23.5, tavern: 15.25, inn: 14.05, shop: 10.1, smith: 11.1 };   // a waystation's (its stilt tavern and inn; the chandlery's on its one-storey roof: at 13.4 it hung over the Stilt House, Saltmere's critic pass)
 function buildTown(seed, region) {
   const R = REGIONS[region] ? region : 'vale', info = REGIONS[R];
   const o = makeWorld(seed, 'town', 140, 120, 90), rng = mulberry32(streamSeed(seed, 4401)), B = (t, n = 1) => `${R}_${t}_${n}`;
-  o.name = info.name; o.region = R;
+  o.name = info.name; o.region = R; o.town = TOWN_ID[R];
   // The circuit is a box. The camera looks from +x+y, so the back walls (north, west) show their inner faces behind
   // the town, and the front ones (east, south) stand low in front of gardens, under the menu bar at the square.
   // EVERY ENTRANCE FACES THE WELL. The camera sees only a building's +x and +y faces, so every service stands
@@ -639,7 +641,7 @@ function clearGround(o, cx, cy, r, named = o.pools.length) {
 // The well is a rainwater cistern: nobody drinks the fen.
 function buildWaystation(seed, region) {
   const R = region, info = REGIONS[R], o = makeWorld(seed, 'town', 130, 116, 90), rng = mulberry32(streamSeed(seed, 4433)), B = (t, n = 1) => `${R}_${t}_${n}`;
-  o.name = info.name; o.region = R; o.marsh = true; o.waystation = true;
+  o.name = info.name; o.region = R; o.town = TOWN_ID[R]; o.marsh = true; o.waystation = true;
   const M = [66, 71], GY = 80;
   // the mere under the town: open water round the square, the chapel's island left dry at the head
   o.pools.push({ cx: 92, cy: 40, rx: 26, ry: 18 }, { cx: 18, cy: 80, rx: 16, ry: 26 }, { cx: 96, cy: 100, rx: 34, ry: 14 }, { cx: 48, cy: 104, rx: 24, ry: 11 },
@@ -679,6 +681,73 @@ function buildWaystation(seed, region) {
   });
   o.exits.push({ x0: 136, y0: GY - 8, x1: 146, y1: GY + 8, to: 'overland', arrive: 'saltmere' });   // the boardwalk's end (the ring's hard edge is at 146)
   o.arrivals = { default: { x: M[0] + 0.5, y: M[1] + 6.5 }, overland: { x: 128.5, y: GY + 0.5 }, temple: { x: 40.5, y: 42.5 } };
+  o.spawn = o.arrivals.default;
+  return o;
+}
+
+// ── KELL'S REST, the Reach's waystation (world doc v1.55 §3.3; docs/town-streets-proposal.md, its street plan) ────────
+// A land's second town (GDD v1.130, the owner: "Kell's Rest as a real second town"): the Kell Assay's depot under the dead
+// volcano, walked into off the end of the Kell road (buildReach). No wall, as a waystation has none; its square is every
+// town's, the services in Ashgate's places in Ashgate's own houses, so the home screen and its plaques read alike
+// (test/kellsrest.test.mjs holds its menu to Ashgate's). Depot Street runs east from the square to the road out; the
+// Assay's fenced yard behind it (the weigh-house at its gate, the ore sheds), the bunk huts in front; the old track
+// climbs the volcano's foot from behind the Ash Shrine. Nothing green: cracked earth and red rock, dead trees, dry grass.
+// Its own stream: 4446 (the scatter).
+/** the towns that aren't their land's own (coach.js COACH ids → their scene's names; regions.js LANDS names the main ones) */
+export const TOWNS = {
+  kells_rest: { region: 'reach', name: "Kell's Rest", tavern: 'The Short Weight', inn: 'The Bunkhouse', shop: 'The Company Store', smith: 'The Depot Forge', temple: 'The Ash Shrine' },
+};
+function buildKellsRest(seed) {
+  const info = TOWNS.kells_rest, o = makeWorld(seed, 'town', 130, 116, 90), rng = mulberry32(streamSeed(seed, 4446)), B = (t, n = 1) => `reach_${t}_${n}`;
+  o.name = info.name; o.region = 'reach'; o.town = 'kells_rest'; o.second = true; o.waystation = true;   // (second: not its land's own town: npcs.js stands its own people in it)
+  o.patches = [{ g: G.SCREE, f: 0.05, s: 51, th: 0.58 }];   // (the overland's cracked earth and red rock)
+  const M = [66, 71], GY = 80;
+  o.roads.push({ w: 7, surface: 'dirt', pts: [[160, GY], [96, GY], [76, 76]] });                               // Depot Street, beaten cinder, east to the Kell road
+  o.roads.push({ w: 2.5, surface: 'track', pts: fillet([[30, 38], [20, 26], [12, 10], [6, -10], [-2, -30]], 8) });   // the old track up the volcano, from behind the shrine
+  o.plazas.push({ cx: 60, cy: 62, rx: 24, ry: 22 }, { cx: 36, cy: 40, rx: 8, ry: 7 });                         // the square and the shrine's forecourt, as every town's
+  finalizeGround(o);
+  // the square: the five in a town's places (buildTown), the plaques at its set heights
+  const svc = [['temple', B('temple'), [34, 24]], ['tavern', B('tavern'), [29, 48]], ['shop', B('shop'), [50, 41]], ['smith', B('smith'), [51, 67]], ['inn', B('inn'), [73, 55]]];
+  const PLAQUE = { shop: [8, 5] };
+  for (const [kind, id, [x, y]] of svc) { const [px, py] = PLAQUE[kind] || [0, 0]; put(o, id, x, y); o.services.push({ kind, id, x, y, name: info[kind] }); o.labels.push({ x: x + px, y: y + py, id, text: info[kind], service: kind, top: SIGN_TOP[kind] }); }
+  put(o, B('well'), M[0], M[1]);
+  for (const [x, y] of [[41, 57], [60, 50], [80, 64], [61, 80], [87, 75], [97, 75], [107, 75]]) putProp(o, 'brazier', x, y);
+  for (const [id, x, y] of [['barrel', 84, 60], ['barrel', 85, 62], ['crate_A_big', 57, 75], ['sack', 58, 77], ['bucket_water', M[0] + 4, M[1] + 2]]) put(o, id, x, y, 'rect', 0);
+  o.hub = { x: 58, y: 58, r: 32, focus: { x: 60, y: 60 } };
+  o.lead = { x0: 100, y0: GY - 10, x1: 146, y1: GY + 10, x: 100, y: GY, k: 0.5 };   // (a waystation's: the camera leads halfway in along the street)
+  // the Assay's yard behind Depot Street: a rail fence, its gate on the street; the weigh-house just inside it, the ore sheds
+  const YX0 = 92, YX1 = 128, YY0 = 20, YY1 = 60;
+  for (const x of [YX0 + 6, YX0 + 18, YX0 + 30]) putRun(o, 'fence_90', x, YY0);
+  for (const x of [YX0 + 6, YX1 - 6]) putRun(o, 'fence_90', x, YY1);                                            // (the gate between, x 104–116)
+  for (const y of [YY0 + 6, YY0 + 18, YY0 + 30]) { putRun(o, 'fence_0', YX0, y); putRun(o, 'fence_0', YX1, y); }
+  put(o, B('longhouse'), 102, 52); put(o, B('workshop'), 102, 30); put(o, B('workshopx'), 118, 36);            // the weigh-house; the ore sheds
+  for (const [id, x, y] of [['wagon_0', 117, 50], ['crate_A_big', 96, 40], ['crate_B_big', 98, 42], ['crate_A_small', 95, 43], ['resource_stone', 110, 42], ['resource_stone', 124, 48], ['cart_0', 124, 24]])
+    put(o, id, x, y, 'rect', 0.1);
+  herd(o, rng, ['rock_C', 'rock_E', 'resource_stone'], 112, 24, 3, 3);                                         // the slag tipped behind the sheds
+  // the bunk huts in front of the street, one storey; a row of the depot's homes west of the square
+  for (const [t, x, y, n] of [['cottage', 94, 94, 1], ['cottage', 108, 95, 1], ['cottage', 122, 94, 1], ['house', 101, 106, 1], ['cottage', 115, 107, 1], ['cottagex', 82, 102, 1],
+    ['cottagex', 24, 70, 1], ['housex', 24, 84, 1], ['longhousex', 26, 99, 1], ['workshop', 42, 98, 1]]) put(o, B(t, n), x, y);
+  // the town set: the square's own as every town's, the depot's colours on the street, its lamps, a farrier's stall
+  for (const [id, x, y] of [
+    [B('standard'), 104, 73], [B('standard'), 104, 87], ['lamppost_0', 88, 85], ['lamppost_0', 101, 85],
+    [B('foodstand'), 40, 77], ['boxes_0', 47, 77], ['table_0', 65, 63], ['bench_0', 43, 33], ['handcart_0', 57, 44],
+    ['woodpile_0', 24, 62], ['trough_0', 132, 90], ['cart_90', 126, 70],
+  ]) put(o, id, x, y, 'rect', 0.1);
+  for (const [id, x, y] of [['wheelbarrow', 96, 90], ['resource_stone', 88, 96], ['barrel', 106, 70], ['crate_A_big', 92, 84]]) put(o, id, x, y, 'rect', 0);
+  // the dead volcano's foot behind it all (north-west), its slag hills west
+  put(o, 'mountain_massif_C', -30, -26, 'round', 0.3); put(o, 'mountain_A', -14, 34, 'round', 0.35); put(o, 'mountain_B', 4, -34, 'round', 0.35);
+  // the scatter: red rock and its rubble, the odd dead tree; never on the square, the street or in front of the way in
+  const RED = ['rock_A', 'rock_B', 'rock_C', 'rock_D', 'rock_E', 'rock_B'];
+  scatter(o, rng, -40, -40, 170, 156, 8, (x, y) => {
+    if (hypot(x - 60, y - 60) < 44 || inFrontOf([[128, GY], [110, 62]], x, y, 30, 14)) return null;
+    return rng() < 0.3 ? pick(rng, rng() < 0.75 ? RED : ['dead_1', 'dead_2']) : null;
+  });
+  forestRing(o, rng, 10, ['rock_E', 'rock_C', 'dead_1', 'rock_D'], ['dead_1', 'dead_2', 'rock_A', 'rock_B']);
+  dress(o, mulberry32(streamSeed(seed, 4448)), (x, y) => hypot(x - o.hub.x, y - o.hub.y) < o.hub.r, ['barrel', 'crate_A_small', 'sack', 'bucket_water', 'resource_stone']);
+  undergrowth(o, -10, -10, 140, 126, 4, (x, y) => (hypot(x - o.hub.x, y - o.hub.y) < o.hub.r + 4 ? -1 : fbm(x * 0.07, y * 0.07, o.seed + 63) > 0.62 ? 0.4 : 0.06),
+    { low: ['ug_grass_1', 'ug_grass_2'], solid: ['rock_A', 'rock_B'], foot: ['ug_grass_2'] });
+  o.exits.push({ x0: 136, y0: GY - 8, x1: 146, y1: GY + 8, to: 'overland', arrive: 'kells_rest' });   // Depot Street's end, onto the Kell road (the ring's hard edge is at 146)
+  o.arrivals = { default: { x: M[0] + 0.5, y: M[1] + 6.5 }, overland: { x: 128.5, y: GY + 0.5 }, temple: { x: 38.5, y: 42.5 } };
   o.spawn = o.arrivals.default;
   return o;
 }
@@ -1001,8 +1070,10 @@ function buildReach(seed) {
     for (const [x, y] of [[X0, Y0], [X1, Y0], [X0, Y1], [X1, Y1], [(X0 + X1) / 2, Y0], [(X0 + X1) / 2, Y1], [X0, GY]]) put(o, B('tower'), x, y, 'round', 0.1);
     putGate(o, B('gatehousey'), X1, GY);
     put(o, B('standard'), X1 + 4, GY - 5, 'rect', 0.1); put(o, B('standard'), X1 + 4, GY + 5, 'rect', 0.1); }
-  // Kell's Rest (a landmark: the waystation isn't built): the Assay's depot round its yard, the bunk huts in front
-  for (const [id, x, y] of [[B('longhouse'), kells[0] - 10, kells[1] - 8], [B('house', 3), kells[0] + 10, kells[1] - 6], [B('cottage'), kells[0] - 10, kells[1] + 8],
+  // Kell's Rest from outside (v1.130, a town you walk into: buildKellsRest): the Assay's depot round its yard, the bunk
+  // huts in front, the end of the Kell road its way in (the exit below), between the depot's colours
+  put(o, B('standard'), kells[0] + 7, kells[1] - 4.5, 'rect', 0.1); put(o, B('standard'), kells[0] + 7, kells[1] + 4.5, 'rect', 0.1);
+  for (const [id, x, y] of [[B('longhouse'), kells[0] - 10, kells[1] - 8], [B('house', 3), kells[0] + 10, kells[1] - 9], [B('cottage'), kells[0] - 10, kells[1] + 8],
     [B('workshopx'), kells[0] + 6, kells[1] + 14]]) put(o, id, x, y);
   put(o, B('lanewell'), kells[0] + 2, kells[1] + 3, 'rect', 0.1);
   // the Assay Yards: the counting house and the ore shed in their fence, the weigh-house's crates at the gate
@@ -1057,6 +1128,8 @@ function buildReach(seed) {
     { low: ['ug_grass_1', 'ug_grass_2'], solid: ['rock_A', 'rock_B'], foot: ['ug_grass_2'] });
 
   o.exits.push({ x0: gate[0] - 8, y0: gate[1] - 4, x1: gate[0] - 1, y1: gate[1] + 4, to: 'town', arrive: 'overland' });
+  // (v1.130) the Kell road's end, between the depot's colours: into Kell's Rest (its Depot Street lets out at `kells_rest`)
+  o.exits.push({ x0: kells[0] + 3, y0: kells[1] - 3, x1: kells[0] + 7, y1: kells[1] + 3, to: 'town', town: 'kells_rest', arrive: 'overland' });
   // the roads out: shut, each with its word (the Reach isn't joined to the other lands yet)
   o.exits.push({ x0: 138, y0: 263, x1: 155, y1: 271, to: 'overland', region: 'vale', arrive: 'reach' });   // (v1.124) down the Wickham road, home to the Vale
   // the sites' doors (v1.124): the Cold Seam's pithead, where its track ends
@@ -1195,9 +1268,12 @@ function buildStage(seed, floor) {
 
 // region picks the land (regions.js): the Vale's overland and Thornwick, or the Fens' and Saltmere; reach · heights
 // preview their walled hubs and their own overlands (not lands you can walk to yet: docs/reach-heights-overlands.md);
-// 'stage' takes its floor in `region`'s place (grass · cobble)
-export function createOutdoor(seed, kind, region = 'vale') {
+// 'stage' takes its floor in `region`'s place (grass · cobble). town: a town that isn't its land's own (TOWNS, v1.130:
+// Kell's Rest), in its own land; anything else is the land's town.
+/** @param {number} seed @param {string} kind @param {string} [region] @param {string | null} [town] */
+export function createOutdoor(seed, kind, region = 'vale', town = null) {
   if (kind === 'stage') return buildStage(seed, region);
+  if (kind === 'town' && town === 'kells_rest' && region === TOWNS.kells_rest.region) return buildKellsRest(seed);
   if (region === 'fens') return kind === 'town' ? buildWaystation(seed, 'fens') : dressCamps(buildFens(seed), 'fens');   // (M8: Saltmere, the Fens)
   if (kind === 'overland' && region === 'reach') return dressCamps(buildReach(seed), 'reach');
   if (kind === 'overland' && region === 'heights') return dressCamps(buildHeights(seed), 'heights');

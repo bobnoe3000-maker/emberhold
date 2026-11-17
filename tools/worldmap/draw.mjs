@@ -174,7 +174,7 @@ scatter([[700, 980], [900, 950], [950, 1100], [760, 1130]], 12, 34, (x, y) => hi
 
 // ── the imperial roads, ruled straight from Solmere, with their dead beacon-towers ──────────────────────────────────
 const SOL = [600, 1150];
-const ROADS = [[SOL, PLACES.greyholt, PLACES.thornwick], [SOL, PLACES.ashgate], [SOL, PLACES.brine, PLACES.highmarch, PLACES.tollhaven], [SOL, PLACES.rookstead], [SOL, [600, 770]], [PLACES.ashgate, PLACES.kells], [PLACES.tollhaven, PLACES.gullwick], [PLACES.greyholt, PLACES.ashgate]];
+const ROADS = [[SOL, PLACES.greyholt, PLACES.thornwick], [SOL, PLACES.ashgate], [SOL, PLACES.brine, PLACES.highmarch, PLACES.tollhaven], [SOL, PLACES.rookstead], [SOL, [600, 770]], [PLACES.ashgate, PLACES.kells_rest], [PLACES.tollhaven, PLACES.gullwick], [PLACES.greyholt, PLACES.ashgate]];
 for (const r of ROADS) {
   add(`<path d="${pathOf(r, false)}" fill="none" stroke="${RED}" stroke-width="2" stroke-dasharray="9 6" opacity="0.8"/>`);
   for (let i = 0; i < r.length - 1; i++) {                      // a beacon-tower each long stretch
@@ -202,7 +202,7 @@ add(`<ellipse cx="${HEIGHTS_C[0]}" cy="${HEIGHTS_C[1]}" rx="52" ry="30" fill="${
 for (let i = 0; i < 9; i++) add(`<path d="M${f1(HEIGHTS_C[0] - 44 + i * 11)},${f1(HEIGHTS_C[1] - 16 + Math.abs(i - 4) * 2.5)} l4,9" stroke="${INK}" stroke-width="0.9"/>`);
 add(`<path d="M${HEIGHTS_C[0] - 10},${HEIGHTS_C[1] + 8} v-12 l4,-6 l3,4 l3,-8 l3,8 l3,-4 l4,6 v12 z" fill="#1e1610"/>`);
 for (const k of ['thornwick', 'ashgate', 'tollhaven', 'rookstead', 'frosthold']) add(hub(...PLACES[k]));
-for (const k of ['greyholt', 'saltmere', 'reedholm', 'kells', 'highmarch', 'brine', 'gullwick', 'hollin']) add(town(...PLACES[k]));
+for (const k of ['greyholt', 'saltmere', 'reedholm', 'kells_rest', 'highmarch', 'brine', 'gullwick', 'hollin']) add(town(...PLACES[k]));
 const SITES = [...EMBER.map((e) => [e.x, e.y, e.ruin ? 'ruin' : 'site']), [420, 818, 'site'], [482, 952, 'ruin'], [282, 990, 'site'],
   [790, 440, 'ruin'], [752, 618, 'site'], [1108, 902, 'site'], [960, 1062, 'ruin'], [1040, 760, 'site'], [722, 1562, 'ruin'], [860, 1722, 'site'], [700, 1772, 'ruin']];
 for (const [x, y, k] of SITES) add(k === 'ruin' ? ruin(x, y) : site(x, y));
@@ -226,7 +226,7 @@ label(482, 1792, 'the Hollow Vale', 22, { it: true }); label(470, 1918, 'the Gre
 label(600, 1250, 'SOLMERE', 32, { sc: true, ls: 8 }); label(600, 1276, 'the dead capital · the Bowl', 17, { it: true }); label(600, 1296, 'the Great Beacon', 17, { it: true });
 label(600, 480, 'the Ember Throne', 16, { it: true });
 label(600, 1088, 'the Mere', 15, { it: true }); label(684, 1124, 'the Mere Tower', 15, { it: true, anchor: 'start' });
-const T = [['thornwick', 'Thornwick', 0, 28], ['greyholt', 'Greyholt', 44, 6], ['saltmere', 'Saltmere', 0, 26], ['reedholm', 'Reedholm', 0, 26], ['ashgate', 'Ashgate', 0, 28], ['kells', 'Kell’s Rest', 0, 26],
+const T = [['thornwick', 'Thornwick', 0, 28], ['greyholt', 'Greyholt', 44, 6], ['saltmere', 'Saltmere', 0, 26], ['reedholm', 'Reedholm', 0, 26], ['ashgate', 'Ashgate', 0, 28], ['kells_rest', 'Kell’s Rest', 0, 26],
   ['frosthold', 'Frosthold', 0, 28], ['glass', 'the Glass Keep', 0, -14], ['tollhaven', 'Tollhaven', -12, 30], ['highmarch', 'Highmarch', 0, -16], ['brine', 'Brine Cross', 0, 26], ['gullwick', 'Gullwick', -48, 6],
   ['rookstead', 'Rookstead', 0, 28], ['hollin', 'Hollin Ford', 0, -14]];
 for (const [k, n, dx, dy] of T) { const [x, y] = PLACES[k]; label(x + dx, y + dy, n, ['thornwick', 'ashgate', 'tollhaven', 'rookstead', 'frosthold'].includes(k) ? 25 : 20); }

@@ -15,12 +15,14 @@ const gap = (a, b) => Math.hypot(Math.max(a[0] - b[2], b[0] - a[2], 0), Math.max
 // the door: the middle of the +x face (faceX in town.json) or the +y face, the only two the camera sees
 const door = (s, faceX) => { const r = rect(s); return faceX ? { x: r[2], y: (r[1] + r[3]) / 2, n: [1, 0] } : { x: (r[0] + r[2]) / 2, y: r[3], n: [0, 1] }; };
 
-for (const region of Object.keys(REGIONS)) {
-  const o = createOutdoor(1, 'town', region), entry = (id) => TOWN[region].find((e) => e.id === id);
+// every region's town, and (v1.130) a land's second: Kell's Rest, the Reach's waystation, in the Reach's own houses
+const BUILT = [...Object.keys(REGIONS).map((r) => [r, r, () => createOutdoor(1, 'town', r)]), ['kells_rest', 'reach', () => createOutdoor(1, 'town', 'reach', 'kells_rest')]];
+for (const [name, region, build] of BUILT) {
+  const o = build(), entry = (id) => TOWN[region].find((e) => e.id === id);
   const well = o.structs.find((s) => s.id === `${region}_well_1` || s.id === `${region}_cistern_1`), gate = o.structs.find((s) => s.id === `${region}_gatehousey_1`);
 
   const way = !!o.waystation;                                   // (M8: a waystation such as Saltmere: the five services, no wall)
-  test(`${region}: every entrance faces the well, on a face the camera sees`, () => {
+  test(`${name}: every entrance faces the well, on a face the camera sees`, () => {
     // every town and waystation has the five (v1.95, the owner: "all services in Every town"; Saltmere's inn 2026-10-05, its shop v1.44, its forge v1.95)
     assert.deepEqual(o.services.map((v) => v.kind).sort(), ['inn', 'shop', 'smith', 'tavern', 'temple']);
     for (const sv of o.services) {
@@ -30,7 +32,7 @@ for (const region of Object.keys(REGIONS)) {
     }
   });
 
-  test(`${region}: the services stand 8+ tiles apart, with every door in the square's frame`, () => {
+  test(`${name}: the services stand 8+ tiles apart, with every door in the square's frame`, () => {
     for (const a of o.services) for (const b of o.services) if (a !== b) assert.ok(gap(rect(a), rect(b)) >= 8, `${a.kind}–${b.kind}: ${gap(rect(a), rect(b)).toFixed(1)}`);
     // the frame the camera settles on (o.hub.focus): 25 tiles of (x − y) either side, from 93 above to 60 below in (x + y)
     // — between the HUD and the menu bar on a phone (DPR 2+, 390 × 844)
@@ -41,7 +43,7 @@ for (const region of Object.keys(REGIONS)) {
     }
   });
 
-  if (!way) test(`${region}: the walls are closed — the way out is only through the gate`, () => {
+  if (!way) test(`${name}: the walls are closed — the way out is only through the gate`, () => {
     const exit = o.exits.find((e) => e.to === 'overland');
     const reach = (shut) => {                                   // flood the walkable tiles from the well; shut = the gate's way through
       const seen = new Set(), q = [[Math.floor(well.x), Math.floor(well.y) + 4]];
@@ -58,17 +60,17 @@ for (const region of Object.keys(REGIONS)) {
     assert.ok(!reach(true), 'with the gate shut the square still reaches the way out: a gap in the walls');
   });
 
-  test(`${region}: you wake in the square (the services bar up, the camera settled), at the temple too after a wipe`, () => {
+  test(`${name}: you wake in the square (the services bar up, the camera settled), at the temple too after a wipe`, () => {
     for (const k of ['default', 'temple']) { const a = o.arrivals[k]; assert.ok(Math.hypot(a.x - o.hub.x, a.y - o.hub.y) < o.hub.r - 6, `${k} arrival is off the square`); }
   });
 
-  if (way) test(`${region}: a waystation has no wall: the square reaches the way out, and the camera leads in along the boardwalk`, () => {
+  if (way) test(`${name}: a waystation has no wall: the square reaches the way out, and the camera leads in along the boardwalk`, () => {
     const exit = o.exits.find((e) => e.to === 'overland'), seen = new Set(), q = [[Math.floor(well.x), Math.floor(well.y) + 4]]; let out = false;
     while (q.length && !out) { const [x, y] = q.pop(), k = x + ',' + y; if (seen.has(k) || !isWalkable(o, x + 0.5, y + 0.5)) continue; if (x >= exit.x0 && x < exit.x1 && y >= exit.y0 && y < exit.y1) out = true; seen.add(k); q.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]); }
     assert.ok(out, 'the square should reach the way out');
     const a = o.arrivals.overland, L = o.lead; assert.ok(a.x > L.x0 && a.x < L.x1 && a.y > L.y0 && a.y < L.y1, 'the arrival is off the approach'); assert.ok(L.k > 0 && L.k < 1);
   });
-  if (!way) test(`${region}: on the approach road the camera leads to the gate`, () => {
+  if (!way) test(`${name}: on the approach road the camera leads to the gate`, () => {
     const a = o.arrivals.overland, L = o.lead;
     assert.ok(a.x > L.x0 && a.x < L.x1 && a.y > L.y0 && a.y < L.y1, 'the arrival is off the approach road');
     assert.deepEqual([L.x, L.y], [gate.x, gate.y]); assert.ok(L.k > 0 && L.k < 1);
@@ -136,8 +138,8 @@ const SET = /_(cottagex?|longhousex?|workshopx?|foodstandx?|standard|lanewell)_\
 const HOME = /_(housex?|cottagex?|longhousex?|workshopx?)_\d$/;
 const segDist = (px, py, [ax, ay], [bx, by]) => { const vx = bx - ax, vy = by - ay, t = Math.max(0, Math.min(1, ((px - ax) * vx + (py - ay) * vy) / (vx * vx + vy * vy || 1))); return Math.hypot(px - ax - t * vx, py - ay - t * vy); };
 const rectDist = (r, x, y) => Math.hypot(Math.max(r[0] - x, x - r[2], 0), Math.max(r[1] - y, y - r[3], 0));
-for (const region of Object.keys(REGIONS)) test(`${region}: the town set is placed, off the roads, out of the way, every door still walked to`, () => {
-  const o = createOutdoor(1, 'town', region), entry = (id) => TOWN[region].find((e) => e.id === id), set = o.structs.filter((s) => SET.test(s.id));
+for (const [name, region, build] of BUILT) test(`${name}: the town set is placed, off the roads, out of the way, every door still walked to`, () => {
+  const o = build(), entry = (id) => TOWN[region].find((e) => e.id === id), set = o.structs.filter((s) => SET.test(s.id));
   const kinds = new Set(set.map((s) => s.id.replace(`${region}_`, '').replace(/x?_\d+$/, '')));
   for (const k of ['cottage', 'longhouse', 'workshop', 'foodstand', 'standard', 'lamppost', 'table', 'boxes', 'handcart']) assert.ok(kinds.has(k), `no ${k} in ${region}`);
   if (!o.waystation) for (const k of ['lanewell', 'cart', 'trough', 'woodpile', 'bench']) assert.ok(kinds.has(k), `no ${k} in ${region}`);
@@ -177,6 +179,12 @@ test('the square\'s menu is the same in every town: services, doors and plaques 
   assert.deepEqual(Object.fromEntries(menu(towns[0]).map((m) => [m.kind, m.top])), { temple: 23.5, tavern: 15.1, shop: 13.4, smith: 11.1, inn: 18.7 });
   const salt = createOutdoor(1, 'town', 'fens');
   assert.ok(salt.labels.filter((l) => l.service).every((l) => l.top > 0), 'Saltmere: a plaque hangs at its roof\'s height');
+  // (v1.130) Kell's Rest, a waystation in Ashgate's own houses: its square's menu is Ashgate's, service for service, plaque
+  // for plaque, only the names its own
+  const ash = createOutdoor(1, 'town', 'reach'), kells = createOutdoor(1, 'town', 'reach', 'kells_rest');
+  assert.deepEqual(menu(kells), menu(ash), "Kell's Rest's square differs from Ashgate's");
+  assert.deepEqual(kells.services.map((v) => v.id), ash.services.map((v) => v.id), 'the same houses');
+  assert.deepEqual(kells.services.map((v) => v.name), ['The Ash Shrine', 'The Short Weight', 'The Company Store', 'The Depot Forge', 'The Bunkhouse']);
 });
 
 // Saltmere's square (its critic pass, 2026-10-10): the square is one deck with a built edge. A boardwalk that runs

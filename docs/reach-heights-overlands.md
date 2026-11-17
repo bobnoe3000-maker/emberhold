@@ -53,7 +53,7 @@ All positions are in tiles. North is up, and the map is 260 × 260, the Vale's s
 |---|---|---|
 | **Ashgate** (box 98–132 × 114–166, gate 132, 140) | The town in small: slag-brick curtain and towers, the gate in the east wall, the temple, houses, a smithy and a workshop inside, the town's colours at the gate. | Moved 14 tiles west, so the three roads meet in front of the east gate. The town scene's road comes in from the east. |
 | **The junction** (152, 140) | The Wickham road, up from the south edge. The Solmere road, east over the Ashwater's bridge at (224, 179) and out the east edge. The Kell road, north round the town's wall, then west at y 102 to Kell's Rest. | The sketch ran the Kell road straight through the town. Imperial roads run straight (§3.6), but not through a walled town. |
-| **Kell's Rest** (38, 104) | A landmark: the Assay's depot round its yard (a longhouse, a house, a cottage, a workshop, the cistern), under the **dead volcano** (massif, 14, 64). | As sketched. |
+| **Kell's Rest** (38, 104) | A landmark: the Assay's depot round its yard (a longhouse, a house, a cottage, a workshop, the cistern), under the **dead volcano** (massif, 14, 64). (GDD v1.130: the Kell road's end, between the depot's colours, is its way in; the house moved three tiles north for it.) | As sketched. |
 | **The Assay Yards** (64, 132) | The counting house and the ore shed, in a rail fence with its gate east, crates and a cart. A track runs in off the Kell road. | As sketched. |
 | **The Cinderworks** (176, 64) | The furnace hall (the region's smithy), the ore shed, two stacks, a wagon. Up a track from the junction among slag heaps (rocks C, D, E and stone piles). Two **tailings ponds**: (148, 90) and (222, 76). | The Ashwater runs 8–10 tiles east of the sketch's line, to clear the works. The ore rails aren't laid (no art). |
 | **The Magma Vault** (168, 30) | A mound's mouth with Furnace Nine's stack over it, up a track from the works. | Moved to the river's west bank. The sketch's track crossed the river with no bridge. |
@@ -157,7 +157,8 @@ that's played has.
   `assets/maps/`; a preview's land tab simply has no map).
 - **The sites as dungeons.** That needs doors, `SITES` rows, foes and bosses. The levels on the sketches are the
   world-map proposal's. The world doc's v1.32 cut to one dungeon a band is still to be made when the Reach is built.
-- **The waystations' squares** (Kell's Rest, the Frozen Hospice). The plans are in `town-streets-proposal.md`.
+- **The waystations' squares** (Kell's Rest, the Frozen Hospice). The plans are in `town-streets-proposal.md`. (Kell's Rest's
+  is built since GDD v1.130: the Kell road's end walks you into it, `outdoor.js` `buildKellsRest`.)
 - **Frosthold's town scene** keeps the walled hub every town shares. The canon's pass and single wall are on the
   overland only.
 - **Without art:**

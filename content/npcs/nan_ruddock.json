@@ -4,11 +4,11 @@
   "role": [
     "townsfolk"
   ],
-  "town": "ashgate",
+  "town": "kells_rest",
   "region": "reach",
   "look": "npc_nan_ruddock",
   "portrait": "npc_nan_ruddock",
   "dialogue": "kellsrest",
   "knot": "nan_hub",
-  "note": "Garrow's quartermaster once; holds the Assay Yards' gate with what's left of the Redhand, because the Assay pays on time (world doc §3.3, §5, v1.54). Met at the Yards' way in."
+  "note": "Garrow's quartermaster once; holds the Assay Yards' gate with what's left of the Redhand, because the Assay pays on time (world doc §3.3, §5, v1.54). Stands in Kell's Rest's square, by the well (v1.55; met at the Yards' way in before)."
 }

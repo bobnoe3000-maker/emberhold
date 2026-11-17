@@ -36,7 +36,8 @@ import { findPath } from './path.js';
 import { mulberry32, streamSeed, STREAM } from './rng.js';
 
 // Where each stands: beside a service building of its region's town (or the square's well, `hub`;
-// off = tiles from that anchor), and what it may change. A spot is [anchor, [dx, dy]].
+// off = tiles from that anchor), and what it may change. A spot is [anchor, [dx, dy]]. (v1.130) `town`: one of its
+// land's other towns (coach.js COACH id: Kell's Rest), else the land's own.
 // Every spot is in view: no building, roof or the well in front of it on screen (art critic pass 8 measured
 // them with the renderer's x-ray share; browser test 15d holds them under 5 %). Osric stands in front of the
 // well, not in it; Ilse and Jory by the shrine's door, clear of Wendel's roof; Nell clear of the Mule's.
@@ -84,11 +85,13 @@ export const NPCS = {
   // Tamsin Coalbrook, Dagny's niece, a mage-smith: held at the goblins' anvil in the Cold Seam's tally cave (floor 2's
   // hall) by the Foreman, for the forge-work she can do (world doc v1.53); joins once he falls
   tamsin: { region: 'reach', found: { site: 'cold_seam', depth: 1, boss: 'foreman' }, spots: [], knot: 'tamsin_hub', flags: ['met_tamsin'] },
-  // (v1.54, world doc §3.3 "Kell's Rest's people") Kell's Rest has no square yet: its two are met at the Assay Yards' gate,
-  // in the way in (as Tobin is at the barrow mouth), and stay: Nan Ruddock with what's left of the Redhand, and Davy
-  // Pruett, the Assay's clerk, through whom Hob's pass comes (Paid by Weight)
-  nan_ruddock: { region: 'reach', found: { site: 'assay_yards', depth: 0, entrance: true }, spots: [], knot: 'nan_hub', flags: ['met_nan'] },
-  assay_clerk: { region: 'reach', found: { site: 'assay_yards', depth: 0, entrance: true }, spots: [], knot: 'clerk_hub', flags: ['met_clerk'] },
+  // (v1.54, world doc §3.3 "Kell's Rest's people"; v1.55 its square, GDD v1.130) Kell's Rest's two: Nan Ruddock with
+  // what's left of the Redhand, by the well where she can see the Kell road and the Yards' gate both (Hob's spot in
+  // Ashgate's square, Osric's in Thornwick's: the same square, its tested spots), and Davy Pruett, the Assay's clerk,
+  // through whom Hob's pass comes (Paid by Weight), outside the Short Weight where the clerks drink (Dagny's, Maudry's).
+  // (Until v1.130 the depot had no square: they stood in the Yards' entrance room.)
+  nan_ruddock: { region: 'reach', town: 'kells_rest', spots: [['hub', [11, 7]]], knot: 'nan_hub', flags: ['met_nan'] },
+  assay_clerk: { region: 'reach', town: 'kells_rest', spots: [['tavern', [10, 1]]], knot: 'clerk_hub', flags: ['met_clerk'] },
 };
 export const PARTS = 4, PART_S = DAY_S / PARTS;                  // dawn · day · dusk · night
 /** the part of the in-game day at time t (s of play) @param {number} t */
@@ -129,15 +132,16 @@ const hashId = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) h
 export function placeNpcs(world, isWalkable, block, part = 0) {
   world.npcs = [];
   if (world.kind !== 'town') return world;
+  const elsewhere = (n) => n.region !== world.region || (n.town || '') !== (world.second ? world.town : '');   // (v1.130: a land's second town, outdoor.js TOWNS, has its own people)
   const taken = Object.values(world.arrivals || {}).map((q) => ({ x: q.x, y: q.y }));   // (nobody stands where you arrive: the hero came in on top of Col)
   for (const [id, n] of Object.entries(NPCS)) {                  // (the named first: their tiles go solid before townsfolk look for theirs)
-    if (n.region !== world.region || n.folk || n.found) continue;
+    if (elsewhere(n) || n.folk || n.found) continue;
     const spot = spotTile(world, n.spots[0], isWalkable, taken);
     if (spot) { world.npcs.push({ id, x: spot.x, y: spot.y, px: spot.x, py: spot.y }); block(world, spot.x, spot.y); taken.push(spot); }
   }
   const folk = [];
   for (const [id, n] of Object.entries(NPCS)) {
-    if (n.region !== world.region || !n.folk || n.found) continue;
+    if (elsewhere(n) || !n.folk || n.found) continue;
     const spots = [];
     for (const sp of n.spots) { const q = spotTile(world, sp, isWalkable, taken); if (!q) break; spots.push(q); taken.push(q); }
     if (spots.length === n.spots.length) folk.push({ id, spots });
@@ -168,7 +172,7 @@ export function placeNpcs(world, isWalkable, block, part = 0) {
  * @param {any} world @param {(w: any, x: number, y: number) => boolean} isWalkable @param {(id: string) => boolean} waiting */
 export function placeFound(world, isWalkable, waiting) {
   if (world.kind !== 'dungeon' || !world.level || !world.level.descentRoom) return world;
-  const placed = [];                                             // (two in one room, Kell's Rest's at the Yards' gate: apart on screen, so a tap picks one)
+  const placed = [];                                             // (two in one room: apart on screen, so a tap picks one)
   for (const [id, n] of Object.entries(NPCS)) {
     if (!n.found || n.found.site !== (world.site || 'barrows') || n.found.depth !== (world.depth || 0) || !waiting(id)) continue;
     // (a visitor by the way in stands in the entrance room, nearest its middle: no fight starts there)

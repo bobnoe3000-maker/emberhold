@@ -50,9 +50,10 @@ export const QS = { LOCKED: -1, AVAILABLE: 0, ACTIVE: 1, READY: 2, DONE: 3 };
 // a third of its level. (They were fixed numbers sized for the old curve: a chapter fell from ~25 % to ~3 % of a level.)
 /** @param {{ share?: number, lv?: number }} r @param {number} level the member's */
 export const questXp = (r, level) => levelShare(Math.min(level, r.lv), r.share);
-// (M8, Act II) two more kinds: `meet` (a conversation opened with `npc`: in a town of `region`, or in a dungeon at `site`)
+// (M8, Act II) two more kinds: `meet` (a conversation opened with `npc`: in a town of `region`, or in a dungeon at `site`;
+// v1.130 `town`: in that one of the land's towns, Kell's Rest, where npcs.js stands them; the compass walks there)
 // and `cages` (full lantern-cages broken at `site`, lamps.js); `loot` can want a floor too
-/** @typedef {{ type: 'waves' | 'loot' | 'elites' | 'reach' | 'fragment' | 'boss' | 'meet' | 'cages' | 'camp', site?: string, count: number, hall?: boolean, floor?: number, boss?: string, npc?: string, region?: string, camp?: string }} Objective */
+/** @typedef {{ type: 'waves' | 'loot' | 'elites' | 'reach' | 'fragment' | 'boss' | 'meet' | 'cages' | 'camp', site?: string, count: number, hall?: boolean, floor?: number, boss?: string, npc?: string, region?: string, town?: string, camp?: string }} Objective */
 /** @typedef {{ kind: string, giver: string, region: string, level: [number, number], steps: { id: string, objectives: Objective[] }[], rewards: { share?: number, lv?: number, xp?: number, gold: number, item?: string }, turnin?: string, after?: string[], reveal?: string[], companion?: string, trial?: string, trialLv?: number }} QuestDef */
 /** @type {Record<string, QuestDef>} */
 export const QUESTS = {
@@ -221,7 +222,7 @@ export const QUESTS = {
   // (Act III runs to 60, the XP table's end: a company past 30 can still finish what it started; Acts I and II stop at 30.)
   ch3_paid_by_weight: {
     kind: 'chapter', giver: 'hob', turnin: 'dagny_coalbrook', region: 'reach', level: [22, 60], after: ['ch3_short_shift'],
-    steps: [{ id: 'pass', objectives: [{ type: 'meet', npc: 'assay_clerk', site: 'assay_yards', count: 1 }] },
+    steps: [{ id: 'pass', objectives: [{ type: 'meet', npc: 'assay_clerk', region: 'reach', town: 'kells_rest', count: 1 }] },   // (v1.130: in Kell's Rest's square; at the Yards' gate before)
       { id: 'weighmaster', objectives: [{ type: 'boss', site: 'assay_yards', boss: 'weighmaster', count: 1 }] }],
     rewards: { share: 0.45, lv: 23, gold: 520 },
   },
@@ -505,6 +506,11 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     const here = world.region || state.region || 'vale', regionOf = (o) => (o.site && SITES[o.site] ? SITES[o.site].region : o.camp && CAMP_BY[o.camp] ? CAMP_BY[o.camp].region : o.region || (NPCS[o.npc] || {}).region || here);
     const away = (r) => (world.kind === 'town' ? pick('road-out') : world.kind === 'dungeon' ? pick('exit') : pick('land:' + r));
     const talkTo = (npc) => { const n = (world.npcs || []).find((x) => x.id === npc); return n ? { tx: Math.floor(n.x), ty: Math.floor(n.y), near: 1, then: { type: 'talk', npc: n.id }, sub: world.kind === 'town' ? 'in town' : 'here', steps: 0 } : null; };
+    // (v1.130) someone in a land's second town (npcs.js `town`: Kell's Rest's two): out of the wrong town, and on the land
+    // to theirs (travel.js town:<id>), not the land's own
+    const homeOf = (npc) => (NPCS[npc] && NPCS[npc].town) || '', theirs = (npc) => (world.second ? world.town : '') === homeOf(npc);
+    const toTown = (npc) => (homeOf(npc) ? pick('town:' + homeOf(npc)) : pick('town'));
+    const inTownTo = (npc) => (theirs(npc) ? talkTo(npc) : pick('road-out'));
     const takerRegion = (NPCS[takerOf(d)] || {}).region;
     const tk = NPCS[takerOf(d)], kept = tk && tk.found && !tk.visitor && !withUs(takerOf(d)) ? tk.found : null;   // (v1.49: a keeper by a dungeon's way in, Tobin: back to him there)
     if (q.st === QS.READY && d.kind !== 'board' && !(d.companion && withUs(d.companion)) && takerRegion && takerRegion !== here) base = away(takerRegion);
@@ -517,15 +523,16 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
       if (d.companion && withUs(d.companion)) return rows;           // he's with you: hand it in from his card
       if (world.kind === 'town') {
         if (d.kind === 'board') base = pick('square');                 // the board is in the tavern, off the square (none once you're there)
+        else if (!theirs(takerOf(d))) base = pick('road-out');
         else { const n = (world.npcs || []).find((x) => x.id === takerOf(d)); if (n) base = { tx: Math.floor(n.x), ty: Math.floor(n.y), near: 1, then: { type: 'talk', npc: n.id }, sub: 'in town', steps: 0 }; }
-      } else base = world.kind === 'dungeon' ? pick('exit') : pick('town');
+      } else base = world.kind === 'dungeon' ? pick('exit') : toTown(takerOf(d));
     } else {
       const objs = d.steps[q.step].objectives, owe = objs.filter((o, i) => q.n[i] < o.count);
       const inSite = owe.some((o) => siteHere(o.site));
       if (battle && inSite && owe.some((o) => (o.type === 'waves' && (!o.hall || hallHere(battle.room)) && (!o.floor || floorHere() >= o.floor)) || o.type === 'elites')) return rows;
       const there = owe.find((o) => siteHere(o.site)) || owe.find((o) => regionOf(o) === here) || owe[0], site = there ? there.site : null;
       if (there && regionOf(there) !== here) base = away(regionOf(there));
-      else if (there && there.type === 'meet' && !there.site) base = world.kind === 'town' ? talkTo(there.npc) : world.kind === 'dungeon' ? pick('exit') : pick('town');   // (someone in town)
+      else if (there && there.type === 'meet' && !there.site) base = world.kind === 'town' ? inTownTo(there.npc) : world.kind === 'dungeon' ? pick('exit') : toTown(there.npc);   // (someone in town)
       else if (there && there.type === 'meet' && inSite && NPCS[there.npc] && NPCS[there.npc].found && floorHere() >= NPCS[there.npc].found.depth + 1) base = talkTo(there.npc) || pick('next-room');   // (someone in the dungeon: on their floor)
       else if (there && there.type === 'meet' && inSite) base = pick('stairs-down') || pick('next-room');
       else if (world.kind === 'town') base = pick('road-out');

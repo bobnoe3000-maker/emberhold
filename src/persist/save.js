@@ -158,6 +158,10 @@
 //       ids may end ':30' (Furnace Nine's, sim/ring.js); the shape is the same.
 //   v53: `held`, the heirlooms found while the bag was full (sim/loot.js keep/release; GDD v1.127): kept for the company
 //       and put in the bag once it has room, never salvaged or left. Absent when none; older data has none.
+//   v54: `town`, the town in the land you're in (or last stood in), a coach stop (sim/coach.js COACH; GDD v1.130: Kell's
+//       Rest, the Reach's second town, a scene of its own). Older data: the land's own town (townFor54), which is where
+//       every town scene was until now; a town that isn't one of the land's stops reads as the land's own (coach.js townIn).
+//       Nan Ruddock and Davy Pruett stand in Kell's Rest's square now, not the Yards' way in: no save holds where people stand.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -165,11 +169,11 @@ import { LAMPS } from '../sim/lamps.js';
 import { makeItem } from '../sim/items.js';
 import { bagStacks, BAG_SIZE } from '../sim/loot.js';
 import { dedupeNames, xpToNext } from '../sim/party.js';
-import { reachedOf } from '../sim/coach.js';
+import { reachedOf, townOf } from '../sim/coach.js';
 import { SITES, bossAt } from '../sim/sites.js';
 import { withFrame43 } from '../sim/appearance.js';
 
-export const SAVE_VERSION = 53;   // (v53: held heirlooms; v52: the level-24 trials, trials24For; v51: the Kingstone's record, `ring`; v50: a lamp's souls 16 / 12, the count's difference taken off; v49: the Fens' dungeons authored, two floors each; v48: raids, `raid`; v47: the Bowl's two ladders, bowl.team / bowl.solo; v46: the Bowl's board, bowl.picks / refresh; v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
+export const SAVE_VERSION = 54;   // (v54: the town you're in, `town`; v53: held heirlooms; v52: the level-24 trials, trials24For; v51: the Kingstone's record, `ring`; v50: a lamp's souls 16 / 12, the count's difference taken off; v49: the Fens' dungeons authored, two floors each; v48: raids, `raid`; v47: the Bowl's two ladders, bowl.team / bowl.solo; v46: the Bowl's board, bowl.picks / refresh; v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
 /** v40 and older (v41: the floors' gates): an old save comes back with the gates it has been through open, as far as the save
  * tells: every floor whose hall's boss is down (sites.js bossAt; state.bosses), and every floor above the one it was made
  * on. A generated hall with no boss, passed and left: its gate stands (its twenty waves again). @param {any} data */
@@ -201,7 +205,7 @@ export function metaOf(data) {
   const h = (data.party && data.party[0]) || {};
   return {
     name: h.name || 'Hero', cls: h.cls || 'fighter', level: h.level || 1, actor: h.actor || null, origin: h.origin || null,
-    party: (data.party || []).length, scene: data.scene || 'town', depth: data.depth || 0, site: data.site || 'barrows', region: data.region || 'vale',
+    party: (data.party || []).length, scene: data.scene || 'town', depth: data.depth || 0, site: data.site || 'barrows', region: data.region || 'vale', town: data.town || null,
     playtime: Math.round(Number.isFinite(data.tick) && data.tick > 0 ? data.tick / TICK_HZ : data.t || 0),   // seconds played (t is game time, retimed when the day changed length) gold: (data.counters && data.counters.gold) || 0,
   };
 }
@@ -210,7 +214,7 @@ export function metaOf(data) {
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object' || !raw.data) return null;
   if (raw.version === SAVE_VERSION) return raw;
-  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); if (raw.version < 31) data = bandsFor(data); if (raw.version < 32) data = questsFor32(data); if (raw.version < 33) data = plansFor33(data); if (raw.version < 36) data = ladderFor36(data); if (raw.version < 41) data = gatesFor41(data); if (raw.version < 43) data = looksFor43(data); if (raw.version < 49) data = plansFor49(data); if (raw.version >= 19 && raw.version < 50) data = lampsFor50(data); if (raw.version < 52) data = trials24For(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
+  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); if (raw.version < 31) data = bandsFor(data); if (raw.version < 32) data = questsFor32(data); if (raw.version < 33) data = plansFor33(data); if (raw.version < 36) data = ladderFor36(data); if (raw.version < 41) data = gatesFor41(data); if (raw.version < 43) data = looksFor43(data); if (raw.version < 49) data = plansFor49(data); if (raw.version >= 19 && raw.version < 50) data = lampsFor50(data); if (raw.version < 52) data = trials24For(data); if (raw.version < 54) data = townFor54(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
   return null;                       // unknown / newer / un-migratable
 }
 
@@ -246,6 +250,9 @@ export function xpFor27(data) {
   };
   return { ...data, party: (data.party || []).map(carry), bench: (data.bench || []).map(carry) };
 }
+
+/** v53 → v54: the town you're in is the land's own (see v54 above) @param {any} data */
+export function townFor54(data) { return { ...data, town: townOf(data && typeof data.region === 'string' ? data.region : 'vale') }; }
 
 /** v27 → v28: the towns reached (see v28 above) @param {any} data */
 export function reachedFor(data) { return { ...data, reached: reachedOf({ ...data, reached: undefined }, SITES) }; }

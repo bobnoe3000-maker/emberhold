@@ -20,7 +20,7 @@
 // rolled on the SHOP stream for the day and put up the first time you're in town that day; bought ones are gone until
 // the next dawn. Every town and waystation keeps its own shelves (v1.44: a waystation's shop is a reason to go there):
 // state.shops = { [town]: { day, lv, bought } } (coach.js town ids; saved since v29), each rolled on its own mix of the
-// stream, Thornwick's as it always was. state.shop is the shelves of the town of the land you're in.
+// stream, Thornwick's as it always was. state.shop is the shelves of the town you're in (v1.130: a land's second has its own: state.town).
 //   buy { idx }             BUY × item level gold, into the bag
 //   sell { uid }            a bag item (not an heirloom) for SELL[rarity] × item level, +25 % a smith's step;
 //                           the last BUYBACK_N sold wait in state.buyback
@@ -34,7 +34,7 @@ import { BASES, SALVAGE, SALVAGE_GOLD, UP_MAX, UP_GOLD, UP_CINDERS, rollItem, ro
 import { bagStacks, BAG_SIZE } from './loot.js';
 import { DAY_S } from './heroes.js';
 import { ORIGIN_EDGE } from './party.js';
-import { townOf, COACH } from './coach.js';
+import { townIn, COACH } from './coach.js';
 
 export { UP_GOLD, UP_CINDERS, salvageOf, cindersIn, SALVAGE_GOLD };
 export const REFORGE_GOLD = 50, REFORGE_CINDERS = 6;     // gold × item level, doubling with each reforge of the item (cinders: 3 until v1.77)
@@ -98,7 +98,7 @@ const NO_SHELF = () => ({ day: -1, lv: 1, bought: [] });
 /** @param {{ state: any, bus: any, getWorld: () => any, seed: number }} o */
 export function createSmith({ state, bus, getWorld, seed }) {
   if (!state.shops) state.shops = {};
-  const here = () => townOf(state.region);                 // the land's town: the shelves a buy or a sell would be at
+  const here = () => townIn(state.town, state.region);     // the town you're in (v1.130: a land's second too): the shelves a buy or a sell would be at
   Object.defineProperty(state, 'shop', { configurable: true, enumerable: false,
     get: () => state.shops[here()] || (state.shops[here()] = NO_SHELF()), set: (v) => { state.shops[here()] = v; } });
   if (!state.buyback) state.buyback = [];

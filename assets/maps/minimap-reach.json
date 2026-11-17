@@ -15,6 +15,12 @@
    "y": 140
   },
   {
+   "kind": "town",
+   "id": "kells_rest",
+   "x": 43,
+   "y": 104
+  },
+  {
    "kind": "land",
    "id": "vale",
    "x": 146.5,
