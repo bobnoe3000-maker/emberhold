@@ -8,7 +8,7 @@ export const WALL = { w: 1200, h: 2400, src: './assets/maps/old-provinces.jpg' }
 
 /** @type {Record<string, [number, number]>} */
 export const PLACES = {
-  thornwick: [330, 1720], greyholt: [470, 1655], saltmere: [323, 1947], reedholm: [530, 2077], ashgate: [360, 905], kells: [240, 838],
+  thornwick: [330, 1720], greyholt: [470, 1655], saltmere: [323, 1947], reedholm: [530, 2077], ashgate: [360, 905], kells_rest: [240, 838],
   frosthold: [420, 440], glass: [790, 440], throne: [600, 522], tollhaven: [1020, 960], highmarch: [820, 835], brine: [722, 1012],
   gullwick: [998, 1180], rookstead: [800, 1600], hollin: [690, 1450],
 };

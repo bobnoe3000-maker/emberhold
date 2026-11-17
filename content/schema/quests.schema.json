@@ -285,7 +285,7 @@
                     "label"
                   ],
                   "additionalProperties": false,
-                  "description": "(M8) a word with someone: in a town of `region`, or in a dungeon at `site`",
+                  "description": "(M8) a word with someone: in a town of `region` (v1.130: `town`, one of its others), or in a dungeon at `site`",
                   "properties": {
                     "type": {
                       "const": "meet"
@@ -301,6 +301,11 @@
                         "reach",
                         "heights"
                       ]
+                    },
+                    "town": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$",
+                      "description": "(v1.130) one of the land's other towns, where the npc stands (coach.js COACH id: kells_rest)"
                     },
                     "site": {
                       "type": "string"

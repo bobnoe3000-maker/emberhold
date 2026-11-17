@@ -218,6 +218,11 @@ The Kell Assay's depot under the dead volcano:
 - In front are one-storey bunk huts.
 - The old track climbs the volcano behind the shrine.
 
+**Implemented** (GDD v1.130, world doc v1.55): `src/sim/outdoor.js` `buildKellsRest`, walked into off the end of the Kell
+road. As built it differs from the plan in two ways: its square is Ashgate's to the tile (the same five houses in the same
+places, so the home screen's menu is the same), and it has the forge every waystation has had since v1.47, *The Depot
+Forge*. Its bare minimap: `docs/img/towns/minimap-kells_rest.png` (`tools/worldmap/minimap.mjs`).
+
 ### Brine Cross, the Tidemark
 
 ![Brine Cross](img/towns/streets-brine.jpg)

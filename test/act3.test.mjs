@@ -20,7 +20,7 @@ const SEED = 20260807;
 const ACTS = ['ch1_smoke_over_the_vale', 'ch1_the_diggers', 'ch1_ember_in_the_fist', 'ch1_the_standard',
   'ch2_fog_on_the_canal', 'ch2_the_locks', 'ch2_the_sickpools', 'ch2_the_bells', 'ch2_the_rolls', 'ch2_the_last_office'];
 const snap = (sim) => JSON.parse(JSON.stringify(sim.snapshot()));
-const goTo = (sim, scene, site = 'barrows', depth = 0, region) => sim.restore({ ...snap(sim), scene, site, depth, floors: [], ...(region ? { region } : {}) });
+const goTo = (sim, scene, site = 'barrows', depth = 0, region, town = null) => sim.restore({ ...snap(sim), scene, site, depth, floors: [], ...(region ? { region } : {}), town });   // (town: a land's second, v1.130; else its own)
 const events = (sim, names) => { const out = []; for (const n of names) sim.bus.on(n, (e) => out.push({ n, ...e })); return out; };
 const npc = (sim, id) => (sim.world.npcs || []).find((n) => n.id === id);
 const effect = (sim, tag, ...args) => { sim.commands.push({ type: 'dialogueEffect', tag, args }); sim.tick(); };
@@ -197,20 +197,22 @@ function withTamsin(sim) {
   assert.ok(sim.state.party.some((m) => m.id === 'tamsin'), 'Tamsin with you');
 }
 
-test('Kell\'s Rest\'s two wait at the Assay Yards\' gate, apart, and answer; Davy Pruett\'s word is Paid by Weight\'s first step', () => {
+test('Kell\'s Rest\'s two stand in its square (v1.130; the Yards\' gate before), apart, and answer; Davy Pruett\'s word is Paid by Weight\'s first step', () => {
   const sim = after2(22, 'town', 'reach'); doneTo(sim, 'ch3_paid_by_weight');
-  goTo(sim, 'dungeon', 'assay_yards', 1); assert.ok(!npc(sim, 'nan_ruddock') && !npc(sim, 'assay_clerk'), 'not under the Yards');
-  goTo(sim, 'dungeon', 'assay_yards', 0);
-  const nan = npc(sim, 'nan_ruddock'), clerk = npc(sim, 'assay_clerk'), E = sim.world.level.entrance;
-  assert.ok(nan && clerk, 'both by the way in');
-  for (const n of [nan, clerk]) assert.equal(sim.world.level.cells.get(Math.floor(n.x) + ',' + Math.floor(n.y)).room, E.id);
+  for (const d of [0, 1]) { goTo(sim, 'dungeon', 'assay_yards', d); assert.ok(!npc(sim, 'nan_ruddock') && !npc(sim, 'assay_clerk'), 'not in the Yards any more'); }
+  goTo(sim, 'town', 'barrows', 0, 'reach'); assert.equal(sim.world.name, 'Ashgate'); assert.ok(!npc(sim, 'nan_ruddock') && !npc(sim, 'assay_clerk'), 'not in Ashgate');
+  goTo(sim, 'town', 'barrows', 0, 'reach', 'kells_rest'); assert.equal(sim.world.name, "Kell's Rest");
+  const nan = npc(sim, 'nan_ruddock'), clerk = npc(sim, 'assay_clerk'), h = sim.world.hub;
+  assert.ok(nan && clerk, 'both in the square');
+  for (const n of [nan, clerk]) assert.ok(Math.hypot(n.x - h.x, n.y - h.y) < h.r, `${n.id} on the square`);
   assert.ok(Math.hypot(nan.x - clerk.x, nan.y - clerk.y) >= 3, 'apart: a tap picks one');
   const ev = events(sim, ['dialogue']);
   talk(sim, 'nan_ruddock'); assert.equal(ev.at(-1).npc, 'nan_ruddock');
   effect(sim, 'companion', 'join'); assert.ok(!sim.state.party.some((m) => m.id === 'nan_ruddock'), 'nobody\'s companion');
   goTo(sim, 'town', 'barrows', 0, 'reach'); talk(sim, 'hob'); effect(sim, 'quest', 'accept', 'ch3_paid_by_weight');
   assert.equal(st(sim, 'ch3_paid_by_weight'), QS.ACTIVE);
-  goTo(sim, 'dungeon', 'assay_yards', 0); talk(sim, 'assay_clerk');
+  goTo(sim, 'town', 'barrows', 0, 'reach', 'kells_rest'); talk(sim, 'assay_clerk');
+  assert.equal(ev.at(-1).npc, 'assay_clerk');
   assert.equal(ev.at(-1).vars.s_ch3_paid_by_weight, 0, 'the Ink reads the pass still to have');
   assert.equal(sim.state.quests.ch3_paid_by_weight.step, 1, 'then on to the Weighmaster');
 });

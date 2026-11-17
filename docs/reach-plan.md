@@ -87,6 +87,12 @@ The floors themselves, drawn to scale like the Vale's and the Fens', come once y
   pithead wheel over its gate wants its own art (the previews list it as missing).
 - **Kell's Rest**, the waystation at the Assay Yards: a square built as Saltmere's is, its services the Assay's (an
   inn and a store, the Assay's prices; a shrine). The plan is already in `town-streets-proposal.md`.
+  **Built (GDD v1.130, world doc v1.55; the owner: "Kell's Rest as a real second town"):** no longer a landmark only. The
+  Kell road's end on the overland walks you in (`src/sim/outdoor.js` `buildKellsRest`; the exit's `town: 'kells_rest'`),
+  Depot Street lets you out at the overland's `kells_rest` arrival. Its square is Ashgate's to the tile, in the Reach's
+  own houses: *The Short Weight*, *The Company Store* (its own shelves), *The Bunkhouse*, the Ash Shrine, *The Depot
+  Forge*. The Guild's coach stops there, a day from Ashgate (`sim/coach.js`); the town you're in is saved (save v54,
+  `town`). Nan Ruddock and Davy Pruett stand in its square.
 
 ## Getting there
 
@@ -217,13 +223,14 @@ assay_xbow · elite cinderhound), `vault` (cinderhound, warrior · furnacepriest
   Magma Vault's mouth on the overland: vents, and it feeds on the fallen. Heirloom `quota`.
 
 **Kell's Rest:** a landmark village on the overland with its people standing in it (no services yet: a second town in a
-land is a bigger change, noted for later). **Spawn points** (camps.js, one a band): `reach_den` the cinder hounds' den
+land is a bigger change, noted for later). *(Since GDD v1.130 a town of its own: see "Ashgate and Kell's Rest" above.)* **Spawn points** (camps.js, one a band): `reach_den` the cinder hounds' den
 (the old Slag Tunnels' adit, a nest, 20), `reach_renegades` the renegades' camp in the black slag hills (23),
 `reach_haulers` the haulers' road on the Cinderworks' track (26), `reach_wagon` the Assay's ore wagon on the Kell road,
 the Redhand guarding it (29).
 
 **People** (content/npcs; art `npc_<id>`): Kell's Rest's `nan_ruddock` (the Redhand's sergeant on the Yards' gate, met
 outside it), `assay_clerk` (`npc_clerk`, a nervous Assay clerk at Kell's Rest who sells nothing and says too much).
+(v1.130: both stand in Kell's Rest's square now, `npcs.js` `town: 'kells_rest'`.)
 
 **Story** (quests.js + content/quests + Ink): `ch3_paid_by_weight` (Hob; the Weighmaster), `ch3_gone_back_to_work`
 (Mother Coke; Oruth), `ch3_night_shift` (Dagny; Morrow Vane), `ch3_quota` (Tamsin; the Stoker, Furnace Nine's lamp: Act

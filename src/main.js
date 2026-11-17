@@ -64,6 +64,9 @@ const SCENE = SCENE0 === 'stage' && !DEV ? 'town' : STAGE3D ? 'dungeon' : SCENE0
 // ?region=vale|fens|reach|heights previews another region's hub town (same buildings, its own tones), or with
 // ?scene=overland its overland (the Reach's and the Heights' are previews: docs/reach-heights-overlands.md).
 const REGION = new URLSearchParams(location.search).get('region') || 'vale';
+// ?scene=town&region=reach&town=kells_rest previews a land's second town (GDD v1.130: Kell's Rest; sim/coach.js COACH ids;
+// anything else is the land's own town).
+const TOWN = new URLSearchParams(location.search).get('town') || null;
 // ?scene=dungeon&site=wickham_keep|sunken_chapel|proving_pens|ninth_milestone|toadking_mound|… previews another dungeon site (sim/sites.js; a parked one, the Mill or the Warren, too).
 const SITE = new URLSearchParams(location.search).get('site') || 'barrows';
 // Game slots (GDD §6.1): three games, each its own seed, main character, party and progress.
@@ -75,7 +78,7 @@ const SLOT = params.has('slot') ? Math.max(1, Math.min(SLOTS, +params.get('slot'
 if (params.has('slot')) setActiveSlot(SLOT);
 const saved = PREVIEW ? null : await readSlot(SLOT);
 const SEED = saved ? saved.data.seed >>> 0 : SLOT === 1 ? WORLD_SEED : crypto.getRandomValues(new Uint32Array(1))[0];
-const sim = createSim(SEED, THEME, { scene: SCENE, region: REVIEW ? (params.get('floor') || 'grass') : REGION, site: SITE });   // (the Stage's floor in region's place: outdoor.js)
+const sim = createSim(SEED, THEME, { scene: SCENE, region: REVIEW ? (params.get('floor') || 'grass') : REGION, site: SITE, town: TOWN });   // (the Stage's floor in region's place: outdoor.js)
 if (DEV) globalThis.__sim = sim;   // dev inspection hook
 // offline progress (ui/away.js; GDD §12): made before anything presentational listens, then the bus is sealed, so while
 // the time away plays through (the bus quiet) only the sim's own listeners and its collector hear the hours of fighting
