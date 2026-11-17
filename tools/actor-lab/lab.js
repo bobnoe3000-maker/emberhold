@@ -187,14 +187,17 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
   const wr = weaponRig(c, v), anchors = {};
   for (const k of Object.keys(wr)) anchors[k] = [];
   const walkClip = clips.find((k) => k.key === 'walk' && /^(Walking|Running)_/.test(k.clip)), stride = walkClip ? strideOf(c, walkClip.clip, ppu, sample) : null;   // (a run is measured too, for the goblins; the party's renderer keeps its 4.5 regardless)
-  const mats = { alb: new Map(), emi: new Map() }, black = new THREE.MeshBasicMaterial({ color: 0 }), white = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const mats = { alb: new Map(), emi: new Map() }, black = new THREE.MeshBasicMaterial({ color: 0 }), white = new THREE.MeshBasicMaterial({ color: 0xffffff }), unseen = new THREE.MeshBasicMaterial({ visible: false });
+  let SOFT = false; c.root.traverse((o) => { if (o.isMesh && o.userData.soft) SOFT = true; });
   c.root.traverse((o) => { if (!o.isMesh) return; const eyes = /Eyes/.test(o.name), m = o.material;
     // eyes glow only on figures that ask for it (skeletons); heroes keep their painted eyes —
     // a flat white eye mesh read as a white "grin" through the knight's visor
     // (a prop part with userData.glow, Wendel's lantern glass, glows too: art pass 6)
     // (a creature, creatures.js: coloured by vertex, its eyes a glowing mesh of their own colours)
     const lit = !eyes && o.userData.glow, own = eyes && !v.eyes && o.userData.glow, glow = (eyes && v.eyes) || lit || own;
-    mats.alb.set(o, own ? new THREE.MeshBasicMaterial({ vertexColors: true }) : glow ? new THREE.MeshBasicMaterial({ color: lit || v.eyes }) : new THREE.MeshBasicMaterial({ map: m.map, color: m.color, vertexColors: !!m.vertexColors, alphaTest: m.alphaTest || 0, polygonOffset: !!m.polygonOffset, polygonOffsetFactor: m.polygonOffsetFactor || 0, polygonOffsetUnits: m.polygonOffsetUnits || 0 }));   // (a cutout kept: the painted face's picture, faces.js, is clear but for its features; copied without it, its clear parts drew black)
+    // (a creature's soft part, Furnace Nine's still smoke: its own colours and opacities, over what's behind it; no glow, no face)
+    if (o.userData.soft) { mats.alb.set(o, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false })); mats.emi.set(o, unseen); return; }
+    mats.alb.set(o, own ?new THREE.MeshBasicMaterial({ vertexColors: true }) : glow ? new THREE.MeshBasicMaterial({ color: lit || v.eyes }) : new THREE.MeshBasicMaterial({ map: m.map, color: m.color, vertexColors: !!m.vertexColors, alphaTest: m.alphaTest || 0, polygonOffset: !!m.polygonOffset, polygonOffsetFactor: m.polygonOffsetFactor || 0, polygonOffsetUnits: m.polygonOffsetUnits || 0 }));   // (a cutout kept: the painted face's picture, faces.js, is clear but for its features; copied without it, its clear parts drew black)
     mats.emi.set(o, glow ? white : black); });
   // (pass 7) what each pixel is: face features (eye, brow, mouth) red, skin green, hair and beard blue
   // (A2 tells the features apart by red: the two eyes, the brows, the mouth)
@@ -202,7 +205,7 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
   // (the painted head's face, faces.js FaceMask, is one picture over the skin, its features painted in it: skin to this pass,
   // its own eyes and brows coming through the albedo; tagged an eye, the whole face was taken for one and painted dark)
   const partOf = (o) => (o.name === 'FaceMask' ? 'skin' : o.userData.part);
-  mats.part = new Map(); c.root.traverse((o) => { if (o.isMesh) mats.part.set(o, new THREE.MeshBasicMaterial({ color: PART[partOf(o)] ?? 0 })); });
+  mats.part = new Map(); c.root.traverse((o) => { if (o.isMesh) mats.part.set(o, o.userData.soft ? unseen : new THREE.MeshBasicMaterial({ color: PART[partOf(o)] ?? 0 })); });
   let hasFace = false; c.root.traverse((o) => { if (o.isMesh && o.userData.part) hasFace = true; });   // (no face, no part pass: skeletons bake as before)
   const nrmMat = new THREE.MeshNormalMaterial();
   const frames = clips.reduce((n, k) => n + k.frames, 0), cols = frames, rows = 8;
@@ -216,7 +219,30 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
   const SS = 4;
   R.setSize(W * SS, H * SS);
   const tmp = document.createElement('canvas'); tmp.width = W * SS; tmp.height = H * SS; const tx = tmp.getContext('2d', { willReadFrequently: true });
+  // (a figure with soft parts, SOFT: the albedo's coverage is its sub-samples' mean opacity, and a pixel the smoke alone
+  // covers is kept where that beats a 4 × 4 Bayer threshold, so thin smoke is a stipple the world shows through and its
+  // thick heart solid; those pixels marked in `softPx`, no ink drawn round them. A figure without is as it always was)
+  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5], softPx = new Uint8Array(W * H);
+  const downSoft = (big) => {
+    const out = new ImageData(W, H), o = out.data, b = big.data, BW = W * SS, N2 = SS * SS; softPx.fill(0);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      let solid = 0, thin = 0, a = 0, r = 0, g = 0, bl = 0;
+      for (let sy = 0; sy < SS; sy++) for (let sx = 0; sx < SS; sx++) {
+        const i = ((y * SS + sy) * BW + x * SS + sx) * 4, ai = b[i + 3]; if (!ai) continue;
+        if (ai === 255) solid++; else thin++;
+        const w = ai / 255; a += w; r += b[i] * b[i] * w; g += b[i + 1] * b[i + 1] * w; bl += b[i + 2] * b[i + 2] * w;
+      }
+      const j = (y * W + x) * 4, k = y * W + x;
+      if (solid * 2 < N2) {                                        // (the body's own edge, no smoke in it: kept or not as always)
+        if (!thin || a / N2 <= (BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 16) continue;
+        softPx[k] = 1;
+      }
+      o[j] = Math.sqrt(r / a); o[j + 1] = Math.sqrt(g / a); o[j + 2] = Math.sqrt(bl / a); o[j + 3] = 255;
+    }
+    return out;
+  };
   const down = (big, kind) => {
+    if (SOFT && kind === 'alb') return downSoft(big);
     const out = new ImageData(W, H), o = out.data, b = big.data, BW = W * SS;
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       let n = 0, r = 0, g = 0, bl = 0, hot = 0;
@@ -403,7 +429,7 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
       despeckle(ad, cls);
       grimPass(ad, gain, v.desat ?? 0.34, v.contrast ?? 1.18, ed, PROTO.has('grade') && !v.skull ? cls : null);   // (a skull's bone takes the world grade)
       if (cls && PROTO.has('grade') && !v.skull) faceLines(ad, cls);
-      const solid = (x, y) => x >= 0 && y >= 0 && x < W && y < H && a.data[(y * W + x) * 4 + 3] > 0;
+      const solid = (x, y) => x >= 0 && y >= 0 && x < W && y < H && a.data[(y * W + x) * 4 + 3] > 0 && !(SOFT && softPx[y * W + x]);   // (no ink round smoke)
       const out = new Uint8ClampedArray(ad);
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
         const i = (y * W + x) * 4;

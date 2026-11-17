@@ -6907,6 +6907,9 @@
     {
       "out": "boss_furnace_nine",
       "variant": "CR11",
+      "creature": {
+        "smoke": true
+      },
       "glow": 3,
       "clips": [
         {

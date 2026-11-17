@@ -84,7 +84,9 @@ export function createRing({ sim, params, dev = false }) {
   /** the window that matters now: an open one (only one is, at a time), else the next to open @param {(G: typeof RING) => boolean} [mine] whose to consider */
   function clock(mine = () => true) {
     const n = new Date(), all = [RING, FURNACE].filter(mine).map((G) => clockFor(G, n));
-    return all.find((w) => w.open) || all.sort((a, b) => a.until - b.until)[0] || clockFor(RING, n);
+    // (a held window first: ?dev&ring=furnace in the first quarter of an hour found the Kingstone's real window open
+    // before it, told the sim that one, and the Vault's mouth went back to its furnace-priests)
+    return all.find((w) => w.open && w.G === held) || all.find((w) => w.open) || all.sort((a, b) => a.until - b.until)[0] || clockFor(RING, n);
   }
   let toastT = 0;
   const say = (text, ms = 2800) => { toast.textContent = text; toast.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('on'), ms); };
