@@ -290,7 +290,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       seen.push([await p.locator('#cine .age').textContent(), await C(() => globalThis.__ui.cinema.music)]);
       await p.tap('#cine'); await p.waitForTimeout(300);                                // every line at once
       if (k === 5) seen.push(await p.locator('#cine .say span.last').textContent());
-      await p.tap('#cine');                                                             // the next card
+      if (k < 5 || await p.locator('#cine.on').count()) await p.tap('#cine', { timeout: 5000 * SLOW }).catch(() => {});   // the next card (the last hands over to creation by itself: on a loaded machine it had, and the tap waited 90 s on a covered #cine)
     }
     await p.waitForSelector('#createWrap.on', { timeout: 10000 * SLOW });
     check('intro: six cards in order, the Fall\'s music unbroken through cards 3–5', JSON.stringify(seen.slice(0, 6)) === JSON.stringify([['The Kindling', 'kindling'], ['The Solmere Empire', 'empire'], ['The Fall', 'fall'], ['The Long Dim', 'fall'], ['Year 301 of the Dim', 'fall'], ['Thornwick', 'thornwick']]), JSON.stringify(seen));

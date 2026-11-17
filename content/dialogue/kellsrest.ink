@@ -1,4 +1,4 @@
-// kellsrest.ink — Kell's Rest's two (world doc §3.3, v1.54 "Kell's Rest's people"), met at the Assay Yards' gate, in its way
+// kellsrest.ink — Kell's Rest's two (world doc §3.3, v1.54 "Kell's Rest's people"), met in Kell's Rest's square (v1.130; the Assay Yards' gate before), in its way
 // in: Nan Ruddock, Garrow's quartermaster once, who holds the gate with what's left of the Redhand because the Assay pays
 // on time; and Davy Pruett, a junior clerk of the Kell Assay, who sells nothing and says too much. Hob's pass comes
 // through him: a word with him is Paid by Weight's first step (quests.js `meet`; s_ is read before this conversation
