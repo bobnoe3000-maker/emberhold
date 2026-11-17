@@ -34,6 +34,7 @@ import { SpectralBlades } from '../src/engine/fx/SpectralBlades.js';
 import { RockSpikes } from '../src/engine/fx/RockSpikes.js';
 import { SpectralBells } from '../src/engine/fx/SpectralBells.js';
 import { createFxAtlas } from '../src/engine/pixel/FxSprites.js';
+import { registerPresets } from '../src/engine/fx/Particles.js';
 import { DEFAULT_KEYFRAMES } from '../src/engine/lighting/LightingSystem.js';
 import { ARID_KEYFRAMES } from '../src/game/Climate.js';
 import { registerTextureSet, TextureLibrary } from '../src/engine/pixel/Textures.js';
@@ -256,9 +257,76 @@ function figureFor(key, name, T) {
   // empty cages, dark; the leader's full one burns, the one the Sickpools want broken: lamps.js)
   const souls = []; root.traverse((o) => { if (o.name === 'Cage_Soul') souls.push(o); });
   for (const s of souls) { const h = new THREE.Sprite(soulHalo()); h.scale.setScalar(0.9 / Math.max(1e-3, s.scale.x)); h.renderOrder = 2; s.add(h); s.scale.multiplyScalar(1.3); }   // (a halo three times the soul, so a full cage reads at a phone's size)
-  f = { name, root, mixer: new THREE.AnimationMixer(root), clips: T.clips, frame: T.frame, creature: T.creature, look: T.look, bones, mats, shines: mats.some((q) => q.shine), yaw: null, key: '', fpos: 0, seen: 0, lit: '', souls };
+  f = { name, root, mixer: new THREE.AnimationMixer(root), clips: T.clips, frame: T.frame, creature: T.creature, look: T.look, bones, mats, shines: mats.some((q) => q.shine), yaw: null, key: '', fpos: 0, seen: 0, lit: '', souls,
+    stack: T.creature === 'furnace' ? stackOf(root) : null, puff: 0, puffN: 0 };
   game.engine.scene.add(root); figs.set(key, f);
   return f;
+}
+// ── Furnace Nine's stack smoke (docs/art-critic-pass-reach-fx.md; the owner: "has smoke as solid geometry that doesn't
+// drift") ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+// Its smoke was two grey blobs over its stack, carried round with its head (creatures.js furnace). Now the stack breathes
+// it: a puff of Luminati's lit smoke particles every STACK_EVERY s from the fire at its lip, each left where it was let go
+// to rise, swell, thin and go with the wind (a burst each, in world space: an emitter's particles go wherever it goes), and
+// now and then a spark. The lip is the highest point of its fire (the glow mesh, 'Eyes': the stack's fire disc over its
+// mouth and eyes), found once, skinned each frame.
+const STACK_EVERY = 0.14, STACK_SPARK = 5;                    // (a puff a seventh of a second; a spark every fifth)
+registerPresets({
+  // the stack's smoke: soot, lit by the world (a burst, as Luminati's deathPoof: its pool and program)
+  emberStackSmoke: { mode: 'burst', motion: 'emit', texture: 'smoke', blending: 'normal', variants: 1, lit: 1, pulse: 0, tumble: 0, aspect: 1, streak: 0, fade: [0.05, 0.6], twinkle: 0, blink: 0, nightVisibility: 0,
+    count: 1, life: [3.6, 5.2], size: [0.45, 0.7], sizeEnd: 4, spawnSize: [0.3, 0.05, 0.3], velocity: [0.1, 1.1, 0.05], velocityVariance: [0.16, 0.2, 0.16],
+    burstSpeed: [0.05, 0.25], burstUp: [0, 0.2], gravity: 0.12, drag: 0.35, windInfluence: 0.55, spin: [0.1, 0.4], color: '#5c5753', colorEnd: '#7a7876', alpha: 0.58 },
+  // a spark up out of it (Luminati's hitSpark's pool: a streak)
+  emberStackSpark: { mode: 'burst', motion: 'emit', texture: 'streak', blending: 'additive', variants: 1, lit: 0, pulse: 0, tumble: 0, aspect: 4, streak: 0.04, fade: [0, 0.3], twinkle: 0, blink: 0, nightVisibility: 0,
+    count: 1, life: [0.5, 1.0], size: [0.04, 0.06], sizeEnd: 0.4, spawnSize: [0.18, 0.05, 0.18], burstSpeed: [0.2, 0.6], burstUp: [1.6, 2.6], gravity: -1.5, drag: 0.6, windInfluence: 0.3,
+    colors: ['#ffd27a', '#ff9a3c', '#ff6a1e'], hdr: 3, alpha: 1 },
+  // the rest (renderer.js puffs): Oruth's hammer on his anvil, sparks thrown up off its face and falling
+  emberForgeSparks: { mode: 'burst', motion: 'emit', texture: 'streak', blending: 'additive', variants: 1, lit: 0, pulse: 0, tumble: 0, aspect: 4, streak: 0.04, fade: [0, 0.3], twinkle: 0, blink: 0, nightVisibility: 0,
+    count: 12, life: [0.3, 0.75], size: [0.04, 0.07], sizeEnd: 0.5, spawnSize: [0.15, 0.05, 0.15], burstSpeed: [1.2, 3.4], burstUp: [1.8, 3.6], gravity: -9, drag: 1.2,
+    colors: ['#fff4c8', '#ffd27a', '#ff9a3c'], hdr: 4, alpha: 1 },
+  // a spoiled piece: a puff of dark smoke off the anvil, slow, and the piece's embers falling dead
+  emberSpoilSmoke: { mode: 'burst', motion: 'emit', texture: 'smoke', blending: 'normal', variants: 1, lit: 1, pulse: 0, tumble: 0, aspect: 1, streak: 0, fade: [0.05, 0.6], twinkle: 0, blink: 0, nightVisibility: 0,
+    count: 16, life: [1.6, 2.6], size: [0.4, 0.7], sizeEnd: 3.6, spawnSize: [0.6, 0.3, 0.6], burstSpeed: [0.3, 0.9], burstUp: [0.8, 1.6], gravity: 0.25, drag: 1.4, windInfluence: 0.3, spin: [0.2, 0.8],
+    color: '#4e4641', colorEnd: '#76716c', alpha: 0.72 },
+  emberSpoilEmbers: { mode: 'burst', motion: 'emit', texture: 'streak', blending: 'additive', variants: 1, lit: 0, pulse: 0, tumble: 0, aspect: 4, streak: 0.04, fade: [0, 0.3], twinkle: 0, blink: 0, nightVisibility: 0,
+    count: 8, life: [0.5, 1.0], size: [0.035, 0.05], sizeEnd: 0.3, spawnSize: [0.3, 0.1, 0.3], burstSpeed: [0.3, 1.0], burstUp: [0.2, 0.9], gravity: -6, drag: 1,
+    colors: ['#ff7a2a', '#c8401a', '#7a2a14'], hdr: 1.8, alpha: 1 },
+  // a wight risen re-armed: a column of forge-sparks up round it
+  emberArmSparks: { mode: 'burst', motion: 'emit', texture: 'streak', blending: 'additive', variants: 1, lit: 0, pulse: 0, tumble: 0, aspect: 4, streak: 0.04, fade: [0, 0.3], twinkle: 0, blink: 0, nightVisibility: 0,
+    count: 22, life: [0.5, 1.1], size: [0.045, 0.075], sizeEnd: 0.4, spawnSize: [0.7, 0.3, 0.7], burstSpeed: [0.4, 1.6], burstUp: [2.2, 4.4], gravity: -4, drag: 1.1,
+    colors: ['#fff0c0', '#ffc060', '#ff7a2a'], hdr: 3.6, alpha: 1 },
+  // a vent letting go: slag thrown up and falling back, and a breath of its smoke
+  emberVentSlag: { mode: 'burst', motion: 'emit', texture: 'streak', blending: 'additive', variants: 1, lit: 0, pulse: 0, tumble: 0, aspect: 4, streak: 0.04, fade: [0, 0.3], twinkle: 0, blink: 0, nightVisibility: 0,
+    count: 12, life: [0.4, 0.8], size: [0.05, 0.08], sizeEnd: 0.5, spawnSize: [0.5, 0.05, 0.5], burstSpeed: [0.4, 1.4], burstUp: [2.4, 4.2], gravity: -10, drag: 0.8,
+    colors: ['#ffe08a', '#ff8a2a', '#ff4a12'], hdr: 3.4, alpha: 1 },
+  emberVentSmoke: { mode: 'burst', motion: 'emit', texture: 'smoke', blending: 'normal', variants: 1, lit: 1, pulse: 0, tumble: 0, aspect: 1, streak: 0, fade: [0.05, 0.6], twinkle: 0, blink: 0, nightVisibility: 0,
+    count: 4, life: [1.2, 2.0], size: [0.3, 0.45], sizeEnd: 3, spawnSize: [0.5, 0.1, 0.5], burstSpeed: [0.1, 0.4], burstUp: [0.8, 1.4], gravity: 0.2, drag: 1.4, windInfluence: 0.4, spin: [0.2, 0.6],
+    color: '#3a302a', colorEnd: '#625a54', alpha: 0.5 },
+});
+/** the furnace's stack lip: its fire's highest vertex, as { mesh, idx } (null if it has none) @param {THREE.Object3D} root */
+function stackOf(root) {
+  let best = null, by = -Infinity;
+  root.traverse((o) => {
+    if (!o.isSkinnedMesh || !o.userData.glow) return;
+    const P = o.geometry.attributes.position;
+    for (let i = 0; i < P.count; i++) if (P.getY(i) > by) { by = P.getY(i); best = { mesh: o, idx: i }; }
+  });
+  return best;
+}
+const _stack = new THREE.Vector3();
+/** the stack breathing, dt s of it (placeFigure, a furnace stood this frame) */
+function puffStack(f, dt) {
+  const P = game?.particles; if (!P || !f.stack) return;
+  f.puff += dt; if (f.puff < STACK_EVERY) return;
+  const { mesh, idx } = f.stack;
+  _stack.fromBufferAttribute(mesh.geometry.attributes.position, idx); mesh.applyBoneTransform(idx, _stack); _stack.applyMatrix4(mesh.matrixWorld);
+  for (; f.puff >= STACK_EVERY; f.puff -= STACK_EVERY) { P.burst('emberStackSmoke', _stack, 1); if (++f.puffN % STACK_SPARK === 0) P.burst('emberStackSpark', _stack, 1); }
+}
+/** the bosses' moments in Luminati's particles (renderer.js puffs, hybrid.js), each a burst where it happens */
+const _puff = new THREE.Vector3();
+const PUFFS = { strike: [['emberForgeSparks', 12, 0.55]], arm: [['emberArmSparks', 22, 0.3]], spoil: [['emberSpoilSmoke', 14, 0.6], ['emberSpoilEmbers', 8, 0.55]], vent: [['emberVentSlag', 12, 0.1], ['emberVentSmoke', 4, 0.2]] };
+function placePuffs(list) {
+  const P = game?.particles; if (!P || !list) return;
+  for (const q of list) { const B = PUFFS[q.kind]; if (!B) continue; for (const [preset, n, lift] of B) { _puff.set(q.x, game.tileMap.getHeight(q.x, q.z) + lift, q.z); P.burst(preset, _puff, n); } }
 }
 const WARN_EMI = new THREE.Color(1, 0.45, 0.15);
 /** stand, pose and light a figure as a model: false while its model is still coming (draw the sprite) */
@@ -296,6 +364,7 @@ function placeFigure(a, key, dt, camAz) {
   f.root.updateMatrixWorld(true);
   // its light: a share of the sprites' self-light, a hit's white flash, a wind-up's ember glow (as the sprites' tint)
   const fl = a.flash || 0, wn = fl ? 0 : Math.round((a.warn || 0) * 20) / 20, op = 1 - (a.fade || 0);
+  if (f.stack && op > 0.5) puffStack(f, dt);                   // (Furnace Nine's stack smoke: while it stands, not as it goes out)
   const lit = `${figGlow}|${fl}|${wn}|${op.toFixed(2)}`;
   if (f.lit !== lit) {
     f.lit = lit;
@@ -345,21 +414,10 @@ const KIT_UNIT = 5, KIT_LIFT = 1.3, KIT = new Map();
 let KIT_MADE = new Map();   // (a level's: set aside with it, load())
 for (const e of ENV_LIST) if (e.build) KIT.set(e.id, e);
 for (const list of Object.values(TOWN_SETS)) for (const e of list) if (e.build) KIT.set(e.id, e);
-// the Cinder Reach's own pieces (docs/art-critic-pass-reach.md), stood by convert.js on the sim's footprints: Ashgate's
-// pithead wheel over its gate, the Cinderworks' furnace hall and stacks, the Cold Seam's headframe. 3D only: no baked
-// card (?landmarks=sprites leaves them out), and no footprint of their own (the sim's gatehouse, tower, smithy and mine)
-for (const e of [
-  { id: 'reach_gatewheel', build: 'gatewheel', style: 'reach', seed: 5, desat: 0.15, tint: [1, 0.93, 0.88], rotY: 90 },
-  { id: 'reach_stack', build: 'stack', style: 'reach', seed: 9, desat: 0.15, tint: [1, 0.93, 0.88] },
-  { id: 'reach_works', build: 'works', style: 'reach', seed: 11, desat: 0.15, tint: [1, 0.93, 0.88] },
-  { id: 'reach_pithead', build: 'pithead', style: 'reach', seed: 4, desat: 0.15, tint: [1, 0.94, 0.9] },
-  // (part 2: the other sites' doors on the overland, and the slag heaps round Furnace Nine's yard)
-  { id: 'reach_assayhouse', build: 'assayhouse', style: 'reach', seed: 13, desat: 0.15, tint: [1, 0.93, 0.88] },
-  { id: 'reach_forgedoor', build: 'forgedoor', style: 'reach', seed: 17, desat: 0.12, tint: [1, 0.95, 0.9] },
-  { id: 'reach_ninthdoor', build: 'ninthdoor', style: 'reach', seed: 19, desat: 0.12, tint: [1, 0.94, 0.9] },
-  { id: 'reach_vaultmouth', build: 'vaultmouth', style: 'reach', seed: 23, desat: 0.15, tint: [1, 0.93, 0.88] },
-  { id: 'reach_slagheap', build: 'slagheap', style: 'reach', seed: 29, desat: 0.15, tint: [1, 0.93, 0.88] },
-]) KIT.set(e.id, e);
+// (the Cinder Reach's own pieces, docs/art-critic-pass-reach.md: Ashgate's pithead wheel over its gate, the Cinderworks'
+// furnace hall and stacks, the Cold Seam's headframe, the other sites' doors, the slag heaps round Furnace Nine's yard,
+// stood by convert.js on the sim's footprints, are town.json's reach_gatewheel … reach_slagheap: in 3D as the rest, and
+// since docs/art-critic-pass-reach-fx.md baked as cards too, for ?landmarks=sprites; `nofoot`, no footprint of their own)
 const DOORS = new Set(['vale_keep_1', 'ruin', 'chapelruin_0']);
 /** a kit piece as one mesh a material (its many boxes merged: a phone draws a few calls, not sixty), lit windows in the
  * world's own glass (they light at dusk with the town's) */
@@ -1000,6 +1058,39 @@ function placeLane(m, x, z, tx, tz, u, w, col, a) {
   m.material.color.setRGB(col[0] / 255, col[1] / 255, col[2] / 255, THREE.SRGBColorSpace); m.material.opacity = a;
 }
 const WARN = [255, 86, 30], WARN_HOT = [255, 238, 220], WARN_INK = [24, 6, 4];
+// (the Reach's, docs/art-critic-pass-reach-fx.md) the Stoker's vents: slag coming up, molten orange, its heart hotter as it
+// comes; the Weighmaster's pan's footprint in brass inside the red
+const SLAG = [255, 122, 24], SLAG_HOT = [255, 206, 96], BRASS = [232, 186, 92];
+// The Weighmaster's pan (battle.js 'scales' tells): a brass scale-pan on three chains, hung from out of sight over the one
+// he weighs, coming down through its wind to land on the tell as it lands (its shadow on the floor closing on them), then
+// hauled back up. One mesh (dish, chains, ring and the chain up merged), a unit across, scaled to the tell; pooled.
+const PAN_DROP = 2.8;                                           // (units over the floor it starts from: over a man's head)
+let PAN_GEO = null, PAN_MAT = null;
+const panPool = [];
+function panGeo() {
+  if (PAN_GEO) return PAN_GEO;
+  const parts = [], pts = [[0, 0], [0.55, 0.015], [0.86, 0.06], [0.98, 0.13], [1.03, 0.15], [1.0, 0.16]].map(([r, y]) => new THREE.Vector2(r, y));
+  parts.push(new THREE.LatheGeometry(pts, 28));                                                          // the dish
+  parts.push(new THREE.TorusGeometry(1.01, 0.03, 5, 28).rotateX(Math.PI / 2).translate(0, 0.15, 0));     // its rolled rim
+  const top = new THREE.Vector3(0, 1.5, 0), up = new THREE.Vector3(0, 1, 0);
+  for (let i = 0; i < 3; i++) {                                                                          // the three chains to a ring
+    const a = (i / 3) * Math.PI * 2 + 0.3, foot = new THREE.Vector3(Math.cos(a) * 0.96, 0.16, Math.sin(a) * 0.96), d = top.clone().sub(foot);
+    const c = new THREE.CylinderGeometry(0.018, 0.018, d.length(), 4); c.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(up, d.clone().normalize())); c.translate((foot.x + top.x) / 2, (foot.y + top.y) / 2, (foot.z + top.z) / 2); parts.push(c);
+  }
+  parts.push(new THREE.TorusGeometry(0.07, 0.022, 4, 10).translate(0, 1.55, 0));                        // the ring
+  parts.push(new THREE.CylinderGeometry(0.022, 0.022, 4, 4).translate(0, 3.6, 0));                      // the chain up, out of sight
+  const geos = parts.map((g) => { const q = g.index ? g.toNonIndexed() : g; for (const k of Object.keys(q.attributes)) if (k !== 'position' && k !== 'normal') q.deleteAttribute(k); if (!q.attributes.normal) q.computeVertexNormals(); return q; });
+  PAN_GEO = mergeGeometries(geos); for (const g of [...parts, ...geos]) if (g !== PAN_GEO) g.dispose();
+  return PAN_GEO;
+}
+function panMesh(n) {
+  while (panPool.length <= n) {
+    PAN_MAT ||= new THREE.MeshStandardMaterial({ color: new THREE.Color('#b8893a'), metalness: 0.55, roughness: 0.42, emissive: new THREE.Color('#ffc864'), emissiveIntensity: 0.12, side: THREE.DoubleSide });
+    const m = new THREE.Mesh(panGeo(), PAN_MAT.clone()); m.castShadow = true; m.receiveShadow = false; m.visible = false; m.name = 'ember:pan'; game.engine.scene.add(m); panPool.push(m);
+  }
+  return panPool[n];
+}
+const easeIn = (u) => u * u * u;
 const OCC_RAY = new THREE.Raycaster();   // (occluded(): the visibility check's ray)
 // (occluded(): a card's pixel alpha where a ray met it, 0..255, read from its texture as Sprite3D samples it, offset +
 // uv × repeat, flipped in y; null where the image can't be read. Each image is copied once into a canvas, for checks only.)
@@ -1557,7 +1648,8 @@ const api = {
    *   blast?: { x: number, z: number, k: number } | null,
    *   spells?: { key: string, id: string, seed: number, age: number, land: number | null, x: number, z: number, tx: number, tz: number, r: number, k?: number, reached: { x: number, z: number }[] }[],
    *   warns?: { x: number, z: number, tx: number, tz: number, r: number, w: number, p: number, hit: number, heavy: boolean, lane: boolean }[],
-   *   tells?: { kind: string, x: number, z: number, r: number, dx: number, dz: number, p: number, hit: number }[] }} f
+   *   tells?: { kind: string, x: number, z: number, r: number, dx: number, dz: number, p: number, hit: number }[],
+   *   puffs?: { kind: string, x: number, z: number }[] | null }} f
    */
   frame(f) {
     if (!game || !game.engine) return;
@@ -1618,8 +1710,25 @@ const api = {
     }
     // the Kingstone's tells (hybrid.js tellsOf, battle.js ringTells): its stamp's and the falling stones' circles, its
     // sweep's fan, each filling from nothing to its edge as it winds (p 0..1), white as it lands (hit: 1 → 0 after it)
+    // (the Reach's: the Weighmaster's 'scales' a pan coming down over its circle, a brass ring inside the red; the Stoker's
+    // 'vent' the floor glowing slag-orange, its heart hotter as it comes, not the Kingstone's red)
+    let np = 0;
     for (const t of f.tells || []) {
       const e = 1 - (1 - t.p) * (1 - t.p), hot = t.hit > 0, col = hot ? WARN_HOT : WARN, out = hot ? t.hit : 1;
+      if (t.kind === 'scales') {
+        const m = panMesh(np++), lift = hot ? PAN_DROP * easeIn(clamp01((1 - t.hit - 0.35) / 0.65)) : PAN_DROP * (1 - easeIn(t.p));
+        m.visible = true; m.position.set(t.x, game.tileMap.getHeight(t.x, t.z) + 0.02 + lift, t.z); m.scale.setScalar(t.r * 0.95); m.rotation.y = t.p * 0.6;
+        m.material.emissiveIntensity = 0.12 + 0.25 * t.p + (hot ? 1.6 * t.hit * t.hit : 0);
+        placeGround(groundMesh('wrim', nk.wrim++), t.x, t.z, t.r * 0.9, hot ? WARN_HOT : BRASS, (0.45 + 0.4 * t.p) * out);
+      }
+      if (t.kind === 'vent') {
+        const beat = 0.85 + 0.15 * Math.sin(performance.now() * 0.012 + t.x * 3.1);
+        placeGround(groundMesh('wrim', nk.wrim++), t.x, t.z, t.r * 1.08, WARN_INK, 0.5 * out);
+        placeGround(groundMesh('wfill', nk.wfill++), t.x, t.z, t.r * e, hot ? WARN_HOT : SLAG, (0.28 + 0.36 * t.p) * beat * out);
+        placeGround(groundMesh('wfill', nk.wfill++), t.x, t.z, t.r * 0.5 * e, hot ? WARN_HOT : SLAG_HOT, 0.35 * t.p * beat * out);
+        placeGround(groundMesh('wrim', nk.wrim++), t.x, t.z, t.r, hot ? WARN_HOT : SLAG, (0.75 + 0.25 * t.p) * out);
+        continue;
+      }
       if (t.kind === 'sweep') {
         const yaw = Math.atan2(-t.dz, t.dx), pc = (m, r, a) => { placeGround(m, t.x, t.z, r, hot ? WARN_HOT : a === 0.5 ? WARN_INK : col, a * out); if (m.visible) m.rotation.z = yaw; };
         pc(groundMesh('cone', nk.cone++), t.r * 1.03, 0.5);
@@ -1632,6 +1741,8 @@ const api = {
         placeGround(groundMesh('wrim', nk.wrim++), t.x, t.z, t.r, col, (0.75 + 0.25 * t.p) * out);
       }
     }
+    for (let i = np; i < panPool.length; i++) if (panPool[i].visible) panPool[i].visible = false;
+    placePuffs(f.puffs);
     placeWater(f.water);
     placeGates(f.gates);
     for (const kind of Object.keys(groundPools)) for (let i = nk[kind]; i < groundPools[kind].length; i++) groundPools[kind][i].visible = false;
@@ -1734,7 +1845,7 @@ const api = {
   ground(x, z) { return game?.tileMap ? game.tileMap.getHeight(x, z) : null; },
   get stats() {
     const shown = (k) => groundPools[k].filter((m) => m.visible).length;
-    return { bits: [...pools.entries()].filter(([sh]) => sh.name === 'ember-bit').reduce((n, [, p]) => n + p.filter((s) => s.visible).length, 0), water: WATER.mesh && WATER.mesh.visible ? WATER.mesh.count : 0, fig: figGlow, lit: Math.round(figLit * 100) / 100, beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), warns: shown('wrim'), lanes: shown('lane'), spells: spellLive.size, dome: SK && SK.domeOf ? 1 : 0, blades: SK ? SK.blades.count - (SK.warmN > 0 ? 2 : 0) : 0, crystals: SK ? SK.crystals.count - (SK.warmN > 0 ? 1 : 0) : 0, frost: SK ? SK.frost.count - (SK.warmN > 0 ? 1 : 0) : 0, spellLight: spellLight && SK ? 1 : 0, focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0) + [...figs.values()].filter((q) => q.root.visible).length, models: [...figs.values()].filter((q) => q.root.visible).length, modelNames: [...new Set([...figs.values()].filter((q) => q.root.visible).map((q) => q.name))], figErr, figFailed: [...templates.values()].filter((t) => t === false).length, pr: game?.engine?.pixelRatio ?? null, dpr: devicePixelRatio || 1, modelMeshes: [...templates.values()].filter(Boolean).map((t) => t.meshes.after).reduce((a, b) => a + b, 0), modelMeshesBefore: [...templates.values()].filter(Boolean).map((t) => t.meshes.before).reduce((a, b) => a + b, 0), figures: FIGURES, atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
+    return { bits: [...pools.entries()].filter(([sh]) => sh.name === 'ember-bit').reduce((n, [, p]) => n + p.filter((s) => s.visible).length, 0), water: WATER.mesh && WATER.mesh.visible ? WATER.mesh.count : 0, fig: figGlow, lit: Math.round(figLit * 100) / 100, beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), warns: shown('wrim'), lanes: shown('lane'), pans: panPool.filter((m) => m.visible).length, spells: spellLive.size, dome: SK && SK.domeOf ? 1 : 0, blades: SK ? SK.blades.count - (SK.warmN > 0 ? 2 : 0) : 0, crystals: SK ? SK.crystals.count - (SK.warmN > 0 ? 1 : 0) : 0, frost: SK ? SK.frost.count - (SK.warmN > 0 ? 1 : 0) : 0, spellLight: spellLight && SK ? 1 : 0, focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0) + [...figs.values()].filter((q) => q.root.visible).length, models: [...figs.values()].filter((q) => q.root.visible).length, modelNames: [...new Set([...figs.values()].filter((q) => q.root.visible).map((q) => q.name))], figErr, figFailed: [...templates.values()].filter((t) => t === false).length, pr: game?.engine?.pixelRatio ?? null, dpr: devicePixelRatio || 1, modelMeshes: [...templates.values()].filter(Boolean).map((t) => t.meshes.after).reduce((a, b) => a + b, 0), modelMeshesBefore: [...templates.values()].filter(Boolean).map((t) => t.meshes.before).reduce((a, b) => a + b, 0), figures: FIGURES, atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
       programs: game?.engine?.renderer?.info?.programs?.length ?? null };
   },
 };

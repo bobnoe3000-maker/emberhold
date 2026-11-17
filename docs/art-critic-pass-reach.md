@@ -394,8 +394,8 @@ Draws and triangles a frame, counted at the context:
 ### Not done, and asked of others
 
 - **Kell's Rest's houses** were already in the Reach's style (part 1: slag brick, rust tile, `REGION_LOOK.reach`).
-- **The four doors have no baked cards**: `?landmarks=sprites` leaves them out, as it does part 1's pieces.
-- **The camps' tents** are our green canvas, a Vale piece (gsprite.js, not this pass's files).
+- **The four doors have no baked cards**: `?landmarks=sprites` leaves them out, as it does part 1's pieces. (Done since: [art-critic-pass-reach-fx.md](./art-critic-pass-reach-fx.md) D2.)
+- **The camps' tents** are our green canvas, a Vale piece (gsprite.js, not this pass's files). (Done since: ash-grey, [art-critic-pass-reach-fx.md](./art-critic-pass-reach-fx.md) D1.)
 - **Sim asks:**
   - give `ninth_vault` `dress: ['strongroom']`;
   - put each site's door exit at its struct's +y face, where the new pieces' doors stand;

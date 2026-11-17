@@ -1381,6 +1381,142 @@
         0.93,
         0.88
       ]
+    },
+    {
+      "id": "reach_gatewheel",
+      "model": "gatewheel",
+      "build": "gatewheel",
+      "style": "reach",
+      "seed": 5,
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ],
+      "rotY": 90,
+      "nofoot": true
+    },
+    {
+      "id": "reach_stack",
+      "model": "stack",
+      "build": "stack",
+      "style": "reach",
+      "seed": 9,
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ],
+      "nofoot": true
+    },
+    {
+      "id": "reach_works",
+      "model": "works",
+      "build": "works",
+      "style": "reach",
+      "seed": 11,
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ],
+      "nofoot": true
+    },
+    {
+      "id": "reach_pithead",
+      "model": "pithead",
+      "build": "pithead",
+      "style": "reach",
+      "seed": 4,
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.94,
+        0.9
+      ],
+      "nofoot": true
+    },
+    {
+      "id": "reach_assayhouse",
+      "model": "assayhouse",
+      "build": "assayhouse",
+      "style": "reach",
+      "seed": 13,
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ],
+      "nofoot": true
+    },
+    {
+      "id": "reach_forgedoor",
+      "model": "forgedoor",
+      "build": "forgedoor",
+      "style": "reach",
+      "seed": 17,
+      "gain": 0.66,
+      "desat": 0.12,
+      "tint": [
+        1.0,
+        0.95,
+        0.9
+      ],
+      "nofoot": true
+    },
+    {
+      "id": "reach_ninthdoor",
+      "model": "ninthdoor",
+      "build": "ninthdoor",
+      "style": "reach",
+      "seed": 19,
+      "gain": 0.66,
+      "desat": 0.12,
+      "tint": [
+        1.0,
+        0.94,
+        0.9
+      ],
+      "nofoot": true
+    },
+    {
+      "id": "reach_vaultmouth",
+      "model": "vaultmouth",
+      "build": "vaultmouth",
+      "style": "reach",
+      "seed": 23,
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ],
+      "nofoot": true
+    },
+    {
+      "id": "reach_slagheap",
+      "model": "slagheap",
+      "build": "slagheap",
+      "style": "reach",
+      "seed": 29,
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ],
+      "nofoot": true
     }
   ],
   "heights": [

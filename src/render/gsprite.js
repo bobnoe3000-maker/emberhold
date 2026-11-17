@@ -389,7 +389,8 @@ export const voxStandard = (rng, T = false) => standardVox(LEGION, rng, T);
 export const voxBanner = (rng, T = false) => standardVox(RED, rng, T);
 // A Company bell tent: round dirty canvas on a centre pole, as tall as a man, its door flap open toward the camera.
 // (An A-frame's voxel slope stair-stepped into stripes, a ladder; a cone shades as one surface, like the stalagmites.)
-export function voxTent() {
+// (the Reach's camps: canvas gone grey with ash, the hem and pole soot-black: `tent_reach`, render3d/convert.js)
+export function voxTent(canvas = ELIT.sand, trim = ELIT.wood) {
   const S = 20, H = 34, { vox, put } = vgrid(S, S, H), c = (S - 1) / 2;
   for (let z = 0; z < 30; z++) {
     const t = z / 29, r = 9.2 * (1 - t) * (0.55 + 0.45 * (1 - t)) + 0.9 + (z < 4 ? 0.3 : 0);   // a bell: steep at the foot, a long taper
@@ -402,7 +403,7 @@ export function voxTent() {
     }
   }
   for (let z = 28; z < 34; z++) put(c, c, z, 3);                                                // the pole's top
-  return bakeVox(vox, S, S, H, ELIT.sand, 0, ELIT.wood);
+  return bakeVox(vox, S, S, H, canvas, 0, trim);
 }
 // (v1.63, the Spit: GDD §10.3) Col's cow, dead beside the goblins' fire: lying on its side, its legs out stiff, the near
 // haunch carved to the red where they've been at it. Its hide the bone ramp (the Vale's pale cattle), the cut flesh.
@@ -857,7 +858,7 @@ export function buildProps(seed) {
     rack: [voxRack()],
     standard: [0, 1].map((v) => voxStandard(mulberry32((seed * 61 + v * 73 + 37) >>> 0))),
     banner: [0, 1].map((v) => voxBanner(mulberry32((seed * 67 + v * 79 + 41) >>> 0))),
-    tent: [voxTent()],
+    tent: [voxTent()], tent_reach: [voxTent(ELIT.ash, ELIT.soot)],
     carcass: [voxCarcass()], burrow: [voxBurrow()],   // (v1.63: the Spit's dead cow, the ditch burrow)
     bunk: [voxBunk()],
     scaffold: [voxScaffold()],

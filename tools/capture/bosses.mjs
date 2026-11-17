@@ -3,7 +3,7 @@
 // level, with every skill learned, on Emberlit and on Luminati. The sim is deterministic, so the same mechanic fires at
 // the same moment on every checkout: a before and an after line up frame for frame.
 //
-//   node tools/capture/bosses.mjs [--out dir] [--base url] [--secs 90] [--only id,id] [--warn]
+//   node tools/capture/bosses.mjs [--out dir] [--base url] [--secs 90] [--only id,id] [--warn] [--dpr 2]
 //
 // --warn: the foes' warnings instead (the telegraph grammar): the first heavy blow, archer's shot and heavy shot in three
 // halls, at +0 … 0.54 s (out tools/capture/out/warn/).
@@ -24,7 +24,7 @@ const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(k);
 // &renderer=luminati, so a --base checkout from before draws on Luminati too, for a before and an after)
 const RENDERERS = ['luminati'];
 const WARN = args.includes('--warn');
-const OUT = resolve(opt('--out', join(ROOT, 'tools/capture/out/' + (WARN ? 'warn' : 'bosses')))), SECS = +opt('--secs', 90), ONLY = opt('--only', '');
+const OUT = resolve(opt('--out', join(ROOT, 'tools/capture/out/' + (WARN ? 'warn' : 'bosses')))), SECS = +opt('--secs', 90), ONLY = opt('--only', ''), DPR = +opt('--dpr', 1);   // (--dpr 2: the strips at twice the pixels, for a close look)
 const AT = WARN ? [0, 100, 200, 300, 400, 540] : [0, 200, 400, 700, 1000, 1400];
 // each boss: its site and floor (sites.js bosses: floor n is depth n − 1), the event its mechanic fires, or a moment of
 // the fight for one that holds (`hold`, ms after the boss's wave)
@@ -37,6 +37,15 @@ const CASES = [
   { boss: 'teague', site: 'drowned_abbey', depth: 0, hold: 4000 },
   { boss: 'drowned_choir', site: 'drowned_abbey', depth: 1, hold: 4000 },
   { boss: 'abbess_below', site: 'drowned_abbey', depth: 2, ev: 'bossFlood' },
+  // (the Reach's, docs/art-critic-pass-reach-fx.md) each with its own moments (`at`, ms): the Weighmaster's pan through its
+  // 2.2 s wind to its landing; Oruth at his anvil through the 4 s of his work to its end, as the fight goes, then with his
+  // health held while he works (`keep`: the piece finished, a wight rising re-armed) and struck past the mark (`keep:
+  // 'spoil'`: the piece spoiled); the Stoker's vents
+  { boss: 'weighmaster', site: 'assay_yards', depth: 1, ev: 'bossScales', at: [0, 600, 1200, 1800, 2250, 2500] },
+  { boss: 'oruth', site: 'forgehall', depth: 1, ev: 'bossForge', at: [0, 700, 1600, 2600, 3700, 4250] },
+  { boss: 'oruth', name: 'oruth (armed)', site: 'forgehall', depth: 1, ev: 'bossForge', keep: true, at: [0, 700, 1600, 2600, 4000, 4500] },
+  { boss: 'oruth', name: 'oruth (spoiled)', site: 'forgehall', depth: 1, ev: 'bossForge', keep: 'spoil', at: [0, 1600, 4000, 4300, 4700, 5200] },
+  { boss: 'stoker', site: 'cinderworks', depth: 1, ev: 'bossVents', at: [0, 500, 1000, 1500, 2000, 2300] },
 ];
 // --warn (the telegraph grammar, docs/combat-fx.md): a foe's first heavy blow, shot or heavy shot in a hall, found by its
 // attack starting (the sim's atkN and atkKind, there on a checkout before the warnings too, so a before lines up)
@@ -46,7 +55,7 @@ const WARNS = [
   { boss: 'garrow_blow', site: 'wickham_keep', depth: 1, warn: 'heavy' },
   { boss: 'choir_shot', site: 'drowned_abbey', depth: 1, warn: 'heavyshot' },
 ];
-const LIST = (WARN ? WARNS : CASES).filter((c) => !ONLY || ONLY.split(',').includes(c.boss));
+const LIST = (WARN ? WARNS : CASES).filter((c) => !ONLY || ONLY.split(',').includes(c.boss) || ONLY.split(',').includes(c.name));
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg' };
 let srv = null, base = opt('--base');
 if (!base) {
@@ -61,7 +70,7 @@ if (!base) {
 
 // ── in the page ─────────────────────────────────────────────────────────────────────────────────────────────────────
 // to the boss's floor, the party (fighter, rogue, cleric) at the hall's level with every trial, at the hall's door
-async function stagePage({ site, depth, ev }) {
+async function stagePage({ site, depth, ev, keep }) {
   const sim = globalThis.__sim, { makeHero, makeMember, statsFor } = await import('/src/sim/party.js'), { autoAllocate } = await import('/src/sim/attributes.js'), { starterKit } = await import('/src/sim/items.js');
   if (depth) sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), scene: 'dungeon', site, depth });
   for (let i = 0; i < 4; i++) globalThis.__frame(16);
@@ -72,6 +81,10 @@ async function stagePage({ site, depth, ev }) {
   sim.state.party.forEach((m, i) => { if (m !== P) { m.x = m.px = P.x + (i === 1 ? 1.2 : -1.2); m.y = m.py = P.y + 1; } });
   globalThis.__bossEv = null; globalThis.__waveAt = null;
   sim.bus.on('bossWave', () => { if (globalThis.__waveAt == null) globalThis.__waveAt = sim.state.t; });
+  // (keep: the piece finished, his health held while he works; 'spoil': struck hard enough while he works, his health put
+  // at the sim's own mark under where he started, ANVIL_SPOIL of it and a little more, 2 s in)
+  if (keep) { const f0 = globalThis.__frame; globalThis.__frame = (ms) => { f0(ms); for (const e of sim.world.enemies || []) if (e.forging > 0) { if (keep === 'spoil') { if (e.forging < 2 && e.hp > e.forgeHp - e.maxHp * 0.06) e.hp = Math.max(1, Math.floor(e.forgeHp - e.maxHp * 0.06)); } else if (e.hp < e.forgeHp) e.hp = e.forgeHp; } }; }
+  globalThis.__anvil = null; sim.bus.on('bossAnvil', (e) => { globalThis.__anvil ??= e.spoiled ? 'the piece spoiled' : 'a wight armed'; });   // (Oruth's work's end, named on its line)
   if (ev) sim.bus.on(ev, (e) => { if (!globalThis.__bossEv && (ev !== 'bossFlood' || e.level > 0)) globalThis.__bossEv = { t: sim.state.t, x: e.x ?? P.x, y: e.y ?? P.y }; });
   return { lv, hall: hall.id };
 }
@@ -111,7 +124,7 @@ async function run(renderer) {
   await mkdir(join(OUT, renderer), { recursive: true });
   const rows = [];
   for (const C of LIST) {
-    const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: DPR });
     const errs = []; p.on('pageerror', (e) => errs.push(String(e)));
     await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=${C.site}&renderer=luminati`);
     await p.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__sim, null, { timeout: 120000 });
@@ -139,15 +152,16 @@ async function run(renderer) {
     }
     if (!got) { console.log(`${renderer} ${C.boss}: no ${C.warn || C.ev || 'hold'} in ${SECS} s (lv ${info.lv})`); await p.close(); continue; }
     const frames = []; let last = 0;
-    for (const at of AT) {
+    for (const at of C.at || AT) {
       await p.evaluate((ms) => globalThis.__advance(ms), at - last); last = at;
       frames.push(await p.evaluate(({ x, y }) => { const [sx, sy] = globalThis.__renderer.screenAt(x, y); return globalThis.__take(sx, sy - 20); }, got));
     }
-    rows.push({ name: C.boss + (got.staged ? ' (staged)' : ''), frames });
+    rows.push({ name: (C.name || C.boss) + (got.staged ? ' (staged)' : ''), frames, at: C.at || null });
     const strip = await p.evaluate(async (fr) => { const ims = await Promise.all(fr.map(async (u) => { const i = new Image(); i.src = u; await i.decode(); return i; }));
       const c = document.createElement('canvas'); c.width = ims[0].width * ims.length; c.height = ims[0].height; const g = c.getContext('2d'); ims.forEach((im, i) => g.drawImage(im, i * im.width, 0)); return c.toDataURL('image/png'); }, frames);
-    await writeFile(join(OUT, renderer, `${C.boss}.png`), Buffer.from(strip.split(',')[1], 'base64'));
-    console.log(`${renderer} ${C.boss}: ${C.warn || C.ev || 'hold'} at ${got.t.toFixed(1)} s (lv ${info.lv})${errs.length ? ' · page errors ' + errs.slice(0, 2).join(' | ') : ''}`);
+    await writeFile(join(OUT, renderer, `${(C.name || C.boss).replace(/\W+/g, '_').replace(/_$/, '')}.png`), Buffer.from(strip.split(',')[1], 'base64'));
+    const anvil = await p.evaluate(() => globalThis.__anvil);
+    console.log(`${renderer} ${C.name || C.boss}: ${C.warn || C.ev || 'hold'} at ${got.t.toFixed(1)} s (lv ${info.lv})${anvil ? ' · ' + anvil : ''}${errs.length ? ' · page errors ' + errs.slice(0, 2).join(' | ') : ''}`);
     await p.close();
   }
   await b.close();
@@ -166,6 +180,7 @@ const jpg = await p.evaluate(async ({ names, all, rs, at }) => {
   for (const [ni, n] of names.entries()) {
     const y = 24 + ni * (ch + 4); g.fillStyle = '#f0c880'; g.fillText(n, 6, y + ch / 2);
     for (const [ri, r] of rs.entries()) { const row = all[r].find((q) => q.name === n); if (!row) continue;
+      if (row.at) { g.fillStyle = '#c8baa2'; g.fillText(`+${row.at.map((a) => a / 1000).join(' · ')} s`, 6, y + ch / 2 + 16); }   // (its own moments)
       for (const [fi, u] of row.frames.entries()) { const im = new Image(); im.src = u; await im.decode(); g.drawImage(im, lab + ri * (at.length * cw + gap) + fi * cw, y, cw, ch); } }
   }
   return c.toDataURL('image/jpeg', 0.86);

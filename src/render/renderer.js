@@ -24,7 +24,7 @@ import { createAnimator } from './anim.js';
 import { leapAt } from './leap.js';
 import { hopAt, dashAt, dashPoint } from './moves.js';
 import { createFX, styleOfSrc, raisedLook, BOLT_RGB } from './fx.js';
-import { createSkillFX, LUM_LOOKS, LUM_HOLDS } from './skillfx.js';
+import { createSkillFX, LUM_LOOKS, LUM_HOLDS, FORGE_BEAT, FORGE_AT } from './skillfx.js';
 import { siteOpen, bossAt } from '../sim/sites.js';
 import { shrineKind } from '../sim/shrines.js';
 import { WARDENS } from '../sim/tower.js';
@@ -378,6 +378,23 @@ export function createRenderer(canvas, sim, input) {
     let best = null, bk = 0;
     for (let i = blasts.length - 1; i >= 0; i--) { const b = blasts[i], a = (now - b.t0) / 1000 / b.life; if (a >= 1) { blasts.splice(i, 1); continue; } if (a < 0) continue; const k = b.amp * (1 - a) * (1 - a); if (k > bk) { bk = k; best = b; } }
     return best ? { x: best.x, y: best.y, k: bk } : null;
+  }
+  // (the Reach's, docs/art-critic-pass-reach-fx.md) the moments the painter answers in its own pieces: a burst of its
+  // particles a puff ({ kind, x, y }, sim tiles: 'strike' Oruth's hammer on his anvil, 'arm' a wight rising re-armed,
+  // 'spoil' a spoiled piece's smoke, 'vent' slag let go), handed on with the next frame and gone
+  const puffs = [];
+  // Oruth at his anvil ('bossForge' for its t): each blow on the beat skillfx.js draws (FORGE_BEAT) lights the room a
+  // moment (a blast, the fire landing's light) and throws the painter's sparks, at his anvil wherever he stands now
+  const forges = [];
+  function forgeBeat(now) {
+    for (let i = forges.length - 1; i >= 0; i--) {
+      const f = forges[i], s = (now - f.t0) / 1000; if (s >= f.T) { forges.splice(i, 1); continue; }
+      const e = (sim.world.enemies || []).find((o) => o.id === f.by); if (!e || e.hp <= 0) { forges.splice(i, 1); continue; }
+      for (; s >= FORGE_BEAT.first + f.n * FORGE_BEAT.every && FORGE_BEAT.first + f.n * FORGE_BEAT.every < f.T; f.n++) {
+        const x = e.x + FORGE_AT.dx, y = e.y + FORGE_AT.dy;
+        blast(x, y, now, 0.28, 0.85); puffs.push({ kind: 'strike', x, y });
+      }
+    }
   }
   // the warnings under way, for another painter's ground (Luminati's markers): where each is now, followed by id while the
   // shooter and its mark move, the shot's start held from its release (as skillfx.js draws it)
@@ -850,7 +867,9 @@ export function createRenderer(canvas, sim, input) {
 
     }
     // the painter's frame: the figures, the camera, the effects' light (EMI, native px) and the fight's ground
-    if (ext) ext.frame(draws, { ox, oy, rx: lastCam.rx, ry: lastCam.ry, S, k: vw / window.innerWidth, vw, vh, nvw, nvh, pz, now, t: skyHoldT ?? sim.state.t, emi: sEMI, key: fxKey, battle: hb, rings, blast: blastNow(clock()), warns: warnsNow(clock()), spells: spellsNow(clock()) });   // (t: the held look's, the title's dusk; blast: a fire landing's light)
+    if (forges.length) forgeBeat(clock());
+    if (ext) ext.frame(draws, { ox, oy, rx: lastCam.rx, ry: lastCam.ry, S, k: vw / window.innerWidth, vw, vh, nvw, nvh, pz, now, t: skyHoldT ?? sim.state.t, emi: sEMI, key: fxKey, battle: hb, rings, blast: blastNow(clock()), warns: warnsNow(clock()), spells: spellsNow(clock()), puffs });   // (t: the held look's, the title's dusk; blast: a fire landing's light; puffs: the painter's bursts, once)
+    puffs.length = 0;
     if (globalThis.__rstats) globalThis.__rstats.cpu.push(performance.now() - t0);
     const outdoor = sim.world.kind !== 'dungeon';
     skyAt(skyHoldT ?? sim.state.t, skyNow); lastNow = now;
@@ -1131,6 +1150,20 @@ export function createRenderer(canvas, sim, input) {
   sim.bus.on('bossScales', ({ id }) => { banner = { text: `${bossName(id)} weighs you`, sub: bossLine.scales[1], until: clock() + 1800, small: true }; });
   sim.bus.on('bossForge', ({ id }) => { banner = { text: `${bossName(id)} goes to his anvil`, sub: bossLine.anvil[1], until: clock() + 2000, small: true }; });
   sim.bus.on('bossAnvil', ({ id, spoiled }) => { banner = { text: spoiled ? 'The piece is spoiled' : `${bossName(id)} arms a wight`, until: clock() + 1600, small: true }; });
+  // (the Reach's, docs/art-critic-pass-reach-fx.md) the Weighmaster's weighing, his pan coming down (Luminati: world.js),
+  // landing; Oruth at his anvil, and the work's end, a wight re-armed or the piece spoiled; the Stoker's slag let go
+  sim.bus.on('bossScales', (e) => moment('boss_scales', e, { ally: true }));
+  sim.bus.on('bossForge', (e) => { moment('boss_forge', e, { life: e.t }); forges.push({ by: e.by, t0: clock(), T: e.t, n: 0 }); });
+  sim.bus.on('bossAnvil', (e) => {
+    sfx.end('boss_forge', e.by); for (let i = forges.length - 1; i >= 0; i--) if (forges[i].by === e.by) forges.splice(i, 1);
+    const o = (sim.world.enemies || []).find((q) => q.id === e.by), x = (o ? o.x : e.x) + FORGE_AT.dx, y = (o ? o.y : e.y) + FORGE_AT.dy;
+    if (e.spoiled) { moment('boss_spoil', e); puffs.push({ kind: 'spoil', x, y }); }
+    else { moment('boss_arm', e, { x: o ? o.x : e.x, y: o ? o.y : e.y }); puffs.push({ kind: 'arm', x: e.x, y: e.y }); blast(e.x, e.y, clock(), 0.45, 1.6); }
+  });
+  sim.bus.on('tellLand', (e) => {
+    if (e.kind === 'scales') { moment('boss_pan', e, { r: e.r }); jolt('stamp', e.x, e.y); }
+    else if (e.kind === 'vent') { moment('boss_vent', e); puffs.push({ kind: 'vent', x: e.x, y: e.y }); }
+  });
   sim.bus.on('bossFled', ({ id }) => { banner = { text: `${bossName(id)} runs`, sub: 'out by the back stair, and gone', until: clock() + 2600 }; });
   sim.bus.on('bossVents', ({ id }) => { banner = { text: `${bossName(id)} opens the vents`, sub: bossLine.vents[1], until: clock() + 1800, small: true }; });
   sim.bus.on('bossMud', (e) => { moment('boss_mud', e); jolt('stamp', e.x, e.y); });

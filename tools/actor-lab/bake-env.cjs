@@ -9,7 +9,10 @@ const DIR = __dirname, ROOT = path.join(DIR, '..', '..'), OUT = path.join(ROOT, 
 (async () => {
   const list = JSON.parse(fs.readFileSync(path.join(DIR, 'env.json')));
   // the undergrowth and rocks are Quaternius' Stylized Nature MegaKit (CC0): its glTF folder unzipped into models/nature/
-  const missing = list.filter((e) => e.gltf && !fs.existsSync(path.join(DIR, 'models', e.gltf + '.gltf'))).map((e) => e.gltf);
+  // --sets town-reach,…: bake only those atlases, the rest as they stand (their footprints read back from their JSON):
+  // a region's new pieces without every other atlas drawn again
+  const ONLY = process.argv.includes('--sets') ? process.argv[process.argv.indexOf('--sets') + 1].split(',') : null;
+  const missing = ONLY && !ONLY.includes('env') ? [] : list.filter((e) => e.gltf && !fs.existsSync(path.join(DIR, 'models', e.gltf + '.gltf'))).map((e) => e.gltf);
   // --keep-missing: bake what's here and carry the rest over from the atlas as it stands (pixels, origin, footprint),
   // for a checkout without the nature pack; a sprite carried over is reported, so the next full bake isn't forgotten
   const KEEP = process.argv.includes('--keep-missing');
@@ -20,9 +23,14 @@ const DIR = __dirname, ROOT = path.join(DIR, '..', '..'), OUT = path.join(ROOT, 
   await p.goto(`http://127.0.0.1:${port}/env.html`); await p.waitForFunction(() => window.ready === true, { timeout: 60000 });
   // atlases: the shared base (env.json) + one per region's town buildings (town.json)
   const sets = [['env', list], ...Object.entries(JSON.parse(fs.readFileSync(path.join(DIR, 'town.json')))).map(([k, l]) => ['town-' + k, l])];
+  if (ONLY) for (const n of ONLY) if (!sets.some(([s]) => s === n)) { console.error(`FAIL no set ${n} (${sets.map(([s]) => s).join(' ')})`); process.exit(1); }
   fs.mkdirSync(OUT, { recursive: true });
   const t0 = Date.now(), foot = {};
+  // (nofoot: a piece the converter stands on the sim's own footprint, the Reach's pithead wheel over its gatehouse: its
+  // card is baked, its footprint isn't the sim's to collide with)
+  const footOf = (l, meta) => { for (const [k, m] of Object.entries(meta)) if (!k.includes('~') && !l.find((e) => e.id === k)?.nofoot) foot[k] = m.foot; };   // (id~frame: an idle frame of id, not a thing of its own)
   for (const [name, l] of sets) {
+    if (ONLY && !ONLY.includes(name)) { footOf(l, JSON.parse(fs.readFileSync(path.join(OUT, `${name}.json`))).sprites); continue; }
     let kept = null;
     const gone = l.filter((e) => e.gltf && !fs.existsSync(path.join(DIR, 'models', e.gltf + '.gltf')));
     if (gone.length) {
@@ -37,7 +45,7 @@ const DIR = __dirname, ROOT = path.join(DIR, '..', '..'), OUT = path.join(ROOT, 
     fs.writeFileSync(path.join(OUT, `${name}.alb.png`), Buffer.from(r.alb.split(',')[1], 'base64'));
     for (const old of ['nrm', 'key']) { const f = path.join(OUT, `${name}.${old}.png`); if (fs.existsSync(f)) fs.unlinkSync(f); }
     fs.writeFileSync(path.join(OUT, `${name}.json`), JSON.stringify({ width: r.width, height: r.height, sprites: r.meta }) + '\n');
-    for (const [k, m] of Object.entries(r.meta)) if (!k.includes('~')) foot[k] = m.foot;   // (id~frame: an idle frame of id, not a thing of its own)
+    footOf(l, r.meta);
     console.log(`  ${name}: ${l.length} sprites → ${r.width}×${r.height}`);
   }
   fs.writeFileSync(path.join(ROOT, 'src', 'sim', 'envfoot.js'),

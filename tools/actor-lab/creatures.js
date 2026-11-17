@@ -758,7 +758,13 @@ function furnace(o = {}) {
   R.part(new THREE.CylinderGeometry(0.15, 0.15, 0.02, 12).translate(0, 2.12, 0), 'head', fire, true);
   for (const s of [1, -1]) R.part(new THREE.BoxGeometry(0.08, 0.035, 0.03).rotateZ(0.25 * s).translate(0.07 * s, 1.74, 0.19), 'head', fire, true);
   R.part(new THREE.TorusGeometry(0.2, 0.03, 5, 14).rotateX(Math.PI / 2).translate(0, 1.6, 0), 'head', ironLo);
-  for (const [x, y, z, r] of [[0.02, 2.3, -0.08, 0.15], [-0.05, 2.5, -0.26, 0.21]]) R.part(blob(V(x, y, z), [r, r * 0.8, r], [8, 6]), 'head', (p, n) => (n.y > 0.3 ? smokeHi : smoke));
+  // (its smoke was two grey blobs here, solid, carried round with its head: the owner, "smoke as solid geometry that
+  // doesn't drift". The world breathes it now, particles let go from the fire at the lip, rising and drifting: world.js
+  // puffStack; `smoke: true` in the variant's creature spec puts them back, for a still card. Its size is fitted to its box, smoke and all
+  // (figure.js fitPpu): a point where the higher blob's top was, a triangle with no area, keeps the box, and the figure
+  // as big as it was)
+  if (o.smoke) for (const [x, y, z, r] of [[0.02, 2.3, -0.08, 0.15], [-0.05, 2.5, -0.26, 0.21]]) R.part(blob(V(x, y, z), [r, r * 0.8, r], [8, 6]), 'head', (p, n) => (n.y > 0.3 ? smokeHi : smoke));
+  else { const top = new THREE.BufferGeometry(); top.setAttribute('position', new THREE.Float32BufferAttribute([-0.05, 2.5 + 0.21 * 0.8, -0.26, -0.05, 2.5 + 0.21 * 0.8, -0.26, -0.05, 2.5 + 0.21 * 0.8, -0.26], 3)); R.part(top, 'head', smoke); }
   // the arms: riveted pipe, the elbows knuckled, tongs for hands
   for (const s of [1, -1]) {
     R.part(blob(V(0.5 * s, 1.34, 0), [0.2, 0.15, 0.19], [8, 6]), `armU${s}`, ironC); R.part(new THREE.TorusGeometry(0.17, 0.03, 5, 12).rotateZ(Math.PI / 2).translate(0.56 * s, 1.34, 0), `armU${s}`, ironLo);   // (round N1: its shoulders as big as its fists' work)

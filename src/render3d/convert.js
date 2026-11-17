@@ -278,7 +278,7 @@ function outdoor(w, region) {
   }
   const raised = (x, z) => { const i = Math.floor(x), j = Math.floor(z); return i < 0 || j < 0 || i >= W || j >= D || heights[j][i] !== '2'; };
   const look = REGION_LOOK[region] || {}, reach = region === 'reach';
-  // a furnace stack (our kit's, world.js REACH_KIT 'reach_stack': STACK_H units to its lip): its smoke, a few sparks
+  // a furnace stack (our kit's, town.json 'reach_stack': STACK_H units to its lip): its smoke, a few sparks
   // and, by night, the glow of its lip
   const stack = (x, z, h) => {
     sprites.push({ id: 'reach_stack', x, z });
@@ -297,7 +297,7 @@ function outdoor(w, region) {
     // (the palisade: ours, on its bank; inside a town a card, the owner's choice: from inside, the model shows its shaded
     // face and its tower reads as a block: docs/vale-landmarks-proposal.md §8)
     if (timber && p && inside(p.cx, p.cz, -4) && /_curtainy?_\d|_tower_\d|_gatehousey?_\d/.test(id)) { sprites.push({ id, x: X(s.x), z: Z(s.y), ...(w.hub ? { card: true } : {}) }); continue; }
-    // the Reach's own pieces (our kit, world.js REACH_KIT): Ashgate's pithead wheel over its gate, the Cinderworks'
+    // the Reach's own pieces (our kit, town.json's reach_*): Ashgate's pithead wheel over its gate, the Cinderworks'
     // furnace hall and its stacks, the Cold Seam's headframe in place of the Vale's mine (on the sim's footprints)
     if (reach && /_gatehousey?_\d/.test(id) && p) { sprites.push({ id: 'reach_gatewheel', x: p.cx, z: p.cz }); continue; }
     if (reach && p && stackAt(region, w, s)) { stack(p.cx, p.cz, hash(id, s.x, s.y)); continue; }
@@ -386,6 +386,7 @@ function outdoor(w, region) {
     else if (kind === 'cookfire') add({ type: 'campfire', x, z, rotation: 0, opts: { seat: false } });
     else if (OVERLAND_3D.has(kind)) add(DRESS_3D[kind](x, z, hash(kind, tx, ty)));
     else if (reach && kind === 'burrow') sprites.push({ id: 'reach_slagheap', x, z });   // (the cinder hounds' den: a heap of slag, not the Vale's turf)
+    else if (reach && kind === 'tent') sprites.push({ prop: kind, kind: 'tent_reach', tx, ty, x, z });   // (the renegades' and the haulers' canvas grey with ash, not the Vale's: gsprite.js)
     else if (OVERLAND_OURS.has(kind)) sprites.push({ prop: kind, tx, ty, x, z });
   }
   // the land goes on past the edge: Luminati's forest border on the blocked ring and its outer scenery beyond, round every

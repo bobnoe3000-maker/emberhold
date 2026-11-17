@@ -39,6 +39,10 @@ Per-sprite knobs in `env.json` beyond the grade:
   the opening (meshes with `userData.mask`), so the bake sees into it only through its mouth,
   and the renderer draws it over the floor (`hole` structures, `renderer.js`).
 - `shadow: false` — no planar ground shadow.
+- `nofoot: true` — baked, but no footprint written to `src/sim/envfoot.js`: a piece the converter stands on the sim's own
+  footprint (the Reach's kit pieces, town.json `reach_gatewheel` … `reach_slagheap`).
+
+`bake-env.cjs --sets town-reach` bakes only the atlases named, the others as they stand (their footprints read back).
 - `gltf` — load a glTF from any path under `models/` (`'nature/Fern_1'`), with `scale` to bring it to our size.
   Cut-out materials (glTF `alphaMode: MASK`: leaf cards, petals, grass blades) bake as cut-outs in every
   pass: albedo, normals, depth key, shadow, glow.
