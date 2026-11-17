@@ -46,7 +46,7 @@ import ENV_LIST from './env.json';
 import TOWN_SETS from './town.json';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
 import { build as buildFigure, fitPpu, pose as poseFigure, compact, findNode } from './figure.js';
-import { setFaceStyle } from './faces.js';
+import { setFaceStyle, forgetFace } from './faces.js';
 // (GDD v1.79: every face is the painted head, faces.js paintedFace; ?faces=mesh the 3D parts, as before, for a comparison)
 if (typeof location !== 'undefined' && new URLSearchParams(location.search).get('faces') === 'mesh') setFaceStyle('mesh');
 import './ground.js';
@@ -386,15 +386,27 @@ function sweepFigures() {
     if (figSeen - f.seen > 3600) { game.engine.scene.remove(f.root); figs.delete(k); }
   }
   // a member's look nobody wears any more (a restyle, a piece taken off: GDD v1.65) let go after two minutes, with the
-  // geometry its build merged for itself (the models' own are shared, and stay); so a long evening at the smith doesn't
-  // grow the page. A template a frame: the check is a counter and a map's size.
+  // geometry its build merged for itself (the models' own are shared, and stay) and the pictures it painted for itself
+  // (its face, a variant's recoloured sheet) once no look left wears them; so a long evening at the smith, or a day's
+  // walk past a hundred townsfolk each with their own face, doesn't grow the page (the owner, 2026-11-17: "Every now and
+  // again the game will crash and relaunch": a 512² face a passer-by, a megabyte each, were never let go). A template a
+  // frame: the check is a counter and a map's size.
   if (figSeen % 120 === 0) for (const [tk, T] of templates) {
     if (!T || !tk.includes('#') || figSeen - (T.used || 0) < 7200) continue;
     let worn = false; for (const f of figs.values()) if (f.name === tk) { worn = true; break; }
     if (worn) continue;
     for (const g of T.root.userData.ownGeos || []) g.dispose();
     templates.delete(tk);
+    const mine = ownTextures(T.root);
+    if (mine.size) { for (const U of templates.values()) if (U) for (const t of ownTextures(U.root)) mine.delete(t); for (const t of mine) forgetFace(t); }
+    break;   // (one a sweep: the rest wait for the next)
   }
+}
+/** the pictures a figure's build painted for itself (faces.js facePicture, figure.js recolor): those it may let go */
+function ownTextures(root) {
+  const out = new Set();
+  root.traverse((o) => { if (!o.isMesh) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) for (const k of ['map', 'emissiveMap']) { const t = m?.[k]; if (t && (t.userData?.faceKey || t.userData?.own)) out.add(t); } });
+  return out;
 }
 
 // ── our own art kept by the converter: our building kit's models stood in 3D, or a sprite each from the env atlases ───
@@ -1976,6 +1988,11 @@ export function createPreview(canvas, o) {
 // renderer for every portrait, made at the first and kept (a portrait is drawn again only when the look changes).
 const PORT_W = 96, PORT_H = 112, PORT_SS = 3, PORT_INK = [8, 5, 14];
 let portR = null;
+// (its own WebGL context, a third beside the world's and a window's live figure: on a phone each holds its own copy of
+// every model and picture it drew. Let go a few seconds after the last portrait, so it holds nothing while you play;
+// the owner, 2026-11-17: "the game will crash and relaunch ... when in a map transition and im looking at inventory")
+let portTimer = 0;
+function portIdle() { clearTimeout(portTimer); portTimer = setTimeout(() => { if (!portR) return; portR.dispose(); portR.forceContextLoss(); portR = null; }, 4000); }
 /** @param {string} actor @param {any} look { appearance, gear } @param {{ assets?: string }} [o] @returns {Promise<HTMLCanvasElement|null>} */
 export async function renderPortrait(actor, look = null, o = {}) {
   if (!ASSETS && o.assets) ASSETS = o.assets;
@@ -1998,7 +2015,7 @@ export async function renderPortrait(actor, look = null, o = {}) {
   const rim = new THREE.DirectionalLight(0xc0a0ff, 1.6); rim.position.set(1.5, 2.2, -2.6); s.add(rim);
   if (!portR) { portR = new THREE.WebGLRenderer({ alpha: true, antialias: false, preserveDrawingBuffer: true }); portR.outputColorSpace = THREE.SRGBColorSpace; portR.toneMapping = THREE.ACESFilmicToneMapping; portR.toneMappingExposure = 1; }
   const BW = PORT_W * PORT_SS, BH = PORT_H * PORT_SS; portR.setPixelRatio(1); portR.setSize(BW, BH, false); portR.setClearColor(0, 0);
-  portR.render(s, cam);
+  portR.render(s, cam); portIdle();
   const big = document.createElement('canvas'); big.width = BW; big.height = BH; const bx = big.getContext('2d', { willReadFrequently: true }); bx.drawImage(portR.domElement, 0, 0);
   const b = bx.getImageData(0, 0, BW, BH).data, d = new Uint8ClampedArray(PORT_W * PORT_H * 4), SS = PORT_SS;
   for (let y = 0; y < PORT_H; y++) for (let x = 0; x < PORT_W; x++) {

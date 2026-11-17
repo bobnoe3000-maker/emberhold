@@ -4,7 +4,7 @@
 // a scene change is when the game holds most (the scene left, set aside to come back to; the one next door built ahead;
 // the new one built; the character window's own WebGL context if it's open). This walks Thornwick → the Vale → the Old
 // Barrows → the Vale → Thornwick, `--cycles` times, optionally with the character window open through every change, and
-// samples the browser's memory as it goes: the resident memory of every process of this browser (its GPU's textures and
+// samples the browser's memory as it goes (--sheet: open as each change begins, and again while the new scene loads): the resident memory of every process of this browser (its GPU's textures and
 // buffers are in its GPU process: SwiftShader here, which holds them in RAM, the nearest a desktop gets to a phone's
 // shared memory), the JS heap, and Luminati's counts (geometries, textures, levels set aside, one built ahead).
 // Prints a row per change (the peak during it, what it settled at) and the walk's peak and growth.
@@ -58,18 +58,19 @@ const gc = () => p.evaluate(() => { try { /** @type {any} */ (globalThis).gc?.()
 
 /** a scene change: the hero onto the way out (the sheet open through it if asked), until the new scene is drawn and settled */
 async function change(label, where) {
-  pids = tree(pid); const before = peak; let top = 0; const from = samples.length;
+  pids = tree(pid); const from = samples.length;
   if (SHEET) await p.evaluate(() => globalThis.__gear.open(0));
   const n = await p.evaluate(() => globalThis.__world3d.state.loads);
   await p.evaluate(where);
+  if (SHEET) { await p.waitForTimeout(300); await p.evaluate(() => globalThis.__gear.open(0)); }   // (opened again while the new scene loads: the sheet closes as a change starts)
   await p.waitForFunction((n) => globalThis.__world3d.state.loads > n && !globalThis.__renderer.transiting, n, { timeout: 240000 });
   await p.waitForTimeout(2500);   // (the next door built ahead, the figures stood)
-  top = Math.max(...samples.slice(from)); if (SHEET) await p.evaluate(() => globalThis.__gear.close());
+  const top = Math.max(...samples.slice(from)); if (SHEET) await p.evaluate(() => globalThis.__gear.close());
   await gc(); await p.waitForTimeout(800); pids = tree(pid);
   const now = rss(pids), st = await page();
   const row = { label, peak: top, settled: now, ...st };
   console.log(`${label.padEnd(28)} peak ${String(top).padStart(5)} MB  settled ${String(now).padStart(5)} MB  heap ${String(st.heap).padStart(4)}  geo ${String(st.geo).padStart(5)}  tex ${String(st.tex).padStart(4)}  kept ${st.kept}  ahead ${st.ahead || '-'}  (${st.last})`);
-  void before; return row;
+  return row;
 }
 const toOverland = () => { const s = globalThis.__sim, e = s.world.exits.find((q) => q.to === 'overland'), P = s.state.player; P.x = P.px = (e.x0 + e.x1) / 2; P.y = P.py = (e.y0 + e.y1) / 2; };
 const toTown = () => { const s = globalThis.__sim, e = s.world.exits.find((q) => q.to === 'town' && !q.closed && (!q.town || q.town === 'thornwick')), P = s.state.player; P.x = P.px = (e.x0 + e.x1) / 2; P.y = P.py = (e.y0 + e.y1) / 2; };

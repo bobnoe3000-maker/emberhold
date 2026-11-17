@@ -57,6 +57,7 @@ function recolor(root, filter) {
       cv.width = img.width; cv.height = img.height; const x = cv.getContext('2d'); x.filter = filter; x.drawImage(img, 0, 0);
       const t = new THREE.CanvasTexture(cv); t.flipY = o.material.map.flipY; t.colorSpace = o.material.map.colorSpace;
       t.magFilter = o.material.map.magFilter; t.minFilter = o.material.map.minFilter; t.wrapS = o.material.map.wrapS; t.wrapT = o.material.map.wrapT;
+      t.userData.own = true;   // (this build's own copy: let go with its template, world.js)
       m = o.material.clone(); m.map = t; done.set(o.material, m); }
     o.material = m; });
 }

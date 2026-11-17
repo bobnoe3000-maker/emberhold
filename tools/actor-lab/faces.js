@@ -673,8 +673,12 @@ function facePicture(f) {
   if (ex.tear) { g.fillStyle = 'rgba(180,215,240,0.85)'; for (const sd of [-1, 1]) { g.beginPath(); g.ellipse(...P(sd * (PE.x - 0.02), PE.y - PE.ry - 0.03), 0.008 * kx, 0.016 * ky, 0, 0, Math.PI * 2); g.fill(); } }
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
   tex.generateMipmaps = false; tex.minFilter = THREE.LinearFilter;   // (no averaging down: at a 20 px head the eyes stay dark pixels, as the far face's dot eyes did)
+  tex.userData.faceKey = key;   // (so the world can let it go with the last figure wearing it: forgetFace)
   faceCache.set(key, tex); return tex;
 }
+/** a face's picture let go (world.js, a look nobody wears any more): out of the cache, its GPU copy freed. Safe while
+ * something still draws it: three uploads it again from its canvas. */
+export function forgetFace(tex) { if (tex?.userData?.faceKey && faceCache.get(tex.userData.faceKey) === tex) faceCache.delete(tex.userData.faceKey); tex?.dispose?.(); }
 /** (a debug look at a face's picture: the canvas) */
 export const facePictureOf = (f) => facePicture(f).image;
 /** the painted head: skull, mask and picture, with the kit's ears, hair, beards and an earring on it */

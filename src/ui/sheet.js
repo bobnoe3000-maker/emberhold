@@ -183,7 +183,7 @@ const icon = (it) => `./assets/items/${BASES[it.base].icon}.png`;
 const fmt = (k, v) => (k === 'crit' || k === 'dodge' ? `${v > 0 ? '+' : ''}${v}%` : k === 'hpr' || k === 'mpr' ? `${v > 0 ? '+' : ''}${v}/s` : `${v > 0 ? '+' : ''}${v}`);
 const classNames = (B, lower) => { const l = classesOf(B).map((c) => CLASSES[c].label).join(' / ') || 'Any class'; return lower ? l.replace('Any class', 'any class') : l; };
 
-export function createGearSheet(sim, { partyPanel, openTerms = () => {}, models = true }) {
+export function createGearSheet(sim, { partyPanel, openTerms = () => {}, models = true, busy = () => false }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const sheet = document.createElement('div'); sheet.id = 'gearSheet';
   const card = document.createElement('div'); card.id = 'gearCard';
@@ -261,19 +261,35 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {}, models 
   // moved into each render's figure box (a canvas moved keeps its context), its model built again only when the look or
   // what's worn changes (render3d/preview.js keys it); the still stays under it until it stands, and wherever there's
   // none to be had. Let go when the window closes.
-  let figGl = null, figPv = null, figWait = null;
+  //
+  // Its own WebGL context beside the world's, so never while the world is building a scene (the owner, 2026-11-17: "the
+  // game will crash and relaunch ... when in a map transition and im looking at inventory"; tools/capture/memwalk.mjs: a
+  // preview opened as a scene change began took the page from 1.3 GB to 3.6 GB): the still until the world has settled,
+  // then the model. And one asked for and let go before it opened is closed as it opens (figGen), not left running with
+  // nobody to close it (it was: the sheet closes as a scene change starts, and a preview still opening lived on, its
+  // figure built through the change, its context never let go).
+  let figGl = null, figPv = null, figWait = null, figGen = 0, figLater = 0;
   function liveFig(m, still) {
     const box = sheet.querySelector('.fig'); if (!models || !box || !still) return;
+    if (busy()) { figAfter(); return; }
     if (!figGl) {
+      const gen = ++figGen;
       figGl = document.createElement('canvas'); figGl.className = 'gl'; figGl.setAttribute('aria-label', 'your character: drag to turn, tap to swing');
-      figWait = openPreview(figGl, (e) => { console.warn('[sheet] the live figure:', e); if (figGl) figGl.style.visibility = 'hidden'; }).then((p) => (figPv = p));
+      figWait = openPreview(figGl, (e) => { console.warn('[sheet] the live figure:', e); if (figGl) figGl.style.visibility = 'hidden'; }).then((p) => { if (gen !== figGen) { p?.close(); return null; } return (figPv = p); });
     }
     box.insertBefore(figGl, box.querySelector('.nm'));
     const L = lookOf(m), look = L ? L.a : null;
     figGl.style.visibility = figPv && figPv.actor.startsWith(actorOf(m) + '#') ? '' : 'hidden';   // (another member's model up: the still until theirs stands)
     figWait.then((p) => p && p.show(actorOf(m), look && look.appearance, { gear: look && look.gear }).then((ok) => { if (figGl && member() === m) { figGl.style.visibility = ok ? '' : 'hidden'; still.style.visibility = ok ? 'hidden' : ''; } }));
   }
-  function dropFig() { if (figPv) figPv.close(); figPv = null; figWait = null; if (figGl) figGl.remove(); figGl = null; }
+  function dropFig() { figGen++; clearTimeout(figLater); figLater = 0; if (figPv) figPv.close(); figPv = null; figWait = null; if (figGl) figGl.remove(); figGl = null; }
+  /** the model once the world has settled (a second after its scene is drawn: its figures stood, its lights placed) */
+  function figAfter() {
+    if (figLater) return;
+    let quiet = 0;
+    const again = () => { figLater = 0; if (!open) return; quiet = busy() ? 0 : quiet + 1; if (quiet < 3) { figLater = setTimeout(again, 400); return; } const fc = sheet.querySelector('canvas[data-fig]'); if (fc) liveFig(member(), fc); };
+    figLater = setTimeout(again, 400);
+  }
   function paintTabs() { for (const cv of sheet.querySelectorAll('canvas[data-actor]')) { const p = S.party[+cv.dataset.idx]; if (p) paintPortrait(cv, p); } }
 
   // ── the Stats tab: attributes and points (GDD §4.1) ─────────────────────────

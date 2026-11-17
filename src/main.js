@@ -145,7 +145,7 @@ renderer.ringClock = (f) => ring.clock(f);   // (the minimap's old stones, lit w
 createDefeat({ sim });                // a wipe: what happened, before you wake at the Shrine (ui/defeat.js)
 createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare(), questTitle: (id) => journal.title(id) });   // compass travel (docs/compass-mockup.html)
 const chatDock = createChatDock({ sim, partyPanel, ring, chat: createChat(), questTitle: (id) => journal.title(id) });   // swipe the cards left: the chat, World and Company news (ui/chatdock.js)
-const gearSheet = createGearSheet(sim, { partyPanel, openTerms: () => guildTerms.open(), models: !WORLD_OFF && !/sprites/.test(params.get('figures') || '') });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)
+const gearSheet = createGearSheet(sim, { partyPanel, openTerms: () => guildTerms.open(), models: !WORLD_OFF && !/sprites/.test(params.get('figures') || ''), busy: () => renderer.transiting });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)
 hud.onWage(() => { if (sim.world.kind !== 'town') return false; townMenu.openHire(); return true; });   // the wage line under the gold
 if (DEV) globalThis.__gear = gearSheet;
 // named NPCs (M4): their look, name and Ink file from content/npcs/; tap one to talk (dialogue.js)

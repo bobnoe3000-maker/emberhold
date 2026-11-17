@@ -1896,6 +1896,45 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 24. Memory in a scene change (the owner, 2026-11-17: "Every now and again the game will crash and relaunch. Usually
+// when in a map transition and im looking at inventory"; tools/capture/memwalk.mjs: a phone's browser dropping a page that
+// holds too much). The character window's live figure is its own WebGL context: none while a scene change is building,
+// even with the window opened again as it loads; it stands again once the world has settled; a preview that opened after
+// its window had closed is closed, not left running; and the portraits' renderer lets its context go once idle.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 760 } }), p = await ctx.newPage(), errs = [];
+    p.on('pageerror', (e) => errs.push(e.message));
+    await p.addInitScript(() => {
+      const L = /** @type {any} */ (globalThis).__gl = [], g = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (k, o) { const r = g.call(this, k, o); if (/webgl/.test(k) && r && !this.__gl) { const e = { c: this, lost: false }; this.__gl = e; L.push(e); this.addEventListener('webglcontextlost', () => { e.lost = true; }); } return r; };
+    });
+    await p.goto(`${base}/index.html?dev&notitle&world=on&tod=day&scene=town&region=vale`, { waitUntil: 'commit' });
+    await p.waitForFunction(() => !!globalThis.__world3d && globalThis.__world3d.state.loads >= 1 && !globalThis.__renderer.transiting, null, { timeout: 120000 * SLOW });
+    const r = await p.evaluate(async (slow) => {
+      const G = /** @type {any} */ (globalThis), sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+      const figs = () => G.__gl.filter((e) => e.c.className === 'gl'), liveFigs = () => figs().filter((e) => !e.lost);
+      G.__gear.open(0);   // (its live figure asked for: then the scene changes under it, as it opens)
+      const s = G.__sim, e = s.world.exits.find((q) => q.to === 'overland'), P = s.state.player; P.x = P.px = (e.x0 + e.x1) / 2; P.y = P.py = (e.y0 + e.y1) / 2;
+      const end = performance.now() + 120000 * slow;
+      while (!G.__renderer.transiting && performance.now() < end) await sleep(20);
+      await sleep(300); G.__gear.open(0);   // (opened again while the new scene loads)
+      let during = 0; while (G.__renderer.transiting && performance.now() < end) { during = Math.max(during, liveFigs().length); await sleep(50); }
+      let back = false; while (performance.now() < end) { const l = liveFigs(); if (l.length === 1 && l[0].c.isConnected && l[0].c.style.visibility !== 'hidden') { back = true; break; } await sleep(250); }
+      const orphans = figs().filter((q) => !q.lost && !q.c.isConnected).length, made = figs().length;
+      G.__gear.close();
+      const pm = await import('./src/render3d/preview.js'), drawn = await pm.portraitOf(s.state.party[0].actor || 'hero_barbarian', null);   // (a portrait: its renderer made)
+      const madeP = G.__gl.filter((q) => q.c.className !== 'gl' && !q.c.isConnected).length;
+      await sleep(6000);   // (its renderer idle 4 s, then let go)
+      const portraits = G.__gl.filter((q) => q.c.className !== 'gl' && !q.c.isConnected), portraitsLive = portraits.filter((q) => !q.lost).length;
+      return { during, back, orphans, made, drawn: !!drawn, madeP, portraits: portraits.length, portraitsLive, figsLive: liveFigs().length, kind: s.world.kind };
+    }, SLOW);
+    check('memory: the character window\'s live figure (its own WebGL context) isn\'t made while a scene change builds, even opened as it loads; it stands once the world has settled; none is left running unowned; closed, it\'s let go; and the portraits\' renderer lets its context go once idle, no page errors',
+      r.kind === 'overland' && r.during === 0 && r.back && r.orphans === 0 && r.figsLive === 0 && r.drawn && r.madeP >= 1 && r.portraitsLive === 0 && errs.length === 0, JSON.stringify(r) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 srv.close();
 const ok = results.length > 0 && results.every(Boolean);
 console.log(ok ? 'BROWSER_OK' : 'BROWSER_FAIL');
