@@ -34,6 +34,7 @@ import { brightAt, brightFor } from './bright.js';
 import { buildProps } from '../render/gsprite.js';
 import { propAt, gateUp } from '../sim/world.js';
 import { createOutdoor } from '../sim/outdoor.js';
+import { townIn } from '../sim/coach.js';
 import { shrineKind } from '../sim/shrines.js';
 import { hash2 } from '../sim/rng.js';
 import { WARN_R } from '../render/skillfx.js';
@@ -246,7 +247,9 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         const to = w.kind === 'town' ? 'overland' : w.kind === 'overland' ? 'town' : '';
         if (to && w.region && api.prepare) {
           try {
-            const r = convertWorld(createOutdoor(w.seed, to, w.region), { region: w.region, stairs: new URLSearchParams(location.search).get('stairs') || '', walls: new URLSearchParams(location.search).get('walls') || '', dlook: DLOOK });
+            // (to a town: the one of this land last stood in, where the way in, a scroll or a wipe would most likely take you;
+            // v1.131: Kell's Rest's, where the land's own was always built ahead)
+            const r = convertWorld(createOutdoor(w.seed, to, w.region, to === 'town' ? townIn(sim.state.town, w.region) : null), { region: w.region, stairs: new URLSearchParams(location.search).get('stairs') || '', walls: new URLSearchParams(location.search).get('walls') || '', dlook: DLOOK });
             api.prepare(r.level, w.region);
           } catch (err) { console.warn('[luminati] the level next door:', err); }
         }

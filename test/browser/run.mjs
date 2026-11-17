@@ -1939,6 +1939,30 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 25. Kell's Rest built ahead (GDD v1.131): on the Reach's overland with Kell's Rest the town last stood in, the town
+// built ahead is Kell's Rest (the land's own, Ashgate, always was), and the walk in takes it: a swap, not a build.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 700 } }), p = await ctx.newPage(), errs = [];
+    p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&world=on&tod=day&scene=overland&region=reach`, { waitUntil: 'commit' });
+    await p.waitForFunction(() => typeof globalThis.__frame === 'function' && !!globalThis.__sim, null, { timeout: 120000 * SLOW });
+    const r = await p.evaluate(async (ms) => {
+      const h = () => globalThis.__world3d, sim = globalThis.__sim, end = performance.now() + ms;
+      const settle = async (n) => { while (performance.now() < end) { globalThis.__frame(16); if (h() && h().state.loads >= n && !globalThis.__renderer.transiting) return true; await new Promise((res) => setTimeout(res, 0)); } return false; };
+      if (!(await settle(1))) return { err: 'the Reach never built' };
+      sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), town: 'kells_rest', scene: 'overland', region: 'reach' }); await settle(2);
+      let ready = false; while (performance.now() < end) { globalThis.__frame(16); if (h().world.loadStats().ahead === 'ready') { ready = true; break; } await new Promise((res) => setTimeout(res, 30)); }
+      const n = h().state.loads + 1, e = sim.world.exits.find((q) => q.to === 'town' && q.town === 'kells_rest'), P = sim.state.player; P.x = P.px = (e.x0 + e.x1) / 2; P.y = P.py = (e.y0 + e.y1) / 2;
+      const ok = await settle(n), st = h().world.loadStats();
+      return { ready, ok, now: sim.world.name, last: st.last };
+    }, 300000 * SLOW);
+    await ctx.close(); await b.close();
+    check('Kell\'s Rest built ahead: on the Reach with Kell\'s Rest last stood in, the town built ahead is Kell\'s Rest and the walk in takes it, no page errors',
+      !!r.ready && !!r.ok && r.now === "Kell's Rest" && r.last === 'ahead' && errs.length === 0, JSON.stringify(r) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+  }
+}
 srv.close();
 const ok = results.length > 0 && results.every(Boolean);
 console.log(ok ? 'BROWSER_OK' : 'BROWSER_FAIL');

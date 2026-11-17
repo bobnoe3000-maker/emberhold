@@ -11,6 +11,8 @@ import { COACH, days, fare, townIn } from '../src/sim/coach.js';
 import { NPCS } from '../src/sim/npcs.js';
 import { migrate, townFor54, metaOf, SAVE_VERSION } from '../src/persist/save.js';
 import { startSession, verifySession } from '../src/sim/replay.js';
+import { makeItem } from '../src/sim/items.js';
+import { SHOPKEEP } from '../src/sim/smith.js';
 
 const SEED = 20260807;
 const ACTS = ['ch1_smoke_over_the_vale', 'ch1_the_diggers', 'ch1_ember_in_the_fist', 'ch1_the_standard',
@@ -183,3 +185,34 @@ test("a walk into Kell's Rest and a coach trip out of it replay to the same stat
   const v = verifySession(ss.claim(), { verified: ss.startHash, elapsedMs: 1e9 }); assert.ok(v.ok, v.reason);
   const back = createSim(SEED); back.restore(ss.start); assert.equal(back.world.name, "Kell's Rest", 'the session starts in Kell\'s Rest');
 });
+
+// v1.131 (the owner: "Kell's Rest as a real second town"): home is the town of this land you last stood in. A Homeward
+// Scroll and a wipe's wake took you to the land's own (Ashgate) even from Kell's Rest's dungeon next door.
+const read = (sim) => { const it = makeItem('homeward', 1, 'common', { uid: 'hw' + sim.state.tick }); sim.state.bag.push(it); sim.commands.push({ type: 'useItem', uid: it.uid }); sim.tick(); };
+const outOfTown = (sim) => { standAt(sim, sim.world.exits.find((e) => e.to === 'overland')); sim.tick(); };
+
+test("home is the land's town you last stood in: a Homeward Scroll out of Kell's Rest's land takes you back to Kell's Rest, out of Ashgate's to Ashgate", () => {
+  const sim = walkedIn(); assert.equal(sim.state.town, 'kells_rest');
+  outOfTown(sim); assert.equal(sim.state.scene, 'overland'); assert.equal(sim.state.town, 'kells_rest', 'still the town last stood in');
+  read(sim); assert.equal(sim.state.scene, 'town'); assert.equal(sim.world.name, "Kell's Rest", 'the scroll: back to Kell\'s Rest');
+  // into the Yards next door and a scroll from its floor
+  outOfTown(sim); standAt(sim, sim.world.exits.find((e) => e.to === 'dungeon' && e.site === 'assay_yards')); sim.tick();
+  assert.equal(sim.state.scene, 'dungeon'); read(sim); assert.equal(sim.world.name, "Kell's Rest");
+  // in Ashgate, Ashgate's
+  const a = onReach(); standAt(a, a.world.exits.find((e) => e.to === 'town' && !e.town && !e.closed)); a.tick(); assert.equal(a.world.name, 'Ashgate');
+  outOfTown(a); read(a); assert.equal(a.world.name, 'Ashgate');
+  // into another land: its own town (Kell's Rest is only the Reach's)
+  const v = walkedIn(); outOfTown(v); v.restore({ ...snap(v), region: 'vale', scene: 'overland' }); v.tick(); read(v); assert.equal(v.world.name, 'Thornwick');
+});
+
+test("a wipe out of Kell's Rest wakes at Kell's Rest's shrine", () => {
+  const sim = walkedIn(); outOfTown(sim);
+  standAt(sim, sim.world.exits.find((e) => e.to === 'dungeon' && e.site === 'assay_yards')); sim.tick(); assert.equal(sim.state.site, 'assay_yards');
+  const L = sim.world.level, r = L.rooms.find((q) => q !== L.entrance), p = sim.state.player; p.x = p.px = r.cx + 0.5; p.y = p.py = r.cy + 0.5;
+  let got = null; sim.bus.on('defeat', (e) => { got = e; });
+  for (let i = 0; i < 20 * 180 && !got; i++) { for (const m of sim.state.party) if (!m.down) m.hp = Math.min(m.hp, 3); sim.tick(); }
+  assert.ok(got, 'the party fell'); assert.equal(sim.state.scene, 'town'); assert.equal(sim.world.name, "Kell's Rest");
+  const t = sim.world.arrivals.temple; assert.ok(Math.hypot(sim.state.player.x - t.x, sim.state.player.y - t.y) < 3, 'at its shrine');
+});
+
+test("Kell's Rest's shop has its own keeper", () => { assert.equal(SHOPKEEP.kells_rest, 'Prosser'); for (const k of Object.keys(COACH)) assert.ok(SHOPKEEP[k], `${k}'s shopkeeper`); });
