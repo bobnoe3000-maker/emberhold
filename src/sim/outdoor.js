@@ -984,8 +984,8 @@ function buildReach(seed) {
     { w: 3, surface: 'track', pts: [[150, 182], [108, 188], [82, 212], [tunnels[0] + 2.5, tunnels[1] + 8]] },        // west to the Slag Tunnels' adit, up to its mouth from below
     { w: 3, surface: 'track', pts: [[148, 226], [132, 230], [seam[0] - 6, seam[1] + 12]] },                          // to the Cold Seam's pithead
     { w: 3, surface: 'track', pts: [[190, 165], [forge[0] + 0.5, forge[1] + 8]] },                                   // to the Forgehall's door
-    { w: 3, surface: 'track', pts: [[76, 102], [76, 122], [yards[0] + 8, yards[1] + 2]] },                           // into the Assay Yards
-    { w: 2.5, surface: 'track', pts: [[kells[0], kells[1] - 6], [48, 82], [58, 56], door(ninth, 8)] },           // the old track up the volcano's flank (the Ninth Vault's)
+    { w: 3, surface: 'track', pts: [[76, 102], [76, 122], [76, 134], [yards[0] + 0.5, yards[1] + 5]] },   // into the Assay Yards, to the counting house's door
+    { w: 2.5, surface: 'track', pts: [[kells[0], kells[1] - 6], [48, 82], [58, 56], door(ninth, 12)] },          // the old track up the volcano's flank (the Ninth Vault's), to its door
   ].map((r) => ({ ...r, pts: fillet(r.pts, Math.max(8, r.w * 2)) }));
   joinRoads(o, ROADS);
   o.roads.push(...ROADS);
@@ -1009,7 +1009,7 @@ function buildReach(seed) {
   put(o, B('longhouse'), yards[0], yards[1] - 3); put(o, B('workshop'), yards[0] - 4, yards[1] + 9);
   for (const x of [yards[0] - 8, yards[0] + 4]) putRun(o, 'fence_90', x, yards[1] - 9);              // (the gate in it east, where the track comes in)
   for (const y of [yards[1] - 3, yards[1] + 9]) putRun(o, 'fence_0', yards[0] - 14, y);
-  for (const [id, x, y] of [['crate_A_big', yards[0] + 7, yards[1] + 6], ['crate_A_small', yards[0] + 8, yards[1] + 8], ['resource_stone', yards[0] + 4, yards[1] + 12], ['cart_0', yards[0] - 10, yards[1] - 6]]) put(o, id, x, y, 'rect', 0.1);
+  for (const [id, x, y] of [['crate_A_big', yards[0] + 9, yards[1] + 9], ['crate_A_small', yards[0] + 10, yards[1] + 11], ['resource_stone', yards[0] + 4, yards[1] + 12], ['cart_0', yards[0] - 10, yards[1] - 6]]) put(o, id, x, y, 'rect', 0.1);
   // the Cinderworks: the furnace hall open to its yard, two stacks, the ore shed; Furnace Nine's stack over the Vault's
   // mouth; the Slag Tunnels' adit; the Cold Seam's pithead; the Forgehall of Oruth; the Ninth Vault's ruin, unnamed
   put(o, B('smith'), works[0], works[1]); put(o, B('workshopx'), works[0] - 13, works[1] + 2); put(o, B('tower'), works[0] + 9, works[1] - 7, 'round', 0.1); put(o, B('tower'), works[0] - 5, works[1] - 11, 'round', 0.1);
@@ -1064,15 +1064,19 @@ function buildReach(seed) {
   // (v1.126) the rest of Act III's: the Yards' gate where the track comes in, the Forgehall's door, the Cinderworks'
   // yard under its stacks (the Magma Vault is its second floor: the mouth up the track is Furnace Nine's, ring.js), and
   // the Ninth Vault's ruin up the volcano's flank, shut until the Chronicle's reach set finds it (sites.js siteOpen)
-  o.exits.push({ x0: yards[0] + 6, y0: yards[1], x1: yards[0] + 10, y1: yards[1] + 4, to: 'dungeon', site: 'assay_yards' });
-  o.exits.push({ x0: forge[0] - 3, y0: forge[1] + 6, x1: forge[0] + 4, y1: forge[1] + 9, to: 'dungeon', site: 'forgehall' });
-  o.exits.push({ x0: works[0] - 4, y0: works[1] + 7, x1: works[0] + 3, y1: works[1] + 10, to: 'dungeon', site: 'cinderworks' });
-  o.exits.push({ x0: ninth[0] - 2, y0: ninth[1] + 5, x1: ninth[0] + 4, y1: ninth[1] + 8, to: 'dungeon', site: 'ninth_vault' });
+  // (each at its building's door, the middle of the +y face its kit piece's door is on: convert.js SITE_DOORS, buildkit.js
+  // assayhouse / forgedoor / ninthdoor; the works' furnace hall is the smithy's. Before, beside them: the Yards' 6 east of
+  // its door, the Ninth Vault's inside its ruin's footprint; the owner, 2026-11-16, "do 3")
+  o.exits.push({ x0: yards[0] - 3, y0: yards[1] + 0.5, x1: yards[0] + 3, y1: yards[1] + 3.5, to: 'dungeon', site: 'assay_yards' });   // (the counting house stands 3 north of yards)
+  o.exits.push({ x0: forge[0] - 3, y0: forge[1] + 6.5, x1: forge[0] + 4, y1: forge[1] + 9.5, to: 'dungeon', site: 'forgehall' });
+  o.exits.push({ x0: works[0] - 3, y0: works[1] + 5.5, x1: works[0] + 3, y1: works[1] + 8.5, to: 'dungeon', site: 'cinderworks' });
+  o.exits.push({ x0: ninth[0] - 3, y0: ninth[1] + 8.5, x1: ninth[0] + 3, y1: ninth[1] + 11.5, to: 'dungeon', site: 'ninth_vault' });
   o.exits.push({ x0: 263, y0: 180, x1: 271, y1: 198, to: 'overland', closed: true, shut: 'The Solmere road runs east, straight as the day it was laid, to the dead capital. Another day.' });
   o.arrivals = { default: { x: join[0] - 4.5, y: gate[1] + 0.5 }, ashgate: { x: join[0] - 4.5, y: gate[1] + 0.5 }, kells_rest: { x: kells[0] + 10.5, y: kells[1] + 4.5 },
     vale_road: { x: 146.5, y: 255.5 }, cold_seam: { x: seam[0] - 5.5, y: seam[1] + 17.5 },
-    assay_yards: { x: yards[0] + 12.5, y: yards[1] - 6.5 }, forgehall: { x: forge[0] + 0.5, y: forge[1] + 13.5 }, cinderworks: { x: works[0] - 0.5, y: works[1] + 14.5 },
-    ninth_vault: { x: ninth[0] - 0.5, y: ninth[1] + 13.5 } };
+    assay_yards: { x: yards[0] + 6.5, y: yards[1] + 4.5 },   // (east of the workshop, which hid one arriving at the door: visibility.mjs)
+    forgehall: { x: forge[0] + 0.5, y: forge[1] + 13.5 }, cinderworks: { x: works[0] + 0.5, y: works[1] + 12.5 },
+    ninth_vault: { x: ninth[0] + 0.5, y: ninth[1] + 15.5 } };
   o.spawn = o.arrivals.default;
   return o;
 }
