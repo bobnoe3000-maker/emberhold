@@ -210,6 +210,8 @@ its door. The plans below are drawn by `node tools/worldmap/streets.mjs --waysta
 
 ### Kell's Rest, the Cinder Reach
 
+**Superseded (GDD v1.132, world doc v1.57: one town a land).** Kell's Rest was built from this plan as a town of its own (GDD v1.130) and taken back the next day: it is the Assay's depot on the Reach's overland, with no square or services. The waystations below are places on their land, not towns, when their lands are built.
+
 ![Kell's Rest](img/towns/streets-kells.jpg)
 
 The Kell Assay's depot under the dead volcano:

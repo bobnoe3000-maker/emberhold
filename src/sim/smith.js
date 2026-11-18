@@ -44,7 +44,7 @@ export const BUY = 40, STOCK_N = 4, BUYBACK_N = 5;
 export const SELL = { common: 6, fine: 15, rare: 40 };   // × item level (heirlooms aren't sold)
 const hashStr = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return h >>> 0; };
 /** who keeps each town's shop (their words: "Wendel won't take an heirloom") */
-export const SHOPKEEP = { thornwick: 'Wendel', saltmere: 'Pim', ashgate: 'Wynn', kells_rest: 'Prosser' };   // (kells_rest v1.131: the Company Store's, the Assay's man)
+export const SHOPKEEP = { thornwick: 'Wendel', saltmere: 'Pim', ashgate: 'Wynn' };
 
 /** the next upgrade's price, or null at +5; a Deepdelver-fostered hero's gold is 10 % less (ORIGIN_EDGE)
  * @param {any} it @param {string} [origin] the hero's @returns {{ gold: number, cinders: number } | null} */

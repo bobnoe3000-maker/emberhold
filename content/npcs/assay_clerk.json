@@ -4,11 +4,11 @@
   "role": [
     "townsfolk"
   ],
-  "town": "kells_rest",
+  "town": "ashgate",
   "region": "reach",
   "look": "npc_clerk",
   "portrait": "npc_clerk",
   "dialogue": "kellsrest",
   "knot": "clerk_hub",
-  "note": "A junior clerk of the Kell Assay at Kell's Rest, who sells nothing and says too much (world doc §3.3, v1.54). Hob's pass comes through him; stands outside the Short Weight in Kell's Rest's square (v1.55; met at the Yards' way in before). Paid by Weight's first step."
+  "note": "A junior clerk of the Kell Assay at Kell's Rest, who sells nothing and says too much (world doc §3.3, v1.54). Hob's pass comes through him; met at the Yards' way in (v1.57; v1.55–v1.56 in a square of Kell's Rest's own). Paid by Weight's first step."
 }

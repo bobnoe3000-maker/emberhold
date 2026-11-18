@@ -84,7 +84,6 @@ const SCENES = [
   scene('fens', { scene: 'overland', region: 'fens' }, [-6, -36, 246, 244], 'fens'),
   scene('ashgate', { scene: 'town', region: 'reach' }, [-22, -20, 166, 136], 'reach'),
   scene('reach', { scene: 'overland', region: 'reach' }, [-6, -36, 266, 278], 'reach'),
-  scene('kells_rest', { scene: 'town', region: 'reach', town: 'kells_rest' }, [-12, -10, 146, 130], 'reach'),   // (v1.130: the Reach's second town)
 ];
 
 // the page: a canvas for the map (ground a tile a pixel-block, then the pieces), an SVG over it for the sheet's words

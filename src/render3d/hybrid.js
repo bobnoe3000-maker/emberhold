@@ -247,8 +247,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         const to = w.kind === 'town' ? 'overland' : w.kind === 'overland' ? 'town' : '';
         if (to && w.region && api.prepare) {
           try {
-            // (to a town: the one of this land last stood in, where the way in, a scroll or a wipe would most likely take you;
-            // v1.131: Kell's Rest's, where the land's own was always built ahead)
+            // (to a town: the one of this land last stood in, state.town; one a land since GDD v1.132)
             const r = convertWorld(createOutdoor(w.seed, to, w.region, to === 'town' ? townIn(sim.state.town, w.region) : null), { region: w.region, stairs: new URLSearchParams(location.search).get('stairs') || '', walls: new URLSearchParams(location.search).get('walls') || '', dlook: DLOOK });
             api.prepare(r.level, w.region);
           } catch (err) { console.warn('[luminati] the level next door:', err); }

@@ -161,7 +161,10 @@
 //   v54: `town`, the town in the land you're in (or last stood in), a coach stop (sim/coach.js COACH; GDD v1.130: Kell's
 //       Rest, the Reach's second town, a scene of its own). Older data: the land's own town (townFor54), which is where
 //       every town scene was until now; a town that isn't one of the land's stops reads as the land's own (coach.js townIn).
-//       Nan Ruddock and Davy Pruett stand in Kell's Rest's square now, not the Yards' way in: no save holds where people stand.
+//       Nan Ruddock and Davy Pruett stood in Kell's Rest's square (until v55): no save holds where people stand.
+//   v55: one town a land (GDD v1.132): Kell's Rest is the depot on the Reach, not a town. A save in it loads on the Reach's
+//       overland by the depot (its `kells_rest` arrival), its `town` the Reach's own; `kells_rest` leaves `reached` (the
+//       coach's stops) and `shops` (its shelves); anywhere else, a `town` of Kell's Rest reads as Ashgate (depotFor55).
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -170,10 +173,11 @@ import { makeItem } from '../sim/items.js';
 import { bagStacks, BAG_SIZE } from '../sim/loot.js';
 import { dedupeNames, xpToNext } from '../sim/party.js';
 import { reachedOf, townOf } from '../sim/coach.js';
+import { REACH } from '../sim/outdoor.js';
 import { SITES, bossAt } from '../sim/sites.js';
 import { withFrame43 } from '../sim/appearance.js';
 
-export const SAVE_VERSION = 54;   // (v54: the town you're in, `town`; v53: held heirlooms; v52: the level-24 trials, trials24For; v51: the Kingstone's record, `ring`; v50: a lamp's souls 16 / 12, the count's difference taken off; v49: the Fens' dungeons authored, two floors each; v48: raids, `raid`; v47: the Bowl's two ladders, bowl.team / bowl.solo; v46: the Bowl's board, bowl.picks / refresh; v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
+export const SAVE_VERSION = 55;   // (v55: Kell's Rest no town, depotFor55; v54: the town you're in, `town`; v53: held heirlooms; v52: the level-24 trials, trials24For; v51: the Kingstone's record, `ring`; v50: a lamp's souls 16 / 12, the count's difference taken off; v49: the Fens' dungeons authored, two floors each; v48: raids, `raid`; v47: the Bowl's two ladders, bowl.team / bowl.solo; v46: the Bowl's board, bowl.picks / refresh; v45: the Bowl's record, `bowl`; v44: the green shrine's boon, boons.hpr; v43: a look's frame and expression; v42: the bosses away, `bossBack`)
 /** v40 and older (v41: the floors' gates): an old save comes back with the gates it has been through open, as far as the save
  * tells: every floor whose hall's boss is down (sites.js bossAt; state.bosses), and every floor above the one it was made
  * on. A generated hall with no boss, passed and left: its gate stands (its twenty waves again). @param {any} data */
@@ -214,7 +218,7 @@ export function metaOf(data) {
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object' || !raw.data) return null;
   if (raw.version === SAVE_VERSION) return raw;
-  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); if (raw.version < 31) data = bandsFor(data); if (raw.version < 32) data = questsFor32(data); if (raw.version < 33) data = plansFor33(data); if (raw.version < 36) data = ladderFor36(data); if (raw.version < 41) data = gatesFor41(data); if (raw.version < 43) data = looksFor43(data); if (raw.version < 49) data = plansFor49(data); if (raw.version >= 19 && raw.version < 50) data = lampsFor50(data); if (raw.version < 52) data = trials24For(data); if (raw.version < 54) data = townFor54(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
+  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); if (raw.version < 31) data = bandsFor(data); if (raw.version < 32) data = questsFor32(data); if (raw.version < 33) data = plansFor33(data); if (raw.version < 36) data = ladderFor36(data); if (raw.version < 41) data = gatesFor41(data); if (raw.version < 43) data = looksFor43(data); if (raw.version < 49) data = plansFor49(data); if (raw.version >= 19 && raw.version < 50) data = lampsFor50(data); if (raw.version < 52) data = trials24For(data); if (raw.version < 54) data = townFor54(data); if (raw.version < 55) data = depotFor55(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
   return null;                       // unknown / newer / un-migratable
 }
 
@@ -253,6 +257,18 @@ export function xpFor27(data) {
 
 /** v53 → v54: the town you're in is the land's own (see v54 above) @param {any} data */
 export function townFor54(data) { return { ...data, town: townOf(data && typeof data.region === 'string' ? data.region : 'vale') }; }
+/** v54 → v55: Kell's Rest is no town (see v55 above) @param {any} data */
+export function depotFor55(data) {
+  if (!data) return data;
+  const out = { ...data };
+  if (Array.isArray(out.reached)) out.reached = out.reached.filter((k) => k !== 'kells_rest');
+  if (out.shops && typeof out.shops === 'object' && 'kells_rest' in out.shops) { const { kells_rest, ...rest } = out.shops; void kells_rest; out.shops = rest; }
+  if (out.town === 'kells_rest') {
+    out.town = townOf('reach');
+    if (out.scene === 'town') { const k = REACH.kells; out.scene = 'overland'; out.region = 'reach'; out.depth = 0; out.player = { ...(out.player || {}), x: k[0] + 10.5, y: k[1] + 4.5 }; }
+  }
+  return out;
+}
 
 /** v27 → v28: the towns reached (see v28 above) @param {any} data */
 export function reachedFor(data) { return { ...data, reached: reachedOf({ ...data, reached: undefined }, SITES) }; }

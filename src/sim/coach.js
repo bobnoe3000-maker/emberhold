@@ -7,24 +7,23 @@
 //
 // The towns you've reached are `state.reached` (core.js, saved since v28): a Set of COACH ids, added to whenever you
 // stand in a town. ROADS is the coach's graph in days; a trip is the shortest path on it.
-// (v1.130) A land can have more than one: Kell's Rest is the Reach's second (outdoor.js TOWNS). The town you're in is
+// (v1.130) A land could have more than one (Kell's Rest, the Reach's second, until GDD v1.132: one town a land). The town you're in is
 // `state.town` (core.js, saved since v54), one of its land's stops; the land's own (townOf) unless you walked or rode
 // into another.
 
 import { LANDS, landId } from './regions.js';
 
-/** the coach's stops: each a land's town (regions.js LANDS[land].town, or a second one: outdoor.js TOWNS), by id
+/** the coach's stops: each a land's town (regions.js LANDS[land].town), by id
  * @type {Record<string, { name: string, land: import('./regions.js').LandId }>} */
 export const COACH = {
   thornwick: { name: 'Thornwick', land: 'vale' },
   saltmere: { name: 'Saltmere', land: 'fens' },
   ashgate: { name: 'Ashgate', land: 'reach' },     // (v1.124: the Cinder Reach, over the range by the Wickham road)
-  kells_rest: { name: "Kell's Rest", land: 'reach' },   // (v1.130: the Reach's waystation, west by the Kell road)
 };
 // the coach roads, [a, b, days] both ways. Each region's milestone adds its own (world-map proposal; the Lamphall is the
 // hub: Thornwick 3, Ashgate 2, Brine Cross 2, Hollin Ford 1, the Frozen Hospice 2).
 /** @type {Array<[string, string, number]>} */
-export const ROADS = [['thornwick', 'saltmere', 1], ['thornwick', 'ashgate', 2], ['ashgate', 'kells_rest', 1]];
+export const ROADS = [['thornwick', 'saltmere', 1], ['thornwick', 'ashgate', 2]];   // (Kell's Rest's, v1.130, gone with its stop: GDD v1.132)
 export const FARE_DAY = 10;                                // gold a day of road
 
 /** the coach stop for a land's town @param {string} land @returns {string} */

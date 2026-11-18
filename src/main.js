@@ -64,8 +64,8 @@ const SCENE = SCENE0 === 'stage' && !DEV ? 'town' : STAGE3D ? 'dungeon' : SCENE0
 // ?region=vale|fens|reach|heights previews another region's hub town (same buildings, its own tones), or with
 // ?scene=overland its overland (the Reach's and the Heights' are previews: docs/reach-heights-overlands.md).
 const REGION = new URLSearchParams(location.search).get('region') || 'vale';
-// ?scene=town&region=reach&town=kells_rest previews a land's second town (GDD v1.130: Kell's Rest; sim/coach.js COACH ids;
-// anything else is the land's own town).
+// ?town=<id>: a land's other town (sim/coach.js COACH ids). There are none since GDD v1.132 (one town a land: Kell's Rest
+// is the depot on the Reach), so it's always the land's own; kept for a land that gets one.
 const TOWN = new URLSearchParams(location.search).get('town') || null;
 // ?scene=dungeon&site=wickham_keep|sunken_chapel|proving_pens|ninth_milestone|toadking_mound|… previews another dungeon site (sim/sites.js; a parked one, the Mill or the Warren, too).
 const SITE = new URLSearchParams(location.search).get('site') || 'barrows';

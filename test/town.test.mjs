@@ -15,8 +15,8 @@ const gap = (a, b) => Math.hypot(Math.max(a[0] - b[2], b[0] - a[2], 0), Math.max
 // the door: the middle of the +x face (faceX in town.json) or the +y face, the only two the camera sees
 const door = (s, faceX) => { const r = rect(s); return faceX ? { x: r[2], y: (r[1] + r[3]) / 2, n: [1, 0] } : { x: (r[0] + r[2]) / 2, y: r[3], n: [0, 1] }; };
 
-// every region's town, and (v1.130) a land's second: Kell's Rest, the Reach's waystation, in the Reach's own houses
-const BUILT = [...Object.keys(REGIONS).map((r) => [r, r, () => createOutdoor(1, 'town', r)]), ['kells_rest', 'reach', () => createOutdoor(1, 'town', 'reach', 'kells_rest')]];
+// every region's town (one a land: GDD v1.132)
+const BUILT = Object.keys(REGIONS).map((r) => [r, r, () => createOutdoor(1, 'town', r)]);
 for (const [name, region, build] of BUILT) {
   const o = build(), entry = (id) => TOWN[region].find((e) => e.id === id);
   const well = o.structs.find((s) => s.id === `${region}_well_1` || s.id === `${region}_cistern_1`), gate = o.structs.find((s) => s.id === `${region}_gatehousey_1`);
@@ -179,12 +179,6 @@ test('the square\'s menu is the same in every town: services, doors and plaques 
   assert.deepEqual(Object.fromEntries(menu(towns[0]).map((m) => [m.kind, m.top])), { temple: 23.5, tavern: 15.1, shop: 13.4, smith: 11.1, inn: 18.7 });
   const salt = createOutdoor(1, 'town', 'fens');
   assert.ok(salt.labels.filter((l) => l.service).every((l) => l.top > 0), 'Saltmere: a plaque hangs at its roof\'s height');
-  // (v1.130) Kell's Rest, a waystation in Ashgate's own houses: its square's menu is Ashgate's, service for service, plaque
-  // for plaque, only the names its own
-  const ash = createOutdoor(1, 'town', 'reach'), kells = createOutdoor(1, 'town', 'reach', 'kells_rest');
-  assert.deepEqual(menu(kells), menu(ash), "Kell's Rest's square differs from Ashgate's");
-  assert.deepEqual(kells.services.map((v) => v.id), ash.services.map((v) => v.id), 'the same houses');
-  assert.deepEqual(kells.services.map((v) => v.name), ['The Ash Shrine', 'The Short Weight', 'The Company Store', 'The Depot Forge', 'The Bunkhouse']);
 });
 
 // Saltmere's square (its critic pass, 2026-10-10): the square is one deck with a built edge. A boardwalk that runs

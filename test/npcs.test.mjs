@@ -26,10 +26,6 @@ test('Thornwick\'s people stand in Thornwick: the named on tiles you walk round,
   const ash = town('reach').world.npcs;
   assert.deepEqual(ash.map((n) => n.id).sort(), Object.keys(NPCS).filter((k) => NPCS[k].region === 'reach' && !NPCS[k].found && !NPCS[k].town).sort());
   assert.equal(ash.length, 9);
-  // (v1.130) Kell's Rest's two stand in Kell's Rest, solid, and nobody of Ashgate's does
-  const kells = createSim(20260807, undefined, { scene: 'town', region: 'reach', town: 'kells_rest' }).world;
-  assert.deepEqual(kells.npcs.map((n) => n.id).sort(), ['assay_clerk', 'nan_ruddock']);
-  for (const n of kells.npcs) assert.equal(isWalkable(kells, n.x, n.y), false, `${n.id}: solid`);
   for (const n of ash) assert.equal(isWalkable(town('reach').world, n.x, n.y), !!n.folk, `${n.id}: ${n.folk ? 'a walker' : 'solid'}`);
   // (M8, Act II) Saltmere's own four stand in Saltmere; Wren and the Kindler wait in their dungeons
   assert.deepEqual(town('fens').world.npcs.map((n) => n.id).sort(), ['dace_pike', 'mother_agnes', 'pim_rushlight', 'sister_orla']);

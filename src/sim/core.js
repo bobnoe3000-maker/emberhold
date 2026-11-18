@@ -82,7 +82,7 @@ function findSpawn(world) {
 export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', site = 'barrows', town = null } = {}) {
   let curRegion = LANDS[region] ? landId(region) : region;   // the land you're in (regions.js), saved; a preview of another region's town keeps its id
   // (v54, GDD v1.130) the town in that land you're in, or last stood in (coach.js COACH id): its own (townOf) unless you
-  // walked or rode into another (Kell's Rest, the Reach's second). Read through townIn, so a stale one is the land's own.
+  // walked or rode into another (none since GDD v1.132: one town a land). Read through townIn, so a stale one is the land's own.
   /** @type {string | null} */ let curTown = typeof town === 'string' ? town : null;
   const townHere = () => townIn(curTown, curRegion);
   const baseSeed = seed >>> 0;
@@ -358,9 +358,9 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   // Travel to another scene and arrive at a named spot (or its default spawn). Into a dungeon: which site; across
   // to another land's overland: which land (regions.js); into a town: which of its land's (v1.130: an exit's or the
   // coach's `town`, or home's: see goHome; else the land's own, as its own gate's).
-  // Home (v1.131, the owner: "Kell's Rest as a real second town"): a wipe's wake and a Homeward Scroll take you to the
-  // town of this land you last stood in (curTown, kept through the overland and its dungeons), not always the land's own:
-  // out of Kell's Rest, back to Kell's Rest. townIn makes it the land's own once you're in another land.
+  // Home (v1.131; one town a land since v1.132, so it's the land's town): a wipe's wake and a Homeward Scroll take you to the
+  // town of this land you last stood in (curTown, kept through the overland and its dungeons); townIn makes it the land's
+  // own once you're in another land.
   const goHome = (arrive) => travel('town', arrive, undefined, null, curTown);
   function travel(to, arrive, site = 'barrows', region = null, town = null) {
     stopWalk(); state.player.resume = null;
@@ -601,7 +601,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       const i = state.bag.findIndex((it) => it && it.uid === cmd.uid), it = state.bag[i];
       if (i < 0 || !isUsable(it)) return;
       if (BASES[it.base].use === 'homeward') {             // the Homeward Scroll: back to the square of the land's town you
-        // last stood in (v1.131: Kell's Rest's, not Ashgate's, when you came out from there). Read mid-fight, it's walking out, as a step-out is (battle.reset).
+        // last stood in (v1.131; one a land since v1.132). Read mid-fight, it's walking out, as a step-out is (battle.reset).
         if (world.kind === 'town') { bus.emit('refused', { reason: 'You are already in town' }); return; }
         if (state.party[0].down || state.party[0].fallen) return;
         state.bag.splice(i, 1);

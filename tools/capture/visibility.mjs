@@ -7,7 +7,7 @@
 //   the stairs both ways, and each closed chest at a chest's height (0.8 units: the owner, 2026-11-12).
 // A subject passes when at least SEEN of it is in view (the rules: 0.5; a person half behind a corner still reads). Prints
 // each map's subjects, the hidden ones with what hid them, and the totals; exit 1 if any is under the bar (--warn: 0).
-//   node tools/capture/visibility.mjs [vale-town fens-town kells-town vale fens reach heights barrows-f1 … | all] [--seen 0.5] [--warn] [--json out.json] [--shots dir]
+//   node tools/capture/visibility.mjs [vale-town fens-town vale fens reach heights barrows-f1 … | all] [--seen 0.5] [--warn] [--json out.json] [--shots dir]
 import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, extname, normalize } from 'node:path';
@@ -19,7 +19,7 @@ const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(k);
 const SEEN = +opt('--seen', 0.5), JSON_OUT = opt('--json', ''), SHOTS = opt('--shots', ''), WARN = args.includes('--warn');
 // the maps: a scene, its land, and for a dungeon its site and floor (0 the first)
 export const MAPS = {
-  'vale-town': { scene: 'town', region: 'vale' }, 'fens-town': { scene: 'town', region: 'fens' }, 'kells-town': { scene: 'town', region: 'reach', town: 'kells_rest' },   // (Kell's Rest, v1.130)
+  'vale-town': { scene: 'town', region: 'vale' }, 'fens-town': { scene: 'town', region: 'fens' },
   vale: { scene: 'overland', region: 'vale' }, fens: { scene: 'overland', region: 'fens' }, reach: { scene: 'overland', region: 'reach' }, heights: { scene: 'overland', region: 'heights' },
   'barrows-f1': { scene: 'dungeon', site: 'barrows', floor: 0 }, 'barrows-f2': { scene: 'dungeon', site: 'barrows', floor: 1 },
   'keep-f1': { scene: 'dungeon', site: 'wickham_keep', floor: 0 }, 'keep-f2': { scene: 'dungeon', site: 'wickham_keep', floor: 1 },

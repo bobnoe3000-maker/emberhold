@@ -16,15 +16,14 @@
   "steps": [
     {
       "id": "pass",
-      "journal": "Go west by the Kell road to Kell's Rest. Find Davy Pruett, the Assay's clerk, outside the Short Weight on its square: Hob's pass comes through him.",
+      "journal": "Go west to the Assay Yards at Kell's Rest. Find Davy Pruett, the Assay's clerk, by the yard gate: Hob's pass comes through him.",
       "objectives": [
         {
           "type": "meet",
           "npc": "assay_clerk",
-          "region": "reach",
-          "town": "kells_rest",
+          "site": "assay_yards",
           "count": 1,
-          "label": "Talk to Davy Pruett in Kell's Rest"
+          "label": "Talk to Davy Pruett at the Yards' gate"
         }
       ]
     },

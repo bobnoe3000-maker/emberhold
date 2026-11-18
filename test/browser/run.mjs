@@ -1149,16 +1149,15 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
 // for each town"): in Thornwick, Ashgate and Frosthold the bar holds the five services in one order, and each service's
 // plaque is drawn in the same place (±1 px), whole on screen, clear of the others and of the right-hand buttons. The
 // plaques hang at set heights (sim outdoor.js SIGN_TOP), so a roof that changes (art critic pass 14) moves none of them.
-// Saltmere's five (a smith since 2026-11-14: every service in every town) are on screen and clear too. (v1.130) Kell's Rest,
-// the Reach's second town in Ashgate's houses: its plaques where Ashgate's are, as every walled town's.
+// Saltmere's five (a smith since 2026-11-14: every service in every town) are on screen and clear too.
 {
   const b = await launch(chromium, 'chromium');
   if (b) {
     const seen = {};
-    for (const region of ['vale', 'reach', 'heights', 'fens', 'kells']) {
+    for (const region of ['vale', 'reach', 'heights', 'fens']) {
       const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
       const errs = []; p.on('pageerror', (e) => errs.push(e.message));
-      await p.goto(`${base}/index.html?dev&manual&notitle&scene=town&region=${region === 'kells' ? 'reach&town=kells_rest' : region}`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+      await p.goto(`${base}/index.html?dev&manual&notitle&scene=town&region=${region}`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
       for (let i = 0; i < 60; i++) { await p.waitForTimeout(100); await p.evaluate(() => { for (let j = 0; j < 3; j++) globalThis.__frame(1000 / 30); }); if (i > 20 && !(await p.evaluate(() => globalThis.__renderer.transiting))) break; }   // (atlases load in real time; the camera settles on the square)
       await p.evaluate(() => { for (let j = 0; j < 60; j++) globalThis.__frame(1000 / 30); });
       seen[region] = await p.evaluate(() => {
@@ -1170,10 +1169,10 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const hit = (a, c) => a.l < c.r && c.l < a.r && a.t < c.b && c.t < a.b;
     const fine = (v, n) => v.plaques.length === n && v.errs.length === 0 && v.plaques.every((q, i) => q.l >= 0 && q.r <= 390 && q.t >= 0 && q.b <= 844 && !v.buttons.some((x) => hit(q, x)) && v.plaques.every((o, j) => j === i || !hit(q, o)));
     const at = (v) => Object.fromEntries(v.plaques.map((q) => [q.kind, [Math.round(q.l), Math.round(q.t)]]));
-    const same = ['reach', 'heights', 'kells'].every((r) => seen[r].plaques.length === seen.vale.plaques.length && seen.vale.plaques.every((q) => { const o = seen[r].plaques.find((x) => x.kind === q.kind); return o && Math.abs(o.t - q.t) <= 1 && Math.abs(o.ax - q.ax) <= 1; }));   // (ax: where it hangs; a long name is then kept on screen and off the buttons)
-    check('town square: the same menu in every town: the bar\'s five services in order, each plaque in the same place in Thornwick, Ashgate, Frosthold and Kell\'s Rest, whole, clear of each other and the buttons; Saltmere\'s five too',
-      ['vale', 'reach', 'heights', 'kells'].every((r) => seen[r].bar.join() === 'shop,smith,tavern,inn,temple' && fine(seen[r], 5)) && same && seen.fens.bar.join() === 'shop,smith,tavern,inn,temple' && fine(seen.fens, 5),
-      JSON.stringify({ vale: at(seen.vale), reach: at(seen.reach), heights: at(seen.heights), fens: at(seen.fens), kells: at(seen.kells), bars: Object.fromEntries(Object.entries(seen).map(([k, v]) => [k, v.bar.length])), errs: Object.values(seen).flatMap((v) => v.errs) }));
+    const same = ['reach', 'heights'].every((r) => seen[r].plaques.length === seen.vale.plaques.length && seen.vale.plaques.every((q) => { const o = seen[r].plaques.find((x) => x.kind === q.kind); return o && Math.abs(o.t - q.t) <= 1 && Math.abs(o.ax - q.ax) <= 1; }));   // (ax: where it hangs; a long name is then kept on screen and off the buttons)
+    check('town square: the same menu in every town: the bar\'s five services in order, each plaque in the same place in Thornwick, Ashgate and Frosthold, whole, clear of each other and the buttons; Saltmere\'s five too',
+      ['vale', 'reach', 'heights'].every((r) => seen[r].bar.join() === 'shop,smith,tavern,inn,temple' && fine(seen[r], 5)) && same && seen.fens.bar.join() === 'shop,smith,tavern,inn,temple' && fine(seen.fens, 5),
+      JSON.stringify({ vale: at(seen.vale), reach: at(seen.reach), heights: at(seen.heights), fens: at(seen.fens), bars: Object.fromEntries(Object.entries(seen).map(([k, v]) => [k, v.bar.length])), errs: Object.values(seen).flatMap((v) => v.errs) }));
     await b.close();
   }
 }
@@ -1937,30 +1936,6 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('memory: the character window\'s live figure (its own WebGL context) isn\'t made while a scene change builds, even opened as it loads; it stands once the world has settled; a tab away and back leaves its canvas the size it was; none is left running unowned; closed, it\'s let go; and the portraits\' renderer lets its context go once idle, no page errors',
       r.kind === 'overland' && r.during === 0 && r.back && r.w0 > 0 && r.wAway === r.w0 && r.wBack === r.w0 && r.orphans === 0 && r.figsLive === 0 && r.drawn && r.madeP >= 1 && r.portraitsLive === 0 && errs.length === 0, JSON.stringify(r) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
-  }
-}
-// 25. Kell's Rest built ahead (GDD v1.131): on the Reach's overland with Kell's Rest the town last stood in, the town
-// built ahead is Kell's Rest (the land's own, Ashgate, always was), and the walk in takes it: a swap, not a build.
-{
-  const b = await launch(chromium, 'chromium');
-  if (b) {
-    const ctx = await b.newContext({ viewport: { width: 390, height: 700 } }), p = await ctx.newPage(), errs = [];
-    p.on('pageerror', (e) => errs.push(e.message));
-    await p.goto(`${base}/index.html?dev&manual&notitle&world=on&tod=day&scene=overland&region=reach`, { waitUntil: 'commit' });
-    await p.waitForFunction(() => typeof globalThis.__frame === 'function' && !!globalThis.__sim, null, { timeout: 120000 * SLOW });
-    const r = await p.evaluate(async (ms) => {
-      const h = () => globalThis.__world3d, sim = globalThis.__sim, end = performance.now() + ms;
-      const settle = async (n) => { while (performance.now() < end) { globalThis.__frame(16); if (h() && h().state.loads >= n && !globalThis.__renderer.transiting) return true; await new Promise((res) => setTimeout(res, 0)); } return false; };
-      if (!(await settle(1))) return { err: 'the Reach never built' };
-      sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), town: 'kells_rest', scene: 'overland', region: 'reach' }); await settle(2);
-      let ready = false; while (performance.now() < end) { globalThis.__frame(16); if (h().world.loadStats().ahead === 'ready') { ready = true; break; } await new Promise((res) => setTimeout(res, 30)); }
-      const n = h().state.loads + 1, e = sim.world.exits.find((q) => q.to === 'town' && q.town === 'kells_rest'), P = sim.state.player; P.x = P.px = (e.x0 + e.x1) / 2; P.y = P.py = (e.y0 + e.y1) / 2;
-      const ok = await settle(n), st = h().world.loadStats();
-      return { ready, ok, now: sim.world.name, last: st.last };
-    }, 300000 * SLOW);
-    await ctx.close(); await b.close();
-    check('Kell\'s Rest built ahead: on the Reach with Kell\'s Rest last stood in, the town built ahead is Kell\'s Rest and the walk in takes it, no page errors',
-      !!r.ready && !!r.ok && r.now === "Kell's Rest" && r.last === 'ahead' && errs.length === 0, JSON.stringify(r) + (errs.length ? ' · ' + errs.join(' | ') : ''));
   }
 }
 srv.close();

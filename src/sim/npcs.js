@@ -37,7 +37,7 @@ import { mulberry32, streamSeed, STREAM } from './rng.js';
 
 // Where each stands: beside a service building of its region's town (or the square's well, `hub`;
 // off = tiles from that anchor), and what it may change. A spot is [anchor, [dx, dy]]. (v1.130) `town`: one of its
-// land's other towns (coach.js COACH id: Kell's Rest), else the land's own.
+// land's other towns (coach.js COACH id; none since GDD v1.132, one town a land), else the land's own.
 // Every spot is in view: no building, roof or the well in front of it on screen (art critic pass 8 measured
 // them with the renderer's x-ray share; browser test 15d holds them under 5 %). Osric stands in front of the
 // well, not in it; Ilse and Jory by the shrine's door, clear of Wendel's roof; Nell clear of the Mule's.
@@ -85,13 +85,12 @@ export const NPCS = {
   // Tamsin Coalbrook, Dagny's niece, a mage-smith: held at the goblins' anvil in the Cold Seam's tally cave (floor 2's
   // hall) by the Foreman, for the forge-work she can do (world doc v1.53); joins once he falls
   tamsin: { region: 'reach', found: { site: 'cold_seam', depth: 1, boss: 'foreman' }, spots: [], knot: 'tamsin_hub', flags: ['met_tamsin'] },
-  // (v1.54, world doc §3.3 "Kell's Rest's people"; v1.55 its square, GDD v1.130) Kell's Rest's two: Nan Ruddock with
-  // what's left of the Redhand, by the well where she can see the Kell road and the Yards' gate both (Hob's spot in
-  // Ashgate's square, Osric's in Thornwick's: the same square, its tested spots), and Davy Pruett, the Assay's clerk,
-  // through whom Hob's pass comes (Paid by Weight), outside the Short Weight where the clerks drink (Dagny's, Maudry's).
-  // (Until v1.130 the depot had no square: they stood in the Yards' entrance room.)
-  nan_ruddock: { region: 'reach', town: 'kells_rest', spots: [['hub', [11, 7]]], knot: 'nan_hub', flags: ['met_nan'] },
-  assay_clerk: { region: 'reach', town: 'kells_rest', spots: [['tavern', [10, 1]]], knot: 'clerk_hub', flags: ['met_clerk'] },
+  // (v1.54, world doc §3.3 "Kell's Rest's people"; v1.57) Kell's Rest is the depot on the Reach, not a town (GDD v1.132): its
+  // two are met at the Assay Yards' gate, in the way in (as Tobin is at the barrow mouth), and stay: Nan Ruddock with
+  // what's left of the Redhand, and Davy Pruett, the Assay's clerk, through whom Hob's pass comes (Paid by Weight).
+  // (v1.130–v1.131 they stood in a square of Kell's Rest's own.)
+  nan_ruddock: { region: 'reach', found: { site: 'assay_yards', depth: 0, entrance: true }, spots: [], knot: 'nan_hub', flags: ['met_nan'] },
+  assay_clerk: { region: 'reach', found: { site: 'assay_yards', depth: 0, entrance: true }, spots: [], knot: 'clerk_hub', flags: ['met_clerk'] },
 };
 export const PARTS = 4, PART_S = DAY_S / PARTS;                  // dawn · day · dusk · night
 /** the part of the in-game day at time t (s of play) @param {number} t */
