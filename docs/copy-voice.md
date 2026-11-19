@@ -52,4 +52,28 @@ through the Script Desk. Until a round is read in, the rules are the style sheet
 
 ## Learned from the owner's edits
 
-*(Nothing yet. The first round is read in once the owner has worked through the desk.)*
+### Round 1 (2026-11-19): *Smoke over the Vale*, 5 lines, all the owner's own wording, all now in the game
+
+What the edits show:
+
+- **The Journal speaks plainly and points the way.** The owner rewrote the quest's Journal text, not its dialogue. The
+  rewrites name the place the way a player knows it, as a dungeon you go into: "the entrance to the Old Barrows'
+  dungeon"; "Head down the road and find Old Barrows dungeon. Go in and drive out the Redhand…". They say what to do
+  in game terms: "win four waves on the first floor", not "hold".
+- **No abstract place names in objectives.** The owner's note on the label: "Waves held at the Barrow Mouth" became
+  "Waves held at the Old Barrow", "the name of the quest location matches what was given in the original quest text".
+  "Mouth" was "too abstract". An objective uses the name the quest gave the place, not a room or floor name the player
+  hasn't been told.
+- **Say what comes next.** The ready line gained "and tell you what is next". When a quest hands the player on, the
+  text should say so.
+- **Name who was cleared.** "clear of Redhands": say who, not just that the place is clear.
+- **Grammar sharpened, voice kept.** On Maudry's line, "That's not warmth, that's spite" became "That's not for warmth,
+  that's for spite". The owner kept the joke and made it parse.
+
+Notes for writers:
+
+- The owner's own words for the foe are "Redhands" (plural) and "the Old Barrow" (singular, in the label and ready
+  line). Canon says "the Redhand" and "the Old Barrows". The owner kept "Old Barrows" in the summary and journal, so ask
+  which form they want before making it uniform.
+- Two of the edits ran over the quest schema's limits: summary 240 characters, ready 120. They were trimmed to fit with
+  the owner's additions kept. The desk now counts characters against each field's limit.

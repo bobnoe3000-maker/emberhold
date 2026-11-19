@@ -9,23 +9,23 @@
     1,
     30
   ],
-  "summary": "Maudry Fenn at the Tired Mule says the Redhand Company, deserters turned bandits, have dug in at the Old Barrows' mouth and are burning the carters' wagons to keep warm. The smoke's been over the Vale a week, and she wants them gone.",
+  "summary": "Maudry Fenn at the Tired Mule says the Redhand Company, deserters turned bandits, have dug in at the entrance to the Old Barrows dungeon and are burning carters' wagons for warmth. Smoke's been over the Vale a week, and she wants them gone.",
   "steps": [
     {
       "id": "barrows",
-      "journal": "Go to the Old Barrows, down the barrows road past the mounds, and drive the Redhand out of their dig at the barrow mouth: hold four waves on the first floor.",
+      "journal": "Head down the road and find Old Barrows dungeon.  Go in and drive out the Redhand on the first floor - win four waves on the first floor.",
       "objectives": [
         {
           "type": "waves",
           "site": "barrows",
           "count": 4,
           "floor": 1,
-          "label": "Waves held at the Barrow Mouth"
+          "label": "Waves held at the Old Barrow"
         }
       ]
     }
   ],
-  "ready": "Tell Osric Hale, at the Watch post by Thornwick's well, that the barrow mouth is clear. He'll ask where they went.",
+  "ready": "Tell Osric Hale at Thornwick's well the Old Barrow is clear of Redhands. He'll ask where they went, and say what's next.",
   "done": "You drove the Redhand out of their dig in the Old Barrows. They went back to Wickham Keep; Osric Hale wrote it down.",
   "rewards": {
     "share": 0.35,

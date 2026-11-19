@@ -173,7 +173,7 @@ She sets the mug down.
 // ── Act I, chapter 1: Smoke over the Vale (content/quests/ch1_smoke_over_the_vale.json) ──
 == maudry_ch1_offer ==
 "The Redhand Company. Deserters, when they're being polite about it. They've dug in at the mouth of the Old Barrows, down the barrows road."
-"Burning the carters' wagons for warmth while they dig. It's summer. That's not warmth, that's spite."
+"Burning the carters' wagons for warmth while they dig. It's summer. That's not for warmth, that's for spite."
 "Everything that comes into the Vale comes down that road. Lord Pellam's grain, strictly, but it's our bread before it's his. Somebody has to shift them, and it's never going to be the Watch."
 + [I'll shift them. #mark: quest]
     "Good. Four waves of them ought to make the point. When they've gone, tell Osric Hale at the Watch post by the well. He'll want to write down where they went." # quest: accept ch1_smoke_over_the_vale
