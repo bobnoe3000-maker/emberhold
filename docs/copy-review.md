@@ -567,3 +567,43 @@ Doing step 8 right after step 1 means each later step lowers the baseline, and t
 ---
 
 *The scan's scripts were one-off scratch work and aren't in the repo; §9's `copylint.mjs` is the proposal for a lasting version.*
+
+## 11. Found while writing the Script Desk's context notes (2026-11-19)
+
+These are places where the text and the game disagree. The Script Desk shows each one beside its line.
+
+**Wrong now:**
+- **Maudry's active line for *Smoke over the Vale*** (maudry.ink, `maudry_ch1_active`): "Up the river, the stone place
+  with the wheel" points to the Tithe Mill. The chapter moved to the barrow mouth in world doc v1.32, and her offer's
+  "smoke up the river" dates from the same earlier version.
+- **Floor numbers in `story.json`:**
+  - The Toadking's hall is the Mound's second floor, not the third.
+  - The Drowned Choir is the Abbey's first floor, not the second.
+  - *The Rolls* labels its chests "on the second floor", but they count from the first floor down.
+  - The Chaplain's Last Page fragment note says the "second-floor hall", but the fragment is on the Chapel's first floor.
+- **Brother Teague** is still "at the choir's door" in Orla's and Wren's lines and the Bells summary. Since world doc
+  v1.48 he keeps a cell off the cloister.
+- **The Mere Tower:** `story.json` still has "the ferry at Saltmere's quay". Since v1.51 Wenna Pike comes when she's sent
+  for.
+- **Ilse's "the mill's tithe ledger":** the fragment has been in Wickham Keep's strongroom since v1.48.
+- **Col's *Old Roads* hand-in choice** "The Scrag's quiet" predates the trial's move to Wickham Keep (v1.48).
+- **The HUD's "New skill learned"** (`src/ui/hud.js`) names the class's level-6 skill after the level-12 and level-24
+  trials. The dialogue box names the right one.
+- **Osric (r0634) and Maudry (r0526) name the Kell Assay** one chapter before Ilse reveals it at *The Last Office*.
+
+**Text that promises more than the game does:**
+- The barrows-road messages pick a line by how many ranks are left, not by which rank fell.
+- *The Sickpools*' ready line mentions only the cages, but the Vatwarden must fall too.
+- *Dead Water*'s "if they see you, it doesn't count" and *Night Boats*' "tied with my knot" are flavour; the game counts
+  any five wave-leaders and any two chests.
+- Gunnar's braided renegade leaders, and the Yards' "guard-captains", aren't what the player fights.
+
+**Canon drift:**
+- Brannoc's chain "held me for a year", but canon says months.
+- Brannagh's "twelve a week" against canon's eleven.
+
+**Never shown:**
+- `story.json`'s "Act II is done" card;
+- the intro's `name` field;
+- the road file's `road` field;
+- a site's `summary`, such as the Proving Pens' design note.
