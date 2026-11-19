@@ -113,3 +113,17 @@ test('a Deepdelver-fostered hero pays 10 % less gold for an upgrade (origin edge
   const s = town(); s.state.party[0].origin = 'deepdelver_fostered'; const w = s.state.party[0].gear.weapon, g0 = s.state.counters.gold;
   run(s, { type: 'upgrade', uid: w.uid, offer: offer(s) }); assert.equal(g0 - s.state.counters.gold, Math.round(UP_GOLD[0] * w.ilv * 0.9));
 });
+
+test('the character window names a piece with its +N and lists what it gives now, the smith\'s share apart (the owner, 2026-11-19)', async () => {
+  const { itemTitle, itemLines } = await import('../src/sim/items.js');
+  // a +9 fine falx and a +5 hood whose HP is both base and affix (each line on its own; together the item's own stats)
+  const falx = { uid: 'f', base: 'falx', r: 'fine', ilv: 17, name: 'Moss-bound Falx', st: { atk: 14, crit: 5 }, aff: [['hpr', 0.4]], up: 9 };
+  const hood = { uid: 'h', base: 'furhood', r: 'rare', ilv: 14, name: 'Bear Hood', st: { def: 5, hp: 58 }, aff: [['dodge', 2], ['hp', 29]], up: 5 };
+  assert.equal(itemTitle(falx), 'Moss-bound Falx +9'); assert.equal(itemTitle({ ...falx, up: 0 }), 'Moss-bound Falx'); assert.equal(itemTitle({ name: 'Plain' }), 'Plain');
+  const L = itemLines(falx), st = itemStats(falx);
+  assert.deepEqual(L.map((l) => [l.k, l.v]), [['atk', st.atk], ['crit', st.crit], ['hpr', st.hpr]], 'each line at its forged value, not the base');
+  assert.ok(L[0].v > falx.st.atk && L[0].gain === Math.round((L[0].v - 14) * 10) / 10, 'the smith\'s share is what he added');
+  const H = itemLines(hood), hs = itemStats(hood);
+  assert.equal(H.filter((l) => l.k === 'hp').reduce((a, l) => a + l.v, 0), hs.hp, 'base and affix lines add up to the stat');
+  assert.ok(itemLines({ ...falx, up: 0 }).every((l) => l.gain === 0), 'no upgrade, no share');
+});

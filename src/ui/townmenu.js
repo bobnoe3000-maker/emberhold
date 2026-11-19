@@ -45,7 +45,7 @@ import { QS } from '../sim/quests.js';
 import { boardWords, boardReady, SKULLS } from './boardwords.js';
 import { feeOf, wageOf, hired, PERKS } from '../sim/companions.js';
 import { rankMark, perkLines, loyaltyWord, wageLine, perkWord, rankLine, wordsReady, SW_CSS } from './sellswords.js';
-import { BASES, SLOT_LABEL, STAT_LABEL, UP_MAX, itemStats, classesOf } from '../sim/items.js';
+import { BASES, SLOT_LABEL, STAT_LABEL, UP_MAX, itemStats, classesOf, itemTitle } from '../sim/items.js';
 import { upgradeCost, reforgeCost, salvageOf, sellPrice, buyPrice, SHOPKEEP, SALVAGE_GOLD, upgradeOdds, canOffer } from '../sim/smith.js';
 import { createForgeFx } from './forgefx.js';
 import { townOf } from '../sim/coach.js';
@@ -376,7 +376,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   const RC = { common: '#b9b2a4', fine: '#72d06c', rare: '#5aa8ff', heirloom: '#f2a33c' };
   const RW = { common: 'Common', fine: 'Fine', rare: 'Rare', heirloom: 'Heirloom' };
   const statLine = (it) => Object.entries(itemStats(it)).map(([k, v]) => `${STAT_LABEL[k] || k} ${v > 0 ? '+' : ''}${v}${k === 'crit' || k === 'dodge' ? ' %' : ''}`).join(' · ');
-  const upName = (it) => `${esc(it.name)}${it.up ? ` +${it.up}` : ''}`;
+  const upName = (it) => esc(itemTitle(it));   // (items.js: the name every window shows)
   // name (in its rarity's colour, with the word), slot, who wears it or that it's in the bag
   // the piece's own icon, as the inventory draws it (sheet.js: assets/items/<BASES icon>.png in a frame by rarity)
   const gearTile = (it) => { const B = BASES[it.base]; return B ? `<div class="gtile ${it.r}"><img src="./assets/items/${B.icon}.png" alt="">${it.up ? `<span class="up">+${it.up}</span>` : ''}</div>` : ''; };

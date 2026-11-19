@@ -17,7 +17,7 @@ import { portraitKey, paintPortrait } from './portraits.js';
 import { firstOpen } from './firststeps.js';
 import { openPreview } from '../render3d/preview.js';
 import { lookOf } from '../render3d/looks.js';
-import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, SALVAGE_GOLD, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF, abilityMods, isUsable } from '../sim/items.js';
+import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, SALVAGE_GOLD, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF, abilityMods, isUsable, itemTitle, itemLines, UP_MAX } from '../sim/items.js';
 import { BAG_SIZE, bagStacks } from '../sim/loot.js';
 import { classIcon, classColor } from './classicons.js';
 import { NPCS } from '../sim/npcs.js';
@@ -82,7 +82,11 @@ const CSS = SW_CSS + `
 .gslot.empty { border-style: dashed; cursor: default; }
 .gslot .lbl { position: absolute; bottom: -14px; left: -10px; right: -10px; text-align: center; font-size: 8px; letter-spacing: 1.2px; color: #7c748a; text-transform: uppercase; }
 .gslot .new { position: absolute; top: -4px; right: -4px; font-size: 7.5px; font-weight: 700; color: #10200c; background: #8fe07a; border-radius: 3px; padding: 1px 3px; }
-.gslot .up { position: absolute; bottom: 1px; right: 3px; color: #8fe07a; font-size: 11px; font-weight: 700; text-shadow: 0 1px 0 #000; }
+/* the smith's +N, as the forge's own tiles show it (townmenu.js .gtile .up; the owner, 2026-11-19: "use the same UI label as in
+   the smith"); the ▲ (better than what's worn) moved to the top-left for it: the class icon there only shows on a piece the
+   member can't wear, the ▲ only on one they can, so the two never meet */
+.gslot .up { position: absolute; bottom: 1px; right: 3px; color: #8fe07a; font: 700 11px ui-monospace, Menlo, monospace; text-shadow: 0 1px 0 #000; }
+.gslot .better { position: absolute; top: 1px; left: 3px; color: #8fe07a; font-size: 11px; font-weight: 700; text-shadow: 0 1px 0 #000; }
 .gslot.off img { filter: grayscale(.85) brightness(.6); }
 .gslot .who { position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 4px; background: rgba(0,0,0,.72); display: grid; place-items: center; }
 .gslot .who svg { width: 12px; height: 12px; display: block; }
@@ -100,7 +104,10 @@ const CSS = SW_CSS + `
 #gearCard.on { display: block; }
 #gearCard .hd { display: flex; gap: 12px; align-items: center; }
 #gearCard .big { width: 72px; height: 72px; border-radius: 10px; flex: none; display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, #2a2234, #120e18); border: 1.5px solid; }
-#gearCard .big img { width: 64px; height: 64px; }
+#gearCard .big { position: relative; } #gearCard .big img { width: 64px; height: 64px; }
+#gearCard .big .up { position: absolute; bottom: 2px; right: 4px; color: #8fe07a; font: 700 12px ui-monospace, Menlo, monospace; text-shadow: 0 1px 0 #000; }
+#gearCard .forge { display: flex; align-items: center; gap: 6px; margin-top: 3px; font-size: 11px; letter-spacing: .5px; color: #e0b860; }
+#gearCard .forge .pips { display: inline-flex; gap: 2px; } #gearCard .forge .pips i { width: 6px; height: 6px; border-radius: 50%; background: #3a3346; } #gearCard .forge .pips i.on { background: #e0b860; }
 #gearCard h3 { font-family: Georgia, serif; font-size: 17px; font-weight: 600; line-height: 1.15; }
 #gearCard .meta { font-size: 10px; color: #978c80; letter-spacing: 1px; margin-top: 4px; line-height: 1.5; }
 #gearCard .meta em { font-style: normal; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
@@ -111,6 +118,7 @@ const CSS = SW_CSS + `
 #gearCard .ln .k { color: #8a8498; letter-spacing: 1px; width: 76px; }
 #gearCard .ln.aff { color: #72d06c; } #gearCard .ln.aff .k { color: inherit; } #gearCard .ln.mod { color: #5aa8ff; } #gearCard .ln.mod.dim { color: #53708f; }
 #gearCard .ln.mana { color: #8fb8e8; font-size: 12px; line-height: 1.4; }   /* (mana in plain terms: what a piece's MP comes to, a minute of a fight) */
+#gearCard .ln .fg { margin-left: auto; font-size: 10.5px; color: #e0b860; } #gearCard .ln .fg.in { margin-left: 6px; }   /* (the smith's share of a line: what the upgrade adds) */
 #gearCard .ln .cmp { margin-left: auto; font-size: 10.5px; } #gearCard .ln .cmp.u { color: #8fe07a; } #gearCard .ln .cmp.d { color: #ff7a66; } #gearCard .ln .cmp.z { color: #5d566a; }
 #gearCard .note { font-size: 10px; color: #c89a60; margin-top: 6px; }
 #gearCard .note.bad { color: #ff7a66; }
@@ -223,7 +231,7 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {}, models 
     const who = !wear ? ours().find((q) => canWear(q, it)) : null, tag = !wear ? classIcon(who ? who.cls : BASES[it.base].cls) : '';
     return `<button class="gslot ${it.r}${sl ? ' sel' : ''}${wear ? '' : ' off'}" data-uid="${it.uid}" ${slot ? `data-slot="${slot}"` : ''}><img src="${icon(it)}" alt="">`
       + `${tag ? `<span class="who">${tag}</span>` : ''}${isNew ? '<span class="new">NEW</span>' : ''}${n > 1 ? `<span class="qty">×${n}</span>` : ''}`
-      + `${!slot && m && isUp(m, it) ? '<span class="up">▲</span>' : ''}${lbl ? `<span class="lbl">${lbl}</span>` : ''}</button>`;
+      + `${it.up > 0 ? `<span class="up">+${it.up}</span>` : ''}${!slot && m && isUp(m, it) ? '<span class="better">▲</span>' : ''}${lbl ? `<span class="lbl">${lbl}</span>` : ''}</button>`;
   };
   function render() {
     if (!open) return;
@@ -429,8 +437,10 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
       cmp = {}; for (const k of new Set([...Object.keys(st), ...Object.keys(cur || {}), ...Object.keys(off || {})])) cmp[k] = Math.round(((st[k] || 0) - (cur?.[k] || 0) - (off?.[k] || 0)) * 10) / 10;
     }
     const cmpCell = (k) => { if (!cmp) return ''; const d = cmp[k] || 0; return `<span class="cmp ${d > 0 ? 'u' : d < 0 ? 'd' : 'z'}">${d > 0 ? '▲ ' : d < 0 ? '▼ ' : ''}${d ? fmt(k, d) : '='}</span>`; };
-    const lines = [...Object.entries(it.st).map(([k, v]) => `<div class="ln"><span class="k">${STAT_LABEL[k]}</span><b>${fmt(k, v)}</b>${cmpCell(k)}</div>`),
-      ...(it.aff || []).map(([k, v]) => `<div class="ln aff"><span class="k">${STAT_LABEL[k]}</span><b>${fmt(k, v)}</b>${cmp && !(k in it.st) ? cmpCell(k) : ''}</div>`)];
+    // each line at what it gives now, the smith's upgrade included, and his share of it (the owner, 2026-11-19: the card had
+    // shown the base stats, so a +9 read as a +0); beside a comparison the share goes in brackets after the value
+    const gainOf = (L) => (L.gain ? `<span class="fg${cmp ? ' in' : ''}">${cmp ? `(${fmt(L.k, L.gain)})` : `${fmt(L.k, L.gain)} forged`}</span>` : '');
+    const lines = itemLines(it).map((L) => `<div class="ln${L.aff ? ' aff' : ''}"><span class="k">${STAT_LABEL[L.k]}</span><b>${fmt(L.k, L.v)}</b>${gainOf(L)}${!L.aff || !(L.k in it.st) ? cmpCell(L.k) : ''}</div>`);
     if (cmp) for (const k of Object.keys(cmp)) if (!(k in it.st) && !(it.aff || []).some((a) => a[0] === k) && cmp[k]) lines.push(`<div class="ln"><span class="k">${STAT_LABEL[k]}</span><b style="color:#5d566a">—</b>${cmpCell(k)}</div>`);
     // mana in plain terms (the owner, 2026-11-15, mana's step 2): what a piece's MP and MP regen come to for the member who'd
     // wear it, a minute of a fight, and in casts of their main ability (a healer's heal, else the first in play)
@@ -445,8 +455,8 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
     if (it.mod) { const mine = wearer && it.mod.ab === ABILITY_OF[wearer.cls]; lines.push(`<div class="ln mod${mine ? '' : ' dim'}">◆ ${modText(it.mod)}${mine ? '' : ' (not this class)'}</div>`); }
     const clsName = classNames(B);
     let warn = '';
-    if (!worn && wearer && isTwoHanded(it) && wearer.gear.off) warn = `⚠ Two-handed: ${wearer.gear.off.name} goes to the bag`;
-    if (!worn && wearer && B.slot === 'off' && isTwoHanded(wearer.gear.weapon)) warn = `⚠ ${wearer.gear.weapon.name} needs both hands`;
+    if (!worn && wearer && isTwoHanded(it) && wearer.gear.off) warn = `⚠ Two-handed: ${itemTitle(wearer.gear.off)} goes to the bag`;
+    if (!worn && wearer && B.slot === 'off' && isTwoHanded(wearer.gear.weapon)) warn = `⚠ ${itemTitle(wearer.gear.weapon)} needs both hands`;
     let btns;
     if (isUsable(it)) {                                    // a scroll: read it, not wear it (core.js useItem)
       const town = sim.world.kind === 'town';
@@ -459,8 +469,8 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
       const armed = armSalvage === it.uid;
       btns = `${eq}<button class="gbtn${armed ? ' arm' : ''}" data-act="salvage">${armed ? `Sure? ✦${SALVAGE[it.r]} · ${SALVAGE_GOLD[it.r]} g` : `Salvage ✦${SALVAGE[it.r]} · ${SALVAGE_GOLD[it.r]} g`}</button><button class="gbtn ghost" data-act="close">Close</button>`;
     }
-    card.innerHTML = `<div class="hd"><div class="big" style="border-color:${RC[it.r]}"><img src="${icon(it)}" alt=""></div>
-      <div><h3 style="color:${RC[it.r]}">${it.name}${stackN > 1 ? ` <small>×${stackN}</small>` : ''}</h3><div class="meta"><em style="color:${RC[it.r]}">${it.r}</em> · item level ${it.ilv}<br>${SLOT_LABEL[B.slot]} · ${B.hands === 2 ? 'two-handed ' : ''}${B.kind} · ${clsName}</div></div></div>
+    card.innerHTML = `<div class="hd"><div class="big" style="border-color:${RC[it.r]}"><img src="${icon(it)}" alt="">${it.up > 0 ? `<span class="up">+${it.up}</span>` : ''}</div>
+      <div><h3 style="color:${RC[it.r]}">${itemTitle(it)}${stackN > 1 ? ` <small>×${stackN}</small>` : ''}</h3><div class="meta"><em style="color:${RC[it.r]}">${it.r}</em> · item level ${it.ilv}<br>${SLOT_LABEL[B.slot]} · ${B.hands === 2 ? 'two-handed ' : ''}${B.kind} · ${clsName}</div>${it.up > 0 ? `<div class="forge"><span class="pips">${Array.from({ length: UP_MAX }, (_, i) => `<i class="${i < it.up ? 'on' : ''}"></i>`).join('')}</span>Forged +${it.up} of ${UP_MAX}${it.up >= UP_MAX ? ' · the top' : ''}</div>` : ''}</div></div>
       ${cmp ? `<div class="cmphd"><span>this item</span><span>vs ${wearer === m ? 'equipped' : esc(wearer.name) + "'s"}</span></div>` : ''}
       <div class="lines">${lines.join('')}</div>
       ${warn ? `<div class="note">${warn}</div>` : ''}${note ? `<div class="note${note.bad ? ' bad' : ''}">${note.text}</div>` : ''}

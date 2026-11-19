@@ -21,6 +21,17 @@
 export const SLOTS = ['weapon', 'off', 'helm', 'armor', 'boots', 'trinket'];
 export const SLOT_LABEL = { weapon: 'Weapon', off: 'Off-hand', helm: 'Helm', armor: 'Armor', boots: 'Boots', trinket: 'Trinket', use: 'To use' };
 export const STAT_LABEL = { hp: 'HP', mp: 'MP', atk: 'ATK', def: 'DEF', crit: 'CRIT', dodge: 'DODGE', hpr: 'HP regen', mpr: 'MP regen' };
+/** an item's name as every window shows it: with the smith's +N once it's been upgraded (the owner, 2026-11-19: "add to
+ * the name") @param {{ name: string, up?: number }} it */
+export const itemTitle = (it) => `${it.name}${it.up > 0 ? ` +${it.up}` : ''}`;
+/** an item's lines as the character window lists them, each at what it gives now, upgrade included (itemStats), and the
+ * smith's share of it: the base stats, then the affixes, each worked out alone so a shared stat (a helm's HP and its HP
+ * affix) shows on its own line @param {any} it @returns {{ k: string, v: number, gain: number, aff: boolean }[]} */
+export function itemLines(it) {
+  const base = itemStats({ ...it, aff: [] });
+  return [...Object.entries(it.st).map(([k, v]) => ({ k, v: base[k], gain: Math.round((base[k] - v) * 10) / 10, aff: false })),
+    ...(it.aff || []).map(([k, v]) => { const now = itemStats({ ...it, st: {}, aff: [[k, v]] })[k]; return { k, v: now, gain: Math.round((now - v) * 10) / 10, aff: true }; })];
+}
 export const RARITIES = ['common', 'fine', 'rare', 'heirloom'];
 const RMULT = { common: 1, fine: 1.15, rare: 1.3, heirloom: 1.45 };
 export const SALVAGE = { common: 1, fine: 2, rare: 5, heirloom: 12 };        // cinders (✦; counters.embers in the save)
