@@ -234,6 +234,10 @@ in the same change that introduces it.
   save migration.
 - **Voice:** follow the tone rules and naming guide in the world doc (small stakes, wry,
   history found not told, no chosen ones).
+- **The owner's voice:** before writing or changing any line a player reads, read
+  [`docs/copy-voice.md`](docs/copy-voice.md). It holds what the owner's edits in the Script Desk have
+  taught, and the [`docs/copy-review.md`](docs/copy-review.md) §8 style sheet: phrase budgets, one
+  device per speaker, and names that never reuse canon.
 - **CI** compiles every Ink file and validates every JSON file against its schema. A broken
   story is a failing build.
 
