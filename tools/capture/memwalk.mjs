@@ -73,7 +73,7 @@ async function change(label, where) {
   return row;
 }
 const toOverland = () => { const s = globalThis.__sim, e = s.world.exits.find((q) => q.to === 'overland'), P = s.state.player; P.x = P.px = (e.x0 + e.x1) / 2; P.y = P.py = (e.y0 + e.y1) / 2; };
-const toTown = () => { const s = globalThis.__sim, e = s.world.exits.find((q) => q.to === 'town' && !q.closed && (!q.town || q.town === 'thornwick')), P = s.state.player; P.x = P.px = (e.x0 + e.x1) / 2; P.y = P.py = (e.y0 + e.y1) / 2; };
+const toTown = () => { const s = globalThis.__sim, e = s.world.exits.find((q) => q.to === 'town' && !q.closed), P = s.state.player; P.x = P.px = (e.x0 + e.x1) / 2; P.y = P.py = (e.y0 + e.y1) / 2; };
 const toBarrows = () => { const s = globalThis.__sim, e = s.world.exits.find((q) => q.to === 'dungeon' && q.site === 'barrows'), P = s.state.player; P.x = P.px = (e.x0 + e.x1) / 2; P.y = P.py = (e.y0 + e.y1) / 2; };
 const outOfDungeon = () => { const s = globalThis.__sim, a = s.world.exitAt, P = s.state.player; for (const e of s.world.enemies || []) e.hp = 0; P.x = P.px = a.x; P.y = P.py = a.y; };
 

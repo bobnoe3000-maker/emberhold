@@ -24,7 +24,7 @@ test('Thornwick\'s people stand in Thornwick: the named on tiles you walk round,
   assert.equal(town('heights').world.npcs.length, 0);
   // (v1.124, Act III) Ashgate's nine stand in Ashgate, every one placed (Thornwick's spots, one for one); Tamsin waits in the Cold Seam
   const ash = town('reach').world.npcs;
-  assert.deepEqual(ash.map((n) => n.id).sort(), Object.keys(NPCS).filter((k) => NPCS[k].region === 'reach' && !NPCS[k].found && !NPCS[k].town).sort());
+  assert.deepEqual(ash.map((n) => n.id).sort(), Object.keys(NPCS).filter((k) => NPCS[k].region === 'reach' && !NPCS[k].found).sort());
   assert.equal(ash.length, 9);
   for (const n of ash) assert.equal(isWalkable(town('reach').world, n.x, n.y), !!n.folk, `${n.id}: ${n.folk ? 'a walker' : 'solid'}`);
   // (M8, Act II) Saltmere's own four stand in Saltmere; Wren and the Kindler wait in their dungeons
@@ -89,13 +89,13 @@ test('flags survive a save; saves from before flags load with none', () => {
 
 // ── the sim's table against the content ─────────────────────────────────────
 const defs = readdirSync('content/npcs').filter((f) => f.endsWith('.json')).map((f) => JSON.parse(readFileSync(`content/npcs/${f}`, 'utf8')));
-const REGION_TOWN = { vale: 'thornwick', fens: 'saltmere', reach: 'ashgate', heights: 'frosthold' };   // (or the NPC's own `town`, a land's second: v1.130)
+const REGION_TOWN = { vale: 'thornwick', fens: 'saltmere', reach: 'ashgate', heights: 'frosthold' };
 
 test('content/npcs matches the sim table (ids, region, town, entry knot); looks are baked', () => {
   assert.deepEqual(defs.map((d) => d.id).sort(), Object.keys(NPCS).sort());
   for (const d of defs) {
     const n = NPCS[d.id];
-    assert.equal(d.region, n.region, d.id); assert.equal(d.town, n.town || REGION_TOWN[n.region], d.id); assert.equal(d.knot, n.knot, d.id);
+    assert.equal(d.region, n.region, d.id); assert.equal(d.town, REGION_TOWN[n.region], d.id); assert.equal(d.knot, n.knot, d.id);
     for (const a of [d.look, d.portrait || d.look]) assert.ok(existsSync(`assets/actors/${a}.json`) && existsSync(`assets/actors/${a}.alb.png`), `${d.id}: no atlas ${a}`);
   }
 });

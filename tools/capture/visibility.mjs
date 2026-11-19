@@ -55,7 +55,7 @@ const STAND = () => {
 
 /** survey one map: its subjects and how much of each is in view @param {string} name */
 export async function survey(page, name) {
-  const m = MAPS[name], q = new URLSearchParams({ scene: m.scene, ...(m.region ? { region: m.region } : {}), ...(m.town ? { town: m.town } : {}), ...(m.site ? { site: m.site } : {}) });
+  const m = MAPS[name], q = new URLSearchParams({ scene: m.scene, ...(m.region ? { region: m.region } : {}), ...(m.site ? { site: m.site } : {}) });
   await page.goto(`${base}/index.html?dev&manual&notitle&world=on&tod=day&${q}`);
   await page.waitForFunction(() => typeof globalThis.__frame === 'function' && !!globalThis.__sim, null, { timeout: 120000 });
   const built = async (n) => { for (let i = 0; i < 1600; i++) { if (await page.evaluate((n) => { globalThis.__frame(16); const h = globalThis.__world3d; return !!h && h.state.loads >= n && h.world?.stats.level >= n && !globalThis.__renderer.transiting; }, n)) return true; await page.waitForTimeout(120); } return false; };

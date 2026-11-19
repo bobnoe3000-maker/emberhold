@@ -17,7 +17,7 @@
 
 import { WALL, PLACES, LAND_AREA, FOG_WORDS } from './wallmap.js';
 import { LANDS } from '../sim/regions.js';
-import { COACH, days, fare, townOf, townIn } from '../sim/coach.js';
+import { COACH, days, fare, townOf } from '../sim/coach.js';
 import { SITES, siteOpen, levelBand } from '../sim/sites.js';
 import { BOSSES, bossAway } from '../sim/battle.js';
 import { NPCS } from '../sim/npcs.js';
@@ -127,20 +127,17 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
   /** @type {{ w: number, x0: number, y0: number } | null} */ let frame = null;   // the land tab's map: its units across and its origin (for a tap on open ground)
 
   const region = () => (LANDS[sim.state.region] ? sim.state.region : 'vale');
-  const townHere = () => townIn(sim.state.town, region());   // (v1.130: the town in the land you're in, a second one too)
-  /** a land tab's town pin: its own town's (the pin's id the land's), or a second town's (its id the coach stop's) @param {string} id @param {string} r */
-  const pinTown = (id, r) => (COACH[id] && COACH[id].land === r ? id : townOf(r));
   const S = () => sim.state;
 
   // where the tracked quest leads: its land, and the site in it (or null for the land's town)
   function questAt() {
     const id = S().tracked, q = id && S().quests[id], d = id && sim.quests.def(id);
     if (!q || !d || q.st === QS.DONE) return null;
-    if (q.st === QS.READY) { const n = NPCS[d.turnin || d.giver]; return { id, land: (n && n.region) || d.region || null, site: null, town: (n && n.town) || null }; }
+    if (q.st === QS.READY) { const n = NPCS[d.turnin || d.giver]; return { id, land: (n && n.region) || d.region || null, site: null }; }
     const step = d.steps && (d.steps[q.step] || d.steps[0]), objs = (step && step.objectives) || [];
     const o = objs.find((/** @type {any} */ ob, /** @type {number} */ i) => (q.n[i] || 0) < ob.count) || objs[0];
     if (o && o.site && SITES[o.site]) return { id, land: SITES[o.site].region, site: o.site };
-    return { id, land: (o && o.region) || d.region || null, site: null, town: (o && (o.town || (NPCS[o.npc] && NPCS[o.npc].town))) || null };   // (town: a land's second, v1.130)
+    return { id, land: (o && o.region) || d.region || null, site: null };
   }
 
   function show(/** @type {string} */ t) {
@@ -165,7 +162,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
       map.append(fogSvg());
       pins = worldPins();
       place(map, pins, WALL.w, 0, 0);
-      const at = PLACES[townHere()] || PLACES[townOf(region())];
+      const at = PLACES[townOf(region())];
       // scrolled to where you are, with "you are here" (west of the pin) wholly in view
       const go = () => { if (scrolled) return; scrolled = true; const k = map.clientWidth / WALL.w, me = pins.find((p) => p.here), tw = me ? me.here.length * 6.6 + 12 + 22 + 10 : 0;
         view.scrollLeft = Math.max(0, Math.min(at[0] * k - view.clientWidth / 2, at[0] * k - tw)); view.scrollTop = Math.max(0, at[1] * k - view.clientHeight * 0.42); };
@@ -266,12 +263,12 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
 
   // ── the Old Provinces: the coach's stops in the open lands ─────────────────────────────────────────────────────────
   function worldPins() {
-    const here = townHere(), inTown = sim.world.kind === 'town', q = questAt(), out = [];
+    const here = townOf(region()), inTown = sim.world.kind === 'town', q = questAt(), out = [];
     for (const id of Object.keys(COACH)) {
       const land = COACH[id].land; if (!sim.landOpen(land) || !PLACES[id]) continue;
       const [x, y] = PLACES[id];
       out.push({ key: id, kind: 'stop', id, land, x, y, tap: true, cls: S().reached.has(id) ? 'lit' : 'dim', label: '',
-        here: id === here ? (inTown ? 'you are here' : `you are in ${lower(LANDS[land].name)}`) : '', star: !!(q && q.land === land && (q.town || townOf(land)) === id),
+        here: id === here ? (inTown ? 'you are here' : `you are in ${lower(LANDS[land].name)}`) : '', star: !!(q && q.land === land && townOf(land) === id),
         west: true });   // (the wall map writes a town's name under its mark and its sites' round it; west of Emberfall's towns is open land and the coast: "you are here" goes there, pass 13)
     }
     for (const G of ringsShown()) { const C = CAMP_BY[G.camp], [x, y] = EMBERFALL[G.region](C.x, C.y); out.push(ringPin(x, y, G)); }
@@ -297,7 +294,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
       const base = { key: p.kind + ':' + p.id, kind: p.kind, id: p.id, x: p.x, y: p.y, tap: true, here: '', star: false };
       if (p.kind === 'site') out.push({ ...base, label: SITES[p.id].name, cls: S().sitesEntered.has(p.id) ? '' : 'fresh', star: !!(q && q.site === p.id),
         here: w.kind === 'dungeon' && S().site === p.id ? 'you are here' : '' });
-      else if (p.kind === 'town') { const t = pinTown(p.id, r); out.push({ ...base, label: COACH[t] ? COACH[t].name : LANDS[r].town, cls: S().reached.has(t) ? 'lit' : 'dim', star: !!(q && q.land === r && !q.site && t === (q.town || townOf(r))), here: w.kind === 'town' && townHere() === t ? 'you are here' : '' }); }
+      else if (p.kind === 'town') out.push({ ...base, label: LANDS[r].town, cls: S().reached.has(townOf(r)) ? 'lit' : 'dim', star: !!(q && q.land === r && !q.site), here: w.kind === 'town' ? 'you are here' : '' });
       else if (LANDS[p.id]) out.push({ ...base, label: `to ${lower(LANDS[p.id].name)}`, cls: sim.landOpen(p.id) ? '' : 'off', star: !!(q && q.land === p.id && q.land !== r) });
     }
     for (const G of ringsShown()) if (r === G.region) { const C = CAMP_BY[G.camp]; out.push(ringPin(C.x, C.y, G)); }
@@ -318,7 +315,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
     if (p.kind === 'stop') {
       card.append(el('h3', '', COACH[p.id].name), el('div', 'sub', `${LANDS[p.land].name} · ${STOP[p.id] || 'a town'}`));
       if (qt) card.append(el('div', 'sub q', `★ ${qt}`));
-      const from = townHere(), inTown = sim.world.kind === 'town';
+      const from = townOf(region()), inTown = sim.world.kind === 'town';
       if (p.id === from && inTown) { info.textContent = 'You are here.'; row.append(info); card.append(row); return; }
       const n = days(from, p.id), f = fare(from, p.id);
       if (n === null || f === null) { info.textContent = 'No coach goes there yet.'; row.append(info); card.append(row); return; }
@@ -362,11 +359,11 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
       const boss = Object.entries(s.bosses || {}).map(([d, b]) => { if (!BOSSES[b]) return ''; const a = bossAway(S(), p.id, Number(d) - 1); return BOSSES[b].name + (a ? ` (back in ${Math.max(1, Math.ceil(a.left / 60))} min)` : ''); }).filter(Boolean).join(', ');
       card.append(el('h3', '', s.name), el('div', 'sub', `levels ${levelBand(p.id)} · ${fl}${boss ? ' · ' + boss : ''}`));
       card.append(el('div', 'sub', (S().sitesEntered.has(p.id) ? 'you’ve been in' : 'never entered') + (s.minLevel ? ` · takes a company from level ${s.minLevel}` : '')));
-    } else if (p.kind === 'town') { const t = pinTown(p.id, r); card.append(el('h3', '', COACH[t] ? COACH[t].name : LANDS[r].town), el('div', 'sub', STOP[t] || 'a town')); }
+    } else if (p.kind === 'town') card.append(el('h3', '', LANDS[r].town), el('div', 'sub', STOP[townOf(r)] || 'a town'));
     else card.append(el('h3', '', LANDS[p.id].name), el('div', 'sub', sim.landOpen(p.id) ? 'the road there' : 'the road is shut'));
     if (qt) card.append(el('div', 'sub q', `★ ${qt}`));
     // Walk there: the compass's own rows (sim travel.js), so the walk is the one the compass would make
-    const w = sim.world, want = p.kind === 'site' ? 'site:' + p.id : p.kind === 'town' ? (pinTown(p.id, r) === townOf(r) ? 'town' : 'town:' + pinTown(p.id, r)) : 'land:' + p.id;
+    const w = sim.world, want = p.kind === 'site' ? 'site:' + p.id : p.kind === 'town' ? 'town' : 'land:' + p.id;
     let go = null, why = '', steps = '';
     if (w.kind === 'overland' && w.region === r) {
       const o = sim.destinations().find((d) => d.id === want && !d.off);

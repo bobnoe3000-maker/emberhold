@@ -36,8 +36,7 @@ import { findPath } from './path.js';
 import { mulberry32, streamSeed, STREAM } from './rng.js';
 
 // Where each stands: beside a service building of its region's town (or the square's well, `hub`;
-// off = tiles from that anchor), and what it may change. A spot is [anchor, [dx, dy]]. (v1.130) `town`: one of its
-// land's other towns (coach.js COACH id; none since GDD v1.132, one town a land), else the land's own.
+// off = tiles from that anchor), and what it may change. A spot is [anchor, [dx, dy]].
 // Every spot is in view: no building, roof or the well in front of it on screen (art critic pass 8 measured
 // them with the renderer's x-ray share; browser test 15d holds them under 5 %). Osric stands in front of the
 // well, not in it; Ilse and Jory by the shrine's door, clear of Wendel's roof; Nell clear of the Mule's.
@@ -131,16 +130,15 @@ const hashId = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) h
 export function placeNpcs(world, isWalkable, block, part = 0) {
   world.npcs = [];
   if (world.kind !== 'town') return world;
-  const elsewhere = (n) => n.region !== world.region || (n.town || '') !== (world.second ? world.town : '');   // (v1.130: a land's second town, outdoor.js TOWNS, has its own people)
   const taken = Object.values(world.arrivals || {}).map((q) => ({ x: q.x, y: q.y }));   // (nobody stands where you arrive: the hero came in on top of Col)
   for (const [id, n] of Object.entries(NPCS)) {                  // (the named first: their tiles go solid before townsfolk look for theirs)
-    if (elsewhere(n) || n.folk || n.found) continue;
+    if (n.region !== world.region || n.folk || n.found) continue;
     const spot = spotTile(world, n.spots[0], isWalkable, taken);
     if (spot) { world.npcs.push({ id, x: spot.x, y: spot.y, px: spot.x, py: spot.y }); block(world, spot.x, spot.y); taken.push(spot); }
   }
   const folk = [];
   for (const [id, n] of Object.entries(NPCS)) {
-    if (elsewhere(n) || !n.folk || n.found) continue;
+    if (n.region !== world.region || !n.folk || n.found) continue;
     const spots = [];
     for (const sp of n.spots) { const q = spotTile(world, sp, isWalkable, taken); if (!q) break; spots.push(q); taken.push(q); }
     if (spots.length === n.spots.length) folk.push({ id, spots });
@@ -171,7 +169,7 @@ export function placeNpcs(world, isWalkable, block, part = 0) {
  * @param {any} world @param {(w: any, x: number, y: number) => boolean} isWalkable @param {(id: string) => boolean} waiting */
 export function placeFound(world, isWalkable, waiting) {
   if (world.kind !== 'dungeon' || !world.level || !world.level.descentRoom) return world;
-  const placed = [];                                             // (two in one room: apart on screen, so a tap picks one)
+  const placed = [];                                             // (two in one room, Kell's Rest's at the Yards' gate: apart on screen, so a tap picks one)
   for (const [id, n] of Object.entries(NPCS)) {
     if (!n.found || n.found.site !== (world.site || 'barrows') || n.found.depth !== (world.depth || 0) || !waiting(id)) continue;
     // (a visitor by the way in stands in the entrance room, nearest its middle: no fight starts there)

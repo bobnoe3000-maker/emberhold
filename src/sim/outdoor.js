@@ -333,12 +333,12 @@ function herd(o, rng, ids, cx, cy, n, spread) {
   }
 }
 const DOORSTEP = ['barrel', 'crate_A_small', 'sack', 'planter_1', 'planter_1', 'pumpkins_1', 'hay_2', 'bucket_water'];
-function dress(o, rng, keepOut, kinds = DOORSTEP) {   // (kinds: Kell's Rest's, nothing green)
+function dress(o, rng, keepOut) {
   for (const st of o.structs.slice()) {
     if (!/_(house|housex|cottage|cottagex|longhouse|longhousex)_\d$/.test(st.id)) continue;
     const f = ENV_FOOT[st.id]; if (!f) continue;
     for (let k = 0, n = 1 + Math.floor(rng() * 2), t = 0; k < n && t < 10; t++) {
-      const onX = rng() < 0.5, id = pick(rng, kinds);
+      const onX = rng() < 0.5, id = pick(rng, DOORSTEP);
       const x = onX ? st.x + f[2] + 0.9 : st.x + f[0] + 0.8 + rng() * (f[2] - f[0] - 1.6), y = onX ? st.y + f[1] + 0.8 + rng() * (f[3] - f[1] - 1.6) : st.y + f[3] + 0.9;
       if (keepOut(x, y) || !fits(o, id, x, y, 0.15)) continue;
       put(o, id, x, y, 'rect', 0.1); k++;
@@ -383,14 +383,12 @@ export const REGIONS = {
 // the ground), the same in every town, not at its roof's top. A roof that changes (art critic pass 14: the shop and
 // the inn came down a storey) moves no plaque, so the menu reads alike in every town (test/town.test.mjs). These are
 // the heights the plaques were laid out at (the roofs' tops before that pass).
-/** each region's own town's id (coach.js COACH; the Heights' a preview's) */
-const TOWN_ID = { vale: 'thornwick', fens: 'saltmere', reach: 'ashgate', heights: 'frosthold' };
 const SIGN_TOP = { temple: 23.5, tavern: 15.1, shop: 13.4, smith: 11.1, inn: 18.7 };
 const WAY_SIGN_TOP = { temple: 23.5, tavern: 15.25, inn: 14.05, shop: 10.1, smith: 11.1 };   // a waystation's (its stilt tavern and inn; the chandlery's on its one-storey roof: at 13.4 it hung over the Stilt House, Saltmere's critic pass)
 function buildTown(seed, region) {
   const R = REGIONS[region] ? region : 'vale', info = REGIONS[R];
   const o = makeWorld(seed, 'town', 140, 120, 90), rng = mulberry32(streamSeed(seed, 4401)), B = (t, n = 1) => `${R}_${t}_${n}`;
-  o.name = info.name; o.region = R; o.town = TOWN_ID[R];
+  o.name = info.name; o.region = R;
   // The circuit is a box. The camera looks from +x+y, so the back walls (north, west) show their inner faces behind
   // the town, and the front ones (east, south) stand low in front of gardens, under the menu bar at the square.
   // EVERY ENTRANCE FACES THE WELL. The camera sees only a building's +x and +y faces, so every service stands
@@ -641,7 +639,7 @@ function clearGround(o, cx, cy, r, named = o.pools.length) {
 // The well is a rainwater cistern: nobody drinks the fen.
 function buildWaystation(seed, region) {
   const R = region, info = REGIONS[R], o = makeWorld(seed, 'town', 130, 116, 90), rng = mulberry32(streamSeed(seed, 4433)), B = (t, n = 1) => `${R}_${t}_${n}`;
-  o.name = info.name; o.region = R; o.town = TOWN_ID[R]; o.marsh = true; o.waystation = true;
+  o.name = info.name; o.region = R; o.marsh = true; o.waystation = true;
   const M = [66, 71], GY = 80;
   // the mere under the town: open water round the square, the chapel's island left dry at the head
   o.pools.push({ cx: 92, cy: 40, rx: 26, ry: 18 }, { cx: 18, cy: 80, rx: 16, ry: 26 }, { cx: 96, cy: 100, rx: 34, ry: 14 }, { cx: 48, cy: 104, rx: 24, ry: 11 },
@@ -685,8 +683,6 @@ function buildWaystation(seed, region) {
   return o;
 }
 
-// (Kell's Rest was a town of its own here, v1.130–v1.131, buildKellsRest; GDD v1.132, the owner: one town a land. It's the
-// depot on the Reach's overland again, buildReach.)
 
 // ── smooth lines (critic pass 10) ────────────────────────────────────────────
 // Roads were straight polylines with hard elbows (up to 77°) and the river ran ruler-straight between kinks.
@@ -1206,10 +1202,9 @@ function buildStage(seed, floor) {
 
 // region picks the land (regions.js): the Vale's overland and Thornwick, or the Fens' and Saltmere; reach · heights
 // preview their walled hubs and their own overlands (not lands you can walk to yet: docs/reach-heights-overlands.md);
-// 'stage' takes its floor in `region`'s place (grass · cobble). town: a town that isn't its land's own; none since GDD
-// v1.132 (one town a land: Kell's Rest is the depot on the Reach), so it's always the land's town.
-/** @param {number} seed @param {string} kind @param {string} [region] @param {string | null} [town] */
-export function createOutdoor(seed, kind, region = 'vale', town = null) {
+// 'stage' takes its floor in `region`'s place (grass · cobble). One town a land (GDD v1.132).
+/** @param {number} seed @param {string} kind @param {string} [region] */
+export function createOutdoor(seed, kind, region = 'vale') {
   if (kind === 'stage') return buildStage(seed, region);
   if (region === 'fens') return kind === 'town' ? buildWaystation(seed, 'fens') : dressCamps(buildFens(seed), 'fens');   // (M8: Saltmere, the Fens)
   if (kind === 'overland' && region === 'reach') return dressCamps(buildReach(seed), 'reach');

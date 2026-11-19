@@ -20,7 +20,7 @@ const SEED = 20260807;
 const ACTS = ['ch1_smoke_over_the_vale', 'ch1_the_diggers', 'ch1_ember_in_the_fist', 'ch1_the_standard',
   'ch2_fog_on_the_canal', 'ch2_the_locks', 'ch2_the_sickpools', 'ch2_the_bells', 'ch2_the_rolls', 'ch2_the_last_office'];
 const snap = (sim) => JSON.parse(JSON.stringify(sim.snapshot()));
-const goTo = (sim, scene, site = 'barrows', depth = 0, region, town = null) => sim.restore({ ...snap(sim), scene, site, depth, floors: [], ...(region ? { region } : {}), town });   // (town: a land's second, v1.130; else its own)
+const goTo = (sim, scene, site = 'barrows', depth = 0, region) => sim.restore({ ...snap(sim), scene, site, depth, floors: [], ...(region ? { region } : {}) });
 const events = (sim, names) => { const out = []; for (const n of names) sim.bus.on(n, (e) => out.push({ n, ...e })); return out; };
 const npc = (sim, id) => (sim.world.npcs || []).find((n) => n.id === id);
 const effect = (sim, tag, ...args) => { sim.commands.push({ type: 'dialogueEffect', tag, args }); sim.tick(); };

@@ -48,7 +48,7 @@ import { rankMark, perkLines, loyaltyWord, wageLine, perkWord, rankLine, wordsRe
 import { BASES, SLOT_LABEL, STAT_LABEL, UP_MAX, itemStats, classesOf } from '../sim/items.js';
 import { upgradeCost, reforgeCost, salvageOf, sellPrice, buyPrice, SHOPKEEP, SALVAGE_GOLD, upgradeOdds, canOffer } from '../sim/smith.js';
 import { createForgeFx } from './forgefx.js';
-import { townIn } from '../sim/coach.js';
+import { townOf } from '../sim/coach.js';
 import { isUsable, SCROLL_PRICE } from '../sim/items.js';
 import { EXPEDITIONS, expeditionPay } from '../sim/expeditions.js';
 import { html, render } from 'htm/preact';
@@ -300,7 +300,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   const head = (kind, title, blurb) => `<button class="close" aria-label="close">×</button><button class="back">‹ back</button>
       <div class="kind">${kind} · ${esc(sim.world.name || '')}</div><h2>${title}</h2><p>${blurb}</p>${note ? `<div class="note">${esc(note)}</div>` : ''}`;
   const gold = () => sim.state.counters.gold || 0;
-  const keeper = () => SHOPKEEP[townIn(sim.state.town, sim.state.region)] || 'The shopkeeper';   // (every town's shop its own: smith.js; v1.130 a land's second town's too)
+  const keeper = () => SHOPKEEP[townOf(sim.state.region)] || 'The shopkeeper';   // (every town's shop its own: smith.js)
   // The Lantern Guild's board (GDD §9): today's jobs, each with who pinned it, its hook, what it asks,
   // how hard (skulls, with the word) and what it pays; and every finished job you're holding, from
   // any day, to hand in. Up to MAX_JOBS open at once; the sim checks every take and hand-in.

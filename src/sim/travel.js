@@ -5,7 +5,7 @@
 //
 //   dungeon  — (in a fight) step out · next unexplored room · room at your level · unopened chest /
 //              shrine · stairs down (greyed until found) · stairs up (the first floor's: out to the surface)
-//   overland — (in a spawn point's fight) step out, past its arena's edge · the region's town (a second one, v1.130: town:<id>) · every site you can go into (site:<id>, nearest first; a hidden one only
+//   overland — (in a spawn point's fight) step out, past its arena's edge · the region's town · every site you can go into (site:<id>, nearest first; a hidden one only
 //              once revealed) · landmarks
 //   town     — town square (not while you're in it) · nearest dungeon (by the road out) · road out
 //
@@ -179,7 +179,7 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
   const sites = [];
   for (const e of world.exits) {
     const t = zone(e); if (!t) continue;
-    if (e.to === 'town') { const lab = labelNear((e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2), steps = pathLen(t.tx, t.ty); if (steps != null) out.push({ id: e.town ? 'town:' + e.town : 'town', icon: 'town', label: lab ? lab.l.text : 'Town', sub: `town · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps }); }
+    if (e.to === 'town') { const lab = labelNear((e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2), steps = pathLen(t.tx, t.ty); if (steps != null) out.push({ id: 'town', icon: 'town', label: lab ? lab.l.text : 'Town', sub: `town · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps }); }
     else if (e.to === 'overland' && e.region && LANDS[e.region]) {      // the road to another land (regions.js): shut until its chapter is done
       const L = LANDS[landId(e.region)], q = L.opens && state.quests && state.quests[L.opens], open = !L.opens || (q && q.st === 3), steps = pathLen(t.tx, t.ty);
       if (steps != null) out.push({ id: 'land:' + e.region, icon: 'next', label: L.name, sub: open ? `the road there · ${steps} steps` : 'the road is shut', tx: t.tx, ty: t.ty, near: 0, steps, ...(open ? {} : { off: true }) });

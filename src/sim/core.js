@@ -40,7 +40,7 @@ import { RING, ringOf, restoreRing, paidFor, isWindowId, windowDraw, tierOf, pay
 import { CAMP_ROOM } from './camps.js';
 import { xpToNext, statsFor, gainXp } from './party.js';
 import { createExpeditions } from './expeditions.js';
-import { createCoach, reachedOf, townIn, COACH } from './coach.js';
+import { createCoach, reachedOf, townOf, COACH } from './coach.js';
 import { createBus, createCommandQueue } from './bus.js';
 import { hypot, atan2, sin, cos } from './detmath.js';
 
@@ -79,12 +79,8 @@ function findSpawn(world) {
 // Scenes: 'town' (Thornwick), 'overland' (the Hollow Vale) and 'dungeon' (a site: sites.js — the Old
 // Barrows, the Tithe Mill, …; depth 0…n). Walking into an exit zone or tapping the Barrows stairs /
 // the dungeon's way up travels between them.
-export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', site = 'barrows', town = null } = {}) {
+export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', site = 'barrows' } = {}) {
   let curRegion = LANDS[region] ? landId(region) : region;   // the land you're in (regions.js), saved; a preview of another region's town keeps its id
-  // (v54, GDD v1.130) the town in that land you're in, or last stood in (coach.js COACH id): its own (townOf) unless you
-  // walked or rode into another (none since GDD v1.132: one town a land). Read through townIn, so a stale one is the land's own.
-  /** @type {string | null} */ let curTown = typeof town === 'string' ? town : null;
-  const townHere = () => townIn(curTown, curRegion);
   const baseSeed = seed >>> 0;
   const override = theme;                                  // fixed theme (preview) or undefined
   // a floor's seed: the world's, the site's own mix (the Old Barrows' is 0: its floors are as they were) and the depth
@@ -101,7 +97,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   // a raid's floor (raid.js): nobody met there (the found, the people at the mouth: a run isn't the story), its gate shut
   // till the run wins the room before it, whatever the slot has opened
   const raidFloor = (w, d) => { if (!raidOn || curScene !== 'dungeon') return w; w.npcs = []; w.raid = true; w.raidTop = raidOn.top; w.gateShut = gateShutOf(w.gates, (id) => raidOn.gates.has(id)); return w; };
-  const buildWorld = (d) => raidFloor(shutGate(placeRoad(placeFound(placeNpcs(curScene === 'dungeon' ? createWorld(levelSeed(d), override, d, curSite) : createOutdoor(baseSeed, curScene, curRegion, curScene === 'town' && LANDS[curRegion] ? townHere() : null), isWalkable, oBlock, clock ? partOf(clock.t) : 0),
+  const buildWorld = (d) => raidFloor(shutGate(placeRoad(placeFound(placeNpcs(curScene === 'dungeon' ? createWorld(levelSeed(d), override, d, curSite) : createOutdoor(baseSeed, curScene, curRegion), isWalkable, oBlock, clock ? partOf(clock.t) : 0),
     isWalkable, (id) => !!clock && (NPCS[id].visitor ? !(clock.flags || {})[NPCS[id].visitor] : ![...clock.party, ...clock.bench].some((m) => m.id === id))), clock)), d);   // a found companion waits in his hall until he joins, a visitor until he's gone (npcs.js); the dead hold the barrows road (road.js)
 
   let world = buildWorld(0);
@@ -111,7 +107,6 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const spawn = findSpawn(world);
   const state = {
     t: 0, tick: 0, depth: 0, get scene() { return curScene; }, get site() { return curSite; }, get region() { return curRegion; },   // tick: integer tick count (replay.js keys commands by it); site: the dungeon you're in (or last were)
-    get town() { return townHere(); },   // (v54) the town in this land you're in or last stood in (coach.js COACH id)
     player: {
       x: spawn.x, y: spawn.y, px: spawn.x, py: spawn.y,
       dir: 'down', mirror: false, moving: false, frame: 0, frameAcc: 0,
@@ -157,15 +152,15 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const heroes = createHeroes({ state, bus, getWorld: () => world, seed: baseSeed, waiting: () => (raidOn ? raidOn.party.slice(1) : []) });   // (a raid: the company waiting is still paid at dawn)
   const dev = createDev({ state, bus });                  // the menu's Developer tools: they mark the game a dev game (dev.js)
   // room battles (battle.js): waves, party AI, damage, XP / gold, defeat → back to town
-  const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => goHome('temple'),
+  const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town', 'temple'),
     onDrop: (src, ilv, x, y) => dropHere(src, { ilv, x, y }),
     raidRun: () => raidOn, onRaidLost: () => leaveRaid('wipe'),
     ringHere: (c) => ringHeld(c), onRingReach: (c, i) => ringReach(c, i),
     moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; p.vx = p.vy = 0; face(p, dx, dy); } });
 
   // the Guild's coach between the towns (coach.js): from a square, to a town reached, for its fare
-  const coach = createCoach({ state, bus, getWorld: () => world, landOpen: (id) => landOpen(id), inBattle: () => !!battle.battle, go: (land, town) => travel('town', 'default', undefined, land, town) });
-  if (curScene === 'town' && LANDS[curRegion]) state.reached.add(townHere());
+  const coach = createCoach({ state, bus, getWorld: () => world, landOpen: (id) => landOpen(id), inBattle: () => !!battle.battle, go: (land) => travel('town', 'default', undefined, land) });
+  if (curScene === 'town' && LANDS[curRegion]) state.reached.add(townOf(curRegion));
 
   // the Chronicle: a whole set reveals its hidden site (lore.js SET_REVEALS); a vault's chest holds its heirloom, once (sites.js `vault`)
   bus.on('setComplete', (e) => { if (SET_REVEALS[e.set]) reveal(SET_REVEALS[e.set]); });
@@ -356,23 +351,17 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const ascend = () => changeFloor(state.depth - 1, (w) => w.stairsDownArrive);
 
   // Travel to another scene and arrive at a named spot (or its default spawn). Into a dungeon: which site; across
-  // to another land's overland: which land (regions.js); into a town: which of its land's (v1.130: an exit's or the
-  // coach's `town`, or home's: see goHome; else the land's own, as its own gate's).
-  // Home (v1.131; one town a land since v1.132, so it's the land's town): a wipe's wake and a Homeward Scroll take you to the
-  // town of this land you last stood in (curTown, kept through the overland and its dungeons); townIn makes it the land's
-  // own once you're in another land.
-  const goHome = (arrive) => travel('town', arrive, undefined, null, curTown);
-  function travel(to, arrive, site = 'barrows', region = null, town = null) {
+  // to another land's overland: which land (regions.js). A land has one town (GDD v1.132), so into a town is into its.
+  function travel(to, arrive, site = 'barrows', region = null) {
     stopWalk(); state.player.resume = null;
     if (raidOn) leaveRaid('left');                                         // (out of a raid by any other road, a scroll: it ends; the company back)
     if (away) { battle.reset(); away = null; boutOn = null; }              // (out of the Bowl by any other road: a bout walked out on is lost)
     if (region && LANDS[region]) curRegion = landId(region);
     floors = new Map();                                    // a new visit: the site's floors are fresh
     if (to === 'dungeon') { curSite = SITES[site] ? site : 'barrows'; curRegion = SITES[curSite].region; state.sitesEntered.add(curSite); }
-    if (to === 'town') curTown = townIn(town, curRegion);
     curScene = to; state.depth = 0;
     world = buildWorld(0);
-    if (to === 'town' && LANDS[curRegion]) { const k = townHere(); if (!state.reached.has(k)) { state.reached.add(k); bus.emit('townReached', { town: k, name: COACH[k].name }); } }   // the coach stops here now
+    if (to === 'town' && LANDS[curRegion]) { const k = townOf(curRegion); if (!state.reached.has(k)) { state.reached.add(k); bus.emit('townReached', { town: k, name: COACH[k].name }); } }   // the coach stops here now
     const a = (world.arrivals && (world.arrivals[arrive] || world.arrivals.default)) || world.stairArrive || null;
     const p = state.player;
     const s = a && isWalkable(world, a.x, a.y) ? a : findSpawn(world);
@@ -600,13 +589,13 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     if (cmd.type === 'useItem') {                          // a thing in the bag you read once (items.js `use`)
       const i = state.bag.findIndex((it) => it && it.uid === cmd.uid), it = state.bag[i];
       if (i < 0 || !isUsable(it)) return;
-      if (BASES[it.base].use === 'homeward') {             // the Homeward Scroll: back to the square of the land's town you
-        // last stood in (v1.131; one a land since v1.132). Read mid-fight, it's walking out, as a step-out is (battle.reset).
+      if (BASES[it.base].use === 'homeward') {             // the Homeward Scroll: back to the square of the region's town (the
+        // nearest: each region has one). Read mid-fight, it's walking out, as a step-out is (battle.reset).
         if (world.kind === 'town') { bus.emit('refused', { reason: 'You are already in town' }); return; }
         if (state.party[0].down || state.party[0].fallen) return;
         state.bag.splice(i, 1);
         bus.emit('itemUsed', { uid: it.uid, base: it.base });
-        goHome('default');
+        travel('town', 'default');
         bus.emit('gearChanged', { member: null });
       }
       return;
@@ -868,7 +857,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       else if (ex && ex.to === 'dungeon' && SITES[ex.site].minLevel && state.party[0].level < SITES[ex.site].minLevel) { if (shut !== ex) { shut = ex; bus.emit('siteLevel', { site: ex.site, need: SITES[ex.site].minLevel }); } }   // not yet: the Mere Tower takes a company from 12
       else if (ex && ex.region && !landOpen(ex.region)) { if (shut !== ex) { shut = ex; bus.emit('landShut', { region: ex.region, line: ex.shut || '' }); } }   // a land not yet opened (regions.js)
       else if (ex && ex.closed) { if (shut !== ex) { shut = ex; bus.emit('landShut', { region: '', line: ex.shut || '' }); } }   // a road out to a land not built yet (the Reach's, the Heights': outdoor.js)
-      else if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive, ex.site, ex.region, ex.town);
+      else if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive, ex.site, ex.region);
       if (!ex) shut = null;
     }
     else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) { if (away && !raidOn && inTower(world)) leaveTower(); else if (away && !raidOn) leaveBowl(); else if (state.depth > (raidOn ? raidOn.top : 0)) ascend(); else if (raidOn) leaveRaid(raidOn.done ? 'won' : 'left'); else travel('overland', curSite); }   // (the Bowl's gate: back where you were, never the land)   // walk up the stair: a floor up, or out
@@ -911,7 +900,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   function snap() {
     const p = state.player;
     return {
-      seed: baseSeed, scene: curScene, site: curSite, region: curRegion, town: townHere(), depth: state.depth, t: state.t, tick: state.tick, dayS: DAY_S,   // (town: v54)
+      seed: baseSeed, scene: curScene, site: curSite, region: curRegion, depth: state.depth, t: state.t, tick: state.tick, dayS: DAY_S,
       player: { x: p.x, y: p.y, dir: p.dir, mirror: p.mirror },
       counters: { ...state.counters },
       party: state.party.map(persistMember),
@@ -979,7 +968,6 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     curScene = data.scene ?? 'dungeon';
     curSite = SITES[data.site] ? data.site : 'barrows';     // v10 and older: the Old Barrows were the only site
     curRegion = landId(data.region);                       // v17 and older: the Vale was the only land
-    curTown = townIn(data.town, curRegion);                // v53 and older: the land's own town (persist/save.js townFor54)
     state.counters.wood = data.counters?.wood ?? 0;
     state.counters.stone = data.counters?.stone ?? 0;
     state.counters.gold = data.counters?.gold ?? 0;
