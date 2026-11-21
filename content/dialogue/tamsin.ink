@@ -160,7 +160,7 @@ Tamsin turns the stamps over in her fingers, one after another, with her eyes sh
 "The Forgehall was the Throne's own forge. The old smiths kept their patterns there, every shape they ever cast. If the Assay is casting something, it learned how from those shelves."
 "Bring me what's in the chests. I want to read them the way you read a letter."
 + [We'll bring them. #mark: quest]
-    "The Forgehall, on the Ashwater. Two chests, the first floor or below. The pattern store's are the heavy ones." # quest: accept tamsin_the_patterns
+    "The Forgehall, on the Ashwater. Two chests, any floor you like. The pattern store's are the heavy ones." # quest: accept tamsin_the_patterns
     -> tamsin_topics
 + [Not now.]
     "They've waited three hundred years to be read. Patterns are patient. Smiths aren't."

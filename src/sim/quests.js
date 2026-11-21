@@ -18,7 +18,8 @@
 // Events: 'questChanged' { id, state, step, progress } · 'questAccepted' { id } · 'questReward' { id, xp, gold } · 'questTracked' { id }.
 // Objective types (quest-lore-system §4.3), each counted in its site:
 //   waves   waves cleared (hall: only in a floor's stairs-down hall; floor: on that floor or deeper)
-//   loot    chests opened
+//   loot    chests opened, anywhere in the site (the owner, 2026-11-21: "open 2 chests on any level … to promote
+//           exploration": a chest quest names no floor; its Journal says where they're likeliest)
 //   elites  elites slain (floor: on that floor or deeper, v1.49)
 //   reach   the deepest floor reached (count = the floor, 1 = the first), going down after taking it
 //   fragment  Chronicle fragments found (lore.js 'fragmentFound')
@@ -129,7 +130,7 @@ export const QUESTS = {
   },
   brannoc_paymasters_box: {
     kind: 'companion', giver: 'brannoc', companion: 'brannoc', region: 'vale', level: [1, 30], after: ['brannoc_old_debts'],
-    steps: [{ id: 'strongroom', objectives: [{ type: 'loot', site: 'wickham_keep', count: 2, floor: 2 }] }],
+    steps: [{ id: 'strongroom', objectives: [{ type: 'loot', site: 'wickham_keep', count: 2 }] }],
     rewards: { share: 0.3, lv: 6, gold: 120 },
   },
   brannoc_standing_down: {
@@ -193,7 +194,7 @@ export const QUESTS = {
   ch2_the_rolls: {
     kind: 'chapter', giver: 'sister_orla', turnin: 'mother_agnes', region: 'fens', level: [17, 30], after: ['ch2_the_bells'],
     steps: [{ id: 'choir', objectives: [{ type: 'boss', site: 'drowned_abbey', boss: 'drowned_choir', count: 1 }] },   // (v1.49: caught on the way up, under the Choir)
-      { id: 'rolls', objectives: [{ type: 'loot', site: 'drowned_abbey', count: 2, floor: 1 }] }],
+      { id: 'rolls', objectives: [{ type: 'loot', site: 'drowned_abbey', count: 2 }] }],
     rewards: { share: 0.45, lv: 17, gold: 320 },
   },
   ch2_the_last_office: {
@@ -249,7 +250,7 @@ export const QUESTS = {
   },
   tamsin_the_patterns: {
     kind: 'companion', giver: 'tamsin', companion: 'tamsin', region: 'reach', level: [25, 60], after: ['tamsin_the_stamp'],
-    steps: [{ id: 'patterns', objectives: [{ type: 'loot', site: 'forgehall', count: 2, floor: 1 }] }],
+    steps: [{ id: 'patterns', objectives: [{ type: 'loot', site: 'forgehall', count: 2 }] }],
     rewards: { share: 0.3, lv: 25, gold: 300 },
   },
   tamsin_spoiled_casting: {
@@ -261,7 +262,7 @@ export const QUESTS = {
   // the Forgehall, their leaders put down so the rest can come home
   gunnar_the_lease: {
     kind: 'errand', giver: 'gunnar_slagg', region: 'reach', level: [22, 60],
-    steps: [{ id: 'counting', objectives: [{ type: 'loot', site: 'assay_yards', count: 2, floor: 1 }] }],
+    steps: [{ id: 'counting', objectives: [{ type: 'loot', site: 'assay_yards', count: 2 }] }],
     rewards: { share: 0.3, lv: 22, gold: 240 },
   },
   gunnar_the_row: {
@@ -273,7 +274,7 @@ export const QUESTS = {
   // to the night pens and held while the shift comes out
   brannagh_last_wages: {
     kind: 'errand', giver: 'old_brannagh', region: 'reach', level: [19, 60],
-    steps: [{ id: 'pay_office', objectives: [{ type: 'loot', site: 'cold_seam', count: 2, floor: 1 }] }],
+    steps: [{ id: 'pay_office', objectives: [{ type: 'loot', site: 'cold_seam', count: 2 }] }],
     rewards: { share: 0.3, lv: 19, gold: 200 },
   },
   brannagh_counted_in: {
@@ -343,8 +344,8 @@ export const QUESTS = {
   },
   wren_night_boats: {
     kind: 'companion', giver: 'wren', companion: 'wren', region: 'fens', level: [1, 30], after: ['wren_the_marker'],
-    steps: [{ id: 'vats', objectives: [{ type: 'loot', site: 'canal_locks', count: 2, floor: 2 }] }],
-    rewards: { share: 0.3, lv: 15, gold: 180 },
+    steps: [{ id: 'vats', objectives: [{ type: 'loot', site: 'canal_locks', count: 2 }] }],
+    rewards: { share: 0.3, lv: 14, gold: 180 },   // (14: since 2026-11-21 its chests can be the Locks' first floor's, at 13)
   },
   wren_settled: {                                   // (after The Bells: the hall she wants held is Brother Teague's until he falls)
     kind: 'companion', giver: 'wren', companion: 'wren', region: 'fens', level: [1, 30], after: ['wren_night_boats', 'ch2_the_bells'],

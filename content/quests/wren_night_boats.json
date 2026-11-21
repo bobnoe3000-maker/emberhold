@@ -16,14 +16,13 @@
   "steps": [
     {
       "id": "vats",
-      "journal": "Open two chests at Vat Seven, the Canal Locks' second floor. Wren says they're hers, and you'll know them by the knots.",
+      "journal": "Open two chests anywhere in the Canal Locks, on any floor. Wren hid hers all over; Vat Seven, on the second floor, is the likeliest.",
       "objectives": [
         {
           "type": "loot",
           "site": "canal_locks",
           "count": 2,
-          "floor": 2,
-          "label": "Wren's caches"
+          "label": "Chests opened in the Canal Locks"
         }
       ]
     }
@@ -32,7 +31,7 @@
   "done": "You found both of Wren's caches. She counted them in front of you, which she says is a compliment.",
   "rewards": {
     "share": 0.3,
-    "lv": 15,
+    "lv": 14,
     "gold": 180
   },
   "dialogue": {

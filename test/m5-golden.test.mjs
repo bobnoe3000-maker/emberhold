@@ -82,15 +82,15 @@ test('M5 golden path: Act I, Brannoc and his chain, a trial, the whole Chronicle
   go(sim, 'dungeon', 'wickham_keep', 0); assert.ok(fightIn(sim, () => st(sim, 'brannoc_old_debts') === QS.READY, firstRoom, 900), 'three sergeants');
   card(); effect(sim, 'quest', 'turnin', 'brannoc_old_debts'); card(); effect(sim, 'quest', 'accept', 'brannoc_paymasters_box');
   // (chests are rarer since 2026-10-01, about one a floor: the strongroom's second chest is a second visit, and a
-  // visit starts from town, its chests full again). The first floor's chests aren't the paymaster's.
+  // visit starts from town, its chests full again). Since 2026-11-21 the first floor's chests count too (any floor's).
   go(sim, 'dungeon', 'wickham_keep', 0);
   for (const [k, kind] of [...sim.world.props]) if (kind === 'chest') openAt(sim, k);
-  assert.deepEqual(sim.state.quests.brannoc_paymasters_box.n, [0], 'not on the Keep\'s first floor');
+  assert.ok(sim.state.quests.brannoc_paymasters_box.n[0] >= 1 || st(sim, 'brannoc_paymasters_box') === QS.READY, 'the Keep\'s first floor counts');
   for (let v = 0; v < 6 && st(sim, 'brannoc_paymasters_box') !== QS.READY; v++) {
     sim.restore({ ...snap(sim), scene: 'dungeon', site: 'wickham_keep', depth: 1, floors: [], mods: [], hp: [] });   // a fresh visit, as travel() makes one
     for (const [k, kind] of [...sim.world.props]) if (kind === 'chest' && st(sim, 'brannoc_paymasters_box') !== QS.READY) openAt(sim, k);
   }
-  assert.equal(st(sim, 'brannoc_paymasters_box'), QS.READY, 'two chests on the Keep\'s second floor');
+  assert.equal(st(sim, 'brannoc_paymasters_box'), QS.READY, 'two chests in the Keep');
   card(); effect(sim, 'quest', 'turnin', 'brannoc_paymasters_box'); card(); effect(sim, 'quest', 'accept', 'brannoc_standing_down');
   go(sim, 'dungeon', 'sunken_chapel', 1); assert.ok(fightIn(sim, () => st(sim, 'brannoc_standing_down') === QS.READY, firstRoom));
   card(); effect(sim, 'quest', 'turnin', 'brannoc_standing_down');

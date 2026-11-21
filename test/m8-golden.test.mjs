@@ -83,7 +83,7 @@ test('M8 golden path: Act II with Wren, her chain, a level-12 trial, the Fens se
   go(sim, 'dungeon', 'canal_locks', 0); assert.ok(fightIn(sim, () => st(sim, 'wren_the_marker') === QS.READY, firstRoom, 1500), 'the marker');
   card(sim, 'wren'); effect(sim, 'quest', 'turnin', 'wren_the_marker'); card(sim, 'wren'); effect(sim, 'quest', 'accept', 'wren_night_boats');
   chests(sim, 'canal_locks', 0, () => false);
-  assert.deepEqual(sim.state.quests.wren_night_boats.n, [0], 'the lock halls\' chests aren\'t hers');
+  assert.ok(sim.state.quests.wren_night_boats.n[0] >= 1 || st(sim, 'wren_night_boats') === QS.READY, 'the lock halls\' chests count too (2026-11-21: a chest quest takes any floor\'s)');
   assert.ok(chests(sim, 'canal_locks', 1, () => st(sim, 'wren_night_boats') === QS.READY), 'her caches');
   card(sim, 'wren'); effect(sim, 'quest', 'turnin', 'wren_night_boats');
 

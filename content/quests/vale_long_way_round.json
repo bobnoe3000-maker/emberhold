@@ -12,7 +12,7 @@
   "steps": [
     {
       "id": "barrows",
-      "journal": "Go down to the Long Gallery, the Old Barrows' second floor, where the dead lie in their niches. Hold four waves there, and open one of their chests.",
+      "journal": "Go down to the Long Gallery, the Old Barrows' second floor. Hold four waves there, and open a chest anywhere in the Old Barrows dungeon, on any floor.",
       "objectives": [
         {
           "type": "waves",

@@ -129,11 +129,12 @@ test('Chains of the Redhand: his to give and take in, in order, only while he\'s
   assert.equal(st('brannoc_old_debts'), QS.READY);
   card(); effect(sim, 'quest', 'turnin', 'brannoc_old_debts'); assert.equal(st('brannoc_old_debts'), QS.DONE);
   card(); effect(sim, 'quest', 'accept', 'brannoc_paymasters_box');
-  // the paymaster's boxes, in the Keep's strongroom (its second floor): a chest on another floor doesn't count
-  goTo(sim, 'dungeon', 'wickham_keep', 0); sim.bus.emit('looted', { kind: 'chest' });
+  // the paymaster's boxes, anywhere in the Keep (2026-11-21: any floor's chests): another dungeon's chest doesn't count
   goTo(sim, 'dungeon', 'barrows', 1); sim.bus.emit('looted', { kind: 'chest' });
   assert.deepEqual(sim.state.quests.brannoc_paymasters_box.n, [0]);
-  goTo(sim, 'dungeon', 'wickham_keep', 1); for (let i = 0; i < 2; i++) sim.bus.emit('looted', { kind: 'chest' });
+  goTo(sim, 'dungeon', 'wickham_keep', 0); sim.bus.emit('looted', { kind: 'chest' });
+  assert.deepEqual(sim.state.quests.brannoc_paymasters_box.n, [1], 'the Keep\'s first floor counts');
+  goTo(sim, 'dungeon', 'wickham_keep', 1); sim.bus.emit('looted', { kind: 'chest' });
   card(); effect(sim, 'quest', 'turnin', 'brannoc_paymasters_box'); assert.equal(st('brannoc_paymasters_box'), QS.DONE);
   card(); effect(sim, 'quest', 'accept', 'brannoc_standing_down');
   // the Binding Crypt, the Sunken Chapel's second floor, among the bound (v1.49; it was the Barrows' Long Gallery): a wave

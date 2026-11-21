@@ -85,7 +85,7 @@ Orla opens the chapel's book at the back, where the names go, and writes *Teague
     -> orla_topics
 
 == orla_rolls_active ==
-"The Abbey's first floor: the Choir first, then two chests of whatever's left. Then the Mother, in the chapel. She'll say thank you. She'll say it as if it hurt."
+"The Abbey's first floor for the Choir, then two chests of whatever's left, wherever they dropped them. Then the Mother, in the chapel. She'll say thank you. She'll say it as if it hurt."
 -> orla_topics
 
 == orla_rolls_what ==

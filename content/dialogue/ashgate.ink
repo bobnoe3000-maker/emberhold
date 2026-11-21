@@ -129,14 +129,14 @@ Hob counts the passes without seeming to look at them, and they are gone into hi
 "The last shift. Forty-two of them, coming up the ladder on a Friday, and the pay office shut its grille in their faces. The Seam's done, the clerk said. Wages to follow."
 "They didn't follow. They're still down there, in the strongboxes behind the grille. I know. I counted them going in."
 + [We'll bring them up. #mark: quest]
-    "The pay office, off the lamp room, on the first level down. Two boxes. Don't count it. I'll count it." # quest: accept brannagh_last_wages
+    "Two boxes, anywhere in the Seam. The pay office, off the lamp room, had them last. Don't count it. I'll count it." # quest: accept brannagh_last_wages
     -> brannagh_topics
 + [Not now.]
     "It's waited forty years. It's good at it."
     -> brannagh_topics
 
 == brannagh_wages_active ==
-"The Cold Seam's pay office. Behind the grille, off the lamp room. Two boxes."
+"The Cold Seam. Two boxes, anywhere you find them. Try the pay office first, behind the grille."
 -> brannagh_topics
 
 == brannagh_wages_turnin ==
@@ -300,14 +300,14 @@ Haldor takes your fighter's sword, sights down it, and grunts, which is as near 
 "I signed it. I never read it. There was a lot of it, and the man was very polite, and the coin was on the table." He turns the mug round. "Morrow Vane. Lovely hand. He wrote out my name for me, so I'd spell it right."
 "The Assay keeps the lease at the Yards, in their counting house. I'd like to read what I sold. All of it. Then I'll know what to be ashamed of, instead of everything."
 + [We'll fetch it. #mark: quest]
-    "The Yards' chests, the first floor. Filed under the year. They file everything." # quest: accept gunnar_the_lease
+    "The Yards' chests, any floor. Filed under the year. They file everything." # quest: accept gunnar_the_lease
     -> gunnar_topics
 + [Not now.]
     "It'll keep. It's paper. Paper keeps better than people."
     -> gunnar_topics
 
 == gunnar_lease_active ==
-"The Assay Yards, the first floor. Two chests'll do it. They keep the lease with the tickets."
+"The Assay Yards. Any two of their chests'll do it. They keep the lease with the tickets."
 -> gunnar_topics
 
 == gunnar_lease_turnin ==

@@ -29,14 +29,13 @@
     },
     {
       "id": "rolls",
-      "journal": "Save what's left of the rolls: open two chests in the Abbey, where the Cult dropped them when the singing stopped.",
+      "journal": "Save what's left of the rolls: open two chests anywhere in the Drowned Abbey, on any floor, wherever the Cult dropped them.",
       "objectives": [
         {
           "type": "loot",
           "site": "drowned_abbey",
           "count": 2,
-          "floor": 1,
-          "label": "Chests opened on the second floor"
+          "label": "Chests opened in the Drowned Abbey"
         }
       ]
     }

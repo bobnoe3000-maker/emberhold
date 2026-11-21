@@ -120,14 +120,14 @@ She reads it once, holds it over the nearest light until it catches, and drops i
 "Back when I ran the canal at night, I left things in the Sickpools. Nobody goes there. That was the point."
 "Now the Cult's draining the vats, and somebody's going to drain one of mine. Two chests, tied with my knot. I'd like them back before somebody in a robe opens them and learns things about the Sisters."
 + [We'll get them. #mark: quest]
-    "Vat Seven, under the Locks. Any two chests down there will be mine, probably. I hid a lot." # quest: accept wren_night_boats
+    "The Canal Locks. Any two chests in there will be mine, probably. I hid a lot." # quest: accept wren_night_boats
     -> wren_topics
 + [Not now.]
     "They've kept this long. Most things I hide do."
     -> wren_topics
 
 == wren_boats_active ==
-"Two chests at Vat Seven, the bottom of the Locks. My knot's the one that looks wrong and isn't."
+"Two chests, anywhere in the Locks. Vat Seven's the likeliest. My knot's the one that looks wrong and isn't."
 -> wren_topics
 
 == wren_boats_turnin ==

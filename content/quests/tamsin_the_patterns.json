@@ -16,13 +16,12 @@
   "steps": [
     {
       "id": "patterns",
-      "journal": "The Forgehall of Oruth: open two of its chests, on the first floor or below. The pattern store's are the ones she wants.",
+      "journal": "Open two chests anywhere in the Forgehall of Oruth, on any floor. The pattern store on the first floor holds two.",
       "objectives": [
         {
           "type": "loot",
           "site": "forgehall",
           "count": 2,
-          "floor": 1,
           "label": "Chests opened in the Forgehall"
         }
       ]

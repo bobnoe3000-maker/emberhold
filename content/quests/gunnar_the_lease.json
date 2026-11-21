@@ -12,13 +12,12 @@
   "steps": [
     {
       "id": "counting",
-      "journal": "The Assay Yards' first floor: open two of its chests. The lease will be in one, filed under the year.",
+      "journal": "Open two chests anywhere in the Assay Yards dungeon, on any floor. The lease will be in one, filed under the year.",
       "objectives": [
         {
           "type": "loot",
           "site": "assay_yards",
           "count": 2,
-          "floor": 1,
           "label": "Chests opened in the Assay Yards"
         }
       ]

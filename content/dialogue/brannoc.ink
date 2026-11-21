@@ -107,14 +107,14 @@ Brannoc is quiet for a while.
 "The paymaster kept the robes' coin in the Keep's strongroom, down in the Barracks, not with Garrow. He trusted nobody. Not Garrow, not the men, not himself. So two boxes, in two places."
 "I'd like to see whose seal is on the purses. Garrow never asked. I'm asking."
 + [We'll find the boxes. #mark: quest]
-    "Two chests in the paymaster's strongroom, off the Barracks, the Keep's second floor. He'd hide them where he'd have to walk past them twice a day, to be sure they were still there." # quest: accept brannoc_paymasters_box
+    "Any two chests in the Keep, on any floor. The paymaster's strongroom, off the Barracks on the second floor, has two. He'd hide them where he'd have to walk past them twice a day, to be sure they were still there." # quest: accept brannoc_paymasters_box
     -> brannoc_topics
 + [Not now.]
     "The coin's not going anywhere. That was always the paymaster's whole idea."
     -> brannoc_topics
 
 == brannoc_box_active ==
-"Two chests in the paymaster's strongroom, off the Barracks, the Keep's second floor. He'd keep them close to the doors, where he could count them on his way past."
+"Two chests, anywhere in the Keep. The strongroom off the Barracks, the second floor, is where I'd look first. He'd keep them close to the doors, where he could count them on his way past."
 -> brannoc_topics
 
 == brannoc_box_turnin ==
