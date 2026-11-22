@@ -92,11 +92,11 @@ test('the Crypt: a fight in the hall of tombs, the Ashbound risen there', () => 
   assert.ok((sim.world.enemies || []).length > 0, 'a wave comes');
 });
 
-test('the Crypt drawn: whole walls under an arcade, its furniture built (no cards), the ossuary\'s bones, a cold fill', () => {
+test('the Crypt drawn: whole walls a unit taller than the inn\'s under an arcade, its furniture built (no cards), the ossuary\'s bones, a cold fill', () => {
   const w = crypt(20260807); w.site = 'haddow_crypt';
   const { level, sprites, ambient } = convertWorld(w, {});
   const hs = new Set(level.heights.join('').split(''));
-  assert.ok(hs.has('8') && hs.has('3'), 'back walls at 8, sills at 3');
+  assert.ok(hs.has('a') && hs.has('3') && !hs.has('8'), 'back walls at 10 (four units over the floor: round arches), sills at 3');
   for (const h of ['5', '7', '9']) assert.ok(!hs.has(h), `no ruined course at ${h}`);
   assert.ok(level.environment.interior);
   assert.ok(ambient.sky[2] > ambient.sky[0] && ambient.sun === 0, 'a crypt\'s cold fill, no sun');
@@ -106,7 +106,7 @@ test('the Crypt drawn: whole walls under an arcade, its furniture built (no card
   assert.ok(by('loculi') > 0 && by('plaque') > 0 && by('saint') > 0, 'each bay its own story');
   assert.ok(by('skullniche') > 0 && by('boneshelf') > 0, 'the ossuary\'s walls');
   assert.ok(by('lightwell') > 0, 'a light-well');
-  assert.equal(by('greattomb'), 1); assert.equal(by('mourner'), 2); assert.equal(by('altar'), 1); assert.equal(by('tomb'), 6);
+  assert.equal(by('greattomb'), 1); assert.equal(by('mourner'), 2); assert.equal(by('altar'), 1); assert.equal(by('tomb'), 7);   // (the hall's four, the vault's two, the stair hall's one)
   assert.ok(!by('post') && !by('beam') && !by('lantern'), 'no inn\'s timber or lanterns');
   assert.ok(!level.objects.some((o) => o.onWall), 'nothing heaped on a ruin\'s top');
   assert.ok(!sprites.some((s) => ['tomb', 'tomb_y', 'great_tomb', 'mourner', 'altar', 'urns', 'bones', 'candelabra', 'pew', 'pew_y', 'offering'].includes(s.prop)), 'no piece left to a card');

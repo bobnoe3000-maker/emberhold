@@ -94,8 +94,8 @@ export const LEGEND = {
   // pale limestone slabs, the family's ledger stones let into the floor among them, walls of pale dressed ashlar capped
   // in stone; the ossuary's walls built of the dead's own bones (painted by world.js, ours)
   '!': { top: 'crypt_flag', side: 'crypt_wall', walkable: true }, '$': { top: 'crypt_ledger', side: 'crypt_wall', walkable: true },
-  '*': { top: 'crypt_cap', side: 'crypt_wall', walkable: false },
-  ':': { top: 'crypt_cap', side: 'ossuary_wall', walkable: false },
+  '*': { top: 'crypt_top', side: 'crypt_wall', walkable: false },
+  ':': { top: 'crypt_top', side: 'ossuary_wall', walkable: false },
   // a dungeon's stairs (Luminati's stair tiles, its own characters for them): each climbs one level toward its side
   '^': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'N', walkable: true }, v: { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'S', walkable: true },
   '>': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'E', walkable: true }, '<': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'W', walkable: true },
@@ -552,8 +552,8 @@ KIT_LOOK.tavern = { floor: ['#', '='], wall: '@', cave: '@', hour: 19.2, mix: 14
 KIT_LOOK.tavern_cellar = { floor: ['=', '#'], wall: '+', cave: '+', hour: 19.2, mix: 30, inside: true, frame: false };
 // a crypt's inside (the Haddow Crypt, docs/crypt-dungeon.md): pale slabs with a ledger stone now and then, pale ashlar
 // walls under a blind arcade (cryptDress), a cold fill and the candles warm against it
-const CRYPT_FILL = { sky: [0.92, 0.96, 1.08], ground: [0.44, 0.44, 0.5], lamps: 2.1 };   // (round 1: at 0.7 the room was a murk of navy)
-KIT_LOOK.crypt = { floor: ['!', '$'], wall: '*', cave: '*', hour: 21, mix: 7, inside: true, fill: CRYPT_FILL };
+const CRYPT_FILL = { sky: [0.83, 0.86, 0.97], ground: [0.4, 0.4, 0.45], lamps: 2.2 };   // (round 2: a tenth down, so the candles' pools carry)   // (round 1: at 0.7 the room was a murk of navy)
+KIT_LOOK.crypt = { floor: ['!', '$'], wall: '*', cave: '*', hour: 21, mix: 11, inside: true, fill: CRYPT_FILL };
 // its ossuary: walls of stacked bones and skulls, no arcade, skulls heaped in niches, candles among them
 KIT_LOOK.ossuary = { floor: ['!', '$'], wall: ':', cave: ':', hour: 21, mix: 4, inside: true, fill: CRYPT_FILL };
 const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KIT_LOOK.cellar, nave: KIT_LOOK.nave, cinder: KIT_LOOK.cultcut, chasm: { floor: ['U', 'm'], wall: 'x', hour: 22.8 },
@@ -673,6 +673,9 @@ function ruinWalls(W, D, tiles, heights, open) {
 // the high corners. The furniture is Luminati's interiors (TAVERN_3D); the rest ours, built in one batch by world.js
 // buildTavern (one draw a material). Every choice is a hash of the tile: the same inn every visit.
 const TAV_BACK = 8, TAV_NEAR = 3;
+// (a crypt's back walls a unit taller, four over the floor: at the inn's three, a round arch over a bay couldn't stand, and
+// the arcade flattened to a strip at a phone's size, the art critic's round 2)
+const CR_BACK = 10, CR_TOP_Y = CR_BACK * 0.5;
 /** what hangs in a bay that isn't a lantern's (world.js buildTavern): a shield, a plate shelf, antlers, a peg rail with a
  * cloak and a hat, the slate of chalked tallies, herbs drying */
 const TAV_STORY = ['shield', 'shelf', 'antlers', 'pegs', 'slate', 'herbs'];
@@ -688,11 +691,11 @@ function tavernWalls(W, D, heights, open, looks, tiles) {
     const s = open(i, j + 1), e = open(i + 1, j), near = open(i - 1, j) || open(i, j - 1) || (!s && !e && open(i - 1, j - 1));
     if (near && !(s || e)) { heights[j][i] = String(TAV_NEAR); continue; }   // a near wall: a sill
     if (!(s || e || open(i + 1, j + 1))) continue;
-    heights[j][i] = near ? String(TAV_NEAR) : String(TAV_BACK);              // (a wall with the floor on its camera side too stays low: it would stand in front of a fight)
+    const style = WALL_STYLE[tiles[j][i]] || 'tavern', rough = style === 'cellar';   // (the crypt's arcade, the ossuary's bones: by their stone too)
+    heights[j][i] = near ? String(TAV_NEAR) : (style === 'crypt' || style === 'ossuary' ? CR_BACK.toString(36) : String(TAV_BACK));              // (a wall with the floor on its camera side too stays low: it would stand in front of a fight)
     if (near) continue;
     // (rough: the wall's own stone is the cellar's rubble, so it takes no frame; the frame follows the texture, and a
     // timber run ends at a post where the rubble starts: round 6, "a visible seam")
-    const style = WALL_STYLE[tiles[j][i]] || 'tavern', rough = style === 'cellar';   // (the crypt's arcade, the ossuary's bones: by their stone too)
     if (s) faces.push({ i, j, n: 's', rough, style });
     if (e) faces.push({ i, j, n: 'e', rough, style });
   }
@@ -761,7 +764,7 @@ function tavernDress(faces, arches, open, add, trim) {
     if (f.n !== 's') continue;
     const i = f.i, j = f.j + 1;                                    // the floor tile south of this face
     if (open(i - 1, j) || open(i - 1, j - 1) || hash('tw', i, j) % 2) continue;   // (a west wall beside it: an inside corner)
-    if (clearOf(i, j)) trim.push({ k: 'web', x: i, z: j, y: TAV_TOP_Y - 0.25 });
+    if (clearOf(i, j)) trim.push({ k: 'web', x: i, z: j, y: (f.style === 'crypt' || f.style === 'ossuary' ? CR_TOP_Y : TAV_TOP_Y) - 0.25 });
   }
 }
 // ── a crypt's back walls (the Haddow Crypt, docs/crypt-dungeon.md): a blind arcade of pale stone. A pier at each end of a
@@ -773,34 +776,34 @@ function tavernDress(faces, arches, open, add, trim) {
 const CRYPT_STORY = ['loculi', 'plaque', 'loculi', 'saint'];
 function cryptRun(a, b, { key, s, n, P, add, trim, clearOf }) {
   const [x0, z0] = P(a), [x1, z1] = P(b);
-  trim.push({ k: 'cornice', x0, z0, x1, z1, n, y: TAV_TOP_Y - 0.15 });
+  trim.push({ k: 'cornice', x0, z0, x1, z1, n, y: CR_TOP_Y - 0.15 });
   trim.push({ k: 'plinth', x0, z0, x1, z1, n });
   const piers = [a, b]; for (let t = a + 4; t <= b - 3; t += 4) piers.push(t);
   piers.sort((p, q) => p - q);
   piers.forEach((t, q) => {
     const [x, z] = P(t); if (!clearOf(x, z)) return;
     const end = t === a ? 1 : t === b ? -1 : 0;
-    trim.push({ k: 'pier', x, z, n, end });
-    if (!end && q % 2 === 1) {   // a sconce: an iron bracket, three candles, their light
-      const light = add({ type: 'light', x: r2(x + (s ? 0 : 0.6)), z: r2(z + (s ? 0.6 : 0)), dy: 1.7, color: '#ffb766', intensity: 3.2, distance: 6, flicker: 0.14, nightOnly: false });
+    trim.push({ k: 'pier', x, z, n, end, top: CR_TOP_Y });
+    if (!end && q % 2 === 1) {   // a sconce: an iron bracket, three candles; every other one its light (round 1: Luminati shares a dozen lights among all in view, and forty small ones left each room murk)
+      const light = q % 4 === 1 ? add({ type: 'light', x: r2(x + (s ? 0 : 0.9)), z: r2(z + (s ? 0.9 : 0)), dy: 1.4, color: '#ffb060', intensity: 4.6, distance: 6.5, flicker: 0.14, nightOnly: false }) : null;
       trim.push({ k: 'sconce', x, z, n, y: TAV_FLOOR_Y + 2.1, light });
     }
   });
   // the bays between the piers, each its own story; a long wall's middle bay the light-well
   const bays = []; for (let q = 0; q < piers.length - 1; q++) if (piers[q + 1] - piers[q] >= 3) bays.push([(piers[q] + piers[q + 1]) / 2, piers[q + 1] - piers[q]]);
-  const well = b - a >= 14 ? bays[(bays.length / 2) | 0]?.[0] : null, o = hash('kv', key) % CRYPT_STORY.length;
+  const well = s && b - a >= 14 ? bays[(bays.length / 2) | 0]?.[0] : null, o = hash('kv', key) % CRYPT_STORY.length;   // (a light-well: a long north wall's, one a room: round 2, "spills outside the room")
   bays.forEach(([t, w], q) => {
     const [x, z] = P(t); if (!clearOf(x, z)) return;
-    trim.push({ k: 'arcade', x, z, n, w: w - 0.5, y: TAV_FLOOR_Y });
+    trim.push({ k: 'arcade', x, z, n, w: w - 0.5, y: TAV_FLOOR_Y, top: CR_TOP_Y });
     if (t === well) {
-      trim.push({ k: 'lightwell', x, z, n, y: TAV_TOP_Y - 0.75 });
-      add({ type: 'light', x: r2(x + (s ? 0 : 1.6)), z: r2(z + (s ? 1.6 : 0)), dy: 0.4, color: '#a8bce8', intensity: 6, distance: 4.2, flicker: 0, nightOnly: false });   // (the shaft's pool on the floor)
+      trim.push({ k: 'lightwell', x, z, n, y: CR_TOP_Y - 0.85 });
+      add({ type: 'light', x: r2(x + (s ? 0 : 1.7)), z: r2(z + (s ? 1.7 : 0)), dy: 0.9, color: '#9fb4c8', intensity: 2.6, distance: 3.2, flicker: 0, nightOnly: false });   // (the shaft's pool on the floor, soft: at 6 it was a blown-out white diamond, round 1)
       add({ type: 'emitter', x: r2(x + (s ? 0 : 0.9)), z: r2(z + (s ? 0.9 : 0)), preset: 'dust', size: [1.4, 2.6, 1.4], dy: 1.6, count: 14 });
       return;
     }
     const kind = CRYPT_STORY[(o + q) % CRYPT_STORY.length];
     trim.push({ k: kind, x, z, n, y: TAV_FLOOR_Y, seed: hash('ky', key, t) % 997 });
-    if ((q === 0 || q === bays.length - 1) && hash('kw', key, t) % 2 === 0) trim.push({ k: 'web2', x, z, n, y: TAV_TOP_Y - 0.45, side: q === 0 ? 1 : -1, size: 0.7 + (hash('kz', key, t) % 4) * 0.1 });
+    if ((q === 0 || q === bays.length - 1) && hash('kw', key, t) % 4 === 0) trim.push({ k: 'web2', x, z, n, y: CR_TOP_Y - 0.45, side: q === 0 ? 1 : -1, size: 0.7 + (hash('kz', key, t) % 4) * 0.1 });
   });
 }
 // ── an ossuary's back walls: the bones are the wall (its texture), and along it every four tiles an arched niche heaped
@@ -808,11 +811,11 @@ function cryptRun(a, b, { key, s, n, P, add, trim, clearOf }) {
 // crossed under it. A cornice along the top.
 function ossuaryRun(a, b, { key, s, n, P, add, trim, clearOf }) {
   const [x0, z0] = P(a), [x1, z1] = P(b);
-  trim.push({ k: 'cornice', x0, z0, x1, z1, n, y: TAV_TOP_Y - 0.15 });
+  trim.push({ k: 'cornice', x0, z0, x1, z1, n, y: CR_TOP_Y - 0.15 });
   for (let t = a + 2, q = 0; t <= b - 2; t += 2, q++) {
     const [x, z] = P(t); if (!clearOf(x, z)) continue;
     if (q % 2 === 0) {
-      const lit = q % 4 === 0, light = lit ? add({ type: 'light', x: r2(x + (s ? 0 : 0.6)), z: r2(z + (s ? 0.6 : 0)), dy: 1.3, color: '#ffb766', intensity: 3, distance: 5.5, flicker: 0.16, nightOnly: false }) : null;
+      const lit = q % 4 === 0, light = lit ? add({ type: 'light', x: r2(x + (s ? 0 : 0.9)), z: r2(z + (s ? 0.9 : 0)), dy: 1.2, color: '#ffb060', intensity: 4, distance: 5.5, flicker: 0.16, nightOnly: false }) : null;
       trim.push({ k: 'skullniche', x, z, n, y: TAV_FLOOR_Y, seed: hash('on', key, t) % 997, light });
     } else trim.push({ k: 'boneshelf', x, z, n, y: TAV_FLOOR_Y, seed: hash('os', key, t) % 997 });
   }
@@ -913,7 +916,7 @@ Object.assign(TAVERN_3D, {
   great_tomb: (x, z, h, k, { trim, add, wall }) => {
     const zz = wall?.side === 'n' ? r2(wall.z + 1.25) : z;
     trim.push({ k: 'greattomb', x, z: zz, rot: 0, seed: h % 997 });
-    add({ type: 'light', x, z: r2(zz + 1.4), dy: 2.4, color: '#ffc27a', intensity: 4, distance: 5.5, flicker: 0.1, nightOnly: false });   // (the founder lit: the vault's focal piece)
+    add({ type: 'light', x, z: r2(zz + 0.9), dy: 1.3, color: '#ffb060', intensity: 1.6, distance: 3, flicker: 0.1, nightOnly: false });   // (a dim warmth under the soffit; the candelabra either side light him: round 2, "a glowing market stall")
   },
   mourner: (x, z, h, k, { trim }) => trim.push({ k: 'mourner', x: r2(x + 0.25), z: r2(z + 0.25) }),
   candelabra: (x, z, h, k, { trim, add }) => { trim.push({ k: 'candelabra', x, z }); add({ type: 'light', x, z, dy: 2.1, color: CRYPT_LIGHT, intensity: 4.2, distance: 6.5, flicker: 0.14, nightOnly: false }); },

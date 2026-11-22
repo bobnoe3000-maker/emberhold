@@ -231,12 +231,14 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
         for (const [u, v] of spots) unit(u, v, -2, 2, -1, 1, alongK('tomb'));
       } break;
       case 'great_tomb': unit(-L * 0.28, -Wd + 2, -4, 4, -2, 2, 'great_tomb'); break;   // (its chest and canopy, nine wide by five deep, against the back wall west of the door in)
-      case 'mourners': for (const s of [-1, 1]) unit(-L * 0.28 + s * 6.5, -Wd + 1, 0, 1, 0, 1, 'mourner'); break;   // (either side of the founder's canopy)
+      case 'mourners': for (const s of [-1, 1]) unit(-L * 0.28 + s * 5.5, -Wd + 5, 0, 1, 0, 1, 'mourner'); break;   // (at the canopy's front corners, where they're seen: round 2)
+      case 'founder_lights': for (const s of [-1, 1]) putAt(-L * 0.28 + s * 7, -Wd + 1, 'candelabra'); break;   // (a candelabrum either side of his canopy, his light)
+      case 'tomb_one': unit(-L * 0.4, Wd - 2, -2, 2, -1, 1, alongK('tomb')); break;   // (the stair hall's one tomb, by the near wall)
       case 'candelabra_pair': for (const s of [-1, 1]) putAt(s * L * 0.47, -Wd + 1, 'candelabra'); break;   // (between the back wall's tombs)
       case 'candelabra_ends': for (const s of [-1, 1]) putAt(s * (L - 1), -Wd * 0.45, 'candelabra'); break;   // (at the end walls, by the wall: keepclear.js)
       case 'offering': unit(-L * 0.3, -Wd + 1, -2, 2, -1, 0, 'offering'); break;   // (the stair hall's table of offerings, against the back wall)
       case 'chantry_altar': unit(0, -Wd + 1, -3, 3, -1, 1, 'altar'); for (const s of [-1, 1]) putAt(s * 5, -Wd + 1, 'candles'); break;
-      case 'chantry_pews': for (const s of [-1, 1]) for (const v of [-2, 2]) unit(s * L * 0.68, v, -1, 1, 0, 0, alongK('pew')); break;   // (two either side, their ends to the walls, the aisle open)
+      case 'chantry_pews': for (const s of [-1, 1]) for (const v of [-3, 2]) unit(s * (L - 1.5), v, 0, 0, -1, 1, acrossK('pew')); break;   // (two either side, against the side walls, the middle open: round 1, "the pews fill the middle")
       // the corners: an urn and a heap of the bones the shelves no longer hold (a doorway's mouth keeps them off: putAt)
       case 'crypt_corners': for (const sx of [-1, 1]) for (const sv of [-1, 1]) { putAt(sx * (L - 1), sv * Wd, sv < 0 ? 'urns' : 'bones'); putAt(sx * (L - 1), sv * (Wd - 1.5), sv < 0 ? 'bones' : 'urns'); } break;
       case 'bedrolls': if (!has('tents')) at(3, 6, 'bedroll'); break;   // (where there are tents, a bedroll at each one's door)
