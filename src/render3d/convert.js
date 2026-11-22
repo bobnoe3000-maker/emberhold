@@ -826,7 +826,7 @@ function ossuaryRun(a, b, { key, s, n, P, add, trim, clearOf }) {
     trim.push({ k: 'footbones', x, z, n, seed: hash('ob', key, t) % 997 });   // (a low heap at every panel's foot: round 6)
     if (q % 3 === 2) trim.push({ k: 'roundel', x, z, n, y: TAV_FLOOR_Y + 2.2 });
     else if (q % 3 === 0) {
-      const lit = q % 4 === 0, light = lit ? add({ type: 'light', x: r2(x + (s ? 0 : 0.9)), z: r2(z + (s ? 0.9 : 0)), dy: 1.2, color: '#ffb060', intensity: 2.8, distance: 5.5, flicker: 0.16, nightOnly: false }) : null;
+      const lit = q % 4 === 0, light = lit ? add({ type: 'light', x: r2(x + (s ? 0 : 0.9)), z: r2(z + (s ? 0.9 : 0)), dy: 1.2, color: '#ffb060', intensity: 2.2, distance: 5.5, flicker: 0.16, nightOnly: false }) : null;
       trim.push({ k: 'skullniche', x, z, n, y: TAV_FLOOR_Y, seed: hash('on', key, t) % 997, light });
     } else trim.push({ k: 'boneshelf', x, z, n, y: TAV_FLOOR_Y, seed: hash('os', key, t) % 997 });
   }
@@ -928,10 +928,10 @@ Object.assign(TAVERN_3D, {
     const zz = wall?.side === 'n' ? r2(wall.z + 1.55) : z;   // (clear of the piers: round 3, the back columns sat in the wall)
     trim.push({ k: 'greattomb', x, z: zz, rot: 0, seed: h % 997 });
     if (wall?.side === 'n') {   // (the family's arms either side of him, a golden fleece on black; urns at the canopy's back corners: round 4)
-      for (const sg of [-1, 1]) { trim.push({ k: 'hatchment', x: r2(x + sg * 3.3), z: wall.z, n: 'z', y: 3.7 }); trim.push({ k: 'urns', x: r2(x + sg * 2.55), z: r2(wall.z + 0.45), seed: (h + sg) % 997 }); }
+      for (const sg of [-1, 1]) { trim.push({ k: 'hatchment', x: r2(x + sg * 3.75), z: wall.z, n: 'z', y: 3.7 }); trim.push({ k: 'urns', x: r2(x + sg * 2.55), z: r2(wall.z + 0.45), seed: (h + sg) % 997 }); }
     }
-    add({ type: 'light', x, z: r2(zz + 0.8), dy: 1.4, color: '#ffb468', intensity: 3.2, distance: 3.4, flicker: 0.1, nightOnly: false });   // (round 5: at 5.5 the canopy's inside an oven)
-    add({ type: 'light', x, z: r2(zz + 3.6), dy: 2.2, color: '#ffbe80', intensity: 4.6, distance: 7.5, flicker: 0, nightOnly: false });   // (round 6: the flags before him clearly amber)   // (a broad low warmth across the vault's middle from his candles: round 5)   // (under the canopy, small and warm: the effigy the brightest thing in the vault, round 3; round 2 it lit the canopy's outside, "a market stall")
+    add({ type: 'light', x, z: r2(zz + 0.15), dy: 2.4, color: '#ffbe78', intensity: 4.2, distance: 2.8, flicker: 0.1, nightOnly: false });   // (round 5: at 5.5 the canopy's inside an oven)
+    add({ type: 'light', x, z: r2(zz + 4.6), dy: 2.4, color: '#ffbe80', intensity: 5.4, distance: 9.5, flicker: 0, nightOnly: false });   // (round 6: the flags before him clearly amber; round 7, out across the floor before him)   // (a broad low warmth across the vault's middle from his candles: round 5)   // (under the canopy, small and warm: the effigy the brightest thing in the vault, round 3; round 2 it lit the canopy's outside, "a market stall")
   },
   mourner: (x, z, h, k, { trim }) => trim.push({ k: 'mourner', x: r2(x + 0.25), z: r2(z + 0.25) }),
   candelabra: (x, z, h, k, { trim, add }) => { trim.push({ k: 'candelabra', x, z }); add({ type: 'light', x, z, dy: 1.3, color: CRYPT_LIGHT, intensity: 5, distance: 6, flicker: 0.14, nightOnly: false }); },
@@ -1000,8 +1000,8 @@ function dungeon(w, o = {}) {
   // random paler flags; trim, below, where the crypt's other pieces are built)
   const ledgers = [];
   if (L.plan) for (const r of L.rooms) {
-    if (!KIT_LOOK[r.kit]?.ledgers || r === L.entrance) continue;
-    const along = r.rw >= r.rh, n = Math.max(2, Math.min(6, Math.floor((along ? r.rw : r.rh) / 3.5)));
+    if (!KIT_LOOK[r.kit]?.ledgers) continue;
+    const along = r.rw >= r.rh, n = r === L.entrance ? 2 : Math.max(2, Math.min(6, Math.floor((along ? r.rw : r.rh) / 3.5)));   // (the stair hall's two: round 7)
     for (let q = 0; q < n; q++) {
       const off = (q - (n - 1) / 2) * 6, gx = r.cx + (along ? off : 0), gy = r.cy + (along ? 0 : off);
       ledgers.push({ k: 'ledger', x: r2((gx - x0) / 2), z: r2((gy - y0) / 2), rot: along ? 0 : Math.PI / 2, seed: hash('lg', r.id, q) % 997 });

@@ -570,7 +570,7 @@ function barPatch() {
   return PATCH_TEX;
 }
 const BONE_TINT = [1.06, 0.99, 0.83];   // (the dead's bones: old ivory, gone yellow-grey; round 6, a quarter down, they were the whitest thing on screen)   // (the dead's bones: old ivory, gone yellow-grey)
-let cryptDark = null, cryptDamp = null, cryptBeam = null, cryptPatch = null, cryptGold = null;
+let cryptDark = null, cryptDamp = null, cryptBeam = null, cryptPatch = null, cryptGold = null, cryptOx = null;
 /** a skull on its frame p (a wall's, or {n: 'z'} facing the camera), at u along it and y, s its size, v out of the wall */
 function skull(b, p, u, y, s, v) {
   const on = (q, uu, yy, vv) => (q.n === 'z' ? [q.x + uu, yy, q.z + vv] : [q.x + vv, yy, q.z + uu]), sz = (q, w, h, d) => (q.n === 'z' ? [w, h, d] : [d, h, w]);
@@ -916,7 +916,7 @@ function buildTavern(pieces) {
       const c = Math.cos(p.rot || 0), sn = Math.sin(p.rot || 0), at = (lx, y, lz) => [p.x + lx * c + lz * sn, y, p.z - lx * sn + lz * c], ry = [0, p.rot || 0, 0];
       const R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
       b.tinted([0.86, 0.85, 0.84], () => { b.box('crypt_cap', [L0 + 0.3, base, W0 + 0.3], { at: at(0, FL + base / 2, 0), rot: ry }); if (G) b.box('crypt_cap', [L0 + 0.7, 0.16, W0 + 0.7], { at: at(0, FL + 0.08, 0), rot: ry }); });
-      b.tinted([1.0, 0.95, 0.86], () => b.box('crypt_cap', [L0, H0, W0], { at: at(0, FL + base + H0 / 2, 0), rot: ry }));
+      b.tinted([1.15, 1.09, 0.99], () => b.box('crypt_cap', [L0, H0, W0], { at: at(0, FL + base + H0 / 2, 0), rot: ry }));
       b.tinted([0.5, 0.47, 0.44], () => { for (const sg of [-1, 1]) for (let k = 0; k < 3; k++) b.box('crypt_cap', [L0 / 3 - 0.16, H0 - 0.24, 0.02], { at: at((k - 1) * L0 / 3, FL + base + H0 / 2, sg * (W0 / 2 + 0.005)), rot: ry }); });   // (the chest's panels)
       b.tinted([0.4, 0.37, 0.33], () => b.box('crypt_cap', [L0 + 0.04, 0.15, W0 + 0.04], { at: at(0, FL + base + 0.075, 0), rot: ry }));   // (a dark band at the chest's foot: round 4)
       b.tinted([1.32, 1.26, 1.15], () => { for (const sg of [-1, 1]) { b.box('crypt_cap', [0.36, 0.42, 0.06], { at: at(0, FL + base + H0 / 2 + 0.03, sg * (W0 / 2 + 0.04)), rot: ry }); b.box('crypt_cap', [0.26, 0.14, 0.065], { at: at(0, FL + base + H0 / 2 - 0.22, sg * (W0 / 2 + 0.04)), rot: [0, p.rot || 0, 0.78] }); } });   // (proud and lighter: round 6)   // (a shield on each long side, its point below: not the treasure chest)
@@ -952,18 +952,22 @@ function buildTavern(pieces) {
         });
       }
     } else if (p.k === 'mourner') {
-      // a stone mourner on a plinth, hooded, head bowed, hands folded
-      b.tinted([0.92, 0.9, 0.88], () => b.box('crypt_cap', [0.8, 0.5, 0.8], { at: [p.x, FL + 0.25, p.z] }));
+      // a stone mourner on a plinth: the robe flaring to the ground, narrow shoulders, a head on its neck under the hood's
+      // lip, bowed; hands folded at the breast (round 7: a cone read as a stalagmite)
+      b.tinted([0.78, 0.75, 0.7], () => { b.box('crypt_cap', [0.8, 0.5, 0.8], { at: [p.x, FL + 0.25, p.z] }); b.box('crypt_cap', [0.9, 0.15, 0.9], { at: [p.x, FL + 0.08, p.z] }); });
       b.tinted([1.45, 1.4, 1.3], () => {
-        b.lathe('crypt_cap', [{ y: 0, r: 0.36 }, { y: 0.4, r: 0.3 }, { y: 1.1, r: 0.22 }, { y: 1.32, r: 0.2 }, { y: 1.4, r: 0 }], { segments: 12, capTop: true, at: [p.x, FL + 0.5, p.z] });
-        b.lathe('crypt_cap', [{ y: 0, r: 0.1 }, { y: 0.12, r: 0.17 }, { y: 0.3, r: 0.14 }, { y: 0.38, r: 0 }], { segments: 10, at: [p.x, FL + 1.86, p.z + 0.06], rot: [0.35, 0, 0] });
-        b.box('crypt_cap', [0.22, 0.24, 0.16], { at: [p.x, FL + 1.35, p.z + 0.26] });
+        b.lathe('crypt_cap', [{ y: 0, r: 0.36 }, { y: 0.35, r: 0.28 }, { y: 0.95, r: 0.19 }, { y: 1.12, r: 0.15 }, { y: 1.16, r: 0.08 }, { y: 1.18, r: 0 }], { segments: 14, capTop: true, at: [p.x, FL + 0.5, p.z] });
+        b.lathe('crypt_cap', [{ y: 0, r: 0.06 }, { y: 0.06, r: 0.07 }], { segments: 8, at: [p.x, FL + 1.66, p.z + 0.03] });                         // (the neck)
+        b.lathe('crypt_cap', [{ y: 0, r: 0.1 }, { y: 0.08, r: 0.15 }, { y: 0.2, r: 0.14 }, { y: 0.3, r: 0 }], { segments: 12, at: [p.x, FL + 1.72, p.z + 0.07], rot: [0.4, 0, 0] });   // (the head, bowed)
+        b.lathe('crypt_cap', [{ y: 0, r: 0.2 }, { y: 0.04, r: 0.21 }, { y: 0.24, r: 0.17 }, { y: 0.36, r: 0 }], { segments: 12, at: [p.x, FL + 1.7, p.z - 0.02], rot: [0.4, 0, 0] });   // (the hood, its lip over the face)
+        b.box('crypt_cap', [0.22, 0.24, 0.16], { at: [p.x, FL + 1.35, p.z + 0.24] });
       });
     } else if (p.k === 'hatchment') {
       // the family's arms in a diamond hatchment, 1.4 across: a black field, a gilt rim, a golden fleece filling it (round 5)
       cryptGold ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#d4a640').multiplyScalar(0.85) });   // (gold that reads in the dark: round 6)
       b.box(cryptGold, sz(p, 1.0, 1.0, 0.05), { at: on(p, 0, p.y, 0.06), rot: tilt(p, Math.PI / 4) });
-      b.box(cryptDark, sz(p, 0.86, 0.86, 0.02), { at: on(p, 0, p.y, 0.095), rot: tilt(p, Math.PI / 4) });
+      cryptOx ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#4a1416') });   // (an oxblood field: a black one in a gold rim read as a hazard sign, round 7)
+      b.box(cryptOx, sz(p, 0.92, 0.92, 0.02), { at: on(p, 0, p.y, 0.095), rot: tilt(p, Math.PI / 4) });
       b.box(cryptGold, sz(p, 0.6, 0.26, 0.03), { at: on(p, 0, p.y - 0.02, 0.11) });                   // (the fleece's body, hung by the middle)
       b.box(cryptGold, sz(p, 0.18, 0.16, 0.03), { at: on(p, 0.34, p.y + 0.02, 0.11), rot: tilt(p, -0.4) });   // (its head, hanging)
       b.box(cryptGold, sz(p, 0.05, 0.3, 0.03), { at: on(p, 0, p.y + 0.24, 0.11) });                   // (the ring's band)
@@ -973,8 +977,8 @@ function buildTavern(pieces) {
       // a small brass cross at its head, the lines of a name (round 5)
       const c = Math.cos(p.rot || 0), sn = Math.sin(p.rot || 0), at = (lx, lz) => [p.x + lx * c + lz * sn, FL + 0.022, p.z - lx * sn + lz * c], ry = [0, p.rot || 0, 0];
       b.tinted([1.08, 1.03, 0.94], () => b.box('crypt_cap', [2.0, 0.04, 1.0], { at: at(0, 0), rot: ry }));   // (round 6: lighter, raised a little so its edge catches)
-      b.tinted([0.62, 0.58, 0.52], () => { for (const sg of [-1, 1]) { b.box('crypt_cap', [1.82, 0.024, 0.035], { at: at(0, sg * 0.41), rot: ry }); b.box('crypt_cap', [0.035, 0.024, 0.85], { at: at(sg * 0.91, 0), rot: ry }); } for (const [lx, w] of [[0.05, 0.9], [0.25, 0.7], [0.45, 0.8]]) b.box('crypt_cap', [0.025, 0.045, w * 0.55], { at: at(lx, 0), rot: ry }); });
-      cryptGold ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#d4a640').multiplyScalar(0.85) }); b.box(cryptGold, [0.32, 0.05, 0.07], { at: at(-0.55, 0), rot: ry }); b.box(cryptGold, [0.07, 0.05, 0.24], { at: at(-0.6, 0), rot: ry });   // (the brass cross glints: round 6)
+      b.tinted([0.5, 0.46, 0.41], () => { for (const sg of [-1, 1]) { b.box('crypt_cap', [1.82, 0.024, 0.035], { at: at(0, sg * 0.41), rot: ry }); b.box('crypt_cap', [0.035, 0.024, 0.85], { at: at(sg * 0.91, 0), rot: ry }); } for (const [lx, w] of [[0.05, 0.9], [0.25, 0.7], [0.45, 0.8]]) b.box('crypt_cap', [0.025, 0.045, w * 0.55], { at: at(lx, 0), rot: ry }); });
+      b.tinted([0.95, 0.82, 0.55], () => { b.box('metal', [0.36, 0.05, 0.045], { at: at(-0.55, 0), rot: ry }); b.box('metal', [0.045, 0.05, 0.26], { at: at(-0.62, 0), rot: ry }); });   // (a thin dull brass cross: round 7, a gold blob read as dropped loot)
     } else if (p.k === 'roundel') {
       // an ossuary panel's centre: a ring of skulls round two long bones crossed
       for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; skull(b, p, Math.cos(a) * 0.5, p.y + Math.sin(a) * 0.5, 0.1, 0.22); }
@@ -991,7 +995,7 @@ function buildTavern(pieces) {
       }
     } else if (p.k === 'footbones') {
       // a few of the dead's bones swept to the wall's foot, a skull among them
-      b.tinted([0.9, 0.85, 0.74], () => { for (const [u0, u1, v0, v1] of [[-0.55, 0.08, 0.32, 0.47], [-0.2, 0.42, 0.55, 0.34], [0.12, 0.66, 0.26, 0.4]]) b.tube('linen', on(p, u0, FL + 0.06, v0), on(p, u1, FL + 0.08, v1), 0.05, 0.045, { segments: 6 }); });   // (round 5: toned to old bone, a quarter shorter)
+      b.tinted([0.86, 0.8, 0.7], () => { for (const [u0, u1, v0, v1] of [[-0.55, 0.08, 0.32, 0.47], [-0.2, 0.42, 0.55, 0.34], [0.12, 0.66, 0.26, 0.4]]) b.tube('linen', on(p, u0, FL + 0.06, v0), on(p, u1, FL + 0.08, v1), 0.05, 0.045, { segments: 6 }); });   // (round 5: toned to old bone, a quarter shorter)
       skull(b, p, 0.55, FL + 0.14, 0.16, 0.45);   // (round 4: half again as big, so they read as bones and a skull, not specks)
     } else if (p.k === 'fallenslab') {
       // a slab fallen from a shelf, leaning on the wall, its name to the room
@@ -1023,7 +1027,7 @@ function buildTavern(pieces) {
         // (round 2: squat and buff, a dark mouth: thin dark ones read as little figures)
         const a = R(k + 3) * 6.28, d = k ? 0.42 : 0, ux = p.x + Math.cos(a) * d, uz = p.z + Math.sin(a) * d, H = 0.42 + R(k + 5) * 0.2, W = 0.27 + R(k + 9) * 0.06;
         b.tinted(R(k + 7) < 0.5 ? [1.38, 1.08, 0.74] : [1.28, 1.12, 0.88], () => b.lathe('crypt_cap', [{ y: 0, r: W * 0.55 }, { y: 0.05, r: W * 0.7 }, { y: H * 0.45, r: W }, { y: H * 0.85, r: W * 0.62 }, { y: H, r: W * 0.66 }], { segments: 12, at: [ux, FL, uz] }));
-        b.lathe(cryptDark, [{ y: 0, r: W * 0.5 }, { y: 0.001, r: 0 }], { segments: 10, at: [ux, FL + H - 0.02, uz] });
+        b.tinted([1.2, 1.12, 0.98], () => b.lathe('crypt_cap', [{ y: 0, r: W * 0.7 }, { y: 0.05, r: W * 0.62 }, { y: 0.1, r: W * 0.2 }, { y: 0.16, r: 0 }], { segments: 10, at: [ux, FL + H, uz] }));   // (a lid: open mouths read as black holes from above, round 7)
       }
     } else if (p.k === 'bonepile') {
       // a heap of the dead the shelves no longer hold: skulls and the long bones
@@ -1076,7 +1080,7 @@ function buildTavern(pieces) {
     for (const q of geos) if (q !== merged) q.dispose();
     if (!merged) continue;
     const mesh = new THREE.Mesh(merged, m);
-    const lit = m === tavernGlass || m === tavernEmber || m === tavernNight || m === tavernNightHi || m === tavernStar || m === tavernGrime || m === cryptDark || m === cryptDamp || m === cryptBeam || m === cryptPatch || m === cryptGold;
+    const lit = m === tavernGlass || m === tavernEmber || m === tavernNight || m === tavernNightHi || m === tavernStar || m === tavernGrime || m === cryptDark || m === cryptDamp || m === cryptBeam || m === cryptPatch || m === cryptGold || m === cryptOx;
     mesh.castShadow = !lit && m !== tavernWeb; mesh.receiveShadow = !lit;
     g.add(mesh);
   }
@@ -1281,8 +1285,8 @@ function ossuaryBones(s, K) {
     const band = y % 24, row = Math.floor(y / 24);   // (round 4: back to two courses a unit, each skull its own turn: at three they read as gravel)
     let t = 0, hf = 0, gap = true;
     if (band < 15) {                                           // a row of skulls, twelve wide, staggered row to row
-      const cw = 12, k = Math.floor((x + (row % 2) * 6) / cw), turn = (K.hash2(k, row, 957) - 0.5) * 2.0, cx = ((x + (row % 2) * 6) % cw) - cw / 2 + 0.5 - turn * 0.4, cy = band - 7;
-      const sz = 0.9 + K.hash2(k, row, 959) * 0.2, rr = (cx * cx) / (27 * sz * sz) + (cy * cy) / (38 * sz * sz);   // (each its own size, ±10 %)
+      const cw = 12, k = Math.floor((x + (row % 2) * 6) / cw), turn = (K.hash2(k, row, 957) - 0.5) * 2.6, cx = ((x + (row % 2) * 6) % cw) - cw / 2 + 0.5 - turn * 0.4, cy = band - 7;
+      const sz = 0.85 + K.hash2(k, row, 959) * 0.3, rr = (cx * cx) / (27 * sz * sz) + (cy * cy) / (38 * sz * sz);   // (each its own size, ±10 %)
       if (rr < 1) {
         gap = false; t = 0.5 + K.hash2(k, row, 953) * 0.45 - cy * 0.03 + (N[i] - 0.5) * 0.12; hf = 1 - rr * 0.6;
         if (cy > -1.5 && cy < 2.2 && Math.abs(Math.abs(cx - turn * 0.6) - 2.1) < 1.3) { t = 0.0; hf = 0.15; }   // (the eye sockets)
@@ -1441,10 +1445,10 @@ registerTextureSet((K) => {
     tavern_wall: { px: [48, 48], normalScale: 0.85, gen: (s, ctx) => ashlar(s, ctx, K, P(['#3c3631', '#4e4741', '#605850', '#726960', '#857a6e', '#978b7d', '#a99d8d', '#bbb09e']), ['#2c2622', '#231e1b'], ['#8a7a64', '#6e7480']) },
     // the Haddow Crypt (docs/crypt-dungeon.md): pale cool limestone ashlar in a light mortar, worn smooth; pale slabs
     // underfoot, the family's ledger stones among them, a name and a border cut in each; the ossuary's walls of bones
-    crypt_wall: { px: [48, 48], normalScale: 0.75, gen: (s, ctx) => ashlar(s, ctx, K, P(['#6a6253', '#7e7563', '#928874', '#a59a84', '#b8a88c', '#c6b79b', '#d2c4a9', '#ddd0b6']), ['#7a6c58', '#6c5f4d'], ['#b09e7c', '#9a9a94']) },   // (round 4: warm grey joints)   // (round 2: warm pale limestone, a clear step over the floor)
+    crypt_wall: { px: [48, 48], normalScale: 0.75, gen: (s, ctx) => ashlar(s, ctx, K, P(['#6c6150', '#807360', '#958671', '#a89780', '#bca88a', '#c9b696', '#d4c2a4', '#dfcfb3']), ['#7a6c58', '#6c5f4d'], ['#b09e7c', '#9a9a94']) },   // (round 4: warm grey joints)   // (round 2: warm pale limestone, a clear step over the floor)
     crypt_top: { px: [32, 32], normalScale: 0.3, gen: (s) => { const N = K.field(s.w, s.h, 4, 4, 965, { oct: 2 }), R = P(['#8c8474', '#9a917f', '#a89e8b', '#b5ab97', '#c1b7a2']); s.each((x, y, i) => { s.set(x, y, at(R, Math.max(0, Math.min(1, 0.5 + (N[i] - 0.5) * 0.6)))); s.hf[i] = 0.6; }); return { normal: 1 }; } },   // (the walls' coping, pale: round 2, "the tops read flat and dark")
     crypt_sill: { px: [48, 48], normalScale: 0.75, gen: (s, ctx) => ashlar(s, ctx, K, P(['#4f4a3f', '#5e584b', '#6d6656', '#7c7462', '#8a816d', '#968c77', '#a19782', '#aba18c']), ['#5c5244', '#51483b'], ['#867860', '#787874']) },   // (the near sills, a quarter darker: round 5)
-    crypt_sill_top: { px: [32, 32], normalScale: 0.3, gen: (s) => { const N = K.field(s.w, s.h, 4, 4, 967, { oct: 2 }), R = P(['#7a7262', '#86806e', '#928a78', '#9e9584', '#a8a08e']); s.each((x, y, i) => { s.set(x, y, at(R, Math.max(0, Math.min(1, 0.5 + (N[i] - 0.5) * 0.6)))); s.hf[i] = 0.6; }); return { normal: 1 }; } },
+    crypt_sill_top: { px: [32, 32], normalScale: 0.3, gen: (s) => { const N = K.field(s.w, s.h, 4, 4, 967, { oct: 2 }), R = P(['#867d6c', '#938b78', '#a09784', '#ada390', '#b8ae9a']); s.each((x, y, i) => { s.set(x, y, at(R, Math.max(0, Math.min(1, 0.5 + (N[i] - 0.5) * 0.6)))); s.hf[i] = 0.6; }); return { normal: 1 }; } },
     crypt_flag: { px: [64, 64], normalScale: 0.7, gen: (s) => tavernFlags(s, K, P(['#3e3830', '#5e574c', '#655d52', '#6c6458', '#736a5e', '#7a7064', '#81776a']), false) },   // (round 4: the flags' spread narrowed, so the ledger stones stand out)   // (round 1: a step darker and warmer than the tombs' pale stone, so they stand off it)
     crypt_ledger: { px: [64, 64], normalScale: 0.8, gen: (s) => ledgerStone(s, K, P(['#36312b', '#706757', '#82786a', '#928879', '#9f9582', '#aca290', '#b8ae9b'])) },   // (round 1: a fifth lighter than the flags round it, so they're seen)
     // the carving stone (the tombs, their likenesses, the arches, the tablets): a fine pale limestone, its grain soft, a
