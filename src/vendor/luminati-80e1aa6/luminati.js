@@ -19915,7 +19915,7 @@ function lh(e) {
 	for (let u of e) {
 		let e = l.has(u.k) || u.k === "plaque" || u.k === "saint" || u.k === "mourner";
 		if (e) {
-			let e = u.k === "plaque" ? 1.8 : u.k === "saint" ? 1.45 : u.k === "mourner" ? 1.2 : 1.95, t = u.k === "plaque" ? o(u, 0, 2.7, 0) : u.k === "saint" || u.k === "mourner" ? [
+			let e = u.k === "plaque" ? 1.8 : u.k === "saint" ? 1.45 : u.k === "mourner" ? 1.4 : 1.95, t = u.k === "plaque" ? o(u, 0, 2.7, 0) : u.k === "saint" || u.k === "mourner" ? [
 				u.x,
 				1,
 				u.z
@@ -20974,12 +20974,12 @@ function lh(e) {
 		} else if (u.k === "loculi") {
 			let e = (e) => (Math.imul(u.seed + e * 977, 2654435761) >>> 0) % 1e3 / 1e3;
 			for (let t = 0; t < 3; t++) for (let r = 0; r < 3; r++) {
-				let i = t * 3 + r, a = (r - 1) * 1, c = 1.62 + t * .76, l = e(i) < .25;
-				n.tinted([
+				let i = t * 3 + r, a = (r - 1) * 1, l = 1.62 + t * .76, d = e(i) < .25;
+				if (n.tinted([
 					1.1,
 					1.07,
 					1
-				], () => n.box("crypt_cap", s(u, .96, .1, .24), { at: o(u, a, c - .36, .1) })), l ? (n.box(Zm, s(u, .86, .6, .02), { at: o(u, a, c, .03) }), e(i + 5) < .5 ? n.tinted([
+				], () => n.box("crypt_cap", s(u, .96, .1, .24), { at: o(u, a, l - .36, .1) })), d) n.box(Zm, s(u, .86, .6, .02), { at: o(u, a, l, .03) }), e(i + 5) < .5 ? n.tinted([
 					1.15,
 					1.1,
 					.98
@@ -21006,7 +21006,7 @@ function lh(e) {
 					}
 				], {
 					segments: 9,
-					at: o(u, a, c - .16, .1),
+					at: o(u, a, l - .16, .1),
 					rot: u.n === "z" ? [
 						0,
 						0,
@@ -21021,21 +21021,28 @@ function lh(e) {
 						1.3,
 						1.3
 					]
-				})) : eh(n, u, a, c - .14, .14, .75)) : (n.tinted([
-					1.25 + (e(i + 7) - .5) * .2,
-					1.21,
-					1.12
-				], () => n.box("crypt_cap", s(u, .86, .6, .06), { at: o(u, a, c, .05) })), n.tinted([
-					.32,
-					.31,
-					.3
-				], () => {
-					for (let t of [
-						.14,
-						.02,
-						-.1
-					]) n.box("crypt_cap", s(u, .4 + e(i + t * 10) * .24, .035, .01), { at: o(u, a, c + t, .085) });
-				}));
+				})) : eh(n, u, a, l - .14, .14, .75);
+				else {
+					let t = e(i + 11) < .2 ? (e(i + 13) - .5) * .5 : 0;
+					n.tinted([
+						1.38 + (e(i + 7) - .5) * .2,
+						1.32,
+						1.2
+					], () => n.box("crypt_cap", s(u, .86, .6, .06), {
+						at: o(u, a, l, .05 + Math.abs(t) * .1),
+						rot: c(u, t)
+					})), n.tinted([
+						.32,
+						.31,
+						.3
+					], () => {
+						for (let t of [
+							.14,
+							.02,
+							-.1
+						]) n.box("crypt_cap", s(u, .4 + e(i + t * 10) * .24, .035, .01), { at: o(u, a, l + t, .085) });
+					});
+				}
 			}
 		} else if (u.k === "plaque") {
 			let e = 2.75;
@@ -21274,7 +21281,7 @@ function lh(e) {
 				color: new P("#9fb4c8"),
 				map: Ym(),
 				transparent: !0,
-				opacity: .32,
+				opacity: .45,
 				depthWrite: !1,
 				fog: !1,
 				blending: 2,
@@ -21289,12 +21296,39 @@ function lh(e) {
 				0,
 				Math.cos(t) * e
 			];
+			n.quad($m, [
+				[
+					t[0] - .75,
+					1.02,
+					t[2] - .75
+				],
+				[
+					t[0] + .75,
+					1.02,
+					t[2] - .75
+				],
+				[
+					t[0] + .75,
+					1.02,
+					t[2] + .75
+				],
+				[
+					t[0] - .75,
+					1.02,
+					t[2] + .75
+				]
+			].reverse(), [
+				[0, .5],
+				[1, .5],
+				[1, .5],
+				[0, .5]
+			]);
 			for (let i of [
 				0,
 				Math.PI / 3,
 				-Math.PI / 3
 			]) {
-				let a = r(.5, i), o = r(.7, i);
+				let a = r(.5, i), o = r(.75, i);
 				n.quad($m, [
 					[
 						e[0] - a[0],
@@ -21456,9 +21490,9 @@ function lh(e) {
 					rot: l
 				});
 			}), n.tinted([
-				.7,
-				.68,
-				.64
+				.36,
+				.34,
+				.32
 			], () => n.box("crypt_cap", [
 				t + .12,
 				.12,
@@ -21469,20 +21503,20 @@ function lh(e) {
 			}));
 			let f = 1 + a + i + .12 + .1, p = e ? 1.12 : 1;
 			if (n.tinted([
-				1.3,
-				1.26,
-				1.18
+				.6,
+				.57,
+				.53
 			], () => n.box("crypt_cap", [
-				1.9 * p,
-				.1,
-				.62 * p
+				t * .86,
+				.08,
+				.66 * p
 			], {
 				at: c(.05, f - .05, 0),
 				rot: l
 			})), n.tinted([
-				1.62,
-				1.56,
-				1.44
+				1.78,
+				1.7,
+				1.55
 			], () => {
 				n.box("crypt_cap", [
 					.36 * p,
@@ -21517,11 +21551,11 @@ function lh(e) {
 						Math.PI / 2
 					]
 				}), n.box("crypt_cap", [
-					1.45 * p,
+					t * .62,
 					.3,
 					.52 * p
 				], {
-					at: c(.12, f + .15, 0),
+					at: c(.1, f + .15, 0),
 					rot: l
 				}), n.box("crypt_cap", [
 					.7 * p,
@@ -21546,7 +21580,25 @@ function lh(e) {
 					at: c(t / 2 - .3, f + .12, e * .1),
 					rot: l
 				});
-			}), (e || d(1) < .34) && n.tinted([
+			}), !e && d(3) < .5 && (n.tinted([
+				1.2,
+				1.15,
+				1
+			], () => n.lathe("linen", [{
+				y: 0,
+				r: .045
+			}, {
+				y: .2,
+				r: .04
+			}], {
+				segments: 7,
+				capTop: !0,
+				at: c(t / 2 - .1, f - .1, r / 2 - .12)
+			})), n.box(th, [
+				.05,
+				.09,
+				.05
+			], { at: c(t / 2 - .1, f + .17, r / 2 - .12) })), (e || d(1) < .34) && n.tinted([
 				.8,
 				.8,
 				.82
@@ -21611,9 +21663,9 @@ function lh(e) {
 					at: c(0, 3.66 - .01, 0),
 					rot: l
 				}), n.tinted([
-					1.06,
-					1.03,
-					.98
+					1.3,
+					1.25,
+					1.14
 				], () => {
 					for (let t of [-1, 1]) n.tinted([
 						.4,
@@ -21647,6 +21699,30 @@ function lh(e) {
 					], {
 						segments: 9,
 						at: c(0, 4.96, 0)
+					});
+					let t = 3.96, r = i + .27;
+					n.poly("crypt_cap", [
+						c(-e - .2, t, r),
+						c(e + .2, t, r),
+						c(0, 4.91, r)
+					], {
+						uAxis: [
+							1,
+							0,
+							0
+						],
+						vAxis: [
+							0,
+							1,
+							0
+						]
+					}), n.box("crypt_cap", [
+						2 * e + .62,
+						.1,
+						.12
+					], {
+						at: c(0, 3.98, r),
+						rot: l
 					});
 				});
 			}
@@ -21734,6 +21810,107 @@ function lh(e) {
 				2.35,
 				u.z + .26
 			] });
+		});
+		else if (u.k === "footcandles") {
+			let e = (e) => (Math.imul(u.seed + e * 977, 2654435761) >>> 0) % 1e3 / 1e3;
+			for (let t = 0; t < 3; t++) {
+				let r = -.5 + t * .45 + (e(t) - .5) * .2, i = .35 + e(t + 3) * .2, a = .1 + e(t + 5) * .2;
+				n.tinted([
+					1.15,
+					1.1,
+					.96
+				], () => {
+					n.lathe("linen", [
+						{
+							y: 0,
+							r: .09
+						},
+						{
+							y: .02,
+							r: .06
+						},
+						{
+							y: .03,
+							r: 0
+						}
+					], {
+						segments: 8,
+						at: o(u, r, 1, i)
+					}), n.lathe("linen", [{
+						y: 0,
+						r: .045
+					}, {
+						y: a,
+						r: .04
+					}], {
+						segments: 7,
+						capTop: !0,
+						at: o(u, r, 1, i)
+					});
+				}), n.box(th, [
+					.04,
+					.07,
+					.04
+				], { at: o(u, r, 1 + a + .05, i) });
+			}
+		} else if (u.k === "footbones") n.tinted(Xm, () => {
+			for (let [e, t, r, i] of [
+				[
+					-.6,
+					0,
+					.3,
+					.45
+				],
+				[
+					-.2,
+					.4,
+					.5,
+					.3
+				],
+				[
+					.1,
+					.6,
+					.25,
+					.38
+				]
+			]) n.tube("linen", o(u, e, 1.05, r), o(u, t, 1.06, i), .035, .035, { segments: 5 });
+		}), eh(n, u, .42, 1.1, .11, .4);
+		else if (u.k === "fallenslab") n.tinted([
+			1.25,
+			1.2,
+			1.1
+		], () => n.box("crypt_cap", s(u, .82, .58, .07), {
+			at: o(u, .1, 1.27, .22),
+			rot: u.n === "z" ? [
+				-.32,
+				0,
+				0
+			] : [
+				0,
+				0,
+				.32
+			]
+		})), n.tinted([
+			.32,
+			.31,
+			.3
+		], () => {
+			for (let e of [
+				.1,
+				0,
+				-.1
+			]) n.box("crypt_cap", s(u, .44, .03, .01), {
+				at: o(u, .1, 1.27 + e, .26 - e * .32),
+				rot: u.n === "z" ? [
+					-.32,
+					0,
+					0
+				] : [
+					0,
+					0,
+					.32
+				]
+			});
 		});
 		else if (u.k === "candlestand") {
 			n.tinted(Km, () => {
@@ -22844,15 +23021,15 @@ qt((e) => {
 			px: [48, 48],
 			normalScale: .75,
 			gen: (n, r) => Bh(n, r, e, t([
-				"#5a5348",
-				"#6e665a",
-				"#82796b",
-				"#958b7b",
-				"#a69c8a",
-				"#b5aa94",
-				"#c3b8a2",
-				"#cfc5ae"
-			]), ["#4a443b", "#423d35"], ["#a09276", "#8c8c88"])
+				"#6a6253",
+				"#7e7563",
+				"#928874",
+				"#a59a84",
+				"#b8a88c",
+				"#c6b79b",
+				"#d2c4a9",
+				"#ddd0b6"
+			]), ["#544c40", "#4a433a"], ["#b09e7c", "#9a9a94"])
 		},
 		crypt_top: {
 			px: [32, 32],
@@ -22874,13 +23051,13 @@ qt((e) => {
 			px: [64, 64],
 			normalScale: .7,
 			gen: (n) => Wh(n, e, t([
-				"#36312b",
-				"#5a534a",
-				"#665e54",
-				"#72695e",
-				"#7e7468",
-				"#897f72",
-				"#958a7c"
+				"#3e3830",
+				"#564f45",
+				"#615a4f",
+				"#6c6458",
+				"#776e61",
+				"#81786a",
+				"#8b8173"
 			]), !1)
 		},
 		crypt_ledger: {

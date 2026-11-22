@@ -541,7 +541,7 @@ export const PLANS = {
       { from: 'the_stair_hall', to: 'the_hall_of_tombs', x: 32, y: 44, w: 10, h: 10 },
       { from: 'the_hall_of_tombs', to: 'the_chantry_chapel', x: 48, y: 20, w: 10, h: 10 },
       { from: 'the_hall_of_tombs', to: 'the_ossuary', x: 92, y: 44, w: 10, h: 10 },
-      { from: 'the_hall_of_tombs', to: 'the_founders_vault', x: 80, y: 70, w: 10, h: 10 },
+      { from: 'the_hall_of_tombs', to: 'the_founders_vault', x: 46, y: 70, w: 10, h: 10 },   // (at the west end: the founder's canopy stands at the middle of the vault's back wall, round 3)
     ] },
   ] },
 

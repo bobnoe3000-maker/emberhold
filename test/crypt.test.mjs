@@ -41,7 +41,7 @@ test('the Crypt: each room dressed as written, on every seed', () => {
     assert.equal(vault.great_tomb, 1, `seed ${seed}: the founder's`); assert.equal(vault.mourner, 2, `seed ${seed}: his mourners`);
     assert.equal(chantry.altar, 1, `seed ${seed}: the chantry's altar`); assert.equal((chantry.pew || 0) + (chantry.pew_y || 0), 4, `seed ${seed}: its pews`);
     assert.equal(stair.offering, 1, `seed ${seed}: the offering table`);
-    assert.ok(hall.candelabra >= 2, `seed ${seed}: candelabra in the hall`);
+    assert.ok(hall.candelabra >= 1 && hall.candles >= 2, `seed ${seed}: a candelabrum and the doorways' candles in the hall`);
   }
 });
 

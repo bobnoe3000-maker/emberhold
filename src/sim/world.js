@@ -102,7 +102,7 @@ const PLAN_OB = { dig: ['spoil', 'brokenpillar'], gallery: ['pillar', 'brokenpil
   yards: ['pillar', 'spoil'], quota: ['pillar'], forge: ['pillar', 'brokenpillar'], deepforge: ['pillar'], works: ['pillar', 'spoil'], vault: ['stalagmite', 'boulder'], strongroom: ['pillar'], tavern: [], tavern_cellar: [], crypt: [], ossuary: [] };   // (the tavern: nothing stood out in its floors, which are for the fight)   // (v1.126)   // (v1.124: the Cold Seam)   // (v1.102: the Fens authored)
 const DOOR_LIGHT = { dig: 'lantern', gallery: 'candles', muster: 'torch', bailey: 'torch', barracks: 'torch', cellar: 'lantern', nave: 'candelabra', cultcut: 'candles', binding: 'candles',
   mound: 'lantern', locks: 'lantern', vats: 'lantern', abbey: 'candelabra', pithead: 'lantern', warren: 'torch',
-  yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra', tavern: 'torch', tavern_cellar: 'candles', crypt: 'candelabra', ossuary: 'candles' };   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
+  yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra', tavern: 'torch', tavern_cellar: 'candles', crypt: 'candles', ossuary: 'candles' };   // (the crypt's doorways a low pricket: a candelabrum crowded the threshold, round 3)   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
 const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave', yards: 'storehouse', quota: 'cellar', forge: 'muster', deepforge: 'binding', works: 'storehouse', vault: 'cave', strongroom: 'muster', tavern: 'storehouse', tavern_cellar: 'storehouse', crypt: 'crypt', ossuary: 'ossuary' };
 const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', crates: 'crates', sacks: 'sacks', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', skulls: 'bones', bones: 'bones', barrels: 'barrels' };
 function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, count }) {
@@ -227,16 +227,16 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       case 'tombs': case 'tombs_near': {
         // (the hall's: two along the back wall east of the chantry's door, two along the near wall west of the vault's;
         // the vault's own pair along its near wall)
-        const spots = d === 'tombs' ? [[L * 0.25, -Wd + 2], [L * 0.7, -Wd + 2], [-L * 0.7, Wd - 2], [-L * 0.28, Wd - 2]] : [[-L * 0.55, Wd - 2], [L * 0.55, Wd - 2]];
+        const spots = d === 'tombs' ? [[L * 0.25, -Wd + 2], [L * 0.7, -Wd + 2], [L * 0.28, Wd - 2], [L * 0.7, Wd - 2]] : [[-L * 0.55, Wd - 2], [L * 0.55, Wd - 2]];   // (the hall's doors west, to the chantry and down to the vault: its tombs east)
         for (const [u, v] of spots) unit(u, v, -2, 2, -1, 1, alongK('tomb'));
       } break;
-      case 'great_tomb': unit(-L * 0.28, -Wd + 2, -4, 4, -2, 2, 'great_tomb'); break;   // (its chest and canopy, nine wide by five deep, against the back wall west of the door in)
-      case 'mourners': for (const s of [-1, 1]) unit(-L * 0.28 + s * 5.5, -Wd + 5, 0, 1, 0, 1, 'mourner'); break;   // (at the canopy's front corners, where they're seen: round 2)
-      case 'founder_lights': for (const s of [-1, 1]) putAt(-L * 0.28 + s * 7, -Wd + 1, 'candelabra'); break;   // (a candelabrum either side of his canopy, his light)
+      case 'great_tomb': unit(0, -Wd + 2, -4, 4, -2, 2, 'great_tomb'); break;   // (its chest and canopy, nine wide by five deep, at the back wall's middle: round 3)
+      case 'mourners': for (const s of [-1, 1]) unit(s * 5.5, -Wd + 5, 0, 1, 0, 1, 'mourner'); break;   // (at the canopy's front corners, where they're seen: round 2)
+      case 'founder_lights': for (const s of [-1, 1]) putAt(s * 7, -Wd + 1, 'candelabra'); break;   // (a candelabrum either side of his canopy, his light)
       case 'tomb_one': unit(-L * 0.4, Wd - 2, -2, 2, -1, 1, alongK('tomb')); break;   // (the stair hall's one tomb, by the near wall)
-      case 'candelabra_pair': for (const s of [-1, 1]) putAt(s * L * 0.47, -Wd + 1, 'candelabra'); break;   // (between the back wall's tombs)
+      case 'candelabra_pair': putAt(L * 0.47, -Wd + 1, 'candelabra'); putAt(0, Wd - 1, 'candelabra'); break;   // (between the back wall's tombs, and at the near wall's middle: the hall's doors take its west end)
       case 'candelabra_ends': for (const s of [-1, 1]) putAt(s * (L - 1), -Wd * 0.45, 'candelabra'); break;   // (at the end walls, by the wall: keepclear.js)
-      case 'offering': unit(-L * 0.3, -Wd + 1, -2, 2, -1, 0, 'offering'); break;   // (the stair hall's table of offerings, against the back wall)
+      case 'offering': unit(-L * 0.6, -Wd + 1, -2, 2, -1, 0, 'offering'); break;   // (clear of the stair well beside it: round 3)   // (the stair hall's table of offerings, against the back wall)
       case 'chantry_altar': unit(0, -Wd + 1, -3, 3, -1, 1, 'altar'); for (const s of [-1, 1]) putAt(s * 5, -Wd + 1, 'candles'); break;
       case 'chantry_pews': for (const s of [-1, 1]) for (const v of [-3, 2]) unit(s * (L - 1.5), v, 0, 0, -1, 1, acrossK('pew')); break;   // (two either side, against the side walls, the middle open: round 1, "the pews fill the middle")
       // the corners: an urn and a heap of the bones the shelves no longer hold (a doorway's mouth keeps them off: putAt)
