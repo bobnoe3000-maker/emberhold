@@ -232,6 +232,7 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       } break;
       case 'great_tomb': unit(0, -Wd + 2, -4, 4, -2, 2, 'great_tomb'); break;   // (its chest and canopy, nine wide by five deep, at the back wall's middle: round 3)
       case 'mourners': for (const s of [-1, 1]) unit(s * 5.5, -Wd + 5, 0, 1, 0, 1, 'mourner'); break;   // (at the canopy's front corners, where they're seen: round 2)
+      case 'tombs_side': for (const s of [-1, 1]) unit(s * (L - 2.5), 0, -1, 1, -2, 2, acrossK('tomb')); break;   // (one against each side wall: round 4, "the vault is sparse")
       case 'founder_lights': for (const s of [-1, 1]) putAt(s * 7, -Wd + 1, 'candelabra'); break;   // (a candelabrum either side of his canopy, his light)
       case 'tomb_one': unit(-L * 0.4, Wd - 2, -2, 2, -1, 1, alongK('tomb')); break;   // (the stair hall's one tomb, by the near wall)
       case 'candelabra_pair': putAt(L * 0.47, -Wd + 1, 'candelabra'); putAt(0, Wd - 1, 'candelabra'); break;   // (between the back wall's tombs, and at the near wall's middle: the hall's doors take its west end)

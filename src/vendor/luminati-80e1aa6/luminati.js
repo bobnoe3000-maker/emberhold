@@ -20898,7 +20898,11 @@ function lh(e) {
 				1.3,
 				1.26,
 				1.18
-			], () => n.box("crypt_cap", s(t, e, .04, .36), { at: o(t, 0, u.y + .15, .18) }))) : (n.tinted([
+			], () => n.box("crypt_cap", s(t, e, .04, .36), { at: o(t, 0, u.y + .15, .18) })), n.tinted([
+				1.25,
+				1.2,
+				1.1
+			], () => n.box("crypt_top", s(t, e, .12, .55), { at: o(t, 0, u.y + .21, 0) }))) : (n.tinted([
 				.86,
 				.84,
 				.82
@@ -20911,9 +20915,9 @@ function lh(e) {
 		} else if (u.k === "arcade") {
 			let e = u.w / 2 - .05, t = Math.min(e, (u.top || r) - .42 - fh), i = (n, r) => [Math.cos(n) * (e + r), fh + Math.sin(n) * (t + r)];
 			n.tinted([
-				.34,
+				.42,
 				.36,
-				.42
+				.3
 			], () => {
 				n.box("crypt_wall", s(u, 2 * e, fh - 1 - .26, .02), { at: o(u, 0, (fh + 1 + .26) / 2, .01) }), n.lathe("crypt_wall", [
 					{
@@ -20955,22 +20959,22 @@ function lh(e) {
 					]
 				});
 			}), n.tinted([
-				1.32,
-				1.28,
-				1.2
+				1.52,
+				1.46,
+				1.34
 			], () => {
 				for (let e = 0; e < 13; e++) {
 					let t = e / 13 * Math.PI, r = (e + 1) / 13 * Math.PI, [a, l] = i(t, .11), [d, f] = i(r, .11);
-					n.box("crypt_cap", s(u, Math.hypot(d - a, f - l) + .03, .3, .28), {
-						at: o(u, (a + d) / 2, (l + f) / 2, .14),
+					n.box("crypt_cap", s(u, Math.hypot(d - a, f - l) + .03, .3, .4), {
+						at: o(u, (a + d) / 2, (l + f) / 2, .2),
 						rot: c(u, -Math.atan2(f - l, d - a))
 					});
 				}
 			}), n.tinted([
-				1.4,
-				1.35,
-				1.25
-			], () => n.box("crypt_cap", s(u, .34, .5, .32), { at: o(u, 0, fh + t + .14, .16) }));
+				1.62,
+				1.55,
+				1.42
+			], () => n.box("crypt_cap", s(u, .36, .52, .44), { at: o(u, 0, fh + t + .14, .22) }));
 		} else if (u.k === "loculi") {
 			let e = (e) => (Math.imul(u.seed + e * 977, 2654435761) >>> 0) % 1e3 / 1e3;
 			for (let t = 0; t < 3; t++) for (let r = 0; r < 3; r++) {
@@ -21278,10 +21282,10 @@ function lh(e) {
 				]) n.box("metal", s(u, .05, .64, .05), { at: o(u, e, u.y, .08) });
 				n.box("metal", s(u, 1, .05, .05), { at: o(u, 0, u.y, .08) });
 			}), $m ||= new tt({
-				color: new P("#9fb4c8"),
+				color: new P("#ece6d4"),
 				map: Ym(),
 				transparent: !0,
-				opacity: .45,
+				opacity: .26,
 				depthWrite: !1,
 				fog: !1,
 				blending: 2,
@@ -21318,10 +21322,10 @@ function lh(e) {
 					t[2] + .75
 				]
 			].reverse(), [
-				[0, .5],
-				[1, .5],
-				[1, .5],
-				[0, .5]
+				[0, .1],
+				[1, .1],
+				[1, .9],
+				[0, .9]
 			]);
 			for (let i of [
 				0,
@@ -21466,9 +21470,9 @@ function lh(e) {
 					rot: l
 				});
 			}), n.tinted([
-				.56,
-				.54,
-				.5
+				.8,
+				.76,
+				.7
 			], () => n.box("crypt_cap", [
 				t,
 				i,
@@ -21477,9 +21481,9 @@ function lh(e) {
 				at: c(0, 1 + a + i / 2, 0),
 				rot: l
 			})), n.tinted([
-				.38,
-				.37,
-				.36
+				.5,
+				.47,
+				.44
 			], () => {
 				for (let e of [-1, 1]) for (let o = 0; o < 3; o++) n.box("crypt_cap", [
 					t / 3 - .16,
@@ -21488,6 +21492,41 @@ function lh(e) {
 				], {
 					at: c((o - 1) * t / 3, 1 + a + i / 2, e * (r / 2 + .005)),
 					rot: l
+				});
+			}), n.tinted([
+				.4,
+				.37,
+				.33
+			], () => n.box("crypt_cap", [
+				t + .04,
+				.15,
+				r + .04
+			], {
+				at: c(0, 1 + a + .075, 0),
+				rot: l
+			})), n.tinted([
+				1.05,
+				1,
+				.92
+			], () => {
+				for (let e of [-1, 1]) n.box("crypt_cap", [
+					.36,
+					.42,
+					.03
+				], {
+					at: c(0, 1 + a + i / 2 + .03, e * (r / 2 + .02)),
+					rot: l
+				}), n.box("crypt_cap", [
+					.26,
+					.14,
+					.035
+				], {
+					at: c(0, 1 + a + i / 2 - .22, e * (r / 2 + .02)),
+					rot: [
+						0,
+						u.rot || 0,
+						.78
+					]
 				});
 			}), n.tinted([
 				.36,
@@ -21739,9 +21778,9 @@ function lh(e) {
 			1.25,
 			u.z
 		] })), n.tinted([
-			1.25,
-			1.21,
-			1.13
+			1.45,
+			1.4,
+			1.3
 		], () => {
 			n.lathe("crypt_cap", [
 				{
@@ -21811,6 +21850,24 @@ function lh(e) {
 				u.z + .26
 			] });
 		});
+		else if (u.k === "hatchment") n.tinted([
+			.3,
+			.24,
+			.18
+		], () => n.box("furniture_wood", s(u, .9, .9, .05), {
+			at: o(u, 0, u.y, .06),
+			rot: c(u, Math.PI / 4)
+		})), n.box(Zm, s(u, .74, .74, .02), {
+			at: o(u, 0, u.y, .095),
+			rot: c(u, Math.PI / 4)
+		}), n.tinted([
+			1.45,
+			1.12,
+			.5
+		], () => {
+			n.box("metal", s(u, .4, .16, .03), { at: o(u, 0, u.y - .02, .11) }), n.box("metal", s(u, .12, .12, .03), { at: o(u, .22, u.y + .04, .11) }), n.box("metal", s(u, .04, .2, .03), { at: o(u, 0, u.y + .14, .11) });
+			for (let e of [-1, 1]) n.box("metal", s(u, .04, .12, .03), { at: o(u, e * .12, u.y - .14, .11) });
+		});
 		else if (u.k === "footcandles") {
 			let e = (e) => (Math.imul(u.seed + e * 977, 2654435761) >>> 0) % 1e3 / 1e3;
 			for (let t = 0; t < 3; t++) {
@@ -21856,25 +21913,25 @@ function lh(e) {
 		} else if (u.k === "footbones") n.tinted(Xm, () => {
 			for (let [e, t, r, i] of [
 				[
-					-.6,
-					0,
+					-.8,
+					.05,
 					.3,
-					.45
+					.5
 				],
 				[
-					-.2,
-					.4,
-					.5,
-					.3
-				],
-				[
-					.1,
+					-.3,
+					.55,
 					.6,
+					.32
+				],
+				[
+					.05,
+					.8,
 					.25,
-					.38
+					.42
 				]
-			]) n.tube("linen", o(u, e, 1.05, r), o(u, t, 1.06, i), .035, .035, { segments: 5 });
-		}), eh(n, u, .42, 1.1, .11, .4);
+			]) n.tube("linen", o(u, e, 1.06, r), o(u, t, 1.08, i), .055, .05, { segments: 6 });
+		}), eh(n, u, .55, 1.1400000000000001, .16, .45);
 		else if (u.k === "fallenslab") n.tinted([
 			1.25,
 			1.2,
@@ -22625,15 +22682,15 @@ function Hh(e, t) {
 		"#9c9178",
 		"#b0a588",
 		"#c2b898"
-	].map((e) => t.parseColor(e)), a = t.parseColor("#15110e"), o = (e) => i[Math.max(0, Math.min(i.length - 1, Math.round(e * (i.length - 1))))], s = t.field(n, r, 6, 6, 951, { oct: 2 });
+	].map((e) => t.parseColor(e)), a = t.parseColor("#110d0a"), o = (e) => i[Math.max(0, Math.min(i.length - 1, Math.round(e * (i.length - 1))))], s = t.field(n, r, 6, 6, 951, { oct: 2 });
 	return e.each((n, r, i) => {
-		let c = r % 16, l = Math.floor(r / 16), u = 0, d = 0, f = !0;
-		if (c < 10) {
-			let e = Math.floor((n + l % 2 * 4) / 8), r = (t.hash2(e, l, 957) - .5) * 1.6, a = (n + l % 2 * 4) % 8 - 4 + .5 - r * .4, o = c - 4.5, p = a * a / 12.5 + o * o / 16;
-			p < 1 && (f = !1, u = .55 + t.hash2(e, l, 953) * .3 - o * .04 + (s[i] - .5) * .12, d = 1 - p * .6, o > -1.2 && o < 1.8 && Math.abs(Math.abs(a - r * .5) - 1.45) < 1 && (u = 0, d = .15), o > 2.2 && o < 3.4 && Math.abs(a - r * .5) < .55 && (u = .05, d = .3));
+		let c = r % 24, l = Math.floor(r / 24), u = 0, d = 0, f = !0;
+		if (c < 15) {
+			let e = Math.floor((n + l % 2 * 6) / 12), r = (t.hash2(e, l, 957) - .5) * 2, a = (n + l % 2 * 6) % 12 - 6 + .5 - r * .4, o = c - 7, p = a * a / 27 + o * o / 38;
+			p < 1 && (f = !1, u = .55 + t.hash2(e, l, 953) * .3 - o * .03 + (s[i] - .5) * .12, d = 1 - p * .6, o > -1.5 && o < 2.2 && Math.abs(Math.abs(a - r * .6) - 2.1) < 1.3 && (u = 0, d = .15), o > 3.2 && o < 4.8 && Math.abs(a - r * .6) < .7 && (u = .05, d = .3));
 		} else {
-			let e = n % 3 - 1, r = c - 12.5 + (Math.floor(n / 3) % 2 ? .4 : -.3), a = e * e / 1.8 + r * r / 5;
-			a < 1 && (f = !1, u = (l % 3 == 2 ? .7 : .4) + t.hash2(n >> 2, l, 955) * .3 + (s[i] - .5) * .14, d = .85 - a * .4);
+			let e = n % 4 - 1.5, r = c - 19.5 + (Math.floor(n / 4) % 2 ? .5 : -.4), a = e * e / 3.2 + r * r / 9;
+			a < 1 && (f = !1, u = .62 + t.hash2(n >> 2, l, 955) * .3 + (s[i] - .5) * .14, d = .85 - a * .4);
 		}
 		if (f) {
 			e.set(n, r, a), e.hf[i] = 0;
@@ -23029,7 +23086,7 @@ qt((e) => {
 				"#c6b79b",
 				"#d2c4a9",
 				"#ddd0b6"
-			]), ["#544c40", "#4a433a"], ["#b09e7c", "#9a9a94"])
+			]), ["#7a6c58", "#6c5f4d"], ["#b09e7c", "#9a9a94"])
 		},
 		crypt_top: {
 			px: [32, 32],
@@ -23052,12 +23109,12 @@ qt((e) => {
 			normalScale: .7,
 			gen: (n) => Wh(n, e, t([
 				"#3e3830",
-				"#564f45",
-				"#615a4f",
+				"#5e574c",
+				"#655d52",
 				"#6c6458",
-				"#776e61",
-				"#81786a",
-				"#8b8173"
+				"#736a5e",
+				"#7a7064",
+				"#81776a"
 			]), !1)
 		},
 		crypt_ledger: {

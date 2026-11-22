@@ -552,7 +552,7 @@ KIT_LOOK.tavern = { floor: ['#', '='], wall: '@', cave: '@', hour: 19.2, mix: 14
 KIT_LOOK.tavern_cellar = { floor: ['=', '#'], wall: '+', cave: '+', hour: 19.2, mix: 30, inside: true, frame: false };
 // a crypt's inside (the Haddow Crypt, docs/crypt-dungeon.md): pale slabs with a ledger stone now and then, pale ashlar
 // walls under a blind arcade (cryptDress), a cold fill and the candles warm against it
-const CRYPT_FILL = { sky: [0.88, 0.89, 0.95], ground: [0.42, 0.41, 0.42], lamps: 2.2 };   // (round 3: the blue a tint in the shadows only, not on the lit stone)   // (round 2: a tenth down, so the candles' pools carry)   // (round 1: at 0.7 the room was a murk of navy)
+const CRYPT_FILL = { sky: [0.94, 0.92, 0.94], ground: [0.44, 0.42, 0.42], lamps: 2.2 };   // (round 4: a touch warmer still, the limestone read taupe)   // (round 3: the blue a tint in the shadows only, not on the lit stone)   // (round 2: a tenth down, so the candles' pools carry)   // (round 1: at 0.7 the room was a murk of navy)
 KIT_LOOK.crypt = { floor: ['!', '$'], wall: '*', cave: '*', hour: 21, mix: 3, ledgers: true, inside: true, fill: CRYPT_FILL };
 // its ossuary: walls of stacked bones and skulls, no arcade, skulls heaped in niches, candles among them
 KIT_LOOK.ossuary = { floor: ['!', '$'], wall: ':', cave: ':', hour: 21, mix: 3, ledgers: true, inside: true, fill: CRYPT_FILL };
@@ -689,7 +689,7 @@ function tavernWalls(W, D, heights, open, looks, tiles) {
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
     if (heights[j][i] !== String(WALL)) continue;
     const s = open(i, j + 1), e = open(i + 1, j), near = open(i - 1, j) || open(i, j - 1) || (!s && !e && open(i - 1, j - 1));
-    if (near && !(s || e)) { heights[j][i] = String(TAV_NEAR); continue; }   // a near wall: a sill
+    if (near && !(s || e)) { heights[j][i] = String(TAV_NEAR); if (tiles[j][i] === ':') tiles[j][i] = '*'; continue; }   // a near wall: a sill (the ossuary's in ashlar: its bones on the outside read as a cliff of skulls, round 4)
     if (!(s || e || open(i + 1, j + 1))) continue;
     const style = WALL_STYLE[tiles[j][i]] || 'tavern', rough = style === 'cellar';   // (the crypt's arcade, the ossuary's bones: by their stone too)
     heights[j][i] = near ? String(TAV_NEAR) : (style === 'crypt' || style === 'ossuary' ? CR_BACK.toString(36) : String(TAV_BACK));              // (a wall with the floor on its camera side too stays low: it would stand in front of a fight)
@@ -785,7 +785,7 @@ function cryptRun(a, b, { key, s, n, P, add, trim, clearOf }) {
     const end = t === a ? 1 : t === b ? -1 : 0;
     trim.push({ k: 'pier', x, z, n, end, top: CR_TOP_Y });
     if (!end && q % 2 === 1) {   // a sconce: an iron bracket, three candles; every other one its light (round 1: Luminati shares a dozen lights among all in view, and forty small ones left each room murk)
-      const light = q % 4 === 1 ? add({ type: 'light', x: r2(x + (s ? 0 : 1.0)), z: r2(z + (s ? 1.0 : 0)), dy: 0.9, color: '#ffb060', intensity: 4.8, distance: 6, flicker: 0.14, nightOnly: false }) : null;
+      const light = q % 4 === 1 ? add({ type: 'light', x: r2(x + (s ? 0 : 0.7)), z: r2(z + (s ? 0.7 : 0)), dy: 1.6, color: '#ffb060', intensity: 4.2, distance: 5.5, flicker: 0.14, nightOnly: false }) : null;
       trim.push({ k: 'sconce', x, z, n, y: TAV_FLOOR_Y + 2.1, light });
     }
   });
@@ -805,8 +805,8 @@ function cryptRun(a, b, { key, s, n, P, add, trim, clearOf }) {
     trim.push({ k: kind, x, z, n, y: TAV_FLOOR_Y, seed: hash('ky', key, t) % 997 });
     // at the bay's foot, a strip of the crypt's leavings: candle stubs, a few bones, a slab fallen from a shelf (round 3:
     // "the rooms feel underdressed"); low, at the wall, where nothing walks
-    const foot = hash('kf', key, t) % 4;
-    if (foot < 3) trim.push({ k: ['footcandles', 'footbones', 'fallenslab'][foot], x, z, n, seed: hash('kg', key, t) % 997 });
+    const foot = hash('kf', key, t) % 6;   // (round 4: half as many, the rest of the foot bare)
+    if (foot < 3 && q % 2 === 0) trim.push({ k: ['footcandles', 'footbones', 'fallenslab'][foot], x, z, n, seed: hash('kg', key, t) % 997 });
     if ((q === 0 || q === bays.length - 1) && hash('kw', key, t) % 4 === 0) trim.push({ k: 'web2', x, z, n, y: CR_TOP_Y - 0.45, side: q === 0 ? 1 : -1, size: 0.7 + (hash('kz', key, t) % 4) * 0.1 });
   });
 }
@@ -920,6 +920,9 @@ Object.assign(TAVERN_3D, {
   great_tomb: (x, z, h, k, { trim, add, wall }) => {
     const zz = wall?.side === 'n' ? r2(wall.z + 1.55) : z;   // (clear of the piers: round 3, the back columns sat in the wall)
     trim.push({ k: 'greattomb', x, z: zz, rot: 0, seed: h % 997 });
+    if (wall?.side === 'n') {   // (the family's arms either side of him, a golden fleece on black; urns at the canopy's back corners: round 4)
+      for (const sg of [-1, 1]) { trim.push({ k: 'hatchment', x: r2(x + sg * 3.1), z: wall.z, n: 'z', y: 3.6 }); trim.push({ k: 'urns', x: r2(x + sg * 2.05), z: r2(wall.z + 0.45), seed: (h + sg) % 997 }); }
+    }
     add({ type: 'light', x, z: r2(zz + 0.6), dy: 1.2, color: '#ffb468', intensity: 5.5, distance: 3, flicker: 0.1, nightOnly: false });   // (under the canopy, small and warm: the effigy the brightest thing in the vault, round 3; round 2 it lit the canopy's outside, "a market stall")
   },
   mourner: (x, z, h, k, { trim }) => trim.push({ k: 'mourner', x: r2(x + 0.25), z: r2(z + 0.25) }),
@@ -944,7 +947,7 @@ TAVERN_3D.tomb_y = TAVERN_3D.tomb; TAVERN_3D.pew_y = TAVERN_3D.pew;
   TAVERN_3D.candles = (x, z, h, k, /** @type {any} */ ctx) => {
     if (ctx.room?.kit !== 'crypt' && ctx.room?.kit !== 'ossuary') return cellarCandles(x, z, h, k, ctx);
     ctx.trim.push({ k: 'candlestand', x, z });
-    ctx.add({ type: 'light', x, z, dy: 1.3, color: CRYPT_LIGHT, intensity: 2.6, distance: 4.5, flicker: 0.16, nightOnly: false });
+    ctx.add({ type: 'light', x, z, dy: 1.3, color: CRYPT_LIGHT, intensity: 2.2, distance: 4.5, flicker: 0.16, nightOnly: false });
   }; }
 
 /** @param {any} w @param {{ region?: string, stairs?: string, walls?: string, dlook?: string }} [o] */

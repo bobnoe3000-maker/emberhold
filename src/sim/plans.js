@@ -536,7 +536,7 @@ export const PLANS = {
       { id: 'the_ossuary', name: 'The Ossuary', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'ossuary', foes: 'ashbound',
         dress: ['candelabra_ends', 'crypt_corners', 'chest'], note: 'Where the older dead went when the shelves filled: their bones stacked in the walls, the skulls in rows.' },
       { id: 'the_founders_vault', name: 'The Founder\'s Vault', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'crypt', foes: 'ashbound',
-        dress: ['great_tomb', 'mourners', 'founder_lights', 'tombs_near', 'crypt_corners', 'chest'], note: 'Old Godwin Haddow, who made the money, under a canopy he paid for himself, two stone mourners he also paid for.' },
+        dress: ['great_tomb', 'mourners', 'founder_lights', 'tombs_near', 'tombs_side', 'crypt_corners', 'chest'], note: 'Old Godwin Haddow, who made the money, under a canopy he paid for himself, two stone mourners he also paid for.' },
     ], halls: [
       { from: 'the_stair_hall', to: 'the_hall_of_tombs', x: 32, y: 44, w: 10, h: 10 },
       { from: 'the_hall_of_tombs', to: 'the_chantry_chapel', x: 48, y: 20, w: 10, h: 10 },
