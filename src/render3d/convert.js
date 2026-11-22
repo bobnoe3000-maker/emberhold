@@ -825,7 +825,7 @@ function ossuaryRun(a, b, { key, s, n, P, add, trim, clearOf }) {
     const [x, z] = P(t); if (!clearOf(x, z)) continue;
     trim.push({ k: 'footbones', x, z, n, seed: hash('ob', key, t) % 997 });   // (a low heap at every panel's foot: round 6)
     if (q % 2 === 0) {
-      const lit = q % 4 === 0, light = lit ? add({ type: 'light', x: r2(x + (s ? 0 : 0.9)), z: r2(z + (s ? 0.9 : 0)), dy: 0.8, color: '#ffb060', intensity: 1.8, distance: 5.5, flicker: 0.16, nightOnly: false }) : null;
+      const lit = q % 4 === 0, light = lit ? add({ type: 'light', x: r2(x + (s ? 0 : 0.9)), z: r2(z + (s ? 0.9 : 0)), dy: 1.4, color: '#ffb060', intensity: 1.35, distance: 5.5, flicker: 0.16, nightOnly: false }) : null;   // (round 14: higher and softer, the heap by it blew out)
       trim.push({ k: 'skullniche', x, z, n, y: TAV_FLOOR_Y, seed: hash('on', key, t) % 997, light });
     } else trim.push({ k: 'boneshelf', x, z, n, y: TAV_FLOOR_Y, seed: hash('os', key, t) % 997 });
   }
@@ -929,7 +929,7 @@ Object.assign(TAVERN_3D, {
     if (wall?.side === 'n') {   // (the family's arms either side of him, a golden fleece on black; urns at the canopy's back corners: round 4)
       for (const sg of [-1, 1]) { trim.push({ k: 'hatchment', x: r2(x + sg * 4.05), z: wall.z, n: 'z', y: 3.6 }); trim.push({ k: 'urns', x: r2(x + sg * 2.55), z: r2(wall.z + 0.45), seed: (h + sg) % 997 }); }
     }
-    add({ type: 'light', x, z: r2(zz + 0.3), dy: 2.0, color: '#ffd8a0', intensity: 3.4, distance: 2.4, flicker: 0.1, nightOnly: false });   // (round 5: at 5.5 the canopy's inside an oven)
+    add({ type: 'light', x, z: r2(zz + 0.15), dy: 2.3, color: '#ffd8a0', intensity: 5.2, distance: 2.5, flicker: 0.1, nightOnly: false });   // (round 5: at 5.5 the canopy's inside an oven; round 14, up under the soffit, down on his likeness)
     add({ type: 'light', x, z: r2(zz + 4.6), dy: 2.4, color: '#ffbe80', intensity: 5.4, distance: 9.5, flicker: 0, nightOnly: false });
     add({ type: 'light', x: r2(x - 9.5), z: r2(zz + 2.5), dy: 2.2, color: '#ffb468', intensity: 3, distance: 5.5, flicker: 0.1, nightOnly: false });   // (a wash on the vault's west wall: round 10, "lopsided")   // (round 6: the flags before him clearly amber; round 7, out across the floor before him)   // (a broad low warmth across the vault's middle from his candles: round 5)   // (under the canopy, small and warm: the effigy the brightest thing in the vault, round 3; round 2 it lit the canopy's outside, "a market stall")
   },
