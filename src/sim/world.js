@@ -231,7 +231,7 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
         for (const [u, v] of spots) unit(u, v, -2, 2, -1, 1, alongK('tomb'));
       } break;
       case 'great_tomb': unit(0, -Wd + 2, -4, 4, -2, 2, 'great_tomb'); break;   // (its chest and canopy, nine wide by five deep, at the back wall's middle: round 3)
-      case 'mourners': for (const s of [-1, 1]) unit(s * 6, -Wd + 5.5, 0, 1, 0, 1, 'mourner'); break;   // (at the canopy's front corners, where they're seen: round 2)
+      case 'mourners': for (const s of [-1, 1]) unit(s * 7, -Wd + 5.5, 0, 1, 0, 1, 'mourner'); break;   // (their own silhouette, clear of the columns: round 9)   // (at the canopy's front corners, where they're seen: round 2)
       case 'tombs_side': for (const s of [-1, 1]) unit(s * (L - 2.5), 0, -1, 1, -2, 2, acrossK('tomb')); break;   // (one against each side wall: round 4, "the vault is sparse")
       case 'founder_lights': for (const s of [-1, 1]) putAt(s * 8.5, -Wd + 1, 'candelabra'); break;   // (outside his hatchments: round 6)   // (a candelabrum either side of his canopy, his light)
       case 'tomb_one': unit(-L * 0.4, Wd - 2, -2, 2, -1, 1, alongK('tomb')); break;   // (the stair hall's one tomb, by the near wall)
@@ -239,7 +239,7 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       case 'candelabra_ends': for (const s of [-1, 1]) putAt(s * (L - 1), -Wd * 0.45, 'candelabra'); break;   // (at the end walls, by the wall: keepclear.js)
       case 'offering': unit(-L * 0.6, -Wd + 1, -2, 2, -1, 0, 'offering'); break;   // (clear of the stair well beside it: round 3)   // (the stair hall's table of offerings, against the back wall)
       case 'chantry_altar': unit(0, -Wd + 1, -3, 3, -1, 1, 'altar'); for (const s of [-1, 1]) putAt(s * 5, -Wd + 1, 'candles'); break;
-      case 'chantry_pews': for (const s of [-1, 1]) for (const v of [-3, 2]) unit(s * (L - 1.5), v, 0, 0, -1, 1, acrossK('pew')); break;   // (two either side, against the side walls, the middle open: round 1, "the pews fill the middle")
+      case 'chantry_pews': for (const s of [-1, 1]) for (const v of [-3, 2]) unit(s * (L - 1), v, 0, 0, -1, 1, acrossK('pew')); break;   // (two either side, against the side walls, the middle open: round 1, "the pews fill the middle")
       // the corners: an urn and a heap of the bones the shelves no longer hold (a doorway's mouth keeps them off: putAt)
       case 'crypt_corners': for (const sx of [-1, 1]) for (const sv of [-1, 1]) { putAt(sx * (L - 1), sv * Wd, 'urns'); if (sv < 0) putAt(sx * (L - 1), -(Wd - 1.5), 'bones'); } break;   // (bones at the back walls only: by the near sill they read as debris, round 6)
       case 'bedrolls': if (!has('tents')) at(3, 6, 'bedroll'); break;   // (where there are tents, a bedroll at each one's door)
