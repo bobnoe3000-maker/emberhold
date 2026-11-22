@@ -11,6 +11,7 @@ import { SITES, siteOpen } from '../src/sim/sites.js';
 import { PLANS, checkPlan } from '../src/sim/plans.js';
 import { dressingFaults } from '../src/sim/keepclear.js';
 import { convertWorld } from '../src/render3d/convert.js';
+import { FAMILIES } from '../src/sim/battle.js';
 
 const SEEDS = [1, 2, 3, 20260807, 617082301];
 const inn = (seed) => createWorld(seed, undefined, 0, 'shuttered_inn');
@@ -21,11 +22,11 @@ const propsOf = (w, part) => {
   return out;
 };
 
-test('the Inn: a parked prototype, one authored floor, every room of the tavern kits, its plan sound', () => {
+test('the Inn: on the Reach at 20, open, one authored floor, every room of the tavern kits, its plan sound', () => {
   const S = SITES.shuttered_inn;
-  assert.ok(S && S.plan && S.flat && S.parked, 'authored, flat, parked: on no land yet');
-  assert.equal(S.floors, 1); assert.equal(S.base, 6);
-  assert.ok(!siteOpen('shuttered_inn', []) || S.parked, 'no way in from a land');
+  assert.ok(S && S.plan && S.flat && !S.parked && !S.hidden, 'authored, flat, placed');
+  assert.equal(S.region, 'reach'); assert.equal(S.floors, 1); assert.equal(S.base, 20); assert.equal(PLANS.shuttered_inn.base, 20);
+  assert.ok(siteOpen('shuttered_inn', []), 'its door opens');
   const P = PLANS.shuttered_inn;
   assert.deepEqual(checkPlan(P), []);
   const spaces = P.floors.flatMap((f) => f.spaces);
@@ -77,13 +78,18 @@ test('the Inn: nothing on the stairs or in a doorway, lights by the walls, every
   }
 });
 
-test('the Inn: a fight in the common room at 6, the Redhand drinking there', () => {
+test('the Inn: a fight in the common room at 20, the Redhand\'s crew drinking there (the taproom: one crossbow in four ranged)', () => {
+  const F = FAMILIES.taproom;
+  assert.ok(F && F.ranged.filter((k) => k === 'crossbow').length === 1, 'one crossbow among the ranged');
+  assert.ok(PLANS.shuttered_inn.floors.flatMap((f) => f.spaces).filter((s) => s.role !== 'entrance').every((s) => s.foes === 'taproom'), 'every fighting room the taproom\'s');
   const sim = createSim(20260807, undefined, { scene: 'dungeon', site: 'shuttered_inn' }); sim.tick();
   const L = sim.world.level, r = L.rooms.find((q) => q.part === 'the_common_room'), p = sim.state.player;
-  assert.equal(sim.world.roomLevels.get(r.id), 6);
+  for (const q of L.rooms) if (q !== L.entrance) assert.equal(sim.world.roomLevels.get(q.id), 20, `${q.name} at 20`);   // (the way in a sanctuary)
   p.x = p.px = r.cx + 0.5; p.y = p.py = r.cy + 0.5;
   for (let i = 0; i < 20 * 6 && !(sim.world.enemies || []).length; i++) sim.tick();
-  assert.ok((sim.world.enemies || []).length > 0, 'a wave comes');
+  const foes = sim.world.enemies || [], kinds = new Set([...F.melee, ...F.ranged, F.elite]);
+  assert.ok(foes.length > 0, 'a wave comes');
+  for (const e of foes) assert.ok(kinds.has(e.kind), `${e.kind}: one of the taproom's`);
 });
 
 test('the Inn drawn: whole walls, the back a storey and a half and the near cut to a sill, its frame and furniture, a lit fill', () => {
@@ -105,4 +111,22 @@ test('the Inn drawn: whole walls, the back a storey and a half and the near cut 
   assert.ok(types.has('hearth') && types.has('rug') && types.has('wallTorch'));
   assert.ok(!level.objects.some((o) => o.onWall), 'nothing heaped on a ruin\'s top');
   assert.ok(!sprites.some((s) => s.prop === 'longtable' || s.prop === 'tbench' || s.prop === 'hearth' || s.prop === 'counter'), 'no piece left to a card');
+});
+
+// (the owner, 2026-11-22: "Add it as a location in game with lvl 20 NPCs.. close to town in the overworld near ashgate")
+test('the Inn on the Reach: a door on its overland near Ashgate, in and back out to where you went in', () => {
+  const sim = createSim(20260807, undefined, { scene: 'overland', region: 'reach' }); sim.tick();
+  const w = sim.world, ex = w.exits.find((e) => e.to === 'dungeon' && e.site === 'shuttered_inn');
+  assert.ok(ex, 'its door');
+  const gate = w.exits.find((e) => e.to === 'town'), mid = (e) => [(e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2];
+  const [dx, dy] = mid(ex), [gx, gy] = mid(gate), d = Math.hypot(dx - gx, dy - gy);
+  assert.ok(d < 60, `near Ashgate's gate: ${d.toFixed(0)} tiles`);
+  const a = w.arrivals.shuttered_inn; assert.ok(a && isWalkable(w, a.x, a.y), 'one arrives on open ground before its door');
+  assert.ok(w.labels.some((l) => l.text === 'The Shuttered Inn'), 'named on the land');
+  // the walk from the town's arrival to the door is open ground the whole way
+  const K = (x, y) => `${x},${y}`, s0 = [Math.floor(w.arrivals.default.x), Math.floor(w.arrivals.default.y)], seen = new Set([K(...s0)]), q = [s0];
+  let found = false;
+  while (q.length && !found) { const [x, y] = q.shift(); if (x >= ex.x0 - 1 && x <= ex.x1 && y >= ex.y0 - 1 && y <= ex.y1) found = true;
+    for (const [ddx, ddy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const k = K(x + ddx, y + ddy); if (!seen.has(k) && Math.abs(x + ddx - dx) < 80 && Math.abs(y + ddy - dy) < 80 && isWalkable(w, x + ddx + 0.5, y + ddy + 0.5)) { seen.add(k); q.push([x + ddx, y + ddy]); } } }
+  assert.ok(found, 'walked to from the gate');
 });

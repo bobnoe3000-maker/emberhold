@@ -258,6 +258,10 @@ export const FAMILIES = {
   // the Cold Seam (GDD v1.124): the old pithead, where the haulers work the goblins' shift; then the warren itself
   pithead: { melee: ['gob', 'hauler'], ranged: ['archer', 'hexer'], elite: 'hauler', undead: () => false },
   warren: { melee: ['gob', 'bruiser'], ranged: ['archer', 'hexer'], elite: 'hauler', undead: () => false },
+  // (v1.138) the Shuttered Inn: the Redhand's crew in the taproom, knives and cudgels and one crossbow in the gallery
+  // (a ranged slot's other half a cutthroat: the Redhand's own two crossbows, at 20 in the inn's open rooms, wiped the
+  // right party by wave 7–9 on three seeds in eight; this mix holds 11–14 on nine, tools/balance/roomlv.mjs)
+  taproom: { melee: ['cutthroat', 'brute'], ranged: ['crossbow', 'cutthroat'], elite: 'brute', undead: () => false },
   // (v1.126) the Assay Yards, the Forgehall, the Cinderworks and the Magma Vault (the build sheet, docs/reach-plan.md)
   yards: { melee: ['assay_guard', 'cutthroat'], ranged: ['assay_xbow', 'crossbow'], elite: 'brute', undead: () => false },
   quota: { melee: ['assay_guard', 'hauler'], ranged: ['assay_xbow', 'assay_xbow'], elite: 'hauler', undead: () => false },

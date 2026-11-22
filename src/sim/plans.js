@@ -500,17 +500,17 @@ export const PLANS = {
   //    a roadside inn the Redhand took and boarded up, a dungeon inside a building. Its walls stand to their full height
   //    (the near ones cut away, so the camera looks in), and its rooms are dressed at their edges, the middle of each left
   //    open for the fight: the common room's hearth and notice board on its back wall, its long tables along the sides.
-  shuttered_inn: { site: 'shuttered_inn', name: 'The Shuttered Inn', kind: 'inn', base: 6, flat: true, floors: [
+  shuttered_inn: { site: 'shuttered_inn', name: 'The Shuttered Inn', kind: 'inn', base: 20, flat: true, floors: [
     { name: 'The Inn', spaces: [
       { id: 'the_front_room', name: 'The Front Room', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'tavern',
         dress: ['counter', 'barrels', 'rug', 'corners'], note: 'The front door off the road and the bar beside it, the shutters nailed; the Redhand drank the place dry first.' },
-      { id: 'the_common_room', name: 'The Common Room', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'tavern', foes: 'redhand',
+      { id: 'the_common_room', name: 'The Common Room', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'tavern', foes: 'taproom',
         dress: ['hearth', 'noticeboard', 'tavern_tables', 'firewood', 'fire_baskets', 'barrels', 'rug', 'corners'], note: 'The big room: the hearth still lit, the old notices on the board, the long tables pushed to the walls for the fighting.' },
-      { id: 'the_kitchen', name: 'The Kitchen', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'tavern', foes: 'redhand',
+      { id: 'the_kitchen', name: 'The Kitchen', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'tavern', foes: 'taproom',
         dress: ['kitchen_hearth', 'prep_table', 'casks', 'sacks', 'chest', 'shrine_west', 'corners'], note: 'The kitchen behind the common room, the pot on the fire, the stores along the wall.' },
-      { id: 'the_snug', name: 'The Snug', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'tavern', foes: 'redhand',
+      { id: 'the_snug', name: 'The Snug', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'tavern', foes: 'taproom',
         dress: ['snug_tables', 'rug', 'chest', 'corners'], note: 'The small room off the common room, where the regulars sat; the Redhand\'s officers have it now.' },
-      { id: 'the_cellar_hall', name: 'The Cellar Hall', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'tavern_cellar', foes: 'redhand',
+      { id: 'the_cellar_hall', name: 'The Cellar Hall', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'tavern_cellar', foes: 'taproom',
         dress: ['casks', 'barrels', 'crates', 'fire_baskets', 'corners'], note: 'The long room at the back, over the cellar: the casks racked down the wall, what\'s left of them.' },
     ], halls: [
       { from: 'the_front_room', to: 'the_common_room', x: 32, y: 44, w: 10, h: 10 },

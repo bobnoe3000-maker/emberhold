@@ -76,8 +76,8 @@ export const SITES = {
   tithe_mill: { name: 'The Tithe Mill', region: 'reach', theme: 'desert', base: 1, perFloor: 0, floors: 1, family: 'redhand', rooms: [6, 6], layout: 'halls', parked: true, mix: 0x3117 },
   // (the owner, 2026-11-22, from a reference: "Prototype a dungeon level that looks like the inside of a building.. a
   // tavern. Needs more open floor to accommodate NPC battle but the walls are up and set dressing looks great. This is a
-  // new dungeon type": the tavern kit, plans.js shuttered_inn; parked, a prototype for review, on no land yet)
-  shuttered_inn: { name: 'The Shuttered Inn', region: 'vale', theme: 'dread', base: 6, perFloor: 0, floors: 1, plan: true, family: 'redhand', rooms: [5, 5], layout: 'halls', flat: true, parked: true, mix: 0x1ee5 },
+  // new dungeon type": the tavern kit, plans.js shuttered_inn; a prototype, then placed: below)
+  shuttered_inn: { name: 'The Shuttered Inn', region: 'reach', theme: 'dread', base: 20, perFloor: 0, floors: 1, plan: true, family: 'taproom', rooms: [5, 5], layout: 'halls', flat: true, mix: 0x1ee5 },   // (the owner, 2026-11-22: "Add it as a location in game with lvl 20 NPCs.. close to town in the overworld near ashgate": on the Reach across the Kell road from Ashgate's north wall, outdoor.js REACH.inn; GDD v1.138)
   scrag_warren: { name: 'The Scrag Warren', region: 'reach', theme: 'warren', base: 2, perFloor: 1, floors: 2, family: 'goblin', rooms: [6, 6], parked: true, mix: 0x6b1d },
 };
 export const SITE_IDS = Object.keys(SITES);

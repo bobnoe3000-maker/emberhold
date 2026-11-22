@@ -51,6 +51,12 @@
    "y": 40
   },
   {
+   "kind": "site",
+   "id": "shuttered_inn",
+   "x": 123.5,
+   "y": 95
+  },
+  {
    "kind": "land",
    "id": "reach",
    "x": 267,

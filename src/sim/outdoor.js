@@ -963,11 +963,15 @@ function buildOverland(seed) {
 // Act II is done): the Wickham road down to the Vale, and the sites' doors as their bands are built (the Cold Seam's
 // first; the rest still landmarks). The Solmere road stays shut, with its word. Its own streams: 4441 (the scatter), 4443 (the hills), 4445 (the river).
 export const REACH = { gate: [132, 140], join: [152, 140], kells: [38, 104], yards: [64, 132], works: [176, 64], vault: [168, 30], ninth: [64, 30],
-  tunnels: [74, 192], seam: [122, 212], forge: [194, 146], volcano: [14, 64], tailings: [[148, 90, 9, 7], [222, 76, 8, 6]] };
+  tunnels: [74, 192], seam: [122, 212], forge: [194, 146], volcano: [14, 64], tailings: [[148, 90, 9, 7], [222, 76, 8, 6]],
+  // the Shuttered Inn (v1.138; the owner: "close to town in the overworld near ashgate"): a roadside inn across the Kell
+  // road from Ashgate's north wall, its door south (the inn piece's) onto the road. (East of the gate it stood in the
+  // Forgehall's line from the camera, the keep's name over its door)
+  inn: [122, 88] };
 function buildReach(seed) {
   const o = makeWorld(seed, 'overland', 260, 260, 90), rng = mulberry32(streamSeed(seed, 4441)), B = (t, n = 1) => `reach_${t}_${n}`;
   o.name = 'The Cinder Reach'; o.region = 'reach';
-  const { gate, join, kells, yards, works, vault, ninth, tunnels, seam, forge, volcano, tailings } = REACH, town = [gate[0] - 4, gate[1]];
+  const { gate, join, kells, yards, works, vault, ninth, tunnels, seam, forge, volcano, tailings, inn } = REACH, town = [gate[0] - 4, gate[1]];
   o.patches = [{ g: G.SCREE, f: 0.05, s: 51, th: 0.58 }];   // cracked earth and red rock through the ash-dusted scrub
   // the Ashwater: down out of the north past the Cinderworks, straight (+y) under the Solmere road's bridge, out east
   const riverPts = chaikin([[180, -60], [182, 0], [194, 50], [206, 100], [216, 140], [222, 160], [224, 172], [224, 186], [230, 204], [250, 220], [300, 250], [340, 280]], 3);
@@ -987,6 +991,7 @@ function buildReach(seed) {
     { w: 3, surface: 'track', pts: [[190, 165], [forge[0] + 0.5, forge[1] + 8]] },                                   // to the Forgehall's door
     { w: 3, surface: 'track', pts: [[76, 102], [76, 122], [76, 134], [yards[0] + 0.5, yards[1] + 5]] },   // into the Assay Yards, to the counting house's door
     { w: 2.5, surface: 'track', pts: [[kells[0], kells[1] - 6], [48, 82], [58, 56], door(ninth, 12)] },          // the old track up the volcano's flank (the Ninth Vault's), to its door
+    { w: 3, surface: 'track', pts: [[inn[0] + 1.5, 101], [inn[0] + 1.5, inn[1] + 8]] },                               // (v1.138) off the Kell road to the Shuttered Inn's door
   ].map((r) => ({ ...r, pts: fillet(r.pts, Math.max(8, r.w * 2)) }));
   joinRoads(o, ROADS);
   o.roads.push(...ROADS);
@@ -1020,18 +1025,22 @@ function buildReach(seed) {
   put(o, 'ruin', vault[0], vault[1], 'round', 0.3); put(o, B('tower'), vault[0] + 10, vault[1] - 6, 'round', 0.1);
   put(o, 'warren_0', tunnels[0], tunnels[1]); put(o, 'mine_0', seam[0], seam[1]); put(o, B('keep'), forge[0], forge[1]);
   put(o, 'chapelruin_0', ninth[0], ninth[1]);
+  // the Shuttered Inn: Ashgate's own build of tavern, shut, a barrel and a crate stack by its door (v1.138)
+  put(o, B('inn'), inn[0], inn[1]);
+  for (const [id, x, y] of [['barrel', inn[0] + 7, inn[1] + 7], ['crate_A_small', inn[0] - 4, inn[1] + 7]]) put(o, id, x, y, 'rect', 0.1);
   o.labels.push({ x: gate[0], y: gate[1], id: B('gatehousey'), text: 'Ashgate' }, { x: kells[0], y: kells[1], id: B('longhouse'), text: "Kell's Rest" },
     { x: yards[0], y: yards[1], id: B('longhouse'), text: 'The Assay Yards' }, { x: works[0], y: works[1], id: B('smith'), text: 'The Cinderworks' },
     { x: vault[0], y: vault[1], id: 'ruin', text: 'The Magma Vault' }, { x: tunnels[0], y: tunnels[1], id: 'warren_0', text: 'The Slag Tunnels' },
-    { x: seam[0], y: seam[1], id: 'mine_0', text: 'The Cold Seam' }, { x: forge[0], y: forge[1], id: B('keep'), text: 'The Forgehall of Oruth' });
+    { x: seam[0], y: seam[1], id: 'mine_0', text: 'The Cold Seam' }, { x: forge[0], y: forge[1], id: B('keep'), text: 'The Forgehall of Oruth' },
+    { x: inn[0], y: inn[1], id: B('inn'), text: 'The Shuttered Inn' });
   for (const r of ROADS) if (r.imperial) beacons(o, r.pts, B('tower'));
 
   // THE HILLS (their own stream): the dead volcano over Kell's Rest; the black slag hills north-west, as the sketch
   // has them; a range past the north and west edges; the low hills round the Slag Tunnels
   const mrng = mulberry32(streamSeed(seed, 4443)), F = (id) => ENV_FOOT[id] || [-10, -10, 10, 10];
   put(o, 'mountain_massif_C', volcano[0], volcano[1], 'round', 0.3);
-  const keepOut = [gate, kells, yards, works, vault, ninth, tunnels, seam, forge, ...campsOf('reach').map((c) => [c.x, c.y])];   // (and the spawn points' ground, v1.126)
-  const sights = [[gate[0], gate[1]], [join[0] - 5, join[1]], kells, yards, works, vault, tunnels, seam, forge];   // (and where you arrive)
+  const keepOut = [gate, kells, yards, works, vault, ninth, tunnels, seam, forge, inn, ...campsOf('reach').map((c) => [c.x, c.y])];   // (and the spawn points' ground, v1.126)
+  const sights = [[gate[0], gate[1]], [join[0] - 5, join[1]], kells, yards, works, vault, tunnels, seam, forge, inn];   // (and where you arrive)
   // (and a region boss's ground, the Vault's mouth, open over its whole arena as the Fens' old stones are: Furnace Nine's
   // fight at 70 % open ground, the ruin and the works' heaps in it, wiped five companies in one window of three; v1.126)
   const ring = campsOf('reach').find((c) => c.ring), inRing = (x, y, m = 2) => !!ring && hypot(x - ring.x, y - ring.y) < ring.arena + m;
@@ -1074,12 +1083,13 @@ function buildReach(seed) {
   o.exits.push({ x0: forge[0] - 3, y0: forge[1] + 6.5, x1: forge[0] + 4, y1: forge[1] + 9.5, to: 'dungeon', site: 'forgehall' });
   o.exits.push({ x0: works[0] - 3, y0: works[1] + 5.5, x1: works[0] + 3, y1: works[1] + 8.5, to: 'dungeon', site: 'cinderworks' });
   o.exits.push({ x0: ninth[0] - 3, y0: ninth[1] + 8.5, x1: ninth[0] + 3, y1: ninth[1] + 11.5, to: 'dungeon', site: 'ninth_vault' });
+  o.exits.push({ x0: inn[0] - 1.5, y0: inn[1] + 5.5, x1: inn[0] + 4.5, y1: inn[1] + 8.5, to: 'dungeon', site: 'shuttered_inn' });   // (v1.138) the inn's door, on its +y face
   o.exits.push({ x0: 263, y0: 180, x1: 271, y1: 198, to: 'overland', closed: true, shut: 'The Solmere road runs east, straight as the day it was laid, to the dead capital. Another day.' });
   o.arrivals = { default: { x: join[0] - 4.5, y: gate[1] + 0.5 }, ashgate: { x: join[0] - 4.5, y: gate[1] + 0.5 }, kells_rest: { x: kells[0] + 10.5, y: kells[1] + 4.5 },
     vale_road: { x: 146.5, y: 255.5 }, cold_seam: { x: seam[0] - 5.5, y: seam[1] + 17.5 },
     assay_yards: { x: yards[0] + 6.5, y: yards[1] + 4.5 },   // (east of the workshop, which hid one arriving at the door: visibility.mjs)
     forgehall: { x: forge[0] + 0.5, y: forge[1] + 13.5 }, cinderworks: { x: works[0] + 0.5, y: works[1] + 12.5 },
-    ninth_vault: { x: ninth[0] + 0.5, y: ninth[1] + 15.5 } };
+    ninth_vault: { x: ninth[0] + 0.5, y: ninth[1] + 15.5 }, shuttered_inn: { x: inn[0] + 1.5, y: inn[1] + 12.5 } };
   o.spawn = o.arrivals.default;
   return o;
 }

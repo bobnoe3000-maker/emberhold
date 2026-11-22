@@ -1,7 +1,7 @@
 # The Shuttered Inn: a building's inside as a dungeon
 
-*2026-11-22 · **Prototype, for the owner's review**, scored 9/10 by the art critic against the reference (§3). The site is parked: it is on no land, and you reach it with
-`?scene=dungeon&site=shuttered_inn`.*
+*2026-11-22 · **Implemented**, scored 9/10 by the art critic against the reference (§3). The site is placed on the Reach at
+level 20, across the Kell road from Ashgate's north wall (§4; GDD v1.138). For a preview, `?scene=dungeon&site=shuttered_inn`.*
 
 The owner, 2026-11-22, with a reference picture (a top-down cutaway of a stone tavern: block walls under dark timber, a
 notice board, a hearth, long tables, lanterns, shields, cobwebs, iron fire baskets, flagstones, warm firelight):
@@ -15,16 +15,16 @@ notice board, a hearth, long tables, lanterns, shields, cobwebs, iron fire baske
 **Two new kits, `tavern` and `tavern_cellar`.** It is the first dungeon kit that is a building's inside rather than a ruin or a cave. Every
 other kit stands its walls ragged and broken down: the walls' ruined tops, GDD v1.98. This one stands them whole.
 
-**The site.** `shuttered_inn` (src/sim/sites.js) is a Vale site at level 6, flat, one floor, the Redhand drinking it dry.
-- It is parked, the way the Proving Pens' trial was: on no land, no way in, no band.
-- Canon: world doc v1.58, "a trial, not canon".
+**The site.** `shuttered_inn` (src/sim/sites.js) is a Reach site at level 20, flat, one floor, no boss, a crew of the
+Redhand drinking it dry (the `taproom` family, §4).
+- It was a parked trial at 6 in the Vale (world doc v1.58). Since v1.59 it is canon and on the land: §4.
 
 **The plan.** It is in src/sim/plans.js and passes `checkPlan`. It has five rooms, joined by halls 10 wide:
 
 | Room | Role | Size | What's in it |
 |---|---|---|---|
 | The Front Room | entrance (the way in, the stairs up under their arch) | medium | the bar and the keeper's shelf of bottles, a rug, barrels |
-| The Common Room | the fighting hall, the Redhand | large | the hearth in its stone surround, the notice board, three long tables with their benches, firewood, two fire baskets in the back corners |
+| The Common Room | the fighting hall, the Redhand's crew | large | the hearth in its stone surround, the notice board, three long tables with their benches, firewood, two fire baskets in the back corners |
 | The Kitchen | an offshoot | small | the kitchen hearth with the cauldron on its crane, the cook's table, cask racks, the shrine by the west wall, a chest |
 | The Snug | a fighting room | medium | two tables by the back wall, the rug in the middle, a chest |
 | The Cellar Hall | the end (`tavern_cellar`) | large | rough rubble walls, candles in niches, hams and onions on hooks, cask racks, barrels, crates, a fire basket |
@@ -158,8 +158,50 @@ dropped, as they couldn't be seen. Tried and taken out: a wisp of chimney smoke,
 - the loot chest's gold look;
 - the Shrine of Might.
 
-## 4. To review
+## 4. On the Reach, at 20
 
-- Whether the owner wants the inn placed on a land, given a road and a story, or the kit used for other buildings'
-  insides.
+The owner, 2026-11-22: *"Add it as a location in game with lvl 20 NPCs.. close to town in the overworld near ashgate"*.
+
+**Where.** The inn stands across the Kell road from Ashgate's north wall (src/sim/outdoor.js `REACH.inn`, at 122, 88).
+- It is the Reach's own inn piece (`reach_inn_1`), its door facing south.
+- A short track runs from the Kell road to its door, with a barrel and a crate at the step.
+- It is named on the land ("The Shuttered Inn") and pinned on the region map (assets/maps/minimap-reach.json).
+- Its door is about 46 tiles from Ashgate's gate. You come out where you went in, on the track before the door.
+
+The first place tried was east of the gate, on the rise (168, 124 and then 170, 110). From the camera there, the
+Forgehall's keep stood in front of the inn and the keep's name sat over its door, so the inn moved across the road. The
+visibility check (`node tools/capture/visibility.mjs reach`) has nothing under half in view.
+
+**The foes: the taproom.** Every fighting room is at 20, and the front room is a sanctuary, as every way in is. The
+family is its own (src/sim/battle.js `taproom`):
+- melee: cutthroats and brutes;
+- ranged: a crossbow, or a cutthroat, half and half;
+- elite: a brute.
+
+The Redhand's own mix has two crossbows in its ranged slots. At 20, in the inn's open rooms, it wore the right party down
+early. The right party here is fighter, rogue and cleric at 20, in gear: `node tools/balance/roomlv.mjs 300 20 20 1,3
+<seed> --site shuttered_inn`, waves held before the wipe, or 300 s held:
+
+| Foes | Seeds | Waves | Under 10 | Held 300 s |
+|---|---|---|---|---|
+| The Redhand (two crossbows) | 8 | 7–13, median 10.5 | 3 | 1 |
+| The Assay's `yards` | 3 | 9–12 | 1 | 0 |
+| **The taproom** (shipped) | 9 | **11–14, median 12** | **0** | 3 |
+| The Cold Seam's goblins, in the inn | 2 | 13–14 | 0 | 2 |
+| The Cold Seam itself, at 20 | 9 | 12–14, median 13 | 0 | 8 |
+
+The taproom meets the contract (10+ waves) on every seed. It sits a step harder than the Cold Seam (19–21) beside it,
+which suits a house full of armed men. Goblins would have been easier, but no goblin drinks at an inn.
+
+**Tests.** test/tavern.test.mjs:
+- the site is on the Reach at 20 and open;
+- every room past the way in is at 20, and a wave is the taproom's;
+- the door is on the overland under 60 tiles from the gate, the arrival is open ground, and the walk from the town's
+  arrival reaches it.
+
+test/worldmap.test.mjs holds the map's pin to the door.
+
+## 5. To review
+
+- The kit used for other buildings' insides.
 - The inn at other hours: it holds its evening light whatever the hour, as a dungeon does.

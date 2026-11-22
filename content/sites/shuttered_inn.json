@@ -1,8 +1,8 @@
 {
   "id": "shuttered_inn",
-  "region": "vale",
+  "region": "reach",
   "name": "The Shuttered Inn",
-  "levels": "6",
+  "levels": "20",
   "floors": 1,
-  "summary": "A trial: an inn with its shutters nailed, the Redhand drinking its cellar dry. The front room and bar, the common room, the kitchen, the snug and the cellar hall: a building's inside as a dungeon."
+  "summary": "A roadside inn across the Kell road from Ashgate's north wall, its shutters nailed shut, the Redhand drinking its cellar dry. The front room and bar, the common room, the kitchen, the snug and the cellar hall."
 }
