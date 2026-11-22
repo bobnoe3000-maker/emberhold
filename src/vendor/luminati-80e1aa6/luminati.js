@@ -19931,7 +19931,7 @@ function mh(e) {
 	for (let u of e) {
 		let e = l.has(u.k) || u.k === "plaque" || u.k === "saint" || u.k === "mourner" || u.k === "greattomb" || u.k === "hatchment";
 		if (e) {
-			let e = u.k === "plaque" ? 1.8 : u.k === "saint" ? 1.45 : u.k === "mourner" ? 1.4 : u.k === "greattomb" || u.k === "hatchment" ? 1.3 : 1.95, t = u.k === "plaque" ? o(u, 0, 2.7, 0) : u.k === "saint" || u.k === "mourner" || u.k === "greattomb" ? [
+			let e = u.k === "plaque" ? 1.8 : u.k === "saint" ? 1.45 : u.k === "mourner" ? 1.2 : u.k === "greattomb" || u.k === "hatchment" ? 1.3 : 1.95, t = u.k === "plaque" ? o(u, 0, 2.7, 0) : u.k === "saint" || u.k === "mourner" || u.k === "greattomb" ? [
 				u.x,
 				1,
 				u.z
@@ -21458,9 +21458,9 @@ function mh(e) {
 					rot: l
 				});
 			}), n.tinted([
-				1.15,
-				1.09,
-				.99
+				1.22,
+				1.1,
+				.92
 			], () => n.box("crypt_cap", [
 				t,
 				i,
@@ -21517,9 +21517,9 @@ function mh(e) {
 					]
 				});
 			}), n.tinted([
-				1.1,
-				1.05,
-				.96
+				1.38,
+				1.27,
+				1.1
 			], () => n.box("crypt_cap", [
 				t + .12,
 				.12,
@@ -21528,7 +21528,7 @@ function mh(e) {
 				at: c(0, 1 + a + i + .06, 0),
 				rot: l
 			}));
-			let f = 1 + a + i + .12 + .1, p = e ? 1.12 : 1;
+			let f = 1 + a + i + .12 + (e ? .22 : .1), p = e ? 1.12 : 1;
 			if (n.tinted([
 				.85,
 				.8,
@@ -21784,9 +21784,21 @@ function mh(e) {
 				u.z
 			] });
 		}), n.tinted([
-			1.45,
-			1.4,
-			1.3
+			.5,
+			.48,
+			.45
+		], () => n.box("crypt_cap", [
+			.84,
+			.05,
+			.84
+		], { at: [
+			u.x,
+			1.505,
+			u.z
+		] })), n.tinted([
+			1.08,
+			1,
+			.86
 		], () => {
 			n.lathe("crypt_cap", [
 				{
@@ -22001,7 +22013,20 @@ function mh(e) {
 			n.tinted(Qm, () => {
 				for (let e of [-1, 1]) n.tube("linen", o(u, -.32 * e, u.y - .3, .16), o(u, .32 * e, u.y + .3, .16), .045, .045, { segments: 6 });
 			}), ah(n, u, 0, u.y - .02, .13, .28);
-		} else if (u.k === "footcandles") {
+		} else if (u.k === "rood") n.tinted([
+			.4,
+			.3,
+			.22
+		], () => {
+			n.box("furniture_wood", s(u, .2, 1.3, .06), { at: o(u, 0, u.y, .05) }), n.box("furniture_wood", s(u, .85, .2, .06), { at: o(u, 0, u.y + .25, .05) });
+		}), n.tinted([
+			1.1,
+			.9,
+			.55
+		], () => {
+			n.box("metal", s(u, .12, 1.2, .05), { at: o(u, 0, u.y, .1) }), n.box("metal", s(u, .76, .12, .05), { at: o(u, 0, u.y + .25, .1) });
+		});
+		else if (u.k === "footcandles") {
 			let e = (e) => (Math.imul(u.seed + e * 977, 2654435761) >>> 0) % 1e3 / 1e3;
 			n.tinted([
 				1.05,
@@ -22049,31 +22074,31 @@ function mh(e) {
 				], { at: o(u, r, 1.12 + a + .05, i) });
 			}
 		} else if (u.k === "footbones") n.tinted([
-			.86,
 			.8,
-			.7
+			.75,
+			.66
 		], () => {
 			for (let [e, t, r, i] of [
 				[
-					-.55,
-					.08,
-					.32,
-					.47
-				],
-				[
-					-.2,
-					.42,
-					.55,
-					.34
-				],
-				[
+					-.3,
 					.12,
-					.66,
-					.26,
-					.4
+					.2,
+					.42
+				],
+				[
+					-.22,
+					.2,
+					.42,
+					.22
+				],
+				[
+					-.05,
+					.3,
+					.3,
+					.34
 				]
 			]) n.tube("linen", o(u, e, 1.06, r), o(u, t, 1.08, i), .05, .045, { segments: 6 });
-		}), ah(n, u, .55, 1.1400000000000001, .16, .45);
+		}), ah(n, u, .28, 1.1400000000000001, .15, .3);
 		else if (u.k === "fallenslab") n.tinted([
 			1.25,
 			1.2,
@@ -22833,21 +22858,21 @@ function Kh(e, t, n) {
 }
 function qh(e, t) {
 	let n = e.w, r = e.h, i = [
-		"#4c473f",
-		"#6a6457",
-		"#857e6e",
-		"#9d9682",
-		"#b3ab93",
-		"#cbbf9c"
+		"#47423a",
+		"#5f5a4e",
+		"#787163",
+		"#8f8875",
+		"#a39b86",
+		"#b6ab8c"
 	].map((e) => t.parseColor(e)), a = t.parseColor("#110d0a"), o = (e) => i[Math.max(0, Math.min(i.length - 1, Math.round(e * (i.length - 1))))], s = t.field(n, r, 6, 6, 951, { oct: 2 });
 	return e.each((n, r, i) => {
 		let c = r % 24, l = Math.floor(r / 24), u = 0, d = 0, f = !0;
 		if (c < 15) {
 			let e = Math.floor((n + l % 2 * 6) / 12), r = (t.hash2(e, l, 957) - .5) * 2.6, a = (n + l % 2 * 6) % 12 - 6 + .5 - r * .4, o = c - 7, p = .85 + t.hash2(e, l, 959) * .3, m = a * a / (27 * p * p) + o * o / (38 * p * p);
-			m < 1 && (f = !1, u = .5 + t.hash2(e, l, 953) * .45 - o * .03 + (s[i] - .5) * .12, d = 1 - m * .6, o > -1.5 && o < 2.2 && Math.abs(Math.abs(a - r * .6) - 2.1) < 1.3 && (u = 0, d = .15), o > 3.2 && o < 4.8 && Math.abs(a - r * .6) < .7 && (u = .05, d = .3));
+			m < 1 && (f = !1, u = .5 + t.hash2(e, l, 953) * .45 - o * .03 + (s[i] - .5) * .12, d = 1 - m * .6, o > -1.5 && o < 2.2 && Math.abs(Math.abs(a - r * .6) - 2.1) < 1.3 && (u = .12, d = .15), o > 3.2 && o < 4.8 && Math.abs(a - r * .6) < .7 && (u = .05, d = .3));
 		} else {
 			let e = n % 4 - 1.5, r = c - 19.5 + (Math.floor(n / 4) % 2 ? .5 : -.4), a = e * e / 3.2 + r * r / 9;
-			a < 1 && (f = !1, u = .62 + t.hash2(n >> 2, l, 955) * .3 + (s[i] - .5) * .14, d = .85 - a * .4);
+			a < 1 && (f = !1, u = .72 + t.hash2(n >> 2, l, 955) * .28 + (s[i] - .5) * .14, d = .85 - a * .4);
 		}
 		if (f) {
 			e.set(n, r, a), e.hf[i] = 0;
@@ -23295,13 +23320,13 @@ qt((e) => {
 			px: [64, 64],
 			normalScale: .7,
 			gen: (n) => Yh(n, e, t([
-				"#3e3830",
-				"#5e574c",
-				"#655d52",
-				"#6c6458",
-				"#736a5e",
-				"#7a7064",
-				"#81776a"
+				"#3a332b",
+				"#6a6052",
+				"#73685a",
+				"#7c7062",
+				"#85796a",
+				"#8e8272",
+				"#978a7a"
 			]), !1)
 		},
 		crypt_ledger: {
