@@ -820,6 +820,7 @@ function ossuaryRun(a, b, { key, s, n, P, add, trim, clearOf }) {
   // (round 5: an ashlar pier every three tiles splits the bones into panels, each with its own centre: unbroken, the
   // skulls read as wallpaper)
   for (let t = a; t <= b; t += 3) { const [x, z] = P(Math.min(t, b)); if (clearOf(x, z)) trim.push({ k: 'pier', x, z, n, end: t === a ? 1 : t >= b ? -1 : 0, top: CR_TOP_Y }); }
+  { const [x, z] = P(a + 0.7); if (clearOf(x, z)) trim.push({ k: 'skullpile', x, z, n }); }   // (a pyramid of skulls at the run's corner: round 12)
   for (let t = a + 1.5, q = 0; t <= b - 1.5; t += 3, q++) {
     const [x, z] = P(t); if (!clearOf(x, z)) continue;
     trim.push({ k: 'footbones', x, z, n, seed: hash('ob', key, t) % 997 });   // (a low heap at every panel's foot: round 6)
@@ -957,7 +958,7 @@ TAVERN_3D.tomb_y = TAVERN_3D.tomb; TAVERN_3D.pew_y = TAVERN_3D.pew;
   TAVERN_3D.candles = (x, z, h, k, /** @type {any} */ ctx) => {
     if (ctx.room?.kit !== 'crypt' && ctx.room?.kit !== 'ossuary') return cellarCandles(x, z, h, k, ctx);
     ctx.trim.push({ k: 'candlestand', x, z });
-    ctx.add({ type: 'light', x, z, dy: 1.3, color: CRYPT_LIGHT, intensity: 1.3, distance: 2.6, flicker: 0.16, nightOnly: false });   // (round 10: under the room's middle, which the fight's in)
+    ctx.add({ type: 'light', x, z, dy: 1.3, color: CRYPT_LIGHT, intensity: 1.1, distance: 2, flicker: 0.16, nightOnly: false });   // (round 10: under the room's middle, which the fight's in)
   }; }
 
 /** @param {any} w @param {{ region?: string, stairs?: string, walls?: string, dlook?: string }} [o] */
@@ -1050,9 +1051,9 @@ function dungeon(w, o = {}) {
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; const o = { id: `${ob.type}_${count[ob.type]}`, ...ob }; objects.push(o); return o; };
   const drop = (o) => { const i = objects.indexOf(o); if (i >= 0) objects.splice(i, 1); };   // (a lantern's light gone with it: a corner's stores take its bay)
   const trim = inside ? [] : null;
-  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 1.8, distance: 8, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 3.4, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
+  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 1.8, distance: 8, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
   if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h) { add({ ...c.ob(X, Z), onWall: true }); if (c.sprite) sprites.push(c.sprite); }   // (onWall: on a wall's top, not the room's own)   // (what stands on the walls' tops, where the stairs didn't take the wall)
-  for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity * (look.fill ? 0.65 : 1), distance: l.glow.distance, flicker: 0.08, nightOnly: false }
+  for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity * (look.fill ? 0.45 : 1), distance: l.glow.distance * (look.fill ? 0.7 : 1), flicker: 0.08, nightOnly: false }
     : { type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });
   for (const [k, kind] of w.props || []) {
     const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);

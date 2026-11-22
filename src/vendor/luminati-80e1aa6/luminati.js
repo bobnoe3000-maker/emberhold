@@ -21136,26 +21136,30 @@ function fh(e) {
 			1
 		], () => {
 			n.box("crypt_cap", s(u, .7, .16, .38), { at: o(u, 0, 1.72, .19) }), n.box("crypt_cap", s(u, .5, .18, .28), { at: o(u, 0, 1.56, .14) });
-		}), eh ||= new tt({ color: new P("#d4a640").multiplyScalar(.85) }), n.lathe(eh, [
+		}), eh ||= new tt({ color: new P("#d4a640").multiplyScalar(.85) }), n.tinted([
+			.8,
+			.7,
+			.45
+		], () => n.lathe("crypt_cap", [
 			{
 				y: 0,
 				r: 0
 			},
 			{
 				y: .001,
-				r: .3
+				r: .32
 			},
 			{
 				y: .02,
-				r: .3
+				r: .32
 			},
 			{
 				y: .021,
 				r: 0
 			}
 		], {
-			segments: 18,
-			at: o(u, 0, 2.96, .06),
+			segments: 20,
+			at: o(u, 0, 3.0999999999999996, .035),
 			rot: u.n === "z" ? [
 				Math.PI / 2,
 				0,
@@ -21165,9 +21169,42 @@ function fh(e) {
 				0,
 				-Math.PI / 2
 			]
-		}), n.tinted([
-			1.2,
-			1.12,
+		})), n.tinted([
+			1.42,
+			1.3,
+			.92
+		], () => n.lathe("crypt_cap", [
+			{
+				y: 0,
+				r: 0
+			},
+			{
+				y: .001,
+				r: .28
+			},
+			{
+				y: .02,
+				r: .28
+			},
+			{
+				y: .021,
+				r: 0
+			}
+		], {
+			segments: 20,
+			at: o(u, 0, 3.0999999999999996, .045),
+			rot: u.n === "z" ? [
+				Math.PI / 2,
+				0,
+				0
+			] : [
+				0,
+				0,
+				-Math.PI / 2
+			]
+		})), n.tinted([
+			1.04,
+			1.02,
 			1
 		], () => n.lathe("crypt_cap", [
 			{
@@ -21195,9 +21232,9 @@ function fh(e) {
 			capTop: !0,
 			at: o(u, 0, 1.8, .2)
 		})), n.tinted([
-			1.62,
-			1.54,
-			1.38
+			1.42,
+			1.4,
+			1.42
 		], () => {
 			n.lathe("crypt_cap", [
 				{
@@ -21459,9 +21496,9 @@ function fh(e) {
 					rot: l
 				});
 			}), n.tinted([
-				1.1,
-				1.06,
-				.98
+				1.26,
+				1.22,
+				1.14
 			], () => n.box("crypt_cap", [
 				t,
 				i,
@@ -21657,14 +21694,14 @@ function fh(e) {
 			}), e) {
 				let e = t / 2 + .25, i = r / 2 + .3;
 				n.tinted([
-					.98,
-					.96,
-					.92
+					1.3,
+					1.28,
+					1.24
 				], () => {
 					for (let t of [-1, 1]) for (let r of [-1, 1]) n.box("crypt_cap", [
-						.3,
+						.35,
 						2.2,
-						.3
+						.35
 					], {
 						at: c(t * e, 2.41, r * i),
 						rot: l
@@ -21710,14 +21747,14 @@ function fh(e) {
 					at: c(0, 2.41, -i - .12),
 					rot: l
 				})), n.tinted([
-					1.3,
-					1.25,
-					1.14
+					1.45,
+					1.42,
+					1.36
 				], () => {
 					for (let t of [-1, 1]) n.tinted([
-						.74,
-						.65,
-						.58
+						.56,
+						.62,
+						.7
 					], () => n.box("crypt_cap", [
 						e + .55,
 						.14,
@@ -21748,7 +21785,7 @@ function fh(e) {
 						at: c(0, 4.96, 0)
 					});
 					let t = 3.96, r = i + .27;
-					n.poly("crypt_cap", [
+					n.poly("crypt_top", [
 						c(-e - .2, t, r),
 						c(e + .2, t, r),
 						c(0, 4.91, r)
@@ -21825,9 +21862,9 @@ function fh(e) {
 			1.505,
 			u.z
 		] })), n.tinted([
-			.92,
-			.85,
-			.74
+			1.12,
+			1.12,
+			1.14
 		], () => n.lathe("crypt_cap", [
 			{
 				y: 0,
@@ -21862,9 +21899,9 @@ function fh(e) {
 				u.z
 			]
 		})), n.tinted([
-			1.5,
-			1.42,
-			1.26
+			1.45,
+			1.44,
+			1.46
 		], () => {
 			n.lathe("crypt_cap", [{
 				y: 0,
@@ -21946,7 +21983,26 @@ function fh(e) {
 				2.35,
 				u.z + .24
 			] });
-		});
+		}), n.tinted([
+			.52,
+			.47,
+			.4
+		], () => n.box("crypt_cap", [
+			.22,
+			.2,
+			.04
+		], {
+			at: [
+				u.x,
+				2.8,
+				u.z + .17
+			],
+			rot: [
+				.4,
+				0,
+				0
+			]
+		}));
 		else if (u.k === "hatchment") {
 			eh ||= new tt({ color: new P("#d4a640").multiplyScalar(.85) }), n.tinted([
 				1.3,
@@ -22040,49 +22096,98 @@ function fh(e) {
 				rot: i
 			});
 		} else if (u.k === "bonering") {
-			let e = u.r || 1.5, t = (e) => (Math.imul((u.seed || 1) + e * 977, 2654435761) >>> 0) % 1e3 / 1e3, r = 0;
-			for (let i = -e; i <= e; i += .27) for (let a = -e; a <= e; a += .27) {
-				if (i * i + a * a > (e - .12) * (e - .12)) continue;
-				let o = .92 + (t(r++) - .5) * .16;
-				n.tinted([
-					o * 1,
-					o * .95,
-					o * .82
-				], () => n.box("crypt_cap", [
-					.24,
-					.02,
-					.24
-				], { at: [
-					u.x + i,
-					1.012,
-					u.z + a
-				] }));
-			}
-			n.tinted([
-				.55,
-				.5,
-				.44
-			], () => {
-				for (let t = 0; t < 40; t++) {
-					let r = t / 40 * Math.PI * 2;
+			let e = u.r || 1.5, t = (e, t, r) => {
+				let i = Math.max(12, Math.round(e * 22));
+				for (let a = 0; a < i; a++) {
+					let o = a / i * Math.PI * 2;
 					n.box("crypt_cap", [
-						.26,
-						.022,
-						.12
+						2 * Math.PI * e / i + .01,
+						r,
+						t
 					], {
 						at: [
-							u.x + Math.cos(r) * e,
-							1.013,
-							u.z + Math.sin(r) * e
+							u.x + Math.cos(o) * e,
+							1 + r / 2 + .004,
+							u.z + Math.sin(o) * e
 						],
 						rot: [
 							0,
-							-r + Math.PI / 2,
+							-o + Math.PI / 2,
 							0
 						]
 					});
 				}
-			});
+			};
+			n.tinted([
+				.86,
+				.8,
+				.68
+			], () => n.lathe("crypt_cap", [
+				{
+					y: 0,
+					r: 0
+				},
+				{
+					y: .001,
+					r: e
+				},
+				{
+					y: .016,
+					r: e
+				},
+				{
+					y: .017,
+					r: 0
+				}
+			], {
+				segments: 32,
+				at: [
+					u.x,
+					1.002,
+					u.z
+				]
+			})), n.tinted([
+				.58,
+				.53,
+				.46
+			], () => {
+				for (let n of [
+					e * .3,
+					e * .58,
+					e * .82
+				]) t(n, .035, .02);
+				for (let t = 0; t < 8; t++) {
+					let r = t / 8 * Math.PI * 2 + .2;
+					n.box("crypt_cap", [
+						e * .7,
+						.02,
+						.035
+					], {
+						at: [
+							u.x + Math.cos(r) * e * .62,
+							1.014,
+							u.z + Math.sin(r) * e * .62
+						],
+						rot: [
+							0,
+							-r,
+							0
+						]
+					});
+				}
+			}), n.tinted([
+				.62,
+				.56,
+				.48
+			], () => t(e, .12, .024));
+		} else if (u.k === "skullpile") {
+			let e = 0;
+			for (let [t, r] of [
+				[4, .12],
+				[3, .34],
+				[2, .56],
+				[1, .78]
+			]) for (let i = 0; i < t; i++) rh(n, u, (i - (t - 1) / 2) * .26, 1 + r, .13, .28 + e++ % 2 * .04);
 		} else if (u.k === "rood") n.tinted([
 			.3,
 			.22,
@@ -22931,7 +23036,7 @@ function Gh(e, t) {
 		let c = r % 24, l = Math.floor(r / 24), u = 0, d = 0, f = !0;
 		if (c < 17) {
 			let e = Math.floor((n + l % 2 * 8) / 16), r = (t.hash2(e, l, 957) - .5) * 2.6, a = (n + l % 2 * 8) % 16 - 8 + .5 - r * .4, o = c - 8, p = .85 + t.hash2(e, l, 959) * .3, m = a * a / (40 * p * p) + o * o / (52 * p * p);
-			m < 1 && (f = !1, u = .5 + t.hash2(e, l, 953) * .45 - o * .03 + (s[i] - .5) * .12, d = 1 - m * .6, o > -1.8 && o < 2.6 && Math.abs(Math.abs(a - r * .6) - 2.6) < 1.5 && (u = .08, d = .15), o > 3.6 && o < 5.4 && Math.abs(a - r * .6) < .8 && (u = .05, d = .3));
+			m < 1 && t.hash2(e, l, 961) > .1 && (f = !1, u = .5 + t.hash2(e, l, 953) * .45 - o * .03 + (s[i] - .5) * .12, d = 1 - m * .6, o > -1.8 && o < 2.6 && Math.abs(Math.abs(a - r * .6) - 2.6) < 1.5 && (u = .08, d = .15), o > 3.6 && o < 5.4 && Math.abs(a - r * .6) < .8 && (u = .05, d = .3));
 		} else {
 			let e = n % 4 - 1.5, r = c - 20.5 + (Math.floor(n / 4) % 2 ? .5 : -.4), a = e * e / 3.2 + r * r / 7;
 			a < 1 && (f = !1, u = .72 + t.hash2(n >> 2, l, 955) * .28 + (s[i] - .5) * .14, d = .85 - a * .4);
