@@ -554,7 +554,7 @@ KIT_LOOK.tavern = { floor: ['#', '='], wall: '@', cave: '@', hour: 19.2, mix: 14
 KIT_LOOK.tavern_cellar = { floor: ['=', '#'], wall: '+', cave: '+', hour: 19.2, mix: 30, inside: true, frame: false };
 // a crypt's inside (the Haddow Crypt, docs/crypt-dungeon.md): pale slabs with a ledger stone now and then, pale ashlar
 // walls under a blind arcade (cryptDress), a cold fill and the candles warm against it
-const CRYPT_FILL = { sky: [0.98, 0.97, 0.99], ground: [0.46, 0.44, 0.44], lamps: 2.2 };   // (round 5: the floor a step up, its middle went blue-black)   // (round 4: a touch warmer still, the limestone read taupe)   // (round 3: the blue a tint in the shadows only, not on the lit stone)   // (round 2: a tenth down, so the candles' pools carry)   // (round 1: at 0.7 the room was a murk of navy)
+const CRYPT_FILL = { sky: [1.05, 1.04, 1.07], ground: [0.46, 0.44, 0.44], lamps: 2.2 };   // (round 5: the floor a step up, its middle went blue-black)   // (round 4: a touch warmer still, the limestone read taupe)   // (round 3: the blue a tint in the shadows only, not on the lit stone)   // (round 2: a tenth down, so the candles' pools carry)   // (round 1: at 0.7 the room was a murk of navy)
 KIT_LOOK.crypt = { floor: ['!', '$'], wall: '*', cave: '*', hour: 21, mix: 0, ledgers: true, inside: true, fill: CRYPT_FILL };
 // its ossuary: walls of stacked bones and skulls, no arcade, skulls heaped in niches, candles among them
 KIT_LOOK.ossuary = { floor: ['!', '$'], wall: ':', cave: ':', hour: 21, mix: 0, ledgers: true, inside: true, fill: CRYPT_FILL };
@@ -823,9 +823,10 @@ function ossuaryRun(a, b, { key, s, n, P, add, trim, clearOf }) {
   for (let t = a; t <= b; t += 3) { const [x, z] = P(Math.min(t, b)); if (clearOf(x, z)) trim.push({ k: 'pier', x, z, n, end: t === a ? 1 : t >= b ? -1 : 0, top: CR_TOP_Y }); }
   for (let t = a + 1.5, q = 0; t <= b - 1.5; t += 3, q++) {
     const [x, z] = P(t); if (!clearOf(x, z)) continue;
-    if (q % 3 === 2) { trim.push({ k: 'roundel', x, z, n, y: TAV_FLOOR_Y + 2.2 }); trim.push({ k: 'footbones', x, z, n, seed: hash('ob', key, t) % 997 }); }
+    trim.push({ k: 'footbones', x, z, n, seed: hash('ob', key, t) % 997 });   // (a low heap at every panel's foot: round 6)
+    if (q % 3 === 2) trim.push({ k: 'roundel', x, z, n, y: TAV_FLOOR_Y + 2.2 });
     else if (q % 3 === 0) {
-      const lit = q % 4 === 0, light = lit ? add({ type: 'light', x: r2(x + (s ? 0 : 0.9)), z: r2(z + (s ? 0.9 : 0)), dy: 1.2, color: '#ffb060', intensity: 4, distance: 5.5, flicker: 0.16, nightOnly: false }) : null;
+      const lit = q % 4 === 0, light = lit ? add({ type: 'light', x: r2(x + (s ? 0 : 0.9)), z: r2(z + (s ? 0.9 : 0)), dy: 1.2, color: '#ffb060', intensity: 2.8, distance: 5.5, flicker: 0.16, nightOnly: false }) : null;
       trim.push({ k: 'skullniche', x, z, n, y: TAV_FLOOR_Y, seed: hash('on', key, t) % 997, light });
     } else trim.push({ k: 'boneshelf', x, z, n, y: TAV_FLOOR_Y, seed: hash('os', key, t) % 997 });
   }
@@ -927,10 +928,10 @@ Object.assign(TAVERN_3D, {
     const zz = wall?.side === 'n' ? r2(wall.z + 1.55) : z;   // (clear of the piers: round 3, the back columns sat in the wall)
     trim.push({ k: 'greattomb', x, z: zz, rot: 0, seed: h % 997 });
     if (wall?.side === 'n') {   // (the family's arms either side of him, a golden fleece on black; urns at the canopy's back corners: round 4)
-      for (const sg of [-1, 1]) { trim.push({ k: 'hatchment', x: r2(x + sg * 3.1), z: wall.z, n: 'z', y: 3.6 }); trim.push({ k: 'urns', x: r2(x + sg * 2.05), z: r2(wall.z + 0.45), seed: (h + sg) % 997 }); }
+      for (const sg of [-1, 1]) { trim.push({ k: 'hatchment', x: r2(x + sg * 3.3), z: wall.z, n: 'z', y: 3.7 }); trim.push({ k: 'urns', x: r2(x + sg * 2.55), z: r2(wall.z + 0.45), seed: (h + sg) % 997 }); }
     }
-    add({ type: 'light', x, z: r2(zz + 0.6), dy: 1.2, color: '#ffb468', intensity: 2.2, distance: 3, flicker: 0.1, nightOnly: false });   // (round 5: at 5.5 the canopy's inside an oven)
-    add({ type: 'light', x, z: r2(zz + 5), dy: 3.2, color: '#ffc890', intensity: 1.8, distance: 9, flicker: 0, nightOnly: false });   // (a broad low warmth across the vault's middle from his candles: round 5)   // (under the canopy, small and warm: the effigy the brightest thing in the vault, round 3; round 2 it lit the canopy's outside, "a market stall")
+    add({ type: 'light', x, z: r2(zz + 0.8), dy: 1.4, color: '#ffb468', intensity: 3.2, distance: 3.4, flicker: 0.1, nightOnly: false });   // (round 5: at 5.5 the canopy's inside an oven)
+    add({ type: 'light', x, z: r2(zz + 3.6), dy: 2.2, color: '#ffbe80', intensity: 4.6, distance: 7.5, flicker: 0, nightOnly: false });   // (round 6: the flags before him clearly amber)   // (a broad low warmth across the vault's middle from his candles: round 5)   // (under the canopy, small and warm: the effigy the brightest thing in the vault, round 3; round 2 it lit the canopy's outside, "a market stall")
   },
   mourner: (x, z, h, k, { trim }) => trim.push({ k: 'mourner', x: r2(x + 0.25), z: r2(z + 0.25) }),
   candelabra: (x, z, h, k, { trim, add }) => { trim.push({ k: 'candelabra', x, z }); add({ type: 'light', x, z, dy: 1.3, color: CRYPT_LIGHT, intensity: 5, distance: 6, flicker: 0.14, nightOnly: false }); },
