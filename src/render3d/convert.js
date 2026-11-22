@@ -929,7 +929,7 @@ Object.assign(TAVERN_3D, {
     if (wall?.side === 'n') {   // (the family's arms either side of him, a golden fleece on black; urns at the canopy's back corners: round 4)
       for (const sg of [-1, 1]) { trim.push({ k: 'hatchment', x: r2(x + sg * 4.05), z: wall.z, n: 'z', y: 3.6 }); trim.push({ k: 'urns', x: r2(x + sg * 2.55), z: r2(wall.z + 0.45), seed: (h + sg) % 997 }); }
     }
-    add({ type: 'light', x, z: r2(zz + 0.1), dy: 2.3, color: '#ffd8a0', intensity: 2.5, distance: 2.1, flicker: 0.1, nightOnly: false });   // (round 5: at 5.5 the canopy's inside an oven)
+    add({ type: 'light', x, z: r2(zz + 0.3), dy: 2.0, color: '#ffd8a0', intensity: 3.4, distance: 2.4, flicker: 0.1, nightOnly: false });   // (round 5: at 5.5 the canopy's inside an oven)
     add({ type: 'light', x, z: r2(zz + 4.6), dy: 2.4, color: '#ffbe80', intensity: 5.4, distance: 9.5, flicker: 0, nightOnly: false });
     add({ type: 'light', x: r2(x - 9.5), z: r2(zz + 2.5), dy: 2.2, color: '#ffb468', intensity: 3, distance: 5.5, flicker: 0.1, nightOnly: false });   // (a wash on the vault's west wall: round 10, "lopsided")   // (round 6: the flags before him clearly amber; round 7, out across the floor before him)   // (a broad low warmth across the vault's middle from his candles: round 5)   // (under the canopy, small and warm: the effigy the brightest thing in the vault, round 3; round 2 it lit the canopy's outside, "a market stall")
   },
@@ -958,7 +958,7 @@ TAVERN_3D.tomb_y = TAVERN_3D.tomb; TAVERN_3D.pew_y = TAVERN_3D.pew;
   TAVERN_3D.candles = (x, z, h, k, /** @type {any} */ ctx) => {
     if (ctx.room?.kit !== 'crypt' && ctx.room?.kit !== 'ossuary') return cellarCandles(x, z, h, k, ctx);
     ctx.trim.push({ k: 'candlestand', x, z });
-    ctx.add({ type: 'light', x, z, dy: 1.3, color: CRYPT_LIGHT, intensity: 1.1, distance: 2, flicker: 0.16, nightOnly: false });   // (round 10: under the room's middle, which the fight's in)
+    ctx.add({ type: 'light', x, z, dy: 1.3, color: CRYPT_LIGHT, intensity: 0.7, distance: 2, flicker: 0.16, nightOnly: false });   // (round 10: under the room's middle, which the fight's in)
   }; }
 
 /** @param {any} w @param {{ region?: string, stairs?: string, walls?: string, dlook?: string }} [o] */
@@ -1051,7 +1051,7 @@ function dungeon(w, o = {}) {
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; const o = { id: `${ob.type}_${count[ob.type]}`, ...ob }; objects.push(o); return o; };
   const drop = (o) => { const i = objects.indexOf(o); if (i >= 0) objects.splice(i, 1); };   // (a lantern's light gone with it: a corner's stores take its bay)
   const trim = inside ? [] : null;
-  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 1.8, distance: 8, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
+  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
   if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h) { add({ ...c.ob(X, Z), onWall: true }); if (c.sprite) sprites.push(c.sprite); }   // (onWall: on a wall's top, not the room's own)   // (what stands on the walls' tops, where the stairs didn't take the wall)
   for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity * (look.fill ? 0.45 : 1), distance: l.glow.distance * (look.fill ? 0.7 : 1), flicker: 0.08, nightOnly: false }
     : { type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });
