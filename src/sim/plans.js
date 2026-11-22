@@ -520,6 +520,31 @@ export const PLANS = {
     ] },
   ] },
 
+  // ── The Haddow Crypt (a prototype: the crypt kit, docs/crypt-dungeon.md; the owner, 2026-11-22: "do a similar dungeon
+  //    style as the inside of a crypt"): the Haddows' burial vault, a wool family's, dug under their chantry and built
+  //    grander than the chantry over it. A dungeon inside a building, as the Shuttered Inn is: its walls stand whole, the
+  //    near ones cut away, and every room is dressed at its edges, the tombs along the walls and the middle open for the
+  //    fight. The dead in it no longer keep to their shelves.
+  haddow_crypt: { site: 'haddow_crypt', name: 'The Haddow Crypt', kind: 'crypt', base: 6, flat: true, floors: [
+    { name: 'The Crypt', spaces: [
+      { id: 'the_stair_hall', name: 'The Stair Hall', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'crypt',
+        dress: ['offering', 'candelabra_ends', 'crypt_corners'], note: 'The steps down from the chantry and the table where the family left its offerings, still laid.' },
+      { id: 'the_hall_of_tombs', name: 'The Hall of Tombs', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'crypt', foes: 'ashbound',
+        dress: ['tombs', 'candelabra_pair', 'crypt_corners'], note: 'Four generations of Haddows in stone along the walls, lids carved with their likenesses, the aisle between them open.' },
+      { id: 'the_chantry_chapel', name: 'The Chantry Chapel', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'crypt', foes: 'ashbound',
+        dress: ['chantry_altar', 'chantry_pews'], note: 'The little chapel below, where a priest was paid to say the family\'s names once a year; nobody has paid him since.' },
+      { id: 'the_ossuary', name: 'The Ossuary', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'ossuary', foes: 'ashbound',
+        dress: ['crypt_corners', 'chest'], note: 'Where the older dead went when the shelves filled: their bones stacked in the walls, the skulls in rows.' },
+      { id: 'the_founders_vault', name: 'The Founder\'s Vault', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'crypt', foes: 'ashbound',
+        dress: ['great_tomb', 'mourners', 'tombs_near', 'candelabra_ends', 'crypt_corners', 'chest'], note: 'Old Godwin Haddow, who made the money, under a canopy he paid for himself, two stone mourners he also paid for.' },
+    ], halls: [
+      { from: 'the_stair_hall', to: 'the_hall_of_tombs', x: 32, y: 44, w: 10, h: 10 },
+      { from: 'the_hall_of_tombs', to: 'the_chantry_chapel', x: 48, y: 20, w: 10, h: 10 },
+      { from: 'the_hall_of_tombs', to: 'the_ossuary', x: 92, y: 44, w: 10, h: 10 },
+      { from: 'the_hall_of_tombs', to: 'the_founders_vault', x: 80, y: 70, w: 10, h: 10 },
+    ] },
+  ] },
+
   // ── The Bowl (GDD §17 v1.85, v1.88; world doc v1.46 §3.9; docs/bowl-arena-proposal.md §12, the owner's "B"): the
   //    Quarry Ring in Solmere, the arena cut down into the old sandstone quarry. Not on any land: the menu takes a company
   //    to it from level 6 and back. One space, open to the sky: the sand, oval, open from wall to wall, the company's gate

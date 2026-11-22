@@ -51,7 +51,7 @@ test('the Inn: each room dressed as written, on every seed', () => {
 test('the Inn: the fighting rooms keep their middles open (furniture to the walls)', () => {
   for (const seed of SEEDS) {
     const w = inn(seed), L = w.level;
-    for (const r of L.rooms.filter((q) => q.foes)) {
+    for (const r of L.rooms.filter((q) => q.family && q !== L.entrance)) {
       let solid = 0, n = 0, mid = 0;
       for (const [k, c] of L.cells) {
         if (c.kind !== 'floor' || c.room !== r.id) continue;
