@@ -19920,7 +19920,7 @@ function fh(e) {
 	for (let u of e) {
 		let e = l.has(u.k) || u.k === "plaque" || u.k === "saint" || u.k === "mourner" || u.k === "greattomb" || u.k === "hatchment";
 		if (e) {
-			let e = u.k === "plaque" ? 1.8 : u.k === "saint" ? 1.45 : u.k === "mourner" ? 1.2 : u.k === "greattomb" || u.k === "hatchment" ? 1.3 : 1.95, t = u.k === "plaque" ? o(u, 0, 2.7, 0) : u.k === "saint" || u.k === "mourner" || u.k === "greattomb" ? [
+			let e = u.k === "plaque" ? 1.8 : u.k === "saint" ? 1.45 : u.k === "mourner" ? 1.38 : u.k === "greattomb" || u.k === "hatchment" ? 1.3 : 1.95, t = u.k === "plaque" ? o(u, 0, 2.7, 0) : u.k === "saint" || u.k === "mourner" || u.k === "greattomb" ? [
 				u.x,
 				1,
 				u.z
@@ -21143,19 +21143,19 @@ function fh(e) {
 			},
 			{
 				y: .001,
-				r: .2
+				r: .3
 			},
 			{
 				y: .02,
-				r: .2
+				r: .3
 			},
 			{
 				y: .021,
 				r: 0
 			}
 		], {
-			segments: 14,
-			at: o(u, 0, 2.92, .1),
+			segments: 18,
+			at: o(u, 0, 2.96, .06),
 			rot: u.n === "z" ? [
 				Math.PI / 2,
 				0,
@@ -21166,9 +21166,9 @@ function fh(e) {
 				-Math.PI / 2
 			]
 		}), n.tinted([
-			1,
-			.95,
-			.86
+			1.2,
+			1.12,
+			1
 		], () => n.lathe("crypt_cap", [
 			{
 				y: 0,
@@ -21459,9 +21459,9 @@ function fh(e) {
 					rot: l
 				});
 			}), n.tinted([
-				1.36,
-				1.23,
-				1.03
+				1.1,
+				1.06,
+				.98
 			], () => n.box("crypt_cap", [
 				t,
 				i,
@@ -21518,9 +21518,9 @@ function fh(e) {
 					]
 				});
 			}), n.tinted([
-				1.6,
-				1.5,
-				1.3
+				1.38,
+				1.33,
+				1.22
 			], () => n.box("crypt_cap", [
 				t + .2,
 				.04,
@@ -21529,9 +21529,9 @@ function fh(e) {
 				at: c(0, 1 + a + i + .13, 0),
 				rot: l
 			})), n.tinted([
-				1.38,
-				1.27,
-				1.1
+				1.2,
+				1.16,
+				1.08
 			], () => n.box("crypt_cap", [
 				t + .12,
 				.12,
@@ -22034,33 +22034,50 @@ function fh(e) {
 			}), n.box(nh, [
 				.08,
 				.05,
-				.5
+				.65
 			], {
-				at: r(-.38, 0),
+				at: r(-.31, 0),
 				rot: i
 			});
 		} else if (u.k === "bonering") {
-			let e = u.r || 1.5;
+			let e = u.r || 1.5, t = (e) => (Math.imul((u.seed || 1) + e * 977, 2654435761) >>> 0) % 1e3 / 1e3, r = 0;
+			for (let i = -e; i <= e; i += .27) for (let a = -e; a <= e; a += .27) {
+				if (i * i + a * a > (e - .12) * (e - .12)) continue;
+				let o = .92 + (t(r++) - .5) * .16;
+				n.tinted([
+					o * 1,
+					o * .95,
+					o * .82
+				], () => n.box("crypt_cap", [
+					.24,
+					.02,
+					.24
+				], { at: [
+					u.x + i,
+					1.012,
+					u.z + a
+				] }));
+			}
 			n.tinted([
-				1.12,
-				1.04,
-				.86
+				.55,
+				.5,
+				.44
 			], () => {
-				for (let t = 0; t < 28; t++) {
-					let r = t / 28 * Math.PI * 2;
+				for (let t = 0; t < 40; t++) {
+					let r = t / 40 * Math.PI * 2;
 					n.box("crypt_cap", [
-						.17,
-						.03,
+						.26,
+						.022,
 						.12
 					], {
 						at: [
 							u.x + Math.cos(r) * e,
-							1.016,
+							1.013,
 							u.z + Math.sin(r) * e
 						],
 						rot: [
 							0,
-							-r,
+							-r + Math.PI / 2,
 							0
 						]
 					});
@@ -22903,20 +22920,20 @@ function Wh(e, t, n) {
 }
 function Gh(e, t) {
 	let n = e.w, r = e.h, i = [
-		"#5a5040",
-		"#716552",
-		"#8a7d66",
-		"#a19279",
-		"#b5a587",
-		"#c8b796"
-	].map((e) => t.parseColor(e)), a = t.parseColor("#3b2d23"), o = (e) => i[Math.max(0, Math.min(i.length - 1, Math.round(e * (i.length - 1))))], s = t.field(n, r, 6, 6, 951, { oct: 2 });
+		"#5e5444",
+		"#776b57",
+		"#91846c",
+		"#a99b80",
+		"#c2b493",
+		"#dcd0b2"
+	].map((e) => t.parseColor(e)), a = t.parseColor("#3a2a1e"), o = (e) => i[Math.max(0, Math.min(i.length - 1, Math.round(e * (i.length - 1))))], s = t.field(n, r, 6, 6, 951, { oct: 2 });
 	return e.each((n, r, i) => {
 		let c = r % 24, l = Math.floor(r / 24), u = 0, d = 0, f = !0;
-		if (c < 15) {
-			let e = Math.floor((n + l % 2 * 6) / 12), r = (t.hash2(e, l, 957) - .5) * 2.6, a = (n + l % 2 * 6) % 12 - 6 + .5 - r * .4, o = c - 7, p = .85 + t.hash2(e, l, 959) * .3, m = a * a / (27 * p * p) + o * o / (38 * p * p);
-			m < 1 && (f = !1, u = .5 + t.hash2(e, l, 953) * .45 - o * .03 + (s[i] - .5) * .12, d = 1 - m * .6, o > -1.5 && o < 2.2 && Math.abs(Math.abs(a - r * .6) - 2.1) < 1.3 && (u = .12, d = .15), o > 3.2 && o < 4.8 && Math.abs(a - r * .6) < .7 && (u = .05, d = .3));
+		if (c < 17) {
+			let e = Math.floor((n + l % 2 * 8) / 16), r = (t.hash2(e, l, 957) - .5) * 2.6, a = (n + l % 2 * 8) % 16 - 8 + .5 - r * .4, o = c - 8, p = .85 + t.hash2(e, l, 959) * .3, m = a * a / (40 * p * p) + o * o / (52 * p * p);
+			m < 1 && (f = !1, u = .5 + t.hash2(e, l, 953) * .45 - o * .03 + (s[i] - .5) * .12, d = 1 - m * .6, o > -1.8 && o < 2.6 && Math.abs(Math.abs(a - r * .6) - 2.6) < 1.5 && (u = .08, d = .15), o > 3.6 && o < 5.4 && Math.abs(a - r * .6) < .8 && (u = .05, d = .3));
 		} else {
-			let e = n % 4 - 1.5, r = c - 19.5 + (Math.floor(n / 4) % 2 ? .5 : -.4), a = e * e / 3.2 + r * r / 9;
+			let e = n % 4 - 1.5, r = c - 20.5 + (Math.floor(n / 4) % 2 ? .5 : -.4), a = e * e / 3.2 + r * r / 7;
 			a < 1 && (f = !1, u = .72 + t.hash2(n >> 2, l, 955) * .28 + (s[i] - .5) * .14, d = .85 - a * .4);
 		}
 		if (f) {
@@ -23335,15 +23352,15 @@ qt((e) => {
 			px: [48, 48],
 			normalScale: .75,
 			gen: (n, r) => Uh(n, r, e, t([
-				"#4f4a3f",
-				"#5e584b",
-				"#6d6656",
-				"#7c7462",
-				"#8a816d",
-				"#968c77",
-				"#a19782",
-				"#aba18c"
-			]), ["#5c5244", "#51483b"], ["#867860", "#787874"])
+				"#5e5242",
+				"#6c5f4c",
+				"#7a6a55",
+				"#887661",
+				"#95826c",
+				"#a18d77",
+				"#ab9781",
+				"#b4a08a"
+			]), ["#5a4c3c", "#504334"], ["#8a7a5e", "#7e7466"])
 		},
 		crypt_sill_top: {
 			px: [32, 32],
@@ -23365,13 +23382,13 @@ qt((e) => {
 			px: [64, 64],
 			normalScale: .7,
 			gen: (n) => qh(n, e, t([
-				"#3a332b",
-				"#6a6052",
-				"#73685a",
+				"#312a23",
+				"#655b4d",
+				"#71675a",
 				"#7c7062",
-				"#85796a",
-				"#8e8272",
-				"#978a7a"
+				"#877a6b",
+				"#928574",
+				"#9d8f7d"
 			]), !1)
 		},
 		crypt_ledger: {
@@ -23392,12 +23409,12 @@ qt((e) => {
 			normalScale: .35,
 			gen: (r) => {
 				let i = e.field(r.w, r.h, 4, 4, 961, { oct: 3 }), a = t([
-					"#6e6b66",
-					"#7e7a74",
-					"#8c8881",
-					"#9a958d",
-					"#a7a299",
-					"#b3aea4"
+					"#786c5a",
+					"#887b67",
+					"#978a75",
+					"#a59782",
+					"#b2a48e",
+					"#bfb19a"
 				]);
 				return r.each((t, o, s) => {
 					let c = .35 + (i[s] - .5) * .5, l = e.hash2(t, o, 963);

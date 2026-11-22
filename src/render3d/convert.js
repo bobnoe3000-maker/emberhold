@@ -1009,7 +1009,8 @@ function dungeon(w, o = {}) {
     // (round 9: one broad low pool at the middle, so the fight stands on the brightest open floor; the ossuary none at
     // its sides, its niches' candles enough: stacked there they burned like a bonfire)
     roomPools.push({ x: r2((r.cx - x0) / 2), z: r2((r.cy - y0) / 2), mid: true });
-    if (r.kit === 'ossuary') rings.push({ k: 'bonering', x: r2((r.cx - x0) / 2), z: r2((r.cy - y0) / 2), r: 1.5 });
+    roomPools.push({ x: r2((r.cx - x0) / 2), z: r2((r.cy + r.rh * 0.3 - y0) / 2), front: true });   // (a wider dimmer one toward the near sill: round 11, the rooms' fronts went cold)
+    if (r.kit === 'ossuary') rings.push({ k: 'bonering', x: r2((r.cx - x0) / 2), z: r2((r.cy - y0) / 2), r: 1.5, seed: hash('or', r.id) % 997 });
     if (r.role !== 'end' && r.kit !== 'ossuary') for (const sg of [-1, 1]) roomPools.push({ x: r2((r.cx + (along ? sg * r.rw * 0.62 : 0) - x0) / 2), z: r2((r.cy + (along ? -r.rh * 0.25 : sg * r.rh * 0.62) - y0) / 2) });
   }
   const ledgers = [];
@@ -1049,9 +1050,9 @@ function dungeon(w, o = {}) {
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; const o = { id: `${ob.type}_${count[ob.type]}`, ...ob }; objects.push(o); return o; };
   const drop = (o) => { const i = objects.indexOf(o); if (i >= 0) objects.splice(i, 1); };   // (a lantern's light gone with it: a corner's stores take its bay)
   const trim = inside ? [] : null;
-  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 3.4, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
+  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 1.8, distance: 8, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 3.4, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
   if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h) { add({ ...c.ob(X, Z), onWall: true }); if (c.sprite) sprites.push(c.sprite); }   // (onWall: on a wall's top, not the room's own)   // (what stands on the walls' tops, where the stairs didn't take the wall)
-  for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity, distance: l.glow.distance, flicker: 0.08, nightOnly: false }
+  for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity * (look.fill ? 0.65 : 1), distance: l.glow.distance, flicker: 0.08, nightOnly: false }
     : { type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });
   for (const [k, kind] of w.props || []) {
     const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);
