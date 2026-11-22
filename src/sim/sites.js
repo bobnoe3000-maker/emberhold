@@ -74,6 +74,10 @@ export const SITES = {
   // every hour; reached by walking into the stones in a window, never from a door, so parked as the Bowl is
   // parked for the Cinder Reach (world doc v1.32 §3.3): its Assay Yards and its Cold Seam, as they were in the Vale
   tithe_mill: { name: 'The Tithe Mill', region: 'reach', theme: 'desert', base: 1, perFloor: 0, floors: 1, family: 'redhand', rooms: [6, 6], layout: 'halls', parked: true, mix: 0x3117 },
+  // (the owner, 2026-11-22, from a reference: "Prototype a dungeon level that looks like the inside of a building.. a
+  // tavern. Needs more open floor to accommodate NPC battle but the walls are up and set dressing looks great. This is a
+  // new dungeon type": the tavern kit, plans.js shuttered_inn; parked, a prototype for review, on no land yet)
+  shuttered_inn: { name: 'The Shuttered Inn', region: 'vale', theme: 'dread', base: 6, perFloor: 0, floors: 1, plan: true, family: 'redhand', rooms: [5, 5], layout: 'halls', flat: true, parked: true, mix: 0x1ee5 },
   scrag_warren: { name: 'The Scrag Warren', region: 'reach', theme: 'warren', base: 2, perFloor: 1, floors: 2, family: 'goblin', rooms: [6, 6], parked: true, mix: 0x6b1d },
 };
 export const SITE_IDS = Object.keys(SITES);

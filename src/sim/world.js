@@ -53,6 +53,8 @@ export const DRESS = {
   abbey:    { rooms: ['nave', 'chancel', 'crypt'], decor: ['candles', 'urns', 'saint'], obstacles: ['pillar', 'brokenpillar', 'gibbet'], pools: 1, pool: 'bog' },
   // the Cinder Reach (v1.124): the Cold Seam's old pithead (timbered galleries, the winding gear, carts) and the warren
   // the goblins dug through into it (raw rock, their fires and their spoil)
+  // (the owner, 2026-11-22: a dungeon inside a building, a tavern: plans.js shuttered_inn; its dressing at the rooms' edges)
+  tavern:   { rooms: ['storehouse', 'barracks', 'storehouse'], decor: ['barrels', 'crates', 'lantern'], obstacles: ['pillar'] },   // (no barrels or crates as obstacles: they'd count as such in every kit's rooms (test/ways), and the inn stands none: PLAN_OB.tavern)
   pithead:  { rooms: ['cellar', 'storehouse', 'cave'], decor: ['lantern', 'crates', 'sacks'], obstacles: ['boulder', 'spoil', 'stalagmite'], pools: 1, pool: 'still' },
   warren:   { rooms: ['cave', 'camp', 'cave'], decor: ['spoil', 'bones', 'sacks'], obstacles: ['stalagmite', 'boulder', 'spoil'] },
   // (v1.126) the Assay Yards (the yards and the counting house; the cellars and the quota office), the Forgehall (its
@@ -73,9 +75,9 @@ export const DRESS = {
 // middle is kept open for the fight; the pieces go in the thirds and at the walls, a focal piece on the room's axis.
 // A piece that runs along a wall comes in two (`<kind>` along x, `<kind>_y` along y: gsprite.js), picked by the wall it's
 // on. A big piece's footprint past its own tile is `block` (stands in the way, draws nothing).
-const ORIENT = new Set(['rack', 'urnshelf', 'standard', 'banner', 'scaffold', 'stall', 'trough', 'portcullis', 'iron_door', 'desk', 'shelf', 'shoring', 'hives', 'bench', 'fallen_door', 'bars', 'cask_rack']);
+const ORIENT = new Set(['longtable', 'tbench', 'rack', 'urnshelf', 'standard', 'banner', 'scaffold', 'stall', 'trough', 'portcullis', 'iron_door', 'desk', 'shelf', 'shoring', 'hives', 'bench', 'fallen_door', 'bars', 'cask_rack']);
 /** the pieces the dressing pass added (keepTheWaysOpen clears them like any decor when they shut a way) */
-export const DRESS_PIECES = new Set(['stall', 'hay', 'trough', 'hen_cart', 'well', 'cart', 'portcullis', 'iron_door', 'desk', 'shelf', 'pit', 'ladder', 'shoring', 'hives', 'bench',
+export const DRESS_PIECES = new Set(['hearth', 'noticeboard', 'counter', 'longtable', 'tbench', 'logpile', 'stall', 'hay', 'trough', 'hen_cart', 'well', 'cart', 'portcullis', 'iron_door', 'desk', 'shelf', 'pit', 'ladder', 'shoring', 'hives', 'bench',
   'fallen_door', 'bars', 'strongbox', 'map_table', 'ledgers', 'stockade', 'guardian', 'sarcophagus_open', 'cask_rack', 'torch', 'candelabra', 'cookfire', 'block',
   ...[...ORIENT].map((k) => k + '_y')]);
 // what lights a doorway, by the room's kit (a brazier each side, before, in every room: the screen was a field of
@@ -86,18 +88,18 @@ const FALLEN = [[-0.4, 0.25], [0.25, -0.3]];   // (two columns down across the p
 /** how many of a piece a room holds at most (the owner, 2026-11-04: "Dont repeat or duplicate set pieces in a room,
  *  piece placement and counts should make sense"): a set piece once, a pair where the place has a pair (guardians either
  *  side of the stair, a camp's two cookfires, the porch's two doors), the rest by what the room would hold */
-export const DRESS_CAP = { urns: 4, bones: 4, well: 1, hen_cart: 1, map_table: 1, stockade: 1, altar: 1, font: 1, shaft: 1, portcullis: 1, iron_door: 1, sarcophagus_open: 1, circle: 1, windlass: 2,
+export const DRESS_CAP = { hearth: 1, noticeboard: 1, counter: 1, longtable: 3, tbench: 6, logpile: 2, urns: 4, bones: 4, well: 1, hen_cart: 1, map_table: 1, stockade: 1, altar: 1, font: 1, shaft: 1, portcullis: 1, iron_door: 1, sarcophagus_open: 1, circle: 1, windlass: 2,
   ledgers: 1, rug: 1, coins: 2, papers: 2, boat: 3, vat: 6, guardian: 2, cookfire: 2, desk: 2, cart: 2, fallen_door: 2, hives: 2, bench: 2, standard: 2, banner: 2, hay: 3, tent: 3,
   saint: 2, lantern: 4, candles: 4, candelabra: 4, torch: 4, brazier: 4, ladder: 1, puddle: 4, scorch: 3, straw: 6, sacks: 3, crates: 2, barrels: 2, cracks: 6 };
 /** what stands out on an authored room's floor, by its place (not the kit's whole list: a gibbet in the stables and the
  *  gate-warden's chapel, a monolith in the legion's vault, said nothing) */
 const PLAN_OB = { dig: ['spoil', 'brokenpillar'], gallery: ['pillar', 'brokenpillar'], muster: ['pillar'], bailey: ['pillar'], barracks: ['pillar'], cellar: ['stalagmite', 'boulder'], nave: ['pillar', 'brokenpillar'], cultcut: ['brokenpillar', 'spoil'], binding: ['pillar'],
   mound: ['reeds'], locks: ['pillar'], vats: ['pillar'], abbey: ['pillar', 'brokenpillar'], pithead: ['boulder', 'spoil'], warren: ['stalagmite', 'boulder'],
-  yards: ['pillar', 'spoil'], quota: ['pillar'], forge: ['pillar', 'brokenpillar'], deepforge: ['pillar'], works: ['pillar', 'spoil'], vault: ['stalagmite', 'boulder'], strongroom: ['pillar'] };   // (v1.126)   // (v1.124: the Cold Seam)   // (v1.102: the Fens authored)
+  yards: ['pillar', 'spoil'], quota: ['pillar'], forge: ['pillar', 'brokenpillar'], deepforge: ['pillar'], works: ['pillar', 'spoil'], vault: ['stalagmite', 'boulder'], strongroom: ['pillar'], tavern: [] };   // (the tavern: nothing stood out in its floors, which are for the fight)   // (v1.126)   // (v1.124: the Cold Seam)   // (v1.102: the Fens authored)
 const DOOR_LIGHT = { dig: 'lantern', gallery: 'candles', muster: 'torch', bailey: 'torch', barracks: 'torch', cellar: 'lantern', nave: 'candelabra', cultcut: 'candles', binding: 'candles',
   mound: 'lantern', locks: 'lantern', vats: 'lantern', abbey: 'candelabra', pithead: 'lantern', warren: 'torch',
-  yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra' };   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
-const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave', yards: 'storehouse', quota: 'cellar', forge: 'muster', deepforge: 'binding', works: 'storehouse', vault: 'cave', strongroom: 'muster' };
+  yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra', tavern: 'torch' };   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
+const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave', yards: 'storehouse', quota: 'cellar', forge: 'muster', deepforge: 'binding', works: 'storehouse', vault: 'cave', strongroom: 'muster', tavern: 'storehouse' };
 const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', crates: 'crates', sacks: 'sacks', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', skulls: 'bones', bones: 'bones', barrels: 'barrels' };
 function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, count }) {
   // every piece through the room's caps (CAP): a recipe can't stand a second well or a fifth torch
@@ -152,6 +154,29 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       case 'cage': big(L * 0.8, -Wd * 0.25, 'stockade', 2, 2); putAt(L * 0.8 - 3, -Wd * 0.25 + 2, 'straw'); break;
       case 'well': big(-L * 0.45, -Wd * 0.3, 'well', 2, 2); putAt(-L * 0.45 + 2, -Wd * 0.3 + 1, 'puddle'); putAt(-L * 0.45 - 3, -Wd * 0.3 + 2, 'torch'); break;   // (each set piece its own key light: in the dark, unlit, it wasn't there)
       case 'carts': putAt(L * 0.6, -wall + 1, 'cart'); putAt(L * 0.6 + 2, -wall + 1, 'sacks'); putAt(-L * 0.7, wall - 1, 'cart'); for (const [u, v] of [[0.55, 0.1], [-0.65, 0.4]]) putAt(u * L, v * Wd, 'straw'); break;
+      // ── the tavern (the owner, 2026-11-22; plans.js shuttered_inn): the walls dressed, the middle left open for the fight.
+      // The hearth and the notice board stand against the back wall (the one the camera faces), the long tables along the
+      // end walls and the near one, each with a bench either side; the fire baskets in the near corners, low.
+      // (the inn's pieces stand at the inn's scale, half again Luminati's own, as the figures do (convert.js TAV_S): each
+      // blocks the floor it covers, a wall piece against the wall itself, so nothing walks through a hearth's back)
+      case 'hearth': case 'kitchen_hearth': {
+        const u0 = d === 'hearth' ? L * 0.25 : -L * 0.3;
+        for (let b = 0; b <= 2; b++) for (let a = d === 'hearth' ? -5 : -3; a <= (d === 'hearth' ? 4 : 2); a++) putAt(u0 + a, -Wd + b, a || b ? 'block' : 'hearth');   // (the common room's in its stone surround, ten wide: round 3, "too small to anchor the room")
+      } break;
+      case 'noticeboard': for (let a = -2; a <= 2; a++) putAt(-L * 0.15 + a, -Wd, a ? 'block' : 'noticeboard'); break;
+      case 'firewood': for (const s of [-1, 1]) for (let b = 0; b <= 1; b++) putAt(L * 0.25 - 0.5 + s * 7, -Wd + b, b ? 'block' : 'logpile'); break;
+      case 'counter': for (let b = 0; b <= 3; b++) for (let a = -3; a <= 3; a++) putAt(-L * 0.5 + a, -Wd + b, a || b !== 3 ? 'block' : 'counter'); break;   // (the bar a step out, the keeper's shelf behind it on the wall)
+      case 'rug': putAt(-L * 0.1, Wd * 0.1, 'rug'); break;
+      case 'prep_table': for (let b = 0; b <= 1; b++) for (let a = -2; a <= 2; a++) putAt(L * 0.3 + a, -Wd + b, a || b !== 1 ? 'block' : 'longtable'); break;   // (the cook's table against the kitchen's wall)
+      case 'fire_baskets': for (const s of [-1, 1]) putAt(s * (L - 3), -Wd + 1, 'brazier'); break;   // (in the back corners, by a wall (keepclear.js): by the near sill, the sill hid the basket and left its flame floating, the art critic's round 2)
+      // a long table: its middle (the piece) and its length (blocks) along the room, a bench either side
+      case 'tavern_tables': case 'snug_tables': {
+        const tables = d === 'snug_tables' ? [[-L * 0.5, -Wd + 3], [L * 0.5, -Wd + 3]] : [[-L * 0.64, -Wd * 0.5], [L * 0.75, -Wd * 0.5], [-L * 0.42, wall - 2.5]];   // (the hearth an apron of clear stone before it; the snug's two by its back wall, the rug alone in the middle)
+        for (const [u, v] of tables) {
+          for (let b = -1; b <= 1; b++) for (let a = -2; a <= 2; a++) putAt(u + a, v + b, a || b ? 'block' : alongK('longtable'));
+          for (const s of [-1, 1]) for (let a = -2; a <= 2; a++) putAt(u + a, v + s * 2, a ? 'block' : alongK('tbench'));
+        }
+      } break;
       case 'casks': row(-wall, -L * 0.6, L * 0.6, 8, 'cask_rack'); putAt(L * 0.7, wall, 'barrels'); putAt(-L * 0.7, wall, 'barrels'); break;
       case 'bunks': for (const s of [-1, 1]) for (let u = -L * 0.75, i = 0; u <= L * 0.75 + 0.01; u += 6, i++) { putAt(u, s * wall, 'bunk'); if (s < 0 && i % 3 === 1) putAt(u + 3, s * (wall - 2), 'straw'); } break;
       case 'iron_door': break;                                             // (at the doorway: dressRoom, which knows the openings)
@@ -380,7 +405,8 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     // pillar taller than the walls, a monolith, or an empty gibbet-cage on its post. Each with open floor all round
     // (3 × 3 clear, 5 tiles from other furniture), never by a doorway, never in the entrance or the descent hall. On
     // their own stream, so the rest of a floor's dressing stands where it did.
-    if (r !== level.entrance && r !== level.descentRoom) {
+    // (an authored kit with no such pieces, the tavern's, keeps its floors open: its middle is for the fight)
+    if (r !== level.entrance && r !== level.descentRoom && !(r.dress && PLAN_OB[r.kit] && !PLAN_OB[r.kit].length)) {
       const n = 1 + (orr() < 0.5 ? 1 : 0), mid = cells.filter(([x, y, c]) => !c.corridor && Math.abs(x - r.cx) <= r.rw * 0.45 && Math.abs(y - r.cy) <= r.rh * 0.45 && hypot(x - r.cx, y - r.cy) > 4 && !nearDoor(x, y));
       // (an authored room's own set piece out on the floor, the yard's well, a cart, stands for one: the middle stays open)
       const OBK = r.dress ? PLAN_OB[r.kit] || ['pillar'] : KIT ? KIT.obstacles : OBSTACLES, pre = r.dress ? Math.min(n, cells.filter(([x, y, c]) => { const p = world.props.get(K(x, y)); return p && p !== 'block' && (DRESS_PIECES.has(p) || OBK.includes(p)) && !c.corridor && Math.abs(x - r.cx) <= r.rw * 0.45 && Math.abs(y - r.cy) <= r.rh * 0.45 && hypot(x - r.cx, y - r.cy) > 4; }).length) : 0;
