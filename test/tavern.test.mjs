@@ -21,7 +21,7 @@ const propsOf = (w, part) => {
   return out;
 };
 
-test('the Inn: a parked prototype, one authored floor, every room of the tavern kit, its plan sound', () => {
+test('the Inn: a parked prototype, one authored floor, every room of the tavern kits, its plan sound', () => {
   const S = SITES.shuttered_inn;
   assert.ok(S && S.plan && S.flat && S.parked, 'authored, flat, parked: on no land yet');
   assert.equal(S.floors, 1); assert.equal(S.base, 6);
@@ -29,7 +29,7 @@ test('the Inn: a parked prototype, one authored floor, every room of the tavern 
   const P = PLANS.shuttered_inn;
   assert.deepEqual(checkPlan(P), []);
   const spaces = P.floors.flatMap((f) => f.spaces);
-  assert.ok(spaces.every((s) => s.kit === 'tavern'), 'every room an inn\'s');
+  assert.ok(spaces.every((s) => s.kit === (s.id === 'the_cellar_hall' ? 'tavern_cellar' : 'tavern')), 'every room an inn\'s, its cellar the cellar\'s');
   assert.deepEqual(spaces.map((s) => s.id), ['the_front_room', 'the_common_room', 'the_kitchen', 'the_snug', 'the_cellar_hall']);
 });
 
@@ -99,7 +99,7 @@ test('the Inn drawn: whole walls, the back a storey and a half and the near cut 
   assert.ok(by('post').length > 20 && by('beam').length > 5, 'posts and beams along the back walls');
   assert.equal(by('board').length, 1); assert.equal(by('logs').length, 2);
   const furn = by('furn').map((p) => p.type).sort();
-  assert.deepEqual([...new Set(furn)], ['bench', 'counter', 'shelf', 'table']);
+  assert.deepEqual([...new Set(furn)], ['bench', 'counter', 'sacks', 'shelf', 'table']);
   assert.equal(furn.filter((f) => f === 'table').length, 6); assert.equal(furn.filter((f) => f === 'bench').length, 10);
   const types = new Set(level.objects.map((o) => o.type));
   assert.ok(types.has('hearth') && types.has('rug') && types.has('wallTorch'));

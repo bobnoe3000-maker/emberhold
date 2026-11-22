@@ -88,6 +88,8 @@ export const LEGEND = {
   // second flag, walls of dressed grey-buff stone blocks capped in dark timber (painted by world.js, ours)
   '#': { top: 'tavern_flag', side: 'tavern_wall', walkable: true }, '=': { top: 'tavern_flag_worn', side: 'tavern_wall', walkable: true },
   '@': { top: 'tavern_cap', side: 'tavern_wall', walkable: false },
+  // its cellar's rough rubble walls (round 5: "a cellar should feel lower and rougher")
+  '+': { top: 'tavern_rubble', side: 'tavern_rubble', walkable: false },
   // a dungeon's stairs (Luminati's stair tiles, its own characters for them): each climbs one level toward its side
   '^': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'N', walkable: true }, v: { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'S', walkable: true },
   '>': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'E', walkable: true }, '<': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'W', walkable: true },
@@ -540,6 +542,8 @@ Object.assign(KIT_LOOK, {
 // a building's inside (the Shuttered Inn, docs/tavern-dungeon.md): its flagstones, its stone walls, an evening's hour; its
 // walls stand whole (tavernWalls, below), not ruined
 KIT_LOOK.tavern = { floor: ['#', '='], wall: '@', cave: '@', hour: 19.2, mix: 14, inside: true };
+// its cellar: the worn flag most of the floor, rough rubble walls, no timber frame, candles in niches (tavernDress)
+KIT_LOOK.tavern_cellar = { floor: ['=', '#'], wall: '+', cave: '+', hour: 19.2, mix: 30, inside: true, frame: false };
 const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KIT_LOOK.cellar, nave: KIT_LOOK.nave, cinder: KIT_LOOK.cultcut, chasm: { floor: ['U', 'm'], wall: 'x', hour: 22.8 },
   warren: KIT_LOOK.warren, ember: KIT_LOOK.ember, lava: KIT_LOOK.lava, mire: KIT_LOOK.mound, sluice: KIT_LOOK.locks, poison: KIT_LOOK.vats, water: KIT_LOOK.abbey };
 /** the fill's tint underground for the Reach's kits and themes (palette.js KIT_TINT holds the Vale's and the Fens'):
@@ -548,7 +552,7 @@ const AMB_TINT = { pithead: [1.08, 0.97, 0.86], warren: [1.04, 0.96, 0.88], embe
   // (round 3: the new kits' fill a step up, ~+12 %: the yards' world band 22 against the stone floors' 26 before)
   yards: [1.1, 1.04, 0.98], quota: [1.02, 1.03, 1.1], forge: [1.2, 1.0, 0.88], deepforge: [1.26, 0.94, 0.8], works: [1.22, 0.96, 0.84], vault: [1.3, 0.9, 0.76], strongroom: [1.12, 1.04, 0.96],
   // (the inn: firelight's warmth in the fill, a lit room's not a cellar's)
-  tavern: [1.3, 1.06, 0.84] };
+  tavern: [1.3, 1.06, 0.84], tavern_cellar: [1.3, 1.06, 0.84] };
 const DEFAULT_LOOK = { floor: ['k', 'm'], wall: 'x', hour: 19.4 };
 /** an overland prop of ours (gsprite.js), a spawn point's dressing (sim/camps.js) */
 const OVERLAND_OURS = new Set(['tent', 'carcass', 'burrow', 'rack', 'banner', 'standard', 'bedroll', 'reeds', 'boat', 'bound', 'urns', 'candles', 'saint']);   // (v1.68: every land's spawn points' dressing)
@@ -592,7 +596,7 @@ const hex = (c) => { const m = Math.max(...c, 1e-6); return '#' + c.map((v) => M
 // tint, no sun or moon, the braziers and lamps doing the rest. Luminati's own hour read its dusk and night palette and
 // lit every wall a saturated violet.
 const AMB_BASE = [0.379, 0.324, 0.449];
-const INSIDE_FILL = { sky: [1.12, 0.96, 0.82], ground: [0.6, 0.5, 0.42] };
+const INSIDE_FILL = { sky: [1.05, 0.88, 0.72], ground: [0.56, 0.45, 0.36] };   // (round 6: a tenth down, so the pools lead and the corners fall away)   // (round 5: a touch toward umber, the rooms' middles warmer)
 /** the ambient a floor's kit wants: Luminati's hemisphere light's sky and ground colours (linear) and intensity */
 export function ambientOf(kit) {
   // (a building's inside is lit, not a cellar: a lamp-and-hearth warmth in the fill, the floor readable from wall to wall,
@@ -657,9 +661,12 @@ function ruinWalls(W, D, tiles, heights, open) {
 // the high corners. The furniture is Luminati's interiors (TAVERN_3D); the rest ours, built in one batch by world.js
 // buildTavern (one draw a material). Every choice is a hash of the tile: the same inn every visit.
 const TAV_BACK = 8, TAV_NEAR = 3;
+/** what hangs in a bay that isn't a lantern's (world.js buildTavern): a shield, a plate shelf, antlers, a peg rail with a
+ * cloak and a hat, the slate of chalked tallies, herbs drying */
+const TAV_STORY = ['shield', 'shelf', 'antlers', 'pegs', 'slate', 'herbs'];
 const TAV_FLOOR_Y = FLOOR * 0.5, TAV_TOP_Y = TAV_BACK * 0.5;
 /** the walls' heights for a building's inside; the back faces, for its frame @returns {{ i: number, j: number, n: 's' | 'e' }[]} */
-function tavernWalls(W, D, heights, open) {
+function tavernWalls(W, D, heights, open, looks, tiles) {
   const faces = [];
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
     if (heights[j][i] !== String(WALL)) continue;
@@ -668,8 +675,11 @@ function tavernWalls(W, D, heights, open) {
     if (!(s || e || open(i + 1, j + 1))) continue;
     heights[j][i] = near ? String(TAV_NEAR) : String(TAV_BACK);              // (a wall with the floor on its camera side too stays low: it would stand in front of a fight)
     if (near) continue;
-    if (s) faces.push({ i, j, n: 's' });
-    if (e) faces.push({ i, j, n: 'e' });
+    // (rough: the wall's own stone is the cellar's rubble, so it takes no frame; the frame follows the texture, and a
+    // timber run ends at a post where the rubble starts: round 6, "a visible seam")
+    const rough = tiles[j][i] === '+';
+    if (s) faces.push({ i, j, n: 's', rough });
+    if (e) faces.push({ i, j, n: 'e', rough });
   }
   return faces;
 }
@@ -686,28 +696,48 @@ function tavernDress(faces, arches, open, add, trim) {
   const clearOf = (x, z) => arches.every((a) => Math.abs(x - a.x) > a.span / 2 + 1.2 || Math.abs(z - a.z) > 2.5);
   // runs along each line of faces: a north wall's (faces 's', along x) and a west wall's (faces 'e', along z)
   const lines = new Map();
-  for (const f of faces) { const key = f.n === 's' ? `s${f.j}` : `e${f.i}`; (lines.get(key) || lines.set(key, []).get(key)).push(f.n === 's' ? f.i : f.j); }
+  for (const f of faces) { const key = (f.rough ? 'c' : '') + (f.n === 's' ? `s${f.j}` : `e${f.i}`); (lines.get(key) || lines.set(key, []).get(key)).push(f.n === 's' ? f.i : f.j); }
   for (const [key, ts] of lines) {
     ts.sort((a, b) => a - b);
-    const s = key[0] === 's', c = +key.slice(1) + 1;               // the face's line: z (north wall) or x (west wall)
-    const P = (t) => (s ? [t, c] : [c, t]);
+    const cellar = key[0] === 'c', k0 = cellar ? key.slice(1) : key, s = k0[0] === 's', c = +k0.slice(1) + 1;   // (the face's line: z (north wall) or x (west wall))
+    const P = (t) => (s ? [t, c] : [c, t]), n = s ? 'z' : 'x';
     const runs = []; for (const t of ts) { const r = runs[runs.length - 1]; if (r && t === r[1]) r[1] = t + 1; else runs.push([t, t + 1]); }
     for (const [a, b] of runs) {
       if (b - a < 2) continue;
-      const [x0, z0] = P(a), [x1, z1] = P(b);
-      trim.push({ k: 'beam', x0, z0, x1, z1, n: s ? 'z' : 'x', y: TAV_TOP_Y - 0.2 });
-      const posts = [a, b]; for (let t = a + 4; t <= b - 3; t += 4) posts.push(t);
-      for (const t of posts) { const [x, z] = P(t); if (clearOf(x, z)) trim.push({ k: 'post', x, z, n: s ? 'z' : 'x', end: t === a ? 1 : t === b ? -1 : 0 }); }
-      // between the posts, the inn's things: a shield hung up, a lantern on an arm (a light for every other one), a bare bay
-      for (let t = a + 2; t <= b - 2; t += 4) {
-        const [x, z] = P(t), h = hash('tv', key, t) % 6;
-        if (!clearOf(x, z)) continue;
-        if (h <= 1) trim.push({ k: 'shield', x, z, n: s ? 'z' : 'x', y: TAV_FLOOR_Y + 2.05, look: hash('ts', key, t) % 5 });
-        else if (h <= 3) {   // (each its light, a wash on the stone round it and a pool below: round 2, "the lanterns light almost nothing")
-          trim.push({ k: 'lantern', x, z, n: s ? 'z' : 'x', y: TAV_FLOOR_Y + 2.6 });
-          add({ type: 'light', x: r2(x + (s ? 0 : 0.7)), z: r2(z + (s ? 0.7 : 0)), dy: 1.6, color: '#ffb468', intensity: 2.6, distance: 4.5, flicker: 0.1, nightOnly: false });
-        } else if (h === 4 && (t - a < 7 || b - t < 7)) trim.push({ k: 'web2', x, z, n: s ? 'z' : 'x', y: TAV_TOP_Y - 0.36, side: t - a < 7 ? 1 : -1, size: 0.6 + (hash('tz', key, t) % 5) * 0.1 });   // (a bare bay near a corner, now and then: a web in its high corner, toward the corner; round 3, "overcorrected")
+      if (cellar) {
+        // a cellar's wall: no frame; a niche with its candles every four tiles (every other one a light), a ham or a
+        // string of onions on a hook between
+        for (let t = a + 2, q = 0; t <= b - 2; t += 2, q++) {
+          const [x, z] = P(t); if (!clearOf(x, z)) continue;
+          if (q % 2 === 0) { trim.push({ k: 'niche', x, z, n, y: TAV_FLOOR_Y + 1.5 }); if (q % 4 === 0) add({ type: 'light', x: r2(x + (s ? 0 : 0.5)), z: r2(z + (s ? 0.5 : 0)), dy: 1.4, color: '#ffbe72', intensity: 2.4, distance: 4.5, flicker: 0.16, nightOnly: false }); }
+          else if (hash('tc', key, t) % 3 === 0) trim.push({ k: 'ham', x, z, n, y: TAV_TOP_Y - 0.5, look: hash('th', key, t) % 2 });
+        }
+        continue;
       }
+      const [x0, z0] = P(a), [x1, z1] = P(b);
+      trim.push({ k: 'beam', x0, z0, x1, z1, n, y: TAV_TOP_Y - 0.2 });
+      trim.push({ k: 'grime', x0, z0, x1, z1, n });   // (a darker band of grime at the wall's foot: round 7, "what gives the reference its depth")
+      const posts = [a, b]; for (let t = a + 4; t <= b - 3; t += 4) posts.push(t);
+      for (const t of posts) { const [x, z] = P(t); if (clearOf(x, z)) trim.push({ k: 'post', x, z, n, end: t === a ? 1 : t === b ? -1 : 0 }); }
+      // between the posts, each bay its own story (round 5: "every back wall is the same bay repeated"): a lantern in every
+      // other bay (its light), and in the rest one thing each, never the same twice running; a long wall's middle bay a
+      // shuttered window, the inn's name, a cool line of night through its crack
+      const bays = []; for (let t = a + 2; t <= b - 2; t += 4) bays.push(t);
+      const win = b - a >= 14 ? bays[(bays.length / 2) | 0] : null, o = hash('tv', key) % TAV_STORY.length;
+      bays.forEach((t, q) => {
+        const [x, z] = P(t); if (!clearOf(x, z)) return;
+        if (t === win) {
+          trim.push({ k: 'window', x, z, n, y: TAV_FLOOR_Y + 1.75 });
+          add({ type: 'light', x: r2(x + (s ? 0 : 1.0)), z: r2(z + (s ? 1.0 : 0)), dy: 0.5, color: '#7a8fc4', intensity: 1.8, distance: 3.2, flicker: 0, nightOnly: false });   // (moonlight, blue-grey and dim: rounds 9, 10)   // (a cool sliver on the floor below it: round 6)
+        } else if (q % 2 === 0) {
+          const light = add({ type: 'light', x: r2(x + (s ? 0 : 0.7)), z: r2(z + (s ? 0.7 : 0)), dy: 1.6, color: '#ffb468', intensity: 2.9, distance: 6, flicker: 0.1, nightOnly: false });
+          trim.push({ k: 'lantern', x, z, n, y: TAV_FLOOR_Y + 2.6, light });
+        } else {
+          const kind = TAV_STORY[(o + q) % TAV_STORY.length];
+          trim.push(kind === 'shield' ? { k: 'shield', x, z, n, y: TAV_FLOOR_Y + 2.05, look: hash('ts', key, t) % 5 } : { k: kind, x, z, n, y: TAV_FLOOR_Y + 1.95, seed: hash('ty', key, t) % 997 });   // (between the rail and the beam, built half again as big: round 6, "dark specks")
+        }
+        if ((q === 0 || q === bays.length - 1) && hash('tw2', key, t) % 3 === 0) trim.push({ k: 'web2', x, z, n, y: TAV_TOP_Y - 0.36, side: q === 0 ? 1 : -1, size: 0.6 + (hash('tz', key, t) % 5) * 0.1 });   // (a web in a corner bay now and then)
+      });
     }
   }
   // cobwebs in the high corners where a north wall meets a west one (half of them)
@@ -732,12 +762,19 @@ const TAVERN_3D = {
     if (wall?.side !== 'n') return;
     const big = room?.size !== 'small', hx = r2(x - 0.25);
     add({ type: 'hearth', x: hx, z: r2(wall.z + 0.5), rotation: 0, opts: { width: big ? 3.6 : 2.6, height: TAV_TOP_Y - TAV_FLOOR_Y, lit: true, embers: true, pot: !big, seed: h % 997 } });
-    if (big) trim.push({ k: 'surround', x: hx, z: wall.z, n: 'z', w: 3.6 });
-    add({ type: 'light', x: hx, z: r2(wall.z + (big ? 2.2 : 1.6)), dy: 0.7, color: '#ff9a4a', intensity: big ? 10 : 6, distance: big ? 7 : 5, flicker: 0.28, nightOnly: false });
+    if (big) trim.push({ k: 'surround', x: hx, z: wall.z, n: 'z', w: 3.6 });   // (no smoke over the stack: a particle wisp read as a grey ball, and showed over the next room's sill, round 8)
+    trim.push({ k: 'apron', x: hx, z: wall.z, n: 'z', seed: h % 997 });
+    if (!big) trim.push({ k: 'cauldron', x: hx, z: wall.z, n: 'z' });   // (the kitchen's pot, swung out on its crane where it reads)   // (a log or two and embers spilled on the hearthstones: the fire reads past the lintel)
+    add({ type: 'light', x: hx, z: r2(wall.z + (big ? 2.2 : 1.6)), dy: 0.7, color: '#ff9a4a', intensity: big ? 13 : 7, distance: big ? 8 : 5, flicker: 0.28, nightOnly: false });   // (the room's brightest: round 6)
   },
-  counter: (x, z, h, k, { wall, trim }) => {
+  counter: (x, z, h, k, { wall, trim, add }) => {
     trim.push({ k: 'furn', type: 'counter', x, z, rot: 0, s: 1.45, opts: { style: 'bar', width: 2.4, items: true, seed: h % 997 } });
-    if (wall?.side === 'n') trim.push({ k: 'furn', type: 'shelf', x, z: r2(wall.z + 0.37), rot: 0, s: 1.45, opts: { kind: 'pantry', width: 2.4, height: 1.9, seed: (h >>> 3) % 997 } });   // (the keeper's shelf behind the bar)
+    if (wall?.side === 'n') {
+      trim.push({ k: 'furn', type: 'shelf', x, z: r2(wall.z + 0.37), rot: 0, s: 1.45, opts: { kind: 'pantry', width: 2.4, height: 1.9, seed: (h >>> 3) % 997 } });   // (the keeper's shelf behind the bar)
+      for (const sg of [-1, 1]) trim.push({ k: 'lantern', x: r2(x + sg * 2.1), z: wall.z, n: 'z', y: TAV_FLOOR_Y + 2.6 });   // (the bar lit, the way in's warm anchor: round 7)
+      add({ type: 'light', x, z: r2(z - 0.3), dy: 2.2, color: '#ffbc70', intensity: 4, distance: 5, flicker: 0.1, nightOnly: false });
+    }
+    trim.push({ k: 'tableware', x, z, rot: 0, y: TAV_FLOOR_Y + 1.02 * 1.45, seed: (h >>> 5) % 997, bar: true });
   },
   // a long table: Luminati's plates on it, and ours, the tankards and a candle in a pool of its own (round 3: "mugs", and
   // "the middles of the rooms are still dim": a candle on each table lights the room without cluttering its floor)
@@ -745,36 +782,58 @@ const TAVERN_3D = {
     const rot = k === 'longtable_y' ? Math.PI / 2 : 0;
     trim.push({ k: 'furn', type: 'table', x, z, rot, s: TAV_S, opts: { shape: 'rect', width: 1.7, depth: 0.85, cloth: false, items: true, candle: false, seed: h % 997 } });
     trim.push({ k: 'tableware', x, z, rot, y: TAV_FLOOR_Y + 0.82 * TAV_S, seed: h % 997 });
-    add({ type: 'light', x, z, dy: 0.82 * TAV_S + 0.45, color: '#ffbe72', intensity: 2.6, distance: 3.4, flicker: 0.18, nightOnly: false });
+    add({ type: 'light', x, z, dy: 0.82 * TAV_S + 0.15, color: '#ffbe72', intensity: 1.3, distance: 1.9, flicker: 0.18, nightOnly: false });   // (low and small: at 2.6 over 3.4 it bleached a figure at the table, round 4)
   },
   tbench: (x, z, h, k, { trim }) => trim.push({ k: 'furn', type: 'bench', x, z, rot: k === 'tbench_y' ? Math.PI / 2 : 0, s: TAV_S, opts: { length: 1.6, back: false } }),
-  rug: (x, z, h, k, { add }) => add({ type: 'rug', x, z, rotation: Math.PI / 2, opts: { color: 'red', width: 3, length: 5, seed: h % 997 } }),
-  barrels: (x, z, h, k, { add }) => add({ type: 'barrel', x, z, rotation: (h % 9) * 0.3, opts: { height: 1.35, lying: false } }),
-  crates: (x, z, h, k, { add }) => add({ type: 'crateStack', x, z, rotation: (h % 7) * 0.2, opts: { count: 2 + (h % 2), size: 1.0, seed: h % 997 } }),
+  rug: (x, z, h, k, { add, room }) => add({ type: 'rug', x, z, rotation: Math.PI / 2, opts: { color: room?.role === 'entrance' ? 'red' : 'blue', width: 3, length: 5, seed: h % 997 } }),   // (blue where the Redhand fight: red foes on a red rug lost their outline, round 6)
+  barrels: (x, z, h, k, ctx) => { clearBay(ctx, x, z); ctx.add({ type: 'barrel', x, z, rotation: (h % 9) * 0.3, opts: { height: 1.35, lying: false } }); },
+  sacks: (x, z, h, k, ctx) => { clearBay(ctx, x, z); ctx.trim.push({ k: 'furn', type: 'sacks', x, z, rot: (h % 5) * 0.4, s: 1.45, opts: { count: 3 + (h % 2), seed: h % 997 } }); },
+  crates: (x, z, h, k, ctx) => { clearBay(ctx, x, z); ctx.add({ type: 'crateStack', x, z, rotation: (h % 7) * 0.2, opts: { count: 2 + (h % 2), size: 1.0, seed: h % 997 } }); },
   // the notice board: the back wall's centrepiece, a lantern either side (round 3: "the reference makes it the
   // centrepiece"); the bay's own shield, lantern or web round it give way
   noticeboard: (x, z, h, k, { wall, trim, add }) => {
     if (wall?.side !== 'n') return;
-    for (let i = trim.length - 1; i >= 0; i--) { const t = trim[i]; if ((t.k === 'shield' || t.k === 'lantern' || t.k === 'web2') && t.n === 'z' && Math.abs(t.z - wall.z) < 0.01 && Math.abs(t.x - x) < 2.8) trim.splice(i, 1); }
+    for (let i = trim.length - 1; i >= 0; i--) { const t = trim[i]; if (t.k !== 'post' && t.k !== 'beam' && t.n === 'z' && Math.abs(t.z - wall.z) < 0.01 && Math.abs(t.x - x) < 3.4) trim.splice(i, 1); }
     trim.push({ k: 'board', x, z: wall.z, n: 'z', y: TAV_FLOOR_Y + 1.6, seed: h % 997 });
-    for (const sg of [-1, 1]) trim.push({ k: 'lantern', x: r2(x + sg * 2.05), z: wall.z, n: 'z', y: TAV_FLOOR_Y + 2.55 });
-    add({ type: 'light', x, z: r2(wall.z + 1.4), dy: 1.7, color: '#ffc88a', intensity: 2.4, distance: 4, flicker: 0.08, nightOnly: false });
+    for (const sg of [-1, 1]) trim.push({ k: 'lantern', x: r2(x + sg * 2.4), z: wall.z, n: 'z', y: TAV_FLOOR_Y + 2.55 });
+    add({ type: 'light', x, z: r2(wall.z + 1.4), dy: 1.7, color: '#ffc88a', intensity: 4, distance: 4.5, flicker: 0.08, nightOnly: false });   // (second only to the hearth: round 6)
   },
   logpile: (x, z, h, k, { wall, trim }) => wall && trim.push({ k: 'logs', x: wall.side === 'n' ? x : wall.x, z: wall.side === 'n' ? wall.z : z, n: wall.side === 'n' ? 'z' : 'x', y: TAV_FLOOR_Y, seed: h % 997 }),
   // an iron fire basket on its stand (the reference's), big enough to read and lighting a pool round it
   // a fire basket by a back wall, where it's seen whole; by a sill (the way in's pair at its door), its light alone (a
   // basket by the sill showed only its flame over it: rounds 2, 3)
-  brazier: (x, z, h, k, { add, wall }) => add(wall && wall.d < 2.6
-    ? { type: 'fire', x, z, opts: { kind: 'brazier', size: 1.15, smoke: false, light: true, intensity: 6, distance: 6.5, seed: h % 997 } }
-    : { type: 'light', x, z, dy: 1.3, color: '#ffae62', intensity: 6, distance: 6, flicker: 0.12, nightOnly: false }),
+  brazier: (x, z, h, k, { add, wall, open }) => add(wall && wall.d < 2.6
+    ? { type: 'fire', x, z, opts: { kind: 'brazier', size: 1.15, smoke: false, light: true, intensity: 4.2, distance: 6, seed: h % 997 } }   // (under the hearth: round 6, a hierarchy of light)
+    : sillPool(x, z, open)),
+  // a doorway's candles (the cellar's): in a niche on the back wall beside it, else their light alone (on a sill they
+  // read as a blob: round 6)
+  candles: (x, z, h, k, { add, wall, trim, open }) => {
+    if (wall && wall.d < 1.6) { trim.push(wall.side === 'n' ? { k: 'niche', x, z: wall.z, n: 'z', y: TAV_FLOOR_Y + 1.5 } : { k: 'niche', x: wall.x, z, n: 'x', y: TAV_FLOOR_Y + 1.5 }); add({ type: 'light', x, z, dy: 1.3, color: '#ffbe72', intensity: 2.4, distance: 4.5, flicker: 0.16, nightOnly: false }); }
+    else add({ ...sillPool(x, z, open), intensity: 3.5, distance: 4.5 });
+  },
   // a cask rack against the wall: two casks on a cradle, their heads to the room, a third on top (in place of the card)
   cask_rack: (x, z, h, k, { wall, trim }) => wall && wall.side === 'n' && trim.push({ k: 'casks', x, z: wall.z, n: 'z', seed: h % 997 }),
   // a doorway's torch on the back wall beside it; where the wall there is a sill, its light alone, a warm pool at the
   // door (a flame on a pole by a sill read as a torch floating, and a basket there was hidden by the sill: rounds 1, 2)
-  torch: (x, z, h, k, { add, wall }) => add(wall && wall.d < 1.6
+  torch: (x, z, h, k, { add, wall, open }) => add(wall && wall.d < 1.6
     ? { type: 'wallTorch', x: wall.side === 'n' ? x : r2(wall.x + 0.12), z: wall.side === 'n' ? r2(wall.z + 0.12) : z, rotation: wall.side === 'n' ? 0 : Math.PI / 2, dy: 1.8, opts: { embers: true } }
-    : { type: 'light', x, z, dy: 1.3, color: '#ffae62', intensity: 6, distance: 6, flicker: 0.12, nightOnly: false }),
+    : sillPool(x, z, open)),
 };
+/** stores stacked against a back wall take the bay above them: its lantern (and the lantern's light) or its hung thing
+ * goes, so nothing hangs in front of the crates (round 8) */
+function clearBay({ wall, trim, drop }, x, z) {
+  if (!wall || wall.d > 1.6) return;
+  for (let i = trim.length - 1; i >= 0; i--) {
+    const t = trim[i]; if (!['lantern', 'shield', 'shelf', 'antlers', 'pegs', 'slate', 'herbs', 'web2'].includes(t.k)) continue;
+    if (wall.side === 'n' ? (t.n === 'z' && Math.abs(t.z - wall.z) < 0.01 && Math.abs(t.x - x) < 1.3) : (t.n === 'x' && Math.abs(t.x - wall.x) < 0.01 && Math.abs(t.z - z) < 1.3)) { if (t.light) drop(t.light); trim.splice(i, 1); }
+  }
+}
+/** a doorway's lamp by a sill: its light alone, low, and drawn back off the sill into the room (rounds 4, 5: it lit the
+ * sill's cap) */
+function sillPool(x, z, open) {
+  const i = Math.floor(x), j = Math.floor(z);
+  return { type: 'light', x: r2(open(i + 1, j) ? x : x - 0.8), z: r2(open(i, j + 1) ? z : z - 0.8), dy: 0.6, color: '#ffae62', intensity: 6, distance: 6, flicker: 0.12, nightOnly: false };
+}
 TAVERN_3D.longtable_y = TAVERN_3D.longtable; TAVERN_3D.tbench_y = TAVERN_3D.tbench;
 
 /** @param {any} w @param {{ region?: string, stairs?: string, walls?: string, dlook?: string }} [o] */
@@ -792,7 +851,8 @@ function dungeon(w, o = {}) {
   // (a plan with no kit of its own, the Ninth Vault: its rooms' one kit, in the Reach; the Vale's Ninth Milestone keeps
   // the chasm's halls it was approved in)
   const L0 = w.level, one = L0.plan && L0.rooms?.length ? [...new Set(L0.rooms.map((r) => r.kit).filter(Boolean))] : [];
-  const kit = w.kit || (one.length === 1 && (SITES[w.site]?.region === 'reach' || KIT_LOOK[one[0]]?.inside) ? one[0] : null);   // (a building's inside: its one kit, wherever it stands)
+  // (a building's inside: its kits all inside ones, the first its floor's; wherever it stands)
+  const kit = w.kit || (one.length === 1 && SITES[w.site]?.region === 'reach' ? one[0] : one.length && one.every((k) => KIT_LOOK[k]?.inside) ? one[0] : null);
   const look = KIT_LOOK[kit] || THEME_LOOK[w.theme] || DEFAULT_LOOK;
   const tiles = grid(W, D, look.wall), heights = grid(W, D, '6'), pools = w.pools || new Set();
   // an authored floor (plans.js) is dressed room by room: each room in its own kit's stone (the Keep's barracks in dressed
@@ -829,7 +889,7 @@ function dungeon(w, o = {}) {
     const [tx, ty] = k.split(',').map(Number), i = Math.floor((tx - x0) / 2), j = Math.floor((ty - y0) / 2);
     if (i >= 0 && j >= 0 && i < W && j < D && heights[j][i] === '2') { heights[j][i] = '0'; tiles[j][i] = 'U'; }
   }
-  const inside = !!look.inside, faces = inside ? tavernWalls(W, D, heights, open) : null;   // (a building's walls stand whole: below)
+  const inside = !!look.inside, faces = inside ? tavernWalls(W, D, heights, open, looks, tiles) : null;   // (a building's walls stand whole: below)
   const crown = o.walls === 'plain' || inside ? null : ruinWalls(W, D, tiles, heights, open);   // (the walls' ragged tops, below; ?walls=plain: level boxes, as before)
   const stairLights = stairs(w, x0, y0, W, D, tiles, heights, o.stairs !== 'plain');
   const objects = [], count = {}, sprites = [];
@@ -837,7 +897,8 @@ function dungeon(w, o = {}) {
   // ?stairs=plain the stairs as they were)
   const archStone = (LEGEND[look.wall]?.side && !/cliff|dirt/.test(LEGEND[look.wall].side)) ? LEGEND[look.wall].side : 'stone_brick';
   for (const a of stairLights.arches || []) sprites.push({ arch: { ...a, stone: archStone } });
-  const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; objects.push({ id: `${ob.type}_${count[ob.type]}`, ...ob }); };
+  const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; const o = { id: `${ob.type}_${count[ob.type]}`, ...ob }; objects.push(o); return o; };
+  const drop = (o) => { const i = objects.indexOf(o); if (i >= 0) objects.splice(i, 1); };   // (a lantern's light gone with it: a corner's stores take its bay)
   const trim = inside ? [] : null;
   if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim); sprites.push({ tavern: { pieces: trim } }); }
   if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h) { add({ ...c.ob(X, Z), onWall: true }); if (c.sprite) sprites.push(c.sprite); }   // (onWall: on a wall's top, not the room's own)   // (what stands on the walls' tops, where the stairs didn't take the wall)
@@ -849,7 +910,7 @@ function dungeon(w, o = {}) {
     const h = hash('p', tx, ty);
     if (kind === 'exit') { add({ type: 'lamppost', x, z, rotation: 0, opts: { style: 'arm' } }); continue; }
     if (kind === 'block') continue;                                 // (a big piece's footprint: world.js big)
-    if (inside && TAVERN_3D[kind]) { const c = w.level.cells.get(k); TAVERN_3D[kind](x, z, h, kind, { add, wall: wallOf(open, W, D, x, z), trim, room: c && c.room >= 0 ? w.level.rooms[c.room] : null }); continue; }
+    if (inside && TAVERN_3D[kind]) { const c = w.level.cells.get(k); TAVERN_3D[kind](x, z, h, kind, { add, drop, wall: wallOf(open, W, D, x, z), trim, open, room: c && c.room >= 0 ? w.level.rooms[c.room] : null }); continue; }
     if (DRESS_3D[kind]) add(DRESS_3D[kind](x, z, h, kind));
     else sprites.push({ prop: kind, tx, ty, x, z, ...(FLAT.has(kind) ? { flat: true } : {}) });
     for (const ob of DRESS_3D_MORE[kind] ? DRESS_3D_MORE[kind](x, z) : []) add(ob);

@@ -540,9 +540,11 @@ function buildArch(a) {
  *   post {x, z, n: 'z'|'x' (the face's normal: +z a north wall's, +x a west wall's), end}; beam {x0, z0, x1, z1, n, y};
  *   shield {x, z, n, y, look}; lantern {x, z, n, y}; board {x, z, n, y, seed}; logs {x, z, n, y, seed}; web {x, z, y};
  *   furn {type (a Luminati builder: table, bench, counter, shelf), x, z, rot, s (its scale), opts} */
-const OAK = [0.62, 0.45, 0.32], OAK_LIT = [0.74, 0.55, 0.4], TAV_IRON = [0.32, 0.3, 0.3];   // (round 3: the oak a step lighter, a warm mid-brown, and its top edge lit: near black, the frame was lost at a phone's size)
-const SHIELD_LOOKS = [['lacquer_red', [1, 1, 1]], ['quilt_blue', [0.9, 0.95, 1.1]], ['furniture_wood', [1, 0.9, 0.8]], ['quilt_green', [0.9, 1, 0.9]], ['cloth_red', [1.05, 0.95, 0.9]]];
-let tavernGlass = null, tavernWeb = null, tavernWebFill = null;
+const OAK = [0.5, 0.37, 0.27], OAK_LIT = [0.68, 0.5, 0.36],   // (round 5: the frame smoke-dark, a step under the furniture's worn oak, so the two part)
+  TAV_IRON = [0.32, 0.3, 0.3];   // (round 3: the oak a step lighter, a warm mid-brown, and its top edge lit: near black, the frame was lost at a phone's size)
+const SHIELD_LOOKS = [['quilt_ochre', [0.95, 0.9, 0.85]],   // (round 8: no bright red, a red disc and its boss read as an eye)
+  ['quilt_blue', [0.9, 0.95, 1.1]], ['furniture_wood', [1, 0.9, 0.8]], ['quilt_green', [0.9, 1, 0.9]], ['cloth_red', [1.05, 0.95, 0.9]]];
+let tavernGlass = null, tavernWeb = null, tavernWebFill = null, tavernEmber = null, tavernNight = null, tavernNightHi = null, tavernStar = null, tavernGrime = null;
 function buildTavern(pieces) {
   const f = game.world.factory, b = f.builder(), FL = 1.0, TOP = FL + TAV_H, furn = [], webTris = [];
   tavernGlass ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffb45e').multiplyScalar(2.2), fog: false });
@@ -552,7 +554,10 @@ function buildTavern(pieces) {
   const on = (p, u, y, v) => (p.n === 'z' ? [p.x + u, y, p.z + v] : [p.x + v, y, p.z + u]);
   const sz = (p, w, h, d) => (p.n === 'z' ? [w, h, d] : [d, h, w]);
   const tilt = (p, a) => (p.n === 'z' ? [0, 0, -a] : [a, 0, 0]);   // (leaning toward +u by a radians, in the wall's plane)
+  const STORY_S = new Set(['shelf', 'antlers', 'pegs', 'slate', 'herbs']);
   for (const p of pieces) {
+    const big = STORY_S.has(p.k);   // (the bay's story items built half again as big about their anchor: round 6, "dark specks")
+    if (big) { const A = on(p, 0, p.y, 0); b.pushMatrix(new THREE.Matrix4().makeTranslation(A[0], A[1], A[2]).multiply(new THREE.Matrix4().makeScale(1.95, 1.95, 1.95)).multiply(new THREE.Matrix4().makeTranslation(-A[0], -A[1], -A[2]))); }
     if (p.k === 'post') b.tinted(OAK, () => {
       const u = p.end * 0.13;
       b.box('furniture_wood', sz(p, 0.28, TAV_H, 0.2), { at: on(p, u, FL + TAV_H / 2, 0.1) });
@@ -568,7 +573,7 @@ function buildTavern(pieces) {
     });
     else if (p.k === 'shield') {
       const [mat, tint] = SHIELD_LOOKS[p.look % SHIELD_LOOKS.length], rot = p.n === 'z' ? [Math.PI / 2, 0, 0] : [0, 0, -Math.PI / 2], R = 0.46, at = on(p, 0, p.y, 0.03);
-      if (p.look % 2 === 0) b.tinted([0.62, 0.62, 0.64], () => {   // (crossed blades behind every other one)
+      if (p.look % 3 === 0) b.tinted([0.36, 0.36, 0.39], () => {   // (crossed blades behind one in three, dull steel: round 4, "white pinwheels")
         for (const sg of [-1, 1]) { b.box('metal', sz(p, 0.07, 1.5, 0.03), { at: on(p, 0, p.y - 0.05, 0.02), rot: tilt(p, sg * 0.7) }); b.box('metal', sz(p, 0.3, 0.06, 0.05), { at: on(p, sg * 0.5, p.y - 0.58, 0.03), rot: tilt(p, sg * 0.7) }); }
       });
       b.tinted(tint, () => b.lathe(mat, [{ y: 0, r: 0 }, { y: 0.03, r: R }, { y: 0.07, r: R }, { y: 0.09, r: 0 }], { segments: 16, at, rot }));
@@ -591,14 +596,23 @@ function buildTavern(pieces) {
       b.box(tavernGlass, sz(p, 0.22, 0.38, 0.22), { at: on(p, 0, y, v) });
     } else if (p.k === 'board') {
       // the notice board: a timber frame and a header, cork-dark boards, the notices pinned askew, red wax on most
-      b.tinted(OAK, () => { b.box('furniture_wood', sz(p, 2.5, 1.7, 0.1), { at: on(p, 0, p.y, 0.05) }); b.box('furniture_wood', sz(p, 2.8, 0.26, 0.16), { at: on(p, 0, p.y + 0.95, 0.08) }); b.box('furniture_wood', sz(p, 2.7, 0.12, 0.2), { at: on(p, 0, p.y - 0.9, 0.1) }); });
-      b.tinted([0.72, 0.6, 0.48], () => b.box('wood_planks', sz(p, 2.25, 1.45, 0.04), { at: on(p, 0, p.y, 0.11) }));
+      b.tinted(OAK, () => { b.box('furniture_wood', sz(p, 3.4, 1.75, 0.1), { at: on(p, 0, p.y, 0.05) }); });
+      b.tinted([1.02, 0.8, 0.55], () => { b.box('furniture_wood', sz(p, 3.8, 0.32, 0.18), { at: on(p, 0, p.y + 1.0, 0.09) }); for (const sg of [-1, 1]) b.box('furniture_wood', sz(p, 0.32, 0.46, 0.2), { at: on(p, sg * 1.95, p.y + 1.05, 0.1) }); b.box('furniture_wood', sz(p, 0.7, 0.2, 0.2), { at: on(p, 0, p.y + 1.24, 0.1) }); });   // (the header a step lighter, its ends carved up: round 4)
+      b.tinted(OAK, () => { b.box('furniture_wood', sz(p, 2.7, 0.12, 0.2), { at: on(p, 0, p.y - 0.9, 0.1) }); });
+      b.tinted([0.72, 0.6, 0.48], () => b.box('wood_planks', sz(p, 3.15, 1.5, 0.04), { at: on(p, 0, p.y, 0.11) }));
       const R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
-      for (let k = 0; k < 12; k++) {
-        const col = k % 4, row = (k / 4) | 0, u = -0.8 + col * 0.53 + (R(k) - 0.5) * 0.14, y = p.y + 0.42 - row * 0.44 + (R(k + 9) - 0.5) * 0.1, w = 0.32 + R(k + 3) * 0.12, h = 0.36 + R(k + 5) * 0.1, a = (R(k + 7) - 0.5) * 0.35;
+      for (let k = 0; k < 15; k++) {
+        const col = k % 5, row = (k / 5) | 0; if (col === 2 && row < 2) continue;   // (the wanted poster's place)
+        const u = -1.3 + col * 0.65 + (R(k) - 0.5) * 0.12, y = p.y + 0.45 - row * 0.46 + (R(k + 9) - 0.5) * 0.08, w = 0.36 + R(k + 3) * 0.12, h = 0.36 + R(k + 5) * 0.08, a = (R(k + 7) - 0.5) * 0.35;
         b.tinted(R(k + 13) < 0.3 ? [0.95, 0.86, 0.66] : [1.02, 0.96, 0.8], () => b.box('linen', sz(p, w, h, 0.012), { at: on(p, u, y, 0.14), rot: tilt(p, a) }));
-        if (R(k + 11) < 0.75) b.tinted([1.1, 0.22, 0.18], () => b.box('cloth_red', sz(p, 0.09, 0.09, 0.025), { at: on(p, u + (R(k + 15) - 0.5) * 0.1, y + h * 0.34, 0.155) }));
+        if (R(k + 11) < 0.7) b.tinted([1.1, 0.22, 0.18], () => b.box('cloth_red', sz(p, 0.09, 0.09, 0.025), { at: on(p, u + (R(k + 15) - 0.5) * 0.1, y + h * 0.34, 0.155) }));
       }
+      // the wanted poster: bigger, a face in charcoal, the reward in red; and a note pinned by a knife
+      b.tinted([1.05, 0.95, 0.74], () => b.box('linen', sz(p, 0.9, 1.15, 0.014), { at: on(p, 0, p.y + 0.12, 0.14), rot: tilt(p, 0.04) }));
+      b.tinted([0.1, 0.09, 0.09], () => b.lathe('linen', [{ y: 0, r: 0.24 }, { y: 0.012, r: 0.24 }], { segments: 12, at: on(p, 0, p.y + 0.3, 0.152), rot: p.n === 'z' ? [Math.PI / 2, 0, 0] : [0, 0, -Math.PI / 2], scale: [1, 1, 1.3] }));
+      b.tinted([1.2, 0.2, 0.16], () => b.box('cloth_red', sz(p, 0.62, 0.1, 0.016), { at: on(p, 0, p.y - 0.22, 0.152) }));
+      b.tinted([0.55, 0.55, 0.58], () => b.box('metal', sz(p, 0.05, 0.34, 0.03), { at: on(p, 1.25, p.y - 0.42, 0.2), rot: tilt(p, -0.6) }));
+      b.tinted([0.4, 0.28, 0.2], () => b.box('furniture_wood', sz(p, 0.07, 0.14, 0.06), { at: on(p, 1.37, p.y - 0.3, 0.22), rot: tilt(p, -0.6) }));
     } else if (p.k === 'logs') {
       // split logs stacked against the wall, three, two, one, their cut ends to the room
       b.tinted([0.85, 0.75, 0.65], () => {
@@ -631,12 +645,21 @@ function buildTavern(pieces) {
         b.box('tavern_wall', sz(p, 0.72, TAV_H, 1.2), { at: on(p, sg * half, FL + TAV_H / 2, 0.6) });
         b.box('tavern_wall', sz(p, 0.86, 0.2, 1.32), { at: on(p, sg * half, FL + 0.1, 0.66) });   // (its plinth)
       }
+      { const h1 = TOP - my; b.tinted([1.12, 1.07, 0.98], () => b.box('tavern_wall', sz(p, p.w * 0.82, h1, 1.05), { at: on(p, 0, my + h1 / 2, 0.52) }));   // (the breast to the beam, lighter stone)
+        b.tinted([0.82, 0.77, 0.7], () => b.box('tavern_wall', sz(p, p.w * 0.66, 0.8, 0.85), { at: on(p, 0, TOP + 0.4, 0.42) }));   // (above it the stack, narrower, soot-dark)
+        b.tinted([0.6, 0.56, 0.52], () => b.box('tavern_wall', sz(p, p.w * 0.74, 0.16, 0.97), { at: on(p, 0, TOP + 0.86, 0.45) }));
+        b.tinted([1.35, 1.25, 1.1], () => b.box('tavern_wall', sz(p, p.w * 0.76, 0.04, 0.99), { at: on(p, 0, TOP + 0.95, 0.45) })); }   // (its top edge lit, so the stack reads against the dark: round 7)   // (its cap course, projecting: round 6, "reads as a stack of crates")   // (the chimney breast from the mantel up through the beam, lighter stone, the room's tallest mass: round 5)
       b.tinted(OAK, () => b.box('furniture_wood', sz(p, p.w + 1.6, 0.26, 0.34), { at: on(p, 0, my, 1.12) }));
       for (const [u, kind] of [[-1.5, 'jug'], [-0.9, 'pot'], [0.6, 'jug'], [1.35, 'pot'], [-2.3, 'jug'], [2.25, 'jug']]) {
         const at = on(p, u, my + 0.13, 1.12);
         if (kind === 'jug') b.tinted([0.95, 0.72, 0.52], () => b.lathe('furniture_wood', [{ y: 0, r: 0.08 }, { y: 0.1, r: 0.12 }, { y: 0.22, r: 0.09 }, { y: 0.3, r: 0.05 }, { y: 0.34, r: 0.06 }], { segments: 9, capTop: true, at }));
         else b.tinted([0.5, 0.48, 0.46], () => b.lathe('metal', [{ y: 0, r: 0.1 }, { y: 0.14, r: 0.13 }, { y: 0.18, r: 0.12 }], { segments: 9, capTop: true, at }));
       }
+    } else if (p.k === 'apron') {
+      // on the hearthstones: a log fallen half out of the fire and a spill of embers, glowing (the fire reads past the lintel)
+      b.tinted([0.7, 0.55, 0.45], () => b.tube('bark', on(p, -0.5, FL + 0.1, 1.15), on(p, 0.35, FL + 0.1, 1.45), 0.1, 0.09, { segments: 7, capTop: 'furniture_wood', capBottom: 'furniture_wood' }));
+      const R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+      for (let k = 0; k < 9; k++) b.box(tavernEmber ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff6a1e').multiplyScalar(1.6), fog: false }), [0.07, 0.04, 0.07], { at: on(p, (R(k) - 0.5) * 1.6, FL + 0.02, 1.1 + R(k + 5) * 0.55), rot: [0, R(k + 9) * 3, 0] });
     } else if (p.k === 'tableware') {
       // tankards along the table, wood and pewter, and a candle in its dish in the middle (Luminati's plates beside them)
       const c = Math.cos(p.rot || 0), sn = Math.sin(p.rot || 0), W = (lx, lz) => [p.x + lx * c + lz * sn, p.z - lx * sn + lz * c];
@@ -654,6 +677,84 @@ function buildTavern(pieces) {
       b.tinted([0.5, 0.48, 0.46], () => b.lathe('metal', [{ y: 0, r: 0.13 }, { y: 0.03, r: 0.13 }, { y: 0.035, r: 0 }], { segments: 10, at: [cx, y, cz] }));
       b.tinted([1.2, 1.15, 1.0], () => b.lathe('linen', [{ y: 0.03, r: 0.045 }, { y: 0.26, r: 0.04 }], { segments: 7, capTop: true, at: [cx, y, cz] }));
       b.box(tavernGlass, [0.05, 0.1, 0.05], { at: [cx, y + 0.33, cz] });
+    } else if (p.k === 'cauldron') {
+      // the kitchen's pot hung low in the fire's mouth on an iron crane, black against the flames, the stew bright on top
+      b.tinted([0.12, 0.11, 0.11], () => {
+        b.box('metal', sz(p, 0.12, 1.7, 0.12), { at: on(p, -1.05, FL + 0.85, 0.85) });
+        b.box('metal', sz(p, 1.1, 0.1, 0.1), { at: on(p, -0.5, FL + 1.55, 0.85) });
+        b.box('metal', sz(p, 0.05, 0.55, 0.05), { at: on(p, 0, FL + 1.25, 0.85) });
+        b.lathe('metal', [{ y: 0, r: 0.14 }, { y: 0.12, r: 0.34 }, { y: 0.36, r: 0.42 }, { y: 0.52, r: 0.37 }, { y: 0.56, r: 0.4 }], { segments: 14, at: on(p, 0, FL + 0.4, 0.85) });
+      });
+      b.box(tavernEmber ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff6a1e').multiplyScalar(1.6), fog: false }), sz(p, 0.6, 0.02, 0.6), { at: on(p, 0, FL + 0.95, 0.85) });
+    } else if (p.k === 'window') {
+      // a shuttered window: a pale dressed-stone surround (lintel, jambs), a sill board with a candle, two weathered plank
+      // shutters rimmed cool where the night leaks round them, a black iron bar across, the crack a soft glow, not a line
+      // (round 7: "the crack is many times brighter than everything else in the window")
+      const W = 1.3, H = 1.55;
+      b.tinted([1.5, 1.44, 1.32], () => { b.box('tavern_wall', sz(p, W + 1.0, 0.4, 0.4), { at: on(p, 0, p.y + H / 2 + 0.2, 0.2) }); for (const sg of [-1, 1]) b.box('tavern_wall', sz(p, 0.4, H + 0.2, 0.36), { at: on(p, sg * (W / 2 + 0.2), p.y, 0.18) }); });
+      b.tinted(OAK_LIT, () => b.box('furniture_wood', sz(p, W + 1.1, 0.12, 0.48), { at: on(p, 0, p.y - H / 2 - 0.06, 0.24) }));
+      // the right shutter shut and barred, the left swung open into the room on its hinge, the night dark-blue behind it
+      // (round 8: the crack and the rims read as two blue strips; one open shutter reads as a window at a glance)
+      const A = 1.1, ajar = p.n === 'z' ? [0, -A, 0] : [0, A, 0];
+      b.tinted([0.82, 0.72, 0.6], () => { b.box('wood_planks', sz(p, W / 2 - 0.05, H, 0.06), { at: on(p, W / 4 + 0.03, p.y, 0.06) }); b.box('wood_planks', sz(p, W / 2 - 0.1, 0.1, 0.03), { at: on(p, W / 4 + 0.03, p.y - 0.45, 0.1) }); });
+      // (the open shutter warm in the sill candle's light, its face to the room, against the dark: round 9)
+      b.tinted([1.3, 1.08, 0.72], () => { b.box('wood_planks', sz(p, W / 2 - 0.05, H, 0.08), { at: on(p, -W / 2 + Math.cos(A) * W / 4, p.y, 0.1 + Math.sin(A) * W / 4), rot: ajar }); b.box('wood_planks', sz(p, W / 2 - 0.1, 0.1, 0.05), { at: on(p, -W / 2 + Math.cos(A) * W / 4 + (p.n === 'z' ? 0.03 : 0.05), p.y - 0.45, 0.1 + Math.sin(A) * W / 4 + (p.n === 'z' ? 0.05 : 0.03)), rot: ajar }); });
+      b.tinted([0.1, 0.1, 0.1], () => { b.box('metal', sz(p, W / 2 + 0.3, 0.12, 0.07), { at: on(p, W / 4 + 0.05, p.y + 0.12, 0.13) }); b.box('metal', sz(p, 0.08, 0.2, 0.1), { at: on(p, W / 2 + 0.27, p.y + 0.12, 0.12) }); });
+      // the night through the open half: a hole, darker than the stone, a touch lighter at its top, two faint stars (round
+      // 9: a lit royal-blue panel read as a banner)
+      b.box(tavernNight ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#0b1019'), fog: false }), sz(p, W / 2 - 0.04, H - 0.04, 0.02), { at: on(p, -W / 4, p.y, 0.03) });
+      b.box(tavernNightHi ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#141c2e'), fog: false }), sz(p, W / 2 - 0.04, H * 0.3, 0.02), { at: on(p, -W / 4, p.y + H * 0.33, 0.035) });
+      for (const [du, dv] of [[-0.42, 0.55], [-0.2, 0.3]]) b.box(tavernStar ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#8c97b4'), fog: false }), sz(p, 0.035, 0.035, 0.01), { at: on(p, du, p.y + dv, 0.042) });
+      // a candle on the sill board, the window's own warm light
+      b.tinted([1.2, 1.15, 1.0], () => b.lathe('linen', [{ y: 0, r: 0.05 }, { y: 0.22, r: 0.045 }], { segments: 7, capTop: true, at: on(p, W / 2 - 0.15, p.y - H / 2, 0.3) }));
+      b.box(tavernGlass, [0.05, 0.09, 0.05], { at: on(p, W / 2 - 0.15, p.y - H / 2 + 0.28, 0.3) });
+    } else if (p.k === 'grime') {
+      // grime at the wall's foot: a darkened band, soft at its top
+      const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { ...p, x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 };
+      b.box(tavernGrime ||= new THREE.MeshBasicMaterial({ color: '#0e0a08', transparent: true, opacity: 0.34, depthWrite: false }), sz(q, len, 0.42, 0.01), { at: on(q, 0, FL + 0.21, 0.012) });
+      b.box(tavernGrime, sz(q, len, 0.28, 0.01), { at: on(q, 0, FL + 0.56, 0.012) });
+    } else if (p.k === 'shelf') {
+      // a plate shelf: a board on brackets, plates stood on edge, jugs between
+      b.tinted(OAK, () => { b.box('furniture_wood', sz(p, 1.5, 0.07, 0.3), { at: on(p, 0, p.y, 0.15) }); for (const sg of [-1, 1]) b.box('furniture_wood', sz(p, 0.06, 0.28, 0.24), { at: on(p, sg * 0.6, p.y - 0.17, 0.12) }); b.box('furniture_wood', sz(p, 1.5, 0.04, 0.04), { at: on(p, 0, p.y + 0.12, 0.27) }); });
+      for (const u of [-0.55, -0.2, 0.3]) b.tinted([1.5, 1.48, 1.45], () => b.lathe('linen', [{ y: 0, r: 0 }, { y: 0.01, r: 0.17 }, { y: 0.03, r: 0.17 }, { y: 0.04, r: 0 }], { segments: 12, at: on(p, u, p.y + 0.2, 0.08), rot: p.n === 'z' ? [Math.PI / 2 - 0.2, 0, 0] : [0, 0, -Math.PI / 2 + 0.2] }));
+      for (const u of [0.05, 0.6]) b.tinted([0.9, 0.62, 0.42], () => b.lathe('furniture_wood', [{ y: 0, r: 0.07 }, { y: 0.09, r: 0.1 }, { y: 0.2, r: 0.07 }, { y: 0.26, r: 0.04 }], { segments: 8, capTop: true, at: on(p, u, p.y + 0.035, 0.15) }));
+    } else if (p.k === 'antlers') {
+      // a stag's antlers on a shield-shaped plaque
+      b.tinted([0.2, 0.14, 0.1], () => b.box('furniture_wood', sz(p, 0.42, 0.55, 0.06), { at: on(p, 0, p.y + 0.2, 0.03) }));   // (a walnut plaque, near black, so the tines stand out: round 9)
+      b.tinted([1.6, 1.52, 1.34], () => {
+        for (const sg of [-1, 1]) {
+          b.box('linen', sz(p, 0.07, 0.6, 0.07), { at: on(p, sg * 0.25, p.y + 0.55, 0.1), rot: tilt(p, -sg * 0.6) });
+          b.box('linen', sz(p, 0.06, 0.45, 0.06), { at: on(p, sg * 0.52, p.y + 0.85, 0.1), rot: tilt(p, sg * 0.15) });
+          for (const [du, dy, a] of [[0.33, 0.68, -0.1], [0.62, 1.02, 0.5], [0.44, 0.98, -0.4], [0.18, 0.5, 0.9], [0.58, 1.2, -0.2]]) b.box('linen', sz(p, 0.065, 0.3, 0.065), { at: on(p, sg * du, p.y + dy, 0.1), rot: tilt(p, -sg * a) });
+        }
+      });
+    } else if (p.k === 'pegs') {
+      // a peg rail with a cloak hung on it and a hat on the next peg
+      b.tinted(OAK, () => { b.box('furniture_wood', sz(p, 1.4, 0.1, 0.06), { at: on(p, 0, p.y + 0.4, 0.03) }); for (const u of [-0.45, 0, 0.45]) b.box('furniture_wood', sz(p, 0.05, 0.05, 0.14), { at: on(p, u, p.y + 0.4, 0.1) }); });
+      b.tinted([0.85, 1.05, 0.8], () => { b.box('quilt_green', sz(p, 0.5, 1.05, 0.1), { at: on(p, -0.42, p.y - 0.15, 0.1) }); b.box('quilt_green', sz(p, 0.6, 0.4, 0.12), { at: on(p, -0.42, p.y - 0.62, 0.11) }); });
+      b.tinted([0.45, 0.35, 0.28], () => { b.lathe('leather', [{ y: 0, r: 0.24 }, { y: 0.02, r: 0.24 }, { y: 0.03, r: 0.13 }, { y: 0.2, r: 0.11 }, { y: 0.21, r: 0 }], { segments: 10, at: on(p, 0.45, p.y + 0.18, 0.18), rot: p.n === 'z' ? [Math.PI / 2 - 0.3, 0, 0] : [0, 0, -Math.PI / 2 + 0.3] }); });
+    } else if (p.k === 'slate') {
+      // the slate by the bar: a framed dark board, tallies in chalk
+      b.tinted(OAK_LIT, () => b.box('furniture_wood', sz(p, 0.9, 0.7, 0.06), { at: on(p, 0, p.y, 0.03) }));
+      b.tinted([0.22, 0.23, 0.25], () => b.box('metal', sz(p, 0.78, 0.58, 0.02), { at: on(p, 0, p.y, 0.065) }));
+      b.tinted([1.7, 1.7, 1.65], () => { for (let r = 0; r < 3; r++) for (let k = 0; k < 4 + r; k++) b.box('linen', sz(p, 0.018, 0.1, 0.01), { at: on(p, -0.3 + k * 0.07 + (k > 3 ? 0.06 : 0), p.y + 0.16 - r * 0.15, 0.078) }); });
+    } else if (p.k === 'herbs') {
+      // herbs drying from a pole: bunches hung head down
+      b.tinted(OAK, () => b.box('furniture_wood', sz(p, 1.5, 0.06, 0.06), { at: on(p, 0, p.y + 0.55, 0.28) }));
+      for (let k = 0; k < 5; k++) b.tinted(k % 2 ? [0.75, 1.0, 0.5] : [1.0, 0.88, 0.5], () => b.lathe('leaves', [{ y: -0.4, r: 0.02 }, { y: -0.28, r: 0.1 }, { y: -0.05, r: 0.06 }, { y: 0, r: 0.02 }], { segments: 6, capTop: true, at: on(p, -0.6 + k * 0.3, p.y + 0.52, 0.28) }));
+    } else if (p.k === 'niche') {
+      // a cellar's niche: a dark recess in the rubble, a stone sill, candles in it
+      b.tinted([0.18, 0.15, 0.13], () => b.box('tavern_rubble', sz(p, 0.6, 0.7, 0.06), { at: on(p, 0, p.y + 0.3, 0.02) }));
+      b.tinted([1.05, 1.0, 0.92], () => { b.box('tavern_rubble', sz(p, 0.8, 0.12, 0.26), { at: on(p, 0, p.y - 0.06, 0.12) }); b.box('tavern_rubble', sz(p, 0.8, 0.14, 0.16), { at: on(p, 0, p.y + 0.72, 0.08) }); });
+      for (const [u, h] of [[-0.15, 0.24], [0.05, 0.34], [0.2, 0.18]]) {
+        b.tinted([1.2, 1.15, 1.0], () => b.lathe('linen', [{ y: 0, r: 0.045 }, { y: h, r: 0.04 }], { segments: 7, capTop: true, at: on(p, u, p.y, 0.12) }));
+        b.box(tavernGlass, [0.04, 0.08, 0.04], { at: on(p, u, p.y + h + 0.06, 0.12) });
+      }
+    } else if (p.k === 'ham') {
+      // on a hook from the vault: a ham in its cloth, or a string of onions
+      b.tinted(TAV_IRON, () => b.box('metal', sz(p, 0.03, 0.35, 0.03), { at: on(p, 0, p.y + 0.2, 0.3) }));
+      if (p.look) b.tinted([0.85, 0.55, 0.4], () => b.lathe('linen', [{ y: -0.62, r: 0.04 }, { y: -0.52, r: 0.17 }, { y: -0.25, r: 0.2 }, { y: -0.06, r: 0.1 }, { y: 0, r: 0.03 }], { segments: 9, capTop: true, at: on(p, 0, p.y, 0.3) }));
+      else for (let k = 0; k < 6; k++) b.tinted([1.0, 0.78, 0.45], () => b.lathe('linen', [{ y: -0.07, r: 0.02 }, { y: -0.04, r: 0.07 }, { y: 0.02, r: 0.06 }, { y: 0.05, r: 0.01 }], { segments: 7, at: on(p, (k % 2 ? 0.05 : -0.05), p.y - 0.1 - k * 0.1, 0.3) }));
     } else if (p.k === 'casks') {
       // two casks on a cradle against the wall, their heads to the room, a third laid on them
       b.tinted(OAK, () => { for (const du of [-0.5, 0.5]) b.box('furniture_wood', sz(p, 1.9, 0.16, 0.14), { at: on(p, 0, FL + 0.08, 0.35 + du) }); });
@@ -666,6 +767,7 @@ function buildTavern(pieces) {
       if (!o) continue;
       o.rotation.y = p.rot || 0; o.scale.setScalar(p.s || 1); o.updateMatrixWorld(true); furn.push(o);
     }
+    if (big) b.pop();
   }
   // merged a material at a time (the trim, the furniture): what three can merge, the attributes all of them carry
   const built = b.build('ember:tavern').group; built.updateMatrixWorld(true);
@@ -685,7 +787,8 @@ function buildTavern(pieces) {
     for (const q of geos) if (q !== merged) q.dispose();
     if (!merged) continue;
     const mesh = new THREE.Mesh(merged, m);
-    mesh.castShadow = m !== tavernGlass && m !== tavernWeb; mesh.receiveShadow = m !== tavernGlass;
+    const lit = m === tavernGlass || m === tavernEmber || m === tavernNight || m === tavernNightHi || m === tavernStar || m === tavernGrime;
+    mesh.castShadow = !lit && m !== tavernWeb; mesh.receiveShadow = !lit;
     g.add(mesh);
   }
   if (webTris.length) { const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(webTris, 3)); g.add(new THREE.Mesh(wg, tavernWebFill)); }
@@ -828,6 +931,27 @@ function reachAir() {
 }
 // The Reach's own textures (registered once, painted when a level names them): Ashgate's slag brick and rust tile, and
 // six of Luminati's set repainted (their relief kept, their colours through a ramp by luminance): cracked earth dark as
+/** the cellar's rubble: rough stones of all sizes (Voronoi on a jittered grid, wrapped), three or four to a wall's
+ * height, a light mortar between, each stone its own tone in a narrow band, lit along its top */
+function tavernRubble(s, K, R, mortar) {
+  const w = s.w, h = s.h, G = 4, cell = w / G, pts = [];
+  for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) pts.push([(i + 0.15 + K.hash2(i, j, 931) * 0.7) * cell, (j + 0.2 + K.hash2(i, j, 932) * 0.6) * cell, K.hash2(i, j, 933)]);
+  const N = K.field(w, h, 6, 6, 935, { oct: 2 }), at = (t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
+  s.each((x, y, i) => {
+    let d1 = 1e9, d2 = 1e9, k1 = 0, ny = 0;
+    for (let k = 0; k < pts.length; k++) for (let oy = -h; oy <= h; oy += h) for (let ox = -w; ox <= w; ox += w) {
+      const dx = (x + 0.5 - pts[k][0] - ox) * 0.8, dy = y + 0.5 - pts[k][1] - oy, d = Math.sqrt(dx * dx + dy * dy);   // (stones a little wider than tall)
+      if (d < d1) { d2 = d1; d1 = d; k1 = k; ny = dy; } else if (d < d2) d2 = d;
+    }
+    const e = (d2 - d1) / 2;
+    if (e < 0.9) { s.set(x, y, mortar); s.hf[i] = 0.05; return; }
+    let t = 0.3 + pts[k1][2] * 0.4 + (N[i] - 0.5) * 0.14 + (ny < -3 ? 0.08 : ny > 3 ? -0.08 : 0);
+    if (e < 1.8) t -= 0.1;
+    s.set(x, y, at(Math.max(0, Math.min(1, t))));
+    s.hf[i] = 0.4 + 0.6 * Math.min(1, (e - 0.9) / 2.5);
+  });
+  return { normal: 2.2 };
+}
 /** the inn's flagstones (registerTextureSet below): cut slabs in running courses (round 3, the art critic: "every
  * stone is a rounded blob with a fat black outline… crocodile skin or a cobbled street, not cut flagstones"), courses of
  * two depths, each slab its own length and its own shade in a narrow band, a joint a pixel wide in mid-dark grey, the
@@ -944,7 +1068,7 @@ registerTextureSet((K) => {
     // (round 2: irregular flags a unit or so across, about twice stone_tiles', in wide dark joints, neighbours close in
     // tone, the art critic: "a tight diamond grid of mottled squares reads as checkerboard noise". Both flags share one
     // layout, so a worn tile meets a clean one joint to joint)
-    tavern_flag: { px: [64, 64], normalScale: 0.8, gen: (s) => tavernFlags(s, K, P(['#3e3730', '#665c52', '#766b5f', '#83786b', '#8f8376', '#9a8e80', '#a89c8c']), false) },
+    tavern_flag: { px: [64, 64], normalScale: 0.8, gen: (s) => tavernFlags(s, K, P(['#40362c', '#6b5e4f', '#7b6d5c', '#897a67', '#968571', '#a1907b', '#ae9d87']), false) },   // (round 5: a step toward umber)
     tavern_flag_worn: { px: [64, 64], normalScale: 0.8, gen: (s) => tavernFlags(s, K, P(['#332c27', '#5a5148', '#675d52', '#73685c', '#7e7366', '#897d70', '#968a7c']), true) },
     // (big dressed blocks, a course three-quarters of a unit high, half a figure's height to a block as in the reference,
     // Luminati's stone_brick's courses half that: painted here, K has no block layout)
@@ -957,22 +1081,28 @@ registerTextureSet((K) => {
         let x = Math.floor(K.hash2(r, 9, ctx.seed + 71) * 20);
         for (const bw of ws) { blocks.push({ x, y: r * RH, w: bw, base: K.hash2(blocks.length, 3, ctx.seed + 73) }); x += bw; }
       }
-      blocks.forEach((b, k) => { for (let dy = 1; dy < RH; dy++) for (let dx = 1; dx < b.w; dx++) id[(b.y + dy) * w + ((b.x + dx) % w)] = k; });
+      // (round 8: a block now and then two courses tall, a few a shade darker: the grid read uniform)
+      blocks.forEach((b) => { b.tall = b.y + 2 * RH <= h && K.hash2(b.x, b.y, ctx.seed + 75) < 0.16; if (K.hash2(b.y, b.x, ctx.seed + 76) < 0.1) b.base *= 0.55; const q = K.hash2(b.x + 3, b.y, ctx.seed + 77); b.tint = q < 0.12 ? '#8a7a64' : q < 0.25 ? '#6e7480' : null; });   // (one in four a touch warmer or cooler: round 10)
+      blocks.forEach((b, k) => { if (!b.tall) for (let dy = 1; dy < RH; dy++) for (let dx = 1; dx < b.w; dx++) id[(b.y + dy) * w + ((b.x + dx) % w)] = k; });
+      blocks.forEach((b, k) => { if (b.tall) for (let dy = 1; dy < 2 * RH; dy++) for (let dx = 1; dx < b.w; dx++) id[(b.y + dy) * w + ((b.x + dx) % w)] = k; });
       const N = K.field(w, h, 6, 6, ctx.seed + 61, { oct: 3 }), STONE = P(['#3c3631', '#4e4741', '#605850', '#726960', '#857a6e', '#978b7d', '#a99d8d', '#bbb09e']);
       s.each((x, y, i) => {
         const k = id[i];
         if (k < 0) { s.set(x, y, K.parseColor(N[i] > 0.55 ? '#2c2622' : '#231e1b')); s.hf[i] = 0; return; }
-        const b = blocks[k], lx = (x - b.x + w) % w, ly = y - b.y, d = Math.min(lx - 1, b.w - 1 - lx, ly - 1, RH - 1 - ly);
+        const b = blocks[k], bh = b.tall ? 2 * RH : RH, lx = (x - b.x + w) % w, ly = y - b.y, d = Math.min(lx - 1, b.w - 1 - lx, ly - 1, bh - 1 - ly);
         let t = 0.3 + b.base * 0.32 + (N[i] - 0.5) * 0.3;
-        if (ly <= 2) t += 0.14; else if (ly >= RH - 2) t -= 0.12;     // (a chamfer: lit along the top, shadowed under)
+        if (ly <= 2) t += 0.14; else if (ly >= bh - 2) t -= 0.12;     // (a chamfer: lit along the top, shadowed under)
         if (lx <= 2) t += 0.06; else if (lx >= b.w - 2) t -= 0.08;
         if (K.hash2(x >> 1, y >> 1, ctx.seed + 74) > 0.97) t -= 0.18;   // (pits)
-        s.set(x, y, at(STONE, Math.max(0, Math.min(1, t))));
+        const col = at(STONE, Math.max(0, Math.min(1, t)));
+        s.set(x, y, b.tint ? K.mixColor(col, b.tint, 0.12) : col);
         s.hf[i] = 0.35 + 0.65 * Math.min(1, d / 2.5) + (N[i] - 0.5) * 0.15;
       });
       return { normal: 2.2 };
     } },
-    tavern_cap: { px: [32, 32], normalScale: 0.5, gen: recolor('wood_planks_dark', P(['#160e0a', '#22160f', '#2e1e14', '#3a2719', '#46301f', '#523a26'])) },
+    // the cellar's rough rubble: stones of all sizes in thick dark mortar
+    tavern_rubble: { px: [48, 48], normalScale: 0.9, gen: (s) => tavernRubble(s, K, P(['#4a433b', '#5c544a', '#6a6156', '#776d61', '#84796c', '#918577']), K.parseColor('#7e7468')) },   // (round 6: big stones, three or four to a wall's height, in a light mortar: the cobble read as bark)
+    tavern_cap: { px: [32, 32], normalScale: 0.5, gen: recolor('wood_planks_dark', P(['#2a1c13', '#3a281b', '#4a3423', '#5a402b', '#6a4c33', '#7a583c'])) },   // (round 4: the wall tops a warm oak, not a black band)
   };
 });
 
