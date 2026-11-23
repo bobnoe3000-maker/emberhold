@@ -700,7 +700,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       if (battle.battle) { no('Not in the middle of a fight'); return; }
       const row = raidSites(state, landOpen).find((q) => q.id === cmd.site);
       if (!row) return;
-      if (!row.ok) { no(row.why === 'level' ? `${row.name} wants a hero of level ${row.base}` : row.why === 'land' ? 'That land isn’t open to you yet' : 'You haven’t found the way in yet'); return; }
+      if (!row.ok) { no(row.why === 'level' ? `${row.name} wants a hero of level ${row.base}` : row.why === 'land' ? 'That land isn’t open to you yet' : row.why === 'boss' ? `Beat ${row.bossName.replace(/^The /, 'the ')} in ${row.name} first` : 'You haven’t found the way in yet'); return; }   // (boss: v1.149)
       if (raidOf(state).used >= RAID.perDay) { no(`That’s your ${RAID.perDay} raids for today`); return; }
       const seats = Array.isArray(cmd.seats) ? cmd.seats.slice(0, 2).map(String) : [];
       raidOut(row.id, [seats[0] || 'any', seats[1] || 'any']);

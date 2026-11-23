@@ -19,7 +19,7 @@ import { RAID, RAID_CLASSES, raidOf, standIns } from '../sim/raid.js';
 /** a class's mark on its chip's edge (its name written beside it: never by colour alone) */
 const CLS_COL = { fighter: '#b8463a', rogue: '#6a8a4a', cleric: '#e6d6a0', mage: '#5a7ab8', shaman: '#8a5a8a' };
 const RARITY = { common: 'Common', fine: 'Fine', rare: 'Rare', heirloom: 'Heirloom' };
-const WHY = { level: (r) => `from level ${r.base}`, land: () => 'its land isn’t open to you yet', shut: () => 'the way in isn’t found yet' };
+const WHY = { level: (r) => `from level ${r.base}`, land: () => 'its land isn’t open to you yet', shut: () => 'the way in isn’t found yet', boss: (r) => `beat ${r.bossName.replace(/^The /, 'the ')} first` };   // (boss: v1.149, its raid opens once he's down)
 
 const CSS = `
 #raidWrap { position: fixed; inset: 0; z-index: 12; display: none; background: rgba(10,8,6,.97); color: #efe4cf; font-family: Georgia, serif; overflow-y: auto;

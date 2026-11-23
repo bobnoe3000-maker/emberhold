@@ -494,7 +494,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       await p.touchscreen.tap(at.x, at.y); await run(150);
       const open = await p.waitForSelector('#talkWrap.on #talk .line', { timeout: 10000 * SLOW }).then(() => true, () => false);
       const who = open ? await p.textContent('#talk .who .nm') : '', first = open ? await p.textContent('#talk .line') : '';
-      await p.waitForTimeout(600);
+      // (the portrait is drawn when the face renderer is free: a fixed 600 ms missed it on a loaded runner, 2 runs in 4)
+      await p.waitForFunction(() => { const c = document.querySelector('#talk .who canvas'); if (!c || !c.width) return false; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) return true; return false; }, null, { timeout: 10000 * SLOW }).catch(() => {});
       const face = await p.evaluate(() => { const c = document.querySelector('#talk .who canvas'); if (!c) return 0; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++; return n; });   // (drawn pixels: his portrait loaded)
       const q = await p.evaluate(() => globalThis.__sim.state.quests.ch2_fog_on_the_canal);
       check('act II: tap him → his window, under his name and the Drowned Eel\'s, his portrait drawn, his first words; the meeting counts (on to the Toadking)',
@@ -863,7 +864,9 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.goto(`${base}/index.html?dev&notitle&scene=town&world=off`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__ui, null, { timeout: 60000 });
     await p.waitForTimeout(1200);
     const home = await p.evaluate(() => { const s = globalThis.__sim; if (!s.state.created) { s.commands.push({ type: 'createHero', cls: 'rogue', look: 'hero_rogue', origin: 'thornwick_born', name: 'Isolde' }); s.tick(); }
-      for (const i of [1, 3]) { s.state.counters.gold = 1e9; s.commands.push({ type: 'hire', idx: i }); s.tick(); } for (const m of s.state.party) m.level = 6; return s.state.party.map((m) => m.id); });
+      for (const i of [1, 3]) { s.state.counters.gold = 1e9; s.commands.push({ type: 'hire', idx: i }); s.tick(); } for (const m of s.state.party) m.level = 6;
+      for (const r of s.raidSites()) if (r.region === 'vale') s.state.bosses[r.boss] = 1;   // (v1.149: a raid opens once its boss is down: the Vale's beaten)
+      return s.state.party.map((m) => m.id); });
     await p.evaluate(() => globalThis.__ui.partyUp.open()); await p.waitForTimeout(300);
     const rows = await p.$$eval('#raid .opt', (b) => b.map((x) => ({ t: x.querySelector('.t1').textContent, off: x.disabled, why: x.querySelector('.t2').textContent })));
     await p.locator('#raid .opt', { hasText: 'Wickham Keep' }).tap();

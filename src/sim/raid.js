@@ -79,7 +79,9 @@ export function raidSites(state, landOpen) {
   const H = state.party[0];
   return RAID_SITES.map((id) => {
     const s = SITES[id], top = bandTop(s), last = bossAt(id, s.floors - 1);
-    const why = !landOpen(s.region) ? 'land' : !siteOpen(id, state.revealed) ? 'shut' : H.level < s.base ? 'level' : '';
+    // (v1.149, the owner: "once a player has defeated a quest/dungeon boss, then they can join raids for that dungeon"):
+    // a raid is a dungeon run again for its pay; the first time through is the dungeon's own, its boss down in play
+    const why = !landOpen(s.region) ? 'land' : !siteOpen(id, state.revealed) ? 'shut' : H.level < s.base ? 'level' : last && !((state.bosses || {})[last] > 0) ? 'boss' : '';
     return { id, name: s.name, region: s.region, base: s.base, top, floors: raidFloors(id).n, boss: last, bossName: last && BOSSES[last] ? BOSSES[last].name : '', ok: !why, why };
   });
 }

@@ -27,8 +27,11 @@ function company(level = 3, cls = 'fighter', hires = [1, 3]) {
   const H = s.state.party[0], twin = makeRival({ id: 'h', name: 'Ada', cls, level, grade: RAID.grade });
   H.level = level; H.gear = twin.gear; H.skills = twin.skills; s.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1 };
   for (const m of s.state.party) { m.level = level; m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp; }
+  beatAll(s);   // (v1.149: a raid opens once its dungeon's boss is down; the gate's own test below)
   return s;
 }
+/** every raid dungeon's last boss down in play, as a company that's been through them (raid.js raidSites `boss`) */
+function beatAll(s) { for (const r of s.raidSites()) if (r.boss) s.state.bosses[r.boss] = 1; }
 const events = (s) => { const out = { refused: [], end: [], room: [] }; s.bus.on('refused', (e) => out.refused.push(e.reason)); s.bus.on('raidEnd', (e) => out.end.push(e)); s.bus.on('raidRoom', (e) => out.room.push(e)); return out; };
 const go = (s, site = 'barrows', seats = ['any', 'any']) => { s.commands.push({ type: 'raidOut', site, seats }); s.tick(); };
 /** play the run as a player would (tools/balance/raid.mjs): rest in the corridors, the gate's room, then the way on */
@@ -238,4 +241,18 @@ test('a raid\'s foes: twice the HP and 15 % harder (GDD §18 v1.108); every othe
   assert.ok(raidFoe, 'a foe in a raid room');
   const lvl = raidFoe.lvl, scale = 1 + 0.14 * (lvl - 1), E = ENEMIES[raidFoe.kind];
   assert.ok(raidFoe.maxHp >= Math.round(E.hp * scale * 2) - 1, `HP ${raidFoe.maxHp}: twice ${Math.round(E.hp * scale)} at the first wave (no tide)`);
+});
+
+// (v1.149, the owner: "once a player has defeated a quest/dungeon boss, then they can join raids for that dungeon")
+test('a raid opens once its dungeon\'s boss is down in play: shut before, said why, refused by the sim; open after', () => {
+  const s = company(6), ev = events(s);
+  s.state.bosses = {};
+  const row = s.raidSites().find((r) => r.id === 'barrows');
+  assert.equal(row.ok, false); assert.equal(row.why, 'boss'); assert.ok(row.bossName, 'his name, for Party Up');
+  go(s, 'barrows'); assert.equal(s.raid, null, 'not set out');
+  assert.ok(ev.refused.some((r) => /^Beat the .+ in The Old Barrows first$/.test(r)), ev.refused.join(' | '));
+  assert.equal(s.state.raid.used, 0, 'a refused raid isn\'t one of the day\'s three');
+  s.state.bosses[row.boss] = 1;
+  assert.equal(s.raidSites().find((r) => r.id === 'barrows').ok, true);
+  go(s, 'barrows'); assert.ok(s.raid && s.raid.site === 'barrows', 'set out');
 });

@@ -46,6 +46,7 @@ for (let s = 0; s < N; s++) {
   sim.bus.on('loot', (l) => { if (sim.raid && l.src !== 'raidCoffer' && l.src !== 'coffer') found[l.item.r]++; });
   sim.bus.on('combat', (c) => { if (c.t === 'down' && c.name === H.name) downs++; });
   sim.bus.on('shrineOffer', (o) => { if (o.will !== 'none') sim.commands.push({ type: 'useShrine', tx: o.tx, ty: o.ty }); });
+  if (sim.raidSites) for (const r of sim.raidSites()) if (r.boss) S.bosses[r.boss] = 1;   // (v1.149: a raid opens once its dungeon's boss is down: a company that's been through them)
   sim.commands.push({ type: 'raidOut', site: SITE, seats: SEATS }); sim.tick();
   if (!sim.raid) { console.log(`seed ${s}: refused`); continue; }
   if (GR) { const rng = mulberry32((seed ^ 0x6a09e667) >>> 0); for (const m of S.party) rekit(m, rng); }
