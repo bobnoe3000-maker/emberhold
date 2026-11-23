@@ -204,14 +204,12 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
       const ci = CLIMB.findIndex((L) => L.id === region()), nx = ci >= 0 && CLIMB[ci + 1] ? PLACES[CLIMB[ci + 1].town] : null;
       const go = () => { if (scrolled) return; scrolled = true; const k = map.clientWidth / WALL.w, me = pins.find((p) => p.here), tw = me ? me.here.length * 6.6 + 12 + 22 + 10 : 0;
         const VW = view.clientWidth - 40;   // (the rail's width off the right: v1.146 critic)
-        const both = nx && Math.abs(nx[0] - at[0]) * k < VW - 90 && Math.abs(nx[1] - at[1]) * k < view.clientHeight * 0.7;
+        const both = nx && Math.abs(nx[0] - at[0]) * k < view.clientWidth - 90 && Math.abs(nx[1] - at[1]) * k < view.clientHeight * 0.7;   // (the full width: two towns 283 px apart on a 390 phone still fit, the next one short of the rail)
         // (v1.146: the tag west of the pin was cut by the view's left edge when both lands were framed) the span from the
         // tag's left end to the next land's town, centred where it fits; where it doesn't, the tag wins
         const hx = me && me.sx != null ? me.sx : at[0] * k, lo = Math.min(hx - tw, at[0] * k - 12), hi = both ? Math.max(nx[0], at[0]) * k + 40 : hx;
         view.scrollLeft = Math.max(0, both && hi - lo <= VW ? (lo + hi) / 2 - VW / 2 : both ? ((at[0] + nx[0]) / 2) * k - (VW - 30) / 2 : Math.min(at[0] * k - VW / 2, hx - tw));
-        // where the next land wins the frame, the tag that would be cut by the view's left edge goes under the pin, inside
-        const me2 = /** @type {HTMLElement | null} */ (map.querySelector('.tag.me'));
-        if (me2 && me && me2.offsetLeft < view.scrollLeft + 4) { me2.style.left = `${Math.max(view.scrollLeft + 6, hx - me2.offsetWidth / 2)}px`; me2.style.top = `${me.sy + 18}px`; }
+        relay();   // (the tags again, now the view is where it opens: "you are here" picks a spot inside it, lay below)
         view.scrollTop = Math.max(0, (both ? ((at[1] + nx[1]) / 2) * k - view.clientHeight * 0.45 : at[1] * k - view.clientHeight * 0.42)); };
       if (img.complete) go(); else img.addEventListener('load', go, { once: true });
       requestAnimationFrame(go);
@@ -269,6 +267,10 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
         const left = [p.sx - (p.here ? 22 : 14) - w, p.sy - h / 2], right = [p.sx + 14, p.sy - h / 2];
         const spots = (p.west ? [left, above, below, right] : [below, above, right, left])
           .filter(([lx, ly]) => lx >= 0 && lx + w <= MW && ly >= 0 && ly + h <= MH);
+        // (v1.146 critic: "you are here" west of the pin was cut by the view's left edge) its spots inside what the view
+        // shows first, the rail's width off the right
+        const V = map.parentElement, V0 = V ? V.scrollLeft : 0, V1 = V ? V0 + V.clientWidth - 40 : MW;
+        if (p.here) spots.sort((a, b) => +(a[0] < V0 || a[0] + w > V1) - +(b[0] < V0 || b[0] + w > V1));
         const at = spots.find(([lx, ly]) => free([lx, ly, lx + w, ly + h])) || (p.here ? spots[0] : null);
         if (!at) continue;
         const t = el('div', 'tag' + (p.here ? ' me' : ''), text); t.style.left = `${at[0]}px`; t.style.top = `${at[1]}px`; map.append(t);
