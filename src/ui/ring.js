@@ -19,6 +19,7 @@
 
 import { swallow } from './actorart.js';
 import { RING, FURNACE, PILGRIM, RINGS, windowAt, paidFor } from '../sim/ring.js';
+import { LANDS } from '../sim/regions.js';
 
 const CSS = `
 #ringLine { position: fixed; left: calc(10px + env(safe-area-inset-left, 0px)); top: calc(var(--hud-b, 44px) + 6px); z-index: 4; display: none; pointer-events: none; max-width: calc(100vw - 150px);
@@ -158,7 +159,9 @@ export function createRing({ sim, params, dev = false }) {
     // and hiding other banners"): in a dungeon, a raid, the Bowl or any fight, the room's own banners (the raid's, a hall's
     // boss bar, the wave pill) hold that place, and the stones are a walk away anyway
     // (whose: a boss the hero is of its band for, and Furnace Nine only once it's been broken)
-    const mine = (G) => !!(H && S.created && H.level >= G.minLevel && (!G.lamp || (S.lampsBroken || []).includes(G.lamp)));
+    // (v1.147: and in a land of the game's: the First Pilgrim's Heights aren't one yet, so his hour isn't called to a
+    // company that can't walk there; held by ?ring=pilgrim, or when you stand on the Heights' preview, it is)
+    const mine = (G) => !!(H && S.created && H.level >= G.minLevel && (!G.lamp || (S.lampsBroken || []).includes(G.lamp)) && (LANDS[G.region] || G === held || S.region === G.region));
     const c = clock(mine), G = c.G, band = mine(G), open = w.kind !== 'dungeon' && !w.arena && !sim.raid && !sim.battle;
     let txt = '';
     // once the company has stood against this hour's Kingstone, nothing to say until the next one stirs (the owner, 2026-11-15:

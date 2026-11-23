@@ -16,6 +16,7 @@
 // DOM only: reads sim state and events, pushes commands.
 
 import { RING, paidFor } from '../sim/ring.js';
+import { LANDS } from '../sim/regions.js';
 /** where each region boss stands, for the news (v1.126: Furnace Nine's at the Vault's mouth) */
 const WHERE = { kingstone: { place: 'the old stones', land: 'the Greywater Fens', dir: 'north-east of Saltmere', stir: 'The old stones are stirring', verb: 'stands' },
   furnace_nine: { place: 'the Vault’s mouth', land: 'the Cinder Reach', dir: 'up the track north of the Cinderworks', stir: 'The Vault’s mouth glows', verb: 'burns' },
@@ -269,7 +270,7 @@ export function createChatDock({ sim, partyPanel, ring, chat, questTitle = (id) 
   setInterval(() => {
     if (!S().created) return;
     // (a boss the hero could fight: of its band, and Furnace Nine only once broken)
-    const H = S().party[0], mine = (/** @type {typeof RING} */ G) => !!(H && H.level >= G.minLevel && (!G.lamp || (S().lampsBroken || []).includes(G.lamp)));
+    const H = S().party[0], mine = (/** @type {typeof RING} */ G) => !!(H && H.level >= G.minLevel && (!G.lamp || (S().lampsBroken || []).includes(G.lamp)) && LANDS[G.region]);   // (v1.147: a land of the game's: not yet the Heights)
     const c = ring.clock(mine), G = (c && c.G) || RING, W = WHERE[G.id] || WHERE.kingstone;
     if (c && mine(G) && c.soon && soonFor !== c.id) { soonFor = c.id; event('world', `${W.stir} · ${G.name} ${W.verb} at ${c.at}`, { sub: `${W.land} · from level ${G.minLevel} · fought at ${G.level}`, act: 'Walk there', run: () => toStones(G) }); }
     if (c && mine(G) && c.open && openFor !== c.id) { openFor = c.id; if (!paidFor(S(), c.id)) event('world', `${G.name} ${W.verb} at ${W.place}`, { sub: `${mmss(c.left)} left · up to five companies`, act: 'Walk there', run: () => toStones(G) }); }

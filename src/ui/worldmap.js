@@ -202,7 +202,9 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
       // scrolled to where you are, with "you are here" (west of the pin) wholly in view
       // (v1.143) and the next land up the climb with it, where both fit across the view: the way on is in sight
       const ci = CLIMB.findIndex((L) => L.id === region()), nx = ci >= 0 && CLIMB[ci + 1] ? PLACES[CLIMB[ci + 1].town] : null;
-      const go = () => { if (scrolled) return; scrolled = true; const k = map.clientWidth / WALL.w, me = pins.find((p) => p.here), tw = me ? me.here.length * 6.6 + 12 + 22 + 10 : 0;
+      // (a map not laid out yet measures 0 wide: scrolled then, it opened on the map's top corner and never scrolled again,
+      // so wait a frame for its width; the browser suite's World map check failed on that race, now and then)
+      const go = () => { if (scrolled) return; if (!map.clientWidth || !view.clientWidth) { requestAnimationFrame(go); return; } scrolled = true; const k = map.clientWidth / WALL.w, me = pins.find((p) => p.here), tw = me ? me.here.length * 6.6 + 12 + 22 + 10 : 0;
         const VW = view.clientWidth - 40;   // (the rail's width off the right: v1.146 critic)
         const both = nx && Math.abs(nx[0] - at[0]) * k < view.clientWidth - 90 && Math.abs(nx[1] - at[1]) * k < view.clientHeight * 0.7;   // (the full width: two towns 283 px apart on a 390 phone still fit, the next one short of the rail)
         // (v1.146: the tag west of the pin was cut by the view's left edge when both lands were framed) the span from the
@@ -398,7 +400,8 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
   }
   // the region bosses on the map: the Kingstone's stones once the Fens are open; Furnace Nine's mouth once the Reach is and
   // it's been broken (v1.126: before that it's the Stoker's lamp, the story's to find)
-  const ringsShown = () => Object.values(RINGS).filter((G) => sim.landOpen(G.region) && (!G.lamp || (S().lampsBroken || []).includes(G.lamp)));
+  // (v1.147: a land of the game's, LANDS: the Heights aren't one yet, and landOpen reads an unknown land as the Vale)
+  const ringsShown = () => Object.values(RINGS).filter((G) => LANDS[G.region] && EMBERFALL[G.region] && sim.landOpen(G.region) && (!G.lamp || (S().lampsBroken || []).includes(G.lamp)));
   const RING_WORDS = {
     kingstone: { place: 'the old stones', verb: 'stands', title: 'The old stones', sub: 'The Greywater Fens · the Kingstone stands the first 15 minutes of every hour', ground: 'the ring', where: 'In the Greywater Fens, north-east of Saltmere.' },
     furnace_nine: { place: 'the Vault’s mouth', verb: 'burns', title: 'The Vault’s mouth', sub: 'The Cinder Reach · Furnace Nine burns the first 15 minutes after every half hour', ground: 'its ground', where: 'In the Cinder Reach, up the track north of the Cinderworks.' },
