@@ -114,7 +114,11 @@ Reasonable is the median × 1.5, rounded up.
 | The Cold Seam | 14.0 | 14 | 21 |
 | The Assay Yards | 15.0 | 15 | 23 |
 | The Cinderworks (the Forgehall its first floor, v1.144) | 15.3 | 16 | 23 |
-| The Haddow Crypt, the Shuttered Inn, the three secrets | not measured | 6 | 9 |
+| The Haddow Crypt | 3.9 | 4 | 6 |
+| The Shuttered Inn (23) | 5.0 | 5 | 8 |
+| The Ninth Milestone (secret) | 6.6 | 7 | 10 |
+| The Reedholm Undercroft (secret, the crypt kit) | 3.9 | 4 | 6 |
+| The Ninth Vault (secret) | 7.5 | 8 | 12 |
 
 How the times play:
 
@@ -122,8 +126,9 @@ How the times play:
   is most of the harness's time.
 - **Three stars want the gates already down** (they stay down for the slot, so on a second visit), or a sharp first
   run.
-- **The five without a measured median** have estimates: a one-floor building is about a third of a two-floor
-  dungeon's rooms. `pace.mjs` walks to a last boss, so it can't time them yet.
+- **The five with no last boss** were measured once `pace.mjs` learnt their end (v1.146): it walks to the end room and
+  opens its chest, or the vault. The Shuttered Inn never finished at first: its Cellar Hall had no chest, so no run
+  there could end (fixed, with a test that every boss-less site's end room has one).
 - **The Proving Pens are a trial,** so they have no stars.
 
 **Fair play.** The stars are a record, never a reward: nothing is paid or granted for them, so a replay is the same
@@ -146,11 +151,10 @@ v57 has none (`starsFor57`). A reload in the middle of a dungeon keeps the run.
 
 - **No reward.** Stars only show. A reward for three stars (a title, a Guild mark, a cosmetic) would be a sim rule,
   and that is the owner's call.
-- **No time shown during a run.** A small clock in the HUD while a run is on would make the quick time something to
-  aim for. It's cheap, and it's the obvious next step. (The owner, 2026-11-23: "Nothing else for 3 stars": no reward,
-  the record only.)
-- **Un-measured pars.** The five sites without a median need a `pace.mjs` that stops at the end room's chest or the
-  vault.
+- **The run's clock (done, v1.146).** A chip on the HUD's third line while a run is on: the best stars still to be
+  had and the time left for them ("★★★ 3:12"), then "★★ 2:40", then the run's time with one star ("★ 15:02"). A tap
+  says the whole rule. (The owner, 2026-11-23: "Nothing else for 3 stars": no reward, the record only.)
+- **Pars all measured** (v1.146), the five without a last boss among them.
 
 ## 5. The overlands' roads (done, GDD v1.146)
 

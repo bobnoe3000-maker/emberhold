@@ -42,6 +42,8 @@ function walk(site, seed) {
   sim.bus.on('gateOpened', () => gates++);
   sim.bus.on('combat', (c) => { if (c.t === 'xp') xp += c.amount || 0; });
   sim.bus.on('bossDown', (e) => { if (e.id === lastBoss && S.depth === last) done = true; });
+  // (v1.146) a site with no last boss ends where its stars do (sim/stars.js): a secret's vault, or the end room's chest
+  S.starRun = { site, t0: S.t, downs: 0 }; sim.bus.on('dungeonStars', (e) => { if (e.site === site) done = true; });
   sim.bus.on('defeat', () => wipes++);
   let scrolls = 0; sim.bus.on('loot', (l) => { if (l.item && l.item.base === 'homeward') scrolls++; });   // (Homeward Scrolls found: items.js SCROLL_DROP)
   sim.bus.on('shrineOffer', (o) => { if (o.will !== 'none') sim.commands.push({ type: 'useShrine', tx: o.tx, ty: o.ty }); });
@@ -62,7 +64,8 @@ function walk(site, seed) {
     const hold = b && !b.quiet && (gatesHere().some((g) => g.rooms.includes(b.room)) || (sim.world.enemies || []).some((e) => e.boss && e.hp > 0 && !e.dead) || here < 1);
     if (!hold && !p.path) {
       const r = sim.destinations(), pick = (...ids) => ids.map((k) => r.find((q) => q.id === k && !q.off)).find(Boolean);
-      const go = pick('gate', 'stairs-down', 'last-hall', 'next-room');
+      const L = sim.world.level, c = L && L.cells.get(`${Math.floor(p.x)},${Math.floor(p.y)}`), atEnd = !!(c && L.descentRoom && c.room === L.descentRoom.id);
+      const go = lastBoss ? pick('gate', 'stairs-down', 'last-hall', 'next-room') : pick('gate', atEnd ? 'loot' : 'last-hall', 'loot', 'next-room');   // (no boss: to the end room, then its chest)
       if (go && !(b && go.room === b.room)) sim.commands.push({ type: 'goto', tx: go.tx, ty: go.ty, near: go.near, then: go.then || null, label: go.label, room: go.room });
     }
     sim.tick();

@@ -480,7 +480,7 @@ export const PLANS = {
       { id: 'the_snug', name: 'The Snug', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'tavern', foes: 'taproom',
         dress: ['snug_tables', 'rug', 'chest', 'corners'], note: 'The small room off the common room, where the regulars sat; the Redhand\'s officers have it now.' },
       { id: 'the_cellar_hall', name: 'The Cellar Hall', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'tavern_cellar', foes: 'taproom',
-        dress: ['casks', 'barrels', 'crates', 'fire_baskets', 'corners'], note: 'The long room at the back, over the cellar: the casks racked down the wall, what\'s left of them.' },
+        dress: ['casks', 'barrels', 'crates', 'fire_baskets', 'corners', 'chest'], note: 'The long room at the back, over the cellar: the casks racked down the wall, what\'s left of them, and behind them a box somebody hid.' },   // (v1.146: its chest, the run's end for the stars and Hob's box: without it the inn could never be finished)
     ], halls: [
       { from: 'the_front_room', to: 'the_common_room', x: 32, y: 44, w: 10, h: 10 },
       { from: 'the_common_room', to: 'the_kitchen', x: 48, y: 20, w: 10, h: 10 },

@@ -12,6 +12,7 @@ import { weatherIcon, skyWord } from './weathericon.js';
 import { PART_NAMES } from '../render/daylight.js';
 import { SHRINES } from '../sim/shrines.js';
 import { CAGE_KINDS } from '../sim/lamps.js';
+import { PAR } from '../sim/stars.js';
 
 export function createHud(sim) {
   // the top bar's bottom edge (the phone's safe area included) as --hud-b, for what stacks under it, and its line 1's
@@ -132,7 +133,8 @@ export function createHud(sim) {
     #hudLine3 .chip { font: 11px/16px ui-monospace, Menlo, monospace; padding: 1px 6px; border-radius: 6px; background: rgba(16,12,22,.78); border: 1px solid; white-space: nowrap; text-shadow: none; pointer-events: auto; cursor: pointer; position: relative; }
     #hudLine3 .chip::after { content: ''; position: absolute; left: -3px; right: -3px; top: -12px; bottom: -12px; }
     #hudLine3 .chip.atk { color: #ff9a84; border-color: rgba(255,154,132,.45); } #hudLine3 .chip.def { color: #9fd4f4; border-color: rgba(159,212,244,.45); } #hudLine3 .chip.hpr { color: #9fe8ae; border-color: rgba(159,232,174,.45); }
-    #hudLine3 .chip.weak { color: #e0a060; border-color: rgba(224,160,96,.45); }`;
+    #hudLine3 .chip.weak { color: #e0a060; border-color: rgba(224,160,96,.45); }
+    #hudLine3 .chip.run { color: #ffd36a; border-color: rgba(255,211,106,.45); }`;
   let skyKey = '';
   /** the sky's icon state, or null underground (a dev hold of the weather wins, as it does on screen) */
   const skyNow = () => {
@@ -184,21 +186,34 @@ export function createHud(sim) {
   const atk = chip('atk', () => `Shrine of Might · the whole party strikes harder, +${pct('atk')} % ATK · ${clock(boonLeft('atk'))} left`);
   const def = chip('def', () => `Shrine of Warding · the whole party stands firmer, +${pct('def')} % DEF · ${clock(boonLeft('def'))} left`);
   const hpr = chip('hpr', () => `Shrine of Mending · the whole party mends twice as fast, +${pct('hpr')} % HP regeneration · ${clock(boonLeft('hpr'))} left`);
+  // (v1.146; world-map-replan.md §4: "a small clock in the HUD while a run is on would make the quick time something to
+  // aim for") the run under way (sim/stars.js): the best stars still to be had and the time left for them, or the time
+  // so far once only the one is left. Its word with its stars, never the colour alone; a tap says the whole rule.
+  const runNow = () => { const r = sim.state.starRun, P = r && PAR[r.site];
+    return P && sim.world.kind === 'dungeon' && sim.state.site === r.site ? { r, P, s: Math.max(0, sim.state.t - r.t0) } : null; };
+  const run = chip('run', () => { const n = runNow(); if (!n) return '';
+    return `This run · ${clock(n.s)} · ★★★ inside ${n.P[0]} min with nobody down${n.r.downs ? ' (somebody has been)' : ''} · ★★ inside ${n.P[1]} min · ★ the end reached`; });
+  const runWords = () => { const n = runNow(); if (!n) return ['', ''];
+    const q = n.P[0] * 60, re = n.P[1] * 60;
+    if (!n.r.downs && n.s <= q) return [`★★★ ${clock(q - n.s)}`, `Three stars: ${Math.ceil(q - n.s)} seconds left`];
+    if (n.s <= re) return [`★★ ${clock(re - n.s)}`, `Two stars: ${Math.ceil(re - n.s)} seconds left`];
+    return [`★ ${clock(n.s)}`, `One star: the run at ${Math.floor(n.s / 60)} minutes`]; };
   let line3Text = '';
   const set = (el, t, label) => { el.textContent = t; el.style.display = t ? '' : 'none'; el.setAttribute('aria-label', t ? label : ''); };
   const paintLine3 = () => {
     const w = weakLeft(), a = boonLeft('atk'), d = boonLeft('def'), r = boonLeft('hpr');
     const tw = w > 0 ? `weakened · ${Math.max(1, Math.ceil(w / 60))} min` : '', ta = a > 0 ? `ATK +${pct('atk')}% ${clock(a)}` : '', td = d > 0 ? `DEF +${pct('def')}% ${clock(d)}` : '';
-    const tr = r > 0 ? `HP regen +${pct('hpr')}% ${clock(r)}` : '';
-    const key = `${tw}|${ta}|${td}|${tr}`; if (key === line3Text) return; line3Text = key;
+    const tr = r > 0 ? `HP regen +${pct('hpr')}% ${clock(r)}` : '', [tn, tnSay] = runWords();
+    const key = `${tw}|${ta}|${td}|${tr}|${tn}`; if (key === line3Text) return; line3Text = key;
+    set(run, tn, tnSay);
     set(atk, ta, `Shrine of Might: plus ${pct('atk')} percent attack, ${Math.ceil(a)} seconds left`);
     set(def, td, `Shrine of Warding: plus ${pct('def')} percent defence, ${Math.ceil(d)} seconds left`);
     set(hpr, tr, `Shrine of Mending: plus ${pct('hpr')} percent health regeneration, ${Math.ceil(r)} seconds left`);
     set(weak, tw, `Weakened for ${Math.ceil(w / 60)} more minutes`);
-    if (line3) line3.style.display = tw || ta || td || tr ? '' : 'none';
+    if (line3) line3.style.display = tw || ta || td || tr || tn ? '' : 'none';
     syncTop();
   };
-  for (const ev of ['weakened', 'partyChanged', 'boonsChanged']) sim.bus.on(ev, paintLine3);
+  for (const ev of ['weakened', 'partyChanged', 'boonsChanged', 'levelChanged', 'dungeonStars']) sim.bus.on(ev, paintLine3);
   setInterval(paintLine3, 500); paintLine3();
 
   // Toasts stack (the owner, 2026-10-04: a quest's count was bare orange text, and the next message, a chest, a skill

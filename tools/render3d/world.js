@@ -216,7 +216,7 @@ function templateOf(name, def, look = null, lk = '') {
 
 const HEAD_SHADOW = typeof location !== 'undefined' && new URLSearchParams(location.search).get('headshadow') === '1';
 const figs = new Map();                                       // a figure's key (hybrid.js) → its model, posed
-let figSeen = 0;
+let figSeen = 0, figNow = 0;   // (figNow: the frame's clock, ms: the sweep goes by time too, v1.146 perf pass: a slow phone's minute was three by frames)
 // the halo round a full cage's soul (figureFor): one additive sprite material, a soft violet disc, made once
 let haloMat = null;
 function soulHalo() {
@@ -356,7 +356,7 @@ function placeFigure(a, key, dt, camAz) {
   if (FIGURES !== 'models') return false;
   const def = castOf(a.name); if (!def) return false;
   const T = templateOf(a.name, def, a.look || null, a.lk || ''), meta = metaOf.get(a.name); if (!T || !meta) return false;
-  T.used = figSeen;
+  T.used = figSeen; T.usedAt = figNow;
   // the clip and frame Emberlit chose: the atlas column's clip, its frame within it
   let ck = null; for (const k in meta.clips) { const c = meta.clips[k]; if (a.col >= c.start && a.col < c.start + c.len) { ck = k; break; } }
   const d = ck && def.clips[ck]; if (!d) return false;
@@ -397,7 +397,7 @@ function placeFigure(a, key, dt, camAz) {
   }
   if (f.shines) { const br = 0.75 + 0.25 * Math.sin(performance.now() * 0.0026 + f.root.id);   // (an heirloom's light pulses: gear.js)
     for (const q of f.mats) if (q.shine) q.m.emissiveIntensity = figGlow * FILL + q.add * br + fl * 2.6 + wn * 0.9; }
-  f.root.visible = true; f.seen = figSeen;
+  f.root.visible = true; f.seen = figSeen; f.seenAt = figNow;
   return true;
 }
 /** the figures not drawn this frame hidden; one unseen for a minute let go */
@@ -405,7 +405,7 @@ function sweepFigures() {
   for (const [k, f] of figs) {
     if (f.seen === figSeen) continue;
     if (f.root.visible) f.root.visible = false;
-    if (figSeen - f.seen > 3600) { game.engine.scene.remove(f.root); figs.delete(k); }
+    if (figSeen - f.seen > 3600 || figNow - (f.seenAt ?? figNow) > 60000) { game.engine.scene.remove(f.root); figs.delete(k); }
   }
   // a member's look nobody wears any more (a restyle, a piece taken off: GDD v1.65) let go after two minutes, with the
   // geometry its build merged for itself (the models' own are shared, and stay) and the pictures it painted for itself
@@ -414,7 +414,7 @@ function sweepFigures() {
   // again the game will crash and relaunch": a 512² face a passer-by, a megabyte each, were never let go). A template a
   // frame: the check is a counter and a map's size.
   if (figSeen % 120 === 0) for (const [tk, T] of templates) {
-    if (!T || !tk.includes('#') || figSeen - (T.used || 0) < 7200) continue;
+    if (!T || !tk.includes('#') || (figSeen - (T.used || 0) < 7200 && figNow - (T.usedAt || 0) < 120000)) continue;
     let worn = false; for (const f of figs.values()) if (f.name === tk) { worn = true; break; }
     if (worn) continue;
     for (const g of T.root.userData.ownGeos || []) g.dispose();
@@ -574,7 +574,7 @@ function skull(b, p, u, y, s, v) {
 }
 let tavernGlass = null, tavernWeb = null, tavernWebFill = null, tavernEmber = null, tavernNight = null, tavernNightHi = null, tavernStar = null, tavernGrime = null;
 function buildTavern(pieces) {
-  const f = game.world.factory, b = f.builder(), FL = 1.0, TOP = FL + TAV_H, furn = [], webTris = [], loose = [];   // (loose: kept whole, never merged: a sprite)
+  const f = game.world.factory, b = f.builder(), FL = 1.0, TOP = FL + TAV_H, furn = [], webTris = [], loose = [], own = [];   // (loose: kept whole, never merged: a sprite; own: this build's own materials and textures, gone with it)
   tavernGlass ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffb45e').multiplyScalar(2.2), fog: false });
   cryptDark ||= new THREE.MeshBasicMaterial({ color: '#0d0a08' });
   tavernWeb ||= new THREE.MeshBasicMaterial({ color: '#cfc9bf', transparent: true, opacity: 0.45, depthWrite: false });   // (round 3: grey-white, a third opaque)
@@ -1141,11 +1141,12 @@ function buildTavern(pieces) {
       const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), img = g2.createImageData(GW, GD);
       for (let j = 0; j < GD; j++) for (let i = 0; i < GW; i++) { const li = i - PD, lj = j - PD, inl = li >= 0 && lj >= 0 && li < W && lj < D, d = inl ? +p.rows[lj][li] : 9, a = Math.max(0, Math.min(1, (d - 0.6) / 6)) * 0.62, o = (j * GW + i) * 4; img.data[o] = img.data[o + 1] = img.data[o + 2] = Math.round(255 * a); img.data[o + 3] = 255; }
       g2.putImageData(img, 0, 0); const tex = new THREE.CanvasTexture(c); tex.magFilter = tex.minFilter = THREE.LinearFilter;
-      const mat = dockMist = new THREE.MeshBasicMaterial({ color: '#46566a', alphaMap: tex, transparent: true, depthWrite: false });
+      const mat = dockMist = new THREE.MeshBasicMaterial({ color: '#46566a', alphaMap: tex, transparent: true, depthWrite: false }); own.push(mat, tex);   // (the perf pass: a level's own, disposed with it)
       const mist = new THREE.Mesh(new THREE.PlaneGeometry(GW, GD), mat); mist.rotation.x = -Math.PI / 2; mist.position.set(W / 2, DOCK_WL + 0.08, D / 2); mist.updateMatrixWorld(true);
       furn.push(mist);
       // and the harbour's far water under it, past the level's edges, at the surface's level and in its body's tone
-      const far = new THREE.Mesh(new THREE.PlaneGeometry(GW, GD), new THREE.MeshBasicMaterial({ color: '#141b22' })); far.rotation.x = -Math.PI / 2; far.position.set(W / 2, DOCK_WL - 0.03, D / 2); far.updateMatrixWorld(true);
+      const farMat = new THREE.MeshBasicMaterial({ color: '#141b22' }); own.push(farMat);
+      const far = new THREE.Mesh(new THREE.PlaneGeometry(GW, GD), farMat); far.rotation.x = -Math.PI / 2; far.position.set(W / 2, DOCK_WL - 0.03, D / 2); far.updateMatrixWorld(true);
       furn.push(far);
     } else if (p.k === 'lampglint') {
       // a lamp's light broken on the water past the deck's edge: six warm streaks across the line of sight, shorter and
@@ -1293,7 +1294,7 @@ function buildTavern(pieces) {
   for (const o of loose) g.add(o);
   if (webTris.length) { const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(webTris, 3)); g.add(new THREE.Mesh(wg, tavernWebFill)); }
   for (const o of [built, ...furn]) o.traverse((q) => { if (q.isMesh) q.geometry.dispose(); });
-  g.dispose = () => g.traverse((o) => { if (o.isMesh) o.geometry.dispose(); });
+  g.dispose = () => { g.traverse((o) => { if (o.isMesh) o.geometry.dispose(); }); for (const r of own) r.dispose(); own.length = 0; };   // (the perf pass, v1.146: the harbour's mist and far water were made each build and never let go)
   return g;
 }
 const TAV_H = 3.0, TAV_FLOOR = 1.0;
@@ -1301,13 +1302,22 @@ const CR_SPRING = 1.0 + 2.25;   // (where the crypt's arches spring, over a figu
 /** our art of a level gone for good: its cards (and their sheets' textures, which Sprite3D's dispose leaves: a texture a
  * card leaked every load, 199 → 288 over four trips), its arches and its kit models */
 function dropEnv(list, made) {
-  for (const s of list) { game.engine.scene.remove(s); s.dispose?.(); s.userData?.sheet?.dispose?.(); }
+  for (const s of list) {
+    game.engine.scene.remove(s); s.dispose?.(); s.userData?.sheet?.dispose?.();
+    // a prop's sheet (standOurs) shared by every piece of its kind on the floor: let go with the last of them
+    const os = s.userData?.ourSheet; if (os) os.refs--;
+  }
   for (const g of made.values()) g.traverse((o) => { if (o.isMesh) o.geometry.dispose(); });
+}
+/** the props' sheets no sprite stands on any more, let go (after a level's props are placed again, so a chest opened
+ * doesn't upload them all afresh) */
+function sweepSheets() {
+  for (const [c, sh] of ourSheets) if (sh.refs <= 0) { sh.texture.dispose(); ourSheets.delete(c); }
 }
 async function placeEnv(list, region) {
   dropEnv(envSprites, KIT_MADE);
   envSprites = []; KIT_MADE = new Map();
-  if (!list?.length) return;
+  if (!list?.length) { sweepSheets(); return; }
   const sets = ['env', `town-${region || 'vale'}`];
   const all = await Promise.all(sets.map((n) => json(`${ASSETS}env/${n}.json`)));
   const at = (id) => { for (let i = 0; i < sets.length; i++) { const m = all[i]?.sprites?.[id]; if (m) return [sets[i], m]; } return null; };
@@ -1337,6 +1347,7 @@ async function placeEnv(list, region) {
     game.engine.scene.add(s); envSprites.push(s);
     s.update(0, game.engine.camera);
   }
+  sweepSheets();   // (the perf pass, v1.146)
 }
 
 // ── the Vale's light outdoors (port step 5; the owner's standing direction: keep the game's dusky, gloomy tones) ─────
@@ -1722,11 +1733,12 @@ function standOurs(p) {
   if (!sheet) {
     const tex = new THREE.CanvasTexture(p.canvas); tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.SRGBColorSpace;
     sheet = { texture: tex, frameWidth: p.canvas.width, frameHeight: p.canvas.height, columns: 1, rows: 1, pixelsPerUnit: NATIVE_PER_UNIT, anchor: [p.ax / p.canvas.width, 0],
-      animations: { idle_down: { frames: [{ col: 0, row: 0 }], fps: 1, loop: false } }, name: `ember-prop:${p.id}` };
+      animations: { idle_down: { frames: [{ col: 0, row: 0 }], fps: 1, loop: false } }, name: `ember-prop:${p.id}`, canvas: p.canvas, refs: 0 };
     ourSheets.set(p.canvas, sheet);
   }
+  sheet.refs++;   // (the perf pass, v1.146: every floor's furniture came from new canvases, and their textures were never let go)
   const s = new Sprite3D(sheet, { ...SPRITE_OPTS, emissiveIntensity: 0.3, castShadow: false, blobShadow: !p.flat });   // (a little of their own colour: lit only by the hemisphere and a far torch, they read as cut-outs)
-  s.name = `ember:prop:${p.id}`;
+  s.name = `ember:prop:${p.id}`; s.userData.ourSheet = sheet;
   standAt(s, p.x, p.z, p.canvas.height - p.ay, NATIVE_PER_UNIT);
   if (p.flat) s.traverse((o) => { o.renderOrder = -1; if (o.material) o.material.depthWrite = false; });
   game.engine.scene.add(s); envSprites.push(s);
@@ -1931,7 +1943,7 @@ function applyGrade() {
 // when visited). At boot the pool is made at its size (boot: game.lightPool)
 function lampsTo(n) {
   const old = game?.lightPool; if (!old || lampsSet === n || !game.lighting) return;
-  for (const [, v] of aside) { game.disposeKept(v.kept); dropEnv(v.env, v.made); }
+  for (const [, v] of aside) { game.disposeKept(v.kept); dropEnv(v.env, v.made); } sweepSheets();
   aside.clear(); dropPrep();
   const np = new LightPool(game.lighting, [], { size: n, fixed: true });
   game.lightPool = np; lampsSet = n;
@@ -2579,6 +2591,7 @@ const api = {
           aside.set(curKey, { kept: left, env: envSprites, made: KIT_MADE, envKey: curEnvKey });
           envSprites = []; KIT_MADE = new Map();
           while (aside.size > ASIDE_MAX) { const [k, v] = aside.entries().next().value; aside.delete(k); game.disposeKept(v.kept); dropEnv(v.env, v.made); }
+          sweepSheets();
         }
       }
       curKey = key;
@@ -2662,7 +2675,7 @@ const api = {
     // the people: as models (placeFigure), or each atlas's pool filled in the order drawn; the rest hidden
     figGlow = figureGlow();
     const used = new Map(), camera = game.engine.camera, order = new Map();
-    figSeen++;
+    figSeen++; figNow = performance.now();
     camera.getWorldDirection(_camDir); const camAz = Math.atan2(-_camDir.x, -_camDir.z);
     for (const a of f.actors) {
       const nth = order.get(a.name) || 0; order.set(a.name, nth + 1);

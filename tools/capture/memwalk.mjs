@@ -8,7 +8,7 @@
 // buffers are in its GPU process: SwiftShader here, which holds them in RAM, the nearest a desktop gets to a phone's
 // shared memory), the JS heap, and Luminati's counts (geometries, textures, levels set aside, one built ahead).
 // Prints a row per change (the peak during it, what it settled at) and the walk's peak and growth.
-//   node tools/capture/memwalk.mjs [--cycles 3] [--sheet] [--base url] [--query a=b] [--json out.json]
+//   node tools/capture/memwalk.mjs [--site barrows] [--cycles 3] [--sheet] [--base url] [--query a=b] [--json out.json]
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
 import { readFile, writeFile } from 'node:fs/promises';
@@ -16,7 +16,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
-const CYCLES = +arg('--cycles', 3), SHEET = process.argv.includes('--sheet'), QUERY = arg('--query', ''), OUT = arg('--json', '');
+const SITE = arg('--site', 'barrows'), CYCLES = +arg('--cycles', 3), SHEET = process.argv.includes('--sheet'), QUERY = arg('--query', ''), OUT = arg('--json', '');
 const ROOT = new URL('../..', import.meta.url).pathname;
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.css': 'text/css', '.mp3': 'audio/mpeg', '.glb': 'model/gltf-binary', '.bin': 'application/octet-stream', '.wasm': 'application/wasm', '.webp': 'image/webp', '.ktx2': 'image/ktx2' };
 let base = arg('--base', ''), srv = null;
@@ -47,6 +47,7 @@ const b = await chromium.launch({ args: ['--enable-precise-memory-info', '--js-f
 const pid = process.pid;   // (Playwright drives the browser in this process: its processes are ours, node's own left out below)
 const ctx = await b.newContext({ viewport: { width: 390, height: 760 }, deviceScaleFactor: 3 }), p = await ctx.newPage(), errs = [];
 p.on('pageerror', (e) => errs.push(e.message));
+p.on('console', (m) => { if (m.type() === 'error' || (m.type() === 'warning' && /luminati|world/i.test(m.text()))) errs.push(`${m.type()}: ${m.text().slice(0, 200)}`); });   // (and what the page says went wrong: a scene change that fails quietly keeps nothing aside)
 await p.goto(`${base}/index.html?dev&notitle&world=on&tod=day&scene=town&region=vale${QUERY ? '&' + QUERY : ''}`, { waitUntil: 'commit' });
 await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__world3d && globalThis.__world3d.state.loads >= 1 && !globalThis.__renderer.transiting, null, { timeout: 240000 });
 
@@ -74,7 +75,8 @@ async function change(label, where) {
 }
 const toOverland = () => { const s = globalThis.__sim, e = s.world.exits.find((q) => q.to === 'overland'), P = s.state.player; P.x = P.px = (e.x0 + e.x1) / 2; P.y = P.py = (e.y0 + e.y1) / 2; };
 const toTown = () => { const s = globalThis.__sim, e = s.world.exits.find((q) => q.to === 'town' && !q.closed), P = s.state.player; P.x = P.px = (e.x0 + e.x1) / 2; P.y = P.py = (e.y0 + e.y1) / 2; };
-const toBarrows = () => { const s = globalThis.__sim, e = s.world.exits.find((q) => q.to === 'dungeon' && q.site === 'barrows'), P = s.state.player; P.x = P.px = (e.x0 + e.x1) / 2; P.y = P.py = (e.y0 + e.y1) / 2; };
+// (--site: a Vale dungeon other than the Barrows, the new kits' floors among them: the perf pass, v1.146)
+const toBarrows = `(() => { const s = globalThis.__sim, e = s.world.exits.find((q) => q.to === 'dungeon' && q.site === ${JSON.stringify(SITE)}), P = s.state.player; P.x = P.px = (e.x0 + e.x1) / 2; P.y = P.py = (e.y0 + e.y1) / 2; })()`;
 const outOfDungeon = () => { const s = globalThis.__sim, a = s.world.exitAt, P = s.state.player; for (const e of s.world.enemies || []) e.hp = 0; P.x = P.px = a.x; P.y = P.py = a.y; };
 
 await gc(); await p.waitForTimeout(1500); pids = tree(pid);
@@ -84,8 +86,8 @@ console.log(`${start.label.padEnd(28)} settled ${start.settled} MB  heap ${start
 const rows = [start];
 for (let c = 1; c <= CYCLES; c++) {
   rows.push(await change(`${c}: Thornwick → Vale`, toOverland));
-  rows.push(await change(`${c}: Vale → Old Barrows`, toBarrows));
-  rows.push(await change(`${c}: Old Barrows → Vale`, outOfDungeon));
+  rows.push(await change(`${c}: Vale → ${SITE}`, toBarrows));
+  rows.push(await change(`${c}: ${SITE} → Vale`, outOfDungeon));
   rows.push(await change(`${c}: Vale → Thornwick`, toTown));
 }
 sampling = false;

@@ -110,3 +110,14 @@ test('a raid\'s run doesn\'t count; the stars ride the save; an older save has n
   const r2 = createSim(SEED); r2.restore(sn); assert.equal(r2.state.starRun.site, 'barrows');
   assert.equal(ev.length, 1);
 });
+
+test('every run can end: a site with no last boss has a chest in its end room, or its vault (v1.146: the Shuttered Inn had neither)', async () => {
+  const { createWorld } = await import('../src/sim/world.js');
+  for (const site of Object.keys(PAR)) {
+    const end = endOf(site); if (end.boss) continue;
+    const w = createWorld(SEED, undefined, SITES[site].floors - 1, site), L = w.level, room = L.rooms.find((r) => r.role === 'end') || L.descentRoom;
+    assert.ok(room, `${site}: an end room`);
+    let chest = false; for (const [k, v] of w.props) { const c = L.cells.get(k); if (v === 'chest' && c && c.room === room.id) chest = true; }
+    assert.ok(chest, `${site}: a chest in ${room.name || room.id}`);
+  }
+});

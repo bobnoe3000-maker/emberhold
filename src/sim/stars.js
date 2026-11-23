@@ -27,10 +27,10 @@ export const PAR = {
   barrows: [9, 14], wickham_keep: [12, 18], sunken_chapel: [14, 20],   // (medians 8.8, 11.6, 13.2 min; the Proving Pens are a trial: no stars)
   toadking_mound: [14, 20], canal_locks: [14, 21], drowned_abbey: [15, 22],   // (13.2, 13.5, 14.5)
   cold_seam: [14, 21], assay_yards: [15, 23], cinderworks: [16, 23],   // (14.0, 15.0, 15.3: re-measured for v1.144's Reach in three, two levels a floor)
-  // one floor, no boss, and the secrets (pace.mjs walks to a last boss, so these aren't measured yet: a one-floor
-  // building is a third of a two-floor dungeon's rooms, a secret one floor of its land's top band)
-  haddow_crypt: [6, 9], shuttered_inn: [6, 9],
-  ninth_milestone: [6, 9], reedholm_undercroft: [6, 9], ninth_vault: [6, 9],
+  // one floor, no boss, and the secrets: pace.mjs walked to their end as the stars do (v1.146: the end room's chest, or the
+  // vault), 3 seeds: medians 3.9, 5.0 (the inn, once its cellar hall had its chest), 6.6, 3.9, 7.5 min
+  haddow_crypt: [4, 6], shuttered_inn: [5, 8],
+  ninth_milestone: [7, 10], reedholm_undercroft: [4, 6], ninth_vault: [8, 12],
 };
 
 /** the stars a finished run earns @param {string} site @param {number} secs @param {number} downs @returns {number} */
