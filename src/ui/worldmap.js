@@ -91,9 +91,6 @@ const CSS = `
 #worldmap .stars i { font-style: normal; color: rgba(240,228,200,.45); }
 #worldmap .prog { position: absolute; transform: translate(-50%, 0); padding: 2px 8px; border-radius: 8px; font: 12px/1.35 Georgia, serif; white-space: nowrap; pointer-events: none; text-align: center;
   background: rgba(28,20,14,.86); color: #f0e2c4; border: 1px solid rgba(214,170,98,.55); }
-#worldmap .prog b { color: #ffd36a; font-weight: 600; }
-#worldmap .prog.is-done { background: linear-gradient(#6a4a14, #3e2a0c); border-color: #ffd36a; }
-#worldmap .prog.is-here { box-shadow: 0 0 0 2px rgba(240,200,128,.5), 0 0 12px rgba(240,200,128,.6); }
 #worldmap .prog.is-shut, #worldmap .prog.is-far { color: #b8ad98; border-style: dashed; background: rgba(36,28,40,.8); }
 #worldmap svg.trail { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
 #worldmap .railpad { position: absolute; top: 0; left: calc(100% + 40px); width: 1px; height: 1px; pointer-events: none; }
@@ -297,7 +294,9 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
     if (landStats(L.id).all) return 'done';
     return region() === L.id ? 'here' : 'open';
   }
-  // under each land's name on the map: its stars and how many of its dungeons are cleared, or when it opens
+  // under each land's name on the map: when it opens, for a land not open yet. (The owner, 2026-11-24: "on the world map -
+  // dont show this progression image, just leave the 3 stars so its cleaner": an open land's tally, ★ got / of and how
+  // many cleared, is gone; each dungeon's pin keeps its stars)
   function progTags(/** @type {HTMLElement} */ map) {
     const lay = () => {
       for (const n of map.querySelectorAll('.prog')) n.remove();
@@ -306,7 +305,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
         const st = landState(L), t = el('div', 'prog is-' + st), lines = L.id === 'fens' ? 2 : 1;
         if (st === 'far') t.textContent = 'the Guild’s roads don’t reach it yet';
         else if (st === 'shut') t.textContent = `opens from level ${L.lv[0]}`;
-        else { const g = landStats(L.id); t.append(el('b', '', `★ ${g.got} / ${g.n * 3}`), ` · ${g.done} of ${g.n} cleared` + (st === 'done' ? ' · done' : '')); }
+        else continue;
         t.style.left = `${L.at[0] * k}px`; t.style.top = `${(L.at[1] + (lines - 1) * 30 + 50) * k}px`; map.append(t);
       }
     };
