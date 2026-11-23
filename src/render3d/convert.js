@@ -102,7 +102,8 @@ export const LEGEND = {
   // at the waterline (round 1: the engine's plank sides read as a stone quay wall)
   _: { top: 'dock_deck', side: 'dock_side', walkable: true },
   // the ramparts (docs/ramparts-dungeon.md): the street behind each terrace the houses stand on, and the parapet's stone
-  ']': { top: 'cobblestone', side: 'stone_wall', walkable: false }, '[': { top: 'rampart_top', side: 'rampart_wall', walkable: false },
+  ']': { top: 'rampart_cobble', side: 'rampart_wall', walkable: false }, '[': { top: 'rampart_top', side: 'rampart_wall', walkable: false },
+  '{': { top: 'rampart_cobble', side: 'rampart_wall', walkable: true },   // (its terraces' cobbles, quieter than the town's: round 1, "the foes lost in the speckle")
   // a dungeon's stairs (Luminati's stair tiles, its own characters for them): each climbs one level toward its side
   '^': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'N', walkable: true }, v: { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'S', walkable: true },
   '>': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'E', walkable: true }, '<': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'W', walkable: true },
@@ -575,7 +576,7 @@ const DOCK_FILL = { sky: [0.62, 0.74, 0.98], ground: [0.34, 0.33, 0.36], lamps: 
 // rampartsDress), a crenellated parapet over the drop at their fronts, the mist below and towers standing up out of it;
 // dusk, the windows and the torches warm
 const RAMP_FILL = { sky: [0.86, 0.92, 1.06], ground: [0.46, 0.43, 0.4], lamps: 2.2 };
-KIT_LOOK.ramparts = { floor: ['c', 'c'], wall: ']', cave: ']', hour: 19.6, mix: 0, inside: true, ramparts: true, fill: RAMP_FILL, backdrop: '#56657a' };
+KIT_LOOK.ramparts = { floor: ['{', '{'], wall: ']', cave: ']', hour: 20.4, mix: 0, inside: true, ramparts: true, fill: RAMP_FILL, backdrop: '#3a4656' };   // (round 1: a later hour, the windows lit; the drop's fog a mid tone, not the brightest thing on screen)
 KIT_LOOK.docks = { floor: ['_', '_'], wall: 'o', cave: 'o', hour: 21.2, mix: 0, inside: true, water: true, fill: DOCK_FILL, backdrop: '#3e4d62' };   // (round 1: the distance blue-grey, not black; round 2, lighter than the deck)
 const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KIT_LOOK.cellar, nave: KIT_LOOK.nave, cinder: KIT_LOOK.cultcut, chasm: { floor: ['U', 'm'], wall: 'x', hour: 22.8 },
   warren: KIT_LOOK.warren, ember: KIT_LOOK.ember, lava: KIT_LOOK.lava, mire: KIT_LOOK.mound, sluice: KIT_LOOK.locks, poison: KIT_LOOK.vats, water: KIT_LOOK.abbey };
@@ -1040,7 +1041,9 @@ function rampartGround(W, D, tiles, heights, open0) {
   // (on the floor as it stood before any of this: a street tile set down here must not count as a terrace for the next)
   const floor = new Uint8Array(W * D); for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) floor[j * W + i] = open0(i, j) ? 1 : 0;
   const open = (i, j) => i >= 0 && j >= 0 && i < W && j < D && floor[j * W + i] === 1;
-  const front = (i, j) => { for (let k = 1; k <= 5; k++) if (open(i, j - k) || open(i - k, j)) return true; return false; };
+  // (round 1: and anything south-east of a terrace within five, the camera's diagonal: a row of houses there covered the
+  // Watch Walk's front)
+  const front = (i, j) => { for (let a = 0; a <= 5; a++) for (let b = 0; b <= 5; b++) if ((a || b) && a + b <= 6 && open(i - a, j - b)) return true; return false; };
   const behind = (i, j) => { for (let k = 1; k <= 4; k++) if (open(i, j + k) || open(i + k, j)) return true; return false; };
   const street = new Uint8Array(W * D);
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
@@ -1072,17 +1075,19 @@ function rampartsDress(W, D, open, { street }, add, trim, arches) {
         for (let t = a, q = 0; t < b - 2; q++) {
           const h = hash('rh', key, t), wd = Math.min(b - t, 4 + (h % 3)); if (wd < 3) break;
           const [x, z] = P(t + wd / 2), cx = along ? x : x - 1.75, cz = along ? z - 1.75 : z;
-          if (clearOf(cx, cz, 1.5)) add({ type: 'house', x: r2(cx), z: r2(cz), rotation: along ? 0 : Math.PI / 2, light: q % 2 === 0, opts: { width: wd - 0.2, depth: 3.3, stories: 2, roof: ROOFS[h % 4], wall: WALLS[(h >> 2) % 3], upperWall: 'plaster', door: 'front', seed: h % 997, chimney: h % 2 === 0, lantern: q % 2 === 0, flowerboxes: h % 3 === 0, shutters: true, woodpile: false, windowLights: true } });
+          if (clearOf(cx, cz, 1.5)) add({ type: 'house', x: r2(cx), z: r2(cz), rotation: along ? 0 : Math.PI / 2, light: q % 2 === 0, opts: { width: wd - 0.2, depth: 3.3, stories: 2, roof: ROOFS[h % 4], wall: WALLS[(h >> 2) % 3], upperWall: 'plaster', door: 'front', seed: h % 997, chimney: h % 2 === 0, lantern: q % 2 === 0, flowerboxes: h % 3 !== 1, shutters: true, woodpile: false, windowLights: true, sign: h % 3 === 0 } });   // (a hanging sign on one in three: round 1)
           t += wd;
         }
       } else {
         const [x0, z0] = P(a), [x1, z1] = P(b);
         trim.push({ k: 'merlons', x0, z0, x1, z1, n: along ? 'z' : 'x' });
+        trim.push({ k: 'walldrop', x0, z0, x1, z1, n: along ? 'z' : 'x', seed: hash('rw', key, a) % 997 });   // (the wall's face down into the mist below the parapet: round 1, "a model on a white table")
       }
     }
   }
   // towers standing up out of the mist round the walls: at the level's west and east ends and behind the houses
-  for (const [x, z, s] of [[-3, D * 0.3, 1], [W + 3, D * 0.55, 1.15], [W * 0.35, -6, 0.9], [W * 0.8, -4, 1.05]]) trim.push({ k: 'fartower', x: r2(x), z: r2(z), s, seed: hash('rt', x, z) % 997 });
+  // (round 1: behind and to the west only, well out: one east of the Bakers' Row stood in front of its fight)
+  for (const [x, z, s] of [[-7, D * 0.25, 1], [-8, D * 0.66, 1.1], [W * 0.28, -9, 0.95], [W * 0.7, -8, 1.05], [W * 0.5, -17, 1.35]]) trim.push({ k: 'fartower', x: r2(x), z: r2(z), s, seed: hash('rt', x, z) % 997 });
 }
 /** the ramparts' pieces (sim/world.js ramparts dressing): torches on poles, the cargo, the stalls, the oven, the well */
 const RAMP_3D = {
@@ -1093,14 +1098,14 @@ const RAMP_3D = {
   sacks: (x, z, h, k, { trim }) => trim.push({ k: 'furn', type: 'sacks', x, z, rot: (h % 5) * 0.4, s: 1.45, opts: { count: 3 + (h % 2), seed: h % 997 } }),
   market_stall: (x, z, h, k, { add }) => add({ type: 'marketStall', x, z: r2(z - 0.4), rotation: 0, opts: { seed: h % 997 } }),
   well: (x, z, h, k, { add }) => add({ type: 'well', x, z, rotation: 0, opts: { seed: h % 997 } }),
-  oven: (x, z, h, k, { add, trim }) => { trim.push({ k: 'oven', x, z: r2(z - 0.4), seed: h % 997 }); add({ type: 'light', x, z: r2(z + 0.6), dy: 0.6, color: '#ff8a3a', intensity: 3.2, distance: 4, flicker: 0.25, nightOnly: false }); },
+  oven: (x, z, h, k, { add, trim }) => { trim.push({ k: 'oven', x, z: r2(z - 0.4), seed: h % 997 }); add({ type: 'light', x, z: r2(z + 0.55), dy: 1.1, color: '#ff8a3a', intensity: 2.2, distance: 2.8, flicker: 0.25, nightOnly: false }); },   // (its glow kept to its mouth: round 1)
 };
 /** a wharf's pieces (sim/world.js docks dressing), built by world.js buildTavern: lamps on posts, cargo, rope and nets on
  * the deck, a boat tied up in the water off the nearest edge, the crane */
 const DOCK_LAMP = '#ffb45e';
 const DOCK_3D = {
   lantern: (x, z, h, k, { add, trim, edge }) => {
-    const light = add({ type: 'light', x, z: r2(z + 0.9), dy: 1.5, color: DOCK_LAMP, intensity: 5.2, distance: 5.5, flicker: 0.12, nightOnly: false }); trim.push({ k: 'lamppost', x, z, seed: h % 997, light });
+    const light = add({ type: 'light', x, z: r2(z + 1.2), dy: 1.3, color: DOCK_LAMP, intensity: 4.8, distance: 6.8, flicker: 0.12, nightOnly: false }); trim.push({ k: 'lamppost', x, z, seed: h % 997, light });
     if (edge && edge.k <= 2) { const along = edge.side === 'n' || edge.side === 's'; trim.push({ k: 'lampglint', x: along ? x : r2(edge.x + edge.dx * 0.7), z: along ? r2(edge.z + edge.dz * 0.7) : r2(z + 0.68), along, out: along ? edge.dz : edge.dx, seed: h % 997 }); }   // (its light broken on the water past the edge: round 1)
   },
   barrels: (x, z, h, k, { add }) => { add({ type: 'barrel', x, z, rotation: (h % 9) * 0.3, opts: { height: 1.35, lying: false } }); if (h % 3 === 0) add({ type: 'barrel', x: r2(x + 0.7), z: r2(z + 0.35), rotation: (h % 7) * 0.4, opts: { height: 1.2, lying: false } }); },

@@ -260,7 +260,7 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       case 'dock_ropes': for (const [u, v] of [[-0.35, -1], [0.2, -1], [-0.6, 1], [0.05, 1]]) putAt(u * L, v * (Wd - 0.5), 'rope'); putAt(L * 0.4, -(Wd - 1), 'net'); putAt(-L * 0.25, Wd - 1, 'net'); break;
       case 'fish_market': for (let u = -L * 0.55; u <= L * 0.25 + 0.01; u += 5) putAt(u, -Wd, 'fishcrates'); for (const s of [-1, 1]) putAt(s * (L - 1), 0, 'fishcrates'); break;   // (the morning's catch in its crates along the back, never collected)
       case 'moorings': putAt(L * 0.35, -Wd, 'boat'); break;   // (a boat tied up off the back edge, in the water where the camera sees it: convert.js; at the near edge it was below the frame, round 2)
-      case 'crane': unit(L * 0.55, -Wd + 1, -1, 1, -1, 0, 'crane'); break;   // (the wharf's derrick at the back edge, a net of cargo on its hook)
+      case 'crane': unit(-L * 0.3, -Wd + 1, -1, 1, -1, 0, 'crane'); break;   // (round 3: into the frame, clear of the boat)   // (the wharf's derrick at the back edge, a net of cargo on its hook)
       // ── the ramparts (the owner, 2026-11-23: "the reaches, high up on the ramparts", a reference; plans.js high_ramparts,
       // docs/ramparts-dungeon.md): a walled town's terraces up on its walls, the houses along their backs (convert.js), a
       // parapet over the drop at their fronts. Every piece by the houses or the parapet, the middle left for the fight: torches
@@ -270,6 +270,7 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       case 'market_stalls': for (const u of [-L * 0.3, L * 0.3]) unit(u, -Wd + 1, -1, 1, -1, 0, 'market_stall'); break;   // (against the houses, their awnings over the street)
       case 'oven': unit(-L * 0.6, -Wd + 1, -1, 1, -1, 0, 'oven'); break;   // (the bakers' oven, built out from a house's front)
       case 'rampart_well': unit(L * 0.65, -Wd + 2, -1, 0, -1, 0, 'well'); break;
+      case 'rampart_clutter': putAt(-L * 0.15, -Wd, 'barrels'); putAt(L * 0.45, -Wd, 'crates'); putAt(L * 0.45 + 1.5, -Wd, 'sacks'); break;   // (round 1: more against the house fronts)
       // ── the Greywater Fens (v1.102, authored): the Toadking's mound, the Canal Locks and Vat Seven, the Drowned Abbey
       case 'boats': for (let u = -L * 0.55, i = 0; u <= L * 0.55 + 0.01 && i < 3; u += 13, i++) putAt(u, -(wall - 1), 'boat'); break;   // (hauled up keel-over at the back wall, three at most)
       case 'reeds': at(4, 5, 'reeds'); break;

@@ -49,5 +49,6 @@ builder is tools/render3d/world.js (`buildTavern`'s rampart pieces).
 | Round | Identity | Building | Dressing | Battle | Light | Materials | Polish | **Overall** |
 |---|---|---|---|---|---|---|---|---|
 | 1: terraces, the town's houses behind, the parapet, towers, torches, a stall, the oven | 6 | 6 | 5 | 7 | 5 | 6 | 5 | **5.5** |
+| 2: the wall's face down into the mist, buttresses, towers behind only, quieter cobbles, a rebuilt oven, signs, more cargo | 6 | 6.5 | 5.5 | 7.5 | 5 | 6 | 5.5 | **6** |
 
 Further rounds are next.

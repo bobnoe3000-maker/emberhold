@@ -578,15 +578,15 @@ export const PLANS = {
   high_ramparts: { site: 'high_ramparts', name: 'The High Ramparts', kind: 'ramparts', base: 22, flat: true, floors: [
     { name: 'The Ramparts', spaces: [
       { id: 'the_stair_head', name: 'The Stair Head', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'ramparts',
-        dress: ['rampart_torches', 'rampart_cargo'], note: 'The top of the long stair up the inside of the wall, and the street along it.' },
+        dress: ['rampart_torches', 'rampart_cargo', 'rampart_clutter'], note: 'The top of the long stair up the inside of the wall, and the street along it.' },
       { id: 'the_market_terrace', name: 'The Market Terrace', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'ramparts', foes: 'yards',
-        dress: ['market_stalls', 'rampart_torches', 'rampart_cargo'], note: 'The stalls up against the houses, their awnings out over the street, nobody selling.' },
+        dress: ['market_stalls', 'rampart_torches', 'rampart_cargo', 'rampart_clutter'], note: 'The stalls up against the houses, their awnings out over the street, nobody selling.' },
       { id: 'the_watch_walk', name: 'The Watch Walk', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'ramparts', foes: 'yards',
         dress: ['rampart_torches'], note: 'Where the watch walked its round; the brazier is still warm.' },
       { id: 'the_bakers_row', name: 'The Bakers\' Row', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'ramparts', foes: 'yards',
         dress: ['oven', 'rampart_torches', 'rampart_cargo', 'chest'], note: 'The ovens built out into the street, and the smell of the morning\'s bread.' },
       { id: 'the_bastion', name: 'The Bastion', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'ramparts', foes: 'yards',
-        dress: ['rampart_well', 'rampart_torches', 'rampart_cargo', 'chest'], note: 'The wall\'s corner tower, its top a yard with a well; the whole drop below it in the mist.' },
+        dress: ['rampart_well', 'rampart_torches', 'rampart_cargo', 'rampart_clutter', 'chest'], note: 'The wall\'s corner tower, its top a yard with a well; the whole drop below it in the mist.' },
     ], halls: [
       { from: 'the_stair_head', to: 'the_market_terrace', x: 32, y: 44, w: 10, h: 10 },
       { from: 'the_market_terrace', to: 'the_watch_walk', x: 52, y: 20, w: 10, h: 10 },
