@@ -43,6 +43,8 @@ const SCENES = [
   { name: 'town square', q: 'scene=town' },
   { name: 'barrows fight', q: 'scene=dungeon&site=barrows', fight: true },
 ];
+// (--sites a,b: those dungeons' fights too, the kits' own floors among them: the perf pass, v1.146)
+for (const s of (opt('--sites', '') || '').split(',').filter(Boolean)) SCENES.push({ name: `${s} fight`, q: `scene=dungeon&site=${s}`, fight: true });
 const b = await chromium.launch();
 const out = [];
 for (const S of SCENES) {

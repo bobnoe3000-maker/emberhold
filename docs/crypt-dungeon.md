@@ -138,3 +138,23 @@ So the crypt meets the contract (10+ waves, nobody fallen in the first five) on 
 
 **Tests.** test/crypt.test.mjs: in the Vale at 6 and open; the chantry, its door, its arrival and its name on the land,
 walked to from Thornwick's gate, in and down. test/sites.test.mjs: its band, 6.
+
+## The Reedholm Undercroft on the kit (v1.145; the critic, 2026-11-24)
+
+The Fens' secret is the crypt kit's second place (plans.js `reedholm_undercroft`), on the Haddow Crypt's floor:
+
+- the Key Stair;
+- the Copy Room, with the copyists' desks and rolls along its walls;
+- the Clergy's Chapel;
+- the Bone Room, an ossuary;
+- the Fair Copy, the copyists' tombs either side and the vault's chest in the middle.
+
+**In the game (captures in the session): 8 / 10.** The shelves of rolls under the vaults read as a scriptorium of the
+dead, not the Haddows' tomb again. The vault's gold chest is the room's one light. Still wanting: the Copy Room's
+floor plaques, the tomb lids' gilt crosses, repeat too evenly across the open floor. A scatter of loose papers there
+would break it up.
+
+**Cost (figperf, 2026-11-24, SwiftShader, 390 × 844):** the Undercroft's fight draws 271 calls and 486 k triangles a frame.
+The town square draws 429 and 725 k, the Barrows' fight 116–125 and 244–255 k. So the crypt kit costs about two
+thirds of the town, the game's heaviest scene. The Haddow Crypt's own floor is the same, but the probe's counter read
+none for it (its fight began before the world was drawn), so it is taken from the Undercroft's.

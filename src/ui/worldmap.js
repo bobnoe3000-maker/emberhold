@@ -412,7 +412,10 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
       if (p.kind === 'site') out.push({ ...base, label: SITES[p.id].name, cls: S().sitesEntered.has(p.id) ? '' : 'fresh', star: !!(q && q.site === p.id), stars: PAR[p.id] ? starsAt(p.id) : null,
         here: w.kind === 'dungeon' && S().site === p.id ? 'you are here' : '' });
       else if (p.kind === 'town') out.push({ ...base, label: LANDS[r].town, cls: S().reached.has(townOf(r)) ? 'lit' : 'dim', star: !!(q && q.land === r && !q.site), here: w.kind === 'town' ? 'you are here' : '' });
-      else if (LANDS[p.id]) out.push({ ...base, label: `to ${lower(LANDS[p.id].name)}`, cls: sim.landOpen(p.id) ? '' : 'off', star: !!(q && q.land === p.id && q.land !== r) });
+      // (v1.146 critic: a way out stands past the land's edge, and the picture's crop cut its pin off, the Vale's to the
+      // Fens wholly) held 4 tiles inside the picture's frame
+      else if (LANDS[p.id]) out.push({ ...base, x: Math.min(Math.max(p.x, L.x0 + 4), L.x0 + L.w - 4), y: Math.min(Math.max(p.y, L.y0 + 4), L.y0 + L.h - 4),
+        label: `to ${lower(LANDS[p.id].name)}`, cls: sim.landOpen(p.id) ? '' : 'off', star: !!(q && q.land === p.id && q.land !== r) });
     }
     for (const G of ringsShown()) if (r === G.region) { const C = CAMP_BY[G.camp]; out.push(ringPin(C.x, C.y, G)); }
     if (w.kind === 'overland') { const pl = S().player; out.push({ key: 'me', kind: 'me', x: pl.x, y: pl.y, tap: false, cls: null, here: 'you are here', label: '' }); }

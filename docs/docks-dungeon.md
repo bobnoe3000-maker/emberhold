@@ -54,5 +54,17 @@ tools/render3d/world.js (`buildTavern`'s dock pieces, `harbourAir`).
 | 2: grey planks, dark deck sides, one mist sheet, tan rope, reeds | 6.5 | 5.5 | 5 | 8.5 | 6 | 6 | 4.5 | **6** |
 | 3: the harbour up under the decks, the glints off for good, the rope raised | 7 | 6.5 | 5.5 | 8.5 | 6 | 6 | 5.5 | **6.5** |
 | 4: the crane in frame, the boat where it's seen, the planks warmer by the lamps | 7 | 6.5 | 6 | 8.5 | 6 | 6 | 5.5 | **6.5** |
+| 5 (2026-11-24, the d8 captures): fish crates along the back, the mist sheet past the edges, a lamp's warm pool on wet planks | 7.5 | 7 | 6 | 8.5 | 7 | 6.5 | 6 | **7** |
 
-Further rounds are next.
+Round 5's verdict. The deck reads as a wharf at night, and the fight has the whole middle. What still holds it
+under 8:
+
+- **The moored boat** reads as a stack of grey crates on a raft from the game's camera. It wants a hull's sheer line
+  and a darker inside.
+- **The mist sheet** past the decks is one flat pale band in a close view (the harbour's end, zoomed). It wants two
+  sheets at different heights, or a softer falloff.
+- **The fish crates** go dark against the dark deck. Their catch wants a cold silver.
+
+The kit is parked: the Old Eel Wharf stays a prototype (the owner, 2026-11-23: "go with recommendations on the old
+eel wharf"), and its rooms are the Drowned Mole's first floor when the Tidemark is built. These three go in then. The
+perf pass (v1.146) made the mist's material and texture go with the level (they were made each build and kept).

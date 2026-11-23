@@ -50,5 +50,17 @@ builder is tools/render3d/world.js (`buildTavern`'s rampart pieces).
 |---|---|---|---|---|---|---|---|---|
 | 1: terraces, the town's houses behind, the parapet, towers, torches, a stall, the oven | 6 | 6 | 5 | 7 | 5 | 6 | 5 | **5.5** |
 | 2: the wall's face down into the mist, buttresses, towers behind only, quieter cobbles, a rebuilt oven, signs, more cargo | 6 | 6.5 | 5.5 | 7.5 | 5 | 6 | 5.5 | **6** |
+| 3–4 (2026-11-24, the r4 captures): the half-timbered fronts with red and blue tiles, the striped stall, the parapet's drop into the fog, the well into frame | 7.5 | 7.5 | 7 | 7.5 | 6.5 | 7 | 6.5 | **7** |
 
-Further rounds are next.
+Rounds 3–4's verdict. The market terrace is the kit at its best: the town's houses stand behind, and a stall sits
+under its awning. The wall drops away into the mist at the front, and the fight has the cobbles. What still holds it
+under 8:
+
+- **The bastion** is bare in its middle, and its back is one flat house front. It wants a tower's turret on the
+  corner, or a beacon's brazier.
+- **The gold chest** (the owner's look, 2026-11-12) reads as a bright speckled block on grey stone up close. It is the
+  chest everywhere, so it stays; it wants nothing of its own here.
+- **The torches** light only their own posts. A warm pool on the cobbles under each would join them to the street.
+
+The kit is parked: the High Ramparts don't belong in the Reach (dungeon-catalog.md §4.3). Their kit goes to the
+Tidemark's Highmarch walls and the Heights' Pilgrims' Stair, and these go in there.

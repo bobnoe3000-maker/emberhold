@@ -179,3 +179,24 @@ Making the two agree means:
    - Ilse's two directions in `content/dialogue/ilse.ink`;
    - *Fog on the Canal*'s summary and Journal line in `content/quests/ch2_fog_on_the_canal.json`;
    - and the world doc's §3.2 "south of the Vale".
+
+## 6. Critic round: the World tab and each land's tab (v1.146)
+
+The owner: "Critic all of this including the updates world map and UI on each region and world screen." A phone at
+390 × 844, the World tab opened from each land (the Vale at 7, the Fens at 14, the Reach at 24, with stars set), and
+each land's tab.
+
+| Screen | Before | Found | Fixed | After |
+|---|---|---|---|---|
+| World, from the Vale | 6.5 | "you are here" cut by the view's left edge; the level rail over the Sunken Chapel's stars; the Reach's fog words under the header | the opening frame keeps the tag and leaves the rail's width; the map scrolls 40 px past its edge; the fog's words smaller | 8 |
+| World, from the Fens | 5.5 | the fog's words for the Reach and for the lands beyond ran into each other; the stars of the Mound and the Locks ran together; EMBERFALL's label in the Fens | words apart; stars over each mark (under it if a neighbour's are there); EMBERFALL on the line between the lands | 7.5 |
+| World, from the Reach | 6.5 | stars beside the marks over the map's own lettering (the Cinderworks, Kell's Rest) | stars over the marks | 7.5 |
+| The Vale's tab | 6.5 | no pin for the canal road to the Fens: the way out stood past the picture's crop | a way out's pin held 4 tiles inside the frame | 8 |
+| The Fens' tab | 5.5 | the shut road north pinned "to the Greywater Fens"; the road to the Vale half cut; the Mound's stars under the Locks' name | shut roads have no pin; the pin held inside; tags placed round the stars | 8 |
+| The Reach's tab | 7.5 | a little crowding round Ashgate (the Inn's and the Yards' names) | | 7.5 |
+
+**Still open.**
+
+- On the World tab framed on the Vale and the Fens, the Fens' progress tag runs under the rail at 390 px. A wider
+  phone shows it whole, and a swipe brings it out.
+- The Kingstone's tag sits under the rail at the right edge in the same view.
