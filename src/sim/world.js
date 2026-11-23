@@ -269,7 +269,7 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       case 'rampart_cargo': for (const s of [-1, 1]) { putAt(s * (L - 1), -(Wd - 1.5), 'barrels'); putAt(s * (L - 2.5), -Wd, s < 0 ? 'crates' : 'sacks'); } break;
       case 'market_stalls': for (const u of [-L * 0.3, L * 0.3]) unit(u, -Wd + 1, -1, 1, -1, 0, 'market_stall'); break;   // (against the houses, their awnings over the street)
       case 'oven': unit(-L * 0.6, -Wd + 1, -1, 1, -1, 0, 'oven'); break;   // (the bakers' oven, built out from a house's front)
-      case 'rampart_well': unit(L * 0.65, -Wd + 2, -1, 0, -1, 0, 'well'); break;
+      case 'rampart_well': unit(-L * 0.45, -Wd + 2, -1, 0, -1, 0, 'well'); break;   // (round 2: into the frame, by the back wall)
       case 'rampart_clutter': putAt(-L * 0.15, -Wd, 'barrels'); putAt(L * 0.45, -Wd, 'crates'); putAt(L * 0.45 + 1.5, -Wd, 'sacks'); break;   // (round 1: more against the house fronts)
       // ── the Greywater Fens (v1.102, authored): the Toadking's mound, the Canal Locks and Vat Seven, the Drowned Abbey
       case 'boats': for (let u = -L * 0.55, i = 0; u <= L * 0.55 + 0.01 && i < 3; u += 13, i++) putAt(u, -(wall - 1), 'boat'); break;   // (hauled up keel-over at the back wall, three at most)

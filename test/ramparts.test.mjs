@@ -79,6 +79,6 @@ test('the Ramparts drawn: houses behind the terraces and never in front of one, 
   assert.ok(level.objects.some((o) => o.type === 'marketStall') && level.objects.some((o) => o.type === 'well'));
   const t = sprites.find((s) => s.tavern); assert.ok(t);
   const by = (k) => t.tavern.pieces.filter((p) => p.k === k).length;
-  assert.ok(by('merlons') > 10 && by('fartower') === 5 && by('torchpole') >= 8 && by('oven') === 1);
+  assert.ok(by('merlons') > 10 && by('fartower') === 8 && t.tavern.pieces.filter((p) => p.k === 'fartower' && p.low).length === 3 && by('torchpole') >= 8 && by('oven') === 1);
   assert.ok(!sprites.some((s) => ['torch', 'barrels', 'crates', 'market_stall', 'oven', 'well'].includes(s.prop)), 'no piece left to a card');
 });

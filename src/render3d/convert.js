@@ -576,7 +576,7 @@ const DOCK_FILL = { sky: [0.62, 0.74, 0.98], ground: [0.34, 0.33, 0.36], lamps: 
 // rampartsDress), a crenellated parapet over the drop at their fronts, the mist below and towers standing up out of it;
 // dusk, the windows and the torches warm
 const RAMP_FILL = { sky: [0.86, 0.92, 1.06], ground: [0.46, 0.43, 0.4], lamps: 2.2 };
-KIT_LOOK.ramparts = { floor: ['{', '{'], wall: ']', cave: ']', hour: 20.4, mix: 0, inside: true, ramparts: true, fill: RAMP_FILL, backdrop: '#3a4656' };   // (round 1: a later hour, the windows lit; the drop's fog a mid tone, not the brightest thing on screen)
+KIT_LOOK.ramparts = { floor: ['{', '{'], wall: ']', cave: ']', hour: 21.6, mix: 0, inside: true, ramparts: true, fill: RAMP_FILL, backdrop: '#3a4656' };   // (round 2: night proper, so the houses' windows light)   // (round 1: a later hour, the windows lit; the drop's fog a mid tone, not the brightest thing on screen)
 KIT_LOOK.docks = { floor: ['_', '_'], wall: 'o', cave: 'o', hour: 21.2, mix: 0, inside: true, water: true, fill: DOCK_FILL, backdrop: '#3e4d62' };   // (round 1: the distance blue-grey, not black; round 2, lighter than the deck)
 const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KIT_LOOK.cellar, nave: KIT_LOOK.nave, cinder: KIT_LOOK.cultcut, chasm: { floor: ['U', 'm'], wall: 'x', hour: 22.8 },
   warren: KIT_LOOK.warren, ember: KIT_LOOK.ember, lava: KIT_LOOK.lava, mire: KIT_LOOK.mound, sluice: KIT_LOOK.locks, poison: KIT_LOOK.vats, water: KIT_LOOK.abbey };
@@ -1043,12 +1043,13 @@ function rampartGround(W, D, tiles, heights, open0) {
   const open = (i, j) => i >= 0 && j >= 0 && i < W && j < D && floor[j * W + i] === 1;
   // (round 1: and anything south-east of a terrace within five, the camera's diagonal: a row of houses there covered the
   // Watch Walk's front)
-  const front = (i, j) => { for (let a = 0; a <= 5; a++) for (let b = 0; b <= 5; b++) if ((a || b) && a + b <= 6 && open(i - a, j - b)) return true; return false; };
+  const front = (i, j) => { for (let a = 0; a <= 6; a++) for (let b = 0; b <= 6; b++) if ((a || b) && a + b <= 8 && open(i - a, j - b)) return true; return false; };   // (round 2: wider, a row still stood south-east of the Watch Walk)
   const behind = (i, j) => { for (let k = 1; k <= 4; k++) if (open(i, j + k) || open(i + k, j)) return true; return false; };
   const street = new Uint8Array(W * D);
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
     if (open(i, j)) continue;
-    if (front(i, j)) { const edge = open(i, j - 1) || open(i - 1, j) || open(i - 1, j - 1); tiles[j][i] = edge ? '[' : ' '; heights[j][i] = edge ? '3' : '0'; continue; }
+    if (front(i, j)) { let edge = false; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) edge ||= open(i + di, j + dj);   // (a parapet wherever a terrace touches the drop)
+      tiles[j][i] = edge ? '[' : ' '; heights[j][i] = edge ? '3' : '0'; continue; }
     if (behind(i, j)) { tiles[j][i] = ']'; heights[j][i] = '1'; street[j * W + i] = 1; continue; }   // (the street a step down from the terrace: at the terrace's own level it would count as one)
     tiles[j][i] = ' '; heights[j][i] = '0';
   }
@@ -1088,17 +1089,22 @@ function rampartsDress(W, D, open, { street }, add, trim, arches) {
   // towers standing up out of the mist round the walls: at the level's west and east ends and behind the houses
   // (round 1: behind and to the west only, well out: one east of the Bakers' Row stood in front of its fight)
   for (const [x, z, s] of [[-7, D * 0.25, 1], [-8, D * 0.66, 1.1], [W * 0.28, -9, 0.95], [W * 0.7, -8, 1.05], [W * 0.5, -17, 1.35]]) trim.push({ k: 'fartower', x: r2(x), z: r2(z), s, seed: hash('rt', x, z) % 997 });
+  // (round 2: and out in the drop before the walls, low, their tops under the street's level so they stand below the parapet
+  // in the mist and never over a terrace)
+  for (const [x, z, s] of [[W * 0.2, D + 12, 0.9], [W + 12, D * 0.8, 1.0], [W * 0.75, D + 16, 1.1]]) trim.push({ k: 'fartower', x: r2(x), z: r2(z), s, low: true, seed: hash('rt', x, z) % 997 });
 }
 /** the ramparts' pieces (sim/world.js ramparts dressing): torches on poles, the cargo, the stalls, the oven, the well */
 const RAMP_3D = {
-  torch: (x, z, h, k, { add, trim }) => { const light = add({ type: 'light', x, z, dy: 2.0, color: '#ffa850', intensity: 4.6, distance: 6, flicker: 0.2, nightOnly: false }); trim.push({ k: 'torchpole', x, z, seed: h % 997, light }); },
+  // (round 2: a wider pool)
+  torch: (x, z, h, k, { add, trim }) => { const light = add({ type: 'light', x, z, dy: 1.8, color: '#ffa850', intensity: 5.4, distance: 7.2, flicker: 0.2, nightOnly: false });
+    trim.push({ k: 'torchpole', x, z, seed: h % 997, light }); },
   brazier: (x, z, h, k, ctx) => RAMP_3D.torch(x, z, h, k, ctx),
   barrels: (x, z, h, k, { add }) => add({ type: 'barrel', x, z, rotation: (h % 9) * 0.3, opts: { height: 1.3, lying: false } }),
   crates: (x, z, h, k, { add }) => add({ type: 'crateStack', x, z, rotation: (h % 7) * 0.2, opts: { count: 2 + (h % 2), size: 1.0, seed: h % 997 } }),
   sacks: (x, z, h, k, { trim }) => trim.push({ k: 'furn', type: 'sacks', x, z, rot: (h % 5) * 0.4, s: 1.45, opts: { count: 3 + (h % 2), seed: h % 997 } }),
   market_stall: (x, z, h, k, { add }) => add({ type: 'marketStall', x, z: r2(z - 0.4), rotation: 0, opts: { seed: h % 997 } }),
   well: (x, z, h, k, { add }) => add({ type: 'well', x, z, rotation: 0, opts: { seed: h % 997 } }),
-  oven: (x, z, h, k, { add, trim }) => { trim.push({ k: 'oven', x, z: r2(z - 0.4), seed: h % 997 }); add({ type: 'light', x, z: r2(z + 0.55), dy: 1.1, color: '#ff8a3a', intensity: 2.2, distance: 2.8, flicker: 0.25, nightOnly: false }); },   // (its glow kept to its mouth: round 1)
+  oven: (x, z, h, k, { add, trim }) => { trim.push({ k: 'oven', x, z: r2(z - 0.4), seed: h % 997 }); add({ type: 'light', x, z: r2(z + 1.1), dy: 0.8, color: '#ff8a3a', intensity: 3.6, distance: 4.2, flicker: 0.25, nightOnly: false }); },   // (its glow from its mouth on the street before it: rounds 1, 2)
 };
 /** a wharf's pieces (sim/world.js docks dressing), built by world.js buildTavern: lamps on posts, cargo, rope and nets on
  * the deck, a boat tied up in the water off the nearest edge, the crane */

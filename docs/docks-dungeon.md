@@ -53,5 +53,6 @@ tools/render3d/world.js (`buildTavern`'s dock pieces, `harbourAir`).
 | 1: decks over water, rails and piles, lamps, cargo | 6 | 5 | 4.5 | 8.5 | 5 | 5 | 4 | **5.5** |
 | 2: grey planks, dark deck sides, one mist sheet, tan rope, reeds | 6.5 | 5.5 | 5 | 8.5 | 6 | 6 | 4.5 | **6** |
 | 3: the harbour up under the decks, the glints off for good, the rope raised | 7 | 6.5 | 5.5 | 8.5 | 6 | 6 | 5.5 | **6.5** |
+| 4: the crane in frame, the boat where it's seen, the planks warmer by the lamps | 7 | 6.5 | 6 | 8.5 | 6 | 6 | 5.5 | **6.5** |
 
 Further rounds are next.

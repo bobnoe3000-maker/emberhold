@@ -560,7 +560,7 @@ function barPatch() {
 const DOCK_WL = 0.84;   // (the harbour's surface: convert.js DOCK_WL)
 const DOCK_WOOD = [0.62, 0.55, 0.48], DOCK_WOOD_DARK = [0.38, 0.35, 0.32], DOCK_ROPE = [0.62, 0.47, 0.29], DOCK_HULL = [0.34, 0.28, 0.23];   // (round 1: the rope tan hemp, not grey rings; the hull dark)   // (a wharf's timbers, grey with salt and wet: docs/docks-dungeon.md)
 const BONE_TINT = [1.06, 0.99, 0.83];   // (the dead's bones: old ivory, gone yellow-grey; round 6, a quarter down, they were the whitest thing on screen)   // (the dead's bones: old ivory, gone yellow-grey)
-let cryptDark = null, cryptDamp = null, cryptPatch = null, cryptGold = null, cryptOx = null, cryptSky = null, cryptBrass = null, dockGlint = null, dockMist = null, rampFog = null;
+let cryptDark = null, cryptDamp = null, cryptPatch = null, cryptGold = null, cryptOx = null, cryptSky = null, cryptBrass = null, dockGlint = null, dockMist = null, rampFog = null, dockPost = null, dockHalo = null, dockCrane = null;
 /** a skull on its frame p (a wall's, or {n: 'z'} facing the camera), at u along it and y, s its size, v out of the wall */
 function skull(b, p, u, y, s, v) {
   const on = (q, uu, yy, vv) => (q.n === 'z' ? [q.x + uu, yy, q.z + vv] : [q.x + vv, yy, q.z + uu]), sz = (q, w, h, d) => (q.n === 'z' ? [w, h, d] : [d, h, w]);
@@ -574,7 +574,7 @@ function skull(b, p, u, y, s, v) {
 }
 let tavernGlass = null, tavernWeb = null, tavernWebFill = null, tavernEmber = null, tavernNight = null, tavernNightHi = null, tavernStar = null, tavernGrime = null;
 function buildTavern(pieces) {
-  const f = game.world.factory, b = f.builder(), FL = 1.0, TOP = FL + TAV_H, furn = [], webTris = [];
+  const f = game.world.factory, b = f.builder(), FL = 1.0, TOP = FL + TAV_H, furn = [], webTris = [], loose = [];   // (loose: kept whole, never merged: a sprite)
   tavernGlass ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffb45e').multiplyScalar(2.2), fog: false });
   cryptDark ||= new THREE.MeshBasicMaterial({ color: '#0d0a08' });
   tavernWeb ||= new THREE.MeshBasicMaterial({ color: '#cfc9bf', transparent: true, opacity: 0.45, depthWrite: false });   // (round 3: grey-white, a third opaque)
@@ -1015,28 +1015,30 @@ function buildTavern(pieces) {
       const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { n: p.n, x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 }, o = p.out;
       if (p.k === 'dockedge') {
         b.tinted(DOCK_WOOD_DARK, () => b.box('furniture_wood', sz(q, len, 0.3, 0.1), { at: on(q, 0, FL - 0.13, o * 0.05) }));
+        b.tinted([0.74, 0.64, 0.52], () => b.box('furniture_wood', sz(q, len, 0.08, 0.2), { at: on(q, 0, FL + 0.03, -o * 0.08) }));   // (the edge beam along the deck's lip: round 4)
         b.tinted([0.42, 0.5, 0.36], () => b.box('furniture_wood', sz(q, len, 0.07, 0.12), { at: on(q, 0, DOCK_WL + 0.02, o * 0.04) }));   // (the weed at the waterline)
       } else b.tinted(DOCK_WOOD, () => { for (const y of [FL + 0.95, FL + 0.5]) b.box('furniture_wood', sz(q, len + 0.1, 0.1, 0.1), { at: on(q, 0, y, o * 0.12) }); });
     } else if (p.k === 'pile') {
       // a pile: a round post driven into the harbour bed, its head carried up as the rail's post on a back edge, a turn of
       // rope round it; on a near edge only its head, proud of the deck
-      const top = p.back ? FL + 1.12 : FL + 0.42, at0 = on(p, 0, 0, p.out * 0.12), R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+      const top = p.back ? FL + 1.12 : FL + 0.62, at0 = on(p, 0, 0, p.out * 0.12), R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
       b.tinted(DOCK_WOOD_DARK, () => b.tube('furniture_wood', [at0[0], -0.4, at0[2]], [at0[0], top, at0[2]], p.back ? 0.16 : 0.13, p.back ? 0.15 : 0.12, { segments: 8 }));
       b.tinted([0.36, 0.42, 0.34], () => b.tube('furniture_wood', [at0[0], DOCK_WL - 0.2, at0[2]], [at0[0], DOCK_WL + 0.06, at0[2]], 0.145, 0.14, { segments: 8 }));   // (green with weed where the tide wets it)
       b.tinted(DOCK_WOOD, () => b.lathe('furniture_wood', [{ y: 0, r: 0.13 }, { y: 0.04, r: 0.1 }, { y: 0.06, r: 0 }], { segments: 8, at: [at0[0], top, at0[2]] }));
-      if (p.back ? R(1) < 0.4 : R(1) < 0.55) b.tinted(DOCK_ROPE, () => { for (const y of p.back ? [FL + 0.62] : [FL + 0.12, FL + 0.26]) b.lathe('linen', [{ y: 0, r: 0.15 }, { y: 0.08, r: 0.155 }], { segments: 8, at: [at0[0], y, at0[2]] }); });   // (two turns of rope on a near pile's head)
+      if (p.back ? R(1) < 0.4 : R(1) < 0.75) b.tinted(DOCK_ROPE, () => { for (const y of p.back ? [FL + 0.62] : [FL + 0.3, FL + 0.44]) b.lathe('linen', [{ y: 0, r: 0.15 }, { y: 0.08, r: 0.155 }], { segments: 8, at: [at0[0], y, at0[2]] }); });   // (two turns of rope on a near pile's head)
     } else if (p.k === 'bollard') {
       // an iron bollard at a near edge, a mooring line's turns on it
       b.tinted(TAV_IRON, () => { b.lathe('metal', [{ y: 0, r: 0.2 }, { y: 0.06, r: 0.16 }, { y: 0.3, r: 0.13 }, { y: 0.36, r: 0.19 }, { y: 0.42, r: 0.17 }, { y: 0.44, r: 0 }], { segments: 10, at: on(p, 0, FL, -p.out * 0.3) }); });
       b.tinted(DOCK_ROPE, () => b.lathe('linen', [{ y: 0, r: 0.16 }, { y: 0.1, r: 0.16 }], { segments: 10, at: on(p, 0, FL + 0.12, -p.out * 0.3) }));
     } else if (p.k === 'lamppost') {
       // a lamp on its post: a squared timber a man and a half high, an arm out at the top, the lantern hung on it, lit
-      b.tinted(DOCK_WOOD_DARK, () => {   // (round 2: dark, the post glowed orange its length)
-        b.box('furniture_wood', [0.2, 2.75, 0.2], { at: [p.x, FL + 1.375, p.z] });
-        b.box('furniture_wood', [0.34, 0.3, 0.34], { at: [p.x, FL + 0.15, p.z] });
-        b.box('furniture_wood', [0.12, 0.12, 0.85], { at: [p.x, FL + 2.62, p.z + 0.38] });
-        b.box('furniture_wood', [0.08, 0.5, 0.08], { at: [p.x, FL + 2.38, p.z + 0.2], rot: [0.75, 0, 0] });   // (its brace)
-      });
+      dockPost ||= new THREE.MeshBasicMaterial({ color: '#2a2019' });   // (round 4: unlit, its own lamp a hand from it lit the post orange its length)
+      b.box(dockPost, [0.2, 2.75, 0.2], { at: [p.x, FL + 1.375, p.z] });
+      b.box(dockPost, [0.34, 0.3, 0.34], { at: [p.x, FL + 0.15, p.z] });
+      b.box(dockPost, [0.12, 0.12, 0.85], { at: [p.x, FL + 2.62, p.z + 0.38] });
+      b.box(dockPost, [0.08, 0.5, 0.08], { at: [p.x, FL + 2.38, p.z + 0.2], rot: [0.75, 0, 0] });   // (its brace)
+      dockHalo ||= (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), gr = g2.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,190,120,0.55)'); gr.addColorStop(0.35, 'rgba(255,170,90,0.18)'); gr.addColorStop(1, 'rgba(255,160,80,0)'); g2.fillStyle = gr; g2.fillRect(0, 0, 64, 64); return new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }); })();
+      { const h = new THREE.Sprite(dockHalo); h.position.set(p.x, FL + 2.17, p.z + 0.68); h.scale.setScalar(1.9); loose.push(h); }   // (a soft halo in the damp air round the lantern: round 4)
       b.tinted(TAV_IRON, () => { b.box('metal', [0.3, 0.04, 0.3], { at: [p.x, FL + 2.36, p.z + 0.68] }); b.box('metal', [0.32, 0.05, 0.32], { at: [p.x, FL + 1.98, p.z + 0.68] }); for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) b.box('metal', [0.03, 0.38, 0.03], { at: [p.x + dx * 0.14, FL + 2.17, p.z + 0.68 + dz * 0.14] }); b.lathe('metal', [{ y: 0, r: 0.18 }, { y: 0.12, r: 0.05 }, { y: 0.2, r: 0 }], { segments: 8, at: [p.x, FL + 2.37, p.z + 0.68] }); b.box('metal', [0.02, 0.14, 0.02], { at: [p.x, FL + 2.55, p.z + 0.68] }); });
       b.box(tavernGlass, [0.24, 0.34, 0.24], { at: [p.x, FL + 2.17, p.z + 0.68] });
     } else if (p.k === 'fishcrate') {
@@ -1047,15 +1049,17 @@ function buildTavern(pieces) {
       b.tinted([1.2, 1.28, 1.36], () => { for (let k = 0; k < 2; k++) b.lathe('metal', [{ y: -0.2, r: 0.0 }, { y: -0.12, r: 0.06 }, { y: 0.08, r: 0.07 }, { y: 0.2, r: 0.0 }], { segments: 7, at: at(0.7 + k * 0.2, FL + 0.06, 0.45 - k * 0.3), rot: [0, 0, Math.PI / 2 + R(k + 20) * 1.2] }); });
     } else if (p.k === 'rope') {
       // a coil of rope on the boards, three turns flat, its end trailing
-      b.tinted(DOCK_ROPE, () => {
-        for (const [r, y] of [[0.44, 0.05], [0.34, 0.05], [0.24, 0.05], [0.39, 0.13]]) { const N = 18;   // (round 3: a flat spiral, its rings apart, one turn over: a raised stack read as a straw hat)
- for (let q = 0; q < N; q++) { const a0 = (q / N) * Math.PI * 2, a1 = ((q + 1) / N) * Math.PI * 2; b.tube('linen', [p.x + Math.cos(a0) * r, FL + y, p.z + Math.sin(a0) * r], [p.x + Math.cos(a1) * r, FL + y, p.z + Math.sin(a1) * r], 0.065, 0.065, { segments: 6 }); } }   // (round 2: a raised coil, three turns stacked, the rope thicker)
-        b.tube('linen', [p.x + 0.42, FL + 0.04, p.z], [p.x + 0.95, FL + 0.03, p.z + 0.4], 0.04, 0.04, { segments: 5 });
+      b.tinted([0.86, 0.66, 0.4], () => {
+        for (const [r, y] of [[0.46, 0.07], [0.31, 0.07], [0.42, 0.18]]) { const N = 18;   // (round 3: a flat spiral, its rings apart, one turn over: a raised stack read as a straw hat; round 4 thicker, warmer)
+ for (let q = 0; q < N; q++) { const a0 = (q / N) * Math.PI * 2, a1 = ((q + 1) / N) * Math.PI * 2; b.tube('linen', [p.x + Math.cos(a0) * r, FL + y, p.z + Math.sin(a0) * r], [p.x + Math.cos(a1) * r, FL + y, p.z + Math.sin(a1) * r], 0.085, 0.085, { segments: 6 }); } }
+        b.tube('linen', [p.x + 0.46, FL + 0.06, p.z], [p.x + 1.0, FL + 0.05, p.z + 0.42], 0.06, 0.06, { segments: 5 });
       });
+      b.tinted([0.36, 0.27, 0.17], () => { const N = 14; for (let q = 0; q < N; q++) { const a0 = (q / N) * Math.PI * 2, a1 = ((q + 1) / N) * Math.PI * 2; b.tube('linen', [p.x + Math.cos(a0) * 0.17, FL + 0.06, p.z + Math.sin(a0) * 0.17], [p.x + Math.cos(a1) * 0.17, FL + 0.06, p.z + Math.sin(a1) * 0.17], 0.075, 0.075, { segments: 6 }); } });   // (the inner turn, in the coil's shadow)
     } else if (p.k === 'net') {
       // a net heaped on the boards to dry: its mesh in a low mound, the cork floats along its edge
-      const c = Math.cos(p.rot || 0), sn = Math.sin(p.rot || 0), at = (lx, lz) => { const d = Math.hypot(lx / 0.75, lz / 0.55); return [p.x + lx * c + lz * sn, FL + 0.03 + Math.max(0, 1 - d) * 0.22, p.z - lx * sn + lz * c]; };
-      b.tinted([0.52, 0.46, 0.36], () => {   // (round 1: a tarred mesh, not grey hatching; round 3, a mid grey-brown so it's seen)
+      const c = Math.cos(p.rot || 0), sn = Math.sin(p.rot || 0), hgt = (lx, lz) => { const d = Math.hypot(lx / 0.78, lz / 0.58); return Math.max(0, 1 - d) * (0.42 + 0.1 * Math.sin(lx * 9 + lz * 4)) + Math.max(0, 1 - d) * 0.06 * Math.sin(lz * 14); }, at = (lx, lz) => [p.x + lx * c + lz * sn, FL + 0.03 + hgt(lx, lz), p.z - lx * sn + lz * c];   // (round 4: heaped in folds, not a mat)
+      b.tinted([0.3, 0.25, 0.19], () => { const G = 6, pt = (a, k) => at((a / G) * 0.78, (k / G) * 0.58); for (let a = -G; a < G; a++) for (let k = -G; k < G; k++) { const q = [pt(a, k), pt(a + 1, k), pt(a + 1, k + 1), pt(a, k + 1)].map((v) => [v[0], v[1] - 0.025, v[2]]); b.quad('linen', q, [[0, 0], [1, 0], [1, 1], [0, 1]]); } });   // (the heap's body, tarred dark under the mesh)
+      b.tinted([0.66, 0.56, 0.4], () => {   // (round 1: a tarred mesh, not grey hatching; round 3, a mid grey-brown so it's seen)
         for (let k = -4; k <= 4; k++) { const lz = k * 0.13; for (let a = -6; a < 6; a++) b.tube('linen', at(a * 0.13, lz), at((a + 1) * 0.13, lz), 0.012, 0.012, { segments: 3 }); }
         for (let a = -6; a <= 6; a++) { const lx = a * 0.13; for (let k = -4; k < 4; k++) b.tube('linen', at(lx, k * 0.13), at(lx, (k + 1) * 0.13), 0.012, 0.012, { segments: 3 }); }
       });
@@ -1063,7 +1067,7 @@ function buildTavern(pieces) {
     } else if (p.k === 'rowboat') {
       // a boat tied up off the deck's edge, sitting in the water: a flat bottom, raked sides, a thwart, the oars shipped
       const c = Math.cos(p.rot || 0), sn = Math.sin(p.rot || 0), at = (lx, y, lz) => [p.x + lx * c + lz * sn, y + DOCK_WL - 0.44, p.z - lx * sn + lz * c], ry = [0, p.rot || 0, 0];   // (afloat at the harbour's level)
-      b.tinted(DOCK_HULL, () => {
+      b.tinted([0.22, 0.18, 0.15], () => {   // (round 4: darker, she read pale and flat)
         b.box('furniture_wood', [2.4, 0.08, 0.7], { at: at(0, 0.36, 0), rot: ry });
         for (const sg of [-1, 1]) b.box('furniture_wood', [2.6, 0.36, 0.07], { at: at(0, 0.55, sg * 0.42), rot: [sg * 0.35, p.rot || 0, 0] });
         b.box('furniture_wood', [0.07, 0.38, 0.86], { at: at(-1.28, 0.56, 0), rot: [0, p.rot || 0, 0.45] });   // (the transom)
@@ -1076,12 +1080,11 @@ function buildTavern(pieces) {
       b.tinted(DOCK_ROPE, () => b.tube('linen', at(-1.3, 0.72, 0), at(-1.9, FL + 0.6 - DOCK_WL, 0), 0.03, 0.03, { segments: 4 }));   // (her painter up to the deck)
     } else if (p.k === 'crane') {
       // the wharf's derrick: a squared mast on a crib of timbers, its jib out over the water, a load hung in a net
-      b.tinted(DOCK_WOOD_DARK, () => { b.box('furniture_wood', [1.4, 0.36, 1.4], { at: [p.x, FL + 0.18, p.z] }); b.box('furniture_wood', [1.0, 0.24, 1.0], { at: [p.x, FL + 0.48, p.z] }); });
-      b.tinted(DOCK_WOOD, () => {
-        b.box('furniture_wood', [0.3, 4.4, 0.3], { at: [p.x, FL + 2.5, p.z] });
-        b.box('furniture_wood', [0.2, 0.2, 3.4], { at: [p.x, FL + 4.3, p.z - 1.05], rot: [-0.32, 0, 0] });   // (the jib, out over the water behind)
-        for (const sg of [-1, 1]) b.box('furniture_wood', [0.1, 1.5, 0.1], { at: [p.x + sg * 0.32, FL + 1.1, p.z + 0.32], rot: [0.35, 0, sg * 0.25] });   // (its stays)
-      });
+      dockCrane ||= new THREE.MeshBasicMaterial({ color: '#3a3029' });   // (round 4: plain dark timber, unlit: lamps by it read it as a glowing red tower)
+      b.box(dockPost || (dockPost = new THREE.MeshBasicMaterial({ color: '#2a2019' })), [1.4, 0.36, 1.4], { at: [p.x, FL + 0.18, p.z] }); b.box(dockPost, [1.0, 0.24, 1.0], { at: [p.x, FL + 0.48, p.z] });
+      b.box(dockCrane, [0.3, 4.4, 0.3], { at: [p.x, FL + 2.5, p.z] });
+      b.box(dockCrane, [0.2, 0.2, 3.4], { at: [p.x, FL + 4.3, p.z - 1.05], rot: [-0.32, 0, 0] });   // (the jib, out over the water behind)
+      for (const sg of [-1, 1]) b.box(dockCrane, [0.1, 1.5, 0.1], { at: [p.x + sg * 0.32, FL + 1.1, p.z + 0.32], rot: [0.35, 0, sg * 0.25] });   // (its stays)
       b.tinted(DOCK_ROPE, () => { b.tube('linen', [p.x, FL + 4.76, p.z - 2.55], [p.x, FL + 1.6, p.z - 2.55], 0.03, 0.03, { segments: 4 }); b.tube('linen', [p.x, FL + 4.2, p.z], [p.x, FL + 4.76, p.z - 2.55], 0.025, 0.025, { segments: 4 }); });
       b.tinted([0.46, 0.42, 0.36], () => b.lathe('linen', [{ y: 0, r: 0.1 }, { y: 0.22, r: 0.48 }, { y: 0.6, r: 0.42 }, { y: 0.78, r: 0.1 }, { y: 0.8, r: 0 }], { segments: 10, at: [p.x, FL + 0.8, p.z - 2.55] }));   // (the load in its net, swung out over the water)
     } else if (p.k === 'merlons') {
@@ -1089,21 +1092,26 @@ function buildTavern(pieces) {
       // coping) so a figure at the parapet is never hidden; the coping's lit edge
       const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { n: p.n, x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 }, TOPY = 1.5;
       b.tinted([1.08, 1.08, 1.1], () => b.box('rampart_wall', sz(q, len, 0.08, 1.06), { at: on(q, 0, TOPY + 0.04, 0.5) }));
-      b.tinted([0.95, 0.95, 0.98], () => { for (let t = 0.5; t < len; t += 1.5) b.box('rampart_wall', sz(q, 0.7, 0.36, 0.8), { at: on(q, t - len / 2, TOPY + 0.26, 0.55) }); });
+      b.tinted([0.95, 0.95, 0.98], () => { for (let t = 0.5; t < len; t += 1.5) b.box('rampart_wall', sz(q, 0.7, 0.46, 0.8), { at: on(q, t - len / 2, TOPY + 0.31, 0.55) }); });   // (round 2: a hand taller)
     } else if (p.k === 'walldrop') {
       // the town wall's face going down from the parapet into the mist: sheer ashlar, a buttress every four tiles, and the
       // mist closing over it from below (a hanging sheet a tile out, clear at the top and thick at the bottom)
       const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { n: p.n, x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 }, LOW = -14;
       b.tinted([0.82, 0.84, 0.88], () => { b.box('rampart_wall', sz(q, len, -LOW, 1.0), { at: on(q, 0, LOW / 2, 0.5) }); for (let t = 2; t < len - 1; t += 4) b.box('rampart_wall', sz(q, 0.9, -LOW - 0.6, 0.7), { at: on(q, t - len / 2, LOW / 2 - 0.3, 1.3) }); });
-      rampFog ||= (() => { const c = document.createElement('canvas'); c.width = 4; c.height = 64; const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), gr = g2.createLinearGradient(0, 0, 0, 64); gr.addColorStop(0, '#000'); gr.addColorStop(0.18, '#222'); gr.addColorStop(0.6, '#aaa'); gr.addColorStop(1, '#fff'); g2.fillStyle = gr; g2.fillRect(0, 0, 4, 64); const t = new THREE.CanvasTexture(c); t.magFilter = t.minFilter = THREE.LinearFilter; return new THREE.MeshBasicMaterial({ color: '#3e4a5a', alphaMap: t, transparent: true, depthWrite: false, side: THREE.DoubleSide }); })();
+      b.tinted([1.12, 1.12, 1.14], () => { b.box('rampart_wall', sz(q, len, 0.22, 0.22), { at: on(q, 0, -0.9, 1.08) }); b.box('rampart_wall', sz(q, len, 0.16, 0.16), { at: on(q, 0, -4.2, 1.05) }); });   // (round 2: two string courses, lit along their tops)
+      cryptDark ||= new THREE.MeshBasicMaterial({ color: '#0d0a08' });
+      for (let t = 4; t < len - 1; t += 4) for (const y of [-2.4, -6.2]) b.box(cryptDark, sz(q, 0.14, 0.7, 0.04), { at: on(q, t - len / 2, y, 1.01) });   // (arrow slits between the buttresses)
+      rampFog ||= (() => { const c = document.createElement('canvas'); c.width = 4; c.height = 64; const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), gr = g2.createLinearGradient(0, 0, 0, 64); gr.addColorStop(0, '#000'); gr.addColorStop(0.07, '#555'); gr.addColorStop(0.25, '#ddd'); gr.addColorStop(1, '#fff'); g2.fillStyle = gr; g2.fillRect(0, 0, 4, 64); const t = new THREE.CanvasTexture(c); t.magFilter = t.minFilter = THREE.LinearFilter; return new THREE.MeshBasicMaterial({ color: '#7a8a9e', alphaMap: t,   // (round 2: a pale fog the wall fades into within its top quarter, not a dark stone run to the frame's edge)
+ transparent: true, depthWrite: false, side: THREE.DoubleSide }); })();
       const o = on(q, 0, 0, 2.2), y0 = LOW, y1 = 0.9, h2 = len / 2 + 2;
       const C = q.n === 'z' ? [[o[0] - h2, y1, o[2]], [o[0] + h2, y1, o[2]], [o[0] + h2, y0, o[2]], [o[0] - h2, y0, o[2]]] : [[o[0], y1, o[2] - h2], [o[0], y1, o[2] + h2], [o[0], y0, o[2] + h2], [o[0], y0, o[2] - h2]];
       b.quad(rampFog, C, [[0, 1], [1, 1], [1, 0], [0, 0]]);
     } else if (p.k === 'fartower') {
       // a tower of the town's wall standing up out of the mist, far off: a round shaft from far below, a crenellated
       // crown, a conical slate roof, a lit slit or two
-      const S = p.s || 1, R0 = 2.2 * S, base = -18, top = 2.6 * S + 1.4, R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
-      b.tinted([0.78, 0.8, 0.86], () => { b.lathe('rampart_wall', [{ y: 0, r: R0 * 1.12 }, { y: 0.4, r: R0 }, { y: top - base, r: R0 }, { y: top - base + 0.01, r: 0 }], { segments: 16, at: [p.x, base, p.z] }); });
+      const S = p.s || 1, R0 = 2.2 * S, base = -22, top = p.low ? -2.2 - S : 2.6 * S + 1.4, R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+      const F = p.low ? 1.25 : 1;   // (a low one out in the drop paler, in the mist)
+      b.tinted([0.78 * F, 0.8 * F, 0.86 * F], () => { b.lathe('rampart_wall', [{ y: 0, r: R0 * 1.12 }, { y: 0.4, r: R0 }, { y: top - base, r: R0 }, { y: top - base + 0.01, r: 0 }], { segments: 16, at: [p.x, base, p.z] }); });
       b.tinted([0.86, 0.88, 0.92], () => { b.lathe('rampart_wall', [{ y: 0, r: R0 }, { y: 0.3, r: R0 * 1.14 }, { y: 0.9, r: R0 * 1.14 }, { y: 0.91, r: 0 }], { segments: 16, at: [p.x, top, p.z] }); for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2; b.box('rampart_wall', [0.6, 0.6, 0.5], { at: [p.x + Math.cos(a) * R0 * 1.08, top + 1.2, p.z + Math.sin(a) * R0 * 1.08], rot: [0, -a, 0] }); } });
       b.tinted([0.62, 0.66, 0.76], () => b.lathe('roof_slate', [{ y: 0, r: R0 * 1.02 }, { y: R0 * 1.9, r: 0.08 }, { y: R0 * 2.0, r: 0 }], { segments: 16, at: [p.x, top + 0.9, p.z] }));
       for (let k = 0; k < 2; k++) { const a = (0.25 + R(k) * 0.5) * Math.PI, y = top - 1.5 - k * 2.4; b.box(tavernGlass, [0.18, 0.5, 0.12], { at: [p.x + Math.cos(a) * R0, y, p.z + Math.sin(a) * R0] }); }
@@ -1115,12 +1123,12 @@ function buildTavern(pieces) {
       // a bakers' oven built out into the street (round 1: "a fire between crates"): a stone footing, the brick dome a man's
       // height, an arched mouth glowing deep inside, a chimney stub, split logs stacked beside it, loaves on a board
       b.tinted([0.92, 0.9, 0.88], () => b.box('rampart_wall', [2.4, 0.7, 2.0], { at: [p.x, FL + 0.35, p.z] }));
-      b.tinted([0.86, 0.52, 0.4], () => b.lathe('rampart_wall', [{ y: 0, r: 1.05 }, { y: 0.45, r: 1.0 }, { y: 0.85, r: 0.78 }, { y: 1.12, r: 0.42 }, { y: 1.22, r: 0 }], { segments: 16, at: [p.x, FL + 0.7, p.z] }));
+      b.tinted([1.18, 0.72, 0.52], () => b.lathe('rampart_wall', [{ y: 0, r: 1.05 }, { y: 0.45, r: 1.0 }, { y: 0.85, r: 0.78 }, { y: 1.12, r: 0.42 }, { y: 1.22, r: 0 }], { segments: 16, at: [p.x, FL + 0.7, p.z] }));
       cryptDark ||= new THREE.MeshBasicMaterial({ color: '#0d0a08' });
       b.lathe(cryptDark, [{ y: 0, r: 0 }, { y: 0.001, r: 0.38 }, { y: 0.02, r: 0.38 }, { y: 0.021, r: 0 }], { segments: 12, at: [p.x, FL + 1.05, p.z + 0.99], rot: [Math.PI / 2, 0, 0] });
       b.box(cryptDark, [0.76, 0.36, 0.02], { at: [p.x, FL + 0.88, p.z + 0.99] });   // (the arched mouth)
       tavernEmber ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff6a20').multiplyScalar(1.6), fog: false });
-      b.box(tavernEmber, [0.5, 0.14, 0.03], { at: [p.x, FL + 0.78, p.z + 0.98] }); b.box(tavernEmber, [0.3, 0.1, 0.03], { at: [p.x - 0.08, FL + 0.92, p.z + 0.98] });
+      b.box(tavernEmber, [0.62, 0.22, 0.03], { at: [p.x, FL + 0.8, p.z + 0.98] }); b.box(tavernEmber, [0.42, 0.16, 0.03], { at: [p.x - 0.06, FL + 0.98, p.z + 0.98] });   // (round 2: the mouth bright)
       b.tinted([0.86, 0.52, 0.4], () => b.box('rampart_wall', [0.36, 0.5, 0.36], { at: [p.x + 0.35, FL + 2.0, p.z - 0.3] }));   // (its chimney stub)
       b.tinted([0.62, 0.48, 0.34], () => { for (let r = 0; r < 3; r++) for (let k = 0; k < 4 - r; k++) b.tube('furniture_wood', [p.x + 1.45, FL + 0.14 + r * 0.24, p.z - 0.5 + k * 0.26 + r * 0.13], [p.x + 2.4, FL + 0.14 + r * 0.24, p.z - 0.5 + k * 0.26 + r * 0.13], 0.12, 0.12, { segments: 6 }); });   // (split logs)
       b.tinted([0.76, 0.6, 0.42], () => b.box('furniture_wood', [1.1, 0.06, 0.5], { at: [p.x - 1.75, FL + 0.9, p.z + 0.3] }));
@@ -1129,13 +1137,16 @@ function buildTavern(pieces) {
       // the harbour's mist: one sheet over the water at a hand over its surface, clear at the decks' edges and thick from
       // six tiles out (its alpha by each tile's distance from a deck: convert.js docksDress), faded out at the sheet's own
       // edges (round 3: a hard wedge)
-      const W = p.W, D = p.D, c = document.createElement('canvas'); c.width = W; c.height = D;
-      const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), img = g2.createImageData(W, D);
-      for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) { const d = +p.rows[j][i], edge = Math.min(1, Math.min(i, j, W - 1 - i, D - 1 - j) / 4), a = Math.max(0, Math.min(1, (d - 0.6) / 6)) * 0.5 * edge, o = (j * W + i) * 4; img.data[o] = img.data[o + 1] = img.data[o + 2] = Math.round(255 * a); img.data[o + 3] = 255; }
+      const PD = 40, W = p.W, D = p.D, GW = W + 2 * PD, GD = D + 2 * PD, c = document.createElement('canvas'); c.width = GW; c.height = GD;   // (round 4: the sheet runs far past the level, thick there: the level's edge showed as a wedge of bare plane)
+      const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), img = g2.createImageData(GW, GD);
+      for (let j = 0; j < GD; j++) for (let i = 0; i < GW; i++) { const li = i - PD, lj = j - PD, inl = li >= 0 && lj >= 0 && li < W && lj < D, d = inl ? +p.rows[lj][li] : 9, a = Math.max(0, Math.min(1, (d - 0.6) / 6)) * 0.62, o = (j * GW + i) * 4; img.data[o] = img.data[o + 1] = img.data[o + 2] = Math.round(255 * a); img.data[o + 3] = 255; }
       g2.putImageData(img, 0, 0); const tex = new THREE.CanvasTexture(c); tex.magFilter = tex.minFilter = THREE.LinearFilter;
-      const mat = dockMist = new THREE.MeshBasicMaterial({ color: '#3c4a5a', alphaMap: tex, transparent: true, depthWrite: false });
-      const mist = new THREE.Mesh(new THREE.PlaneGeometry(W, D), mat); mist.rotation.x = -Math.PI / 2; mist.position.set(W / 2, DOCK_WL + 0.08, D / 2); mist.updateMatrixWorld(true);
+      const mat = dockMist = new THREE.MeshBasicMaterial({ color: '#46566a', alphaMap: tex, transparent: true, depthWrite: false });
+      const mist = new THREE.Mesh(new THREE.PlaneGeometry(GW, GD), mat); mist.rotation.x = -Math.PI / 2; mist.position.set(W / 2, DOCK_WL + 0.08, D / 2); mist.updateMatrixWorld(true);
       furn.push(mist);
+      // and the harbour's far water under it, past the level's edges, at the surface's level and in its body's tone
+      const far = new THREE.Mesh(new THREE.PlaneGeometry(GW, GD), new THREE.MeshBasicMaterial({ color: '#141b22' })); far.rotation.x = -Math.PI / 2; far.position.set(W / 2, DOCK_WL - 0.03, D / 2); far.updateMatrixWorld(true);
+      furn.push(far);
     } else if (p.k === 'lampglint') {
       // a lamp's light broken on the water past the deck's edge: six warm streaks across the line of sight, shorter and
       // fainter going out from the edge (p.out: which way the water lies)
@@ -1148,7 +1159,7 @@ function buildTavern(pieces) {
     } else if (p.k === 'reeds') {
       // a clump of reeds against the back piles, standing out of the water
       const R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
-      b.tinted([0.42, 0.48, 0.28], () => { for (let k = 0; k < 22; k++) { const a = R(k) * 6.28, r = R(k + 11) * 0.4, x = p.x + Math.cos(a) * r, z = p.z + Math.sin(a) * r, hh = 0.8 + R(k + 5) * 0.6, lean = (R(k + 9) - 0.5) * 0.45; b.tube('leaves', [x, DOCK_WL - 0.05, z], [x + lean, DOCK_WL + hh, z + lean * 0.5], 0.022, 0.006, { segments: 3 }); } });   // (thin dark blades: round 2, round ones read as cabbages)
+      b.tinted([0.24, 0.28, 0.16], () => { for (let k = 0; k < 34; k++) { const a = R(k) * 6.28, r = R(k + 11) * 0.5, x = p.x + Math.cos(a) * r, z = p.z + Math.sin(a) * r, hh = 1.1 + R(k + 5) * 0.8, lean = (R(k + 9) - 0.5) * 0.5; b.tube('leaves', [x, DOCK_WL - 0.05, z], [x + lean, DOCK_WL + hh, z + lean * 0.5], 0.032, 0.008, { segments: 3 }); } });   // (round 4: taller, darker, more: unseen against the water)   // (thin dark blades: round 2, round ones read as cabbages)
       b.tinted([0.55, 0.42, 0.28], () => { for (let k = 0; k < 3; k++) { const x = p.x + (R(k + 20) - 0.5) * 0.4, z = p.z + (R(k + 23) - 0.5) * 0.4; b.lathe('linen', [{ y: 0, r: 0.03 }, { y: 0.16, r: 0.035 }, { y: 0.2, r: 0 }], { segments: 5, at: [x, DOCK_WL + 0.6 + R(k + 26) * 0.35, z] }); } });   // (bulrush heads)
     } else if (p.k === 'bonering') {
       // the ossuary's floor (round 18): a square panel of the floor's flags, a tenth paler, laid square to the room inside a
@@ -1279,6 +1290,7 @@ function buildTavern(pieces) {
     mesh.castShadow = !lit && m !== tavernWeb; mesh.receiveShadow = !lit;
     g.add(mesh);
   }
+  for (const o of loose) g.add(o);
   if (webTris.length) { const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(webTris, 3)); g.add(new THREE.Mesh(wg, tavernWebFill)); }
   for (const o of [built, ...furn]) o.traverse((q) => { if (q.isMesh) q.geometry.dispose(); });
   g.dispose = () => g.traverse((o) => { if (o.isMesh) o.geometry.dispose(); });
@@ -1412,7 +1424,7 @@ const REACH_GRADE = { saturation: 0.86, contrast: 1.05, vignette: 0.8 };
 const MURK = ['#6e5440', '#4c3e33', '#30302e', '#1c1e21'], MURK_CREST = '#8c7c6a', MURK_FOAM = '#a89a88';
 // a harbour at night (the docks, docs/docks-dungeon.md): its water slate and near black, the fog's colour on it, little
 // glint; the mist's motes cold
-const HARBOUR = ['#28333d', '#1f2933', '#172029', '#10171e'];   // (round 3: slate, not cobalt)
+const HARBOUR = ['#1c262f', '#18212a', '#151d25', '#121920'];   // (round 3: slate, not cobalt; round 4: every band within a step of the body, the ripple dashes in the lightest read as static)
 function harbourAir() {
   const W = game?.world, u = W?.water?.uniforms; if (!u) return;
   if (W.waterBase) Object.assign(W.waterBase, { glint: 0, brightness: 0.95 }); else W.waterBase = { glint: 0, brightness: 0.95 };   // (the weather keeps the water's own glint and brightness and sets them every frame: its base ours; round 2, the specks back)
@@ -1679,11 +1691,11 @@ registerTextureSet((K) => {
     crypt_top: { px: [32, 32], normalScale: 0.3, gen: (s) => { const N = K.field(s.w, s.h, 4, 4, 965, { oct: 2 }), R = P(['#8c8474', '#9a917f', '#a89e8b', '#b5ab97', '#c1b7a2']); s.each((x, y, i) => { s.set(x, y, at(R, Math.max(0, Math.min(1, 0.5 + (N[i] - 0.5) * 0.6)))); s.hf[i] = 0.6; }); return { normal: 1 }; } },   // (the walls' coping, pale: round 2, "the tops read flat and dark")
     crypt_sill: { px: [48, 48], normalScale: 0.75, gen: (s, ctx) => ashlar(s, ctx, K, P(['#5e5242', '#6c5f4c', '#7a6a55', '#887661', '#95826c', '#a18d77', '#ab9781', '#b4a08a']), ['#5a4c3c', '#504334'], ['#8a7a5e', '#7e7466']) },   // (round 11: the wall's hue at two-thirds, not a cold grey)   // (the near sills, a quarter darker: round 5)
     crypt_sill_top: { px: [32, 32], normalScale: 0.3, gen: (s) => { const N = K.field(s.w, s.h, 4, 4, 967, { oct: 2 }), R = P(['#867d6c', '#938b78', '#a09784', '#ada390', '#b8ae9a']); s.each((x, y, i) => { s.set(x, y, at(R, Math.max(0, Math.min(1, 0.5 + (N[i] - 0.5) * 0.6)))); s.hf[i] = 0.6; }); return { normal: 1 }; } },
-    dock_deck: { px: [64, 64], normalScale: 0.85, gen: (s) => dockPlanks(s, K, P(['#211b15', '#665b4e', '#706457', '#7a6e60', '#857868', '#8f8271', '#998b79'])) },   // (round 3: warmer than the water)   // (a wharf's planks, weathered grey-brown, the warmth left to the lamps: docks round 1)
+    dock_deck: { px: [64, 64], normalScale: 0.85, gen: (s) => dockPlanks(s, K, P(['#22190f', '#6c5a47', '#776450', '#826e59', '#8c7762', '#97816b', '#a28b74'])) },   // (round 3: warmer than the water)   // (a wharf's planks, weathered grey-brown, the warmth left to the lamps: docks round 1)
     dock_side: { px: [32, 32], normalScale: 0.6, gen: (s) => dockUnder(s, K) },
     // the ramparts' parapet (docs/ramparts-dungeon.md): the town wall's grey ashlar, its top flagged
     rampart_wall: { px: [48, 48], normalScale: 0.8, gen: (s, ctx) => ashlar(s, ctx, K, P(['#4a4c50', '#56585c', '#626468', '#6e7074', '#7a7c80', '#86888b', '#909295', '#9a9c9e']), ['#3e3f42', '#35363a'], ['#7e7a72', '#727a80']) },
-    rampart_cobble: { px: [64, 64], normalScale: 0.6, gen: recolor('cobblestone', P(['#3c3934', '#4a4640', '#55504a', '#5f5a53', '#69635c', '#726c64', '#7b746b'])) },   // (round 1: Luminati's cobbles through a narrow grey ramp, no moss)
+    rampart_cobble: { px: [64, 64], normalScale: 0.6, gen: recolor('cobblestone', P(['#46423c', '#55504a', '#615b54', '#6c665e', '#777068', '#817a71', '#8b847a'])) },   // (round 2: a tenth lighter, dark foes kept their outline)   // (round 1: Luminati's cobbles through a narrow grey ramp, no moss)
     rampart_top: { px: [64, 64], normalScale: 0.7, gen: (s) => tavernFlags(s, K, P(['#36383b', '#66686b', '#717376', '#7c7e81', '#87898b', '#929496', '#9c9ea0']), false) },
     crypt_flag: { px: [64, 64], normalScale: 0.7, gen: (s) => tavernFlags(s, K, P(['#312a23', '#655b4d', '#71675a', '#7c7062', '#877a6b', '#928574', '#9d8f7d']), false) },   // (round 11: a little more spread between the flags, the joints darker)   // (round 8: warmer and a sixth lighter, the joints darker)   // (round 4: the flags' spread narrowed, so the ledger stones stand out)   // (round 1: a step darker and warmer than the tombs' pale stone, so they stand off it)
     crypt_ledger: { px: [64, 64], normalScale: 0.8, gen: (s) => ledgerStone(s, K, P(['#36312b', '#706757', '#82786a', '#928879', '#9f9582', '#aca290', '#b8ae9b'])) },   // (round 1: a fifth lighter than the flags round it, so they're seen)
