@@ -109,9 +109,9 @@ The doors between rooms are 10 wide, the minimum hall width that `checkPlan` acc
 
 | Land | Levels | Band dungeons | Secret | Also | Against the rule |
 |---|---|---|---|---|---|
-| The Hollow Vale | 1–9 | the Old Barrows, Wickham Keep, the Sunken Chapel | the Ninth Milestone (9) | the Haddow Crypt (6), the Proving Pens (a trial at 4) | **Over by one.** The Haddow Crypt sits inside Wickham Keep's band (4–6). |
+| The Hollow Vale | 1–9 | the Old Barrows, Wickham Keep, the Sunken Chapel | the Ninth Milestone (9) | the Haddow Crypt (6, the cleric's trial), the Proving Pens (a trial at 4) | Keeps it: the crypt is a side vault inside Wickham Keep's band (4–6), sent to by *Last Rites*. |
 | The Greywater Fens | 10–18 | Toadking's Mound, the Canal Locks, the Drowned Abbey | the Reedholm Undercroft (18) | the Mere Tower (no XP); the Old Eel Wharf (parked) | Keeps it. |
-| The Cinder Reach | 19–30 | the Cold Seam, the Assay Yards, the Cinderworks (Oruth's Forgehall its first floor) | the Ninth Vault (30) | the Shuttered Inn (20); the High Ramparts (parked) | **Keeps it** (v1.144: three bands of four). The Shuttered Inn sits inside the Cold Seam's band. |
+| The Cinder Reach | 19–30 | the Cold Seam, the Assay Yards, the Cinderworks (Oruth's Forgehall its first floor) | the Ninth Vault (30) | the Shuttered Inn (23, Hob's price); the High Ramparts (parked) | **Keeps it** (v1.144: three bands of four). The Shuttered Inn sits inside the Yards' band (v1.145). |
 | The Tidemark | 30–45 | (not built) | the Sister's Cabin (canon) | | Three bands of five, §4.4. |
 | The Greenwood | 45–60 | (not built) | the First Barn (canon) | | Three bands of five, §4.5. |
 | The Pale Heights | 60–75 | (not built) | (none named) | the Ember Throne finale (73–75), the Undervaults | Three bands of four and the finale, §4.6. |
@@ -179,8 +179,10 @@ written.
     up the canal into it. The errand would come from **Dace Pike**, who writes down what everyone owes.
 - **Recommendation:** keep it parked. It is the kit's proving ground. Its rooms become the Drowned Mole's first floor,
   so the kit's first real place is the Tidemark.
-- **A re-dress later.** The Reedholm Undercroft (the binding clergy's copy-room) is drawn by the generic generator. The
-  tavern kit's shelves and boards, with the crypt's stone, would give it a scriptorium's look.
+- **Re-dressed (v1.145).** The Reedholm Undercroft (the binding clergy's copy-room) was drawn by the generic generator.
+  It is now a designed floor on the crypt kit (plans.js `reedholm_undercroft`): the Haddow Crypt's proven floor,
+  dressed as a scriptorium of the dead (the copyists' desks and rolls, the clergy's chapel, the bone room, the Fair
+  Copy's chest between the copyists' tombs).
 
 ### 4.3 The Cinder Reach (19–30, Act III, built)
 
@@ -190,7 +192,7 @@ written.
 | 23–26 | The Assay Yards | compound | built |
 | 27–30 | The Cinderworks: Oruth's Forgehall (floor 1), the Furnace Hall and the Magma Vault (floor 2) | forge hall, then foundry | built |
 | secret, 30 | The Ninth Vault | strongroom | built |
-| side vault, 20 | The Shuttered Inn | inn | **tavern** (built) |
+| side vault, 23 | The Shuttered Inn | inn | **tavern** (built) |
 
 - **The rule: three, done (v1.144).** The owner chose (b): "Make the reach as 3 dungeons". The Reach is three bands
   of four, two levels a floor:
@@ -205,7 +207,7 @@ written.
   the Forgehall to the Cinderworks' door.
 - **The High Ramparts** don't belong in the Reach: no walled town stands high there (Ashgate's wall is on flat ground).
   Its kit moves to the Tidemark and the Heights, and the site stays parked.
-- **The Shuttered Inn's errand** exists in its place (Nan Ruddock's Redhand off the yards' gates). It is the land's one
+- **The Shuttered Inn** is *Paid by Weight*'s last step (v1.145: Hob's box behind its casks; Nan Ruddock's Redhand off the yards' gates). It is the land's one
   side vault.
 
 ### 4.4 The Tidemark (31–45, Act IV, *The Seventh Voice*): proposed
@@ -259,7 +261,7 @@ These are three bands of four, then the finale at 73–75. Every site name is ca
 | 65–68 | **The Soulcracks** | glass canyon | the existing `chasm` theme with **new `glasscrack`**: the crater's black glass along the split, pilgrims fused into it | The canyon the Fall split open. |
 | 69–72 | **The Praetory**, then **the Glass Keep** | fortress, then glass palace | floor 1 the `barracks` kit (built) with ice and the ramparts' parapets: the Empress's bound guard at their posts. Floor 2 **new `glasskeep`**: the crypt kit's vault and arcade in black glass | At the Glass Keep, Aurelle's last letter (the reveal). The Glass Legate. |
 | 73–75 | **The Ember Throne** (finale, world doc §3.5) | throne, rune plates | **new `runeplate`** (planned separately) | The Kindler and the vessel. Lucan sings the last verse. |
-| secret, 75 | **The Hospice Charnel** **(proposal)**, under the Frozen Hospice | charnel | **ossuary** (reused) with snow at the door and ice on the bones | The Heights' Chronicle set opens it: the pilgrims who never went home, kept by the monks. The Heights have no hidden site in canon yet, so this goes to the world doc first if taken. |
+| secret, 75 | **The Hospice Charnel** (canon, world doc v1.65), under the Frozen Hospice | charnel | **ossuary** (reused) with snow at the door and ice on the bones | The Heights' Chronicle set opens it: the pilgrims who never went home, kept by the monks. The Heights have no hidden site in canon yet, so this goes to the world doc first if taken. |
 
 - **Not dungeons:**
   - **The Lip** holds the First Pilgrim, the land's region boss, as a ring fight on the overland like the Kingstone.
@@ -310,6 +312,20 @@ and critic rounds against a reference. Each new kit wants a reference image from
 | ramparts | | | the High Ramparts (parked) | **Highmarch's walls**, the Lamp Fort | | **the Pilgrims' Stair**, the Praetory | |
 
 ## 7. For the owner to decide
+
+*Decided 2026-11-23 (GDD v1.144, v1.145).* The owner: "Fit in the one floor dungeons into the existing quest line we
+can replace an existing dungeon in favor of the better dungeon if its the right style. Make the reach as 3 dungeons, Go
+with hospice charnel, go with recommendations on the old eel wharf. Nothing else for 3 stars."
+
+- **1, side vaults: into the story.** The Haddow Crypt takes the cleric's trial at 6 (*Last Rites*, from the Sunken
+  Chapel: a crypt for the rites, at the trial's level). The Shuttered Inn is *Paid by Weight*'s last step, Hob's box,
+  and stands at 23 in the Yards' band. The Fens' secret, the Reedholm Undercroft, is replaced by the better dungeon of
+  its style: a designed crypt floor where the generator's stood (§4.2).
+- **2, the Reach: three** (§4.3).
+- **4, the Heights' secret: the Hospice Charnel**, canon in world doc v1.65.
+- **5, the Old Eel Wharf: parked**, its rooms for the Drowned Mole.
+
+The list as it was asked:
 
 1. **Side vaults:** take the rule in §3 (one a land, one floor, opened by its errand, sealed after), or park the
    Haddow Crypt and the Shuttered Inn back out of the bands.

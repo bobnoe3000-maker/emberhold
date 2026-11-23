@@ -161,7 +161,7 @@ export const QUESTS = {
   },
   trial_last_rites: {
     kind: 'trial', giver: 'sister_ilse', trial: 'cleric', region: 'vale', level: [1, 30],
-    steps: [{ id: 'chapel', objectives: [{ type: 'waves', site: 'sunken_chapel', count: 5, hall: true, floor: 1 }] }],   // (v1.48: the Nave's last hall; it was the Barrows')
+    steps: [{ id: 'chapel', objectives: [{ type: 'waves', site: 'haddow_crypt', count: 5 }] }],   // (v1.145: the Haddows' names, said in their crypt at 6, the trial's level; it was the Nave's last hall, the Barrows' before that)
     rewards: { share: 0.3, lv: 6, gold: 60 },
   },
   // Act II, The Drowned Abbey (world doc v1.29 §6; docs/m8-plan.md slice 7): Ilse sends the company south to Dace Pike;
@@ -222,8 +222,9 @@ export const QUESTS = {
   // (Act III runs to 60, the XP table's end: a company past 30 can still finish what it started; Acts I and II stop at 30.)
   ch3_paid_by_weight: {
     kind: 'chapter', giver: 'hob', turnin: 'dagny_coalbrook', region: 'reach', level: [23, 60], after: ['ch3_short_shift'],
-    steps: [{ id: 'pass', objectives: [{ type: 'meet', npc: 'assay_clerk', site: 'assay_yards', count: 1 }] },
-      { id: 'weighmaster', objectives: [{ type: 'boss', site: 'assay_yards', boss: 'weighmaster', count: 1 }] }],
+    steps: [{ id: 'pass', objectives: [{ type: 'meet', npc: 'assay_clerk', site: 'assay_yards', count: 1 }] },   // (v1.145: and last, Hob's price, his box in the Shuttered Inn: below)
+      { id: 'weighmaster', objectives: [{ type: 'boss', site: 'assay_yards', boss: 'weighmaster', count: 1 }] },
+      { id: 'price', objectives: [{ type: 'loot', site: 'shuttered_inn', count: 1 }] }],
     rewards: { share: 0.45, lv: 26, gold: 520 },
   },
   ch3_gone_back_to_work: {

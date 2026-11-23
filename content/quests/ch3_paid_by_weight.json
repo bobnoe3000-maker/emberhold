@@ -39,9 +39,21 @@
           "label": "The Weighmaster"
         }
       ]
+    },
+    {
+      "id": "price",
+      "journal": "Hob's price: a box he kept behind the casks in the Shuttered Inn's cellar hall, across the Kell road from Ashgate's north wall.",
+      "objectives": [
+        {
+          "type": "loot",
+          "site": "shuttered_inn",
+          "count": 1,
+          "label": "Hob's box, in the Shuttered Inn"
+        }
+      ]
     }
   ],
-  "ready": "The Weighmaster is down and the night shift's rolls are yours. Take them to Dagny Coalbrook in Ashgate.",
+  "ready": "Hob has his box back. The night shift's rolls go to Dagny Coalbrook in Ashgate.",
   "done": "Dagny read the rolls standing up. Every name on them was sent to the Cinderworks.",
   "rewards": {
     "share": 0.45,

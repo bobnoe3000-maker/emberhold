@@ -69,7 +69,7 @@ export const SITES = {
   // out to it from ☰ (v1.112, core.js towerGo: from wherever the company is, and back there), from level 12 (minLevel:
   // core.js turns a company under it away). It pays no XP, so it competes with no band.
   mere_tower: { name: 'The Mere Tower', region: 'fens', theme: 'dread', base: 12, perFloor: 0, floors: 1, family: 'ashbound', rooms: [2, 2], layout: 'halls', flat: true, minLevel: 12, menu: true, mix: 0x3e7e },
-  reedholm_undercroft: { name: 'The Reedholm Undercroft', region: 'fens', theme: 'chasm', base: 18, perFloor: 0, floors: 1, family: 'ashbound', rooms: [4, 4], layout: 'halls', flat: true, hidden: true, secret: true, vault: 'the_fair_copy', mix: 0x4e3d },
+  reedholm_undercroft: { name: 'The Reedholm Undercroft', region: 'fens', theme: 'crypt', base: 18, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [5, 5], layout: 'halls', flat: true, hidden: true, secret: true, vault: 'the_fair_copy', mix: 0x4e3d },
   // the Bowl (GDD §17 v1.85; bowl.js): the arena in Solmere, reached from the menu for now (from level 6), never from a
   // land, so parked: on no map, in no band, no foes of its own (a bout's rivals are bowl.js's)
   bowl: { name: 'The Bowl', region: 'fens', theme: 'desert', base: 6, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [1, 1], layout: 'halls', flat: true, parked: true, arena: true, mix: 0xb0e1 },
@@ -80,7 +80,7 @@ export const SITES = {
   // (the owner, 2026-11-22, from a reference: "Prototype a dungeon level that looks like the inside of a building.. a
   // tavern. Needs more open floor to accommodate NPC battle but the walls are up and set dressing looks great. This is a
   // new dungeon type": the tavern kit, plans.js shuttered_inn; a prototype, then placed: below)
-  shuttered_inn: { name: 'The Shuttered Inn', region: 'reach', theme: 'dread', base: 20, perFloor: 0, floors: 1, plan: true, family: 'taproom', rooms: [5, 5], layout: 'halls', flat: true, mix: 0x1ee5 },   // (the owner, 2026-11-22: "Add it as a location in game with lvl 20 NPCs.. close to town in the overworld near ashgate": on the Reach across the Kell road from Ashgate's north wall, outdoor.js REACH.inn; GDD v1.138)
+  shuttered_inn: { name: 'The Shuttered Inn', region: 'reach', theme: 'dread', base: 23, perFloor: 0, floors: 1, plan: true, family: 'taproom', rooms: [5, 5], layout: 'halls', flat: true, mix: 0x1ee5 },   // (the owner, 2026-11-22: "Add it as a location in game with lvl 20 NPCs.. close to town in the overworld near ashgate": on the Reach across the Kell road from Ashgate's north wall, outdoor.js REACH.inn; GDD v1.138)
   // (the owner, 2026-11-22: "do a similar dungeon style as the inside of a crypt": the crypt kit, plans.js haddow_crypt,
   // docs/crypt-dungeon.md; parked, a prototype for review, on no land yet, as the inn was)
   haddow_crypt: { name: 'The Haddow Crypt', region: 'vale', theme: 'crypt', base: 6, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [5, 5], layout: 'halls', flat: true, mix: 0xc4e7 },   // (the owner, 2026-11-23: "put it in the vale": the Haddows' chantry north of the east road past the crossroads, outdoor.js buildOverland `crypt`; GDD v1.140),

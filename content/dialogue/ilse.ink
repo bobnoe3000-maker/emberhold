@@ -110,7 +110,7 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 + { q_ch3_the_wickham_road == 0 } [Where is the Kell Assay? #mark: quest] -> ilse_ch3_road_offer
 + { q_ch3_the_wickham_road == 1 } [About Ashgate… #mark: quest active] -> ilse_ch3_road_active
 + { q_vale_first_page == 2 } [I found this in the barrows. #mark: quest ready] -> ilse_page_turnin
-+ { q_trial_last_rites == 2 } [The rites are said, in the chapel. #mark: quest ready] -> ilse_trial_turnin
++ { q_trial_last_rites == 2 } [The Haddows' names are said. #mark: quest ready] -> ilse_trial_turnin
 + { q_trial_last_rites == 0 } [Is there anything you'd teach a cleric? #mark: quest] -> ilse_trial_offer
 + { q_trial_last_rites == 1 } [About the rites… #mark: quest active] -> ilse_trial_active
 + { q_vale_first_page == 0 } [Can I help with the Chronicle? #mark: quest] -> ilse_page_offer
@@ -125,17 +125,17 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 
 // ── the cleric's trial (content/quests/trial_last_rites.json) ──
 == ilse_trial_offer ==
-"Nobody said the rites for the Third Legion. They were waiting to be relieved. You don't bury people who are waiting."
-"I'd like a cleric of yours to go down into the Sunken Chapel, where the legion was bound, to the Nave's last hall, and stand, and say them. The dead will object. Say them anyway, five waves long."
+"The Haddows paid a priest to say their names once a year, in the little chapel under their chantry. The money ran out before the names did."
+"Send a cleric of yours down into the Haddow Crypt and have every name said, five waves long. The family got up when the priest stopped coming. They'll want to check you have the list right."
 + [We'll say them. #mark: quest]
     "Properly. Every word. I'll know if you skip one, and so will they." # quest: accept trial_last_rites
     -> ilse_topics
 + [Not yet.]
-    "They've waited three hundred years. I've only waited since spring."
+    "Then the list goes back in the drawer. It's a long list. Wool paid well."
     -> ilse_topics
 
 == ilse_trial_active ==
-"The Nave's last hall, in the Sunken Chapel, the first floor. Five waves. The rites don't need to be loud. They need to be finished."
+"The Haddow Crypt, under the chantry east of the lumber camp. Five waves, anywhere below. The rites don't need to be loud. They need to be finished."
 -> ilse_topics
 
 == ilse_trial_turnin ==

@@ -468,7 +468,8 @@ export const PLANS = {
   //    a roadside inn the Redhand took and boarded up, a dungeon inside a building. Its walls stand to their full height
   //    (the near ones cut away, so the camera looks in), and its rooms are dressed at their edges, the middle of each left
   //    open for the fight: the common room's hearth and notice board on its back wall, its long tables along the sides.
-  shuttered_inn: { site: 'shuttered_inn', name: 'The Shuttered Inn', kind: 'inn', base: 20, flat: true, floors: [
+  shuttered_inn: { site: 'shuttered_inn', name: 'The Shuttered Inn', kind: 'inn', base: 23,   // (v1.145: 23, the Yards' band, its Redhand off the Yards' gates and Hob's price in Paid by Weight; it was 20)
+    flat: true, floors: [
     { name: 'The Inn', spaces: [
       { id: 'the_front_room', name: 'The Front Room', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'tavern',
         dress: ['counter', 'barrels', 'rug', 'corners'], note: 'The front door off the road and the bar beside it, the shutters nailed; the Redhand drank the place dry first.' },
@@ -510,6 +511,31 @@ export const PLANS = {
       { from: 'the_hall_of_tombs', to: 'the_chantry_chapel', x: 48, y: 20, w: 10, h: 10 },
       { from: 'the_hall_of_tombs', to: 'the_ossuary', x: 92, y: 44, w: 10, h: 10 },
       { from: 'the_hall_of_tombs', to: 'the_founders_vault', x: 46, y: 70, w: 10, h: 10 },   // (at the west end: the founder's canopy stands at the middle of the vault's back wall, round 3)
+    ] },
+  ] },
+
+  // ── The Reedholm Undercroft (v1.145; the owner, 2026-11-23: "we can replace an existing dungeon in favor of the better
+  //    dungeon if its the right style"): the Fens' secret, the binding clergy's copy-room under Reedholm priory, was the
+  //    generator's; now the crypt kit's, on the Haddow Crypt's proven floor (its halls, its open middles), dressed as
+  //    a scriptorium of the dead: the copyists' desks and rolls at the walls, the clergy's chapel, their bones, and the
+  //    vault where the fair copy lies (world doc §7: The Fair Copy, its heirloom, in the end room's chest: world.js placeVault).
+  reedholm_undercroft: { site: 'reedholm_undercroft', name: 'The Reedholm Undercroft', kind: 'crypt', base: 18, flat: true, floors: [
+    { name: 'The Undercroft', spaces: [
+      { id: 'the_key_stair', name: 'The Key Stair', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'crypt',
+        dress: ['candelabra_ends', 'crypt_corners'], note: 'The stair down from the priory\'s low door. The key was on its nail by the door. It always was.' },
+      { id: 'the_copy_room', name: 'The Copy Room', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'crypt', foes: 'ashbound',
+        dress: ['desks', 'rolls', 'candelabra_pair', 'crypt_corners'], note: 'Where the binding rolls were written out fair: the copyists\' desks along the walls, the ink dry in its horns.' },
+      { id: 'the_clergy_chapel', name: 'The Clergy\'s Chapel', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'crypt', foes: 'ashbound',
+        dress: ['chantry_altar', 'chantry_pews', 'shrine'], note: 'The binding clergy\'s own chapel, where a roll was blessed before it was bound.' },
+      { id: 'the_bone_room', name: 'The Bone Room', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'ossuary', foes: 'ashbound',
+        dress: ['candelabra_ends', 'crypt_corners', 'chest'], note: 'The priory\'s dead, brought down when the water came into the Abbey.' },
+      { id: 'the_fair_copy', name: 'The Fair Copy', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'crypt', foes: 'ashbound',
+        dress: ['vault_chest', 'tombs_near', 'tombs_side', 'founder_lights', 'rolls', 'crypt_corners'], note: 'The copyists in their tombs, and between them the chest with the fair copy: every name, in a better hand than it was ever written in.' },
+    ], halls: [
+      { from: 'the_key_stair', to: 'the_copy_room', x: 32, y: 44, w: 10, h: 10 },
+      { from: 'the_copy_room', to: 'the_clergy_chapel', x: 48, y: 20, w: 10, h: 10 },
+      { from: 'the_copy_room', to: 'the_bone_room', x: 92, y: 44, w: 10, h: 10 },
+      { from: 'the_copy_room', to: 'the_fair_copy', x: 46, y: 70, w: 10, h: 10 },
     ] },
   ] },
 

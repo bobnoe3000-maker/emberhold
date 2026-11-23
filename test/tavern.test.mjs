@@ -22,10 +22,10 @@ const propsOf = (w, part) => {
   return out;
 };
 
-test('the Inn: on the Reach at 20, open, one authored floor, every room of the tavern kits, its plan sound', () => {
+test('the Inn: on the Reach at 23, open, one authored floor, every room of the tavern kits, its plan sound', () => {
   const S = SITES.shuttered_inn;
   assert.ok(S && S.plan && S.flat && !S.parked && !S.hidden, 'authored, flat, placed');
-  assert.equal(S.region, 'reach'); assert.equal(S.floors, 1); assert.equal(S.base, 20); assert.equal(PLANS.shuttered_inn.base, 20);
+  assert.equal(S.region, 'reach'); assert.equal(S.floors, 1); assert.equal(S.base, 23); assert.equal(PLANS.shuttered_inn.base, 23);
   assert.ok(siteOpen('shuttered_inn', []), 'its door opens');
   const P = PLANS.shuttered_inn;
   assert.deepEqual(checkPlan(P), []);
@@ -78,13 +78,13 @@ test('the Inn: nothing on the stairs or in a doorway, lights by the walls, every
   }
 });
 
-test('the Inn: a fight in the common room at 20, the Redhand\'s crew drinking there (the taproom: one crossbow in four ranged)', () => {
+test('the Inn: a fight in the common room at 23, the Redhand\'s crew drinking there (the taproom: one crossbow in four ranged)', () => {
   const F = FAMILIES.taproom;
   assert.ok(F && F.ranged.filter((k) => k === 'crossbow').length === 1, 'one crossbow among the ranged');
   assert.ok(PLANS.shuttered_inn.floors.flatMap((f) => f.spaces).filter((s) => s.role !== 'entrance').every((s) => s.foes === 'taproom'), 'every fighting room the taproom\'s');
   const sim = createSim(20260807, undefined, { scene: 'dungeon', site: 'shuttered_inn' }); sim.tick();
   const L = sim.world.level, r = L.rooms.find((q) => q.part === 'the_common_room'), p = sim.state.player;
-  for (const q of L.rooms) if (q !== L.entrance) assert.equal(sim.world.roomLevels.get(q.id), 20, `${q.name} at 20`);   // (the way in a sanctuary)
+  for (const q of L.rooms) if (q !== L.entrance) assert.equal(sim.world.roomLevels.get(q.id), 23, `${q.name} at 23`);   // (the way in a sanctuary)
   p.x = p.px = r.cx + 0.5; p.y = p.py = r.cy + 0.5;
   for (let i = 0; i < 20 * 6 && !(sim.world.enemies || []).length; i++) sim.tick();
   const foes = sim.world.enemies || [], kinds = new Set([...F.melee, ...F.ranged, F.elite]);

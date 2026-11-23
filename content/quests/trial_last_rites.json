@@ -9,19 +9,17 @@
     1,
     30
   ],
-  "summary": "Sister Ilse at the Shrine of the Ember says nobody said the last rites for the dead in the Sunken Chapel, where the legion was bound. Hold its nave while they're said, and she'll teach your clerics a blessing (the cleric's level-6 skill).",
+  "summary": "The Haddows paid a priest to say their names once a year, under their chantry, until the money ran out. Hold their crypt while a cleric of yours says them, and Sister Ilse will teach your clerics a blessing.",
   "steps": [
     {
       "id": "chapel",
-      "journal": "Go to the Sunken Chapel, in the marsh where the river leaves the Vale, and hold the last hall of the Nave, its first floor, for five waves.",
+      "journal": "Go to the Haddow Crypt, under the chantry in the meadow east of the lumber camp, and hold it for five waves while the names are said.",
       "objectives": [
         {
           "type": "waves",
-          "site": "sunken_chapel",
+          "site": "haddow_crypt",
           "count": 5,
-          "hall": true,
-          "floor": 1,
-          "label": "Waves held in the Nave's last hall"
+          "label": "Waves held in the Haddow Crypt"
         }
       ]
     }

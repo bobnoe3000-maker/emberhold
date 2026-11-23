@@ -73,6 +73,7 @@ VAR q_trial24_shaman = -1
 
 == hob_weight_active ==
 "West, by the Kell road, under the dead mountain. Pruett at the gate, then down under the Yards to the quota office. The rolls go to Dagny. Not to me. I don't want to know what's on them. I already know."
+"After that I'll want what you owe. You'll hear from me."
 -> hob_topics
 
 // ── the rogues' trial at 24 (content/quests/trial24_rogue.json) ──

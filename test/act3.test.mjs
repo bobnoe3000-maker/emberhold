@@ -225,6 +225,10 @@ test('Act III played on: Paid by Weight (Hob → Dagny), Gone Back to Work (Moth
     talk(sim, giver); effect(sim, 'quest', 'accept', id); assert.equal(st(sim, id), QS.ACTIVE, `${id}: ${giver} gives it`);
     if (id === 'ch3_paid_by_weight') sim.state.quests[id] = { st: QS.ACTIVE, step: 1, n: [0] };   // (the clerk's word: the test above)
     goTo(sim, 'dungeon', site, depth); sim.state.bosses[fall.id] = 1; sim.bus.emit('bossDown', fall);
+    if (id === 'ch3_paid_by_weight') {   // (v1.145: then Hob's price, a chest in the Shuttered Inn)
+      assert.equal(st(sim, id), QS.ACTIVE, 'the Weighmaster down: Hob\'s price still owed');
+      goTo(sim, 'dungeon', 'shuttered_inn', 0); sim.bus.emit('looted', { tx: 1, ty: 1, kind: 'chest' });
+    }
     assert.equal(st(sim, id), QS.READY, `${id}: ${fall.id} down`);
     goTo(sim, 'town', 'barrows', 0, 'reach');
     if (taker !== giver) { talk(sim, giver); effect(sim, 'quest', 'turnin', id); assert.equal(st(sim, id), QS.READY, `${id}: not ${giver}'s to take in`); }
