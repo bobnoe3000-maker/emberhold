@@ -45,6 +45,12 @@
    "y": 25.5
   },
   {
+   "kind": "site",
+   "id": "haddow_crypt",
+   "x": 213.5,
+   "y": 198.8
+  },
+  {
    "kind": "land",
    "id": "fens",
    "x": 38.5,

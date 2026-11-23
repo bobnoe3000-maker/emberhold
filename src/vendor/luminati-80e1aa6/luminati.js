@@ -21497,9 +21497,9 @@ function ph(e) {
 					rot: l
 				});
 			}), n.tinted([
-				1.26,
-				1.22,
-				1.14
+				1.32,
+				1.3,
+				1.27
 			], () => n.box("crypt_cap", [
 				t,
 				i,
@@ -21508,9 +21508,9 @@ function ph(e) {
 				at: c(0, 1 + a + i / 2, 0),
 				rot: l
 			})), n.tinted([
-				.76,
-				.72,
-				.66
+				1.02,
+				1,
+				.98
 			], () => {
 				for (let e of [-1, 1]) for (let o = 0; o < 3; o++) n.box("crypt_cap", [
 					t / 3 - .16,
@@ -21521,9 +21521,9 @@ function ph(e) {
 					rot: l
 				});
 			}), n.tinted([
-				.4,
-				.37,
-				.33
+				.92,
+				.9,
+				.88
 			], () => n.box("crypt_cap", [
 				t + .04,
 				.15,
@@ -21602,13 +21602,13 @@ function ph(e) {
 				at: c(-t * .37, f + .07, 0),
 				rot: l
 			})), n.tinted(e ? [
-				2,
-				1.92,
-				1.76
+				2.1,
+				2.04,
+				1.92
 			] : [
 				1.78,
-				1.7,
-				1.55
+				1.72,
+				1.62
 			], () => {
 				n.lathe("crypt_cap", [
 					{
@@ -21691,7 +21691,7 @@ function ph(e) {
 				.05,
 				.09,
 				.05
-			], { at: c(t / 2 - .1, f + .17, r / 2 - .12) })), (e || d(1) < .34) && n.tinted([
+			], { at: c(t / 2 - .1, f + .17, r / 2 - .12) })), !e && d(1) < .34 && n.tinted([
 				.8,
 				.8,
 				.82
@@ -21715,128 +21715,187 @@ function ph(e) {
 				let e = t / 2 + .25, i = r / 2 + .3;
 				n.tinted([
 					1.3,
-					1.28,
-					1.24
+					1.32,
+					1.38
 				], () => {
 					for (let t of [-1, 1]) for (let r of [-1, 1]) n.box("crypt_cap", [
-						.35,
-						2.2,
-						.35
+						.36,
+						2.05,
+						.36
 					], {
-						at: c(t * e, 2.41, r * i),
+						at: c(t * e, 4.05 / 2, r * i),
 						rot: l
 					}), n.box("crypt_cap", [
-						.42,
-						.16,
-						.42
+						.48,
+						.2,
+						.48
 					], {
-						at: c(t * e, 1.24, r * i),
+						at: c(t * e, 1.1, r * i),
 						rot: l
 					}), n.box("crypt_cap", [
-						.42,
+						.48,
 						.16,
-						.42
+						.48
 					], {
-						at: c(t * e, 3.58, r * i),
+						at: c(t * e, 3.03, r * i),
+						rot: l
+					}), n.box("crypt_cap", [
+						.36,
+						.8400000000000003,
+						.36
+					], {
+						at: c(t * e, 6.9399999999999995 / 2, r * i),
 						rot: l
 					});
-					n.box("crypt_cap", [
-						2 * e + .5,
-						.3,
-						2 * i + .5
+					for (let t of [-1, 1]) n.box("crypt_cap", [
+						2 * e + .42,
+						t > 0 ? .16 : .26,
+						.36
 					], {
-						at: c(0, 3.81, 0),
+						at: c(0, 3.89 + (t > 0 ? .18 : .13), t * i),
 						rot: l
 					});
-				}), n.box(Zm, [
-					2 * e + .3,
-					.02,
-					2 * i + .3
-				], {
-					at: c(0, 3.66 - .01, 0),
-					rot: l
 				}), n.tinted([
-					.42,
-					.36,
-					.3
-				], () => n.box("crypt_wall", [
-					2 * e,
-					2.3,
-					.06
-				], {
-					at: c(0, 2.41, -i - .12),
-					rot: l
-				})), n.tinted([
-					1.45,
-					1.42,
-					1.36
+					1.55,
+					1.52,
+					1.46
 				], () => {
-					for (let t of [-1, 1]) n.tinted([
-						.66,
-						.67,
-						.7
-					], () => n.box("crypt_cap", [
-						e + .42,
-						.14,
-						2 * i + .6
+					for (let t of [-1, 1]) n.box("crypt_cap", [
+						2 * e + .64,
+						.1,
+						.5
 					], {
-						at: c(t * (e + .2) / 2, 4.16, 0),
-						rot: [
-							0,
-							u.rot || 0,
-							-t * .3
-						]
-					})), n.tinted([
-						.86,
-						.87,
-						.9
-					], () => {
-						for (let r = 0; r < 5; r++) n.box("crypt_cap", [
-							e + .4,
-							.05,
-							.06
+						at: c(0, 4.2, t * i),
+						rot: l
+					}), n.box("crypt_cap", [
+						.5,
+						.1,
+						2 * i + .64
+					], {
+						at: c(t * e, 4.2, 0),
+						rot: l
+					});
+				});
+				let a = (e, t) => {
+					let n = e / 2 - .18, r = (e) => [Math.cos(e) * (n + .1), 3.05 + Math.sin(e) * .72];
+					for (let e = 0; e < 11; e++) {
+						let n = e / 11 * Math.PI, i = (e + 1) / 11 * Math.PI, [a, o] = r(n), [s, c] = r(i);
+						t((a + s) / 2, (o + c) / 2, Math.hypot(s - a, c - o) + .03, -Math.atan2(c - o, s - a));
+					}
+					return n;
+				};
+				n.tinted([
+					1.02,
+					1.02,
+					1.04
+				], () => {
+					a(2 * e, (e, t, r, a) => {
+						for (let o of [-1, 1]) n.box("crypt_cap", [
+							r,
+							.22,
+							.3
 						], {
-							at: c(t * (e + .2) / 2, 4.24, -i - .2 + r * (2 * i + .4) / 4),
+							at: c(e, t, o * i),
 							rot: [
 								0,
 								u.rot || 0,
-								-t * .3
+								a
+							]
+						});
+					}), a(2 * i, (t, r, i, a) => {
+						for (let o of [-1, 1]) n.box("crypt_cap", [
+							.3,
+							.22,
+							i
+						], {
+							at: c(o * e, r, t),
+							rot: [
+								-a,
+								u.rot || 0,
+								0
 							]
 						});
 					});
-					n.tinted([
-						.86,
-						.87,
-						.9
-					], () => n.box("crypt_cap", [
-						.12,
-						.12,
-						2 * i + .66
+					for (let t of [-1, 1]) n.box("crypt_cap", [
+						.3,
+						.4,
+						.34
 					], {
-						at: c(0, 4.4, 0),
+						at: c(0, 3.79, t * i),
 						rot: l
-					})), n.lathe("crypt_cap", [
-						{
-							y: 0,
-							r: .1
-						},
-						{
-							y: .16,
-							r: .14
-						},
-						{
-							y: .3,
-							r: 0
-						}
+					}), n.box("crypt_cap", [
+						.34,
+						.4,
+						.3
 					], {
-						segments: 9,
-						at: c(0, 3.66 + .86, 0)
+						at: c(t * e, 3.79, 0),
+						rot: l
 					});
-					let t = 3.96, r = i + .27;
+				}), n.tinted([
+					1.18,
+					1.16,
+					1.12
+				], () => {
+					for (let t of [-1, 1]) for (let r of [-1, 1]) t < 0 && n.box("crypt_cap", [
+						e * .42,
+						.4620000000000002,
+						.2
+					], {
+						at: c(r * e * .78, 3.6632000000000002, t * i),
+						rot: l
+					}), n.box("crypt_cap", [
+						.2,
+						.4620000000000002,
+						i * .42
+					], {
+						at: c(t * e, 3.6632000000000002, r * i * .78),
+						rot: l
+					});
+				}), n.tinted([
+					1.4,
+					1.38,
+					1.32
+				], () => {
+					let t = Math.hypot(2 * e, 2 * i), r = Math.atan2(2 * i, 2 * e);
+					for (let e of [-1, 1]) n.box("crypt_cap", [
+						t,
+						.12,
+						.14
+					], {
+						at: c(0, 3.97, 0),
+						rot: [
+							0,
+							(u.rot || 0) + e * r,
+							0
+						]
+					});
+				}), rh ||= new tt({ color: new P("#a8853f") }), n.lathe(rh, [
+					{
+						y: 0,
+						r: .16
+					},
+					{
+						y: .1,
+						r: .18
+					},
+					{
+						y: .18,
+						r: 0
+					}
+				], {
+					segments: 10,
+					at: c(0, 4.01, 0)
+				});
+				let o = 4.25, s = 5.25, d = -i - .1;
+				n.tinted([
+					1.42,
+					1.4,
+					1.34
+				], () => {
 					n.poly("crypt_top", [
-						c(-e - .2, t, r),
-						c(e + .2, t, r),
-						c(0, 4.5200000000000005, r)
+						c(-e - .3, o, d),
+						c(e + .3, o, d),
+						c(0, s, d)
 					], {
 						uAxis: [
 							1,
@@ -21848,31 +21907,75 @@ function ph(e) {
 							1,
 							0
 						]
-					}), n.box("crypt_cap", [
-						2 * e + .62,
-						.1,
-						.12
-					], {
-						at: c(0, 3.98, r),
-						rot: l
-					}), n.tinted([
-						1.6,
-						1.52,
-						1.38
-					], () => {
-						for (let t of [-1, 1]) n.box("crypt_cap", [
-							e + .34,
-							.06,
-							.1
-						], {
-							at: c(t * (e + .2) / 2, 8.48 / 2 + .03, r + .04),
-							rot: [
-								0,
-								u.rot || 0,
-								-t * .3
-							]
-						});
 					});
+				}), n.tinted([
+					1.6,
+					1.56,
+					1.48
+				], () => {
+					for (let t of [-1, 1]) n.box("crypt_cap", [
+						Math.hypot(e + .3, 1) + .1,
+						.12,
+						.18
+					], {
+						at: c(t * (e + .3) / 2, 4.79, d + .06),
+						rot: [
+							0,
+							u.rot || 0,
+							-t * Math.atan2(1, e + .3)
+						]
+					});
+				}), n.lathe("crypt_cap", [
+					{
+						y: 0,
+						r: .12
+					},
+					{
+						y: .18,
+						r: .16
+					},
+					{
+						y: .34,
+						r: 0
+					}
+				], {
+					segments: 9,
+					at: c(0, s, d + .04)
+				}), eh ||= new tt({ color: new P("#d4a640").multiplyScalar(.85) }), n.box(eh, [
+					.5,
+					.2,
+					.04
+				], {
+					at: c(0, 4.55, d + .06),
+					rot: l
+				}), n.box(eh, [
+					.04,
+					.2,
+					.04
+				], {
+					at: c(0, 4.71, d + .06),
+					rot: l
+				}), th ||= new tt({ color: new P("#6e1e20") }), n.box(th, [
+					.5 * p,
+					.15,
+					.66 * p
+				], {
+					at: c(-t * .37, f + .075, 0),
+					rot: l
+				}), n.box(rh, [
+					1.4,
+					.06,
+					.09
+				], {
+					at: c(.22, f + .33, .2),
+					rot: l
+				}), n.box(rh, [
+					.06,
+					.06,
+					.34
+				], {
+					at: c(-.42, f + .33, .2),
+					rot: l
 				});
 			}
 		} else if (u.k === "mourner") n.tinted([
@@ -22149,90 +22252,89 @@ function ph(e) {
 				rot: i
 			});
 		} else if (u.k === "bonering") {
-			let e = u.r || 1.5, t = (e, t, r) => {
-				let i = Math.max(12, Math.round(e * 22));
-				for (let a = 0; a < i; a++) {
-					let o = a / i * Math.PI * 2;
-					n.box("crypt_cap", [
-						2 * Math.PI * e / i + .01,
-						r,
-						t
-					], {
-						at: [
-							u.x + Math.cos(o) * e,
-							1 + r / 2 + .004,
-							u.z + Math.sin(o) * e
-						],
-						rot: [
-							0,
-							-o + Math.PI / 2,
-							0
-						]
-					});
-				}
-			};
+			let e = (u.r || 1.5) + .2;
 			n.tinted([
-				1.12,
-				1.12,
-				1.12
-			], () => n.lathe("crypt_flag", [
-				{
-					y: 0,
-					r: 0
-				},
-				{
-					y: .001,
-					r: e
-				},
-				{
-					y: .016,
-					r: e
-				},
-				{
-					y: .017,
-					r: 0
-				}
-			], {
-				segments: 32,
-				at: [
-					u.x,
-					1.002,
-					u.z
-				]
-			})), n.tinted([
-				.46,
-				.45,
-				.43
+				.36,
+				.34,
+				.32
+			], () => n.box("crypt_cap", [
+				2 * e,
+				.012,
+				2 * e
+			], { at: [
+				u.x,
+				1.006,
+				u.z
+			] }));
+			let t = (2 * e - .08) / 3;
+			for (let r = 0; r < 3; r++) for (let i = 0; i < 3; i++) {
+				if (r === 1 && i === 1) continue;
+				let a = 1.06 + (r * 5 + i * 3) % 4 * .025;
+				n.tinted([
+					a,
+					a,
+					a
+				], () => n.box("crypt_flag", [
+					t - .06,
+					.03,
+					t - .06
+				], { at: [
+					u.x - e + .04 + t * (r + .5),
+					1.016,
+					u.z - e + .04 + t * (i + .5)
+				] }));
+			}
+			n.tinted([
+				1.32,
+				1.3,
+				1.24
+			], () => n.box("crypt_cap", [
+				t - .06,
+				.035,
+				t - .06
+			], { at: [
+				u.x,
+				1.018,
+				u.z
+			] })), rh ||= new tt({ color: new P("#a8853f") }), n.box(rh, [
+				.07,
+				.03,
+				.62
+			], { at: [
+				u.x,
+				1.036,
+				u.z + .02
+			] }), n.box(rh, [
+				.36,
+				.03,
+				.07
+			], { at: [
+				u.x,
+				1.036,
+				u.z - .14
+			] }), n.tinted([
+				1.42,
+				1.4,
+				1.36
 			], () => {
-				for (let n of [
-					e * .3,
-					e * .58,
-					e * .82
-				]) t(n, .05, .02);
-				for (let t = 0; t < 8; t++) {
-					let r = t / 8 * Math.PI * 2 + .2;
-					n.box("crypt_cap", [
-						e * .7,
-						.02,
-						.05
-					], {
-						at: [
-							u.x + Math.cos(r) * e * .62,
-							1.014,
-							u.z + Math.sin(r) * e * .62
-						],
-						rot: [
-							0,
-							-r,
-							0
-						]
-					});
-				}
-			}), n.tinted([
-				.3,
-				.29,
-				.28
-			], () => t(e, .06, .024));
+				for (let t of [-1, 1]) n.box("crypt_cap", [
+					2 * e + .4,
+					.06,
+					.2
+				], { at: [
+					u.x,
+					1.03,
+					u.z + t * (e + .1)
+				] }), n.box("crypt_cap", [
+					.2,
+					.06,
+					2 * e + .4
+				], { at: [
+					u.x + t * (e + .1),
+					1.03,
+					u.z
+				] });
+			});
 		} else if (u.k === "skullpile") {
 			let e = 0;
 			for (let [t, r] of [

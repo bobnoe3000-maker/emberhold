@@ -80,7 +80,7 @@ export const SITES = {
   shuttered_inn: { name: 'The Shuttered Inn', region: 'reach', theme: 'dread', base: 20, perFloor: 0, floors: 1, plan: true, family: 'taproom', rooms: [5, 5], layout: 'halls', flat: true, mix: 0x1ee5 },   // (the owner, 2026-11-22: "Add it as a location in game with lvl 20 NPCs.. close to town in the overworld near ashgate": on the Reach across the Kell road from Ashgate's north wall, outdoor.js REACH.inn; GDD v1.138)
   // (the owner, 2026-11-22: "do a similar dungeon style as the inside of a crypt": the crypt kit, plans.js haddow_crypt,
   // docs/crypt-dungeon.md; parked, a prototype for review, on no land yet, as the inn was)
-  haddow_crypt: { name: 'The Haddow Crypt', region: 'vale', theme: 'crypt', base: 6, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [5, 5], layout: 'halls', flat: true, parked: true, mix: 0xc4e7 },
+  haddow_crypt: { name: 'The Haddow Crypt', region: 'vale', theme: 'crypt', base: 6, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [5, 5], layout: 'halls', flat: true, mix: 0xc4e7 },   // (the owner, 2026-11-23: "put it in the vale": the Haddows' chantry north of the east road past the crossroads, outdoor.js buildOverland `crypt`; GDD v1.140),
   scrag_warren: { name: 'The Scrag Warren', region: 'reach', theme: 'warren', base: 2, perFloor: 1, floors: 2, family: 'goblin', rooms: [6, 6], parked: true, mix: 0x6b1d },
 };
 export const SITE_IDS = Object.keys(SITES);

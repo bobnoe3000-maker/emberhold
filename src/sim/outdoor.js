@@ -773,6 +773,11 @@ function buildOverland(seed) {
   // The Scrag Warren (2–5, v1.19): the goblins' burrow at the foot of the north range, 142 tiles out, between the barrows
   // and the keep; its door faces the Vale, a track up to it off the keep road.
   const mill = [92, 106], chapel = [226, 218], stone = [236, 40], warren = [108, 18];
+  // the Haddow Crypt (v1.140; the owner: "put it in the vale"): the Haddows' chantry in the meadow east of the lumber
+  // camp, the chapel's marsh beyond it, its door south onto a track off the camp road; the family's vault under it. 163
+  // tiles from the gate, between the keep (4-6, 154) and the chapel (7-9, 183): a level-6 room. (By the crossroads, 127
+  // out, it lay nearer than the Pens at 4; and the Vale's woods are at their floor, so it stands where no grove has to go)
+  const crypt = [214, 190];
   // The river (critic pass 10): the old course as a spline (its lower reach swings east to the chapel's marsh, 2026-10-03), with a slow meander and a breathing width (meander), held
   // where it was at the bridges and the mill. Bridges are axis-aligned (bridge_90 spans x), so every road crosses its
   // bridge on a straight run along x, and the river runs across it (~+y) there.
@@ -794,6 +799,7 @@ function buildOverland(seed) {
     { w: 3, surface: 'track', pts: [[86, 148], [88, 132], [mill[0] - 1, mill[1] + 12]] },                // up to the mill
     { w: 3, surface: 'track', pts: [[168, 196], [184, 226], [206, 234], [chapel[0] + 1, chapel[1] + 14]] },   // the causeway to the chapel, off the camp track
     { w: 4, surface: 'track', pts: [[161, 84], [142, 66], [122, 44], [warren[0] + 2.5, warren[1] + 7]] },      // up under the range to the warren's door (its adit faces down the track)
+    { w: 3, surface: 'track', pts: [[182, 204], [196, 203], [crypt[0] - 0.5, crypt[1] + 12]] },                 // (v1.140) off the camp road to the Haddows' chantry door
     { w: 5, surface: 'dirt', fens: true, pts: [[92, 206], [80, 236], [54, 250], [38, 264], [38, 274]] },   // the canal road south off the barrows road, to the Fens (M8; shut until Act I is done)
     { w: 5, surface: 'dirt', reach: true, pts: [[142, 66], [146, 46], [150, 22], [152, -16]] },   // the Wickham road north off the warren track, past the keep's west side, over the range to the Cinder Reach (v1.124; shut until Act II is done)
   ].map((r) => ({ ...r, pts: fillet(r.pts, Math.max(8, r.w * 2)) }));
@@ -825,6 +831,8 @@ function buildOverland(seed) {
   put(o, 'chapelruin_0', chapel[0], chapel[1]);
   put(o, 'milestone_0', stone[0], stone[1], 'rect', 0.2);
   put(o, 'warren_0', warren[0], warren[1]);
+  put(o, B('temple'), crypt[0], crypt[1]);                        // the Haddows' chantry (v1.140), the family's vault under it
+  putProp(o, 'brazier', crypt[0] + 4, crypt[1] + 11);           // a brazier at the chantry's step
   for (const [id, dx, dy] of [['grove_3', -20, -2], ['grove_5', 14, -20], ['pine_2', -12, -12], ['pine_5', 16, -6]]) put(o, id, warren[0] + dx, warren[1] + dy, 'round', 0.35);   // the range's foot is wooded either side of the scar
   put(o, B('farm'), 64, 114); put(o, 'wheelbarrow', 57, 128, 'rect', 0);
   for (const [id, x, y] of [['resource_lumber', camp[0] + 10, camp[1] + 4], ['stump', camp[0] - 16, camp[1] + 14], ['stump', camp[0] + 4, camp[1] + 14], ['flag_red', keep[0] - 14, keep[1] + 30]])
@@ -835,6 +843,7 @@ function buildOverland(seed) {
     { x: mill[0], y: mill[1], id: 'watermill_0', text: 'The Tithe Mill' }, { x: chapel[0], y: chapel[1], id: 'chapelruin_0', text: 'The Sunken Chapel', site: 'sunken_chapel' },   // (v1.48: the Tithe Mill a working mill again, a landmark)
     { x: stone[0], y: stone[1], id: 'milestone_0', text: 'The Ninth Milestone', site: 'ninth_milestone' },   // (v1.48: the Scrag Warren's adit is boarded up again: no label)
     { x: warren[0], y: warren[1], id: 'warren_0', text: 'The Proving Pens', site: 'proving_pens' },   // (v1.60: the adit's boards off again, for a trial: the bestiary's pens)
+    { x: crypt[0], y: crypt[1], id: B('temple'), text: 'The Haddow Crypt', site: 'haddow_crypt' },   // (v1.140)
     { x: mine[0], y: mine[1], id: 'mine_0', text: 'Deepdelve Mine' }, { x: camp[0], y: camp[1], id: 'lumbermill_90', text: 'Lumber camp' });
 
   // THE RANGES (critic pass 10: mountains smaller than the keep, on a 15-tile lattice, 11 of them on the meadow).
@@ -872,8 +881,8 @@ function buildOverland(seed) {
   // the open). Woods where a wood belongs: the north-west, the slopes under the range, round the lumber camp, the
   // barrows' far side; then the old forest mask; then meadow trees in clumps of 2–4. Every site keeps its clearing
   // and its sightline (inFrontOf). Rocks mostly at the foothills now: 1 % on the meadow, not 5 %.
-  const trng = mulberry32(streamSeed(seed, 4412)), sites = [keep, barrows, mine, camp, [60, 112], mill, chapel, stone, warren];
-  const sights = [keep, barrows, mine, camp, cross, [town[0] + 4, town[1]], mill, chapel, stone];   // (the warren, dug into the range's foot, keeps a shorter one)
+  const trng = mulberry32(streamSeed(seed, 4412)), sites = [keep, barrows, mine, camp, [60, 112], mill, chapel, stone, warren, crypt];
+  const sights = [keep, barrows, mine, camp, cross, [town[0] + 4, town[1]], mill, chapel, stone, crypt];   // (the warren, dug into the range's foot, keeps a shorter one)
   const clear = (x, y, id) => {
     if (hypot(x - town[0] + 16, y - town[1]) < 40 || hypot(x - cross[0], y - cross[1]) < 18) return false;
     for (const c of sites) if (hypot(x - c[0], y - c[1]) < (c === camp || c === warren ? 16 : 24)) return false;
@@ -926,7 +935,7 @@ function buildOverland(seed) {
   // clear of every site and its way in
   const nearWater = (x, y) => { for (const [dx, dy] of [[0, 0], [2.5, 0], [-2.5, 0], [0, 2.5], [0, -2.5]]) { const g = groundAt(o, x + dx, y + dy).g; if (g === G.WATER || g === G.BANK) return true; } return false; };
   undergrowth(o, -40, -40, 300, 300, 4, (x, y) => {
-    for (const c of [keep, barrows, mine, camp, cross, [town[0] + 4, town[1]], mill, chapel, stone, warren]) if (hypot(x - c[0], y - c[1]) < 14) return -1;
+    for (const c of [keep, barrows, mine, camp, cross, [town[0] + 4, town[1]], mill, chapel, stone, warren, crypt]) if (hypot(x - c[0], y - c[1]) < 14) return -1;
     let wood = 0; for (const w of WOODS) wood = Math.max(wood, 1 - hypot(x - w.x, y - w.y) / w.r);
     const f = fbm(x * 0.022, y * 0.022, o.seed + 7);
     return nearWater(x, y) ? 0.55 : (f > 0.5 && f < 0.6) || (wood > 0 && wood < 0.35) ? 0.4 : fbm(x * 0.08, y * 0.08, o.seed + 13) > 0.68 ? 0.45 : 0;
@@ -942,9 +951,10 @@ function buildOverland(seed) {
   o.exits.push({ x0: chapel[0] - 2, y0: chapel[1] + 11, x1: chapel[0] + 4, y1: chapel[1] + 14, to: 'dungeon', site: 'sunken_chapel' });
   o.exits.push({ x0: stone[0] - 2, y0: stone[1] + 4, x1: stone[0] + 3, y1: stone[1] + 7, to: 'dungeon', site: 'ninth_milestone' });
   o.exits.push({ x0: warren[0], y0: warren[1] + 6, x1: warren[0] + 5, y1: warren[1] + 9, to: 'dungeon', site: 'proving_pens' });   // (v1.60) the adit's mouth, where the track ends
+  o.exits.push({ x0: crypt[0] - 3, y0: crypt[1] + 7.5, x1: crypt[0] + 2, y1: crypt[1] + 10, to: 'dungeon', site: 'haddow_crypt' });   // (v1.140) the chantry's door, on its +y face: the stair down to the vault
   o.arrivals = { default: { x: town[0] + 30.5, y: town[1] + 0.5 }, thornwick: { x: town[0] + 30.5, y: town[1] + 0.5 }, barrows: { x: barrows[0] + 1.5, y: barrows[1] + 13.5 },
     tithe_mill: { x: mill[0] - 0.5, y: mill[1] + 15.5 }, wickham_keep: { x: keep[0] + 0.5, y: keep[1] + 27.5 }, sunken_chapel: { x: chapel[0] + 1.5, y: chapel[1] + 19.5 }, ninth_milestone: { x: stone[0] + 0.5, y: stone[1] + 11.5 },
-    scrag_warren: { x: warren[0] + 4, y: warren[1] + 13.5 }, proving_pens: { x: warren[0] + 2.5, y: warren[1] + 13.5 }, fens: { x: 38.5, y: 255.5 }, reach: { x: 151.5, y: 4.5 } };
+    scrag_warren: { x: warren[0] + 4, y: warren[1] + 13.5 }, proving_pens: { x: warren[0] + 2.5, y: warren[1] + 13.5 }, haddow_crypt: { x: crypt[0] - 0.5, y: crypt[1] + 14.5 }, fens: { x: 38.5, y: 255.5 }, reach: { x: 151.5, y: 4.5 } };
   // the canal road leaves the Vale at its south edge, for the Fens (regions.js); shut, with a word, until Act I is done
   o.exits.push({ x0: 30, y0: 263, x1: 47, y1: 271, to: 'overland', region: 'fens', arrive: 'vale_road',
     shut: "The canal road's under water past the barrows. Sister Ilse says there's a way through, when you've a reason to go." });

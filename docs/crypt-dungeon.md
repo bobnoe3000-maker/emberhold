@@ -1,7 +1,8 @@
 # The Haddow Crypt: a crypt's inside as a dungeon
 
-*2026-11-22 · **Prototype**: scored 8/10 by the art critic after sixteen rounds (§3). The site is parked: it is on no
-land, and you reach it with `?scene=dungeon&site=haddow_crypt`.*
+*2026-11-23 · **Implemented**: scored 8/10 by the art critic after eighteen rounds (§3), and placed in the Vale at 6
+(§4): the Haddows' chantry east of the lumber camp. `?scene=dungeon&site=haddow_crypt` goes straight
+in.*
 
 The owner, 2026-11-22, after the Shuttered Inn (docs/tavern-dungeon.md):
 
@@ -83,20 +84,57 @@ Round 16's verdict on the chantry: *"the best spot in the crypt"*. Opening the f
 the camera above could see his likeness) read as a timber pergola and cost the building half a point, so the roofed
 canopy was put back after it; the rest of round 16's fixes stayed, and the ledger crosses took the reliquary's brass.
 
-**Where it stopped: 8/10, seven rounds level.** From round 10 the overall held at 8 while the areas under it rose
-(building 8 to 8.5, battle 8 to 8.5, polish to 8). The critic's remaining asks, for a later pass:
-- the founder's likeness, which his canopy's roof hides from the camera: a stone canopy that stays open (piers, round
-  arches on all four faces, crossed ribs over him) is the way it named;
-- the ossuary's disc as wedge flags round a centre stone, not rings;
-- a warm wash on the pier under each sconce, so the arcade has a lit and dark beat;
-- the stone furniture in the walls' cream-grey, the pews the only brown.
-What moved it, in order: a wall tall enough for a round arch (round 2), the stone graded rather than the light (3), the
-fight on the brightest floor (9), and each small piece made to read as itself at a phone's size, which took most of the
-rounds from 10 on. Things that read as something else, and were rebuilt: crossed light planes (a white sheet), a shaft
-(smoke), a ring of skulls (cart wheels), a dashed ring (a spell circle), a crosshatched disc (wicker), a gold cross (dropped
-loot), a saturated halo (a banana), a cone mourner (a stalagmite), brown mourners (chess pawns), a black field in gold (a
-hazard sign), open urns (holes), three cut lines on a slab (a louvre), a wide dark ledger border (a trapdoor).
+The owner, 2026-11-23: *"Do the remaining suggested passes, then put it in the vale."* Two more rounds took the
+critic's remaining asks:
+
+| Round | Identity | Building | Dressing | Battle | Light | Materials | Polish | **Overall** |
+|---|---|---|---|---|---|---|---|---|
+| 17: an open stone canopy (arches on every face, ribs to a gilt boss, the pediment a reredos), wedge paving, sconce washes, cooler chests | 8.5 | 7.5 | 8 | 8 | 7.5 | 7.5 | 7.5 | **8** |
+| 18: the ossuary's middle a square panel of flags in a kerb, the canopy's front opened and its stone cooled, the chests' panels mid-grey | 8.5 | 7.5 | 8.5 | 8 | 7.5 | 8 | 7.5 | **8** |
+
+Round 18's verdict: the ossuary's middle *"reads as a grave and not a ritual"*, the chests *"as stone sarcophagi, not
+crates"*. Round 17's wedge flags ringed by upright bone ends read as a summoning circle beside the foes' red rings and
+were taken out the same day.
+
+**Where it stopped: 8/10.** From round 10 the overall held at 8 while the areas under it rose (dressing to 8.5,
+materials to 8, battle 8 to 8.5 and back). The critic's asks for a later pass:
+- the canopy's top: a low stepped or gabled cap with corner pinnacles in place of the flat entablature, and the
+  founder's face and hands lit from inside it;
+- the ossuary panel's kerb a step darker, with joints, and the nearest ledger moved off its corner;
+- the tomb chests a chamfered overhanging lid on a wider plinth, a different likeness on each;
+- each flag a slightly different tone, worn along the walking lines, and small warm pools under the candelabra.
 
 **Kept out of scope.** These are shared across the game, so the critic was told and they stay: the room gates' bars,
 the loot chest's gold look, the figures, the near sills' height and the walls at the rooms' corners, the pews' wood (an
 engine piece).
+
+## 4. In the Vale, at 6
+
+The owner, 2026-11-23: *"put it in the vale"*.
+
+**Where.** The Haddows' chantry stands in the meadow east of the lumber camp, with the Sunken Chapel's marsh beyond it
+(src/sim/outdoor.js `buildOverland`, `crypt` at 214, 190). It is the Vale's temple piece, with a brazier at its step
+and its door south onto a track off the camp road.
+- It is named on the land ("The Haddow Crypt") and pinned on the region map (assets/maps/minimap-vale.json).
+- Its door is 168 tiles from Thornwick's gate, between the Keep (4–6, 154) and the Sunken Chapel (7–9, 183): the Vale's
+  sites lie further out as they get harder (test/overland.test.mjs). You come out where you went in, on the track.
+- First tried north of the east road past the crossroads (178, 116): 127 tiles out, nearer than the Proving Pens at 4.
+- The woods, the meadow clumps and the undergrowth keep clear of it and of its line from the camera, as every site's.
+  The Vale's woods are at their floor (30 groves, v1.71's thinning), so the spot is one where no grove has to go.
+- The visibility check (`node tools/capture/visibility.mjs vale`) has nothing under half in view (21 subjects).
+
+**The foes.** The Ashbound, as the plan always had them, every fighting room at 6 and the stair hall a sanctuary.
+`node tools/balance/roomlv.mjs 300 6 6 1,3 <seed> --site haddow_crypt`, the right party at 6:
+
+| Seed | Waves in 300 s | Lowest health | Downs | Fallen |
+|---|---|---|---|---|
+| 1 | 17 | 64 % | 0 | 0 |
+| 2 | 18 | 47 % | 1 | 0 |
+| 3 | 18 | 54 % | 0 | 0 |
+| 4 | 17 | 62 % | 0 | 0 |
+| (the Old Barrows' second floor, the same Ashbound at 6) | 17 | 49 % | 0 | 0 |
+
+So the crypt meets the contract (10+ waves, nobody fallen in the first five) on every seed, as hard as the barrows.
+
+**Tests.** test/crypt.test.mjs: in the Vale at 6 and open; the chantry, its door, its arrival and its name on the land,
+walked to from Thornwick's gate, in and down. test/sites.test.mjs: its band, 6.

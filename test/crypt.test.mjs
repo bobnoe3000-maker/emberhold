@@ -22,11 +22,11 @@ const propsOf = (w, part) => {
   return out;
 };
 
-test('the Crypt: a parked prototype in the Vale, one authored floor of the crypt kits, its plan sound', () => {
+test('the Crypt: in the Vale at 6, open, one authored floor of the crypt kits, its plan sound', () => {
   const S = SITES.haddow_crypt;
-  assert.ok(S && S.plan && S.flat && S.parked, 'authored, flat, parked');
-  assert.equal(S.region, 'vale'); assert.equal(S.floors, 1); assert.equal(S.family, 'ashbound');
-  assert.ok(!siteOpen('haddow_crypt', []), 'no door on any land yet');
+  assert.ok(S && S.plan && S.flat && !S.parked && !S.hidden, 'authored, flat, placed');
+  assert.equal(S.region, 'vale'); assert.equal(S.floors, 1); assert.equal(S.family, 'ashbound'); assert.equal(S.base, 6);
+  assert.ok(siteOpen('haddow_crypt', []), 'its door opens');
   const P = PLANS.haddow_crypt;
   assert.deepEqual(checkPlan(P), []);
   const spaces = P.floors.flatMap((f) => f.spaces);
@@ -110,4 +110,24 @@ test('the Crypt drawn: whole walls a unit taller than the inn\'s under an arcade
   assert.ok(!by('post') && !by('beam') && !by('lantern'), 'no inn\'s timber or lanterns');
   assert.ok(!level.objects.some((o) => o.onWall), 'nothing heaped on a ruin\'s top');
   assert.ok(!sprites.some((s) => ['tomb', 'tomb_y', 'great_tomb', 'mourner', 'altar', 'urns', 'bones', 'candelabra', 'pew', 'pew_y', 'offering'].includes(s.prop)), 'no piece left to a card');
+});
+
+// (the owner, 2026-11-23: "Do the remaining suggested passes, then put it in the vale")
+test('the Crypt in the Vale: the Haddows\' chantry on the overland, its door, named, walked to from Thornwick, in and down', () => {
+  const sim = createSim(20260807, undefined, { scene: 'overland', region: 'vale' }); sim.tick();
+  const w = sim.world, ex = w.exits.find((e) => e.to === 'dungeon' && e.site === 'haddow_crypt');
+  assert.ok(ex, 'its door');
+  const gate = w.exits.find((e) => e.to === 'town'), mid = (e) => [(e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2];
+  const [dx, dy] = mid(ex), [gx, gy] = mid(gate), d = Math.hypot(dx - gx, dy - gy);
+  assert.ok(d > 156 && d < 182, `between the Keep (4–6) and the Sunken Chapel (7–9) by distance: ${d.toFixed(0)} tiles from the gate`);
+  const a = w.arrivals.haddow_crypt; assert.ok(a && isWalkable(w, a.x, a.y), 'one arrives on open ground before its door');
+  assert.ok(w.labels.some((l) => l.text === 'The Haddow Crypt' && l.site === 'haddow_crypt'), 'named on the land');
+  assert.ok(w.structs.some((s) => s.id === 'vale_temple_1' && Math.hypot(s.x - dx, s.y - dy) < 14), 'the chantry over its door');
+  const K = (x, y) => `${x},${y}`, s0 = [Math.floor(w.arrivals.default.x), Math.floor(w.arrivals.default.y)], seen = new Set([K(...s0)]), q = [s0];
+  let found = false;
+  while (q.length && !found) { const [x, y] = q.shift(); if (x >= ex.x0 - 1 && x <= ex.x1 && y >= ex.y0 - 1 && y <= ex.y1) found = true;
+    for (const [ddx, ddy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const k = K(x + ddx, y + ddy); if (!seen.has(k) && x + ddx > -10 && x + ddx < 270 && y + ddy > -10 && y + ddy < 270 && isWalkable(w, x + ddx + 0.5, y + ddy + 0.5)) { seen.add(k); q.push([x + ddx, y + ddy]); } } }
+  assert.ok(found, 'walked to from the gate');
+  const p = sim.state.player; p.x = p.px = dx; p.y = p.py = dy; for (let i = 0; i < 5; i++) sim.tick();
+  assert.equal(sim.state.scene, 'dungeon'); assert.equal(sim.state.site, 'haddow_crypt');
 });

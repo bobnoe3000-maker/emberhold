@@ -786,8 +786,9 @@ function cryptRun(a, b, { key, s, n, P, add, trim, clearOf }) {
     const [x, z] = P(t); if (!clearOf(x, z)) return;
     const end = t === a ? 1 : t === b ? -1 : 0;
     trim.push({ k: 'pier', x, z, n, end, top: CR_TOP_Y });
-    if (!end && q % 2 === 1) {   // a sconce: an iron bracket, three candles; every other one its light (round 1: Luminati shares a dozen lights among all in view, and forty small ones left each room murk)
-      const light = q % 4 === 1 ? add({ type: 'light', x: r2(x + (s ? 0 : 0.7)), z: r2(z + (s ? 0.7 : 0)), dy: 1.6, color: '#ffb060', intensity: 3.6, distance: 5.5, flicker: 0.14, nightOnly: false }) : null;
+    if (!end && q % 2 === 1) {   // (round 17: its light held close to the pier and up, a warm wash on the pier's face and the arch beside it, so the arcade beats lit and dark)
+      // a sconce: an iron bracket, three candles; every other one its light (round 1: Luminati shares a dozen lights among all in view, and forty small ones left each room murk)
+      const light = q % 4 === 1 ? add({ type: 'light', x: r2(x + (s ? 0 : 0.4)), z: r2(z + (s ? 0.4 : 0)), dy: 2.1, color: '#ffb060', intensity: 3.8, distance: 4.6, flicker: 0.14, nightOnly: false }) : null;
       trim.push({ k: 'sconce', x, z, n, y: TAV_FLOOR_Y + 2.1, light });
     }
   });
