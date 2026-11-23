@@ -208,7 +208,10 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
         // (v1.146: the tag west of the pin was cut by the view's left edge when both lands were framed) the span from the
         // tag's left end to the next land's town, centred where it fits; where it doesn't, the tag wins
         const hx = me && me.sx != null ? me.sx : at[0] * k, lo = Math.min(hx - tw, at[0] * k - 12), hi = both ? Math.max(nx[0], at[0]) * k + 40 : hx;
-        view.scrollLeft = Math.max(0, both && hi - lo <= VW ? (lo + hi) / 2 - VW / 2 : both ? lo - 8 : Math.min(at[0] * k - VW / 2, hx - tw));
+        view.scrollLeft = Math.max(0, both && hi - lo <= VW ? (lo + hi) / 2 - VW / 2 : both ? ((at[0] + nx[0]) / 2) * k - (VW - 30) / 2 : Math.min(at[0] * k - VW / 2, hx - tw));
+        // where the next land wins the frame, the tag that would be cut by the view's left edge goes under the pin, inside
+        const me2 = /** @type {HTMLElement | null} */ (map.querySelector('.tag.me'));
+        if (me2 && me && me2.offsetLeft < view.scrollLeft + 4) { me2.style.left = `${Math.max(view.scrollLeft + 6, hx - me2.offsetWidth / 2)}px`; me2.style.top = `${me.sy + 18}px`; }
         view.scrollTop = Math.max(0, (both ? ((at[1] + nx[1]) / 2) * k - view.clientHeight * 0.45 : at[1] * k - view.clientHeight * 0.42)); };
       if (img.complete) go(); else img.addEventListener('load', go, { once: true });
       requestAnimationFrame(go);
