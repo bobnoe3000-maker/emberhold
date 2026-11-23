@@ -59,10 +59,10 @@ const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', ro
   // cinder hounds (built in code), the Cult's furnace-priests; the Reach's bosses, and Furnace Nine, the region boss)
   assay_guard: 'enemy_assay_guard', assay_xbow: 'enemy_assay_xbow', renegade: 'enemy_renegade', forgewight: 'enemy_forgewight',
   cinderhound: 'creature_cinderhound', furnacepriest: 'enemy_furnacepriest',
-  weighmaster: 'boss_weighmaster', oruth: 'boss_oruth', morrow_vane: 'boss_morrow_vane', stoker: 'boss_stoker', furnace_nine: 'boss_furnace_nine' };   // (v1.53) the Cold Seam's: a slag hauler, the hod on his back; Gritch, a goblin in a dead foreman's lamp-hat   // (v1.105) the Kingstone: the golem drawn twice its size (BIG), four times a man
+  weighmaster: 'boss_weighmaster', oruth: 'boss_oruth', morrow_vane: 'boss_morrow_vane', stoker: 'boss_stoker', furnace_nine: 'boss_furnace_nine', first_pilgrim: 'boss_first_pilgrim' };   // (v1.53) the Cold Seam's: a slag hauler, the hod on his back; Gritch, a goblin in a dead foreman's lamp-hat   // (v1.105) the Kingstone: the golem drawn twice its size (BIG), four times a man
 // the Mere Tower's wardens (sim tower.js): baked tall as the bosses are (tools/actor-lab variants W1–W10), named on the boss bar
 for (const id of Object.keys(WARDENS)) ENEMY_ACTOR[id] = 'boss_' + id.slice('warden_'.length);
-const BIG = /** @type {Record<string, number>} */ ({ kingstone: 2, furnace_nine: 1.54 });   // (Furnace Nine: baked tall as a boss, 2.6 men, drawn to the Kingstone's four)   // a kind drawn larger than its actor's model (hybrid.js: the figure's scale)
+const BIG = /** @type {Record<string, number>} */ ({ kingstone: 2, furnace_nine: 1.54, first_pilgrim: 1.5 });   // (v1.147 the First Pilgrim: baked 2.7 men, drawn four)   // (Furnace Nine: baked tall as a boss, 2.6 men, drawn to the Kingstone's four)   // a kind drawn larger than its actor's model (hybrid.js: the figure's scale)
 const UNDEAD_LOOK = new Set(SKELETONS.concat(['enemy_forgewight', 'boss_oruth', 'boss_standard', 'boss_quartermaster', 'drowned_brother', 'drowned_cantor', 'boss_bellringer', 'boss_hush', 'boss_watcher', 'boss_starroom', 'boss_choir', 'boss_abbess']));   // (they rise from the ground and shamble)
 // walk-cycle length in tiles (one full loop of the baked walk clip): frames advance with
 // distance, so this sets the stride — hero/companion run (Running_A), skeleton shamble
@@ -76,7 +76,7 @@ const strideOf = (atl, fallback) => (atl && atl.meta.stride) || (atl && ACTOR_ST
 // Kingstone drawn twice the golem's size (BIG) shuffled at 2.4 steps a second, its planted feet sliding at 7× its walk
 // (the owner, 2026-11-16: "The stone king moves too fast for how big and heavy he is"; measured in Luminati, its foot
 // bones on the manual clock). Its stride at its height: twice a man's
-const ACTOR_STRIDE = /** @type {Record<string, number>} */ ({ creature_golem: 4.4, boss_furnace_nine: 5.7 });   // (Furnace Nine on the golem's walk, 2.6 men tall as baked)
+const ACTOR_STRIDE = /** @type {Record<string, number>} */ ({ creature_golem: 4.4, boss_furnace_nine: 5.7, boss_first_pilgrim: 5.0 });   // (Furnace Nine on the golem's walk, 2.6 men tall as baked)
 const NO_WEATHER = Object.freeze({ kind: 'clear', k: 0 });
 // a marsh world's marsh-lights: one over each mere big enough to hold one, at its middle, with its own phase (fx.wisps)
 const WISPS = new WeakMap();

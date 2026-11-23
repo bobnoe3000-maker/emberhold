@@ -42,7 +42,10 @@ export function hazardAt(b, x, y) {
  * battle (battle.tells) apart from the hazards: a tell doesn't slow anyone, it's somewhere not to be when it lands.
  * @param {any} t @param {number} x @param {number} y */
 export function inTell(t, x, y) {
-  const dx = x - t.x, dy = y - t.y; if (hypot(dx, dy) >= t.r) return false;
+  const dx = x - t.x, dy = y - t.y;
+  // (v1.147) a lane: from (t.x, t.y) along t.dir, t.r long and t.lane wide (the First Pilgrim's gaze)
+  if (t.lane) { const c = cos(t.dir), s = sin(t.dir), along = dx * c + dy * s, across = Math.abs(-dx * s + dy * c); return along >= 0 && along <= t.r && across <= t.lane / 2; }
+  if (hypot(dx, dy) >= t.r) return false;
   if (!t.arc) return true;
   let a = atan2(dy, dx) - t.dir; while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI;
   return Math.abs(a) <= t.arc / 2;

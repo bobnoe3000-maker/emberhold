@@ -102,7 +102,7 @@ const bitCanvases = new WeakMap();
 function tellsOf(sim, origin) {
   const b = sim.battle, T = sim.state.t; if (!b || !b.tells || !b.tells.length) return [];
   return b.tells.map((t) => ({ kind: t.kind, x: (t.x - origin.x) / 2, z: (t.y - origin.y) / 2, r: t.r / 2, dx: t.dir == null ? 1 : Math.cos(t.dir), dz: t.dir == null ? 0 : Math.sin(t.dir),
-    p: Math.max(0, Math.min(1, (T - t.from) / Math.max(0.05, t.at - t.from))), hit: t.done ? Math.max(0, 1 - (T - t.at) / 0.6) : 0 }));
+    p: Math.max(0, Math.min(1, (T - t.from) / Math.max(0.05, t.at - t.from))), hit: t.done ? Math.max(0, 1 - (T - t.at) / 0.6) : 0, w: t.lane ? t.lane / 2 : 0 }));   // (w: a lane's width, the First Pilgrim's gaze, v1.147)
 }
 // a figure's key, the same each frame (a unit, an NPC's presence, a crowd walker, a picket: renderer.js `u` / `who`), so
 // Luminati keeps its model, mid-clip and mid-turn (world.js placeFigure); a draw with none is keyed by order there

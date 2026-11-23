@@ -36,6 +36,8 @@ const ROWS = [
   { name: 'Cinder hound', key: 'hound', spec: { kind: 'hound' }, height: 0.8, cy: 0.4, half: 0.6, yaw: -0.7, shots: SHOTS },
   { name: 'Furnace Nine (region boss) · front', key: 'furnacef', spec: VAR.furnace, height: 2.0, cy: 1.15, half: 1.3, yaw: 0.45, shots: [['Idle', [0.3]], ['Heavy', [0.42]], ['Death', [0.99]]] },
   { name: 'Furnace Nine (region boss)', key: 'furnace', spec: VAR.furnace, height: 2.0, cy: 1.15, half: 1.4, yaw: -0.5, shots: SHOTS },
+  { name: 'The First Pilgrim (region boss) · front', key: 'pilgrimf', spec: VAR.pilgrim, height: 2.2, cy: 1.2, half: 1.35, yaw: 0.35, shots: [['Idle', [0.3]], ['Cast', [0.5]], ['Heavy', [0.45]]] },
+  { name: 'The First Pilgrim (region boss)', key: 'pilgrim', spec: VAR.pilgrim, height: 2.2, cy: 1.2, half: 1.45, yaw: -0.5, shots: SHOTS },
   { name: 'Gritch, the Foreman (boss)', key: 'foreman', spec: VAR.goblin_foreman, height: 0.86 * 1.3, cy: 0.55, half: 0.8, yaw: -0.5, shots: SHOTS },
 ].filter((r) => !arg('only') || arg('only').split(',').includes(r.key));
 // --clips Attack,Heavy [--frames N]: each row through those clips instead, N moments of each (default 6), for reading a

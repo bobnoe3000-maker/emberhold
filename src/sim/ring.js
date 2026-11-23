@@ -74,18 +74,34 @@ export const FURNACE = {
   feedReach: 8,          // "near it": tiles past its body
   heirloom: 'quota',
 };
+// The First Pilgrim (v1.147; world doc v1.67 §3.6, §10.2; the owner, 2026-11-24, with a reference: "New overworld boss
+// for the heights.. Appears at the bottom of every hour"): the Pale Heights', at half past as Furnace Nine is (the two are
+// told apart by their ids' tag, ':30p'). The pilgrim who found the Ember in the crater and looked at it too long: his head
+// one great eye with the Ember's light behind it, ringed in the crater's black glass, his crook still in his hand. He stands
+// at the head of the Pilgrims' Stair under the Lip (camps.js `heights_lip`). His blows are the Kingstone's shapes (the
+// crook where the nearest stands, a stamp, a sweep of the crook, the Lip shedding its glass), and his own: **the gaze**,
+// the Ember's light out through the eye in two beams, each a lane across the ground from his feet to one who hangs back
+// (`gaze`: the two furthest), told as the rest are, filling till it burns.
+export const PILGRIM = {
+  ...RING, id: 'first_pilgrim', name: 'The First Pilgrim', kind: 'first_pilgrim', family: 'ashbound', offset: 1800, tag: 'p',
+  region: 'heights', camp: 'heights_lip', level: 75, minLevel: 61,
+  hpStep: [1, 1.85, 3.3, 3.9, 4.6],   // (Furnace Nine's: the same event a land higher)
+  gaze: { every: 10, crackedEvery: 7, wind: 1.8, len: 16, lane: 1.8, n: 2, hurt: 0.7, first: 5 },   // (1.8 s: a member at a run clears a lane 1.8 wide, test/pilgrim.test.mjs)
+  heirloom: 'first_light',
+};
 /** every region boss, by id @type {Record<string, typeof RING>} */
-export const RINGS = { kingstone: RING, furnace_nine: FURNACE };
+export const RINGS = { kingstone: RING, furnace_nine: FURNACE, first_pilgrim: PILGRIM };
 /** the region boss whose ground is this spawn point, if any @param {string} campId */
 export const ringByCamp = (campId) => Object.values(RINGS).find((R) => R.camp === campId) || null;
 const two = (n) => String(n).padStart(2, '0');
-/** the suffix a window's id carries for its boss (the Kingstone's none, the hour's top; Furnace Nine's ':30') @param {typeof RING} R */
-const suffixOf = (R) => (R.offset ? ':' + two(Math.round(R.offset / 60)) : '');
+/** the suffix a window's id carries for its boss (the Kingstone's none, the hour's top; Furnace Nine's ':30'; the First
+ * Pilgrim's ':30p', the same half hour in another land) @param {typeof RING} R */
+const suffixOf = (R) => (R.offset ? ':' + two(Math.round(R.offset / 60)) + (/** @type {any} */ (R).tag || '') : '');
 /** the region boss a window's id is for @param {string} id */
-export const ringForId = (id) => Object.values(RINGS).find((R) => (R.offset ? id.endsWith(suffixOf(R)) : !id.includes(':'))) || RING;
+export const ringForId = (id) => Object.values(RINGS).find((R) => (R.offset ? id.endsWith(suffixOf(R)) : !id.includes(':'))) || RING;   // (':30p' doesn't end ':30': the Pilgrim's is never Furnace Nine's)
 
 /** a window's id, the hour it opens: 'YYYY-MM-DDTHH' @param {any} id */
-export const isWindowId = (id) => typeof id === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}(:30)?$/.test(id);   // (':30': Furnace Nine's)
+export const isWindowId = (id) => typeof id === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}(:30p?)?$/.test(id);   // (':30': Furnace Nine's; ':30p': the First Pilgrim's)
 
 /** @param {any} state */
 export function ringOf(state) {

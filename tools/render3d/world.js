@@ -259,7 +259,7 @@ function figureFor(key, name, T) {
   const souls = []; root.traverse((o) => { if (o.name === 'Cage_Soul') souls.push(o); });
   for (const s of souls) { const h = new THREE.Sprite(soulHalo()); h.scale.setScalar(0.9 / Math.max(1e-3, s.scale.x)); h.renderOrder = 2; s.add(h); s.scale.multiplyScalar(1.3); }   // (a halo three times the soul, so a full cage reads at a phone's size)
   f = { name, root, mixer: new THREE.AnimationMixer(root), clips: T.clips, frame: T.frame, creature: T.creature, look: T.look, bones, mats, shines: mats.some((q) => q.shine), yaw: null, key: '', fpos: 0, seen: 0, lit: '', souls,
-    stack: T.creature === 'furnace' ? stackOf(root) : null, puff: 0, puffN: 0 };
+    stack: T.creature === 'furnace' ? stackOf(root) : null, puff: 0, puffN: 0, eye: T.creature === 'pilgrim' ? eyeOf(root) : null };
   game.engine.scene.add(root); figs.set(key, f);
   return f;
 }
@@ -2070,6 +2070,42 @@ function placeLane(m, x, z, tx, tz, u, w, col, a) {
   m.material.color.setRGB(col[0] / 255, col[1] / 255, col[2] / 255, THREE.SRGBColorSpace); m.material.opacity = a;
 }
 const WARN = [255, 86, 30], WARN_HOT = [255, 238, 220], WARN_INK = [24, 6, 4];
+// (v1.147) the First Pilgrim's gaze: the Ember's orange, hotter than the warnings' red; his sigil a deep red
+const GAZE = [255, 150, 50], SIGIL = [235, 36, 28], SIGIL_HOT = [255, 92, 60], GAZE_EYE = 4.3, GAZE_FWD = 0.45;   // (the eye's height over his feet and how far before them, units: round G2, measured on his model in the gaze's frames, drawn ×1.5)
+// a beam: a cylinder from his eye to the lane's far end, additive, unlit, pooled
+let BEAM_GEO = null, gazeFlare = 0; const beamPool = [];
+// (round G3: from a fixed height the beam left his chest whenever his cast leant him: it starts at his eye now, wherever
+// the clip has it. The eye's mesh (his glow's: creatures.js pilgrim) and its front-most vertex, the iris's, skinned each
+// frame)
+function eyeOf(root) {
+  let m = null; root.traverse((o) => { if (!m && o.isSkinnedMesh && /^Eyes$/.test(o.name)) m = o; }); if (!m) return null;
+  const P = m.geometry.attributes.position; let idx = 0, best = -Infinity;
+  for (let i = 0; i < P.count; i++) { const z = P.getZ(i) - Math.abs(P.getX(i)) - Math.abs(P.getY(i) - 1.75); if (z > best) { best = z; idx = i; } }
+  return { m, idx };
+}
+const _eye = new THREE.Vector3();
+/** the First Pilgrim's eye in the world, or null (no figure of his drawn) */
+function pilgrimEye() {
+  for (const f of figs.values()) if (f.eye && f.root.visible) { const { m, idx } = f.eye; _eye.fromBufferAttribute(m.geometry.attributes.position, idx); m.applyBoneTransform(idx, _eye); return _eye.applyMatrix4(m.matrixWorld); }
+  return null;
+}
+function beamMesh(n) {
+  if (!BEAM_GEO) BEAM_GEO = new THREE.CylinderGeometry(1, 1, 1, 10, 1, true).translate(0, 0.5, 0).rotateX(Math.PI / 2);   // (along +z, from 0 to 1)
+  while (beamPool.length <= n) {
+    const m = new THREE.Mesh(BEAM_GEO, new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+    m.renderOrder = 3; m.visible = false; m.frustumCulled = false; game.engine.scene.add(m); beamPool.push(m);
+  }
+  return beamPool[n];
+}
+const _bA = new THREE.Vector3(), _bB = new THREE.Vector3();
+function placeBeam(m, x, z, tx, tz, r, col, a) {
+  m.visible = a > 0.01; if (!m.visible) return;
+  const dx = tx - x, dz = tz - z, d = Math.hypot(dx, dz) || 1, eye = pilgrimEye();
+  if (eye) _bA.copy(eye); else _bA.set(x + (dx / d) * GAZE_FWD, game.tileMap.getHeight(x, z) + GAZE_EYE, z + (dz / d) * GAZE_FWD);
+  _bB.set(tx, game.tileMap.getHeight(tx, tz) + 0.05, tz);
+  m.position.copy(_bA); m.lookAt(_bB); m.scale.set(r, r, _bA.distanceTo(_bB));
+  m.material.color.setRGB((col[0] / 255) * a, (col[1] / 255) * a, (col[2] / 255) * a, THREE.SRGBColorSpace); m.material.opacity = 1;
+}
 // (the Reach's, docs/art-critic-pass-reach-fx.md) the Stoker's vents: slag coming up, molten orange, its heart hotter as it
 // comes; the Weighmaster's pan's footprint in brass inside the red
 const SLAG = [255, 122, 24], SLAG_HOT = [255, 206, 96], BRASS = [232, 186, 92];
@@ -2725,9 +2761,23 @@ const api = {
     // sweep's fan, each filling from nothing to its edge as it winds (p 0..1), white as it lands (hit: 1 → 0 after it)
     // (the Reach's: the Weighmaster's 'scales' a pan coming down over its circle, a brass ring inside the red; the Stoker's
     // 'vent' the floor glowing slag-orange, its heart hotter as it comes, not the Kingstone's red)
-    let np = 0;
+    let np = 0, nbm = 0, sigil = null; gazeFlare = 0;
     for (const t of f.tells || []) {
       const e = 1 - (1 - t.p) * (1 - t.p), hot = t.hit > 0, col = hot ? WARN_HOT : WARN, out = hot ? t.hit : 1;
+      // (v1.147) the First Pilgrim's gaze: a lane from his feet, filling outward as it winds, its edges dark; his sight
+      // along it, a thin line from the eye in the wind's last part; landed, the beam, white-hot in its orange, gone in
+      // half a second; a red sigil turning at his feet while he looks (docs/art-critic-pass-pilgrim.md)
+      if (t.kind === 'gaze') {
+        const tx = t.x + t.dx * t.r, tz = t.z + t.dz * t.r;
+        placeLane(groundMesh('lane', nk.lane++), t.x, t.z, tx, tz, 1, t.w * 1.3, WARN_INK, 0.42 * out);
+        placeLane(groundMesh('lane', nk.lane++), t.x, t.z, tx, tz, 1, t.w, hot ? WARN_HOT : WARN, (0.14 + 0.12 * t.p) * out);
+        placeLane(groundMesh('lane', nk.lane++), t.x, t.z, tx, tz, e, t.w * 0.55, hot ? WARN_HOT : GAZE, (0.3 + 0.45 * t.p) * out);
+        if (!hot && t.p > 0.6) { const k = (t.p - 0.6) / 0.4; placeBeam(beamMesh(nbm++), t.x, t.z, tx, tz, 0.02 + 0.03 * k, GAZE, 0.25 + 0.5 * k * (0.75 + 0.25 * Math.sin(performance.now() * 0.05))); }
+        if (hot) { placeBeam(beamMesh(nbm++), t.x, t.z, tx, tz, 0.34 * t.hit + 0.06, GAZE, 0.75 * t.hit); placeBeam(beamMesh(nbm++), t.x, t.z, tx, tz, 0.12 * t.hit + 0.03, WARN_HOT, t.hit); }
+        if (!sigil || t.p > sigil.p) sigil = t;
+        if (hot) gazeFlare = Math.max(gazeFlare, t.hit);
+        continue;
+      }
       if (t.kind === 'scales') {
         const m = panMesh(np++), lift = hot ? PAN_DROP * easeIn(clamp01((1 - t.hit - 0.35) / 0.65)) : PAN_DROP * (1 - easeIn(t.p));
         m.visible = true; m.position.set(t.x, game.tileMap.getHeight(t.x, t.z) + 0.02 + lift, t.z); m.scale.setScalar(t.r * 0.95); m.rotation.y = t.p * 0.6;
@@ -2755,6 +2805,17 @@ const api = {
       }
     }
     for (let i = np; i < panPool.length; i++) if (panPool[i].visible) panPool[i].visible = false;
+    for (let i = nbm; i < beamPool.length; i++) if (beamPool[i].visible) beamPool[i].visible = false;
+    if (sigil) {
+      const a = sigil.hit > 0 ? sigil.hit : 0.5 + 0.5 * sigil.p, spin = performance.now() * 0.0006;
+      // (round G2: at 1.75 it hid under his robe's hem: out past it, a faint fill inside, its glyphs turning both ways)
+      placeGround(groundMesh('wfill', nk.wfill++), sigil.x, sigil.z, 2.7, SIGIL, 0.14 * a);
+      placeGround(groundMesh('wrim', nk.wrim++), sigil.x, sigil.z, 2.9, WARN_INK, 0.55 * a);
+      placeGround(groundMesh('wrim', nk.wrim++), sigil.x, sigil.z, 2.75, SIGIL_HOT, 0.95 * a);
+      placeGround(groundMesh('wrim', nk.wrim++), sigil.x, sigil.z, 1.9, SIGIL, 0.75 * a);
+      const m = groundMesh('focus', nk.focus++); placeGround(m, sigil.x, sigil.z, 3.0, SIGIL_HOT, 0.85 * a); if (m.visible) m.rotation.z = spin;
+      const m2 = groundMesh('focus', nk.focus++); placeGround(m2, sigil.x, sigil.z, 2.2, SIGIL, 0.75 * a); if (m2.visible) m2.rotation.z = -spin * 1.6;
+    }
     placePuffs(f.puffs);
     placeWater(f.water);
     placeGates(f.gates);
@@ -2783,7 +2844,9 @@ const api = {
     // in half a second; one of Luminati's spell lights, as the carry light is
     if (blastLight) {
       const b = f.blast;
+      const eye = gazeFlare > 0.01 ? pilgrimEye() : null;
       if (b && b.k > 0.01) blastLight.set(b.x, game.tileMap.getHeight(b.x, b.z) + 1.6, b.z, { color: [2.0, 0.95, 0.32], intensity: 9 * b.k / (f.ambient?.lamps ?? 1), distance: 7, decay: 1.6, flicker: 0.25 });
+      else if (eye) blastLight.set(eye.x, eye.y, eye.z, { color: [2.0, 1.05, 0.4], intensity: 12 * gazeFlare / (f.ambient?.lamps ?? 1), distance: 9, decay: 1.4, flicker: 0.1 });   // (the gaze's flare: the eye lights the ground round him as it burns, v1.147)
       else blastLight.off();
     }
     placeSpells(f.spells || [], f.dt || 0, f.ambient?.lamps, !!(f.rings && f.rings.length));

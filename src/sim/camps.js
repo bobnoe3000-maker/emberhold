@@ -101,6 +101,13 @@ export const CAMPS = [
     family: 'works', band: ['furnacepriest', 'cinderhound', 'furnacepriest'], elite: 0.25, respawn: RESPAWN, posts: [[-2.4, 0.6], [2.2, 1.0], [0.2, -2.4]], face: [0, 0],
     ring: 'furnace_nine',   // (Furnace Nine's ground, ring.js FURNACE: at half past, once it's broken, it burns here in their place)
     dress: [['brazier', -4.2, -2.6], ['brazier', 4.4, -2.8], ['chains', 5.0, 1.8], ['bones', -4.8, 2.2], ['spoil', 3.6, 4.6], ['urns', -3.0, -4.6]] },
+  // (v1.147) the head of the Pilgrims' Stair under the Lip: the pilgrims who climbed after him and stopped where he did,
+  // frozen where they knelt (the Ashbound's), and at half past the First Pilgrim himself (ring.js PILGRIM). The Heights
+  // aren't a land you walk yet: it stands in their overland as it's previewed (?scene=overland&region=heights)
+  { id: 'heights_lip', region: 'heights', kind: 'camp', name: 'The head of the Stair', x: 158, y: 112, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 72,
+    family: 'ashbound', band: ['warrior', 'mage', 'warrior'], elite: 0.25, respawn: RESPAWN, posts: [[-2.4, 0.6], [2.4, 0.6], [0, -2.4]], face: [0, 0],
+    ring: 'first_pilgrim',
+    dress: [['bones', -4.4, 2.0], ['urns', -5.4, -0.8], ['bones', -2.6, 4.2], ['urns', -3.6, -3.8]] },   // (west of the Stair's track: it runs up through the east side)
 ];
 export const CAMP_BY = Object.fromEntries(CAMPS.map((c) => [c.id, c]));
 /** a land's spawn points @param {string} region */

@@ -399,7 +399,11 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
   // the region bosses on the map: the Kingstone's stones once the Fens are open; Furnace Nine's mouth once the Reach is and
   // it's been broken (v1.126: before that it's the Stoker's lamp, the story's to find)
   const ringsShown = () => Object.values(RINGS).filter((G) => sim.landOpen(G.region) && (!G.lamp || (S().lampsBroken || []).includes(G.lamp)));
-  const RING_WORDS = { kingstone: { place: 'the old stones', verb: 'stands' }, furnace_nine: { place: 'the Vault’s mouth', verb: 'burns' } };
+  const RING_WORDS = {
+    kingstone: { place: 'the old stones', verb: 'stands', title: 'The old stones', sub: 'The Greywater Fens · the Kingstone stands the first 15 minutes of every hour', ground: 'the ring', where: 'In the Greywater Fens, north-east of Saltmere.' },
+    furnace_nine: { place: 'the Vault’s mouth', verb: 'burns', title: 'The Vault’s mouth', sub: 'The Cinder Reach · Furnace Nine burns the first 15 minutes after every half hour', ground: 'its ground', where: 'In the Cinder Reach, up the track north of the Cinderworks.' },
+    first_pilgrim: { place: 'the Lip', verb: 'stands', title: 'The Lip', sub: 'The Pale Heights · the First Pilgrim stands the first 15 minutes after every half hour', ground: 'his ground', where: 'In the Pale Heights, at the head of the Pilgrims’ Stair.' },   // (v1.147)
+  };
   // a boss's pin: lit while it stands (a window open, not yet stood in), warm when it's about to
   function ringPin(/** @type {number} */ x, /** @type {number} */ y, /** @type {typeof RING} */ G = RING) {
     const c = ringClock((q) => q === G), live = !!(c && c.open && !paidFor(S(), c.id)), soon = !!(c && c.soon), W = RING_WORDS[G.id] || RING_WORDS.kingstone;
@@ -457,19 +461,18 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
     }
     const r = region();
     if (p.kind === 'ring') {                               // the old stones and the Kingstone (GDD §19 v1.105); the Vault's mouth and Furnace Nine (v1.126)
-      const G = RINGS[p.ring] || RING, furnace = G.id === 'furnace_nine', W = RING_WORDS[G.id] || RING_WORDS.kingstone;
+      const G = RINGS[p.ring] || RING, W = RING_WORDS[G.id] || RING_WORDS.kingstone;
       const c = ringClock((q) => q === G), w = sim.world, P = S().player, C = CAMP_BY[G.camp], mm = (/** @type {number} */ t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
-      card.append(el('h3', '', furnace ? 'The Vault’s mouth' : 'The old stones'),
-        el('div', 'sub', furnace ? 'The Cinder Reach · Furnace Nine burns the first 15 minutes after every half hour' : 'The Greywater Fens · the Kingstone stands the first 15 minutes of every hour'));
+      card.append(el('h3', '', W.title), el('div', 'sub', W.sub));
       card.append(el('div', 'sub ring', !c ? '' : c.open ? (paidFor(S(), c.id) ? `It ${W.verb} now · you’ve stood against it this window` : `It ${W.verb} now · ${mm(c.left)} left`)
         : `It ${W.verb} next at ${c.at}${c.soon ? ` · in ${mm(c.until)}` : ''}`));
-      card.append(el('div', 'sub', `from level ${G.minLevel} · fought at level ${G.level} · up to five companies · walk into ${furnace ? 'its ground' : 'the ring'} to fight it`));
+      card.append(el('div', 'sub', `from level ${G.minLevel} · fought at level ${G.level} · up to five companies · walk into ${W.ground} to fight it`));
       // Walk there: to just outside its reach on your side; a step on and you're in it (and, in a window, its fight)
       let go = null, why = '', steps = '';
       if (w.kind === 'overland' && w.region === G.region) {
         const dx = P.x - C.x, dy = P.y - C.y, d = Math.hypot(dx, dy) || 1, k = Math.min(d, C.reach + 3) / d, s = sim.spotNear(C.x + dx * k, C.y + dy * k);
-        if (s) { go = { type: 'goto', tx: s.tx, ty: s.ty, near: 0, then: null, label: furnace ? 'The Vault’s mouth' : 'The old stones' }; steps = `about ${s.steps} steps`; } else why = 'No way there from here.';
-      } else why = r !== G.region ? (furnace ? 'In the Cinder Reach, up the track north of the Cinderworks.' : 'In the Greywater Fens, north-east of Saltmere.') : w.kind === 'town' ? 'Take the road out first.' : 'Climb out first.';
+        if (s) { go = { type: 'goto', tx: s.tx, ty: s.ty, near: 0, then: null, label: W.title }; steps = `about ${s.steps} steps`; } else why = 'No way there from here.';
+      } else why = r !== G.region ? W.where : w.kind === 'town' ? 'Take the road out first.' : 'Climb out first.';
       if (go) info.append('The way', el('br'), el('em', '', steps));
       button('Walk there', 'walk', why, () => { if (go) sim.commands.push(go); close(); });
       return;

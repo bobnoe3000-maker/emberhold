@@ -6973,6 +6973,79 @@
       "tall": 2.4
     },
     {
+      "out": "boss_first_pilgrim",
+      "variant": "CR12",
+      "glow": 3,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 5
+        },
+        {
+          "key": "walk",
+          "clip": "Walk",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "attack",
+          "clip": "Attack",
+          "frames": 7,
+          "fps": 13,
+          "once": true,
+          "impact": 4
+        },
+        {
+          "key": "attack2",
+          "clip": "Attack2",
+          "frames": 7,
+          "fps": 13,
+          "once": true,
+          "impact": 4
+        },
+        {
+          "key": "heavy",
+          "clip": "Heavy",
+          "frames": 10,
+          "fps": 10,
+          "once": true,
+          "impact": 5
+        },
+        {
+          "key": "cast",
+          "clip": "Cast",
+          "frames": 10,
+          "fps": 8,
+          "once": true,
+          "impact": 5
+        },
+        {
+          "key": "hit",
+          "clip": "Hit",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death",
+          "frames": 8,
+          "fps": 8,
+          "once": true
+        }
+      ],
+      "gain": 1,
+      "grade": {
+        "desat": 0.05,
+        "contrast": 1.12
+      },
+      "px": 73,
+      "tall": 2.7
+    },
+    {
       "out": "npc_nan_ruddock",
       "portrait": true,
       "figure": {

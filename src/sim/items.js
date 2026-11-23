@@ -216,6 +216,7 @@ export const HEIRLOOMS = {
   the_last_office: { base: 'amulet', name: 'The Last Office', flav: 'Said every night, by the dead, for the living.', aff: ['def', 'hp', 'hpr'] },
   // the Kingstone's (GDD §19 v1.105, world doc v1.50 §3.2): a Gold-tier chance in the Ring, once a hero
   kingstones_ember: { base: 'charm', name: "The Kingstone's Ember", flav: 'Still warm. It was warm when the Empire found it.', aff: ['hp', 'def', 'atk'] },
+  first_light: { base: 'ring', name: 'First Light', flav: 'It was beautiful. That was the trouble.', aff: ['crit', 'atk', 'mp'] },   // (the First Pilgrim, the Heights' region boss: world doc §10.2, v1.147)
   // the Fens set's vault, the Reedholm Undercroft (world doc v1.30 §7)
   the_fair_copy: { base: 'charm', name: 'The Fair Copy', flav: 'Every name, in a better hand than it was ever written in.', aff: ['mp', 'mpr', 'def'] },
   // Wren's chain, What's Owed (world doc v1.29 §5)

@@ -95,6 +95,7 @@ export const FX_STYLES = {
   boss_morrow_vane:  { col: [210, 220, 240], attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [235, 240, 255], thin: true },
   boss_stoker:       { col: EMBER, attack: 'arc', attack2: 'arc', heavy: 'stab', heavyCol: FIRE, spark: [255, 170, 80], heavySpark: [255, 120, 40], wide: 1.3 },
   boss_furnace_nine: { col: [205, 190, 175], attack: 'arc', attack2: 'arc', heavy: 'arc', heavyCol: FIRE, spark: [255, 170, 90], heavySpark: [255, 110, 30], wide: 1.6, quake: true, burn: true },
+  boss_first_pilgrim: { col: [255, 160, 90], attack: 'arc', attack2: 'stab', heavy: 'arc', heavyCol: FIRE, spark: [255, 190, 120], heavySpark: [255, 120, 50], wide: 1.5, quake: true },   // (v1.147: the crook's swing, the Ember's sparks)
   boss_spiderqueen:  { col: [180, 230, 120], attack: 'stab', attack2: 'stab', heavy: 'arc', spark: [210, 240, 160], wide: 1.35 },
   boss_skarn:        { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 200, 130], wide: 1.25 },
   boss_garrow:       { col: REDHAND, attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [255, 210, 170], wide: 1.15 },

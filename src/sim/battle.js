@@ -344,6 +344,7 @@ export const BOSSES = {
   // Furnace Nine (v1.126, ring.js FURNACE): the Reach's region boss, the furnace-lamp relit and walking, slag in its belly; its
   // tells are the Kingstone's shapes, and it feeds on the fallen (battle.js ringTick)
   furnace_nine: { name: 'Furnace Nine', like: 'golem', hp: 115, atk: 1.6, def: 1.5, speed: 1.1, xp: 0, gold: 0, mech: 'ring', escort: [], range: 5.5, body: 2.4, event: true },
+  first_pilgrim: { name: 'The First Pilgrim', like: 'golem', hp: 115, atk: 1.6, def: 1.5, speed: 1.1, xp: 0, gold: 0, mech: 'ring', escort: [], range: 5.5, body: 2.4, event: true },   // (v1.147: the Heights' region boss, ring.js PILGRIM)
   // (v1.126, the build sheet: docs/reach-plan.md) the Reach's other four
   weighmaster: { name: 'The Weighmaster', like: 'brute', hp: 21, atk: 2.2, def: 1.7, speed: 2.8, xp: 13, gold: 32, mech: 'scales', escort: ['assay_guard', 'assay_xbow'], heirloom: 'short_weight' },
   oruth: { name: 'Oruth the Forgemaster', like: 'warrior', hp: 24, atk: 2.3, def: 1.8, speed: 2.4, xp: 14, gold: 34, mech: 'anvil', escort: ['forgewight', 'forgewight'], undead: true, heirloom: 'oruths_last_commission' },
@@ -862,7 +863,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       ring: { cfg: RG, cx, cy, R: opts.camp ? opts.camp.arena : Math.min(g.x1 - g.x0 + 1, g.y1 - g.y0 + 1) / 2, t: 0, secs: Math.max(60, opts.secs || RG.window), boss: 0, base: 0,
         coming: opts.companies.slice(0, RG.maxParties - 1).map((c, i) => ({ at: RG.arrive[i], id: c.id, members: c.members, in: false })),
         companies: [], all: [...state.party], part: new Map(), parties: 1, over: null, rest: 0, tellN: 0,
-        stampT: 4, sweepT: 7, stonesT: 16, slamT: 2.5, markT: 0, mark: null, stonesAt: [...RG.stones.at], cracked: false } };
+        stampT: 4, sweepT: 7, stonesT: 16, slamT: 2.5, gazeT: RG.gaze ? RG.gaze.first : 1e9, markT: 0, mark: null, stonesAt: [...RG.stones.at], cracked: false } };
     w.enemies = []; w.projectiles = []; w.allies = [];
     rng = mulberry32(streamSeed(seed ^ Math.imul((opts.salt || 0) + 1, 0x9e3779b1), 0x41b6));   // (the Ring's own draws: its window's salt)
     const R = battle.ring, k = foe(w, RG.kind, RG.level, cx, cy, premiumOf(RG.level), false, FAMILIES[RG.family], BOSSES[RG.id]);
@@ -956,9 +957,9 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   function ringTells(w, k, dt) {
     const R = battle.ring, T = state.t, live = R.all.filter(alive);
     if (!R.cracked && k.hp < k.maxHp * RC().cracked) { R.cracked = true; bus.emit('ring', { t: 'cracked' }); }
-    const push = (t) => { t.id = ++R.tellN; t.from = T; battle.tells.push(t); bus.emit('tell', { id: t.id, kind: t.kind, x: t.x, y: t.y, r: t.r, dir: t.dir ?? null, arc: t.arc ?? null, wind: t.at - T }); };
+    const push = (t) => { t.id = ++R.tellN; t.from = T; battle.tells.push(t); bus.emit('tell', { id: t.id, kind: t.kind, x: t.x, y: t.y, r: t.r, dir: t.dir ?? null, arc: t.arc ?? null, lane: t.lane ?? null, wind: t.at - T }); };
     // (one wind-up at a time: it faces the tell it winds and stands still for it, kingTurn; the swing lands with it)
-    const wind = (t, x, y) => { push(t); k.act = t.at - T; k.windDir = atan2(y - k.y, x - k.x); t.swing = t.kind === 'sweep' ? 'b' : 'heavy'; if (t.kind !== 'slam') k.hold = t.at - T; };   // (it plants its feet for a stamp or a sweep; a slam it throws on the move)
+    const wind = (t, x, y) => { push(t); k.act = t.at - T; k.windDir = atan2(y - k.y, x - k.x); t.swing = t.kind === 'sweep' ? 'b' : t.kind === 'gaze' ? 'cast' : 'heavy'; if (t.kind !== 'slam') k.hold = t.at - T; };   // (it plants its feet for a stamp or a sweep; a slam it throws on the move)
     if (!live.length) return;
     // its blow (v1.106: every hit of its, the plain blow too, 70 % of max HP: a hero at 30 % after one, Downed by a second
     // unhealed, the owner): a slam where whoever's nearest stands, told on the ground as the others are
@@ -977,6 +978,19 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       const S = RC().sweep; R.sweepT = R.cracked ? S.crackedEvery : S.every;
       const t = nearest(k, live.map(posOf)) || posOf(live[0]), dir = atan2(t.y - k.y, t.x - k.x);
       wind({ kind: 'sweep', x: k.x, y: k.y, r: S.len + (k.body || 0), dir, arc: S.arc, at: T + S.wind, hurt: S.hurt, throw: S.throw }, t.x, t.y);
+    }
+    // (v1.147) the First Pilgrim's gaze (ring.js PILGRIM): the Ember's light out through his eye in two beams, each a lane
+    // from his feet to one of the two furthest of the companies (those hanging back: the bows, the healers), told as the
+    // rest are; he stands and looks for its wind
+    const GZ = RC().gaze;
+    if (GZ && (R.gazeT -= dt) <= 0 && k.act <= 0) {
+      R.gazeT = R.cracked ? GZ.crackedEvery : GZ.every;
+      const far = live.map((m) => ({ a: posOf(m), d: hypot(posOf(m).x - k.x, posOf(m).y - k.y) })).sort((p, q) => q.d - p.d).slice(0, GZ.n);
+      far.forEach(({ a }, i) => {
+        const dir = atan2(a.y - k.y, a.x - k.x), t = { kind: 'gaze', x: k.x, y: k.y, r: GZ.len + (k.body || 0), dir, lane: GZ.lane, at: T + GZ.wind, hurt: GZ.hurt, beam: i };
+        if (i === 0) wind(t, a.x, a.y); else push(t);
+      });
+      bus.emit('ring', { t: 'gaze', n: far.length });
     }
     const share = k.hp / k.maxHp, due = R.stonesAt.length && share <= R.stonesAt[0];
     if ((R.stonesT -= dt) <= 0 || due) {
@@ -1008,7 +1022,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
           if (isWalkable(w, gx, gy) && roomAt(w, gx, gy) === battle.room) { if (m === hero()) { state.player.x = gx; state.player.y = gy; } m.x = gx; m.y = gy; }
         }
       }
-      bus.emit('tellLand', { id: t.id, kind: t.kind, x: t.x, y: t.y, r: t.r, dir: t.dir ?? null, arc: t.arc ?? null, hit });
+      bus.emit('tellLand', { id: t.id, kind: t.kind, x: t.x, y: t.y, r: t.r, dir: t.dir ?? null, arc: t.arc ?? null, lane: t.lane ?? null, hit });
     }
     battle.tells = battle.tells.filter((t) => !t.done || T - t.at < 0.6);
   }

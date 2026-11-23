@@ -2,7 +2,7 @@
 // right party (fighter, rogue, cleric) walks into the old stones in the Fens in a window and fights it to its end, with as many AI
 // companies as the window draws (1–4 offline: picked windows give 2–5 parties). Prints, per run and in sum: won or lost,
 // how long (the targets: 5–7 minutes at any head count), how often each of the party went down, the hero's tier and pay.
-//   node tools/balance/regionboss.mjs [--boss kingstone|furnace_nine] [--parties 2,3,4,5] [--lv 18] [--seeds 3] [--pilot | --blind] [--src dir]
+//   node tools/balance/regionboss.mjs [--boss kingstone|furnace_nine|first_pilgrim] [--parties 2,3,4,5] [--lv 18] [--seeds 3] [--pilot | --blind] [--src dir]
 // --boss furnace_nine: Furnace Nine at the Vault's mouth in the Reach instead (v1.126; its lamp broken first, its level 30);
 // --feeds 0.03: what it takes back for each of the fallen (0: none)
 // --pilot: the hero is moved out of a tell as a player would (a 0.5 s look, then away to the nearest open ground);
@@ -28,7 +28,7 @@ const want = ['fighter', 'rogue', 'cleric'];
 
 /** a window whose draw brings `n` AI companies @param {number} seed @param {number} n */
 function windowFor(seed, n) {
-  for (let d = 1; d < 29; d++) for (let h = 0; h < 24; h++) { const id = `2026-11-${String(d).padStart(2, '0')}T${String(h).padStart(2, '0')}${RING.offset ? ':30' : ''}`; if (windowDraw(seed, id).n === n) return id; }
+  for (let d = 1; d < 29; d++) for (let h = 0; h < 24; h++) { const id = `2026-11-${String(d).padStart(2, '0')}T${String(h).padStart(2, '0')}${RING.offset ? ':30' + (RING.tag || '') : ''}`; if (windowDraw(seed, id).n === n) return id; }
   return null;
 }
 function run(seed, parties) {

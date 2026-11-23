@@ -38,7 +38,7 @@ export function createAnimator() {
     let swing = false, step = false;
     if ((u.atkN || 0) !== s.atkN) {                              // a swing: light A / light B alternate, heavy for abilities and elites
       s.atkN = u.atkN || 0; s.atkT0 = now; swing = true;
-      s.atkKey = (u.atkKind === 'heavy' && C.heavy && 'heavy') || (u.atkKind === 'b' && C.attack2 && 'attack2') || 'attack'; s.atkClip = C[s.atkKey];
+      s.atkKey = (u.atkKind === 'heavy' && C.heavy && 'heavy') || (u.atkKind === 'b' && C.attack2 && 'attack2') || (u.atkKind === 'cast' && C.cast && 'cast') || 'attack';   // (cast: the First Pilgrim's gaze, v1.147) s.atkClip = C[s.atkKey];
     }
     if ((u.hitN || 0) !== s.hitN) { s.hitN = u.hitN || 0; s.hitT0 = now; }
     if ((u.fidgetN || 0) !== s.fidN) { s.fidN = u.fidgetN || 0; s.gestT0 = now; s.gest = 'fidget'; }   // idle gestures (companions at ease, the hero idling)

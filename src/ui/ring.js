@@ -11,12 +11,14 @@
 //   - the end card from `ringResult`: how it ended, the tier (its word beside its colour), the pay, the companies' parts
 //     ranked, and **Close**.
 // (v1.126) Furnace Nine's the same, at half past, at the Vault's mouth in the Cinder Reach, once the company has broken it:
-// the clock says whichever window is open, else the next. A dev query (localhost) holds a window open: ?dev&ring=on
-// (the Kingstone's), ?dev&ring=furnace (Furnace Nine's). DOM only: reads sim state and events, pushes commands. Every
+// the clock says whichever window is open, else the next. (v1.147) The First Pilgrim's the same half hour as Furnace Nine's,
+// at the Lip in the Pale Heights: two windows open at once then, and the one told to the sim is the land the hero stands
+// in's. A dev query (localhost) holds a window open: ?dev&ring=on (the Kingstone's), ?dev&ring=furnace (Furnace Nine's),
+// ?dev&ring=pilgrim (the First Pilgrim's). DOM only: reads sim state and events, pushes commands. Every
 // word is written here; names are content/arena.json's (a company by its player's, as the Bowl's board shows them).
 
 import { swallow } from './actorart.js';
-import { RING, FURNACE, windowAt, paidFor } from '../sim/ring.js';
+import { RING, FURNACE, PILGRIM, RINGS, windowAt, paidFor } from '../sim/ring.js';
 
 const CSS = `
 #ringLine { position: fixed; left: calc(10px + env(safe-area-inset-left, 0px)); top: calc(var(--hud-b, 44px) + 6px); z-index: 4; display: none; pointer-events: none; max-width: calc(100vw - 150px);
@@ -53,10 +55,11 @@ const CSS = `
 #ringCard button { width: 100%; min-height: 46px; border-radius: 10px; font: 600 15px Georgia, serif; background: linear-gradient(#ff9a50, #b4461c); color: #1a0c06; border: 1px solid #ffc890; }
 `;
 /** where each stands, and what its tells are called, in the lines and toasts */
-const PLACE = { kingstone: 'the old stones', furnace_nine: 'the Vault’s mouth' };
+const PLACE = { kingstone: 'the old stones', furnace_nine: 'the Vault’s mouth', first_pilgrim: 'the Lip' };
 const WORDS = {
   kingstone: { cracked: 'The Kingstone cracks · its blows come faster', stones: 'Stones fall · find the clear', stir: 'The old stones are stirring' },
   furnace_nine: { cracked: 'Furnace Nine roars white · its blows come faster', stones: 'The vents open · find the clear', stir: 'The Vault’s mouth glows', fed: 'Furnace Nine feeds on the fallen · it burns hotter' },
+  first_pilgrim: { cracked: 'The eye splits · it looks faster', stones: 'The Lip sheds its glass · find the clear', stir: 'Something at the Lip is looking down', gaze: 'He looks your way · out of the light' },
 };
 const TIER = { gold: 'Gold', silver: 'Silver', bronze: 'Bronze' }, RW = { common: 'Common', fine: 'Fine', rare: 'Rare', heirloom: 'Heirloom' };
 const mmss = (s) => { s = Math.max(0, Math.ceil(s)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
@@ -70,7 +73,7 @@ export function createRing({ sim, params, dev = false }) {
   bar.innerHTML = '<div class="top"><span>The Kingstone</span><small></small></div><div class="hp"><i></i><em></em></div><div class="sub"></div>';
   const barName = /** @type {HTMLElement} */ (bar.querySelector('.top span'));
   const barTop = /** @type {HTMLElement} */ (bar.querySelector('.top small')), barHp = /** @type {HTMLElement} */ (bar.querySelector('.hp i')), barSub = /** @type {HTMLElement} */ (bar.querySelector('.sub'));
-  const heldAs = dev && params ? params.get('ring') : null, held = heldAs === 'on' ? RING : heldAs === 'furnace' ? FURNACE : null;   // (localhost: a window held open, for tests and captures)
+  const heldAs = dev && params ? params.get('ring') : null, held = heldAs === 'on' ? RING : heldAs === 'furnace' ? FURNACE : heldAs === 'pilgrim' ? PILGRIM : null;   // (localhost: a window held open, for tests and captures)
   /** @type {Record<string, any>} */ let by = {};
   fetch('./content/arena.json').then((r) => r.json()).then((d) => { by = Object.fromEntries(d.companies.map((c) => [c.id, c])); }).catch(() => {});
   const who = (id) => (by[id] && (by[id].player || by[id].name)) || 'A company';
@@ -81,12 +84,14 @@ export function createRing({ sim, params, dev = false }) {
     const w = windowAt(held === G ? { ...c, m: G.offset / 60, s: 0 } : c, G), nx = new Date(n.getTime() + w.until * 1000);
     return { ...w, G, at: `${String(nx.getHours()).padStart(2, '0')}:${String(nx.getMinutes()).padStart(2, '0')}` };   // (the next one's, the Date's own: past midnight too)
   }
-  /** the window that matters now: an open one (only one is, at a time), else the next to open @param {(G: typeof RING) => boolean} [mine] whose to consider */
+  /** the window that matters now: an open one (the land the hero's in first: at half past Furnace Nine's and the First
+   * Pilgrim's both are), else the next to open @param {(G: typeof RING) => boolean} [mine] whose to consider */
   function clock(mine = () => true) {
-    const n = new Date(), all = [RING, FURNACE].filter(mine).map((G) => clockFor(G, n));
+    const n = new Date(), all = Object.values(RINGS).filter(mine).map((G) => clockFor(G, n)), here = sim.state.region;
     // (a held window first: ?dev&ring=furnace in the first quarter of an hour found the Kingstone's real window open
     // before it, told the sim that one, and the Vault's mouth went back to its furnace-priests)
-    return all.find((w) => w.open && w.G === held) || all.find((w) => w.open) || all.sort((a, b) => a.until - b.until)[0] || clockFor(RING, n);
+    return all.find((w) => w.open && w.G === held) || all.find((w) => w.open && w.G.region === here) || all.find((w) => w.open)
+      || all.sort((a, b) => a.until - b.until || (a.G.region === here ? -1 : b.G.region === here ? 1 : 0))[0] || clockFor(RING, n);
   }
   let toastT = 0;
   const say = (text, ms = 2800) => { toast.textContent = text; toast.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('on'), ms); };
@@ -102,6 +107,7 @@ export function createRing({ sim, params, dev = false }) {
     else if (e.t === 'cracked') say(W.cracked, 3000);
     else if (e.t === 'stones') say(W.stones, 2000);
     else if (e.t === 'fed' && W.fed) say(W.fed, 2400);
+    else if (e.t === 'gaze' && W.gaze) say(W.gaze, 1800);
   });
   sim.bus.on('ringLeft', () => { card.classList.remove('on'); });
 
@@ -112,11 +118,11 @@ export function createRing({ sim, params, dev = false }) {
     const me = r.parts.find((q) => q.id === r.you) || null;
     card.textContent = '';
     const add = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; card.appendChild(e); return e; };
-    const furnace = r.boss === 'furnace_nine';
+    const furnace = r.boss === 'furnace_nine', pilgrim = r.boss === 'first_pilgrim';
     add('div', 'kind', r.name || 'The Kingstone');
-    add('h2', '', won ? (furnace ? 'It goes out' : 'It falls back into the ring') : left ? 'You walked out on it' : 'The window shuts');
-    add('p', '', won ? `It went down in ${mmss(r.secs)}, ${r.parties} companies round it. ${furnace ? 'It lights again at half past the next hour.' : 'It stands again at the next hour.'}`
-      : left ? `Out of ${furnace ? 'the Vault’s mouth' : 'the stones'} before the end: nothing paid for this window.` : `It was still standing when the window's quarter hour ran out. A minute there pays Bronze.`);
+    add('h2', '', won ? (furnace ? 'It goes out' : pilgrim ? 'He shuts his eye' : 'It falls back into the ring') : left ? 'You walked out on it' : 'The window shuts');
+    add('p', '', won ? `${pilgrim ? 'He' : 'It'} went down in ${mmss(r.secs)}, ${r.parties} companies round ${pilgrim ? 'him' : 'it'}. ${furnace ? 'It lights again at half past the next hour.' : pilgrim ? 'He looks again at half past the next hour.' : 'It stands again at the next hour.'}`
+      : left ? `Out of ${furnace ? 'the Vault’s mouth' : pilgrim ? 'the Lip' : 'the stones'} before the end: nothing paid for this window.` : `${pilgrim ? 'He was' : 'It was'} still standing when the window's quarter hour ran out. A minute there pays Bronze.`);
     add('div', `tier ${r.tier || 'none'}`, r.tier ? `${TIER[r.tier]} tier` : 'No tier');
     const nums = add('div', 'nums', null);
     const kv = (k, v) => { const d = document.createElement('div'); d.append(`${k} `); const b = document.createElement('b'); b.textContent = v; d.append(b); nums.appendChild(d); };

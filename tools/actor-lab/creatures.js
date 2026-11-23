@@ -806,6 +806,152 @@ function furnace(o = {}) {
   return { root: R.mesh(o.glow || '#ff8a30', 1.6), clips: [] };   // (its clips are KayKit's: the variant's rig)
 }
 
+// ── the First Pilgrim (the Pale Heights' region boss: world doc v1.67 §10.2, GDD v1.147 §19.11) ───────────────────────
+// The pilgrim who found the Ember and looked too long. A gaunt man a head taller than any, his head one great eye: a pale
+// globe veined red in a lidded socket, its iris the Ember's orange with the light behind it, ringed in shards of the
+// crater's black glass, the longest over the brow, rimed at their tips. Ice grown out of his back in long frozen strands,
+// curling up behind the eye. His pilgrim's robe gone to rags below a rope belt, a gourd on it, the hood thrown back round
+// his neck, a mantle over one shoulder; frost-pale skin, blue in its hollows, rime on what faces up, his toes black with
+// cold. His crook in his right hand, its head a brass crescent hooked and spiked. On KayKit's rig (the variant's
+// creature.rig); his own bones are the ice strands, their sway laid into its clips.
+function pilgrim(o = {}) {
+  const R = new Rig(o.seed || 97); R.crease = (40 * Math.PI) / 180;
+  const skin = new THREE.Color(o.skin || '#76818c'), skinLo = new THREE.Color('#4e5a6a'), rime = new THREE.Color('#e4eef4');
+  const skinC = (p, n) => (n.y > 0.72 ? mixC(skin, rime, (n.y - 0.72) * 3) : n.y < -0.3 ? mixC(skin, skinLo, (-n.y - 0.3) * 2) : skin);
+  const wool = new THREE.Color(o.robe || '#5e5042'), woolLo = new THREE.Color('#2e261e'), woolHi = new THREE.Color('#9a9488');
+  const woolC = (p, n) => (n.y > 0.75 ? mixC(wool, woolHi, (n.y - 0.75) * 3) : n.y < -0.2 ? woolLo : wool);
+  const sclera = new THREE.Color('#dcdcd2'), vein = new THREE.Color('#8a2420'), pupil = new THREE.Color('#140806');
+  const iris = new THREE.Color('#ff9a40'), core = new THREE.Color('#fff0c8');
+  const glass = new THREE.Color('#14171e'), glassHi = new THREE.Color('#56647a'), ice = new THREE.Color('#9cc4e0'), iceLo = new THREE.Color('#3e6a96');
+  const glassC = (p, n) => (n.y > 0.5 ? mixC(glass, glassHi, (n.y - 0.5) * 2) : glass), iceC = (p, n) => (n.y > 0.3 ? mixC(ice, rime, (n.y - 0.3)) : mixC(iceLo, ice, n.y + 0.7));
+  const wood = new THREE.Color('#3a2c20'), brass = new THREE.Color('#b08a3a'), brassHi = new THREE.Color('#e8c46a'), brassLo = new THREE.Color('#5a4218'), rope = new THREE.Color('#8a7652'), toe = new THREE.Color('#1e2230');
+  const brassC = (p, n) => (n.y > 0.4 ? mixC(brass, brassHi, (n.y - 0.4) * 1.6) : n.y < -0.4 ? brassLo : brass);
+  // the bones: long gaunt legs, a narrow chest, the eye on a short stalk of a neck, arms to mid-thigh
+  R.bone('root', null, V(0, 0.92, 0)); R.bone('spine', R.by.get('root'), V(0, 1.08, -0.01)); R.bone('chest', R.by.get('spine'), V(0, 1.3, 0));
+  R.bone('neck', R.by.get('chest'), V(0, 1.5, 0.03)); R.bone('head', R.by.get('neck'), V(0, 1.6, 0.05));
+  const ARM = {};
+  for (const s of [1, -1]) {
+    const Sh = V(0.21 * s, 1.43, 0), El = V(0.27 * s, 1.13, 0.01), Wr = V(0.3 * s, 0.85, 0.06);
+    const u = R.bone(`armU${s}`, R.by.get('chest'), Sh), l = R.bone(`armL${s}`, u, El); R.bone(`hand${s}`, l, Wr);
+    const h = R.bone(`legU${s}`, R.by.get('root'), V(0.1 * s, 0.9, 0)), k = R.bone(`legL${s}`, h, V(0.11 * s, 0.5, 0.02)); R.bone(`foot${s}`, k, V(0.12 * s, 0.08, 0));
+    ARM[s] = { Sh, El, Wr };
+  }
+  // the ice: five strands out of his upper back, curling up and out behind the eye, three bones each
+  const STR = [[-0.13, 1.42, 0.55, 0.62], [0.13, 1.42, -0.55, 0.62], [-0.07, 1.36, 1.25, 0.5], [0.07, 1.36, -1.25, 0.5], [0, 1.46, 0, 0.72]], strands = [];
+  STR.forEach(([x, y, out, len], i) => {
+    const b = V(x, y, -0.13), P = [b, b.clone().add(V(-out * 0.08, 0.12 * len / 0.6, -0.16)), b.clone().add(V(-out * 0.2, 0.38 * len / 0.6, -0.22)), b.clone().add(V(-out * 0.3, 0.62 * len / 0.6, -0.16)), b.clone().add(V(-out * 0.34, 0.8 * len / 0.6, -0.04))];
+    let tb = R.by.get('chest'); const names = [];
+    for (let k = 0; k < 3; k++) { tb = R.bone(`ice${i}${k}`, tb, P[k]); names.push(`ice${i}${k}`); }
+    const t = tube(P, [0.05, 0.042, 0.03, 0.016, 0.002], names, 6, 18); R.part(t.g, R.skin(t.skin), iceC, false, (25 * Math.PI) / 180);
+    strands.push(names);
+  });
+  // the eye: a pale globe on its stalk, veined, its iris the Ember's, a dark pupil with a white-hot glint; a lidded socket
+  const E = V(0, 1.75, 0.1), ER = 0.19;   // (round P1: it sat back in its socket and the lids hid it, a helmet's visor: forward, the lids thin)
+  R.part(limb(V(0, 1.47, 0.02), V(0, 1.66, 0.02), 0.075, 0.11, 9), 'head', skinC);
+  R.part(blob(E.clone().add(V(0, -0.02, -0.06)), [0.17, 0.16, 0.15], [12, 9]), 'head', skinC);   // (the socket's back, flesh)
+  const blood = new THREE.Color('#c07a6a');   // (round P2: a clean white globe read as a toy's: bloodshot toward its rim)
+  R.part(blob(E, [ER, ER, ER * 0.96], [16, 12]), 'head', (p, n) => (n.z < 0.1 ? skinC(p, n) : n.z < 0.75 ? mixC(blood, sclera, (n.z - 0.2) / 0.55) : sclera));
+  for (let k = 0; k < 14; k++) {   // veins from the iris out over the globe
+    const a = (k / 14) * TAU + 0.3, d0 = 0.1, pts = [];
+    for (let j = 0; j <= 3; j++) { const r = d0 + j * 0.032, wob = 0.25 * Math.sin(k * 3.1 + j * 1.7), x = Math.cos(a + wob * 0.3) * r, y = Math.sin(a + wob * 0.3) * r, z = Math.sqrt(Math.max(0, ER * ER - x * x - y * y)); pts.push(E.clone().add(V(x, y, z * 0.97 + 0.004))); }
+    for (let j = 0; j < 3; j++) R.part(limb(pts[j], pts[j + 1], 0.008 - j * 0.0015, 0.006 - j * 0.0015, 4), 'head', vein);
+  }
+  R.part(new THREE.TorusGeometry(0.112, 0.012, 6, 28).translate(E.x, E.y, E.z + ER * 0.82), 'head', new THREE.Color('#3a1206'));   // (the iris's dark edge)
+  R.part(blob(E.clone().add(V(0, 0, ER * 0.84)), [0.112, 0.112, 0.045], [16, 6]), 'head', iris, true);
+  R.part(blob(E.clone().add(V(0, 0, ER * 0.84 + 0.04)), [0.034, 0.062, 0.012], [10, 6]), 'head', pupil);   // (a slit: before it, the iris hid it)
+  R.part(blob(E.clone().add(V(0.04, 0.045, ER * 0.84 + 0.04)), [0.016, 0.016, 0.008], [6, 4]), 'head', core, '#fff0c8');
+  // the lids: a heavy brow over it, a lower lid, a rim of flesh
+  R.part(new THREE.TorusGeometry(ER * 0.99, 0.022, 8, 30).scale(1, 1, 0.6).translate(E.x, E.y, E.z - 0.02), 'head', skinC);
+  // (round P3: a cap of lid over the top read as a grey helmet from the game's camera, above. A narrow lid now, dark, its
+  // edge low over the iris's top, a stare)
+  const lidC = (p, n) => mixC(skinLo, skin, Math.max(0, n.y) * 0.6);
+  R.part(new THREE.SphereGeometry(ER * 1.04, 22, 6, -Math.PI * 0.95, Math.PI * 0.9, Math.PI * 0.06, Math.PI * 0.2).rotateX(Math.PI / 2 + 0.25).translate(E.x, E.y, E.z + 0.004), 'head', lidC);
+  R.part(new THREE.TorusGeometry(ER * 0.7, 0.026, 6, 22, Math.PI * 0.8).rotateZ(Math.PI * 0.1).translate(E.x, E.y - 0.005, E.z + ER * 0.72), 'head', lidC);   // the lid's edge, heavy
+  R.part(new THREE.SphereGeometry(ER * 1.02, 18, 6, 0, TAU, Math.PI * 0.86, Math.PI * 0.14).rotateX(-0.25).translate(E.x, E.y, E.z + 0.002), 'head', skinC);   // the lower
+  // the ring of black glass: shards out from behind the eye, longest over the brow, none under it; rime on the top three
+  const SH = 13;
+  for (let k = 0; k < SH; k++) {
+    const a = Math.PI / 2 + ((k - (SH - 1) / 2) / ((SH - 1) / 2)) * Math.PI * 0.8, d = V(Math.cos(a), Math.sin(a), 0), up = Math.max(0, d.y);
+    const len = 0.14 + 0.26 * up * up + 0.05 * hash3(k, 3, 7, 1), w = 0.035 + 0.02 * up;
+    const b = E.clone().add(d.clone().multiplyScalar(ER * 0.92)).add(V(0, 0, -0.08)), e = b.clone().add(d.clone().multiplyScalar(len)).add(V(0, 0, -0.08 - 0.05 * up));
+    R.part(limb(b, e, w, 0.003, 4), 'head', glassC, false, 0.3);
+    if (up > 0.8) R.part(limb(b.clone().lerp(e, 0.75), e, w * 0.32, 0.002, 4), 'head', ice, '#a8dcff');
+  }
+  // the body: a narrow chest over a gaunt belly, ribs showing
+  R.part(blob(V(0, 1.33, 0.0), [0.22, 0.17, 0.13], [12, 9]), 'chest', skinC);
+  R.part(limb(V(0, 1.0, 0), V(0, 1.24, 0.0), 0.13, 0.17, 10), 'spine', skinC);
+  // (round P1: a bare stick of a man under a kilt. The robe now: its body over the back and sides, open down the front
+  // on his ribs, falling to his shins)
+  R.part(blob(V(0, 1.3, -0.045), [0.235, 0.2, 0.135], [14, 10]), 'chest', woolC);
+  R.part(limb(V(0, 0.98, -0.03), V(0, 1.24, -0.04), 0.155, 0.19, 12).scale(1, 1, 0.9), 'spine', woolC);
+  for (const y of [1.25, 1.31, 1.37]) for (const s of [1, -1]) R.part(limb(V(0.03 * s, y, 0.11), V(0.15 * s, y - 0.03, 0.07), 0.012, 0.008, 5), 'chest', skinC);
+  // the robe: the hood thrown back round the neck, a mantle over his left shoulder and across, a rope belt, a gourd
+  R.part(new THREE.TorusGeometry(0.13, 0.055, 8, 18).rotateX(Math.PI / 2 - 0.25).translate(0, 1.47, -0.01), 'chest', woolC);
+  R.part(blob(V(0, 1.48, -0.13), [0.13, 0.1, 0.07], [10, 7]), 'chest', woolC);   // (the hood's fall at his back)
+  R.part(limb(V(0.2, 1.46, 0.0), V(-0.14, 1.06, 0.1), 0.1, 0.07, 8).scale(1, 1, 0.55).translate(0, 0, 0.04), 'chest', woolC);
+  R.part(limb(V(0.2, 1.46, -0.02), V(-0.12, 1.04, -0.12), 0.1, 0.07, 8).scale(1, 1, 0.55).translate(0, 0, -0.04), 'chest', woolC);
+  R.part(blob(V(0.21, 1.45, 0.0), [0.1, 0.07, 0.1], [9, 6]), 'armU1', woolC);
+  R.part(new THREE.TorusGeometry(0.155, 0.02, 6, 22).rotateX(Math.PI / 2).translate(0, 1.0, 0.0), 'spine', rope);
+  R.part(limb(V(0.06, 0.99, 0.14), V(0.08, 0.78, 0.16), 0.012, 0.01, 5), 'root', rope);
+  R.part(blob(V(0.17, 0.86, 0.1), [0.055, 0.07, 0.055], [9, 7]), 'root', new THREE.Color('#9a7a44'));   // the gourd
+  R.part(blob(V(0.17, 0.95, 0.1), [0.03, 0.035, 0.03], [7, 5]), 'root', new THREE.Color('#9a7a44'));
+  // the skirt, falling from the belt to the knees in rags; each rag on the leg it hangs by
+  const legW = (s) => R.skin((p) => { const k = Math.max(0, Math.min(1, (0.95 - p.y) / 0.5)); return [[`legU${s}`, 0.35 + 0.65 * k], ['root', 0.65 - 0.65 * k]]; });
+  for (const s of [1, -1]) R.part(new THREE.CylinderGeometry(0.17, 0.26, 0.68, 16, 3, true, s > 0 ? 0 : Math.PI, Math.PI).translate(0, 0.65, 0), legW(s), woolC);
+  for (let k = 0; k < 18; k++) {
+    const a = (k / 18) * TAU + 0.1, s = Math.sin(a) >= 0 ? 1 : -1, x = Math.sin(a), z = Math.cos(a), len = 0.1 + 0.14 * hash3(k, 9, 2, 4) + (z < -0.3 ? 0.1 : 0);
+    const at = V(x * 0.255, 0.33, z * 0.255);
+    R.part(limb(at, at.clone().add(V(x * 0.03, -len, z * 0.03)), 0.055, 0.008, 3), legW(s), woolC);
+  }
+  // the arms: rags to the elbow, gaunt forearms, long hands; the left open, the right closed on the crook
+  for (const s of [1, -1]) {
+    const A = ARM[s], U = `armU${s}`, Lb = `armL${s}`, H = `hand${s}`;
+    const shW = R.skin((p) => { const k = Math.max(0, Math.min(1, p.distanceTo(A.Sh) / 0.1)); return k >= 1 ? [[U, 1]] : [[U, 0.5 + 0.5 * k], ['chest', 0.5 - 0.5 * k]]; });
+    const elW = R.skin((p) => { const k = Math.max(0, Math.min(1, p.distanceTo(A.El) / 0.06)); return k >= 1 ? [[Lb, 1]] : [[Lb, 0.5 + 0.5 * k], [U, 0.5 - 0.5 * k]]; });
+    R.part(blob(A.Sh, [0.09, 0.08, 0.09], [9, 7]), shW, woolC);
+    R.part(limb(A.Sh, A.El, 0.085, 0.1, 9), shW, woolC);                       // (the sleeve, to the elbow)
+    for (let k = 0; k < 5; k++) { const a = (k / 5) * TAU, at = A.El.clone().add(V(Math.cos(a) * 0.075, 0.02, Math.sin(a) * 0.075)); R.part(limb(at, at.clone().add(V(0, -0.07 - 0.05 * hash3(k, s, 1, 1), 0)), 0.03, 0.004, 3), U, woolC); }
+    R.part(limb(A.El, A.Wr, 0.055, 0.04, 8), elW, skinC);
+    R.part(blob(A.El, [0.052, 0.05, 0.052], [7, 5]), elW, skinC);
+    R.part(blob(A.Wr.clone().add(V(0, -0.05, 0.01)), [0.04, 0.06, 0.035], [8, 6]), H, skinC);
+    if (s > 0) for (let f = 0; f < 4; f++) { const b = A.Wr.clone().add(V(0.012 * (f - 1.5) + 0.005, -0.1, 0.02 + 0.008 * (f - 1.5))), e = b.clone().add(V(0.008 * (f - 1.5), -0.09, 0.025)); R.part(limb(b, e, 0.011, 0.006, 5), H, skinC); R.part(limb(e, e.clone().add(V(0, -0.025, 0.02)), 0.006, 0.002, 4), H, toe); }
+    else R.part(blob(A.Wr.clone().add(V(0, -0.1, 0.035)), [0.042, 0.045, 0.042], [8, 6]), H, skinC);   // (the fist on the crook)
+  }
+  // the legs: bare and gaunt below the rags, the feet long, the toes black with cold
+  for (const s of [1, -1]) {
+    R.part(limb(V(0.1 * s, 0.9, 0), V(0.11 * s, 0.5, 0.02), 0.09, 0.065, 9), `legU${s}`, skinC);
+    R.part(limb(V(0.11 * s, 0.5, 0.02), V(0.12 * s, 0.09, 0.0), 0.06, 0.042, 8), `legL${s}`, skinC);
+    R.part(blob(V(0.11 * s, 0.5, 0.035), [0.045, 0.045, 0.04], [7, 5]), `legL${s}`, skinC);
+    R.part(blob(V(0.12 * s, 0.05, 0.06), [0.05, 0.035, 0.11], [9, 6]), `foot${s}`, skinC);
+    for (let k = 0; k < 4; k++) R.part(blob(V((0.12 + 0.022 * (k - 1.5)) * s, 0.03, 0.17), [0.014, 0.014, 0.022], [6, 4]), `foot${s}`, toe);
+  }
+  // the crook: a dark shaft through his right fist, brass-banded and rimed, its head a brass crescent hooked out and up,
+  // spiked along its outer edge, a shard of the black glass in its curl
+  const bot = V(-0.33, 0.03, 0.16), top = V(-0.27, 2.0, 0.0), cr = 0.15, CC = top.clone().add(V(0, cr, 0));
+  R.part(limb(bot, top, 0.022, 0.024, 8), 'hand-1', (p, n) => (n.y > 0.6 ? rime : wood));
+  for (const u of [0.0, 0.62, 0.97]) R.part(limb(bot.clone().lerp(top, u), bot.clone().lerp(top, u + 0.025), 0.03, 0.03, 8), 'hand-1', brassC);
+  R.part(new THREE.TorusGeometry(cr, 0.032, 8, 30, Math.PI * 1.12).rotateZ(-Math.PI / 2).rotateY(Math.PI).translate(CC.x, CC.y, CC.z), 'hand-1', brassC);
+  for (let k = 0; k < 7; k++) {
+    const a = -Math.PI / 2 + 0.35 + (k / 6) * Math.PI * 0.75, d = V(-Math.cos(a), Math.sin(a), 0), b = CC.clone().add(d.clone().multiplyScalar(cr + 0.02));
+    R.part(limb(b, b.clone().add(d.clone().multiplyScalar(0.07 + 0.03 * (k % 2))), 0.016, 0.002, 4), 'hand-1', brassC, false, 0.3);
+  }
+  R.part(limb(CC.clone().add(V(0.04, -0.05, 0)), CC.clone().add(V(0.0, 0.08, 0)), 0.03, 0.003, 4), 'hand-1', glassC, false, 0.3);
+  const root3 = R.mesh(o.glow || '#ff6a1c', 1.6);
+  // the ice's sway (his own bones; the body's motion is KayKit's): slow in the idle, trailing in the walk, flung in a blow
+  const sway = (t, a = 1, k = 1, lean = 0) => Object.fromEntries(strands.flatMap((n, i) => n.map((b, j) => [b, qe(lean * (0.1 + 0.1 * j) + 0.06 * a * S(k * t - j * 0.18 + i * 0.21), 0.05 * a * C(k * t * 0.5 + i * 0.3), 0.07 * a * S(k * t - j * 0.2 + i * 0.37))])));
+  const clips = [
+    clip(R, 'Idle', 3.0, (t) => ({ q: sway(t) })),
+    clip(R, 'Walk', 1.0, (t) => ({ q: sway(t, 0.7, 2, -0.15) })),   // (round P4: leant forward, they flared over his head)
+    clip(R, 'Attack', 0.8, (t) => ({ q: sway(t, 1.6, 1, 0.6 * bell(0.2, 0.5, 0.9, t)) })),
+    clip(R, 'Attack2', 0.8, (t) => ({ q: sway(t, 1.6, 1, 0.5 * bell(0.2, 0.5, 0.9, t)) })),
+    clip(R, 'Heavy', 1.2, (t) => ({ q: sway(t, 2, 1, -0.5 * bell(0, 0.35, 0.5, t) + 0.8 * bell(0.4, 0.6, 1, t)) })),
+    clip(R, 'Hit', 0.5, (t) => ({ q: sway(t, 2.2, 1, 0.5 * bell(0, 0.2, 1, t)) })),
+    clip(R, 'Death', 1.5, (t) => ({ q: sway(t, 1.5 * (1 - t), 1, 0.9 * ease(0.2, 0.8, t)) })),
+    clip(R, 'Cast', 1.5, (t) => ({ q: sway(t, 1.2, 1, -0.6 * bell(0.1, 0.4, 0.95, t)) })),   // (the gaze: the strands flare back off him)
+  ];
+  return { root: root3, clips };
+}
+
 // ── Gritch, called the Foreman (world doc v1.53 §3.3; docs/art-critic-pass-reach-cast.md) ────────────────────────────────
 // A hill goblin of the Scrag Warren who dug through into the Cold Seam and found the last Deepdelver foreman's brass
 // lamp-hat and his whistle. The hat is the read: a miner's hard hat made for a man's head, sat down on a goblin's to the
@@ -1315,7 +1461,7 @@ const gulper = (o = {}) => toad({ ...o, gulper: true });
 // the bosses: the rat and the spider grown into kings and queens (their own colours, their own parts: king(), queen())
 const ratking = (o = {}) => rat({ fur: '#3a342e', belly: '#5a5048', furTop: '#544c44', eyes: '#ff3818', seed: 17, ...o, king: true });
 const spiderqueen = (o = {}) => spider({ body: '#1e1622', band: '#6a4864', mark: '#e2d8c2', eyes: '#78c038', seed: 37, ...o, queen: true });
-const KINDS = { rat, spider, beetle, goblin, wraith, golem, toad, gulper, ratking, spiderqueen, hound, furnace };
+const KINDS = { rat, spider, beetle, goblin, wraith, golem, toad, gulper, ratking, spiderqueen, hound, furnace, pilgrim };
 export const CREATURE_KINDS = Object.keys(KINDS);
 
 // ── the humanoids on KayKit's rig (the owner, 2026-11-10: "goblin and other humanoids NPCs should use the same rigging,
