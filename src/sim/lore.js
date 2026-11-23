@@ -53,11 +53,12 @@ export const FRAGMENTS = {
   frag_reach_weigh_ticket: { set: 'reach', order: 4, site: 'assay_yards', floor: 1, via: 'chest' },
   frag_reach_quota_order: { set: 'reach', order: 5, site: 'assay_yards', floor: 1, via: 'hall' },        // in the counting house, the first floor's hall
   frag_reach_throne_weight: { set: 'reach', order: 6, site: 'assay_yards', floor: 2, via: 'boss' },      // the Weighmaster's
-  frag_reach_binding_of_oruth: { set: 'reach', order: 7, site: 'forgehall', floor: 1, via: 'chest' },
-  frag_reach_pattern_shelf: { set: 'reach', order: 8, site: 'forgehall', floor: 1, via: 'shrine' },
-  frag_reach_apron_plate: { set: 'reach', order: 9, site: 'forgehall', floor: 2, via: 'boss' },          // Oruth's, when he lies down
-  frag_reach_night_rota: { set: 'reach', order: 10, site: 'cinderworks', floor: 1, via: 'chest' },
-  frag_reach_vanes_ledger: { set: 'reach', order: 11, site: 'cinderworks', floor: 1, via: 'boss' },      // left when he runs (his fall, for the story: battle.js `fled`)
+  // (v1.144: the Forgehall is the Cinderworks' first floor; Vane holds a room on its second, so his ledger is in a chest there)
+  frag_reach_binding_of_oruth: { set: 'reach', order: 7, site: 'cinderworks', floor: 1, via: 'chest' },
+  frag_reach_pattern_shelf: { set: 'reach', order: 8, site: 'cinderworks', floor: 1, via: 'shrine' },
+  frag_reach_apron_plate: { set: 'reach', order: 9, site: 'cinderworks', floor: 1, via: 'boss' },          // Oruth's, when he lies down
+  frag_reach_night_rota: { set: 'reach', order: 10, site: 'cinderworks', floor: 1, via: 'hall' },
+  frag_reach_vanes_ledger: { set: 'reach', order: 11, site: 'cinderworks', floor: 2, via: 'chest' },      // left when he runs (his fall, for the story: battle.js `fled`)
   frag_reach_renewal: { set: 'reach', order: 12, site: 'cinderworks', floor: 2, via: 'boss' },           // the Stoker's, in the Magma Vault
 };
 /** a whole set reveals its hidden site (sites.js; world doc §7) */

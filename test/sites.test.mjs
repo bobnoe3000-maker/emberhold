@@ -37,7 +37,8 @@ test('every site builds each floor in its band; the last floor has no stairs dow
         // floor's first rooms at base + floor − 1, its hall a level up
         const P = PLANS[id].floors[d], hall = w.roomLevels.get(w.level.descentRoom.id);
         for (const r of w.level.rooms) if (r !== w.level.entrance) assert.equal(w.roomLevels.get(r.id), S.flat ? S.base : S.base + P.spaces[r.id].lv, `${id} floor ${d + 1} ${r.part}`);
-        if (!S.flat) { assert.equal(hall, S.base + d + 1, `${id} floor ${d + 1}: its hall a level up`); assert.ok(lv.every((v) => v === S.base + d || v === S.base + d + 1), `${id} floor ${d + 1}: levels ${lv}`); }
+        const fl = S.base + (S.perFloor || 1) * d;   // (v1.144: the Reach's bands two levels a floor)
+        if (!S.flat) { assert.equal(hall, fl + 1, `${id} floor ${d + 1}: its hall a level up`); assert.ok(lv.every((v) => v === fl || v === fl + 1), `${id} floor ${d + 1}: levels ${lv}`); }
       } else if (S.band) {
         // the floor's level everywhere, the hall too; the two rooms ranked before the hall one up, to the band's top
         const lo = S.base + d, top = Math.min(S.base + S.floors - 1, lo + 1), hall = w.roomLevels.get(w.level.descentRoom.id);
@@ -54,11 +55,11 @@ test('every site builds each floor in its band; the last floor has no stairs dow
   }
 });
 
-test('one dungeon a level: the open bands run 1–30 in ten, each level in exactly one; the room rule by rank', () => {
+test('one dungeon a level: the open bands run 1–30 in nine (the Reach in three of four, v1.144), each level in exactly one; the room rule by rank', () => {
   const bands = SITE_IDS.filter((id) => SITES[id].band);
-  assert.deepEqual(bands, ['barrows', 'wickham_keep', 'sunken_chapel', 'toadking_mound', 'canal_locks', 'drowned_abbey', 'cold_seam', 'assay_yards', 'forgehall', 'cinderworks']);
+  assert.deepEqual(bands, ['barrows', 'wickham_keep', 'sunken_chapel', 'toadking_mound', 'canal_locks', 'drowned_abbey', 'cold_seam', 'assay_yards', 'cinderworks']);
   for (const id of bands) { assert.ok(SITES[id].plan, `${id}: authored (the Vale 2026-11-02, the Fens v1.102)`); assert.equal(SITES[id].floors, 2, `${id}: two floors, the owner's rule`); }
-  for (const id of bands) assert.equal(bandTop(SITES[id]), SITES[id].base + 2, `${id}: a band of three levels`);
+  for (const id of bands) assert.equal(bandTop(SITES[id]), SITES[id].base + (SITES[id].region === 'reach' ? 3 : 2), `${id}: a band of three levels (the Reach's of four, v1.144)`);
   for (let lv = 1; lv <= 30; lv++) {
     const at = bands.filter((id) => SITES[id].base <= lv && lv <= bandTop(SITES[id]));
     assert.equal(at.length, 1, `level ${lv}: ${at}`);
@@ -152,5 +153,5 @@ test('the Drowned Abbey: two authored floors of five spaces (v1.102), 16–18; e
   assert.equal(SITES.drowned_abbey.floors, 2); assert.ok(SITES.drowned_abbey.plan); assert.deepEqual(SITES.drowned_abbey.rooms, [5, 5]);
   assert.deepEqual(Object.fromEntries(SITE_IDS.filter((id) => !SITES[id].parked).map((id) => [id, levelBand(id)])), {
     barrows: '1–3', wickham_keep: '4–6', sunken_chapel: '7–9', proving_pens: '4', ninth_milestone: '9',
-    toadking_mound: '10–12', canal_locks: '13–15', drowned_abbey: '16–18', mere_tower: '12', reedholm_undercroft: '18', cold_seam: '19–21', assay_yards: '22–24', forgehall: '25–27', cinderworks: '28–30', ninth_vault: '30', shuttered_inn: '20', haddow_crypt: '6' });
+    toadking_mound: '10–12', canal_locks: '13–15', drowned_abbey: '16–18', mere_tower: '12', reedholm_undercroft: '18', cold_seam: '19–22', assay_yards: '23–26', cinderworks: '27–30', ninth_vault: '30', shuttered_inn: '20', haddow_crypt: '6' });
 });

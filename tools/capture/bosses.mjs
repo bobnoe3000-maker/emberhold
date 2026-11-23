@@ -42,9 +42,9 @@ const CASES = [
   // health held while he works (`keep`: the piece finished, a wight rising re-armed) and struck past the mark (`keep:
   // 'spoil'`: the piece spoiled); the Stoker's vents
   { boss: 'weighmaster', site: 'assay_yards', depth: 1, ev: 'bossScales', at: [0, 600, 1200, 1800, 2250, 2500] },
-  { boss: 'oruth', site: 'forgehall', depth: 1, ev: 'bossForge', at: [0, 700, 1600, 2600, 3700, 4250] },
-  { boss: 'oruth', name: 'oruth (armed)', site: 'forgehall', depth: 1, ev: 'bossForge', keep: true, at: [0, 700, 1600, 2600, 4000, 4500] },
-  { boss: 'oruth', name: 'oruth (spoiled)', site: 'forgehall', depth: 1, ev: 'bossForge', keep: 'spoil', at: [0, 1600, 4000, 4300, 4700, 5200] },
+  { boss: 'oruth', site: 'cinderworks', depth: 0, ev: 'bossForge', at: [0, 700, 1600, 2600, 3700, 4250] },
+  { boss: 'oruth', name: 'oruth (armed)', site: 'cinderworks', depth: 0, ev: 'bossForge', keep: true, at: [0, 700, 1600, 2600, 4000, 4500] },
+  { boss: 'oruth', name: 'oruth (spoiled)', site: 'cinderworks', depth: 0, ev: 'bossForge', keep: 'spoil', at: [0, 1600, 4000, 4300, 4700, 5200] },
   { boss: 'stoker', site: 'cinderworks', depth: 1, ev: 'bossVents', at: [0, 500, 1000, 1500, 2000, 2300] },
 ];
 // --warn (the telegraph grammar, docs/combat-fx.md): a foe's first heavy blow, shot or heavy shot in a hall, found by its

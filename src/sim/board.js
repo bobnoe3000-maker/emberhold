@@ -106,8 +106,8 @@ export function boardOffers(seed, day, lv, half = 0) {
 // has its own (M8), so nothing one land draws moves the other's.
 // (2026-11-02) an authored band (sites.js `plan`, plans.js) spans three levels over two floors: a floor's first rooms at
 // base + floor − 1, its hall a level up (floor 1's hall base + 1, floor 2's the band's top)
-const siteFloorLv = (S, f) => (S.band ? S.base + (f - 1) : S.base + S.perFloor * (f - 1));
-const siteHallLv = (S, f) => (S.plan && S.band ? S.base + f : S.band ? siteFloorLv(S, f) : siteFloorLv(S, f) + Math.floor(((S.rooms ? S.rooms[1] : 6) - 2) / 2));
+const siteFloorLv = (S, f) => (S.band ? S.base + (S.perFloor || 1) * (f - 1) : S.base + S.perFloor * (f - 1));   // (v1.144: the Reach's bands two levels a floor)
+const siteHallLv = (S, f) => (S.plan && S.band ? siteFloorLv(S, f) + 1 : S.band ? siteFloorLv(S, f) : siteFloorLv(S, f) + Math.floor(((S.rooms ? S.rooms[1] : 6) - 2) / 2));
 const landSites = (region) => SITE_IDS.filter((id) => SITES[id].region === region && SITES[id].band && !SITES[id].hidden && !SITES[id].parked).sort((a, b) => SITES[a].base - SITES[b].base);   // (by band: the Reach's sites aren't listed in order, v1.54)
 /** @type {Record<string, (S: any, rng: () => number, lv: number) => ({ s: Size, target: number } | null)>} */
 const LAND_SIZE = {

@@ -34,12 +34,6 @@
   },
   {
    "kind": "site",
-   "id": "forgehall",
-   "x": 194.5,
-   "y": 154
-  },
-  {
-   "kind": "site",
    "id": "cinderworks",
    "x": 176,
    "y": 71

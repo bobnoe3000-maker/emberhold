@@ -22,10 +22,11 @@ test('plans: each floor runs entrance → rooms → its last hall, with one offs
       assert.ok(fights.length >= 2, `${p.site} floor ${fi + 1}: two rooms or more before its hall`);
       if (!p.flat) {
         assert.ok(fights.every((s) => s.lv <= /** @type {any} */ (last).lv), `${p.site} floor ${fi + 1}: no room above its hall`);
-        assert.equal(/** @type {any} */ (last).lv, fi + 1, `${p.site} floor ${fi + 1}: the hall a level up`);
+        assert.equal(/** @type {any} */ (last).lv, fi * (p.step || 1) + 1, `${p.site} floor ${fi + 1}: the hall a level up`);   // (v1.144: `step` levels a floor, the Reach's two)
       }
     });
-    if (!p.flat) assert.equal(Math.max(...p.floors.flatMap((f) => f.spaces.map((s) => s.lv))), 2, `${p.site}: the band's top is +2`);
+    if (!p.flat) assert.equal(Math.max(...p.floors.flatMap((f) => f.spaces.map((s) => s.lv))), (p.floors.length - 1) * (p.step || 1) + 1, `${p.site}: the band's top`);
+    if (!p.flat && SITES[p.site].span) assert.equal(SITES[p.site].base + Math.max(...p.floors.flatMap((f) => f.spaces.map((s) => s.lv))), SITES[p.site].base + SITES[p.site].span - 1, `${p.site}: its top the band's`);
   }
 });
 
@@ -39,8 +40,12 @@ test('plans: the bosses stand where the band wants them, and are the sim\'s own'
   assert.deepEqual(bosses.toadking_mound, [['toadking', 12]]);
   assert.deepEqual(bosses.canal_locks, [['vatwarden', 15]]);
   assert.deepEqual(bosses.drowned_abbey, [['teague', 17], ['drowned_choir', 17], ['abbess_below', 18]]);
+  // (v1.144) the Reach in bands of four: the Foreman and the Weighmaster at their tops; the Cinderworks' three, Oruth in the
+  // Forgehall's hall (its first floor), Morrow Vane in the furnace hall (a room's own), the Stoker at Furnace Nine
+  assert.deepEqual(bosses.cold_seam, [['foreman', 22]]); assert.deepEqual(bosses.assay_yards, [['weighmaster', 26]]);
+  assert.deepEqual(bosses.cinderworks, [['oruth', 28], ['morrow_vane', 29], ['stoker', 30]]);
   for (const p of Object.values(PLANS)) p.floors.forEach((f, d) => { for (const s of f.spaces) if (s.boss) {
-    if (s.role === 'offshoot') assert.ok(!Object.values(SITES[p.site].bosses || {}).includes(s.boss), `${p.site}: ${s.boss} a side room's own, no hall's`);
+    if (s.role === 'offshoot' || s.role === 'room') assert.ok(!Object.values(SITES[p.site].bosses || {}).includes(s.boss), `${p.site}: ${s.boss} a side room's own, no hall's`);   // (a room's too, v1.144: Morrow Vane's furnace hall)
     else assert.equal((SITES[p.site].bosses || {})[d + 1], s.boss, `${p.site} floor ${d + 1}: ${s.boss} its hall's`);
   } });
 });

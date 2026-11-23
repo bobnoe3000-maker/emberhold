@@ -33,8 +33,8 @@ test('the Wickham road: shut until Act II is done, then north into the Reach and
   assert.equal(townOf('reach'), 'ashgate'); assert.equal(days('thornwick', 'ashgate'), 2);
 });
 
-test('the Cold Seam: a band of 19–21, two authored floors that keep the plan rules, its door on the Reach, the Foreman in the tally cave', () => {
-  assert.equal(levelBand('cold_seam'), '19–21'); assert.equal(SITES.cold_seam.region, 'reach');
+test('the Cold Seam: a band of 19–22 (v1.144), two authored floors that keep the plan rules, its door on the Reach, the Foreman in the tally cave', () => {
+  assert.equal(levelBand('cold_seam'), '19–22'); assert.equal(SITES.cold_seam.region, 'reach');
   assert.deepEqual(checkPlan(PLANS.cold_seam), []);
   assert.equal(bossAt('cold_seam', 1), 'foreman'); assert.equal(BOSSES.foreman.mech, 'chutes');
   const sim = createSim(5, undefined, { scene: 'overland', region: 'reach' }); sim.tick();

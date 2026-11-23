@@ -2,6 +2,7 @@
 // its dungeon asks when it's done; Act I's fourth chapter, The Standard, comes before Act II; Tobin Hask's errand, The
 // Last Chit, is taken and handed in at the barrow mouth, and the compass leads back to him there.
 import { test } from 'node:test';
+import { PLANS } from '../src/sim/plans.js';
 import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
 import { QUESTS, QS } from '../src/sim/quests.js';
@@ -25,8 +26,9 @@ function placeOf(d) {
   return Math.max(...all.filter((o) => o.site && SITES[o.site] && SITES[o.site].band).map((o) => {
     const S = SITES[o.site], f = o.type === 'meet' && NPCS[o.npc] && NPCS[o.npc].found;
     if (f) return S.base + f.depth;                                             // (someone found on a floor: Wren in the Boat Hall)
-    if (o.type === 'boss') { const b = Object.entries(S.bosses || {}).find(([, x]) => x === o.boss); return S.base + (b ? +b[0] - (S.plan ? 0 : 1) : 0); }   // (an authored floor's hall a level up: plans.js)
-    return S.base + (o.type === 'reach' ? o.count : o.floor || 1) - 1;
+    if (o.type === 'boss') { const sp = PLANS[o.site] && PLANS[o.site].floors.flatMap((f) => f.spaces).find((q) => q.boss === o.boss); if (sp) return S.base + sp.lv;   // (an authored plan: the boss's own room, a side room's too, v1.144)
+      const b = Object.entries(S.bosses || {}).find(([, x]) => x === o.boss); return S.base + (b ? +b[0] - (S.plan ? 0 : 1) : 0); }   // (an authored floor's hall a level up: plans.js)
+    return S.base + (S.perFloor || 1) * ((o.type === 'reach' ? o.count : o.floor || 1) - 1);   // (v1.144: the Reach's bands two levels a floor)
   }), 0);
 }
 

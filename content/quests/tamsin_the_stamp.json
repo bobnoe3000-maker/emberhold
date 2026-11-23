@@ -5,7 +5,7 @@
   "giver": "tamsin",
   "region": "reach",
   "level": [
-    22,
+    23,
     60
   ],
   "companion": "tamsin",
@@ -28,7 +28,7 @@
   "done": "Tamsin knows the Assay's mark by feel now. She says it's badly cut.",
   "rewards": {
     "share": 0.35,
-    "lv": 23,
+    "lv": 24,
     "gold": 260
   },
   "dialogue": {

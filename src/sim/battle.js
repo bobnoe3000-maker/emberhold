@@ -413,7 +413,7 @@ export function roomBossAway(state, w, room) {
  *  @param {any} w @param {number} room */
 export function sideBoss(w, room) {
   const r = w && w.level && w.level.plan ? w.level.rooms.find((q) => q.id === room) : null;
-  return r && r.role === 'offshoot' && r.boss ? r.boss : null;
+  return r && (r.role === 'offshoot' || r.role === 'room') && r.boss ? r.boss : null;   // (v1.144: or a room: Morrow Vane's furnace hall, the Cinderworks' second floor)
 }
 const LULL = 4, OUT_OF_BATTLE_REGEN = 5, LULL_REGEN = 1.5, BOLT_SPEED = 26, AUTO_DELAY = 0.5;
 // Animation timing the sim honours so hits land on the swing: a blow (or a bolt's release)

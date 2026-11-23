@@ -1,6 +1,6 @@
 # The Cinder Reach: a plan
 
-**Plan of record (2026-11-16).** The owner, on what's next: *"do 2 then start the Reach plan"*; then, on this plan:
+**Plan of record (2026-11-16); re-cut 2026-11-23** (GDD v1.144: the owner, "Make the reach as 3 dungeons"; the Cold Seam 19–22, the Assay Yards 23–26, the Cinderworks 27–30 with Oruth's Forgehall as its first floor; [dungeon-catalog.md §4.3](./dungeon-catalog.md)). Below, the four-band plan as it was first built. The owner, on what's next: *"do 2 then start the Reach plan"*; then, on this plan:
 *"Act 3, go with your recommendation. Furnace Nine at 30 after on the hour, Morrow Vane escapes. Be sure to dress the
 overworld and dungeons to the theme, run critic passes in the area and new NPC models."* The decisions as taken are in
 [the last section](#decisions-for-the-owner); canon in world doc v1.53. Building in the order below, steps 1 to 3 first.

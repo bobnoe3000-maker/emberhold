@@ -25,7 +25,7 @@
 /** @typedef {{ id: string, name: string, role: Role, x: number, y: number, w: number, h: number, shape: 'rect' | 'cave' | 'round', lv: number, kit: string, boss?: string, foes?: string, dress: string[], note: string }} Space */
 /** @typedef {{ from: string, to: string, x: number, y: number, w: number, h: number, rough?: boolean }} Hall */
 /** @typedef {{ name: string, spaces: Space[], halls: Hall[] }} Floor */
-/** @typedef {{ site: string, name: string, kind: string, base: number, flat?: boolean, floors: Floor[] }} Plan */
+/** @typedef {{ site: string, name: string, kind: string, base: number, step?: number, flat?: boolean, floors: Floor[] }} Plan */
 
 export const PLAN_RULES = Object.freeze({ maxSpaces: 5, maxFloors: 2, hallMinW: 10, hallMaxLen: 14, small: [18, 26], medium: [28, 38], large: [40, 62], gallery: [60, 80] });
 
@@ -215,7 +215,7 @@ export const PLANS = {
   //    beds; then the stilt-built boat houses over the water, the Toadking in his Boat Hall with Wren his prisoner.
   // the Cinder Reach's first band (GDD v1.124, world doc v1.53, docs/reach-plan.md): the Deepdelvers' old pithead, then
   // the warren the Scrag Warren's goblins dug on through the range into it; the Foreman in the tally cave, Tamsin held there
-  cold_seam: { site: 'cold_seam', name: 'The Cold Seam', kind: 'seam', base: 19, floors: [
+  cold_seam: { site: 'cold_seam', name: 'The Cold Seam', kind: 'seam', base: 19, step: 2, floors: [
     { name: 'The Old Pithead', spaces: [
       { id: 'the_shaft_head', name: 'The Shaft Head', role: 'entrance', x: 0, y: 0, w: 32, h: 28, shape: 'rect', lv: 0, kit: 'pithead',
         dress: ['timbers', 'lanterns', 'crates'], note: 'The cage landing at the foot of the shaft, the cage itself long gone; the shaft\'s ladder up to the day is the way out. Timbered, dry, cold.' },
@@ -234,15 +234,15 @@ export const PLANS = {
       { from: 'the_long_gallery', to: 'the_winding_room', x: 54, y: 80, w: 10, h: 10, rough: true },
     ] },
     { name: 'The Warren', spaces: [
-      { id: 'the_breakthrough', name: 'The Breakthrough', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'cave', lv: 1, kit: 'warren',
+      { id: 'the_breakthrough', name: 'The Breakthrough', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'cave', lv: 2, kit: 'warren',
         dress: ['rubble', 'lanterns', 'stair_up'], note: 'Where the goblins broke through out of the range into the cut stone: raw rock one side, the Deepdelvers\' dressed wall the other.' },
-      { id: 'the_burrow_hall', name: 'The Burrow Hall', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'cave', lv: 1, kit: 'warren', foes: 'warren',
+      { id: 'the_burrow_hall', name: 'The Burrow Hall', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'cave', lv: 2, kit: 'warren', foes: 'warren',
         dress: ['bedrolls', 'cookfires', 'sacks'], note: 'A long burrow the goblins sleep in, in shifts: the bedrolls are never cold.' },
-      { id: 'the_larder', name: 'The Larder', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'cave', lv: 2, kit: 'warren', foes: 'warren',
+      { id: 'the_larder', name: 'The Larder', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'cave', lv: 3, kit: 'warren', foes: 'warren',
         dress: ['barrels', 'bones', 'chest', 'shrine'], note: 'What the warren eats, hung and stacked; better not to look at the bottom of the pile.' },
-      { id: 'the_spoil_cut', name: 'The Spoil Cut', role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'cave', lv: 2, kit: 'warren', foes: 'warren',
+      { id: 'the_spoil_cut', name: 'The Spoil Cut', role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'cave', lv: 3, kit: 'warren', foes: 'warren',
         dress: ['carts', 'rubble', 'lanterns'], note: 'Where the goblins tip what they dig, by the cartload: the old carts, stolen off the Seam\'s rails, and a heap to the roof.' },
-      { id: 'the_tally_cave', name: 'The Tally Cave', role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'cave', lv: 2, kit: 'warren', foes: 'warren', boss: 'foreman',
+      { id: 'the_tally_cave', name: 'The Tally Cave', role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'cave', lv: 3, kit: 'warren', foes: 'warren', boss: 'foreman',
         dress: ['scaffold', 'ladders', 'braziers', 'drips'], note: 'The Foreman\'s cave: the old chutes come down through its roof from the gallery above, and he has chalked his crosses on the floor under them. His tally covers the walls. Tamsin Coalbrook at the goblins\' anvil, on a chain.' },
     ], halls: [
       { from: 'the_breakthrough', to: 'the_burrow_hall', x: 30, y: 8, w: 10, h: 10, rough: true },
@@ -253,7 +253,7 @@ export const PLANS = {
   ] },
   // the Cinder Reach's other bands (GDD v1.126, the build sheet in docs/reach-plan.md): the Cold Seam's two floor shapes, held to the
   // rules, each room its own place
-  assay_yards: { site: 'assay_yards', name: 'The Assay Yards', kind: 'yards', base: 22, floors: [
+  assay_yards: { site: 'assay_yards', name: 'The Assay Yards', kind: 'yards', base: 23, step: 2, floors: [
     { name: 'The Yards and the Counting House', spaces: [
       { id: 'the_yard_gate', name: 'The Yard Gate', role: 'entrance', x: 0, y: 0, w: 32, h: 28, shape: 'rect', lv: 0, kit: 'yards',
         dress: ['crates', 'lanterns', 'banners'], note: 'The Assay\'s gate in its fence, the scale-and-pick painted over it; Nan Ruddock\'s men lounge on the inside of it, paid by the week.' },
@@ -272,15 +272,15 @@ export const PLANS = {
       { from: 'the_ore_sheds', to: 'the_counting_house', x: 54, y: 80, w: 10, h: 10, rough: true },
     ] },
     { name: 'The Cellars and the Quota Office', spaces: [
-      { id: 'the_cellar_stair', name: 'The Cellar Stair', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'cave', lv: 1, kit: 'quota',
+      { id: 'the_cellar_stair', name: 'The Cellar Stair', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'cave', lv: 2, kit: 'quota',
         dress: ['lanterns', 'barrels', 'stair_up'], note: 'The foot of the counting house stair, where the cellars begin: cool, dry, swept.' },
-      { id: 'the_cage_store', name: 'The Cage Store', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'cave', lv: 1, kit: 'quota', foes: 'quota',
+      { id: 'the_cage_store', name: 'The Cage Store', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'cave', lv: 2, kit: 'quota', foes: 'quota',
         dress: ['bars', 'chains', 'lanterns'], note: 'The night shift\'s chains on the walls, a hook for each, and a number chalked over each hook.' },
-      { id: 'the_ledger_room', name: 'The Ledger Room', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'cave', lv: 2, kit: 'quota', foes: 'quota',
+      { id: 'the_ledger_room', name: 'The Ledger Room', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'cave', lv: 3, kit: 'quota', foes: 'quota',
         dress: ['rolls', 'desks', 'chest', 'shrine'], note: 'The rolls of the night shift, by name and weight: the company\'s proof, if anyone will read it.' },
-      { id: 'the_assay_furnace', name: 'The Assay Furnace', role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'cave', lv: 2, kit: 'quota', foes: 'quota',
+      { id: 'the_assay_furnace', name: 'The Assay Furnace', role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'cave', lv: 3, kit: 'quota', foes: 'quota',
         dress: ['braziers', 'carts', 'crates'], note: 'Where the ore is tried: a small furnace kept hot, crucibles in rows, the slag of every sample swept into a heap.' },
-      { id: 'the_quota_office', name: 'The Quota Office', role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'cave', lv: 2, kit: 'quota', foes: 'quota', boss: 'weighmaster',
+      { id: 'the_quota_office', name: 'The Quota Office', role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'cave', lv: 3, kit: 'quota', foes: 'quota', boss: 'weighmaster',
         dress: ['desks', 'ledger', 'braziers', 'banners'], note: 'The Weighmaster\'s office: his brass scale on its stand, the week\'s quota chalked on a board, and a column headed QUOTA in every book.' },
     ], halls: [
       { from: 'the_cellar_stair', to: 'the_cage_store', x: 30, y: 8, w: 10, h: 10, rough: true },
@@ -289,75 +289,43 @@ export const PLANS = {
       { from: 'the_assay_furnace', to: 'the_quota_office', x: 132, y: 34, w: 10, h: 10, rough: true },
     ] },
   ] },
-  forgehall: { site: 'forgehall', name: 'The Forgehall of Oruth', kind: 'forge', base: 25, floors: [
-    { name: 'The Forgehall', spaces: [
-      { id: 'the_great_doors', name: 'The Great Doors', role: 'entrance', x: 0, y: 0, w: 32, h: 28, shape: 'rect', lv: 0, kit: 'forge',
-        dress: ['braziers', 'rubble', 'lanterns'], note: 'The forge-hall\'s doors, imperial bronze, a man\'s height thick; someone has opened them again.' },
+  // (v1.144, the owner: "Make the reach as 3 dungeons") the Cinderworks, 27–30, the Forgehall of Oruth its first floor: the
+  // Assay walled the forge-hall's great doors on the Ashwater and drove a cut down into it from the works, so the way in is
+  // the works gate and the old forge-hall lies under it, Oruth at his forge in its hall; the stair behind his anvil goes
+  // down to the furnace hall, Morrow Vane's (a room's own boss), and the Magma Vault and Furnace Nine below
+  cinderworks: { site: 'cinderworks', name: 'The Cinderworks', kind: 'works', base: 27, step: 2, floors: [
+    { name: 'The Works and the Forgehall', spaces: [
+      { id: 'the_works_gate', name: 'The Works Gate', role: 'entrance', x: 0, y: 0, w: 32, h: 28, shape: 'rect', lv: 0, kit: 'works',
+        dress: ['crates', 'lanterns', 'banners'], note: 'The Cinderworks\' gate on its track among the slag heaps, the Assay\'s men on it in shifts; the cut down to the old forge-hall opens behind the gatehouse.' },
       { id: 'the_anvil_hall', name: 'The Anvil Hall', role: 'room', x: 42, y: 0, w: 38, h: 30, shape: 'rect', lv: 0, kit: 'forge', foes: 'forge',
-        dress: ['racks', 'scaffold', 'braziers'], note: 'Anvils in rows, a hundred of them, cold three centuries; some of them are warm.' },
+        dress: ['racks', 'scaffold', 'braziers'], note: 'The forge-hall\'s anvils in rows, a hundred of them, cold three centuries; some of them are warm.' },
       { id: 'the_pattern_store', name: 'The Pattern Store', role: 'offshoot', x: 90, y: 4, w: 24, h: 22, shape: 'rect', lv: 1, kit: 'forge', foes: 'forge',
         dress: ['rolls', 'racks', 'chests', 'shrine'], note: 'The empire\'s patterns for every blade it ever ordered, in wax and wood on the shelves.' },
-      { id: 'the_quench_pools', name: 'The Quench Pools', role: 'room', x: 28, y: 40, w: 60, h: 40, shape: 'rect', lv: 0, kit: 'forge', foes: 'forge',
-        dress: ['drips', 'rubble', 'chains'], note: 'Long troughs of black water where the blades were quenched; the steam comes off them again.' },
-      { id: 'the_bellows_hall', name: 'The Bellows Hall', role: 'descent', x: 34, y: 90, w: 50, h: 44, shape: 'rect', lv: 1, kit: 'forge', foes: 'forge',
-        dress: ['scaffold', 'braziers', 'stair_down'], note: 'The great bellows that fed the forges, leather rotted, the frames still standing; the way down to the deep forges behind them.' },
-    ], halls: [
-      { from: 'the_great_doors', to: 'the_anvil_hall', x: 32, y: 9, w: 10, h: 10 },
-      { from: 'the_anvil_hall', to: 'the_pattern_store', x: 80, y: 10, w: 10, h: 10 },
-      { from: 'the_anvil_hall', to: 'the_quench_pools', x: 52, y: 30, w: 10, h: 10 },
-      { from: 'the_quench_pools', to: 'the_bellows_hall', x: 54, y: 80, w: 10, h: 10, rough: true },
-    ] },
-    { name: 'The Deep Forges', spaces: [
-      { id: 'the_ore_lift', name: 'The Ore Lift', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'cave', lv: 1, kit: 'deepforge',
-        dress: ['windlasses', 'lanterns', 'stair_up'], note: 'The lift that brought the ore down, its cage on the bottom, its chains up into the dark.' },
-      { id: 'the_deep_forges', name: 'The Deep Forges', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'cave', lv: 1, kit: 'deepforge', foes: 'deepforge',
-        dress: ['braziers', 'racks', 'scaffold'], note: 'The forges the empire kept for itself, deeper than the Deepdelvers ever dug; lit.' },
-      { id: 'the_masterwork_vault', name: 'The Masterwork Vault', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'cave', lv: 2, kit: 'deepforge', foes: 'deepforge',
-        dress: ['bars', 'chest', 'shrine', 'racks'], note: 'Oruth\'s own work, kept back, behind bars that have rusted to the stone.' },
-      { id: 'the_bound_benches', name: 'The Bound Smiths\' Benches', role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'cave', lv: 2, kit: 'deepforge', foes: 'deepforge',
-        dress: ['bound', 'chains', 'braziers'], note: 'Where the bound smiths worked, each at a bench, each with a chain to it. They are working again.' },
-      { id: 'oruths_forge', name: 'Oruth\'s Forge', role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'cave', lv: 2, kit: 'deepforge', foes: 'deepforge', boss: 'oruth',
-        dress: ['braziers', 'scaffold', 'racks', 'drips'], note: 'The Forgemaster\'s forge and his anvil, and Oruth at it, working as ordered.' },
-    ], halls: [
-      { from: 'the_ore_lift', to: 'the_deep_forges', x: 30, y: 8, w: 10, h: 10, rough: true },
-      { from: 'the_deep_forges', to: 'the_masterwork_vault', x: 56, y: 24, w: 10, h: 10, rough: true },
-      { from: 'the_deep_forges', to: 'the_bound_benches', x: 110, y: 8, w: 10, h: 10, rough: true },
-      { from: 'the_bound_benches', to: 'oruths_forge', x: 132, y: 34, w: 10, h: 10, rough: true },
-    ] },
-  ] },
-  cinderworks: { site: 'cinderworks', name: 'The Cinderworks', kind: 'works', base: 28, floors: [
-    { name: 'The Works', spaces: [
-      { id: 'the_works_gate', name: 'The Works Gate', role: 'entrance', x: 0, y: 0, w: 32, h: 28, shape: 'rect', lv: 0, kit: 'works',
-        dress: ['crates', 'lanterns', 'banners'], note: 'The Cinderworks\' gate on its track among the slag heaps, the Assay\'s men on it in shifts.' },
-      { id: 'the_ore_floor', name: 'The Ore Floor', role: 'room', x: 42, y: 0, w: 38, h: 30, shape: 'rect', lv: 0, kit: 'works', foes: 'works',
-        dress: ['carts', 'sacks', 'braziers'], note: 'The floor where the ore comes in by the cart and goes up to the furnace by the basket: heat, noise, the night shift.' },
-      { id: 'the_priests_vestry', name: 'The Priests\' Vestry', role: 'offshoot', x: 90, y: 4, w: 24, h: 22, shape: 'rect', lv: 1, kit: 'works', foes: 'works',
-        dress: ['candles', 'chains', 'chest', 'shrine'], note: 'The Cult\'s furnace-priests\' vestry, aprons on the pegs, censers on the shelf.' },
       { id: 'the_night_pens', name: 'The Night Pens', role: 'room', x: 28, y: 40, w: 60, h: 40, shape: 'rect', lv: 0, kit: 'works', foes: 'works',
-        dress: ['cage', 'bars', 'chains'], note: 'Where the night shift is held between shifts. The doors are on the outside.' },
-      { id: 'the_furnace_hall', name: 'The Furnace Hall', role: 'descent', x: 34, y: 90, w: 50, h: 44, shape: 'rect', lv: 1, kit: 'works', foes: 'works', boss: 'morrow_vane',
-        dress: ['braziers', 'carts', 'banners', 'stair_down'], note: 'The works\' furnace hall, Morrow Vane\'s office at the back of it, and the stair down to the Magma Vault behind the furnace.' },
+        dress: ['cage', 'bars', 'chains'], note: 'Where the night shift is held between shifts, in the forge-hall\'s old quench troughs drained dry. The doors are on the outside.' },
+      { id: 'oruths_forge', name: 'Oruth\'s Forge', role: 'descent', x: 34, y: 90, w: 50, h: 44, shape: 'rect', lv: 1, kit: 'deepforge', foes: 'deepforge', boss: 'oruth',
+        dress: ['braziers', 'scaffold', 'racks', 'stair_down'], note: 'The Forgemaster\'s forge and his anvil, and Oruth at it, working as ordered; the stair down to the furnace hall behind it.' },
     ], halls: [
-      { from: 'the_works_gate', to: 'the_ore_floor', x: 32, y: 9, w: 10, h: 10 },
-      { from: 'the_ore_floor', to: 'the_priests_vestry', x: 80, y: 10, w: 10, h: 10 },
-      { from: 'the_ore_floor', to: 'the_night_pens', x: 52, y: 30, w: 10, h: 10 },
-      { from: 'the_night_pens', to: 'the_furnace_hall', x: 54, y: 80, w: 10, h: 10, rough: true },
+      { from: 'the_works_gate', to: 'the_anvil_hall', x: 32, y: 9, w: 10, h: 10 },
+      { from: 'the_anvil_hall', to: 'the_pattern_store', x: 80, y: 10, w: 10, h: 10 },
+      { from: 'the_anvil_hall', to: 'the_night_pens', x: 52, y: 30, w: 10, h: 10 },
+      { from: 'the_night_pens', to: 'oruths_forge', x: 54, y: 80, w: 10, h: 10, rough: true },
     ] },
-    { name: 'The Magma Vault', spaces: [
-      { id: 'the_stair_into_the_heat', name: 'The Stair into the Heat', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'cave', lv: 1, kit: 'vault',
-        dress: ['braziers', 'rubble', 'stair_up'], note: 'The stair down from the furnace hall, the air getting thicker with every step.' },
-      { id: 'the_slag_channels', name: 'The Slag Channels', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'cave', lv: 1, kit: 'vault', foes: 'vault',
-        dress: ['braziers', 'rubble', 'drips'], note: 'Channels cut in the floor where the slag runs off the furnace, glowing; the walkways between them are narrow.' },
-      { id: 'the_priests_cells', name: 'The Priests\' Cells', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'cave', lv: 2, kit: 'vault', foes: 'vault',
+    { name: 'The Furnace Hall and the Magma Vault', spaces: [
+      { id: 'the_stair_into_the_heat', name: 'The Stair into the Heat', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'cave', lv: 2, kit: 'vault',
+        dress: ['braziers', 'rubble', 'stair_up'], note: 'The stair down from Oruth\'s forge, the air getting thicker with every step.' },
+      { id: 'the_furnace_hall', name: 'The Furnace Hall', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'rect', lv: 2, kit: 'works', foes: 'works', boss: 'morrow_vane',
+        dress: ['braziers', 'carts', 'banners'], note: 'The works\' furnace hall, Morrow Vane\'s office at its back and the door he bolts behind him.' },
+      { id: 'the_priests_cells', name: 'The Priests\' Cells', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'cave', lv: 3, kit: 'vault', foes: 'vault',
         dress: ['candles', 'chains', 'chest', 'shrine'], note: 'The furnace-priests\' cells, a cot and a censer in each.' },
-      { id: 'the_casting_floor', name: 'The Casting Floor', role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'cave', lv: 2, kit: 'vault', foes: 'vault',
+      { id: 'the_casting_floor', name: 'The Casting Floor', role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'cave', lv: 3, kit: 'vault', foes: 'vault',
         dress: ['scaffold', 'chains', 'braziers'], note: 'The vessel\'s mould on the casting floor, empty: it has gone.' },
-      { id: 'furnace_nine', name: 'Furnace Nine', role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'cave', lv: 2, kit: 'vault', foes: 'vault', boss: 'stoker',
+      { id: 'furnace_nine', name: 'Furnace Nine', role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'cave', lv: 3, kit: 'vault', foes: 'vault', boss: 'stoker',
         dress: ['braziers', 'chains', 'scaffold'], note: 'Furnace Nine, a furnace-lamp hot enough to melt pale iron, and its Stoker. The night shift\'s souls are in it.' },
     ], halls: [
-      { from: 'the_stair_into_the_heat', to: 'the_slag_channels', x: 30, y: 8, w: 10, h: 10, rough: true },
-      { from: 'the_slag_channels', to: 'the_priests_cells', x: 56, y: 24, w: 10, h: 10, rough: true },
-      { from: 'the_slag_channels', to: 'the_casting_floor', x: 110, y: 8, w: 10, h: 10, rough: true },
+      { from: 'the_stair_into_the_heat', to: 'the_furnace_hall', x: 30, y: 8, w: 10, h: 10, rough: true },
+      { from: 'the_furnace_hall', to: 'the_priests_cells', x: 56, y: 24, w: 10, h: 10, rough: true },
+      { from: 'the_furnace_hall', to: 'the_casting_floor', x: 110, y: 8, w: 10, h: 10, rough: true },
       { from: 'the_casting_floor', to: 'furnace_nine', x: 132, y: 34, w: 10, h: 10, rough: true },
     ] },
   ] },
@@ -640,7 +608,8 @@ export function checkPlan(p) {
       if (k === 'gallery' && hi > R.gallery[1]) out.push(`${at} ${s.id}: ${hi} long, over a gallery's ${R.gallery[1]}`);
       if ((s.role === 'descent' || s.role === 'end') && k !== 'large') out.push(`${at} ${s.id}: a floor's last hall is large`);
       if (s.role === 'entrance' && k === 'small') out.push(`${at} ${s.id}: an entrance is never small`);
-      if (!p.flat && (s.lv < fi || s.lv > fi + 1)) out.push(`${at} ${s.id}: level +${s.lv} outside the floor's +${fi}..+${fi + 1}`);
+      const lvLo = fi * (p.step || 1);   // (v1.144: a band of four, two levels a floor: `step`)
+      if (!p.flat && (s.lv < lvLo || s.lv > lvLo + 1)) out.push(`${at} ${s.id}: level +${s.lv} outside the floor's +${lvLo}..+${lvLo + 1}`);
       for (const t of f.spaces) if (t !== s && s.x < t.x + t.w && t.x < s.x + s.w && s.y < t.y + t.h && t.y < s.y + s.h) out.push(`${at}: ${s.id} overlaps ${t.id}`);
     }
     // halls: hallMinW wide or more, 8–14 long, each joining its two spaces across a shared edge, overlapping no other

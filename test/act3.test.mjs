@@ -198,7 +198,7 @@ function withTamsin(sim) {
 }
 
 test('Kell\'s Rest\'s two wait at the Assay Yards\' gate (GDD v1.132: the depot is no town), apart, and answer; Davy Pruett\'s word is Paid by Weight\'s first step', () => {
-  const sim = after2(22, 'town', 'reach'); doneTo(sim, 'ch3_paid_by_weight');
+  const sim = after2(23, 'town', 'reach'); doneTo(sim, 'ch3_paid_by_weight');
   goTo(sim, 'dungeon', 'assay_yards', 1); assert.ok(!npc(sim, 'nan_ruddock') && !npc(sim, 'assay_clerk'), 'not under the Yards');
   goTo(sim, 'dungeon', 'assay_yards', 0);
   const nan = npc(sim, 'nan_ruddock'), clerk = npc(sim, 'assay_clerk'), E = sim.world.level.entrance;
@@ -231,8 +231,8 @@ test('Act III played on: Paid by Weight (Hob → Dagny), Gone Back to Work (Moth
     talk(sim, taker); effect(sim, 'quest', 'turnin', id); assert.equal(st(sim, id), QS.DONE, id);
   };
   play('ch3_paid_by_weight', 'hob', 'dagny_coalbrook', { id: 'weighmaster' }, 'assay_yards', 1);
-  play('ch3_gone_back_to_work', 'mother_coke', 'mother_coke', { id: 'oruth' }, 'forgehall', 1);
-  play('ch3_night_shift', 'dagny_coalbrook', 'dagny_coalbrook', { id: 'morrow_vane', fled: true }, 'cinderworks', 0);
+  play('ch3_gone_back_to_work', 'mother_coke', 'mother_coke', { id: 'oruth' }, 'cinderworks', 0);   // (v1.144: the Forgehall, the Cinderworks' first floor)
+  play('ch3_night_shift', 'dagny_coalbrook', 'dagny_coalbrook', { id: 'morrow_vane', fled: true }, 'cinderworks', 1);   // (his furnace hall, the second floor)
   play('ch3_quota', 'tamsin', 'dagny_coalbrook', { id: 'stoker' }, 'cinderworks', 1);
   assert.deepEqual(ev.filter((e) => e.n === 'questReward').map((e) => e.gold), [520, 580, 620, 700]);
   assert.deepEqual(storyStatus(sim.state, (id) => sim.quests.status(id)), { kind: 'end', region: 'reach' }, 'Act III is done');
@@ -241,7 +241,7 @@ test('Act III played on: Paid by Weight (Hob → Dagny), Gone Back to Work (Moth
 test('the chapters wait for their bands, and Quota is Tamsin\'s: from her card, while she\'s with you', () => {
   const sim = after2(24, 'town', 'reach'); doneTo(sim, 'ch3_gone_back_to_work');
   assert.equal(st(sim, 'ch3_gone_back_to_work'), QS.LOCKED, '25');
-  for (const [id, lv] of [['ch3_paid_by_weight', 22], ['ch3_gone_back_to_work', 25], ['ch3_night_shift', 28], ['ch3_quota', 30]]) assert.equal(QUESTS[id].level[0], lv, id);
+  for (const [id, lv] of [['ch3_paid_by_weight', 23], ['ch3_gone_back_to_work', 27], ['ch3_night_shift', 29], ['ch3_quota', 30]]) assert.equal(QUESTS[id].level[0], lv, id);   // (v1.144: bands of four)
   doneTo(sim, 'ch3_quota'); sim.state.party[0].level = 30;
   sim.commands.push({ type: 'talk', npc: 'tamsin' }); sim.tick(); effect(sim, 'quest', 'accept', 'ch3_quota');
   assert.equal(st(sim, 'ch3_quota'), QS.AVAILABLE, 'she\'s still in the Seam: no talk, no quest');
@@ -267,10 +267,10 @@ test('the side work: Tamsin\'s chain while she\'s with you, in order; Gunnar\'s 
   const chests = (n) => () => { for (let i = 0; i < n; i++) sim.bus.emit('looted', { kind: 'chest' }); };
   const waves = (n) => () => { for (let i = 0; i < n; i++) sim.bus.emit('wave', { cleared: true, room: -1 }); };
   run('tamsin_the_stamp', 'tamsin', 'assay_yards', 0, elites(3));
-  run('tamsin_the_patterns', 'tamsin', 'forgehall', 0, chests(2));
+  run('tamsin_the_patterns', 'tamsin', 'cinderworks', 0, chests(2));
   run('tamsin_spoiled_casting', 'tamsin', 'cinderworks', 1, waves(5));
   run('gunnar_the_lease', 'gunnar_slagg', 'assay_yards', 0, chests(2));
-  run('gunnar_the_row', 'gunnar_slagg', 'forgehall', 0, elites(3));
+  run('gunnar_the_row', 'gunnar_slagg', 'cinderworks', 0, elites(3));
   run('brannagh_last_wages', 'old_brannagh', 'cold_seam', 0, chests(2));
   doneTo(sim, 'ch3_quota');
   run('brannagh_counted_in', 'old_brannagh', 'cinderworks', 0, waves(6));
@@ -299,11 +299,11 @@ test('the trials at 24: offered once someone of the class is 24 and its 12 is do
   withTamsin(sim); assert.equal(st(sim, 'trial24_mage'), QS.AVAILABLE);
 });
 
-test('the Reach\'s Chronicle: twelve, in its four dungeons; the last one reveals the Ninth Vault; Vane\'s ledger is his when he runs', () => {
+test('the Reach\'s Chronicle: twelve, in its three dungeons (v1.144); the last one reveals the Ninth Vault; Oruth\'s apron plate is his when he lies down', () => {
   assert.equal(SETS.reach.length, 12);
   const sim = after2(30, 'town', 'reach'), ev = events(sim, ['fragmentFound', 'setComplete']);
-  goTo(sim, 'dungeon', 'cinderworks', 0); sim.bus.emit('bossDown', { id: 'morrow_vane', fled: true });
-  assert.deepEqual(ev.filter((e) => e.n === 'fragmentFound').map((e) => e.id), ['frag_reach_vanes_ledger']);
+  goTo(sim, 'dungeon', 'cinderworks', 0); sim.bus.emit('bossDown', { id: 'oruth' });
+  assert.deepEqual(ev.filter((e) => e.n === 'fragmentFound').map((e) => e.id), ['frag_reach_apron_plate']);
   sim.state.fragments.push(...SETS.reach.filter((id) => !sim.state.fragments.includes(id) && id !== 'frag_reach_renewal'));
   goTo(sim, 'dungeon', 'cinderworks', 1); sim.bus.emit('bossDown', { id: 'stoker' });
   assert.ok(ev.some((e) => e.n === 'setComplete' && e.set === 'reach'));

@@ -25,10 +25,11 @@ const events = (sim, names) => { const ev = []; for (const e of names) sim.bus.o
 // (v1.48, one dungeon a level: GDD §3) a land's board sends you to the dungeon whose band holds your level, now and then
 // the one below; a floor is at its band's base + floor − 1 and its hall keeps that level; waves, chests and elites are
 // wanted at your level within the dungeon's band
-const BANDS = { vale: ['barrows', 'wickham_keep', 'sunken_chapel'], fens: ['toadking_mound', 'canal_locks', 'drowned_abbey'], reach: ['cold_seam', 'assay_yards', 'forgehall', 'cinderworks'] };
-const yoursAt = (region, lv) => { const all = BANDS[region], i = all.findIndex((id) => SITES[id].base <= lv && lv <= SITES[id].base + 2); return i >= 0 ? i : lv < SITES[all[0]].base ? 0 : all.length - 1; };
+const BANDS = { vale: ['barrows', 'wickham_keep', 'sunken_chapel'], fens: ['toadking_mound', 'canal_locks', 'drowned_abbey'], reach: ['cold_seam', 'assay_yards', 'cinderworks'] };   // (v1.144: three)
+const yoursAt = (region, lv) => { const all = BANDS[region], i = all.findIndex((id) => SITES[id].base <= lv && lv <= SITES[id].base + (SITES[id].span || 3) - 1); return i >= 0 ? i : lv < SITES[all[0]].base ? 0 : all.length - 1; };
 // (2026-11-02) an authored band's floor hall is a level up from its floor's first rooms (plans.js): floor 1's at base + 1
-const placeLv = (j) => { const S = SITES[j.site]; return j.tpl === 'warden' && S.plan ? S.base + j.floor : j.tpl === 'delve' || j.tpl === 'warden' ? S.base + j.floor - 1 : Math.max(S.base, Math.min(j.lv, S.base + 2)); };
+// (v1.144) the Reach's bands two levels a floor (`perFloor`), its top base + span − 1
+const placeLv = (j) => { const S = SITES[j.site], fl = S.base + (S.perFloor || 1) * (j.floor - 1); return j.tpl === 'warden' && S.plan ? fl + 1 : j.tpl === 'delve' || j.tpl === 'warden' ? fl : Math.max(S.base, Math.min(j.lv, S.base + (S.span || 3) - 1)); };
 /** a job's site is its land's band for the level or the one below; its floor is in the site; it asks for nothing more
  * than two levels up; its skulls are its place's level against the hero's @param {any} j @param {string} region */
 const checkPlace = (j, region) => {

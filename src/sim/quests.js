@@ -214,27 +214,27 @@ export const QUESTS = {
   ch3_short_shift: {
     kind: 'chapter', giver: 'dagny_coalbrook', region: 'reach', level: [19, 60], after: ['ch3_the_wickham_road'],
     steps: [{ id: 'foreman', objectives: [{ type: 'boss', site: 'cold_seam', boss: 'foreman', count: 1 }] }],   // (one who fell before counts: settle)
-    rewards: { share: 0.5, lv: 21, gold: 480 },
+    rewards: { share: 0.5, lv: 22, gold: 480 },
   },
   // (v1.54, world doc §6 "As told") the rest of Act III: Hob's way into the Yards (a word with the Assay's clerk at the gate,
   // then the Weighmaster; the rolls go to Dagny); Mother Coke's ancestor put back to sleep; Morrow Vane, who runs (his
   // fall, for the story: battle.js `fled`); and Tamsin's: the Stoker, Furnace Nine's lamp, the empty mould, back to Dagny.
   // (Act III runs to 60, the XP table's end: a company past 30 can still finish what it started; Acts I and II stop at 30.)
   ch3_paid_by_weight: {
-    kind: 'chapter', giver: 'hob', turnin: 'dagny_coalbrook', region: 'reach', level: [22, 60], after: ['ch3_short_shift'],
+    kind: 'chapter', giver: 'hob', turnin: 'dagny_coalbrook', region: 'reach', level: [23, 60], after: ['ch3_short_shift'],
     steps: [{ id: 'pass', objectives: [{ type: 'meet', npc: 'assay_clerk', site: 'assay_yards', count: 1 }] },
       { id: 'weighmaster', objectives: [{ type: 'boss', site: 'assay_yards', boss: 'weighmaster', count: 1 }] }],
-    rewards: { share: 0.45, lv: 23, gold: 520 },
+    rewards: { share: 0.45, lv: 26, gold: 520 },
   },
   ch3_gone_back_to_work: {
-    kind: 'chapter', giver: 'mother_coke', region: 'reach', level: [25, 60], after: ['ch3_paid_by_weight'],
-    steps: [{ id: 'oruth', objectives: [{ type: 'boss', site: 'forgehall', boss: 'oruth', count: 1 }] }],
-    rewards: { share: 0.5, lv: 26, gold: 580 },
+    kind: 'chapter', giver: 'mother_coke', region: 'reach', level: [27, 60], after: ['ch3_paid_by_weight'],
+    steps: [{ id: 'oruth', objectives: [{ type: 'boss', site: 'cinderworks', boss: 'oruth', count: 1 }] }],   // (v1.144: the Forgehall, the Cinderworks' first floor)
+    rewards: { share: 0.5, lv: 28, gold: 580 },
   },
   ch3_night_shift: {
-    kind: 'chapter', giver: 'dagny_coalbrook', region: 'reach', level: [28, 60], after: ['ch3_gone_back_to_work'],
+    kind: 'chapter', giver: 'dagny_coalbrook', region: 'reach', level: [29, 60], after: ['ch3_gone_back_to_work'],
     steps: [{ id: 'vane', objectives: [{ type: 'boss', site: 'cinderworks', boss: 'morrow_vane', count: 1 }] }],
-    rewards: { share: 0.5, lv: 28, gold: 620 },
+    rewards: { share: 0.5, lv: 29, gold: 620 },
   },
   ch3_quota: {
     kind: 'chapter', giver: 'tamsin', turnin: 'dagny_coalbrook', region: 'reach', level: [30, 60], after: ['ch3_night_shift'],
@@ -244,14 +244,14 @@ export const QUESTS = {
   // Tamsin's chain, Showing Off (world doc v1.54 §5): the Assay's stamps off the Yards' guard-captains, the imperial
   // patterns in the Forgehall's pattern store, the Cult's spare moulds cracked on the Magma Vault's floor
   tamsin_the_stamp: {
-    kind: 'companion', giver: 'tamsin', companion: 'tamsin', region: 'reach', level: [22, 60],
+    kind: 'companion', giver: 'tamsin', companion: 'tamsin', region: 'reach', level: [23, 60],
     steps: [{ id: 'yards', objectives: [{ type: 'elites', site: 'assay_yards', count: 3 }] }],
-    rewards: { share: 0.35, lv: 23, gold: 260 },
+    rewards: { share: 0.35, lv: 24, gold: 260 },
   },
   tamsin_the_patterns: {
-    kind: 'companion', giver: 'tamsin', companion: 'tamsin', region: 'reach', level: [25, 60], after: ['tamsin_the_stamp'],
-    steps: [{ id: 'patterns', objectives: [{ type: 'loot', site: 'forgehall', count: 2 }] }],
-    rewards: { share: 0.3, lv: 25, gold: 300 },
+    kind: 'companion', giver: 'tamsin', companion: 'tamsin', region: 'reach', level: [27, 60], after: ['tamsin_the_stamp'],
+    steps: [{ id: 'patterns', objectives: [{ type: 'loot', site: 'cinderworks', count: 2 }] }],
+    rewards: { share: 0.3, lv: 27, gold: 300 },
   },
   tamsin_spoiled_casting: {
     kind: 'companion', giver: 'tamsin', companion: 'tamsin', region: 'reach', level: [29, 60], after: ['tamsin_the_patterns'],
@@ -261,14 +261,14 @@ export const QUESTS = {
   // Gunnar Slagg's shame (world doc v1.54 §3.3): the lease out of the Assay's counting house; the Slagborn who went over to
   // the Forgehall, their leaders put down so the rest can come home
   gunnar_the_lease: {
-    kind: 'errand', giver: 'gunnar_slagg', region: 'reach', level: [22, 60],
+    kind: 'errand', giver: 'gunnar_slagg', region: 'reach', level: [23, 60],
     steps: [{ id: 'counting', objectives: [{ type: 'loot', site: 'assay_yards', count: 2 }] }],
-    rewards: { share: 0.3, lv: 22, gold: 240 },
+    rewards: { share: 0.3, lv: 23, gold: 240 },
   },
   gunnar_the_row: {
-    kind: 'errand', giver: 'gunnar_slagg', region: 'reach', level: [25, 60], after: ['gunnar_the_lease'],
-    steps: [{ id: 'renegades', objectives: [{ type: 'elites', site: 'forgehall', count: 3 }] }],
-    rewards: { share: 0.35, lv: 26, gold: 300 },
+    kind: 'errand', giver: 'gunnar_slagg', region: 'reach', level: [27, 60], after: ['gunnar_the_lease'],
+    steps: [{ id: 'renegades', objectives: [{ type: 'elites', site: 'cinderworks', count: 3 }] }],
+    rewards: { share: 0.35, lv: 27, gold: 300 },
   },
   // Old Brannagh's shrine (world doc v1.54 §3.3): the Cold Seam's last wages out of the pay office; the Flame carried down
   // to the night pens and held while the shift comes out
@@ -332,9 +332,9 @@ export const QUESTS = {
     steps: [{ id: 'cages', objectives: [{ type: 'waves', site: 'assay_yards', count: 6, floor: 2 }] }],
     rewards: { share: 0.3, lv: 24, gold: 240 },
   },
-  trial24_shaman: {                                  // Mother Coke: the fortieth verse, sung in the Forgehall
+  trial24_shaman: {                                  // Mother Coke: the fortieth verse, sung over the clans' ore in the Yards
     kind: 'trial', giver: 'mother_coke', trial: 'shaman', trialLv: 24, region: 'reach', level: [1, 60],
-    steps: [{ id: 'forge', objectives: [{ type: 'waves', site: 'forgehall', count: 6, floor: 1 }] }],
+    steps: [{ id: 'forge', objectives: [{ type: 'waves', site: 'assay_yards', count: 6, floor: 1 }] }],   // (v1.144: the Forgehall is 27 now; the verse is sung in the Yards' ore sheds, over the clans' own ore)
     rewards: { share: 0.3, lv: 24, gold: 240 },
   },
   wren_the_marker: {

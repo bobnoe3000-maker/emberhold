@@ -111,10 +111,9 @@ Reasonable is the median × 1.5, rounded up.
 | Toadking's Mound | 13.2 | 14 | 20 |
 | The Canal Locks | 13.5 | 14 | 21 |
 | The Drowned Abbey | 14.5 | 15 | 22 |
-| The Cold Seam | 13.7 | 14 | 21 |
-| The Assay Yards | 15.1 | 16 | 23 |
-| The Forgehall of Oruth | 16.4 | 17 | 25 |
-| The Cinderworks | 14.2 | 15 | 22 |
+| The Cold Seam | 14.0 | 14 | 21 |
+| The Assay Yards | 15.0 | 15 | 23 |
+| The Cinderworks (the Forgehall its first floor, v1.144) | 15.3 | 16 | 23 |
 | The Haddow Crypt, the Shuttered Inn, the three secrets | not measured | 6 | 9 |
 
 How the times play:

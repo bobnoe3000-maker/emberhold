@@ -6,7 +6,7 @@
   "turnin": "dagny_coalbrook",
   "region": "reach",
   "level": [
-    22,
+    23,
     60
   ],
   "after": [
@@ -45,7 +45,7 @@
   "done": "Dagny read the rolls standing up. Every name on them was sent to the Cinderworks.",
   "rewards": {
     "share": 0.45,
-    "lv": 23,
+    "lv": 26,
     "gold": 520
   },
   "dialogue": {

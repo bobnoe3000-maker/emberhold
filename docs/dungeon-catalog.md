@@ -111,7 +111,7 @@ The doors between rooms are 10 wide, the minimum hall width that `checkPlan` acc
 |---|---|---|---|---|---|
 | The Hollow Vale | 1–9 | the Old Barrows, Wickham Keep, the Sunken Chapel | the Ninth Milestone (9) | the Haddow Crypt (6), the Proving Pens (a trial at 4) | **Over by one.** The Haddow Crypt sits inside Wickham Keep's band (4–6). |
 | The Greywater Fens | 10–18 | Toadking's Mound, the Canal Locks, the Drowned Abbey | the Reedholm Undercroft (18) | the Mere Tower (no XP); the Old Eel Wharf (parked) | Keeps it. |
-| The Cinder Reach | 19–30 | the Cold Seam, the Assay Yards, the Forgehall of Oruth, the Cinderworks | the Ninth Vault (30) | the Shuttered Inn (20); the High Ramparts (parked) | **Four, built.** A twelve-level land in bands of three. The Shuttered Inn sits inside the Cold Seam's band. |
+| The Cinder Reach | 19–30 | the Cold Seam, the Assay Yards, the Cinderworks (Oruth's Forgehall its first floor) | the Ninth Vault (30) | the Shuttered Inn (20); the High Ramparts (parked) | **Keeps it** (v1.144: three bands of four). The Shuttered Inn sits inside the Cold Seam's band. |
 | The Tidemark | 30–45 | (not built) | the Sister's Cabin (canon) | | Three bands of five, §4.4. |
 | The Greenwood | 45–60 | (not built) | the First Barn (canon) | | Three bands of five, §4.5. |
 | The Pale Heights | 60–75 | (not built) | (none named) | the Ember Throne finale (73–75), the Undervaults | Three bands of four and the finale, §4.6. |
@@ -186,18 +186,23 @@ written.
 
 | | Dungeon | Archetype | Kits |
 |---|---|---|---|
-| 19–21 | The Cold Seam | mine | built |
-| 22–24 | The Assay Yards | compound | built |
-| 25–27 | The Forgehall of Oruth | forge hall | built |
-| 28–30 | The Cinderworks, the Magma Vault | foundry | built |
+| 19–22 | The Cold Seam | mine | built |
+| 23–26 | The Assay Yards | compound | built |
+| 27–30 | The Cinderworks: Oruth's Forgehall (floor 1), the Furnace Hall and the Magma Vault (floor 2) | forge hall, then foundry | built |
 | secret, 30 | The Ninth Vault | strongroom | built |
 | side vault, 20 | The Shuttered Inn | inn | **tavern** (built) |
 
-- **The rule.** The Reach is the one land over three: four bands, as built in v1.53 (the owner's cut). The choices:
-  - **(a) Keep the four** and record the Reach as the exception. This is the recommendation: it is built, balanced
-    (the smoke contract at 24, 27 and 30) and written (six chapters).
-  - **(b) Widen to three bands of four.** The Forgehall (25–27) and the Cinderworks (28–30) would be re-cut as two
-    bands of four, Oruth's forge becoming the Cinderworks' first floor. That means a rebalance and new chapters.
+- **The rule: three, done (v1.144).** The owner chose (b): "Make the reach as 3 dungeons". The Reach is three bands
+  of four, two levels a floor:
+  - the Cold Seam 19–22, the Assay Yards 23–26;
+  - the Cinderworks 27–30, with Oruth's Forgehall as its first floor (Oruth at the bottom of it, 28) and the Furnace
+    Hall, the Magma Vault and Furnace Nine as its second (Morrow Vane holds the Furnace Hall at 29, the Stoker the
+    vault's end at 30).
+
+  The Forgehall's own door on the Ashwater is walled up (the Assay dug in from the works). The chapters keep their
+  beats; their levels and directions moved with the bands (*Paid by Weight* 23, *Gone Back to Work* 27, *Night Shift*
+  29), and the shaman's trial at 24 went to the Assay Yards' sheds. Saves from before (v58) send a hero standing in
+  the Forgehall to the Cinderworks' door.
 - **The High Ramparts** don't belong in the Reach: no walled town stands high there (Ashgate's wall is on flat ground).
   Its kit moves to the Tidemark and the Heights, and the site stays parked.
 - **The Shuttered Inn's errand** exists in its place (Nan Ruddock's Redhand off the yards' gates). It is the land's one

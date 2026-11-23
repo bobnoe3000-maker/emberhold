@@ -5,7 +5,7 @@
   "giver": "gunnar_slagg",
   "region": "reach",
   "level": [
-    25,
+    27,
     60
   ],
   "after": [
@@ -15,11 +15,11 @@
   "steps": [
     {
       "id": "renegades",
-      "journal": "The Forgehall of Oruth: the renegades' leaders come with every fifth lot. Put down three.",
+      "journal": "The Forgehall, the Cinderworks' first floor: the renegades' leaders come with every fifth lot. Put down three.",
       "objectives": [
         {
           "type": "elites",
-          "site": "forgehall",
+          "site": "cinderworks",
           "count": 3,
           "label": "Renegade leaders in the Forgehall"
         }
@@ -30,7 +30,7 @@
   "done": "The Slagborn are walking home in ones and twos. Gunnar is drinking where the row can see him.",
   "rewards": {
     "share": 0.35,
-    "lv": 26,
+    "lv": 27,
     "gold": 300
   },
   "dialogue": {

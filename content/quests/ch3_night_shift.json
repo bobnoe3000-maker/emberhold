@@ -5,7 +5,7 @@
   "giver": "dagny_coalbrook",
   "region": "reach",
   "level": [
-    28,
+    29,
     60
   ],
   "after": [
@@ -15,7 +15,7 @@
   "steps": [
     {
       "id": "vane",
-      "journal": "North up the track among the slag heaps to the Cinderworks. Morrow Vane is in the furnace hall, the first floor's hall.",
+      "journal": "The Cinderworks again, down past Oruth's forge: Morrow Vane keeps the furnace hall, on the second floor.",
       "objectives": [
         {
           "type": "boss",
@@ -31,7 +31,7 @@
   "done": "Vane is a day ahead on the Solmere road, with the vessel. He left his ledger behind.",
   "rewards": {
     "share": 0.5,
-    "lv": 28,
+    "lv": 29,
     "gold": 620
   },
   "dialogue": {

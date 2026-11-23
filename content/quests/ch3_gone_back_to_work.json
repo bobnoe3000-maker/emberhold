@@ -5,7 +5,7 @@
   "giver": "mother_coke",
   "region": "reach",
   "level": [
-    25,
+    27,
     60
   ],
   "after": [
@@ -15,11 +15,11 @@
   "steps": [
     {
       "id": "oruth",
-      "journal": "East on the Ashwater, below the Solmere road: the Forgehall of Oruth. Down to the deep forges, the second floor, and Oruth's own anvil.",
+      "journal": "North up the track to the Cinderworks: the Assay cut down from the works into the old Forgehall. Oruth's anvil is in the first floor's hall.",
       "objectives": [
         {
           "type": "boss",
-          "site": "forgehall",
+          "site": "cinderworks",
           "boss": "oruth",
           "count": 1,
           "label": "Oruth the Forgemaster"
@@ -31,7 +31,7 @@
   "done": "Mother Coke sang the fortieth verse over him, and it rhymed again.",
   "rewards": {
     "share": 0.5,
-    "lv": 26,
+    "lv": 28,
     "gold": 580
   },
   "dialogue": {

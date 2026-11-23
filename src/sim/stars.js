@@ -26,7 +26,7 @@ import { SITES } from './sites.js';
 export const PAR = {
   barrows: [9, 14], wickham_keep: [12, 18], sunken_chapel: [14, 20],   // (medians 8.8, 11.6, 13.2 min; the Proving Pens are a trial: no stars)
   toadking_mound: [14, 20], canal_locks: [14, 21], drowned_abbey: [15, 22],   // (13.2, 13.5, 14.5)
-  cold_seam: [14, 21], assay_yards: [16, 23], forgehall: [17, 25], cinderworks: [15, 22],   // (13.7, 15.1, 16.4, 14.2)
+  cold_seam: [14, 21], assay_yards: [15, 23], cinderworks: [16, 23],   // (14.0, 15.0, 15.3: re-measured for v1.144's Reach in three, two levels a floor)
   // one floor, no boss, and the secrets (pace.mjs walks to a last boss, so these aren't measured yet: a one-floor
   // building is a third of a two-floor dungeon's rooms, a secret one floor of its land's top band)
   haddow_crypt: [6, 9], shuttered_inn: [6, 9],

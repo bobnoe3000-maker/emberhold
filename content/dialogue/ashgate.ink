@@ -321,7 +321,7 @@ He folds it very small and doesn't drink for a while.
 "When Oruth woke, some of ours went to the Forgehall. Our own ancestor, working again. They thought it meant something. It does. It means somebody's using him."
 "Their leaders keep the rest there. Put the leaders down. The rest will come home. They'll hate me, home. That's better than the Forgehall."
 + [We'll send them home. #mark: quest]
-    "The Forgehall, on the Ashwater. The leaders come with every fifth lot, with braids to the waist. Three of them." # quest: accept gunnar_the_row
+    "The Forgehall. The Assay walled its doors, so you go in at the Cinderworks gate and down. The leaders come with every fifth lot, with braids to the waist. Three of them." # quest: accept gunnar_the_row
     -> gunnar_topics
 + [Not yet.]
     "No. Not yet. I've been saying not yet for a year."
@@ -372,7 +372,7 @@ Gunnar listens, nods, and puts his mug down on the Rest's table, and leaves it t
 + { q_ch3_gone_back_to_work == 2 } [Oruth's asleep. #mark: quest ready] -> coke_oruth_turnin
 + { q_ch3_gone_back_to_work == 0 } [The Forgehall's lit. #mark: quest] -> coke_oruth_offer
 + { q_ch3_gone_back_to_work == 1 } [About Oruth… #mark: quest active] -> coke_oruth_active
-+ { q_trial24_shaman == 2 } [The verse is sung in the Forgehall. #mark: quest ready] -> coke_trial_turnin
++ { q_trial24_shaman == 2 } [The verse is sung. #mark: quest ready] -> coke_trial_turnin
 + { q_trial24_shaman == 0 } [Would you teach a shaman the fortieth verse? #mark: quest] -> coke_trial_offer
 + { q_trial24_shaman == 1 } [About the verse… #mark: quest active] -> coke_trial_active
 + [Sing on, Mother.] -> END
@@ -383,7 +383,7 @@ Gunnar listens, nods, and puts his mug down on the Rest's table, and leaves it t
 "Oruth was the clans' forgemaster before there were clans to speak of. The Throne bound him to his anvil, and told us he'd gone to the Throne. He works as he was ordered. He'll work for anyone who lights the fire."
 "Don't kill him. You can't. Beat him till he's tired of it, and he'll lie down and go back to sleep. Then I'll sing over him, and it'll rhyme."
 + [We'll put him to bed. #mark: quest]
-    "The Forgehall, on the Ashwater below the Solmere road. His own forge is the deep one, down the ore lift. Mind his wights. He makes them better while you watch." # quest: accept ch3_gone_back_to_work
+    "The Assay walled the Forgehall's doors and dug in from the Cinderworks. Go in at the works gate. His forge is at the bottom of the first floor. Mind his wights. He makes them better while you watch." # quest: accept ch3_gone_back_to_work
     { boss_oruth == 1: "You've been. He's asleep already? Then I'll sing it now." }
     -> coke_topics
 + [Not yet.]
@@ -403,16 +403,16 @@ Mother Coke sits a long while. Then she sings, low, in the clans' old tongue, an
 // ── the shamans' trial at 24 (content/quests/trial24_shaman.json) ──
 == coke_trial_offer ==
 "The fortieth verse. The one that stops rhyming. A shaman of yours should know it, so they know what it sounds like when something's woken that shouldn't be."
-"It wants singing in the Forgehall, where he can hear it. Six turns of the fighting. Sing under it."
+"It wants singing over the clans' own ore. The Assay weighs it in sheds at the Yards. Six turns of the fighting. Sing under it."
 + [We'll sing it. #mark: quest]
-    "The Forgehall, the first floor. Six turns. Don't sing it pretty. It isn't." # quest: accept trial24_shaman
+    "The Yards, the first floor. Six turns. Don't sing it pretty. It isn't." # quest: accept trial24_shaman
     -> coke_topics
 + [Not yet.]
     "The verse keeps. It's kept three hundred years."
     -> coke_topics
 
 == coke_trial_active ==
-"The Forgehall. Six turns of the fighting, with the verse under it."
+"The Yards' sheds. Six turns of the fighting, with the verse under it."
 -> coke_topics
 
 == coke_trial_turnin ==

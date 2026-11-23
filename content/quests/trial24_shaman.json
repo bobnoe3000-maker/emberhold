@@ -10,23 +10,23 @@
   ],
   "trial": "shaman",
   "trialLv": 24,
-  "summary": "Mother Coke will teach a shaman of yours the fortieth verse, the one that stops rhyming. It wants singing in the Forgehall, where Oruth can hear it.",
+  "summary": "Mother Coke will teach a shaman of yours the fortieth verse, the one that stops rhyming. It wants singing over the clans' own ore, in the Assay Yards' sheds.",
   "steps": [
     {
       "id": "forge",
-      "journal": "The Forgehall of Oruth, the first floor or below: hold six waves.",
+      "journal": "The Assay Yards, the first floor or below: hold six waves.",
       "objectives": [
         {
           "type": "waves",
-          "site": "forgehall",
+          "site": "assay_yards",
           "count": 6,
           "floor": 1,
-          "label": "Waves held in the Forgehall"
+          "label": "Waves held in the Assay Yards"
         }
       ]
     }
   ],
-  "ready": "The verse is sung in the Forgehall. Tell Mother Coke.",
+  "ready": "The verse is sung over the clans' ore. Tell Mother Coke.",
   "done": "Your shamans know the fortieth verse. Mother Coke says they sing it flat.",
   "rewards": {
     "share": 0.3,

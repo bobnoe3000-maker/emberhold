@@ -86,12 +86,12 @@ test('Act III (v1.124): after Act II, Ilse in Thornwick sends the company north;
   S.bosses = {}; assert.deepEqual(openLeads(S, status(sim), 'reach').map((l) => l.id), ['foreman', 'reachchronicle', 'reachboard']);
   S.bosses = { foreman: 1 }; assert.deepEqual(openLeads(S, status(sim), 'reach').map((l) => l.id), ['tamsin', 'reachchronicle', 'reachboard']);
   S.bench = [{ id: 'tamsin', cls: 'mage', level: 19 }]; assert.deepEqual(openLeads(S, status(sim), 'reach').map((l) => l.id), ['reachchronicle', 'reachboard'], 'she\'s with you');
-  S.party[0].level = 22; assert.deepEqual(openLeads(S, status(sim), 'reach').map((l) => l.id), ['showingoff', 'reachchronicle', 'reachboard'], 'her chain, from 22');
+  S.party[0].level = 23; assert.deepEqual(openLeads(S, status(sim), 'reach').map((l) => l.id), ['showingoff', 'reachchronicle', 'reachboard'], 'her chain, from 23 (v1.144)');
   assert.deepEqual(openLeads(S, status(sim), 'reach').find((l) => l.id === 'reachchronicle'), { id: 'reachchronicle', n: 0, of: 12 });
   S.revealed = new Set(['ninth_vault']); S.sitesEntered = new Set();
   assert.ok(openLeads(S, status(sim), 'reach').some((l) => l.id === 'ninthvault'), 'the set whole: the Ninth Vault');
   // (v1.54) the rest of the act: Hob, Mother Coke, Dagny, then Tamsin's, from her card
-  for (const [id, giver, town, lv] of [['ch3_paid_by_weight', 'hob', 'Ashgate', 22], ['ch3_gone_back_to_work', 'mother_coke', 'Ashgate', 25], ['ch3_night_shift', 'dagny_coalbrook', 'Ashgate', 28]]) {
+  for (const [id, giver, town, lv] of [['ch3_paid_by_weight', 'hob', 'Ashgate', 23], ['ch3_gone_back_to_work', 'mother_coke', 'Ashgate', 27], ['ch3_night_shift', 'dagny_coalbrook', 'Ashgate', 29]]) {
     const before = CHAPTERS[CHAPTERS.indexOf(id) - 1]; S.quests[before] = { st: 3, step: 0, n: [] };
     S.party[0].level = lv - 1; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'level', id, level: lv });
     S.party[0].level = lv; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id, giver, town });

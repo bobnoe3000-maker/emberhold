@@ -5,7 +5,7 @@
   "giver": "tamsin",
   "region": "reach",
   "level": [
-    25,
+    27,
     60
   ],
   "after": [
@@ -16,13 +16,13 @@
   "steps": [
     {
       "id": "patterns",
-      "journal": "Open two chests anywhere in the Forgehall of Oruth, on any floor. The pattern store on the first floor holds two.",
+      "journal": "Open two chests in the Cinderworks. The old Forgehall is its first floor, and the pattern store there holds two.",
       "objectives": [
         {
           "type": "loot",
-          "site": "forgehall",
+          "site": "cinderworks",
           "count": 2,
-          "label": "Chests opened in the Forgehall"
+          "label": "Chests opened in the Cinderworks"
         }
       ]
     }
@@ -31,7 +31,7 @@
   "done": "Lamp patterns, forty to a shelf, each to hold one. Tamsin put them back very carefully.",
   "rewards": {
     "share": 0.3,
-    "lv": 25,
+    "lv": 27,
     "gold": 300
   },
   "dialogue": {

@@ -87,7 +87,7 @@ for (const [region, L] of Object.entries(LANDS_NEW)) {
 
   test(`${region}: the preview builds it, the roads out are shut with their words, and the town's gate and the overland's agree`, () => {
     // (v1.124: the Reach is a land: the Wickham road open to the Vale, the Cold Seam's door; the Solmere road still shut)
-    const land = region === 'reach', open = land ? ['cold_seam', 'assay_yards', 'forgehall', 'cinderworks', 'ninth_vault', 'shuttered_inn'] : [];   // (v1.126: Act III's, the Ninth Vault's door shut till it's found; v1.138: the Shuttered Inn by Ashgate)
+    const land = region === 'reach', open = land ? ['cold_seam', 'assay_yards', 'cinderworks', 'ninth_vault', 'shuttered_inn'] : [];   // (v1.126: Act III's, the Ninth Vault's door shut till it's found; v1.138: the Shuttered Inn by Ashgate)
     assert.equal(region in LANDS, land, land ? 'a land since v1.124' : 'not a land you can walk to yet');
     assert.deepEqual(Object.keys(SITES).filter((k) => SITES[k].region === region && !SITES[k].parked), open, 'its open sites');
     const sim = createSim(20260807, undefined, { scene: 'overland', region }); sim.tick();

@@ -1041,7 +1041,7 @@ function buildReach(seed) {
   o.labels.push({ x: gate[0], y: gate[1], id: B('gatehousey'), text: 'Ashgate' }, { x: kells[0], y: kells[1], id: B('longhouse'), text: "Kell's Rest" },
     { x: yards[0], y: yards[1], id: B('longhouse'), text: 'The Assay Yards' }, { x: works[0], y: works[1], id: B('smith'), text: 'The Cinderworks' },
     { x: vault[0], y: vault[1], id: 'ruin', text: 'The Magma Vault' }, { x: tunnels[0], y: tunnels[1], id: 'warren_0', text: 'The Slag Tunnels' },
-    { x: seam[0], y: seam[1], id: 'mine_0', text: 'The Cold Seam' }, { x: forge[0], y: forge[1], id: B('keep'), text: 'The Forgehall of Oruth' },
+    { x: seam[0], y: seam[1], id: 'mine_0', text: 'The Cold Seam' }, { x: forge[0], y: forge[1], id: B('keep'), text: 'The Forgehall, walled up' },
     { x: inn[0], y: inn[1], id: B('inn'), text: 'The Shuttered Inn' });
   for (const r of ROADS) if (r.imperial) beacons(o, r.pts, B('tower'));
 
@@ -1090,7 +1090,7 @@ function buildReach(seed) {
   // assayhouse / forgedoor / ninthdoor; the works' furnace hall is the smithy's. Before, beside them: the Yards' 6 east of
   // its door, the Ninth Vault's inside its ruin's footprint; the owner, 2026-11-16, "do 3")
   o.exits.push({ x0: yards[0] - 3, y0: yards[1] + 0.5, x1: yards[0] + 3, y1: yards[1] + 3.5, to: 'dungeon', site: 'assay_yards' });   // (the counting house stands 3 north of yards)
-  o.exits.push({ x0: forge[0] - 3, y0: forge[1] + 6.5, x1: forge[0] + 4, y1: forge[1] + 9.5, to: 'dungeon', site: 'forgehall' });
+  // (v1.144) the Forgehall's great doors are walled: the Assay cut in to it from the works, the Cinderworks' first floor
   o.exits.push({ x0: works[0] - 3, y0: works[1] + 5.5, x1: works[0] + 3, y1: works[1] + 8.5, to: 'dungeon', site: 'cinderworks' });
   o.exits.push({ x0: ninth[0] - 3, y0: ninth[1] + 8.5, x1: ninth[0] + 3, y1: ninth[1] + 11.5, to: 'dungeon', site: 'ninth_vault' });
   o.exits.push({ x0: inn[0] - 1.5, y0: inn[1] + 5.5, x1: inn[0] + 4.5, y1: inn[1] + 8.5, to: 'dungeon', site: 'shuttered_inn' });   // (v1.138) the inn's door, on its +y face
@@ -1098,7 +1098,7 @@ function buildReach(seed) {
   o.arrivals = { default: { x: join[0] - 4.5, y: gate[1] + 0.5 }, ashgate: { x: join[0] - 4.5, y: gate[1] + 0.5 }, kells_rest: { x: kells[0] + 10.5, y: kells[1] + 4.5 },
     vale_road: { x: 146.5, y: 255.5 }, cold_seam: { x: seam[0] - 5.5, y: seam[1] + 17.5 },
     assay_yards: { x: yards[0] + 6.5, y: yards[1] + 4.5 },   // (east of the workshop, which hid one arriving at the door: visibility.mjs)
-    forgehall: { x: forge[0] + 0.5, y: forge[1] + 13.5 }, cinderworks: { x: works[0] + 0.5, y: works[1] + 12.5 },
+    cinderworks: { x: works[0] + 0.5, y: works[1] + 12.5 },
     ninth_vault: { x: ninth[0] + 0.5, y: ninth[1] + 15.5 }, shuttered_inn: { x: inn[0] + 1.5, y: inn[1] + 12.5 } };
   o.spawn = o.arrivals.default;
   return o;
