@@ -196,8 +196,12 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
       progTags(map); rail(map);
       const at = PLACES[townOf(region())];
       // scrolled to where you are, with "you are here" (west of the pin) wholly in view
+      // (v1.143) and the next land up the climb with it, where both fit across the view: the way on is in sight
+      const ci = CLIMB.findIndex((L) => L.id === region()), nx = ci >= 0 && CLIMB[ci + 1] ? PLACES[CLIMB[ci + 1].town] : null;
       const go = () => { if (scrolled) return; scrolled = true; const k = map.clientWidth / WALL.w, me = pins.find((p) => p.here), tw = me ? me.here.length * 6.6 + 12 + 22 + 10 : 0;
-        view.scrollLeft = Math.max(0, Math.min(at[0] * k - view.clientWidth / 2, at[0] * k - tw)); view.scrollTop = Math.max(0, at[1] * k - view.clientHeight * 0.42); };
+        const both = nx && Math.abs(nx[0] - at[0]) * k < view.clientWidth - 90 && Math.abs(nx[1] - at[1]) * k < view.clientHeight * 0.7;
+        view.scrollLeft = Math.max(0, both ? ((at[0] + nx[0]) / 2) * k - (view.clientWidth - 30) / 2 : Math.min(at[0] * k - view.clientWidth / 2, at[0] * k - tw));
+        view.scrollTop = Math.max(0, (both ? ((at[1] + nx[1]) / 2) * k - view.clientHeight * 0.45 : at[1] * k - view.clientHeight * 0.42)); };
       if (img.complete) go(); else img.addEventListener('load', go, { once: true });
       requestAnimationFrame(go);
     } else {
