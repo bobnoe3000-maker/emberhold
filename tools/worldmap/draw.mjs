@@ -32,7 +32,7 @@ for (const r of ['vale', 'fens']) {
   WATER[r] = pts.filter((_, i) => i % 3 === 0 || i === pts.length - 1).map(([x, y]) => EMBERFALL[r](x, y).map((v) => Math.round(v)));
 }
 // the canal starts where the Fens do, not up in the Vale (v1.143: the Fens' top edge on the map)
-{ const top = 1601, a = WATER.fens, i = a.findIndex(([, y]) => y >= top);
+{ const top = 1691, a = WATER.fens, i = a.findIndex(([, y]) => y >= top);
   if (i > 0) { const [x0, y0] = a[i - 1], [x1, y1] = a[i]; WATER.fens = [[Math.round(x0 + ((x1 - x0) * (top - y0)) / (y1 - y0)), top], ...a.slice(i)]; } }
 const W = 1200, H = 2400;                 // portrait, the shape of a phone held upright (the owner)
 
@@ -166,7 +166,7 @@ scatter([[170, 650], [330, 628], [540, 660], [560, 840], [520, 1060], [330, 1090
 scatter([[420, 1960], [510, 1960], [530, 2090], [470, 2130], [410, 2060]], 22, 18, (x, y) => tree(x, y, rr(6, 8)));                      // the Vale's woods
 scatter([[200, 470], [330, 470], [380, 580], [240, 620]], 26, 17, (x, y) => pine(x, y, rr(8, 11)));                                      // pines under the Heights
 scatter([[830, 470], [960, 480], [990, 610], [850, 620]], 24, 17, (x, y) => pine(x, y, rr(8, 11)));
-scatter([[530, 1606], [900, 1600], [960, 1700], [940, 1850], [620, 1860], [530, 1820]], 64, 16, (x, y) => reeds(x, y, rr(5, 7)));      // the Greywater Fens (v1.143: east of the Vale, above it)
+scatter([[546, 1640], [916, 1630], [976, 1790], [956, 1940], [636, 1950], [546, 1910]], 64, 16, (x, y) => reeds(x, y, rr(5, 7)));      // the Greywater Fens (v1.143: east of the Vale, above it; v1.146 down beside its north-east)
 scatter([[460, 1340], [600, 1300], [610, 1470], [500, 1500]], 12, 34, (x, y) => hill(x, y, rr(10, 14)));                                 // the downs
 scatter([[190, 1580], [490, 1580], [500, 1800], [200, 1810]], 12, 34, (x, y) => hill(x, y, rr(10, 14)));   // (the downs between the Reach and the Vale)
 scatter([[700, 980], [900, 950], [950, 1100], [760, 1130]], 12, 34, (x, y) => hill(x, y, rr(10, 14)));
@@ -214,7 +214,7 @@ const BORDERS = [[[160, 610], [350, 622], [480, 610], [600, 640], [720, 620], [8
   [[690, 1200], [800, 1300], [1040, 1340]],                                                                  // the Tidemark's foot
   [[515, 1170], [520, 1360], [518, 1556]],                                                                   // the Reach | Solmere and the Fens
   [[160, 1556], [330, 1560], [518, 1556], [700, 1540], [1040, 1530]],                                        // the Reach's and the Tidemark's foot
-  [[518, 1556], [520, 1700], [530, 1846], [560, 1880], [610, 2000], [640, 2200]]];                          // the Vale | the Fens
+  [[518, 1556], [522, 1700], [524, 1860], [526, 1940], [575, 1975], [620, 2040], [640, 2200]]];               // the Vale | the Fens (v1.146: the Fens' corner beside the Vale's north-east)
 for (const bd of BORDERS) add(`<path d="${pathOf(ragged(bd, false, 0.25, 3), false)}" fill="none" stroke="${INK}" stroke-width="1.6" stroke-dasharray="1 7" stroke-linecap="round" opacity="0.55" clip-path="url(#land)"/>`);
 
 // ── lettering ────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -222,9 +222,9 @@ const halo = `paint-order="stroke" stroke="${PAPER}" stroke-width="5" stroke-lin
 const label = (x, y, txt, size, o = {}) => add(`<text x="${x}" y="${y}" font-family="${o.sc ? 'Fell SC' : o.it ? 'Fell It' : 'Fell'}" font-size="${size}" fill="${o.fill || INK}" text-anchor="${o.anchor || 'middle'}" letter-spacing="${o.ls || 0}" ${o.halo === false ? '' : halo}${o.rot ? ` transform="rotate(${o.rot} ${x} ${y})"` : ''}${o.op ? ` opacity="${o.op}"` : ''}>${txt}</text>`);
 // the regions: spaced capitals, and the band under each in red, in whoever's hand added it later
 // (v1.143) a land a band, climbing the map: the lowest at its foot, the highest at its head
-const REG = [[300, 1770, ['THE HOLLOW VALE'], '1 – 9'], [760, 1572, ['THE GREYWATER', 'FENS'], '10 – 18'], [336, 1146, ['THE CINDER REACH'], '19 – 30'], [870, 726, ['THE TIDEMARK'], '31 – 45'], [330, 668, ['THE GREENWOOD'], '46 – 60'], [600, 300, ['THE PALE HEIGHTS'], '61 – 75']];
+const REG = [[300, 1770, ['THE HOLLOW VALE'], '1 – 9'], [720, 1590, ['THE GREYWATER', 'FENS'], '10 – 18'], [336, 1146, ['THE CINDER REACH'], '19 – 30'], [870, 726, ['THE TIDEMARK'], '31 – 45'], [330, 668, ['THE GREENWOOD'], '46 – 60'], [600, 300, ['THE PALE HEIGHTS'], '61 – 75']];
 for (const [x, y, lines, lv] of REG) { lines.forEach((l, i) => label(x, y + i * 30, l, 28, { sc: true, ls: 4 })); label(x, y + (lines.length - 1) * 30 + 26, `levels ${lv}`, 20, { it: true, fill: RED }); }
-label(560, 1872, 'EMBERFALL', 20, { sc: true, ls: 6, op: 0.8 }); label(560, 1894, 'the Vale and the Fens', 15, { it: true, op: 0.8 });
+label(522, 1652, 'EMBERFALL', 20, { sc: true, ls: 6, op: 0.8 }); label(522, 1674, 'the Vale and the Fens', 15, { it: true, op: 0.8 });   // (v1.146: on the line between the two, above them; it stood in the Fens once they moved down)
 label(600, 1250, 'SOLMERE', 32, { sc: true, ls: 8 }); label(600, 1276, 'the dead capital · the Bowl', 17, { it: true }); label(600, 1296, 'the Great Beacon', 17, { it: true });
 label(600, 480, 'the Ember Throne', 16, { it: true });
 label(600, 1088, 'the Mere', 15, { it: true }); label(684, 1124, 'the Mere Tower', 15, { it: true, anchor: 'start' });

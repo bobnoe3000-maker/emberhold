@@ -376,16 +376,16 @@ She writes for a long time without looking up. "They were waiting to be relieved
 "The shard." She has it out of the cloth before you've finished, which she never does. "I can't read the foundry mark. I've tried. I've tried twice, and then a third time, which is a sin at Reedholm."
 "But the robed men's boats come up from the Fens, and the Sisters at Saltmere write to me about them, and they're frightened, and Sisters don't frighten."
 "There's a man at the Drowned Eel in Saltmere, Dace Pike. He writes down what everybody owes. If somebody's paying for boats, he'll have it in a column somewhere."
-+ [We'll go south. #mark: quest]
++ [We'll go to Saltmere. #mark: quest]
     She writes a letter, reads it twice, and gives it to you folded small. "Give him this. He'll read it with his finger. Be patient. He's the only man in Saltmere who reads at all." # quest: accept ch2_fog_on_the_canal
-    "The canal road leaves the Vale at its south edge, past the barrows. Saltmere's a day. You'll smell it before you see it."
+    "The canal road leaves the Vale at its north-east corner, past the old milestone. Saltmere's a day's walk, most of it wet."
     -> ilse_topics
 + [Not yet.]
     "No. Not yet. It's kept three hundred years." She wraps it again. "I'd still rather it didn't keep much longer."
     -> ilse_topics
 
 == ilse_ch2_active ==
-"Saltmere: the canal road south, a day. Dace Pike, at the Drowned Eel. Give him my letter, and let him read it slowly."
+"Saltmere's a day up the canal road, north-east past the milestone. Dace Pike, at the Drowned Eel. Give him my letter, and let him read it slowly."
 -> ilse_topics
 
 // ── Act II, chapter 6: The Last Office (content/quests/ch2_the_last_office.json, given by Mother Agnes) ──

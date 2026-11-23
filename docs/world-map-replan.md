@@ -147,11 +147,14 @@ v57 has none (`starsFor57`). A reload in the middle of a dungeon keeps the run.
 - **No reward.** Stars only show. A reward for three stars (a title, a Guild mark, a cosmetic) would be a sim rule,
   and that is the owner's call.
 - **No time shown during a run.** A small clock in the HUD while a run is on would make the quick time something to
-  aim for. It's cheap, and it's the obvious next step.
+  aim for. It's cheap, and it's the obvious next step. (The owner, 2026-11-23: "Nothing else for 3 stars": no reward,
+  the record only.)
 - **Un-measured pars.** The five sites without a median need a `pace.mjs` that stops at the end room's chest or the
   vault.
 
-## 5. The next step: the overlands' roads
+## 5. The overlands' roads (done, GDD v1.146)
+
+**Done (v1.146).** The Vale's canal road leaves at its north-east past the milestone; the Fens' road from the Vale comes in at their south-west; the Fens sit 90 units lower and 16 east on the wall map so the two meet (test/worldmap.test.mjs). The six lines are rewritten, the minimaps and land pictures regenerated. As it was planned:
 
 The wall map is re-laid, but the overlands keep the sides their roads leave by:
 

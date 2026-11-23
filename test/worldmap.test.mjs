@@ -19,7 +19,8 @@ test('each land\'s map is in assets/maps, and its pins are the overland\'s exits
     const L = JSON.parse(readFileSync(new URL(`assets/maps/minimap-${r}.json`, ROOT), 'utf8'));
     for (const seed of [20260807, 1, 0xdeadbeef]) {
       const o = createOutdoor(seed, 'overland', r);
-      const want = o.exits.map((e) => ({ kind: e.to === 'dungeon' ? 'site' : e.to === 'town' ? 'town' : 'land', id: e.site || e.region || r, x: Math.round((e.x0 + e.x1) * 5) / 10, y: Math.round((e.y0 + e.y1) * 5) / 10 }));
+      const want = o.exits.filter((e) => !e.closed).map((e) => ({   // (v1.146: a shut road to a land not built has no pin)
+  kind: e.to === 'dungeon' ? 'site' : e.to === 'town' ? 'town' : 'land', id: e.site || e.region || r, x: Math.round((e.x0 + e.x1) * 5) / 10, y: Math.round((e.y0 + e.y1) * 5) / 10 }));
       assert.deepEqual(L.pins, want, `${r} on seed ${seed}: rerun node tools/worldmap/minimap.mjs`);
     }
     assert.ok(L.w > 0 && L.h > 0 && L.px === 4);
@@ -48,10 +49,14 @@ test('Emberfall on the wall map is the game\'s: each town stands where its overl
     const e = createOutdoor(1, 'overland', land).exits.find((x) => x.to === 'town'), [x, y] = EMBERFALL[land]((e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2);
     assert.ok(Math.hypot(x - PLACES[town][0], y - PLACES[town][1]) < 24, `${town}: ${x.toFixed(0)},${y.toFixed(0)} vs ${PLACES[town]}`);
   }
+  // the roads between the two lands meet (v1.146: the Vale's canal road out at its north-east, the Fens' in at their
+  // south-west, as the re-laid map has them: docs/world-map-replan.md §5)
+  const out = createOutdoor(1, 'overland', 'vale').exits.find((x) => x.region === 'fens'), back = createOutdoor(1, 'overland', 'fens').exits.find((x) => x.region === 'vale');
+  const a = EMBERFALL.vale((out.x0 + out.x1) / 2, (out.y0 + out.y1) / 2), b = EMBERFALL.fens((back.x0 + back.x1) / 2, (back.y0 + back.y1) / 2);
+  assert.ok(Math.hypot(a[0] - b[0], a[1] - b[1]) < 12, `${a} vs ${b}`);
+  assert.ok(out.x0 > 200 && out.y1 < 130, 'the Vale\'s way to the Fens at its north-east'); assert.ok(back.x1 < 40 && back.y0 > 120, 'the Fens\' way to the Vale at their south-west');
   // (v1.143, the owner: "lowest levels at the bottom and highest at the top") the lands climb the map in their levels'
-  // order: each built land's town above the one before it. (The overlands' roads between lands still leave by the sides
-  // they did before the map was re-laid, the Vale's canal road south and the Fens' north: re-pointing them is the plan's
-  // next step, docs/world-map-replan.md §5, and this file's old check that they meet comes back with it.)
+  // order: each built land's town above the one before it
   const { CLIMB } = await import('../src/ui/wallmap.js');
   for (let i = 1; i < CLIMB.length; i++) assert.ok(PLACES[CLIMB[i].town][1] < PLACES[CLIMB[i - 1].town][1] && CLIMB[i].at[1] < CLIMB[i - 1].at[1], `${CLIMB[i].id} above ${CLIMB[i - 1].id}`);
   assert.ok(PLACES.throne[1] < PLACES.frosthold[1] + 100, 'the Throne at the top, where it was');

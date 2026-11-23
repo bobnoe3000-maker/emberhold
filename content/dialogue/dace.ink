@@ -94,7 +94,7 @@ Dace writes it all down. Then he writes *no name* beside it, and underlines that
 -> dace_topics
 
 == dace_saltmere ==
-"Stilts, boards, eels, fog. The Sisters at the chapel, Pim at his cart, my sister Wenna at the landing with her punt. Folk come down the canal road from your Vale and look at us like we're sinking."
+"Stilts, boards, eels, fog. The Sisters at the chapel, Pim at his cart, my sister Wenna at the landing with her punt. Folk come in off the road from your Vale and look at us like we're sinking."
 "We are. Slowly. We've been sinking since the empire. We'll be sinking long after it's back."
 -> dace_topics
 

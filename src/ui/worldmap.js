@@ -87,7 +87,7 @@ const CSS = `
 #worldmap .pin.dgn { width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 3px; border: 2px solid #3b2a1c; background: rgba(246,236,210,.55); transform: rotate(45deg); }
 #worldmap .pin.dgn.won { background: #e0a85a; border-color: #5a2e14; }
 #worldmap .pin.dgn.gold { background: #ffd36a; border-color: #7a4a10; box-shadow: 0 0 9px rgba(255,200,90,.95); }
-#worldmap .stars { position: absolute; margin: -8px 0 0 12px; padding: 0 4px; border-radius: 6px; background: rgba(28,20,14,.82); color: #ffd36a; font: 13px/16px Georgia, serif; letter-spacing: 1px; white-space: nowrap; pointer-events: none; }
+#worldmap .stars { position: absolute; transform: translateX(-50%); padding: 0 3px; border-radius: 6px; background: rgba(28,20,14,.82); color: #ffd36a; font: 12px/16px Georgia, serif; letter-spacing: 0; white-space: nowrap; pointer-events: none; }
 #worldmap .stars i { font-style: normal; color: rgba(240,228,200,.45); }
 #worldmap .prog { position: absolute; transform: translate(-50%, 0); padding: 2px 8px; border-radius: 8px; font: 12px/1.35 Georgia, serif; white-space: nowrap; pointer-events: none; text-align: center;
   background: rgba(28,20,14,.86); color: #f0e2c4; border: 1px solid rgba(214,170,98,.55); }
@@ -96,6 +96,7 @@ const CSS = `
 #worldmap .prog.is-here { box-shadow: 0 0 0 2px rgba(240,200,128,.5), 0 0 12px rgba(240,200,128,.6); }
 #worldmap .prog.is-shut, #worldmap .prog.is-far { color: #b8ad98; border-style: dashed; background: rgba(36,28,40,.8); }
 #worldmap svg.trail { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+#worldmap .railpad { position: absolute; top: 0; left: calc(100% + 40px); width: 1px; height: 1px; pointer-events: none; }
 #worldmap .rail { position: absolute; right: 4px; width: 26px; z-index: 2; display: flex; flex-direction: column-reverse; gap: 3px; padding: 4px 3px; border-radius: 12px;
   background: rgba(16,12,22,.82); border: 1px solid rgba(214,170,98,.45); }
 #worldmap .rail button { position: relative; flex: 1; min-height: 0; padding: 0; border: 1px solid #3a3446; border-radius: 6px; background: #221c2c; overflow: hidden; }
@@ -191,6 +192,9 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
       img.src = WALL.src; img.width = WALL.w; img.height = WALL.h;
       map.style.width = `${Math.round(Math.max(view.clientWidth * WALL_ZOOM, WALL_MIN))}px`;
       map.append(fogSvg(), trailSvg());
+      // (v1.146 critic: the level rail stood over the right edge's pins, the Sunken Chapel's stars under it) the map
+      // scrolls a rail's width further, so whatever the rail covers can be brought out from under it
+      { const pad = el('div', 'railpad'); map.append(pad); }
       pins = worldPins();
       place(map, pins, WALL.w, 0, 0);
       progTags(map); rail(map);
@@ -199,8 +203,12 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
       // (v1.143) and the next land up the climb with it, where both fit across the view: the way on is in sight
       const ci = CLIMB.findIndex((L) => L.id === region()), nx = ci >= 0 && CLIMB[ci + 1] ? PLACES[CLIMB[ci + 1].town] : null;
       const go = () => { if (scrolled) return; scrolled = true; const k = map.clientWidth / WALL.w, me = pins.find((p) => p.here), tw = me ? me.here.length * 6.6 + 12 + 22 + 10 : 0;
-        const both = nx && Math.abs(nx[0] - at[0]) * k < view.clientWidth - 90 && Math.abs(nx[1] - at[1]) * k < view.clientHeight * 0.7;
-        view.scrollLeft = Math.max(0, both ? ((at[0] + nx[0]) / 2) * k - (view.clientWidth - 30) / 2 : Math.min(at[0] * k - view.clientWidth / 2, at[0] * k - tw));
+        const VW = view.clientWidth - 40;   // (the rail's width off the right: v1.146 critic)
+        const both = nx && Math.abs(nx[0] - at[0]) * k < VW - 90 && Math.abs(nx[1] - at[1]) * k < view.clientHeight * 0.7;
+        // (v1.146: the tag west of the pin was cut by the view's left edge when both lands were framed) the span from the
+        // tag's left end to the next land's town, centred where it fits; where it doesn't, the tag wins
+        const hx = me && me.sx != null ? me.sx : at[0] * k, lo = Math.min(hx - tw, at[0] * k - 12), hi = both ? Math.max(nx[0], at[0]) * k + 40 : hx;
+        view.scrollLeft = Math.max(0, both && hi - lo <= VW ? (lo + hi) / 2 - VW / 2 : both ? lo - 8 : Math.min(at[0] * k - VW / 2, hx - tw));
         view.scrollTop = Math.max(0, (both ? ((at[1] + nx[1]) / 2) * k - view.clientHeight * 0.45 : at[1] * k - view.clientHeight * 0.42)); };
       if (img.complete) go(); else img.addEventListener('load', go, { once: true });
       requestAnimationFrame(go);
@@ -242,7 +250,11 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
         if (p.here) { const h = el('div', 'here'); h.style.left = `${p.sx}px`; h.style.top = `${p.sy}px`; map.append(h); }
         if (p.cls !== null) { const n = el('div', 'pin' + (p.cls ? ' ' + p.cls : '') + (sel === p.key ? ' sel' : '')); n.dataset.key = p.key; n.style.left = `${p.sx}px`; n.style.top = `${p.sy}px`; map.append(n); }
         if (p.star) { const s = el('div', 'star', '★'); s.style.left = `${p.sx + 10}px`; s.style.top = `${p.sy}px`; map.append(s); }
-        if (p.stars != null) { const s = el('div', 'stars'); s.append('★'.repeat(p.stars)); if (p.stars < 3) s.append(el('i', '', '☆'.repeat(3 - p.stars))); s.setAttribute('aria-label', `${p.stars} of 3 stars`); s.style.left = `${p.sx}px`; s.style.top = `${p.sy}px`; map.append(s); }
+        // (v1.146 critic: beside the mark they ran into the next dungeon's and over the map's own lettering) the stars
+        // over the mark, where the wall map writes nothing; under it if a neighbour's are there already, else beside
+        if (p.stars != null) { const s = el('div', 'stars'); s.append('★'.repeat(p.stars)); if (p.stars < 3) s.append(el('i', '', '☆'.repeat(3 - p.stars))); s.setAttribute('aria-label', `${p.stars} of 3 stars`);
+          const W2 = 21, spots = [[p.sx, p.sy - 26], [p.sx, p.sy + 10], [p.sx + 12 + W2, p.sy - 8]], at = spots.find(([x, y]) => free([x - W2, y, x + W2, y + 16])) || spots[0];
+          s.style.left = `${at[0]}px`; s.style.top = `${at[1]}px`; map.append(s); }
       }
       // the words beside the pins: you are here first, then the names, each below its pin, or above, right or left
       // where that would cover another (art critic pass 12: three of the Fens' were dropped); skipped only when none is free
@@ -352,8 +364,8 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
     svg.append(el2('rect', { width: WALL.w, height: WALL.h, fill: 'rgba(36,28,40,0.62)', mask: 'url(#wmFog)' }));
     const words = [FOG_WORDS.beyond, ...['fens', 'reach'].filter((r) => !opened.includes(r)).map((r) => FOG_WORDS[r])];
     for (const w of words) w.lines.forEach((line, i) => {
-      const t = document.createElementNS(NS, 'text'); t.setAttribute('x', String(w.at[0])); t.setAttribute('y', String(w.at[1] + i * 42)); t.setAttribute('text-anchor', 'middle');
-      t.setAttribute('font-family', 'Georgia, serif'); t.setAttribute('font-style', 'italic'); t.setAttribute('font-size', i === 0 ? '36' : '31'); t.setAttribute('fill', '#f0e2c4');
+      const t = document.createElementNS(NS, 'text'); t.setAttribute('x', String(w.at[0])); t.setAttribute('y', String(w.at[1] + i * 34)); t.setAttribute('text-anchor', 'middle');
+      t.setAttribute('font-family', 'Georgia, serif'); t.setAttribute('font-style', 'italic'); t.setAttribute('font-size', i === 0 ? '30' : '24'); t.setAttribute('fill', '#f0e2c4');
       t.setAttribute('stroke', 'rgba(20,14,22,.85)'); t.setAttribute('stroke-width', '6'); t.setAttribute('paint-order', 'stroke');
       t.textContent = line; svg.append(t);
     });

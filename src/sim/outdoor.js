@@ -490,10 +490,10 @@ function buildTown(seed, region) {
   return o;
 }
 
-// ── THE GREYWATER FENS (M8; world doc §3.2) — the overland south of the Vale ───────────────────────────────────
-// Reed-choked marsh round a drowned imperial canal, ruled straight north to south. The canal road comes down from
-// the Vale on its west bank to Saltmere, the stilt town in its mere, and on south to the Canal Locks, where it
-// crosses, and the Drowned Abbey in the canal's flood. Open ground is wet peat and reed (o.marsh), with meres of
+// ── THE GREYWATER FENS (M8; world doc §3.2) — the overland north-east of the Vale ───────────────────────────────────
+// Reed-choked marsh round a drowned imperial canal, ruled straight north to south. The road from the Vale comes in at
+// the south-west (v1.146) to the Abbey road below the Locks; the canal road runs up its west bank to Saltmere, the
+// stilt town in its mere, and south to the Canal Locks, where it crosses, and the Drowned Abbey in the canal's flood. Open ground is wet peat and reed (o.marsh), with meres of
 // still bog water. The five sites (m8-plan slice 3) stand on the canal's banks and the meres' shores, each with its
 // way in toward the camera (+y) where its road or causeway ends, its own water behind it.
 export const FENS = { north: [60, -6], salt: [72, 60], mound: [34, 104], locks: [100, 128], lockhall: [76, 112], pools: [180, 96], abbey: [126, 206], reedholm: [202, 190], stones: [200, 40] };
@@ -509,6 +509,7 @@ function buildFens(seed) {
   const o = makeWorld(seed, 'overland', 240, 240, 90), rng = mulberry32(streamSeed(seed, 4431)), B = (t, n = 1) => `fens_${t}_${n}`;
   o.name = 'The Greywater Fens'; o.region = 'fens'; o.marsh = true;
   const { north, salt, mound, locks, lockhall, pools, abbey, reedholm } = FENS;
+  const VALE_ROAD = [[-30, 218], [20, 216], [52, 204], [78, 186], [93.5, 168]];   // (v1.146: the Vale lies south-west of the Fens on the wall map; the road used to come down from the north)
   // the canal: straight runs between the imperial works, wider where it broke its banks
   o.rivers.push({ w: 10, pts: [[104, -60], [103, 60], [101, locks[1]], [104, 180], [118, 200], [128, 230], [134, 320]] });
   // meres: Saltmere's, the Mound's (behind the island), the Sickpools' green water, the Abbey's flood round its walls;
@@ -521,11 +522,13 @@ function buildFens(seed) {
   for (let i = 0; i < 26; i++) {
     const cx = rng() * 240, cy = rng() * 240, rx = 5 + rng() * 11, ry = 4 + rng() * 8;
     if (keepOut.some(([x, y]) => hypot(x - cx, y - cy) < 26 + rx) || Math.abs(cx - 103) < 16 + rx) continue;
+    if (VALE_ROAD.some(([x, y]) => hypot(x - cx, y - cy) < 12 + rx)) continue;   // (v1.146: no mere across the road in from the Vale; after the draws, so the rest stay where they were)
     o.pools.push({ cx, cy, rx, ry });
   }
   const door = (p, dy = 12) => [p[0] + 1, p[1] + dy];                                                            // a site's way in, in front of it
   const ROADS = [
-    { w: 5, surface: 'dirt', pts: [[north[0], -30], [north[0] + 2, 14], [salt[0] + 12, salt[1] - 20], [salt[0] + 20, salt[1] + 6], [92, 100], [locks[0] - 8, locks[1]]] },   // the canal road, down from the Vale past Saltmere to the Locks
+    { w: 5, surface: 'dirt', pts: [[north[0], -30], [north[0] + 2, 14], [salt[0] + 12, salt[1] - 20], [salt[0] + 20, salt[1] + 6], [92, 100], [locks[0] - 8, locks[1]]] },   // the canal road, down from the north past Saltmere to the Locks
+    { w: 5, surface: 'dirt', pts: VALE_ROAD },   // (v1.146) the road from the Vale, in at the fen's south-west and up to the Abbey road, the Locks and Saltmere
     { w: 4, surface: 'deck', pts: [[salt[0] + 19, salt[1]], [salt[0] - 2, salt[1]]] },                                     // Saltmere's boardwalk, straight in off the canal road to its landing gate
     { w: 3, surface: 'deck', pts: [[salt[0] + 10, salt[1] + 1], [salt[0] + 10, salt[1] + 12]] },                            // (world doc v1.23) the jetty off it to Wenna Pike's punt: the Mere Tower
     { w: 5, surface: 'dirt', pts: [[locks[0] - 8, locks[1]], [locks[0] + 18, locks[1]]] },                                  // over the lock gates
@@ -576,6 +579,17 @@ function buildFens(seed) {
     const id = n > 0.67 ? pick(rng, edge ? ['willow_1', 'willow_2', 'alder_1', 'willow_2', 'dead_1'] : ['alder_1', 'alder_2', 'alder_3', 'carr_1', 'carr_2']) : rng() < (edge ? 0.12 : 0.05) ? pick(rng, ['dead_1', 'dead_2']) : null;
     return id && /willow|dead/.test(id) && !edge ? null : id && keepFen() ? id : null;
   });
+  // (v1.146) the road from the Vale's verges: alder and carr either side every 7 tiles, as the Vale's canal road has its
+  // oaks. No draws, so nothing else moves; they give back the cover the road and its drier ground took off the south-west
+  { const pts = fillet(VALE_ROAD, 10);
+    for (let i = 0, run = 0, next = 4; i + 1 < pts.length; i++) {
+      const [ax, ay] = pts[i], [bx, by] = pts[i + 1], l = hypot(bx - ax, by - ay), nx = -(by - ay) / l, ny = (bx - ax) / l;
+      for (; next < run + l; next += 7) for (const sd of [-11, 11]) {
+        const t = next - run, id = ['alder_1', 'carr_2', 'alder_2', 'carr_1'][Math.floor(next / 7) % 4], x = ax + (bx - ax) * t / l + nx * sd, y = ay + (by - ay) * t / l + ny * sd;
+        if (x > 2 && y < 236 && fits(o, id, x, y, -3) && offRoad(o, id, x, y) && !waterNear(o, x, y, 3)) put(o, id, x, y, 'round', 0.35);   // (crowns over the verge, never the road: the Vale's margin)
+      }
+      run += l;
+    } }
   forestRing(o, rng, 6, FENS_CLUSTER, FENS_SINGLE);
   waterEdge(o, keepOut, keepFen);
   const ways = [mound, lockhall, pools, abbey, reedholm].map((p) => door(p, 8));
@@ -583,13 +597,14 @@ function buildFens(seed) {
     if (keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 12) || ways.some(([kx, ky]) => hypot(x - kx, y - ky) < 8)) return -1;
     return fbm(x * 0.08, y * 0.08, o.seed + 43) > 0.6 ? 0.5 : 0.08;
   });
-  o.exits.push({ x0: north[0] - 8, y0: -11, x1: north[0] + 9, y1: -4, to: 'overland', region: 'vale', arrive: 'fens' });   // back up the canal road to the Vale
+  o.exits.push({ x0: -11, y0: 209, x1: -4, y1: 227, to: 'overland', region: 'vale', arrive: 'fens' });   // (v1.146) back down the road south-west to the Vale
+  o.exits.push({ x0: north[0] - 8, y0: -11, x1: north[0] + 9, y1: -4, to: 'overland', closed: true, shut: 'The canal road runs on north to the Mere and Solmere. Another day.' });
   o.exits.push({ x0: salt[0] - 2, y0: salt[1] - 2, x1: salt[0] + 3.5, y1: salt[1] + 2, to: 'town', arrive: 'overland' });   // through the landing gate: into Saltmere
   // each site's door: a box in front of it (the Undercroft's is the low door in Reedholm's chapel front, left of centre)
   const SITE_AT = { toadking_mound: mound, canal_locks: lockhall, drowned_abbey: abbey, reedholm_undercroft: [reedholm[0] - 3, reedholm[1]] };   // (v1.48: the Sickpools have no door of their own)
   const DOOR_Y = { toadking_mound: 7, canal_locks: 5.5, drowned_abbey: 8.5, reedholm_undercroft: 7.5 };
   for (const [site, [x, y]] of Object.entries(SITE_AT)) o.exits.push({ x0: x - 2.5, y0: y + DOOR_Y[site], x1: x + 3.5, y1: y + DOOR_Y[site] + 3, to: 'dungeon', site });
-  o.arrivals = { default: { x: salt[0] + 12.5, y: salt[1] + 0.5 }, saltmere: { x: salt[0] + 12.5, y: salt[1] + 0.5 }, vale_road: { x: north[0] + 0.5, y: 2.5 } };   // on the boardwalk, facing the gate
+  o.arrivals = { default: { x: salt[0] + 12.5, y: salt[1] + 0.5 }, saltmere: { x: salt[0] + 12.5, y: salt[1] + 0.5 }, vale_road: { x: 6.5, y: 217.5 } };   // on the boardwalk, facing the gate (and in from the Vale, at the fen's south-west: v1.146)
   for (const [site, [x, y]] of Object.entries(SITE_AT)) o.arrivals[site] = { x: x + 1.5, y: y + DOOR_Y[site] + 7.5 };
   o.spawn = o.arrivals.default;
   clearGround(o, FENS.stones[0], FENS.stones[1], STONES_CLEAR, named);   // (last: the rest of the fen as it was, tree for tree)
@@ -800,7 +815,7 @@ function buildOverland(seed) {
     { w: 3, surface: 'track', pts: [[168, 196], [184, 226], [206, 234], [chapel[0] + 1, chapel[1] + 14]] },   // the causeway to the chapel, off the camp track
     { w: 4, surface: 'track', pts: [[161, 84], [142, 66], [122, 44], [warren[0] + 2.5, warren[1] + 7]] },      // up under the range to the warren's door (its adit faces down the track)
     { w: 3, surface: 'track', pts: [[182, 204], [196, 203], [crypt[0] - 0.5, crypt[1] + 12]] },                 // (v1.140) off the camp road to the Haddows' chantry door
-    { w: 5, surface: 'dirt', fens: true, pts: [[92, 206], [80, 236], [54, 250], [38, 264], [38, 274]] },   // the canal road south off the barrows road, to the Fens (M8; shut until Act I is done)
+    { w: 5, surface: 'dirt', fens: true, pts: [[244, 66], [258, 54], [266, 44], [300, 34]] },   // the canal road off the old road north-east, past the milestone and out at the Vale's north-east, to the Fens (M8; shut until Act I is done; v1.146: it left by the south-west, before the wall map was re-laid: docs/world-map-replan.md §5)
     { w: 5, surface: 'dirt', reach: true, pts: [[142, 66], [146, 46], [150, 22], [152, -16]] },   // the Wickham road north off the warren track, past the keep's west side, over the range to the Cinder Reach (v1.124; shut until Act II is done)
   ].map((r) => ({ ...r, pts: fillet(r.pts, Math.max(8, r.w * 2)) }));
   joinRoads(o, ROADS);
@@ -863,7 +878,8 @@ function buildOverland(seed) {
     x += (f[2] - f[0]) * (0.55 + mrng() * 0.2);
   }
   for (let x = -60; x < 330; x += 20 + mrng() * 14) { const id = pick(mrng, SHOULDER), f = F(id); if (x + f[2] > GORGE[0] && x + f[0] < GORGE[1]) continue; const sy = -6 - f[3] - mrng() * 6; if (!inPass(x + f[0], x + f[2])) put(o, id, x, sy, 'round', 0.35); }   // shoulders before the range
-  for (let y = -40; y < 320; y += 20 + mrng() * 10) { const id = pick(mrng, SHOULDER), f = F(id); put(o, id, 268 - f[0] + mrng() * 16, y, 'round', 0.35); }   // the east: lower, further out
+  const EAST_PASS = [16, 64];                                          // (v1.146) where the canal road goes out east: the same draws, nothing put across it
+  for (let y = -40; y < 320; y += 20 + mrng() * 10) { const id = pick(mrng, SHOULDER), f = F(id), ex = 268 - f[0] + mrng() * 16; if (!(y + f[3] > EAST_PASS[0] && y + f[1] < EAST_PASS[1])) put(o, id, ex, y, 'round', 0.35); }   // the east: lower, further out
   // the owner, 2026-11-11: "Reduce the trees in Hollow Vale by 25%". Every tree on the land (the foothills, the woods,
   // the meadow clumps, the canal road's verges; not the forest ring past the edge, the Vale's wall) is kept on a draw
   // of its own stream, so the thinning moves nothing else: the trees left stand where they stood.
@@ -889,7 +905,7 @@ function buildOverland(seed) {
     for (const c of campsOf('vale')) if (hypot(x - c.x, y - c.y) < (/grove/.test(id) ? 16 : 10)) return false;   // a spawn point's fire and posts on open ground (camps.js; v1.71 the thinning let a grove in over the Spit's)
     return !inFrontOf(sights, x, y, /grove/.test(id) ? 80 : /rock/.test(id) ? 30 : 62, 32) && !inFrontOf([warren], x, y, 40, 26);   // (the adit's spoil and its wreckage reach wider than the old hole did)
   };
-  const WOODS = [{ x: 30, y: 48, r: 30 }, { x: 74, y: 16, r: 24 }, { x: 212, y: 24, r: 22 }, { x: 236, y: 182, r: 26 }, { x: 24, y: 240, r: 22 }, { x: 240, y: 104, r: 16 }];
+  const WOODS = [{ x: 30, y: 48, r: 30 }, { x: 74, y: 16, r: 24 }, { x: 212, y: 24, r: 22 }, { x: 236, y: 182, r: 26 }, { x: 24, y: 240, r: 22 }, { x: 240, y: 104, r: 16 }, { x: 54, y: 252, r: 14 }];   // (v1.146: the last, the south-west wood closing over where the canal road ran before it went north-east)
   // a wood's crowns close over each other (groves overlap there, as the range's massifs do); its edge thins to singles
   for (let y = -80; y < 350; y += 6) for (let x = -80; x < 350; x += 6) {
     const jx = x + (trng() - 0.5) * 5.4, jy = y + (trng() - 0.5) * 5.4;
@@ -919,7 +935,7 @@ function buildOverland(seed) {
       const [ax, ay] = pts[i], [bx, by] = pts[i + 1], l = hypot(bx - ax, by - ay), nx = -(by - ay) / l, ny = (bx - ax) / l;
       for (; next < run + l; next += 6) for (const s of [-11, 11]) {
         const t = next - run, id = Math.floor(next / 6) % 3 ? 'oak_1' : 'autumn_2', x = ax + (bx - ax) * t / l + nx * s, y = ay + (by - ay) * t / l + ny * s;
-        if (y < 258 && keepTree() && clear(x, y, id) && fits(o, id, x, y, -3) && offRoad(o, id, x, y)) put(o, id, x, y, 'round', 0.35);
+        if (x < 258 && y < 258 && keepTree() && clear(x, y, id) && fits(o, id, x, y, -3) && offRoad(o, id, x, y)) put(o, id, x, y, 'round', 0.35);
       }
       run += l;
     } }
@@ -954,10 +970,11 @@ function buildOverland(seed) {
   o.exits.push({ x0: crypt[0] - 3, y0: crypt[1] + 7.5, x1: crypt[0] + 2, y1: crypt[1] + 10, to: 'dungeon', site: 'haddow_crypt' });   // (v1.140) the chantry's door, on its +y face: the stair down to the vault
   o.arrivals = { default: { x: town[0] + 30.5, y: town[1] + 0.5 }, thornwick: { x: town[0] + 30.5, y: town[1] + 0.5 }, barrows: { x: barrows[0] + 1.5, y: barrows[1] + 13.5 },
     tithe_mill: { x: mill[0] - 0.5, y: mill[1] + 15.5 }, wickham_keep: { x: keep[0] + 0.5, y: keep[1] + 27.5 }, sunken_chapel: { x: chapel[0] + 1.5, y: chapel[1] + 19.5 }, ninth_milestone: { x: stone[0] + 0.5, y: stone[1] + 11.5 },
-    scrag_warren: { x: warren[0] + 4, y: warren[1] + 13.5 }, proving_pens: { x: warren[0] + 2.5, y: warren[1] + 13.5 }, haddow_crypt: { x: crypt[0] - 0.5, y: crypt[1] + 14.5 }, fens: { x: 38.5, y: 255.5 }, reach: { x: 151.5, y: 4.5 } };
-  // the canal road leaves the Vale at its south edge, for the Fens (regions.js); shut, with a word, until Act I is done
-  o.exits.push({ x0: 30, y0: 263, x1: 47, y1: 271, to: 'overland', region: 'fens', arrive: 'vale_road',
-    shut: "The canal road's under water past the barrows. Sister Ilse says there's a way through, when you've a reason to go." });
+    scrag_warren: { x: warren[0] + 4, y: warren[1] + 13.5 }, proving_pens: { x: warren[0] + 2.5, y: warren[1] + 13.5 }, haddow_crypt: { x: crypt[0] - 0.5, y: crypt[1] + 14.5 }, fens: { x: 255.5, y: 57.5 }, reach: { x: 151.5, y: 4.5 } };
+  // the canal road leaves the Vale at its north-east, for the Fens (regions.js; v1.146: the wall map's way, the Fens
+  // north-east of the Vale); shut, with a word, until Act I is done
+  o.exits.push({ x0: 263, y0: 34, x1: 271, y1: 54, to: 'overland', region: 'fens', arrive: 'vale_road',
+    shut: "The canal road's under water past the milestone. Sister Ilse says there's a way through, when you've a reason to go." });
   // the Wickham road leaves at its north edge over the range, for the Cinder Reach (v1.124); shut, with a word, until Act II is done
   o.exits.push({ x0: 143, y0: -11, x1: 162, y1: -4, to: 'overland', region: 'reach', arrive: 'vale_road',
     shut: 'The Wickham road goes north over the range to the Cinder Reach. Not yet: Sister Ilse has the Abbey\'s ledger to read first.' });

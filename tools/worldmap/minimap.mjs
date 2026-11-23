@@ -75,7 +75,8 @@ const glyphOf = (id) => {
 
 // an overland's pins: the middle of each exit (outdoor.js exits), in tiles
 const r1 = (v) => Math.round(v * 10) / 10;
-const pinsOf = (sc) => sc.exits.map((e) => ({ kind: e.to === 'dungeon' ? 'site' : e.to === 'town' ? 'town' : 'land', id: e.site || e.region || sc.region, x: r1((e.x0 + e.x1) / 2), y: r1((e.y0 + e.y1) / 2) }));
+const pinsOf = (sc) => sc.exits.filter((e) => !e.closed).map((e) => ({   // (v1.146: a shut road out, to a land not built, has no pin: it read "to the Greywater Fens" in the Fens)
+  kind: e.to === 'dungeon' ? 'site' : e.to === 'town' ? 'town' : 'land', id: e.site || e.region || sc.region, x: r1((e.x0 + e.x1) / 2), y: r1((e.y0 + e.y1) / 2) }));
 
 const SCENES = [
   scene('thornwick', { scene: 'town', region: 'vale' }, [-22, -20, 166, 136], 'vale'),
