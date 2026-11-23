@@ -159,7 +159,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; p.vx = p.vy = 0; face(p, dx, dy); } });
 
   // the Guild's coach between the towns (coach.js): from a square, to a town reached, for its fare
-  const coach = createCoach({ state, bus, getWorld: () => world, landOpen: (id) => landOpen(id), inBattle: () => !!battle.battle, go: (land) => travel('town', 'default', undefined, land) });
+  const coach = createCoach({ state, bus, getWorld: () => world, landOpen: (id) => landOpen(id), inBattle: () => !!battle.battle, busy: () => !!(raidOn || ringOn), go: (land) => travel('town', 'default', undefined, land) });
   if (curScene === 'town' && LANDS[curRegion]) state.reached.add(townOf(curRegion));
 
   // the Chronicle: a whole set reveals its hidden site (lore.js SET_REVEALS); a vault's chest holds its heirloom, once (sites.js `vault`)

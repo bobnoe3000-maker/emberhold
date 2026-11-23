@@ -4,7 +4,7 @@
 // you're in on the left, the World on the right.
 //   World (headed The Old Provinces): the Lantern Guild's wall map (wallmap.js), fogged past the lands you can walk. The coach's
 //     towns are pinned: lit once you've stood in one, dim until then; "you are here"; a ★ by the town whose land the
-//     tracked quest leads to. A town's card offers the Guild's coach there (sim/coach.js), from a town's square.
+//     tracked quest leads to. A town's card offers the Guild's coach there (sim/coach.js), from anywhere above ground (v1.142).
 //   The land you're in: its overland drawn from the sim (tools/worldmap/minimap.mjs → assets/maps/), with its town,
 //     its sites and its roads out. A pin's card says what's there, and Walk there pushes the compass's own goto (from
 //     town: the road out, walking on to the site), so nothing new reaches the sim but the coach. A tap on open ground
@@ -17,7 +17,7 @@
 
 import { WALL, PLACES, LAND_AREA, FOG_WORDS } from './wallmap.js';
 import { LANDS } from '../sim/regions.js';
-import { COACH, days, fare, townOf } from '../sim/coach.js';
+import { COACH, trip, townOf } from '../sim/coach.js';
 import { SITES, siteOpen, levelBand } from '../sim/sites.js';
 import { BOSSES, bossAway } from '../sim/battle.js';
 import { NPCS } from '../sim/npcs.js';
@@ -101,6 +101,8 @@ function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.
  */
 /** @param {{ sim: any, toast: any, inSquare: () => boolean, questTitle: (id: string) => string, minimap: () => any, ringClock?: (f?: (G: any) => boolean) => any }} o */
 export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ringClock = () => null }) {
+  // the road's length in words: none when the coach only fetches you in to your own land's town (v1.142)
+  const road = (/** @type {number} */ n) => n === 0 ? 'in to the town' : `${n === 1 ? 'a day' : NUM[n] + ' days'} on the road`;
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const btn = el('button'); btn.id = 'mapBtn'; btn.setAttribute('aria-label', 'Map'); btn.append(el('span', 'dot'));
   const wrap = el('div'); wrap.id = 'mapWrap';
@@ -317,11 +319,15 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
       if (qt) card.append(el('div', 'sub q', `★ ${qt}`));
       const from = townOf(region()), inTown = sim.world.kind === 'town';
       if (p.id === from && inTown) { info.textContent = 'You are here.'; row.append(info); card.append(row); return; }
-      const n = days(from, p.id), f = fare(from, p.id);
-      if (n === null || f === null) { info.textContent = 'No coach goes there yet.'; row.append(info); card.append(row); return; }
-      info.append('The Guild’s coach', el('br'), el('em', '', `${n === 1 ? 'a day' : NUM[n] + ' days'} on the road · ${f} gold`));
+      // (v1.142: from anywhere above ground; out on a land the fare adds the way to its town gate: sim/coach.js trip)
+      const t = trip(S(), sim.world, p.id);
+      if (!t && sim.world.kind !== 'town' && sim.world.kind !== 'overland') { info.textContent = 'The Guild’s coach'; button('Travel', '', 'Climb out first: the coach waits above ground.', () => {}); return; }
+      if (!t) { info.textContent = 'No coach goes there yet.'; row.append(info); card.append(row); return; }
+      const f = t.fare;
+      info.append('The Guild’s coach', el('br'), el('em', '', `${road(t.days)} · ${f} gold`));
+      if (t.pickup) info.append(el('br'), el('em', 'pick', `${t.pickup} of it to fetch you here`));
       const why = !S().reached.has(p.id) ? 'Walk there first: the coach goes only where you’ve been.'
-        : !inTown || !inSquare() ? 'The coach leaves from a town’s square, by the tavern.'
+        : !sim.landOpen(COACH[p.id].land) ? 'The road there is shut.'
         : (S().counters.gold || 0) < f ? `Not enough gold: the fare is ${f}.` : '';
       button('Travel', '', why, () => { sim.commands.push({ type: 'coach', to: p.id }); close(); });
       return;
@@ -405,7 +411,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
   let hideAt = 0;
   sim.bus.on('coach', (e) => {
     coachCard.textContent = '';
-    const box = el('div'); box.append(el('b', '', 'The Guild’s coach'), el('span', '', `${COACH[e.from].name} to ${COACH[e.to].name}`), el('span', '', `${e.days === 1 ? 'a day' : NUM[e.days] + ' days'} on the road · ${e.fare} gold`));
+    const box = el('div'); box.append(el('b', '', 'The Guild’s coach'), el('span', '', `${COACH[e.from].name} to ${COACH[e.to].name}`), el('span', '', `${road(e.days)} · ${e.fare} gold`));
     coachCard.append(box); coachCard.classList.add('on');
     clearTimeout(hideAt); hideAt = setTimeout(() => coachCard.classList.remove('on'), 2200);
   });
