@@ -557,8 +557,10 @@ function barPatch() {
   g.putImageData(img, 0, 0); PATCH_TEX = new THREE.CanvasTexture(c); PATCH_TEX.colorSpace = THREE.SRGBColorSpace;
   return PATCH_TEX;
 }
+const DOCK_WL = 0.84;   // (the harbour's surface: convert.js DOCK_WL)
+const DOCK_WOOD = [0.62, 0.55, 0.48], DOCK_WOOD_DARK = [0.38, 0.35, 0.32], DOCK_ROPE = [0.62, 0.47, 0.29], DOCK_HULL = [0.34, 0.28, 0.23];   // (round 1: the rope tan hemp, not grey rings; the hull dark)   // (a wharf's timbers, grey with salt and wet: docs/docks-dungeon.md)
 const BONE_TINT = [1.06, 0.99, 0.83];   // (the dead's bones: old ivory, gone yellow-grey; round 6, a quarter down, they were the whitest thing on screen)   // (the dead's bones: old ivory, gone yellow-grey)
-let cryptDark = null, cryptDamp = null, cryptPatch = null, cryptGold = null, cryptOx = null, cryptSky = null, cryptBrass = null;
+let cryptDark = null, cryptDamp = null, cryptPatch = null, cryptGold = null, cryptOx = null, cryptSky = null, cryptBrass = null, dockGlint = null, dockMist = null;
 /** a skull on its frame p (a wall's, or {n: 'z'} facing the camera), at u along it and y, s its size, v out of the wall */
 function skull(b, p, u, y, s, v) {
   const on = (q, uu, yy, vv) => (q.n === 'z' ? [q.x + uu, yy, q.z + vv] : [q.x + vv, yy, q.z + uu]), sz = (q, w, h, d) => (q.n === 'z' ? [w, h, d] : [d, h, w]);
@@ -1007,6 +1009,131 @@ function buildTavern(pieces) {
       b.tinted([0.66, 0.62, 0.56], () => { for (const sg of [-1, 1]) { b.box('crypt_cap', [1.86, 0.045, 0.06], { at: at(0, sg * 0.42), rot: ry }); b.box('crypt_cap', [0.06, 0.045, 0.9], { at: at(sg * 0.92, 0), rot: ry }); } });   // (round 14: a narrow border a step under the floor, not near-black: a wide dark one read as a trapdoor)
       b.tinted([0.92, 0.88, 0.8], () => { for (const [lx, w] of [[0.3, 0.6], [0.46, 0.5], [0.62, 0.56]]) b.box('crypt_cap', [0.025, 0.045, w], { at: at(lx, 0), rot: ry }); });   // (the name and dates cut under the cross)
       cryptBrass ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#a8853f') }); b.box(cryptBrass, [0.95, 0.05, 0.08], { at: at(-0.4, 0), rot: ry }); b.box(cryptBrass, [0.08, 0.05, 0.6], { at: at(-0.6, 0), rot: ry });   // (round 16: the reliquary's brass, the arm wider: lit metal read as dark scratches)   // (round 14: an upright Latin cross at the head, the stem half the slab, the arm a third down)   // (round 13: dull brass, no glow: three or four lit crosses a room read as pickups)   // (round 11: the arm half the shaft, a third down: short and high it read as a sword's hilt)   // (a long thin brass cross, softly self-lit: round 7, a gold blob read as dropped loot; round 10, unseen at play size)
+    } else if (p.k === 'dockedge' || p.k === 'dockrail') {
+      // ── a wharf (docs/docks-dungeon.md): a deck's edge, its fascia board down toward the water, the waterline dark and
+      // slimed; along a back edge a rail on its piles, two timbers at a man's waist and his knee
+      const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { n: p.n, x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 }, o = p.out;
+      if (p.k === 'dockedge') {
+        b.tinted(DOCK_WOOD_DARK, () => b.box('furniture_wood', sz(q, len, 0.3, 0.1), { at: on(q, 0, FL - 0.13, o * 0.05) }));
+        b.tinted([0.42, 0.5, 0.36], () => b.box('furniture_wood', sz(q, len, 0.07, 0.12), { at: on(q, 0, DOCK_WL + 0.02, o * 0.04) }));   // (the weed at the waterline)
+      } else b.tinted(DOCK_WOOD, () => { for (const y of [FL + 0.95, FL + 0.5]) b.box('furniture_wood', sz(q, len + 0.1, 0.1, 0.1), { at: on(q, 0, y, o * 0.12) }); });
+    } else if (p.k === 'pile') {
+      // a pile: a round post driven into the harbour bed, its head carried up as the rail's post on a back edge, a turn of
+      // rope round it; on a near edge only its head, proud of the deck
+      const top = p.back ? FL + 1.12 : FL + 0.42, at0 = on(p, 0, 0, p.out * 0.12), R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+      b.tinted(DOCK_WOOD_DARK, () => b.tube('furniture_wood', [at0[0], -0.4, at0[2]], [at0[0], top, at0[2]], 0.13, 0.12, { segments: 8 }));
+      b.tinted([0.36, 0.42, 0.34], () => b.tube('furniture_wood', [at0[0], DOCK_WL - 0.2, at0[2]], [at0[0], DOCK_WL + 0.06, at0[2]], 0.145, 0.14, { segments: 8 }));   // (green with weed where the tide wets it)
+      b.tinted(DOCK_WOOD, () => b.lathe('furniture_wood', [{ y: 0, r: 0.13 }, { y: 0.04, r: 0.1 }, { y: 0.06, r: 0 }], { segments: 8, at: [at0[0], top, at0[2]] }));
+      if (p.back ? R(1) < 0.4 : R(1) < 0.55) b.tinted(DOCK_ROPE, () => { for (const y of p.back ? [FL + 0.62] : [FL + 0.12, FL + 0.26]) b.lathe('linen', [{ y: 0, r: 0.15 }, { y: 0.08, r: 0.155 }], { segments: 8, at: [at0[0], y, at0[2]] }); });   // (two turns of rope on a near pile's head)
+    } else if (p.k === 'bollard') {
+      // an iron bollard at a near edge, a mooring line's turns on it
+      b.tinted(TAV_IRON, () => { b.lathe('metal', [{ y: 0, r: 0.2 }, { y: 0.06, r: 0.16 }, { y: 0.3, r: 0.13 }, { y: 0.36, r: 0.19 }, { y: 0.42, r: 0.17 }, { y: 0.44, r: 0 }], { segments: 10, at: on(p, 0, FL, -p.out * 0.3) }); });
+      b.tinted(DOCK_ROPE, () => b.lathe('linen', [{ y: 0, r: 0.16 }, { y: 0.1, r: 0.16 }], { segments: 10, at: on(p, 0, FL + 0.12, -p.out * 0.3) }));
+    } else if (p.k === 'lamppost') {
+      // a lamp on its post: a squared timber a man and a half high, an arm out at the top, the lantern hung on it, lit
+      b.tinted(DOCK_WOOD_DARK, () => {   // (round 2: dark, the post glowed orange its length)
+        b.box('furniture_wood', [0.2, 2.75, 0.2], { at: [p.x, FL + 1.375, p.z] });
+        b.box('furniture_wood', [0.34, 0.3, 0.34], { at: [p.x, FL + 0.15, p.z] });
+        b.box('furniture_wood', [0.12, 0.12, 0.85], { at: [p.x, FL + 2.62, p.z + 0.38] });
+        b.box('furniture_wood', [0.08, 0.5, 0.08], { at: [p.x, FL + 2.38, p.z + 0.2], rot: [0.75, 0, 0] });   // (its brace)
+      });
+      b.tinted(TAV_IRON, () => { b.box('metal', [0.3, 0.04, 0.3], { at: [p.x, FL + 2.36, p.z + 0.68] }); b.box('metal', [0.32, 0.05, 0.32], { at: [p.x, FL + 1.98, p.z + 0.68] }); for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) b.box('metal', [0.03, 0.38, 0.03], { at: [p.x + dx * 0.14, FL + 2.17, p.z + 0.68 + dz * 0.14] }); b.lathe('metal', [{ y: 0, r: 0.18 }, { y: 0.12, r: 0.05 }, { y: 0.2, r: 0 }], { segments: 8, at: [p.x, FL + 2.37, p.z + 0.68] }); b.box('metal', [0.02, 0.14, 0.02], { at: [p.x, FL + 2.55, p.z + 0.68] }); });
+      b.box(tavernGlass, [0.24, 0.34, 0.24], { at: [p.x, FL + 2.17, p.z + 0.68] });
+    } else if (p.k === 'fishcrate') {
+      // a crate of the catch: low, open, silver fish packed in it head to tail, two fallen out on the boards
+      const R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000, c = Math.cos(p.rot || 0), sn = Math.sin(p.rot || 0), at = (lx, y, lz) => [p.x + lx * c + lz * sn, y, p.z - lx * sn + lz * c], ry = [0, p.rot || 0, 0];
+      b.tinted(DOCK_WOOD, () => { b.box('furniture_wood', [1.1, 0.06, 0.72], { at: at(0, FL + 0.04, 0), rot: ry }); for (const sg of [-1, 1]) { b.box('furniture_wood', [1.1, 0.3, 0.06], { at: at(0, FL + 0.17, sg * 0.33), rot: ry }); b.box('furniture_wood', [0.06, 0.3, 0.72], { at: at(sg * 0.52, FL + 0.17, 0), rot: ry }); } });
+      b.tinted([1.25, 1.32, 1.4], () => { for (let k = 0; k < 7; k++) { const lx = -0.36 + (k % 4) * 0.24 + (R(k) - 0.5) * 0.06, lz = (k < 4 ? -0.13 : 0.13) + (R(k + 9) - 0.5) * 0.06; b.lathe('metal', [{ y: -0.2, r: 0.0 }, { y: -0.12, r: 0.06 }, { y: 0.08, r: 0.07 }, { y: 0.2, r: 0.0 }], { segments: 7, at: at(lx, FL + 0.27, lz), rot: [Math.PI / 2, (p.rot || 0) + (R(k + 3) - 0.5) * 0.6, 0] }); } });
+      b.tinted([1.2, 1.28, 1.36], () => { for (let k = 0; k < 2; k++) b.lathe('metal', [{ y: -0.2, r: 0.0 }, { y: -0.12, r: 0.06 }, { y: 0.08, r: 0.07 }, { y: 0.2, r: 0.0 }], { segments: 7, at: at(0.7 + k * 0.2, FL + 0.06, 0.45 - k * 0.3), rot: [0, 0, Math.PI / 2 + R(k + 20) * 1.2] }); });
+    } else if (p.k === 'rope') {
+      // a coil of rope on the boards, three turns flat, its end trailing
+      b.tinted(DOCK_ROPE, () => {
+        for (const [r, y] of [[0.36, 0.06], [0.33, 0.15], [0.3, 0.24], [0.2, 0.08]]) { const N = 16; for (let q = 0; q < N; q++) { const a0 = (q / N) * Math.PI * 2, a1 = ((q + 1) / N) * Math.PI * 2; b.tube('linen', [p.x + Math.cos(a0) * r, FL + y, p.z + Math.sin(a0) * r], [p.x + Math.cos(a1) * r, FL + y, p.z + Math.sin(a1) * r], 0.065, 0.065, { segments: 6 }); } }   // (round 2: a raised coil, three turns stacked, the rope thicker)
+        b.tube('linen', [p.x + 0.42, FL + 0.04, p.z], [p.x + 0.95, FL + 0.03, p.z + 0.4], 0.04, 0.04, { segments: 5 });
+      });
+    } else if (p.k === 'net') {
+      // a net heaped on the boards to dry: its mesh in a low mound, the cork floats along its edge
+      const c = Math.cos(p.rot || 0), sn = Math.sin(p.rot || 0), at = (lx, lz) => { const d = Math.hypot(lx / 0.75, lz / 0.55); return [p.x + lx * c + lz * sn, FL + 0.03 + Math.max(0, 1 - d) * 0.22, p.z - lx * sn + lz * c]; };
+      b.tinted([0.3, 0.28, 0.22], () => {   // (round 1: a dark tarred mesh, not grey hatching)
+        for (let k = -4; k <= 4; k++) { const lz = k * 0.13; for (let a = -6; a < 6; a++) b.tube('linen', at(a * 0.13, lz), at((a + 1) * 0.13, lz), 0.012, 0.012, { segments: 3 }); }
+        for (let a = -6; a <= 6; a++) { const lx = a * 0.13; for (let k = -4; k < 4; k++) b.tube('linen', at(lx, k * 0.13), at(lx, (k + 1) * 0.13), 0.012, 0.012, { segments: 3 }); }
+      });
+      b.tinted([1.05, 0.78, 0.44], () => { for (let a = -6; a <= 6; a += 2) b.lathe('furniture_wood', [{ y: 0, r: 0.07 }, { y: 0.06, r: 0.085 }, { y: 0.13, r: 0 }], { segments: 6, at: at(a * 0.13, 0.55) }); });   // (the cork floats, bigger)
+    } else if (p.k === 'rowboat') {
+      // a boat tied up off the deck's edge, sitting in the water: a flat bottom, raked sides, a thwart, the oars shipped
+      const c = Math.cos(p.rot || 0), sn = Math.sin(p.rot || 0), at = (lx, y, lz) => [p.x + lx * c + lz * sn, y + DOCK_WL - 0.44, p.z - lx * sn + lz * c], ry = [0, p.rot || 0, 0];   // (afloat at the harbour's level)
+      b.tinted(DOCK_HULL, () => {
+        b.box('furniture_wood', [2.4, 0.08, 0.7], { at: at(0, 0.36, 0), rot: ry });
+        for (const sg of [-1, 1]) b.box('furniture_wood', [2.6, 0.36, 0.07], { at: at(0, 0.55, sg * 0.42), rot: [sg * 0.35, p.rot || 0, 0] });
+        b.box('furniture_wood', [0.07, 0.38, 0.86], { at: at(-1.28, 0.56, 0), rot: [0, p.rot || 0, 0.45] });   // (the transom)
+        for (const sg of [-1, 1]) b.box('furniture_wood', [0.9, 0.38, 0.07], { at: at(1.5, 0.58, sg * 0.24), rot: [sg * 0.3, (p.rot || 0) - sg * 0.5, 0] });   // (her bow, drawn to a point)
+        b.box('furniture_wood', [0.1, 0.5, 0.1], { at: at(1.9, 0.68, 0), rot: [0, p.rot || 0, -0.4] });   // (the stem)
+      });
+      b.tinted([0.5, 0.42, 0.34], () => { for (const lx of [-0.8, -0.3, 0.2, 0.7]) b.box('furniture_wood', [0.06, 0.06, 0.8], { at: at(lx, 0.44, 0), rot: ry }); });   // (her ribs)
+      b.tinted([0.86, 0.74, 0.56], () => { b.box('furniture_wood', [2.66, 0.06, 0.08], { at: at(0, 0.75, 0.5), rot: ry }); b.box('furniture_wood', [2.66, 0.06, 0.08], { at: at(0, 0.75, -0.5), rot: ry }); b.box('furniture_wood', [0.24, 0.05, 0.84], { at: at(0.1, 0.62, 0), rot: ry }); });   // (the gunwales lit, the thwart)
+      b.tinted(DOCK_WOOD, () => { for (const sg of [-1, 1]) b.box('furniture_wood', [2.0, 0.04, 0.06], { at: at(-0.1, 0.66, sg * 0.18), rot: [0, (p.rot || 0) + sg * 0.06, 0] }); });   // (the oars shipped)
+      b.tinted(DOCK_ROPE, () => b.tube('linen', at(-1.3, 0.72, 0), at(-1.9, FL + 0.6 - DOCK_WL, 0), 0.03, 0.03, { segments: 4 }));   // (her painter up to the deck)
+    } else if (p.k === 'crane') {
+      // the wharf's derrick: a squared mast on a crib of timbers, its jib out over the water, a load hung in a net
+      b.tinted(DOCK_WOOD_DARK, () => { b.box('furniture_wood', [1.4, 0.36, 1.4], { at: [p.x, FL + 0.18, p.z] }); b.box('furniture_wood', [1.0, 0.24, 1.0], { at: [p.x, FL + 0.48, p.z] }); });
+      b.tinted(DOCK_WOOD, () => {
+        b.box('furniture_wood', [0.3, 4.4, 0.3], { at: [p.x, FL + 2.5, p.z] });
+        b.box('furniture_wood', [0.2, 0.2, 3.4], { at: [p.x, FL + 4.3, p.z - 1.05], rot: [-0.32, 0, 0] });   // (the jib, out over the water behind)
+        for (const sg of [-1, 1]) b.box('furniture_wood', [0.1, 1.5, 0.1], { at: [p.x + sg * 0.32, FL + 1.1, p.z + 0.32], rot: [0.35, 0, sg * 0.25] });   // (its stays)
+      });
+      b.tinted(DOCK_ROPE, () => { b.tube('linen', [p.x, FL + 4.76, p.z - 2.55], [p.x, FL + 1.6, p.z - 2.55], 0.03, 0.03, { segments: 4 }); b.tube('linen', [p.x, FL + 4.2, p.z], [p.x, FL + 4.76, p.z - 2.55], 0.025, 0.025, { segments: 4 }); });
+      b.tinted([0.46, 0.42, 0.36], () => b.lathe('linen', [{ y: 0, r: 0.1 }, { y: 0.22, r: 0.48 }, { y: 0.6, r: 0.42 }, { y: 0.78, r: 0.1 }, { y: 0.8, r: 0 }], { segments: 10, at: [p.x, FL + 0.8, p.z - 2.55] }));   // (the load in its net, swung out over the water)
+    } else if (p.k === 'merlons') {
+      // ── the ramparts (docs/ramparts-dungeon.md): the parapet's crenellations, a merlon a tile, kept low (a hand over the
+      // coping) so a figure at the parapet is never hidden; the coping's lit edge
+      const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { n: p.n, x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 }, TOPY = 1.5;
+      b.tinted([1.08, 1.08, 1.1], () => b.box('rampart_wall', sz(q, len, 0.08, 1.06), { at: on(q, 0, TOPY + 0.04, 0.5) }));
+      b.tinted([0.95, 0.95, 0.98], () => { for (let t = 0.5; t < len; t += 1.5) b.box('rampart_wall', sz(q, 0.7, 0.36, 0.8), { at: on(q, t - len / 2, TOPY + 0.26, 0.55) }); });
+    } else if (p.k === 'fartower') {
+      // a tower of the town's wall standing up out of the mist, far off: a round shaft from far below, a crenellated
+      // crown, a conical slate roof, a lit slit or two
+      const S = p.s || 1, R0 = 2.2 * S, base = -18, top = 2.6 * S + 1.4, R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+      b.tinted([0.78, 0.8, 0.86], () => { b.lathe('rampart_wall', [{ y: 0, r: R0 * 1.12 }, { y: 0.4, r: R0 }, { y: top - base, r: R0 }, { y: top - base + 0.01, r: 0 }], { segments: 16, at: [p.x, base, p.z] }); });
+      b.tinted([0.86, 0.88, 0.92], () => { b.lathe('rampart_wall', [{ y: 0, r: R0 }, { y: 0.3, r: R0 * 1.14 }, { y: 0.9, r: R0 * 1.14 }, { y: 0.91, r: 0 }], { segments: 16, at: [p.x, top, p.z] }); for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2; b.box('rampart_wall', [0.6, 0.6, 0.5], { at: [p.x + Math.cos(a) * R0 * 1.08, top + 1.2, p.z + Math.sin(a) * R0 * 1.08], rot: [0, -a, 0] }); } });
+      b.tinted([0.62, 0.66, 0.76], () => b.lathe('roof_slate', [{ y: 0, r: R0 * 1.02 }, { y: R0 * 1.9, r: 0.08 }, { y: R0 * 2.0, r: 0 }], { segments: 16, at: [p.x, top + 0.9, p.z] }));
+      for (let k = 0; k < 2; k++) { const a = (0.25 + R(k) * 0.5) * Math.PI, y = top - 1.5 - k * 2.4; b.box(tavernGlass, [0.18, 0.5, 0.12], { at: [p.x + Math.cos(a) * R0, y, p.z + Math.sin(a) * R0] }); }
+    } else if (p.k === 'torchpole') {
+      // a torch on an iron pole at a terrace's corner, its basket burning
+      b.tinted(TAV_IRON, () => { b.tube('metal', [p.x, FL, p.z], [p.x, FL + 2.1, p.z], 0.05, 0.04, { segments: 6 }); b.lathe('metal', [{ y: 0, r: 0.22 }, { y: 0.06, r: 0.2 }, { y: 0.08, r: 0 }], { segments: 8, at: [p.x, FL, p.z] }); b.lathe('metal', [{ y: 0, r: 0.06 }, { y: 0.18, r: 0.17 }, { y: 0.3, r: 0.19 }], { segments: 8, at: [p.x, FL + 2.08, p.z] }); });
+      b.box(tavernGlass, [0.22, 0.3, 0.22], { at: [p.x, FL + 2.48, p.z] }); b.box(tavernGlass, [0.12, 0.2, 0.12], { at: [p.x + 0.04, FL + 2.7, p.z - 0.02] });
+    } else if (p.k === 'oven') {
+      // a bakers' oven built out into the street: a stone base, the brick dome, its mouth glowing, a stack of loaves' boards
+      b.tinted([0.92, 0.9, 0.88], () => b.box('rampart_wall', [2.2, 0.9, 1.8], { at: [p.x, FL + 0.45, p.z] }));
+      b.tinted([0.78, 0.5, 0.38], () => b.lathe('rampart_wall', [{ y: 0, r: 1.0 }, { y: 0.5, r: 0.92 }, { y: 0.9, r: 0.6 }, { y: 1.1, r: 0 }], { segments: 14, at: [p.x, FL + 0.9, p.z] }));
+      cryptDark ||= new THREE.MeshBasicMaterial({ color: '#0d0a08' });
+      b.box(cryptDark, [0.7, 0.45, 0.05], { at: [p.x, FL + 1.15, p.z + 0.9] });
+      tavernEmber ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff6a20').multiplyScalar(1.6), fog: false });
+      b.box(tavernEmber, [0.55, 0.12, 0.06], { at: [p.x, FL + 0.98, p.z + 0.9] });
+      b.tinted([0.6, 0.42, 0.3], () => b.box('furniture_wood', [0.2, 1.3, 0.2], { at: [p.x - 0.55, FL + 2.3, p.z - 0.3] }));   // (its flue)
+    } else if (p.k === 'harbourmist') {
+      // the harbour's mist: one sheet over the water at a hand over its surface, clear at the decks' edges and thick from
+      // six tiles out (its alpha by each tile's distance from a deck: convert.js docksDress)
+      const W = p.W, D = p.D, c = document.createElement('canvas'); c.width = W; c.height = D;
+      const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), img = g2.createImageData(W, D);
+      for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) { const d = +p.rows[j][i], a = Math.max(0, Math.min(1, (d - 0.6) / 6)) * 0.62, o = (j * W + i) * 4; img.data[o] = img.data[o + 1] = img.data[o + 2] = Math.round(255 * a); img.data[o + 3] = 255; }
+      g2.putImageData(img, 0, 0); const tex = new THREE.CanvasTexture(c); tex.magFilter = tex.minFilter = THREE.LinearFilter;
+      const mat = dockMist = new THREE.MeshBasicMaterial({ color: '#4a5d74', alphaMap: tex, transparent: true, depthWrite: false });
+      const mist = new THREE.Mesh(new THREE.PlaneGeometry(W, D), mat); mist.rotation.x = -Math.PI / 2; mist.position.set(W / 2, DOCK_WL + 0.08, D / 2); mist.updateMatrixWorld(true);
+      furn.push(mist);
+    } else if (p.k === 'lampglint') {
+      // a lamp's light broken on the water past the deck's edge: six warm streaks across the line of sight, shorter and
+      // fainter going out from the edge (p.out: which way the water lies)
+      dockGlint ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffb060').multiplyScalar(0.55), transparent: true, opacity: 0.5, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+      const R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+      for (let k = 0; k < 6; k++) {
+        const w = 0.55 - k * 0.06 + R(k) * 0.2, d = k * 0.3 + R(k + 7) * 0.08, s2 = (R(k + 3) - 0.5) * 0.3;
+        b.box(dockGlint, p.along ? [w, 0.01, 0.07] : [0.07, 0.01, w], { at: p.along ? [p.x + s2, DOCK_WL + 0.03, p.z + p.out * d] : [p.x + p.out * d, DOCK_WL + 0.03, p.z + s2] });
+      }
+    } else if (p.k === 'reeds') {
+      // a clump of reeds against the back piles, standing out of the water
+      const R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+      b.tinted([0.3, 0.34, 0.2], () => { for (let k = 0; k < 14; k++) { const a = R(k) * 6.28, r = R(k + 11) * 0.4, x = p.x + Math.cos(a) * r, z = p.z + Math.sin(a) * r, hh = 0.8 + R(k + 5) * 0.6, lean = (R(k + 9) - 0.5) * 0.45; b.tube('leaves', [x, DOCK_WL - 0.05, z], [x + lean, DOCK_WL + hh, z + lean * 0.5], 0.022, 0.006, { segments: 3 }); } });   // (thin dark blades: round 2, round ones read as cabbages)
+      b.tinted([0.55, 0.42, 0.28], () => { for (let k = 0; k < 3; k++) { const x = p.x + (R(k + 20) - 0.5) * 0.4, z = p.z + (R(k + 23) - 0.5) * 0.4; b.lathe('linen', [{ y: 0, r: 0.03 }, { y: 0.16, r: 0.035 }, { y: 0.2, r: 0 }], { segments: 5, at: [x, DOCK_WL + 0.6 + R(k + 26) * 0.35, z] }); } });   // (bulrush heads)
     } else if (p.k === 'bonering') {
       // the ossuary's floor (round 18): a square panel of the floor's flags, a tenth paler, laid square to the room inside a
       // pale limestone kerb, a ledger with a brass cross at its middle. (Every round thing read as something else: a
@@ -1132,7 +1259,7 @@ function buildTavern(pieces) {
     for (const q of geos) if (q !== merged) q.dispose();
     if (!merged) continue;
     const mesh = new THREE.Mesh(merged, m);
-    const lit = m === tavernGlass || m === tavernEmber || m === tavernNight || m === tavernNightHi || m === tavernStar || m === tavernGrime || m === cryptDark || m === cryptDamp || m === cryptPatch || m === cryptGold || m === cryptOx || m === cryptSky || m === cryptBrass;
+    const lit = m === tavernGlass || m === tavernEmber || m === tavernNight || m === tavernNightHi || m === tavernStar || m === tavernGrime || m === cryptDark || m === cryptDamp || m === cryptPatch || m === cryptGold || m === cryptOx || m === cryptSky || m === cryptBrass || m === dockGlint || m === dockMist;
     mesh.castShadow = !lit && m !== tavernWeb; mesh.receiveShadow = !lit;
     g.add(mesh);
   }
@@ -1239,6 +1366,7 @@ function skyFor(lv, region) {
   // (the Reach: the arid climate's sky graded to ash; any other arid level, the Bowl, its own again)
   if (env.climate === 'arid' && !env.interior) { const want = ash ? 'ash' : 'arid'; if (skyShown !== want) { L.setKeyframes(ash ? ASH_KEYFRAMES : ARID_KEYFRAMES); skyShown = want; } }
   if (ash) reachAir();
+  if (env.harbour) harbourAir();
   if (env.interior || env.climate || env.season) return;                 // (underground: the ambient's ours; a climate's sky its own)
   const want = region === 'vale' ? 'dusky' : 'default';
   L.setKeyframes(want === 'dusky' ? DUSKY : DEFAULT_KEYFRAMES); skyShown = want;   // (each outdoor level: a climate before may have set its own)
@@ -1266,6 +1394,15 @@ const REACH_GRADE = { saturation: 0.86, contrast: 1.05, vignette: 0.8 };
 // the Ashwater murky (slate over rust silt, not a mountain stream's blue); the land past the map's edge in cracked dark
 // earth (the arid climate lays it in orange dry dirt); the climate's gold dust motes as ash
 const MURK = ['#6e5440', '#4c3e33', '#30302e', '#1c1e21'], MURK_CREST = '#8c7c6a', MURK_FOAM = '#a89a88';
+// a harbour at night (the docks, docs/docks-dungeon.md): its water slate and near black, the fog's colour on it, little
+// glint; the mist's motes cold
+const HARBOUR = ['#2e4252', '#223646', '#172735', '#0c1620'];
+function harbourAir() {
+  const W = game?.world, u = W?.water?.uniforms; if (!u) return;
+  if (W.waterBase) Object.assign(W.waterBase, { glint: 0, brightness: 0.95 }); else W.waterBase = { glint: 0, brightness: 0.95 };   // (the weather keeps the water's own glint and brightness and sets them every frame: its base ours; round 2, the specks back)
+  ['uC0', 'uC1', 'uC2', 'uC3'].forEach((k, i) => u[k]?.value.set(HARBOUR[i]));   // (and the ripple dashes in the shallowest tone, a step over the body) 
+  if (u.uSaturation) u.uSaturation.value = 0.72; if (u.uBrightness) u.uBrightness.value = 0.95; if (u.uGlint) u.uGlint.value = 0; if (u.uFoamAmount) u.uFoamAmount.value = 0; u.uCrest?.value.set(HARBOUR[2]); u.uFoam?.value.set(HARBOUR[1]); if (u.uReflect) u.uReflect.value = 0.3;   // (glints and crests on it read as stars: docks round 1)
+}
 function reachAir() {
   const W = game?.world; if (!W) return;
   const u = W.water?.uniforms;
@@ -1308,6 +1445,31 @@ function ashlar(s, ctx, K, STONE, mortar, tints) {
     s.hf[i] = 0.35 + 0.65 * Math.min(1, d / 2.5) + (N[i] - 0.5) * 0.15;
   });
   return { normal: 2.2 };
+}
+/** a wharf's deck: planks along x, six texels wide (three-eighths of a unit), their ends staggered, a dark seam between, a
+ * nail at each end, the grain along them; the tone kept narrow (round 1: "noisy"), a grey-green weathering here and there */
+function dockPlanks(s, K, R) {
+  const w = s.w, h = s.h, PW = 8, N = K.field(w, h, 16, 4, 961, { oct: 3 }), at = (t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
+  s.each((x, y, i) => {
+    const row = Math.floor(y / PW), ly = y % PW, off = Math.floor(K.hash2(row, 1, 963) * 64), L = 20 + Math.floor(K.hash2(row, 2, 965) * 20), lx = (x + off) % L, k = Math.floor((x + off) / L);
+    if (ly <= 1) { s.set(x, y, R[0]); s.hf[i] = 0.05; return; }                              // (the seam, two texels: round 2, hairlines read as slate)
+    if (lx === 0) { s.set(x, y, R[1]); s.hf[i] = 0.2; return; }                                // (the butt joint)
+    let t = 0.5 + (K.hash2(row, k, 967) - 0.5) * 0.22 + (N[i] - 0.5) * 0.16;
+    if (ly === 2) t += 0.08; else if (ly === PW - 1) t -= 0.08;
+    if ((lx === 2 || lx === L - 3) && (ly === 2 || ly === PW - 3)) t -= 0.3;                 // (the nails)
+    if (K.hash2(x >> 1, row * 7 + ly, 969) > 0.86) t -= 0.07;                                  // (the grain)
+    s.set(x, y, at(Math.max(0.15, Math.min(1, t)))); s.hf[i] = 0.55 + (ly === 1 ? 0.25 : 0) + (N[i] - 0.5) * 0.2;
+  });
+  return { normal: 1.6 };
+}
+/** under a wharf's deck: the dark between the piles, a pile every 24 texels, a cross-brace, the weed low down */
+function dockUnder(s, K) {
+  const GAP = K.parseColor('#0b0f14'), PILE = K.parseColor('#2f2a25'), PILE_LIT = K.parseColor('#3e372f'), WEED = K.parseColor('#26301f');
+  s.each((x, y, i) => {
+    const px = x % 32, pile = px >= 13 && px <= 18, weed = y >= s.h - 6 && K.hash2(x, y >> 1, 971) > 0.35;
+    s.set(x, y, weed ? WEED : pile ? (px === 6 ? PILE_LIT : PILE) : GAP); s.hf[i] = pile ? 0.8 : 0.05;
+  });
+  return { normal: 1.2 };
 }
 /** a ledger stone let into the crypt's floor: one long slab across the tile, a border cut round it, a name in lines, a
  * small roundel at its head; the floor's joint round it */
@@ -1501,6 +1663,11 @@ registerTextureSet((K) => {
     crypt_top: { px: [32, 32], normalScale: 0.3, gen: (s) => { const N = K.field(s.w, s.h, 4, 4, 965, { oct: 2 }), R = P(['#8c8474', '#9a917f', '#a89e8b', '#b5ab97', '#c1b7a2']); s.each((x, y, i) => { s.set(x, y, at(R, Math.max(0, Math.min(1, 0.5 + (N[i] - 0.5) * 0.6)))); s.hf[i] = 0.6; }); return { normal: 1 }; } },   // (the walls' coping, pale: round 2, "the tops read flat and dark")
     crypt_sill: { px: [48, 48], normalScale: 0.75, gen: (s, ctx) => ashlar(s, ctx, K, P(['#5e5242', '#6c5f4c', '#7a6a55', '#887661', '#95826c', '#a18d77', '#ab9781', '#b4a08a']), ['#5a4c3c', '#504334'], ['#8a7a5e', '#7e7466']) },   // (round 11: the wall's hue at two-thirds, not a cold grey)   // (the near sills, a quarter darker: round 5)
     crypt_sill_top: { px: [32, 32], normalScale: 0.3, gen: (s) => { const N = K.field(s.w, s.h, 4, 4, 967, { oct: 2 }), R = P(['#867d6c', '#938b78', '#a09784', '#ada390', '#b8ae9a']); s.each((x, y, i) => { s.set(x, y, at(R, Math.max(0, Math.min(1, 0.5 + (N[i] - 0.5) * 0.6)))); s.hf[i] = 0.6; }); return { normal: 1 }; } },
+    dock_deck: { px: [64, 64], normalScale: 0.85, gen: (s) => dockPlanks(s, K, P(['#1e1915', '#625a51', '#6d645a', '#786e63', '#82786b', '#8c8173', '#968b7c'])) },   // (a wharf's planks, weathered grey-brown, the warmth left to the lamps: docks round 1)
+    dock_side: { px: [32, 32], normalScale: 0.6, gen: (s) => dockUnder(s, K) },
+    // the ramparts' parapet (docs/ramparts-dungeon.md): the town wall's grey ashlar, its top flagged
+    rampart_wall: { px: [48, 48], normalScale: 0.8, gen: (s, ctx) => ashlar(s, ctx, K, P(['#4a4c50', '#56585c', '#626468', '#6e7074', '#7a7c80', '#86888b', '#909295', '#9a9c9e']), ['#3e3f42', '#35363a'], ['#7e7a72', '#727a80']) },
+    rampart_top: { px: [64, 64], normalScale: 0.7, gen: (s) => tavernFlags(s, K, P(['#36383b', '#66686b', '#717376', '#7c7e81', '#87898b', '#929496', '#9c9ea0']), false) },
     crypt_flag: { px: [64, 64], normalScale: 0.7, gen: (s) => tavernFlags(s, K, P(['#312a23', '#655b4d', '#71675a', '#7c7062', '#877a6b', '#928574', '#9d8f7d']), false) },   // (round 11: a little more spread between the flags, the joints darker)   // (round 8: warmer and a sixth lighter, the joints darker)   // (round 4: the flags' spread narrowed, so the ledger stones stand out)   // (round 1: a step darker and warmer than the tombs' pale stone, so they stand off it)
     crypt_ledger: { px: [64, 64], normalScale: 0.8, gen: (s) => ledgerStone(s, K, P(['#36312b', '#706757', '#82786a', '#928879', '#9f9582', '#aca290', '#b8ae9b'])) },   // (round 1: a fifth lighter than the flags round it, so they're seen)
     // the carving stone (the tombs, their likenesses, the arches, the tablets): a fine pale limestone, its grain soft, a

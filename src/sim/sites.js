@@ -81,6 +81,12 @@ export const SITES = {
   // (the owner, 2026-11-22: "do a similar dungeon style as the inside of a crypt": the crypt kit, plans.js haddow_crypt,
   // docs/crypt-dungeon.md; parked, a prototype for review, on no land yet, as the inn was)
   haddow_crypt: { name: 'The Haddow Crypt', region: 'vale', theme: 'crypt', base: 6, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [5, 5], layout: 'halls', flat: true, mix: 0xc4e7 },   // (the owner, 2026-11-23: "put it in the vale": the Haddows' chantry north of the east road past the crossroads, outdoor.js buildOverland `crypt`; GDD v1.140),
+  // (the owner, 2026-11-23, from a reference: "start two new level dressing types, docks and harbor": the docks kit, plans.js
+  // old_eel_wharf; parked, a prototype for review, on no land yet)
+  old_eel_wharf: { name: 'The Old Eel Wharf', region: 'fens', theme: 'mound', base: 12, perFloor: 0, floors: 1, plan: true, family: 'drowned', rooms: [5, 5], layout: 'halls', flat: true, parked: true, mix: 0xd0c5 },
+  // (the owner, 2026-11-23, from a reference: "the reaches, high up on the ramparts": the ramparts kit, plans.js high_ramparts;
+  // parked, a prototype for review, on no land yet)
+  high_ramparts: { name: 'The High Ramparts', region: 'reach', theme: 'dread', base: 22, perFloor: 0, floors: 1, plan: true, family: 'yards', rooms: [5, 5], layout: 'halls', flat: true, parked: true, mix: 0x4a3b },
   scrag_warren: { name: 'The Scrag Warren', region: 'reach', theme: 'warren', base: 2, perFloor: 1, floors: 2, family: 'goblin', rooms: [6, 6], parked: true, mix: 0x6b1d },
 };
 export const SITE_IDS = Object.keys(SITES);

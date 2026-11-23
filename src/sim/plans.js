@@ -545,6 +545,56 @@ export const PLANS = {
     ] },
   ] },
 
+  // ── The Old Eel Wharf (a prototype: the docks kit, docs/docks-dungeon.md; the owner, 2026-11-23, from a reference:
+  //    "start two new level dressing types, docks and harbor"): the eel-men's wharf on the Fens' edge, its decks out over
+  //    the black water on piles, a trial for Tollhaven's quays (world doc §3.7). No walls: each deck's edge is the water,
+  //    railed; boardwalks between them. Every piece at an edge and the middle open for the fight. The drowned come up
+  //    the piles at night.
+  old_eel_wharf: { site: 'old_eel_wharf', name: 'The Old Eel Wharf', kind: 'wharf', base: 12, flat: true, floors: [
+    { name: 'The Wharf', spaces: [
+      { id: 'the_landing', name: 'The Landing', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'docks',
+        dress: ['dock_lamps', 'dock_cargo', 'dock_ropes'], note: 'The steps up from the boats, the eel-men\'s barrels where they left them.' },
+      { id: 'the_fish_market', name: 'The Fish Market', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'docks', foes: 'drowned',
+        dress: ['fish_market', 'dock_lamps', 'dock_ropes', 'moorings'], note: 'The morning\'s catch still in its crates along the back, and nobody come to buy it.' },
+      { id: 'the_net_stage', name: 'The Net Stage', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'docks', foes: 'drowned',
+        dress: ['dock_lamps', 'dock_ropes'], note: 'Where the nets were spread to mend; they are still spread.' },
+      { id: 'the_long_jetty', name: 'The Long Jetty', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'docks', foes: 'drowned',
+        dress: ['dock_lamps', 'dock_cargo', 'moorings', 'chest'], note: 'The deep-water berth, a boat still tied up at it with nobody in her.' },
+      { id: 'the_harbour_end', name: 'The Harbour End', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'docks', foes: 'drowned',
+        dress: ['crane', 'dock_lamps', 'dock_cargo', 'dock_ropes', 'moorings', 'chest'], note: 'The crane and its last load, swung out over the water and left there.' },
+    ], halls: [
+      { from: 'the_landing', to: 'the_fish_market', x: 32, y: 44, w: 10, h: 10 },
+      { from: 'the_fish_market', to: 'the_net_stage', x: 52, y: 20, w: 10, h: 10 },
+      { from: 'the_fish_market', to: 'the_long_jetty', x: 92, y: 44, w: 10, h: 10 },
+      { from: 'the_fish_market', to: 'the_harbour_end', x: 48, y: 70, w: 10, h: 10 },
+    ] },
+  ] },
+
+  // ── The High Ramparts (a prototype: the ramparts kit, docs/ramparts-dungeon.md; the owner, 2026-11-23, from a reference:
+  //    "the reaches, high up on the ramparts"): a walled town's upper streets, built along the top of its ramparts, the
+  //    houses on the town side and a parapet over the drop on the other, the mist down below. A trial for the Reach's walled
+  //    towns. Every piece by the houses or the parapet, the middle of each terrace open for the fight. The Assay's men hold
+  //    the walls.
+  high_ramparts: { site: 'high_ramparts', name: 'The High Ramparts', kind: 'ramparts', base: 22, flat: true, floors: [
+    { name: 'The Ramparts', spaces: [
+      { id: 'the_stair_head', name: 'The Stair Head', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'ramparts',
+        dress: ['rampart_torches', 'rampart_cargo'], note: 'The top of the long stair up the inside of the wall, and the street along it.' },
+      { id: 'the_market_terrace', name: 'The Market Terrace', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'ramparts', foes: 'yards',
+        dress: ['market_stalls', 'rampart_torches', 'rampart_cargo'], note: 'The stalls up against the houses, their awnings out over the street, nobody selling.' },
+      { id: 'the_watch_walk', name: 'The Watch Walk', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'ramparts', foes: 'yards',
+        dress: ['rampart_torches'], note: 'Where the watch walked its round; the brazier is still warm.' },
+      { id: 'the_bakers_row', name: 'The Bakers\' Row', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'ramparts', foes: 'yards',
+        dress: ['oven', 'rampart_torches', 'rampart_cargo', 'chest'], note: 'The ovens built out into the street, and the smell of the morning\'s bread.' },
+      { id: 'the_bastion', name: 'The Bastion', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'ramparts', foes: 'yards',
+        dress: ['rampart_well', 'rampart_torches', 'rampart_cargo', 'chest'], note: 'The wall\'s corner tower, its top a yard with a well; the whole drop below it in the mist.' },
+    ], halls: [
+      { from: 'the_stair_head', to: 'the_market_terrace', x: 32, y: 44, w: 10, h: 10 },
+      { from: 'the_market_terrace', to: 'the_watch_walk', x: 52, y: 20, w: 10, h: 10 },
+      { from: 'the_market_terrace', to: 'the_bakers_row', x: 92, y: 44, w: 10, h: 10 },
+      { from: 'the_market_terrace', to: 'the_bastion', x: 48, y: 70, w: 10, h: 10 },
+    ] },
+  ] },
+
   // ── The Bowl (GDD §17 v1.85, v1.88; world doc v1.46 §3.9; docs/bowl-arena-proposal.md §12, the owner's "B"): the
   //    Quarry Ring in Solmere, the arena cut down into the old sandstone quarry. Not on any land: the menu takes a company
   //    to it from level 6 and back. One space, open to the sky: the sand, oval, open from wall to wall, the company's gate
