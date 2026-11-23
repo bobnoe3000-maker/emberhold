@@ -15,7 +15,8 @@
 //     clock is ui/ring.js's); its card says when it stands, and Walk there walks to the ring's edge, where Enter the Ring is.
 // It only reads state and pushes commands; the sim checks every one. Text renders as text (textContent), never HTML.
 
-import { WALL, PLACES, LAND_AREA, FOG_WORDS } from './wallmap.js';
+import { WALL, PLACES, LAND_AREA, FOG_WORDS, CLIMB } from './wallmap.js';
+import { PAR } from '../sim/stars.js';
 import { LANDS } from '../sim/regions.js';
 import { COACH, trip, townOf } from '../sim/coach.js';
 import { SITES, siteOpen, levelBand } from '../sim/sites.js';
@@ -71,6 +72,9 @@ const CSS = `
 #worldmap .card h3 { margin: 0; font: 600 17px Georgia, serif; color: #f0c880; }
 #worldmap .card .sub { font-size: 12px; color: #b8a888; margin-top: 3px; line-height: 1.45; }
 #worldmap .card .sub.q { color: #e8b0a0; }
+#worldmap .card .stars-line { color: #efe4cf; font-size: 13px; }
+#worldmap .card .stars-line b { color: #ffd36a; font: 16px Georgia, serif; letter-spacing: 1px; }
+#worldmap .card .stars-line i { color: rgba(240,228,200,.4); font: normal 16px Georgia, serif; letter-spacing: 1px; }
 #worldmap .card .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
 #worldmap .card .fare { font-size: 13px; color: #efe4cf; line-height: 1.5; min-width: 0; }
 #worldmap .card .fare em { color: #e0a85a; font-style: normal; }
@@ -78,6 +82,30 @@ const CSS = `
 #worldmap .card .go { flex: none; min-width: 120px; min-height: 48px; border-radius: 12px; border: 1px solid #e0a85a; background: linear-gradient(#5a3e1e, #3e2a14); color: #f8e2b4; font: 600 15px Georgia, serif; }
 #worldmap .card .go.walk { background: linear-gradient(#2e3e2a, #1e2a1c); border-color: #8fbf7a; color: #dff0d2; }
 #worldmap .card .go:disabled { opacity: .42; }
+/* (v1.143) the climb: a dungeon's stars beside its mark, each land's progress under its name, the road climbed inked in,
+   and the level rail at the side, the lowest at its foot and the highest at its head */
+#worldmap .pin.dgn { width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 3px; border: 2px solid #3b2a1c; background: rgba(246,236,210,.55); transform: rotate(45deg); }
+#worldmap .pin.dgn.won { background: #e0a85a; border-color: #5a2e14; }
+#worldmap .pin.dgn.gold { background: #ffd36a; border-color: #7a4a10; box-shadow: 0 0 9px rgba(255,200,90,.95); }
+#worldmap .stars { position: absolute; margin: -8px 0 0 12px; padding: 0 4px; border-radius: 6px; background: rgba(28,20,14,.82); color: #ffd36a; font: 13px/16px Georgia, serif; letter-spacing: 1px; white-space: nowrap; pointer-events: none; }
+#worldmap .stars i { font-style: normal; color: rgba(240,228,200,.45); }
+#worldmap .prog { position: absolute; transform: translate(-50%, 0); padding: 2px 8px; border-radius: 8px; font: 12px/1.35 Georgia, serif; white-space: nowrap; pointer-events: none; text-align: center;
+  background: rgba(28,20,14,.86); color: #f0e2c4; border: 1px solid rgba(214,170,98,.55); }
+#worldmap .prog b { color: #ffd36a; font-weight: 600; }
+#worldmap .prog.is-done { background: linear-gradient(#6a4a14, #3e2a0c); border-color: #ffd36a; }
+#worldmap .prog.is-here { box-shadow: 0 0 0 2px rgba(240,200,128,.5), 0 0 12px rgba(240,200,128,.6); }
+#worldmap .prog.is-shut, #worldmap .prog.is-far { color: #b8ad98; border-style: dashed; background: rgba(36,28,40,.8); }
+#worldmap svg.trail { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+#worldmap .rail { position: absolute; right: 4px; width: 26px; z-index: 2; display: flex; flex-direction: column-reverse; gap: 3px; padding: 4px 3px; border-radius: 12px;
+  background: rgba(16,12,22,.82); border: 1px solid rgba(214,170,98,.45); }
+#worldmap .rail button { position: relative; flex: 1; min-height: 0; padding: 0; border: 1px solid #3a3446; border-radius: 6px; background: #221c2c; overflow: hidden; }
+#worldmap .rail button .fill { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(#e0a84a, #8a5a1a); }
+#worldmap .rail button.done { border-color: #ffd36a; }
+#worldmap .rail button.open { border-color: #b67c2a; }
+#worldmap .rail button.off { opacity: .45; border-style: dashed; }
+#worldmap .rail button span { position: absolute; left: 0; right: 0; top: 2px; font: 9px ui-monospace, Menlo, monospace; color: #efe4cf; text-shadow: 0 0 3px #000; }
+#worldmap .rail .me { position: absolute; left: -7px; right: -7px; height: 0; border-top: 3px solid #8fe07a; box-shadow: 0 0 6px #8fe07a; pointer-events: none; }
+#worldmap .rail .me em { position: absolute; right: 100%; top: -9px; margin-right: 3px; padding: 0 4px; border-radius: 4px; background: #1e3a18; color: #c8f0b0; font: 10px/16px ui-monospace, Menlo, monospace; font-style: normal; white-space: nowrap; }
 #coachCard { position: fixed; inset: 0; z-index: 13; display: grid; place-items: center; background: rgba(6,4,10,.7); opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility 0s linear .35s; pointer-events: none; }
 #coachCard.on { opacity: 1; visibility: visible; transition: opacity .25s ease; }
 #coachCard div { max-width: 300px; margin: 0 16px; padding: 16px 20px; text-align: center; background: #100c16; border: 1px solid rgba(214,170,98,0.5); border-radius: 14px; color: #efe4cf; }
@@ -123,7 +151,8 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
 
   /** @type {Record<string, any>} */ const lands = {};      // assets/maps/minimap-<land>.json: the overland's frame and pins (its picture: land-<land>.jpg)
   /** @type {number[][] | null} */ let coast = null;         // assets/maps/old-provinces.json: the wall map's coast, for the fog
-  fetch('./assets/maps/old-provinces.json').then((q) => q.json()).then((j) => { coast = j.coast; const f = view.querySelector('svg.fog'); if (open && tab === 'world' && f) f.replaceWith(fogSvg()); }).catch(() => {});
+  /** @type {Record<string, number[]>} */ let siteXY = {};   // (v1.143) each dungeon's mark on the wall map (draw.mjs): its stars stand beside it
+  fetch('./assets/maps/old-provinces.json').then((q) => q.json()).then((j) => { coast = j.coast; siteXY = j.sites || {}; if (open && tab === 'world') paint(); const f = view.querySelector('svg.fog'); if (open && tab === 'world' && f) f.replaceWith(fogSvg()); }).catch(() => {});
   const landData = (/** @type {string} */ r) => lands[r] || (lands[r] = fetch(`./assets/maps/minimap-${r}.json`).then((q) => q.json()).catch(() => null));
   let open = false, tab = 'world', sel = '', pins = /** @type {any[]} */ ([]), scrolled = false;
   /** @type {{ w: number, x0: number, y0: number } | null} */ let frame = null;   // the land tab's map: its units across and its origin (for a tap on open ground)
@@ -155,15 +184,16 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
   // ── the map: pins (in the map's own units), drawn over the image at its scale ──────────────────────────────────────
   function paint() {
     if (!open) return;
-    view.textContent = ''; card.classList.remove('on'); view.style.paddingBottom = ''; frame = null;
+    view.textContent = ''; card.classList.remove('on'); view.style.paddingBottom = ''; frame = null; for (const n of sheet.querySelectorAll('.rail')) n.remove();
     const map = el('div', 'map'), img = /** @type {HTMLImageElement} */ (el('img'));
     img.alt = ''; map.append(img); view.append(map);
     if (tab === 'world') {
       img.src = WALL.src; img.width = WALL.w; img.height = WALL.h;
       map.style.width = `${Math.round(Math.max(view.clientWidth * WALL_ZOOM, WALL_MIN))}px`;
-      map.append(fogSvg());
+      map.append(fogSvg(), trailSvg());
       pins = worldPins();
       place(map, pins, WALL.w, 0, 0);
+      progTags(map); rail(map);
       const at = PLACES[townOf(region())];
       // scrolled to where you are, with "you are here" (west of the pin) wholly in view
       const go = () => { if (scrolled) return; scrolled = true; const k = map.clientWidth / WALL.w, me = pins.find((p) => p.here), tw = me ? me.here.length * 6.6 + 12 + 22 + 10 : 0;
@@ -200,7 +230,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
   /** @param {HTMLElement} map @param {any[]} list @param {number} unitsWide @param {number} x0 @param {number} y0 */
   function place(map, list, unitsWide, x0, y0) {
     const lay = () => {
-      for (const n of map.querySelectorAll('.pin, .here, .tag, .star')) n.remove();
+      for (const n of map.querySelectorAll('.pin, .here, .tag, .star, .stars')) n.remove();
       const k = map.clientWidth / unitsWide, boxes = /** @type {number[][]} */ ([]);
       const free = (/** @type {number[]} */ bx) => { if (boxes.some((o) => bx[0] < o[2] && bx[2] > o[0] && bx[1] < o[3] && bx[3] > o[1])) return false; boxes.push(bx); return true; };
       for (const p of list) {
@@ -208,6 +238,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
         if (p.here) { const h = el('div', 'here'); h.style.left = `${p.sx}px`; h.style.top = `${p.sy}px`; map.append(h); }
         if (p.cls !== null) { const n = el('div', 'pin' + (p.cls ? ' ' + p.cls : '') + (sel === p.key ? ' sel' : '')); n.dataset.key = p.key; n.style.left = `${p.sx}px`; n.style.top = `${p.sy}px`; map.append(n); }
         if (p.star) { const s = el('div', 'star', '★'); s.style.left = `${p.sx + 10}px`; s.style.top = `${p.sy}px`; map.append(s); }
+        if (p.stars != null) { const s = el('div', 'stars'); s.append('★'.repeat(p.stars)); if (p.stars < 3) s.append(el('i', '', '☆'.repeat(3 - p.stars))); s.setAttribute('aria-label', `${p.stars} of 3 stars`); s.style.left = `${p.sx}px`; s.style.top = `${p.sy}px`; map.append(s); }
       }
       // the words beside the pins: you are here first, then the names, each below its pin, or above, right or left
       // where that would cover another (art critic pass 12: three of the Fens' were dropped); skipped only when none is free
@@ -227,6 +258,68 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
     lay();
     const img = map.querySelector('img'); if (img && !img.complete) img.addEventListener('load', lay, { once: true });
     relay = lay;
+  }
+  // ── (v1.143) the climb: stars, each land's progress, the road climbed, the level rail ───────────────────────────────
+  const starsAt = (/** @type {string} */ id) => { const r = S().stars && S().stars[id]; return r ? r.n : 0; };
+  /** a land's dungeons with stars to win (found ones), the stars won and how many are cleared @param {string} land */
+  function landStats(land) {
+    const ids = Object.keys(PAR).filter((k) => SITES[k] && SITES[k].region === land && !SITES[k].parked && siteOpen(k, S().revealed));
+    const got = ids.reduce((a, k) => a + starsAt(k), 0), done = ids.filter((k) => starsAt(k) > 0).length;
+    return { n: ids.length, got, done, all: ids.length > 0 && done === ids.length };
+  }
+  /** where a land stands on the climb: 'done' (every dungeon cleared), 'here', 'open', 'shut' (built, not yet open), 'far' */
+  function landState(/** @type {typeof CLIMB[number]} */ L) {
+    if (!L.built || !LANDS[L.id]) return 'far';
+    if (!sim.landOpen(L.id)) return 'shut';
+    if (landStats(L.id).all) return 'done';
+    return region() === L.id ? 'here' : 'open';
+  }
+  // under each land's name on the map: its stars and how many of its dungeons are cleared, or when it opens
+  function progTags(/** @type {HTMLElement} */ map) {
+    const lay = () => {
+      for (const n of map.querySelectorAll('.prog')) n.remove();
+      const k = map.clientWidth / WALL.w;
+      for (const L of CLIMB) {
+        const st = landState(L), t = el('div', 'prog is-' + st), lines = L.id === 'fens' ? 2 : 1;
+        if (st === 'far') t.textContent = 'the Guild’s roads don’t reach it yet';
+        else if (st === 'shut') t.textContent = `opens from level ${L.lv[0]}`;
+        else { const g = landStats(L.id); t.append(el('b', '', `★ ${g.got} / ${g.n * 3}`), ` · ${g.done} of ${g.n} cleared` + (st === 'done' ? ' · done' : '')); }
+        t.style.left = `${L.at[0] * k}px`; t.style.top = `${(L.at[1] + (lines - 1) * 30 + 50) * k}px`; map.append(t);
+      }
+    };
+    lay(); const img = map.querySelector('img'); if (img && !img.complete) img.addEventListener('load', lay, { once: true });
+  }
+  // the road climbed: town to town up the map in the lands' order, inked solid through the lands open, dotted beyond, to
+  // the Throne
+  function trailSvg() {
+    const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg'), mk = (/** @type {string} */ tag, /** @type {Record<string, any>} */ at) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(at)) e.setAttribute(k, String(v)); return e; };
+    svg.setAttribute('class', 'trail'); svg.setAttribute('viewBox', `0 0 ${WALL.w} ${WALL.h}`); svg.setAttribute('preserveAspectRatio', 'none');
+    const pts = [...CLIMB.map((L) => ({ at: PLACES[L.town], open: L.built && !!LANDS[L.id] && sim.landOpen(L.id) })), { at: PLACES.throne, open: false }];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i].at, b = pts[i + 1].at, lit = pts[i].open && pts[i + 1].open;
+      svg.append(mk('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: lit ? '#b8402a' : '#5a4330', 'stroke-width': lit ? 7 : 4, 'stroke-dasharray': lit ? '' : '4 14', 'stroke-linecap': 'round', opacity: lit ? 0.55 : 0.5 }));
+    }
+    for (const p of pts.slice(0, -1)) svg.append(mk('circle', { cx: p.at[0], cy: p.at[1], r: 16, fill: 'none', stroke: p.open ? '#b8402a' : '#5a4330', 'stroke-width': 4, opacity: 0.55 }));
+    return svg;
+  }
+  // the level rail, beside the map and not scrolling with it: a segment a land, the lowest at its foot; each filled by
+  // the stars won there, and a mark at the hero's level; a tap scrolls the map to the land
+  function rail(/** @type {HTMLElement} */ map) {
+    for (const n of sheet.querySelectorAll('.rail')) n.remove();
+    const R0 = el('div', 'rail'), lv = (S().party[0] && S().party[0].level) || 1, hb = view.getBoundingClientRect(), sb = sheet.getBoundingClientRect();
+    R0.style.top = `${hb.top - sb.top + 8}px`; R0.style.height = `${Math.max(160, hb.height - 16)}px`;
+    for (const L of CLIMB) {
+      const st = landState(L), b = /** @type {HTMLButtonElement} */ (el('button', st === 'far' || st === 'shut' ? 'off' : st === 'done' ? 'done' : 'open'));
+      const g = st === 'far' || st === 'shut' ? null : landStats(L.id), f = el('div', 'fill'); f.style.height = `${g && g.n ? Math.round((100 * g.got) / (g.n * 3)) : 0}%`;
+      b.append(f, el('span', '', String(L.lv[0]))); b.setAttribute('aria-label', `${L.name}, levels ${L.lv[0]} to ${L.lv[1]}`);
+      b.addEventListener('click', () => { const k = map.clientWidth / WALL.w; view.scrollTo({ top: Math.max(0, L.at[1] * k - view.clientHeight * 0.4), left: Math.max(0, L.at[0] * k - view.clientWidth / 2), behavior: 'smooth' }); });
+      R0.append(b);
+    }
+    // the hero's level: within its land's segment, as far up it as the level is through the land's band
+    const i = Math.max(0, CLIMB.findIndex((L) => lv <= L.lv[1])), L = CLIMB[i < 0 ? CLIMB.length - 1 : i], t = Math.min(1, Math.max(0, (lv - L.lv[0] + 0.5) / (L.lv[1] - L.lv[0] + 1)));
+    const me = el('div', 'me'); me.append(el('em', '', `LV ${lv}`)); R0.append(me);
+    requestAnimationFrame(() => { const seg = /** @type {HTMLElement} */ (R0.children[i]); if (!seg) return; me.style.top = `${seg.offsetTop + seg.offsetHeight * (1 - t)}px`; });
+    sheet.append(R0);
   }
   // a picked pin scrolled clear of its card (the card stands over the bottom of the map)
   function inView(/** @type {any} */ p) {
@@ -274,6 +367,12 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
         west: true });   // (the wall map writes a town's name under its mark and its sites' round it; west of Emberfall's towns is open land and the coast: "you are here" goes there, pass 13)
     }
     for (const G of ringsShown()) { const C = CAMP_BY[G.camp], [x, y] = EMBERFALL[G.region](C.x, C.y); out.push(ringPin(x, y, G)); }
+    // (v1.143) the dungeons of the open lands, found ones only, each with its stars (sim/stars.js): the map's own ink names them
+    for (const id of Object.keys(PAR)) {
+      const S0 = SITES[id], at = siteXY[id]; if (!S0 || !at || S0.parked || !sim.landOpen(S0.region) || !siteOpen(id, S().revealed)) continue;
+      const n = starsAt(id);
+      out.push({ key: 'site:' + id, kind: 'site', id, x: at[0], y: at[1], tap: true, cls: 'dgn' + (n === 3 ? ' gold' : n ? ' won' : ''), label: '', here: '', star: !!(q && q.site === id), stars: n });
+    }
     return out;
   }
   // the region bosses on the map: the Kingstone's stones once the Fens are open; Furnace Nine's mouth once the Reach is and
@@ -294,7 +393,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
     for (const p of L.pins || []) {
       if (p.kind === 'site' && !siteOpen(p.id, S().revealed)) continue;             // not found yet: not on the map either
       const base = { key: p.kind + ':' + p.id, kind: p.kind, id: p.id, x: p.x, y: p.y, tap: true, here: '', star: false };
-      if (p.kind === 'site') out.push({ ...base, label: SITES[p.id].name, cls: S().sitesEntered.has(p.id) ? '' : 'fresh', star: !!(q && q.site === p.id),
+      if (p.kind === 'site') out.push({ ...base, label: SITES[p.id].name, cls: S().sitesEntered.has(p.id) ? '' : 'fresh', star: !!(q && q.site === p.id), stars: PAR[p.id] ? starsAt(p.id) : null,
         here: w.kind === 'dungeon' && S().site === p.id ? 'you are here' : '' });
       else if (p.kind === 'town') out.push({ ...base, label: LANDS[r].town, cls: S().reached.has(townOf(r)) ? 'lit' : 'dim', star: !!(q && q.land === r && !q.site), here: w.kind === 'town' ? 'you are here' : '' });
       else if (LANDS[p.id]) out.push({ ...base, label: `to ${lower(LANDS[p.id].name)}`, cls: sim.landOpen(p.id) ? '' : 'off', star: !!(q && q.land === p.id && q.land !== r) });
@@ -365,6 +464,13 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
       const boss = Object.entries(s.bosses || {}).map(([d, b]) => { if (!BOSSES[b]) return ''; const a = bossAway(S(), p.id, Number(d) - 1); return BOSSES[b].name + (a ? ` (back in ${Math.max(1, Math.ceil(a.left / 60))} min)` : ''); }).filter(Boolean).join(', ');
       card.append(el('h3', '', s.name), el('div', 'sub', `levels ${levelBand(p.id)} · ${fl}${boss ? ' · ' + boss : ''}`));
       card.append(el('div', 'sub', (S().sitesEntered.has(p.id) ? 'you’ve been in' : 'never entered') + (s.minLevel ? ` · takes a company from level ${s.minLevel}` : '')));
+      // (v1.143) its stars: what it has, the best time, and what the next one asks (sim/stars.js PAR)
+      if (PAR[p.id]) {
+        const rec = S().stars[p.id], n = rec ? rec.n : 0, [qk, ok] = PAR[p.id], mm = (/** @type {number} */ t) => `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+        const st = el('div', 'sub stars-line'); st.append(el('b', '', '★'.repeat(n)), el('i', '', '☆'.repeat(3 - n)));
+        st.append(` ${n} of 3` + (rec && rec.best != null ? ` · best ${mm(rec.best)}${rec.clean ? ', nobody down' : ''}` : ''));
+        card.append(st, el('div', 'sub', n >= 3 ? 'Every star taken.' : `★ the end reached · ★★ inside ${ok} min · ★★★ inside ${qk} min with nobody down`));
+      }
     } else if (p.kind === 'town') card.append(el('h3', '', LANDS[r].town), el('div', 'sub', STOP[townOf(r)] || 'a town'));
     else card.append(el('h3', '', LANDS[p.id].name), el('div', 'sub', sim.landOpen(p.id) ? 'the road there' : 'the road is shut'));
     if (qt) card.append(el('div', 'sub q', `★ ${qt}`));
@@ -405,6 +511,8 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
   sim.bus.on('levelChanged', () => { if (open) show(tab); });
   sim.bus.on('questTracked', () => { if (open) show(tab); });
 
+  // (v1.143) a dungeon's run ended: its stars, and the map's button lit when it's a new best
+  sim.bus.on('dungeonStars', (e) => { const n = e.n, mm = `${Math.floor(e.secs / 60)}:${String(e.secs % 60).padStart(2, '0')}`; toast(`${SITES[e.site].name} · ${'★'.repeat(n)}${'☆'.repeat(3 - n)} · ${mm}${e.downs ? '' : ', nobody down'}`, 3600); if (n > e.was) btn.classList.add('due'); });
   // a town reached for the first time: the coach stops there now
   sim.bus.on('townReached', (e) => { btn.classList.add('due'); toast(`${e.name} · the Guild’s coach stops here now`, 2800); });
   // the trip: a card while the other town comes up (the sim moved you at once; the day on the road is words)

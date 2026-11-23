@@ -19,10 +19,10 @@ const { PLACES, EMBERFALL } = await import(pathToFileURL(join(ROOT, 'src', 'ui',
 const { createOutdoor } = await import(pathToFileURL(join(ROOT, 'src', 'sim', 'outdoor.js')).href);
 const { SITES: GAME_SITES } = await import(pathToFileURL(join(ROOT, 'src', 'sim', 'sites.js')).href);
 const EMBER = [];
-for (const r of ['vale', 'fens']) for (const e of createOutdoor(1, 'overland', r).exits) {
+for (const r of ['vale', 'fens', 'reach']) for (const e of createOutdoor(1, 'overland', r).exits) {   // (v1.143: the Reach's too)
   if (e.to !== 'dungeon' || !GAME_SITES[e.site] || GAME_SITES[e.site].hidden || e.site === 'mere_tower') continue;   // (the Tower stands in Solmere's Mere: Wenna's punt goes there)
   const [x, y] = EMBERFALL[r]((e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2);
-  EMBER.push({ id: e.site, x: Math.round(x), y: Math.round(y), name: GAME_SITES[e.site].name.replace(/^The /, 'the '), ruin: ['barrows', 'sunken_chapel', 'drowned_abbey'].includes(e.site) });
+  EMBER.push({ id: e.site, x: Math.round(x), y: Math.round(y), name: GAME_SITES[e.site].name.replace(/^The /, 'the '), ruin: ['barrows', 'sunken_chapel', 'drowned_abbey', 'haddow_crypt'].includes(e.site) });
 }
 // and their water (art critic pass 13): the Vale's river and the Fens' drowned canal as the game lays them (each land's
 // widest river; the mill-race is too small for a wall), the whole of each, drawn under the coast so both run to the sea
@@ -31,8 +31,8 @@ for (const r of ['vale', 'fens']) {
   const pts = [...createOutdoor(1, 'overland', r).rivers].sort((a, b) => b.w - a.w)[0].pts;
   WATER[r] = pts.filter((_, i) => i % 3 === 0 || i === pts.length - 1).map(([x, y]) => EMBERFALL[r](x, y).map((v) => Math.round(v)));
 }
-// the canal starts where the Fens do (the Vale's road south meets it there), not up in the Vale
-{ const top = 1886, a = WATER.fens, i = a.findIndex(([, y]) => y >= top);
+// the canal starts where the Fens do, not up in the Vale (v1.143: the Fens' top edge on the map)
+{ const top = 1601, a = WATER.fens, i = a.findIndex(([, y]) => y >= top);
   if (i > 0) { const [x0, y0] = a[i - 1], [x1, y1] = a[i]; WATER.fens = [[Math.round(x0 + ((x1 - x0) * (top - y0)) / (y1 - y0)), top], ...a.slice(i)]; } }
 const W = 1200, H = 2400;                 // portrait, the shape of a phone held upright (the owner)
 
@@ -140,9 +140,9 @@ function range(line, n, h, w, dark = false) {
 // rivers first (marks sit over them), roads after the land
 const RIVERS = [
   [[600, 600], [606, 760], [588, 900], [602, 1090]],                                            // the Sol, from the crater to the Mere
-  [[680, 1200], [780, 1300], [880, 1400], [960, 1520], [1010, 1600]],                            // the Long Water, the Mere to the sea
+  [[680, 1200], [780, 1300], [880, 1400], [960, 1480], [1020, 1540]],                            // the Long Water, the Mere to the sea
   [[820, 840], [880, 880], [950, 920], [1020, 960]],                                             // the Highmarch water, to Tollhaven
-  [[400, 860], [440, 950], [490, 1040], [540, 1120]],                                            // the Ashwater, from the Reach to the Mere
+  [[430, 1330], [470, 1260], [505, 1205], [532, 1168]],                                          // the Ashwater, from the Reach up to the Mere (v1.143)
 ];
 for (const rv of RIVERS) { const p = ragged(rv, false, 0.35, 4); add(`<path d="${pathOf(p, false)}" fill="none" stroke="${INK2}" stroke-width="2" stroke-linecap="round" opacity="0.85"/>`); }
 const MERE = ragged([[520, 1130], [580, 1100], [670, 1110], [690, 1150], [640, 1195], [550, 1192], [510, 1162]], true, 0.25, 4);
@@ -156,25 +156,24 @@ const HEIGHTS_C = [600, 520];
 for (let i = 0; i < 24; i++) { const a = (i / 24) * Math.PI * 2, rad = rr(78, 92); const x = HEIGHTS_C[0] + Math.cos(a) * rad * 1.25, y = HEIGHTS_C[1] + Math.sin(a) * rad * 0.8; if (Math.sin(a) > 0.55 && Math.abs(Math.cos(a)) < 0.3) continue; add(peak(x, y + 10, rr(26, 40), rr(14, 20))); }   // the crater's rim, open to the south (the Pilgrims' Stair)
 range([[240, 390], [310, 350], [380, 345], [430, 368]], 9, 44, 21); range([[770, 368], [830, 345], [900, 350], [960, 400]], 9, 44, 21);   // the Pale Heights (the name between them)
 range([[230, 470], [300, 440]], 5, 32, 17); range([[900, 450], [970, 480]], 5, 32, 17);
-range([[200, 770], [270, 742], [340, 752], [430, 770]], 12, 30, 16, true);                    // the Cinder Reach: black hills
-range([[220, 1010], [300, 1036], [410, 1046]], 9, 24, 14, true);
-add(peak(236, 800, 60, 32, true)); add(`<path d="M224,742 q12,-13 24,0" fill="none" stroke="${INK}" stroke-width="1.4"/>`);   // Kell's dead volcano, and its smoke
-for (let i = 0; i < 3; i++) add(`<path d="M${239 + i * 4},${732 - i * 6} q${8 + i * 3},-10 0,-${18 + i * 6} q-${8 + i * 3},-10 0,-${18 + i * 4}" fill="none" stroke="${INK2}" stroke-width="1" opacity="${0.5 - i * 0.12}"/>`);
-range([[205, 1525], [280, 1512], [360, 1518], [440, 1534]], 11, 22, 13);                      // the Vale's north range (the Scrag Warren)
+range([[200, 1236], [270, 1214], [340, 1222], [440, 1238]], 12, 30, 16, true);                 // the Cinder Reach: black hills (v1.143: under the Mere)
+range([[220, 1500], [300, 1520], [420, 1528]], 9, 24, 14, true);
+add(peak(200, 1296, 60, 32, true)); add(`<path d="M188,1238 q12,-13 24,0" fill="none" stroke="${INK}" stroke-width="1.4"/>`);   // Kell's dead volcano, and its smoke
+for (let i = 0; i < 3; i++) add(`<path d="M${203 + i * 4},${1228 - i * 6} q${8 + i * 3},-10 0,-${18 + i * 6} q-${8 + i * 3},-10 0,-${18 + i * 4}" fill="none" stroke="${INK2}" stroke-width="1" opacity="${0.5 - i * 0.12}"/>`);
+range([[205, 1858], [280, 1846], [360, 1850], [440, 1866]], 11, 22, 13);                      // the Vale's north range (the Scrag Warren; v1.143 the Vale at the foot)
 range([[930, 820], [985, 800], [1015, 840]], 5, 24, 13);                                      // the Highmarch fells
-range([[930, 1790], [960, 1720], [990, 1650]], 5, 22, 12);
-scatter([[640, 1380], [800, 1340], [960, 1420], [990, 1600], [930, 1780], [760, 1830], [660, 1760], [626, 1560]], 250, 17, (x, y) => tree(x, y, rr(7, 10)));   // the Greenwood (its west edge off Emberfall's line: pass 13)
-scatter([[440, 1650], [560, 1650], [580, 1770], [470, 1810], [420, 1730]], 26, 18, (x, y) => tree(x, y, rr(6, 8)));                      // the Vale's woods
+scatter([[170, 650], [330, 628], [540, 660], [560, 840], [520, 1060], [330, 1090], [170, 1060], [150, 860]], 230, 17, (x, y) => tree(x, y, rr(7, 10)));   // the Greenwood (v1.143: up under the Heights, west)
+scatter([[420, 1960], [510, 1960], [530, 2090], [470, 2130], [410, 2060]], 22, 18, (x, y) => tree(x, y, rr(6, 8)));                      // the Vale's woods
 scatter([[200, 470], [330, 470], [380, 580], [240, 620]], 26, 17, (x, y) => pine(x, y, rr(8, 11)));                                      // pines under the Heights
 scatter([[830, 470], [960, 480], [990, 610], [850, 620]], 24, 17, (x, y) => pine(x, y, rr(8, 11)));
-scatter([[190, 1880], [360, 1860], [560, 1930], [560, 2120], [400, 2180], [230, 2130]], 64, 16, (x, y) => reeds(x, y, rr(5, 7)));      // the Greywater Fens
+scatter([[530, 1606], [900, 1600], [960, 1700], [940, 1850], [620, 1860], [530, 1820]], 64, 16, (x, y) => reeds(x, y, rr(5, 7)));      // the Greywater Fens (v1.143: east of the Vale, above it)
 scatter([[460, 1340], [600, 1300], [610, 1470], [500, 1500]], 12, 34, (x, y) => hill(x, y, rr(10, 14)));                                 // the downs
-scatter([[220, 1150], [440, 1150], [450, 1310], [250, 1330]], 12, 34, (x, y) => hill(x, y, rr(10, 14)));
+scatter([[190, 1580], [490, 1580], [500, 1800], [200, 1810]], 12, 34, (x, y) => hill(x, y, rr(10, 14)));   // (the downs between the Reach and the Vale)
 scatter([[700, 980], [900, 950], [950, 1100], [760, 1130]], 12, 34, (x, y) => hill(x, y, rr(10, 14)));
 
 // ── the imperial roads, ruled straight from Solmere, with their dead beacon-towers ──────────────────────────────────
 const SOL = [600, 1150];
-const ROADS = [[SOL, PLACES.greyholt, PLACES.thornwick], [SOL, PLACES.ashgate], [SOL, PLACES.brine, PLACES.highmarch, PLACES.tollhaven], [SOL, PLACES.rookstead], [SOL, [600, 770]], [PLACES.ashgate, PLACES.kells_rest], [PLACES.tollhaven, PLACES.gullwick], [PLACES.greyholt, PLACES.ashgate]];
+const ROADS = [[SOL, PLACES.saltmere, PLACES.greyholt, PLACES.thornwick], [SOL, PLACES.ashgate], [SOL, PLACES.brine, PLACES.highmarch, PLACES.tollhaven], [SOL, PLACES.hollin, PLACES.rookstead], [SOL, [600, 770]], [PLACES.ashgate, PLACES.kells_rest], [PLACES.tollhaven, PLACES.gullwick], [PLACES.greyholt, PLACES.ashgate]];   // (v1.143: the roads climb with the lands)
 for (const r of ROADS) {
   add(`<path d="${pathOf(r, false)}" fill="none" stroke="${RED}" stroke-width="2" stroke-dasharray="9 6" opacity="0.8"/>`);
   for (let i = 0; i < r.length - 1; i++) {                      // a beacon-tower each long stretch
@@ -203,26 +202,29 @@ for (let i = 0; i < 9; i++) add(`<path d="M${f1(HEIGHTS_C[0] - 44 + i * 11)},${f
 add(`<path d="M${HEIGHTS_C[0] - 10},${HEIGHTS_C[1] + 8} v-12 l4,-6 l3,4 l3,-8 l3,8 l3,-4 l4,6 v12 z" fill="#1e1610"/>`);
 for (const k of ['thornwick', 'ashgate', 'tollhaven', 'rookstead', 'frosthold']) add(hub(...PLACES[k]));
 for (const k of ['greyholt', 'saltmere', 'reedholm', 'kells_rest', 'highmarch', 'brine', 'gullwick', 'hollin']) add(town(...PLACES[k]));
-const SITES = [...EMBER.map((e) => [e.x, e.y, e.ruin ? 'ruin' : 'site']), [420, 818, 'site'], [482, 952, 'ruin'], [282, 990, 'site'],
-  [790, 440, 'ruin'], [752, 618, 'site'], [1108, 902, 'site'], [960, 1062, 'ruin'], [1040, 760, 'site'], [722, 1562, 'ruin'], [860, 1722, 'site'], [700, 1772, 'ruin']];
+const SITES = [...EMBER.map((e) => [e.x, e.y, e.ruin ? 'ruin' : 'site']),
+  [790, 440, 'ruin'], [752, 618, 'site'], [1108, 902, 'site'], [960, 1062, 'ruin'], [1040, 760, 'site'], [470, 760, 'ruin'], [230, 960, 'site'], [500, 880, 'ruin']];
 for (const [x, y, k] of SITES) add(k === 'ruin' ? ruin(x, y) : site(x, y));
 add(`<path d="${pathOf(ragged([[690, 610], [730, 626], [770, 606], [815, 628]], false, 0.6, 3), false)}" fill="none" stroke="${INK}" stroke-width="2.6"/>`);   // the Soulcracks
 
 // ── the old province lines, faint and dotted (the Guild's guess at where one ends) ────────────────────────────────
-const BORDERS = [[[160, 660], [350, 690], [480, 720], [600, 770], [720, 720], [860, 690], [1040, 680]],   // the Heights' foot
-  [[480, 720], [520, 860], [500, 1000], [440, 1120], [300, 1250], [160, 1300]],                              // the Reach
-  [[720, 720], [680, 880], [700, 1060], [780, 1250], [1030, 1300]],                                          // the Tidemark
-  [[160, 1420], [330, 1440], [500, 1420], [580, 1520], [620, 1720], [640, 1960]],                            // Emberfall
-  [[580, 1520], [640, 1330], [780, 1260], [1030, 1300]]];                                                    // the Greenwood
+const BORDERS = [[[160, 610], [350, 622], [480, 610], [600, 640], [720, 620], [860, 640], [1040, 630]],   // the Heights' foot (v1.143: the lands climb)
+  [[600, 640], [585, 820], [565, 1000], [545, 1090]],                                                       // the Greenwood | the Tidemark
+  [[160, 1110], [300, 1100], [460, 1118], [530, 1100]],                                                      // the Greenwood | the Reach
+  [[690, 1200], [800, 1300], [1040, 1340]],                                                                  // the Tidemark's foot
+  [[515, 1170], [520, 1360], [518, 1556]],                                                                   // the Reach | Solmere and the Fens
+  [[160, 1556], [330, 1560], [518, 1556], [700, 1540], [1040, 1530]],                                        // the Reach's and the Tidemark's foot
+  [[518, 1556], [520, 1700], [530, 1846], [560, 1880], [610, 2000], [640, 2200]]];                          // the Vale | the Fens
 for (const bd of BORDERS) add(`<path d="${pathOf(ragged(bd, false, 0.25, 3), false)}" fill="none" stroke="${INK}" stroke-width="1.6" stroke-dasharray="1 7" stroke-linecap="round" opacity="0.55" clip-path="url(#land)"/>`);
 
 // ── lettering ────────────────────────────────────────────────────────────────────────────────────────────────────────
 const halo = `paint-order="stroke" stroke="${PAPER}" stroke-width="5" stroke-linejoin="round"`;
 const label = (x, y, txt, size, o = {}) => add(`<text x="${x}" y="${y}" font-family="${o.sc ? 'Fell SC' : o.it ? 'Fell It' : 'Fell'}" font-size="${size}" fill="${o.fill || INK}" text-anchor="${o.anchor || 'middle'}" letter-spacing="${o.ls || 0}" ${o.halo === false ? '' : halo}${o.rot ? ` transform="rotate(${o.rot} ${x} ${y})"` : ''}${o.op ? ` opacity="${o.op}"` : ''}>${txt}</text>`);
 // the regions: spaced capitals, and the band under each in red, in whoever's hand added it later
-const REG = [[262, 1624, ['EMBERFALL'], '1 – 15'], [330, 636, ['THE CINDER', 'REACH'], '15 – 30'], [870, 726, ['THE TIDEMARK'], '30 – 45'], [800, 1902, ['THE GREENWOOD'], '45 – 60'], [600, 300, ['THE PALE HEIGHTS'], '60 – 75']];
-for (const [x, y, lines, lv] of REG) { lines.forEach((l, i) => label(x, y + i * 34, l, 32, { sc: true, ls: 5 })); label(x, y + (lines.length - 1) * 34 + 28, `levels ${lv}`, 20, { it: true, fill: RED }); }
-label(482, 1792, 'the Hollow Vale', 22, { it: true }); label(470, 1918, 'the Greywater Fens', 22, { it: true });
+// (v1.143) a land a band, climbing the map: the lowest at its foot, the highest at its head
+const REG = [[300, 1770, ['THE HOLLOW VALE'], '1 – 9'], [760, 1572, ['THE GREYWATER', 'FENS'], '10 – 18'], [336, 1146, ['THE CINDER REACH'], '19 – 30'], [870, 726, ['THE TIDEMARK'], '31 – 45'], [330, 668, ['THE GREENWOOD'], '46 – 60'], [600, 300, ['THE PALE HEIGHTS'], '61 – 75']];
+for (const [x, y, lines, lv] of REG) { lines.forEach((l, i) => label(x, y + i * 30, l, 28, { sc: true, ls: 4 })); label(x, y + (lines.length - 1) * 30 + 26, `levels ${lv}`, 20, { it: true, fill: RED }); }
+label(560, 1872, 'EMBERFALL', 20, { sc: true, ls: 6, op: 0.8 }); label(560, 1894, 'the Vale and the Fens', 15, { it: true, op: 0.8 });
 label(600, 1250, 'SOLMERE', 32, { sc: true, ls: 8 }); label(600, 1276, 'the dead capital · the Bowl', 17, { it: true }); label(600, 1296, 'the Great Beacon', 17, { it: true });
 label(600, 480, 'the Ember Throne', 16, { it: true });
 label(600, 1088, 'the Mere', 15, { it: true }); label(684, 1124, 'the Mere Tower', 15, { it: true, anchor: 'start' });
@@ -230,22 +232,22 @@ const T = [['thornwick', 'Thornwick', 0, 28], ['greyholt', 'Greyholt', 44, 6], [
   ['frosthold', 'Frosthold', 0, 28], ['glass', 'the Glass Keep', 0, -14], ['tollhaven', 'Tollhaven', -12, 30], ['highmarch', 'Highmarch', 0, -16], ['brine', 'Brine Cross', 0, 26], ['gullwick', 'Gullwick', -48, 6],
   ['rookstead', 'Rookstead', 0, 28], ['hollin', 'Hollin Ford', 0, -14]];
 for (const [k, n, dx, dy] of T) { const [x, y] = PLACES[k]; label(x + dx, y + dy, n, ['thornwick', 'ashgate', 'tollhaven', 'rookstead', 'frosthold'].includes(k) ? 25 : 20); }
-const EMBER_DX = { canal_locks: 44, toadking_mound: -18, tithe_mill: 30, drowned_abbey: 44 };
-const EMBER_DY = { sunken_chapel: -14 };   // (above its mark: the Vale's river runs under it)
-const S = [...EMBER.map((e) => [e.x + (EMBER_DX[e.id] || 0), e.y + (EMBER_DY[e.id] || 24), e.name]), [420, 842, 'the Cinderworks'], [482, 976, 'the Forgehall'], [282, 1014, 'the Slag Tunnels'],
-  [752, 652, 'the Soulcracks'], [1105, 862, 'the Gull Isles'], [960, 1086, 'the Drowned Mole'], [1040, 784, 'the Lamp Fort'], [722, 1586, 'the Tally-House'], [860, 1746, 'the Root Granary'], [700, 1796, 'the First Barn?']];
+const EMBER_DX = { canal_locks: 44, toadking_mound: -18, tithe_mill: 30, drowned_abbey: 44, haddow_crypt: -30, sunken_chapel: 36 };
+const EMBER_DY = { sunken_chapel: 26, haddow_crypt: -14 };   // (above its mark: the Vale's river runs under it)
+const S = [...EMBER.map((e) => [e.x + (EMBER_DX[e.id] || 0), e.y + (EMBER_DY[e.id] || 24), e.name]),
+  [752, 652, 'the Soulcracks'], [1105, 862, 'the Gull Isles'], [960, 1086, 'the Drowned Mole'], [1040, 784, 'the Lamp Fort'], [470, 784, 'the Tally-House'], [230, 984, 'the Root Granary'], [500, 904, 'the First Barn?']];
 for (const [x, y, n] of S) label(x, y, n, 17, { it: true });
 label(70, 1300, 'THE GREY SEA', 28, { sc: true, ls: 12, rot: -90, halo: false, op: 0.75 });
 label(1135, 1450, 'THE NARROW SEA', 28, { sc: true, ls: 12, rot: 90, halo: false, op: 0.75 });
 label(800, 2215, 'THE SALT DEEPS', 26, { sc: true, ls: 12, halo: false, op: 0.75 });
 label(600, 118, 'the White Waste', 22, { it: true, halo: false, op: 0.7 });
 label(990, 196, 'Here the map', 18, { it: true, halo: false, op: 0.55 }); label(990, 216, 'is not finished.', 18, { it: true, halo: false, op: 0.55 });
-label(912, 1470, 'the Long Water', 17, { it: true, rot: 52 });
+label(900, 1410, 'the Long Water', 17, { it: true, rot: 42 });
 label(578, 930, 'the Sol', 17, { it: true, rot: -88 });
-label(486, 1012, 'the Ashwater', 17, { it: true, rot: 60 });
+label(500, 1268, 'the Ashwater', 17, { it: true, rot: -58 });
 label(618, 700, 'the Pilgrims’ Stair', 17, { it: true, anchor: 'start' });
-label(346, 2040, 'the drowned canal', 15, { it: true, anchor: 'start', rot: 83 });
-label(700, 1990, 'the Bight of Sol', 14, { it: true, halo: false, op: 0.7 });
+
+label(830, 2075, 'the Bight of Sol', 14, { it: true, halo: false, op: 0.7 });
 add(`<g transform="translate(-1782,700)"><path d="M1835,1060 q14,-26 28,0 q14,26 28,0 q14,-26 28,0" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"/><path d="M1828,1062 q-12,-16 -2,-24 q10,-4 12,8" fill="${PAPER}" stroke="${INK}" stroke-width="2"/><circle cx="1830" cy="1046" r="1.6" fill="${INK}"/></g>`);   // a sea-serpent, because there always is one
 
 // ── the cartouche, the rose, the key, the scale and the border ─────────────────────────────────────────────────────
@@ -294,5 +296,7 @@ if (!process.argv[2]) {
   const A = join(ROOT, 'assets', 'maps'); mkdirSync(A, { recursive: true }); copyFileSync(OUT, join(A, 'old-provinces.jpg')); console.log('copied', join(A, 'old-provinces.jpg'));
   // the coast, for the World map's fog: a land you can walk is lit to its shore and a little past, not to a ruled line
   // across the sea (src/ui/worldmap.js; art critic pass 13). Every other point, whole map units.
-  writeFileSync(join(A, 'old-provinces.json'), JSON.stringify({ w: W, h: H, coast: COAST.filter((_, i) => i % 2 === 0).map(([x, y]) => [Math.round(x), Math.round(y)]) }) + '\n');
+  // and each dungeon's mark (v1.143: the World map puts its stars beside it), hidden ones too: the map shows them once found
+  const sites = {}; for (const r of ['vale', 'fens', 'reach']) for (const e of createOutdoor(1, 'overland', r).exits) if (e.to === 'dungeon' && GAME_SITES[e.site] && !sites[e.site]) sites[e.site] = EMBERFALL[r]((e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2).map((v) => Math.round(v));
+  writeFileSync(join(A, 'old-provinces.json'), JSON.stringify({ w: W, h: H, coast: COAST.filter((_, i) => i % 2 === 0).map(([x, y]) => [Math.round(x), Math.round(y)]), sites }) + '\n');
 }

@@ -69,11 +69,11 @@ test("save v55: a save in Kell's Rest's square loads on the Reach by the depot; 
 });
 
 test('save v56: `town` dropped (one town a land, so it was always the land\'s own); a save without one as it was', () => {
-  assert.equal(SAVE_VERSION, 56);
+  assert.ok(SAVE_VERSION >= 56);
   const base = snap((() => { const s = createSim(SEED, undefined, { scene: 'town', region: 'reach' }); s.tick(); return s; })());
   assert.ok(!('town' in base), 'the snapshot has none');
   assert.deepEqual(dropTown56({ ...base, town: 'ashgate' }), base); assert.deepEqual(dropTown56(base), base);
   const m = migrate({ version: 55, savedAt: 1, data: { ...base, town: 'ashgate' } });
-  assert.equal(m.version, 56); assert.ok(!('town' in m.data)); assert.ok(!('town' in m.meta));
+  assert.equal(m.version, SAVE_VERSION); assert.ok(!('town' in m.data)); assert.ok(!('town' in m.meta));
   const t = createSim(SEED); t.restore(m.data); assert.equal(t.world.name, 'Ashgate');
 });

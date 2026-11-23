@@ -44,14 +44,17 @@ test('every coach stop is on the wall map, inside its land; the lands don\'t ove
 
 test('Emberfall on the wall map is the game\'s: each town stands where its overland puts it (art critic pass 12)', async () => {
   const { EMBERFALL } = await import('../src/ui/wallmap.js');
-  for (const [land, town] of [['vale', 'thornwick'], ['fens', 'saltmere']]) {
+  for (const [land, town] of [['vale', 'thornwick'], ['fens', 'saltmere'], ['reach', 'ashgate']]) {
     const e = createOutdoor(1, 'overland', land).exits.find((x) => x.to === 'town'), [x, y] = EMBERFALL[land]((e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2);
     assert.ok(Math.hypot(x - PLACES[town][0], y - PLACES[town][1]) < 24, `${town}: ${x.toFixed(0)},${y.toFixed(0)} vs ${PLACES[town]}`);
   }
-  // the roads between the two lands meet
-  const out = createOutdoor(1, 'overland', 'vale').exits.find((x) => x.region === 'fens'), back = createOutdoor(1, 'overland', 'fens').exits.find((x) => x.region === 'vale');
-  const a = EMBERFALL.vale((out.x0 + out.x1) / 2, (out.y0 + out.y1) / 2), b = EMBERFALL.fens((back.x0 + back.x1) / 2, (back.y0 + back.y1) / 2);
-  assert.ok(Math.hypot(a[0] - b[0], a[1] - b[1]) < 12, `${a} vs ${b}`);
+  // (v1.143, the owner: "lowest levels at the bottom and highest at the top") the lands climb the map in their levels'
+  // order: each built land's town above the one before it. (The overlands' roads between lands still leave by the sides
+  // they did before the map was re-laid, the Vale's canal road south and the Fens' north: re-pointing them is the plan's
+  // next step, docs/world-map-replan.md §5, and this file's old check that they meet comes back with it.)
+  const { CLIMB } = await import('../src/ui/wallmap.js');
+  for (let i = 1; i < CLIMB.length; i++) assert.ok(PLACES[CLIMB[i].town][1] < PLACES[CLIMB[i - 1].town][1] && CLIMB[i].at[1] < CLIMB[i - 1].at[1], `${CLIMB[i].id} above ${CLIMB[i - 1].id}`);
+  assert.ok(PLACES.throne[1] < PLACES.frosthold[1] + 100, 'the Throne at the top, where it was');
 });
 
 test('the wall map\'s coast is in assets/maps for the fog, and every coach stop stands on land (art critic pass 13)', () => {

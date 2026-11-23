@@ -41,6 +41,7 @@ import { CAMP_ROOM } from './camps.js';
 import { xpToNext, statsFor, gainXp } from './party.js';
 import { createExpeditions } from './expeditions.js';
 import { createCoach, reachedOf, townOf, COACH } from './coach.js';
+import { createStars, starsOf, starRunOf } from './stars.js';
 import { createBus, createCommandQueue } from './bus.js';
 import { hypot, atan2, sin, cos } from './detmath.js';
 
@@ -117,6 +118,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     sitesEntered: new Set(),          // dungeon sites ever entered (compass: "nearest unexplored")
     revealed: new Set(),              // hidden sites found (sites.js): a chapter's reward, or the Chronicle's
     secrets: {},                      // (v31) a secret site's seal: { [site]: sealed until state.t } (sites.js SECRET_REST)
+    stars: {},                        // (v57) each dungeon's best: { [site]: { n 0..3, best secs, clean, runs } } (stars.js)
+    starRun: null,                    // (v57) the run under way: { site, t0, downs } (stars.js)
     camps: {},                        // (v37) the overland's spawn points: { [id]: { at: full again at state.t, n: times cleared } } (camps.js)
     gates: gatesOpen,                 // (v41) the floors' gates opened, by `site:depth` (world.js gateOf): open for good
     party: [makeHero()],                                   // [your main character, …up to two companions]
@@ -160,6 +163,9 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
 
   // the Guild's coach between the towns (coach.js): from a square, to a town reached, for its fare
   const coach = createCoach({ state, bus, getWorld: () => world, landOpen: (id) => landOpen(id), inBattle: () => !!battle.battle, busy: () => !!(raidOn || ringOn), go: (land) => travel('town', 'default', undefined, land) });
+  // a dungeon's stars (stars.js, GDD v1.143): a run from the door to the end, its time and its downs; a record, never a reward
+  const stars = createStars({ state, bus, site: () => curSite, depth: () => state.depth, counts: () => curScene === 'dungeon' && !raidOn && !away,
+    endRoom: (tx, ty) => { const L = world.level, c = L && L.cells.get(`${tx},${ty}`), r = c && L.rooms.find((q) => q.id === c.room); return !!r && r.role === 'end'; } });
   if (curScene === 'town' && LANDS[curRegion]) state.reached.add(townOf(curRegion));
 
   // the Chronicle: a whole set reveals its hidden site (lore.js SET_REVEALS); a vault's chest holds its heirloom, once (sites.js `vault`)
@@ -360,6 +366,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     floors = new Map();                                    // a new visit: the site's floors are fresh
     if (to === 'dungeon') { curSite = SITES[site] ? site : 'barrows'; curRegion = SITES[curSite].region; state.sitesEntered.add(curSite); }
     curScene = to; state.depth = 0;
+    stars.begin(to === 'dungeon' ? curSite : null);     // (stars.js: a fresh visit starts a run; anywhere else ends one)
     world = buildWorld(0);
     if (to === 'town' && LANDS[curRegion]) { const k = townOf(curRegion); if (!state.reached.has(k)) { state.reached.add(k); bus.emit('townReached', { town: k, name: COACH[k].name }); } }   // the coach stops here now
     const a = (world.arrivals && (world.arrivals[arrive] || world.arrivals.default)) || world.stairArrive || null;
@@ -917,6 +924,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       sitesEntered: [...state.sitesEntered],
       revealed: [...state.revealed],
       secrets: { ...state.secrets },     // (v31)
+      stars: JSON.parse(JSON.stringify(state.stars || {})), starRun: state.starRun ? { ...state.starRun } : null,   // (v57) stars.js
       camps: Object.fromEntries(Object.entries(state.camps || {}).map(([k, v]) => [k, { at: v.at, n: v.n }])),   // (v37) camps.js
       gates: [...gatesOpen],             // (v41) the floors' gates opened (v1.118: `site:depth` the hall's, `site:depth:room` another's)
       flags: { ...state.flags },
@@ -995,6 +1003,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     state.sitesEntered = new Set((data.sitesEntered ?? []).filter((k) => SITES[k]));
     state.secrets = {}; for (const [k, v] of Object.entries(data.secrets ?? {})) if (SITES[k] && SITES[k].secret && Number.isFinite(v)) state.secrets[k] = v;   // (v31)
     state.camps = campsFrom(data.camps);                                    // (v37) absent: every spawn point full
+    state.stars = starsOf(data); state.starRun = starRunOf(data);          // (v57) stars.js: absent, none yet
     gatesOpen.clear(); for (const g of Array.isArray(data.gates) ? data.gates : []) if (typeof g === 'string' && /^[a-z_]+:\d+(:\d+)?$/.test(g)) gatesOpen.add(g);   // (v41) absent: none open (save.js opens an old save's floors already passed)
     state.revealed = new Set((data.revealed ?? []).filter((k) => SITES[k] && SITES[k].hidden));
     state.flags = {}; for (const [k, v] of Object.entries(data.flags ?? {})) if (typeof v === 'number') state.flags[k] = v;   // v5 and older: none yet
