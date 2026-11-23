@@ -7,6 +7,8 @@
 //
 //   devUnlockSkills {}       every class's level-6, level-12 and level-24 trials done for the company (state.trials, as the
 //                            trials' quests set them): each ability opens at its level (skills.js unlocked)
+//   devOpenLands    {}       (v1.148, the owner: "Open the Heights so we can fight him in play") every land's road and
+//                            coach open now (state.flags.dev_lands: core.js landOpen), its chapters left as they are
 //   devLevel        { id }   one level for a member of the party or the bench, by the sim's own way: exactly the XP the
 //                            level wants (party.js gainXp), so its 3 stat points, a skill point at every even level
 //                            (both derived from the level: attributes.js, skills.js), the HP its new max brings and
@@ -17,8 +19,10 @@
 import { gainXp, xpToNext } from './party.js';
 import { TRIAL_CLASSES } from './skills.js';
 
-/** the highest level a dev level goes to: the end of the XP table (party.js) */
-export const DEV_LEVEL_MAX = 60;
+/** the highest level a dev level goes to: the end of the XP table (party.js; v1.148 the Heights' top, 75) */
+export const DEV_LEVEL_MAX = 75;
+/** (v1.148) the flag devOpenLands sets (state.flags, saved): every land's road open, its opening chapter or not */
+export const DEV_LANDS = 'dev_lands';
 
 /** @param {{ state: any, bus: any }} deps */
 export function createDev({ state, bus }) {
@@ -32,6 +36,10 @@ export function createDev({ state, bus }) {
         if (!state.created) return refuse('Make your hero first');
         for (const c of TRIAL_CLASSES) { state.trials[c] = 1; state.trials[c + '12'] = 1; state.trials[c + '24'] = 1; }
         mark('skills'); bus.emit('partyChanged', state.party); return true;
+      }
+      case 'devOpenLands': {
+        if (!state.created) return refuse('Make your hero first');
+        state.flags[DEV_LANDS] = 1; mark('lands'); return true;
       }
       case 'devLevel': {
         const m = find(cmd.id);

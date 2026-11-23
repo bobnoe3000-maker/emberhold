@@ -368,7 +368,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
     cut.append(coast ? el2('path', { d: 'M' + coast.map((p) => p.join(',')).join('L') + 'Z', fill: '#000', stroke: '#000', 'stroke-width': 56, 'stroke-linejoin': 'round' }) : el2('path', { d: lands || 'M0,0Z', fill: '#000' }));
     soft.append(cut); mask.append(el2('rect', { width: WALL.w, height: WALL.h, fill: '#fff' }), soft); defs.append(clip, feather, mask); svg.append(defs);
     svg.append(el2('rect', { width: WALL.w, height: WALL.h, fill: 'rgba(36,28,40,0.62)', mask: 'url(#wmFog)' }));
-    const words = [FOG_WORDS.beyond, ...['fens', 'reach'].filter((r) => !opened.includes(r)).map((r) => FOG_WORDS[r])];
+    const words = [FOG_WORDS.beyond, ...['fens', 'reach', 'heights'].filter((r) => !opened.includes(r)).map((r) => FOG_WORDS[r])];
     for (const w of words) w.lines.forEach((line, i) => {
       const t = document.createElementNS(NS, 'text'); t.setAttribute('x', String(w.at[0])); t.setAttribute('y', String(w.at[1] + i * 34)); t.setAttribute('text-anchor', 'middle');
       t.setAttribute('font-family', 'Georgia, serif'); t.setAttribute('font-style', 'italic'); t.setAttribute('font-size', i === 0 ? '30' : '24'); t.setAttribute('fill', '#f0e2c4');

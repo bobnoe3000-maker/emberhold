@@ -16,7 +16,7 @@ import { validAppearance } from './appearance.js';
 import { createLoot } from './loot.js';
 import { createSmith } from './smith.js';
 import { createHeroes, DAY_S } from './heroes.js';
-import { createDev } from './dev.js';
+import { createDev, DEV_LANDS } from './dev.js';
 import { hash2, mulberry32, streamSeed } from './rng.js';
 import { RANKS, PERKS, TRAIT_PERK, FOUND_PERKS } from './companions.js';
 import { createBattle, BOSSES, GOLD_DROP } from './battle.js';
@@ -1059,7 +1059,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   /** the World map's tap on open ground: the nearest spot to stand on and the walk there (read-only; travel.js) @param {number} tx @param {number} ty */
   function spotNear(tx, ty) { return walkSpot({ world, state, standable }, tx, ty); }
   /** is this land open to you? (regions.js: its chapter done) @param {string} id */
-  function landOpen(id) { const L = LANDS[landId(id)]; return !L.opens || (state.quests && state.quests[L.opens] && state.quests[L.opens].st === QS.DONE) || false; }
+  function landOpen(id) { const L = LANDS[landId(id)]; return !L.opens || !!(state.flags && state.flags[DEV_LANDS]) || (state.quests && state.quests[L.opens] && state.quests[L.opens].st === QS.DONE) || false; }   // (DEV_LANDS: the Developer panel's Open every land, a dev game's)
   /** a hidden site found (a chapter's reward, the Chronicle): its way in opens on the Vale @param {string} id */
   function reveal(id) { if (SITES[id] && SITES[id].hidden && !state.revealed.has(id)) { state.revealed.add(id); bus.emit('siteRevealed', { site: id, name: SITES[id].name }); } }
   return { state, bus, commands, tick, snapshot, restore, destinations, spotNear, heroes, quests, board, lore, smith, reveal, landOpen, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; }, get focusId() { return battle.focusId; },

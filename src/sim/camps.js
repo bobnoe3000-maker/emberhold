@@ -102,8 +102,21 @@ export const CAMPS = [
     ring: 'furnace_nine',   // (Furnace Nine's ground, ring.js FURNACE: at half past, once it's broken, it burns here in their place)
     dress: [['brazier', -4.2, -2.6], ['brazier', 4.4, -2.8], ['chains', 5.0, 1.8], ['bones', -4.8, 2.2], ['spoil', 3.6, 4.6], ['urns', -3.0, -4.6]] },
   // (v1.147) the head of the Pilgrims' Stair under the Lip: the pilgrims who climbed after him and stopped where he did,
-  // frozen where they knelt (the Ashbound's), and at half past the First Pilgrim himself (ring.js PILGRIM). The Heights
-  // aren't a land you walk yet: it stands in their overland as it's previewed (?scene=overland&region=heights)
+  // frozen where they knelt (the Ashbound's), and at half past the First Pilgrim himself (ring.js PILGRIM). A land you
+  // walk since v1.148, once Act III is done
+  // (v1.148: the Heights open) three more, a land's three or four (v1.68), each a stretch of its band and of its canon
+  // (world doc §3.6): the Soulcracks' dead, out of the splits the Fall left; the Praetory's bound guard at their posts;
+  // the Glass Keep's golems of crater glass at its gate. Placed on open ground off the tracks, each arena clear of the
+  // others' (test/heights-open.test.mjs)
+  { id: 'heights_cracks', region: 'heights', kind: 'camp', name: 'The Soulcracks', x: 186, y: 172, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 64,
+    family: 'wraiths', band: ['wraith', 'wraith', 'wraith'], elite: 0.25, respawn: RESPAWN, posts: [[-2.4, 0.6], [2.4, 0.6], [0, -2.4]], face: [0, 0],
+    dress: [['bones', -3.8, 2.4], ['urns', 3.6, -2.8], ['bones', 4.4, 2.6], ['boulder', -4.6, -2.6]] },
+  { id: 'heights_praetory', region: 'heights', kind: 'camp', name: "The Praetory's watch", x: 220, y: 122, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 67,
+    family: 'ashbound', band: ['warrior', 'warrior', 'rogue'], elite: 0.3, respawn: RESPAWN, posts: [[-2.6, 0.4], [2.6, 0.4], [0, -2.6]], face: [0, 0],
+    dress: [['brazier', -4.2, -2.6], ['brazier', 4.4, -2.8], ['chains', 4.8, 2.0], ['bones', -4.4, 2.6]] },
+  { id: 'heights_glass', region: 'heights', kind: 'camp', name: "The Glass Keep's gate", x: 214, y: 52, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 70,
+    family: 'golems', band: ['golem', 'golem'], elite: 0.2, respawn: RESPAWN, posts: [[-2.8, 0.4], [2.8, 0.4]], face: [0, 0],
+    dress: [['boulder', -4.6, 2.2], ['boulder', 4.4, -2.8], ['bones', 3.8, 3.2], ['boulder', -3.6, -3.8]] },
   { id: 'heights_lip', region: 'heights', kind: 'camp', name: 'The head of the Stair', x: 158, y: 112, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 72,
     family: 'ashbound', band: ['warrior', 'mage', 'warrior'], elite: 0.25, respawn: RESPAWN, posts: [[-2.4, 0.6], [2.4, 0.6], [0, -2.4]], face: [0, 0],
     ring: 'first_pilgrim',

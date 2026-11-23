@@ -1,0 +1,24 @@
+{
+ "scene": "heights",
+ "region": "heights",
+ "px": 4,
+ "x0": -6,
+ "y0": -36,
+ "w": 272,
+ "h": 314,
+ "seed": 20260807,
+ "pins": [
+  {
+   "kind": "town",
+   "id": "heights",
+   "x": 69.5,
+   "y": 100
+  },
+  {
+   "kind": "land",
+   "id": "reach",
+   "x": 150.5,
+   "y": 267
+  }
+ ]
+}

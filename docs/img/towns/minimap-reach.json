@@ -49,6 +49,12 @@
    "id": "shuttered_inn",
    "x": 123.5,
    "y": 95
+  },
+  {
+   "kind": "land",
+   "id": "heights",
+   "x": 267,
+   "y": 189
   }
  ]
 }

@@ -22,7 +22,7 @@ import { html, render } from 'htm/preact';
 import { CLASSES } from '../sim/party.js';
 import { pendingPoints } from '../sim/attributes.js';
 import { pendingSkillPoints, ladderOf, unlocked, TRIAL_CLASSES } from '../sim/skills.js';
-import { DEV_LEVEL_MAX } from '../sim/dev.js';
+import { DEV_LEVEL_MAX, DEV_LANDS } from '../sim/dev.js';
 import { swallow } from './actorart.js';
 import { debugReport } from './debugreport.js';
 import { ZOOM_PCT_MIN, ZOOM_PCT_MAX } from '../render3d/settings.js';
@@ -207,11 +207,14 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
       <div class="devsaid" role="status">${devSaid}</div>
       <button disabled=${done >= all || !S.created} onClick=${() => devDo([{ type: 'devUnlockSkills' }], () => 'Every skill unlocked: each opens at its level (6, 12)')}>
         Unlock every skill<small>${done >= all ? 'done: every class’s level-6, 12 and 24 trials' : `every class’s trials, as if done (${done} of ${all} now): each skill opens at its level`}</small></button>
+      <button disabled=${!S.created || !!S.flags[DEV_LANDS]} onClick=${() => devDo([{ type: 'devOpenLands' }], () => 'Every land open: the roads and the coach go everywhere built, the Pale Heights too')}>
+        Open every land<small>${S.flags[DEV_LANDS] ? 'done: every road and coach stop open' : 'every road and coach stop open now, the chapters that open them left as they are'}</small></button>
       ${S.created && S.party.map((m) => html`<div key=${m.id}>
         <div class="devwho">${m.name}<small>${(CLASSES[m.cls] || CLASSES.fighter).label} · level ${m.level} · ${pts(m)} · ${open(m)} of ${carried(m)} skills open</small></div>
         <div class="row">
           <button disabled=${m.level >= DEV_LEVEL_MAX} onClick=${() => up(m, 1)}>+1 level</button>
           <button disabled=${m.level >= DEV_LEVEL_MAX} onClick=${() => up(m, 5)}>+5 levels</button>
+          <button disabled=${m.level >= DEV_LEVEL_MAX} onClick=${() => up(m, 10)}>+10 levels</button>
         </div></div>`)}
       <div class="row">
         <button disabled=${!S.created} onClick=${() => { devSaid = ''; close(); openParty(); }}>Party<small>spend the points</small></button>

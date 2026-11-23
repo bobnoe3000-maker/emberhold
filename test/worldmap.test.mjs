@@ -45,7 +45,7 @@ test('every coach stop is on the wall map, inside its land; the lands don\'t ove
 
 test('Emberfall on the wall map is the game\'s: each town stands where its overland puts it (art critic pass 12)', async () => {
   const { EMBERFALL } = await import('../src/ui/wallmap.js');
-  for (const [land, town] of [['vale', 'thornwick'], ['fens', 'saltmere'], ['reach', 'ashgate']]) {
+  for (const [land, town] of [['vale', 'thornwick'], ['fens', 'saltmere'], ['reach', 'ashgate'], ['heights', 'frosthold']]) {
     const e = createOutdoor(1, 'overland', land).exits.find((x) => x.to === 'town'), [x, y] = EMBERFALL[land]((e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2);
     assert.ok(Math.hypot(x - PLACES[town][0], y - PLACES[town][1]) < 24, `${town}: ${x.toFixed(0)},${y.toFixed(0)} vs ${PLACES[town]}`);
   }

@@ -1111,8 +1111,11 @@ function buildReach(seed) {
   o.exits.push({ x0: works[0] - 3, y0: works[1] + 5.5, x1: works[0] + 3, y1: works[1] + 8.5, to: 'dungeon', site: 'cinderworks' });
   o.exits.push({ x0: ninth[0] - 3, y0: ninth[1] + 8.5, x1: ninth[0] + 3, y1: ninth[1] + 11.5, to: 'dungeon', site: 'ninth_vault' });
   o.exits.push({ x0: inn[0] - 1.5, y0: inn[1] + 5.5, x1: inn[0] + 4.5, y1: inn[1] + 8.5, to: 'dungeon', site: 'shuttered_inn' });   // (v1.138) the inn's door, on its +y face
-  o.exits.push({ x0: 263, y0: 180, x1: 271, y1: 198, to: 'overland', closed: true, shut: 'The Solmere road runs east, straight as the day it was laid, to the dead capital. Another day.' });
-  o.arrivals = { default: { x: join[0] - 4.5, y: gate[1] + 0.5 }, ashgate: { x: join[0] - 4.5, y: gate[1] + 0.5 }, kells_rest: { x: kells[0] + 10.5, y: kells[1] + 4.5 },
+  // (v1.148) the Solmere road east: through the dead capital (not a land you walk) and up the Sol to the Pale Heights,
+  // open once Act III is done, the vessel a day ahead on it
+  o.exits.push({ x0: 263, y0: 180, x1: 271, y1: 198, to: 'overland', region: 'heights', arrive: 'reach',
+    shut: 'The Solmere road runs east, straight as the day it was laid, to the dead capital. Not yet: the night shift is still down under the Cinderworks.' });
+  o.arrivals = { default: { x: join[0] - 4.5, y: gate[1] + 0.5 }, ashgate: { x: join[0] - 4.5, y: gate[1] + 0.5 }, heights: { x: 256.5, y: 189.5 }, kells_rest: { x: kells[0] + 10.5, y: kells[1] + 4.5 },
     vale_road: { x: 146.5, y: 255.5 }, cold_seam: { x: seam[0] - 5.5, y: seam[1] + 17.5 },
     assay_yards: { x: yards[0] + 6.5, y: yards[1] + 4.5 },   // (east of the workshop, which hid one arriving at the door: visibility.mjs)
     cinderworks: { x: works[0] + 0.5, y: works[1] + 12.5 },
@@ -1126,8 +1129,8 @@ function buildReach(seed) {
 // The imperial road comes up the frozen Sol to the Frozen Hospice; the pass road runs from it over the Sol's bridge
 // and north-west to Frosthold's one wall in its pass (the gate east, as the town scene's); the Pilgrims' Stair climbs
 // in switchbacks to the Lip, the one break in the crater's rim; the crater's floor is glass, the Throne half-sunk in
-// it. NOT PLAYABLE YET (no `heights` land, Act VI isn't built): the preview only (?scene=overland&region=heights).
-// Landmarks with no doors; the road out shut with its word. Its own streams: 4442 (the scatter), 4444 (the peaks).
+// it. (v1.148) A land you walk once Act III is done, up the Sol from the Reach's Solmere road; its sites have no doors
+// yet (the Heights' dungeons aren't built), its spawn points and the First Pilgrim at the Lip are its fights. Its own streams: 4442 (the scatter), 4444 (the peaks).
 export const HEIGHTS = { gate: [74, 100], hospice: [152, 204], lip: [158, 100], crater: [150, 64], throne: [150, 60], cracks: [206, 152], praetory: [214, 104],
   glass: [220, 34], tarn: [88, 142] };
 function buildHeights(seed) {
@@ -1218,8 +1221,8 @@ function buildHeights(seed) {
     { low: ['ug_grass_1', 'ug_grass_2', 'ug_fern'], solid: ['rock_A', 'rock_B'], foot: ['ug_grass_2', 'ug_fern'] });
 
   o.exits.push({ x0: gate[0] - 8, y0: gate[1] - 4, x1: gate[0] - 1, y1: gate[1] + 4, to: 'town', arrive: 'overland' });
-  o.exits.push({ x0: 142, y0: 263, x1: 159, y1: 271, to: 'overland', closed: true, shut: 'The road down the Sol goes to Solmere. Nobody climbs this far to turn round.' });
-  o.arrivals = { default: { x: gate[0] + 22.5, y: gate[1] + 0.5 }, frosthold: { x: gate[0] + 22.5, y: gate[1] + 0.5 }, hospice: { x: hospice[0] - 1.5, y: hospice[1] + 10.5 } };
+  o.exits.push({ x0: 142, y0: 263, x1: 159, y1: 271, to: 'overland', region: 'reach', arrive: 'heights', shut: 'The road down the Sol goes to Solmere, and west on its road to the Cinder Reach. Not open to you from here.' });   // (v1.148) down the Sol to Solmere and west on its road, home to the Reach
+  o.arrivals = { default: { x: gate[0] + 22.5, y: gate[1] + 0.5 }, frosthold: { x: gate[0] + 22.5, y: gate[1] + 0.5 }, hospice: { x: hospice[0] - 1.5, y: hospice[1] + 10.5 }, reach: { x: 150.5, y: 255.5 } };
   o.spawn = o.arrivals.default;
   return o;
 }

@@ -76,5 +76,5 @@ test('validated: an unknown member does nothing; the end of the XP table is the 
   sim.commands.push({ type: 'devLevel', id: 'nobody' }); sim.tick();
   assert.ok(!sim.state.dev, 'nothing done, nothing marked');
   h.level = DEV_LEVEL_MAX; run(sim, [{ type: 'devLevel', id: h.id }]);
-  assert.equal(h.level, DEV_LEVEL_MAX); assert.ok(ref.some((r) => /level 60/.test(r)));
+  assert.equal(h.level, DEV_LEVEL_MAX); assert.ok(ref.some((r) => /level 75/.test(r)));   // (v1.148: the Heights' top)
 });
