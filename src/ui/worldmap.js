@@ -83,7 +83,7 @@ const CSS = `
 #worldmap .card .go.walk { background: linear-gradient(#2e3e2a, #1e2a1c); border-color: #8fbf7a; color: #dff0d2; }
 #worldmap .card .go:disabled { opacity: .42; }
 /* (v1.143) the climb: a dungeon's stars beside its mark, each land's progress under its name, the road climbed inked in,
-   and the level rail at the side, the lowest at its foot and the highest at its head */
+   (2026-11-24, the owner: the level rail at the side removed, "do we need this? Lets just remove it entirely") */
 #worldmap .pin.dgn { width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 3px; border: 2px solid #3b2a1c; background: rgba(246,236,210,.55); transform: rotate(45deg); }
 #worldmap .pin.dgn.won { background: #e0a85a; border-color: #5a2e14; }
 #worldmap .pin.dgn.gold { background: #ffd36a; border-color: #7a4a10; box-shadow: 0 0 9px rgba(255,200,90,.95); }
@@ -93,17 +93,6 @@ const CSS = `
   background: rgba(28,20,14,.86); color: #f0e2c4; border: 1px solid rgba(214,170,98,.55); }
 #worldmap .prog.is-shut, #worldmap .prog.is-far { color: #b8ad98; border-style: dashed; background: rgba(36,28,40,.8); }
 #worldmap svg.trail { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
-#worldmap .railpad { position: absolute; top: 0; left: calc(100% + 40px); width: 1px; height: 1px; pointer-events: none; }
-#worldmap .rail { position: absolute; right: 4px; width: 26px; z-index: 2; display: flex; flex-direction: column-reverse; gap: 3px; padding: 4px 3px; border-radius: 12px;
-  background: rgba(16,12,22,.82); border: 1px solid rgba(214,170,98,.45); }
-#worldmap .rail button { position: relative; flex: 1; min-height: 0; padding: 0; border: 1px solid #3a3446; border-radius: 6px; background: #221c2c; overflow: hidden; }
-#worldmap .rail button .fill { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(#e0a84a, #8a5a1a); }
-#worldmap .rail button.done { border-color: #ffd36a; }
-#worldmap .rail button.open { border-color: #b67c2a; }
-#worldmap .rail button.off { opacity: .45; border-style: dashed; }
-#worldmap .rail button span { position: absolute; left: 0; right: 0; bottom: 2px; font: 9px ui-monospace, Menlo, monospace; color: #efe4cf; text-shadow: 0 0 3px #000; }
-#worldmap .rail .me { position: absolute; left: -7px; right: -7px; height: 0; border-top: 3px solid #8fe07a; box-shadow: 0 0 6px #8fe07a; pointer-events: none; }
-#worldmap .rail .me em { position: absolute; right: 100%; top: -9px; margin-right: 3px; padding: 0 4px; border-radius: 4px; background: #1e3a18; color: #c8f0b0; font: 10px/16px ui-monospace, Menlo, monospace; font-style: normal; white-space: nowrap; }
 #coachCard { position: fixed; inset: 0; z-index: 13; display: grid; place-items: center; background: rgba(6,4,10,.7); opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility 0s linear .35s; pointer-events: none; }
 #coachCard.on { opacity: 1; visibility: visible; transition: opacity .25s ease; }
 #coachCard div { max-width: 300px; margin: 0 16px; padding: 16px 20px; text-align: center; background: #100c16; border: 1px solid rgba(214,170,98,0.5); border-radius: 14px; color: #efe4cf; }
@@ -182,19 +171,16 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
   // ── the map: pins (in the map's own units), drawn over the image at its scale ──────────────────────────────────────
   function paint() {
     if (!open) return;
-    view.textContent = ''; card.classList.remove('on'); view.style.paddingBottom = ''; frame = null; for (const n of sheet.querySelectorAll('.rail')) n.remove();
+    view.textContent = ''; card.classList.remove('on'); view.style.paddingBottom = ''; frame = null;
     const map = el('div', 'map'), img = /** @type {HTMLImageElement} */ (el('img'));
     img.alt = ''; map.append(img); view.append(map);
     if (tab === 'world') {
       img.src = WALL.src; img.width = WALL.w; img.height = WALL.h;
       map.style.width = `${Math.round(Math.max(view.clientWidth * WALL_ZOOM, WALL_MIN))}px`;
       map.append(fogSvg(), trailSvg());
-      // (v1.146 critic: the level rail stood over the right edge's pins, the Sunken Chapel's stars under it) the map
-      // scrolls a rail's width further, so whatever the rail covers can be brought out from under it
-      { const pad = el('div', 'railpad'); map.append(pad); }
       pins = worldPins();
       place(map, pins, WALL.w, 0, 0);
-      progTags(map); rail(map);
+      progTags(map);
       const at = PLACES[townOf(region())];
       // scrolled to where you are, with "you are here" (west of the pin) wholly in view
       // (v1.143) and the next land up the climb with it, where both fit across the view: the way on is in sight
@@ -202,7 +188,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
       // (a map not laid out yet measures 0 wide: scrolled then, it opened on the map's top corner and never scrolled again,
       // so wait a frame for its width; the browser suite's World map check failed on that race, now and then)
       const go = () => { if (scrolled) return; if (!map.clientWidth || !view.clientWidth) { requestAnimationFrame(go); return; } scrolled = true; const k = map.clientWidth / WALL.w, me = pins.find((p) => p.here), tw = me ? me.here.length * 6.6 + 12 + 22 + 10 : 0;
-        const VW = view.clientWidth - 40;   // (the rail's width off the right: v1.146 critic)
+        const VW = view.clientWidth;
         const both = nx && Math.abs(nx[0] - at[0]) * k < view.clientWidth - 90 && Math.abs(nx[1] - at[1]) * k < view.clientHeight * 0.7;   // (the full width: two towns 283 px apart on a 390 phone still fit, the next one short of the rail)
         // (v1.146: the tag west of the pin was cut by the view's left edge when both lands were framed) the span from the
         // tag's left end to the next land's town, centred where it fits; where it doesn't, the tag wins
@@ -267,8 +253,8 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
         const spots = (p.west ? [left, above, below, right] : [below, above, right, left])
           .filter(([lx, ly]) => lx >= 0 && lx + w <= MW && ly >= 0 && ly + h <= MH);
         // (v1.146 critic: "you are here" west of the pin was cut by the view's left edge) its spots inside what the view
-        // shows first, the rail's width off the right
-        const V = map.parentElement, V0 = V ? V.scrollLeft : 0, V1 = V ? V0 + V.clientWidth - 40 : MW;
+        // shows first
+        const V = map.parentElement, V0 = V ? V.scrollLeft : 0, V1 = V ? V0 + V.clientWidth : MW;
         if (p.here) spots.sort((a, b) => +(a[0] < V0 || a[0] + w > V1) - +(b[0] < V0 || b[0] + w > V1));
         const at = spots.find(([lx, ly]) => free([lx, ly, lx + w, ly + h])) || (p.here ? spots[0] : null);
         if (!at) continue;
@@ -279,7 +265,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
     const img = map.querySelector('img'); if (img && !img.complete) img.addEventListener('load', lay, { once: true });
     relay = lay;
   }
-  // ── (v1.143) the climb: stars, each land's progress, the road climbed, the level rail ───────────────────────────────
+  // ── (v1.143) the climb: stars, each land's progress, the road climbed ───────────────────────────────
   const starsAt = (/** @type {string} */ id) => { const r = S().stars && S().stars[id]; return r ? r.n : 0; };
   /** a land's dungeons with stars to win (found ones), the stars won and how many are cleared @param {string} land */
   function landStats(land) {
@@ -323,30 +309,6 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
     }
     for (const p of pts.slice(0, -1)) svg.append(mk('circle', { cx: p.at[0], cy: p.at[1], r: 16, fill: 'none', stroke: p.open ? '#b8402a' : '#5a4330', 'stroke-width': 4, opacity: 0.55 }));
     return svg;
-  }
-  // the level rail, beside the map and not scrolling with it: a segment a land, the lowest at its foot; each filled by
-  // the stars won there, and a mark at the hero's level; a tap scrolls the map to the land
-  function rail(/** @type {HTMLElement} */ map) {
-    for (const n of sheet.querySelectorAll('.rail')) n.remove();
-    const R0 = el('div', 'rail'), lv = (S().party[0] && S().party[0].level) || 1, hb = view.getBoundingClientRect(), sb = sheet.getBoundingClientRect();
-    R0.style.top = `${hb.top - sb.top + 8}px`; R0.style.height = `${Math.max(160, hb.height - 16)}px`;
-    // (2026-11-24, the owner, of the rail: "What does this slider mean and it doesnt seem accurate". Its fill was each
-    // land's dungeon stars, its numbers at the tops of boxes all one height, so LV 35 stood under the "31" and the Vale
-    // read half done at any level.) Now a climb of levels and nothing else: each land a box as tall as its band, its
-    // first level at its foot, gold up to the hero's level; a land not open dashed. The stars are on the dungeons
-    for (const L of CLIMB) {
-      const st = landState(L), b = /** @type {HTMLButtonElement} */ (el('button', st === 'far' || st === 'shut' ? 'off' : st === 'done' ? 'done' : 'open'));
-      const span = L.lv[1] - L.lv[0] + 1, f = el('div', 'fill'); f.style.height = `${Math.round(100 * Math.min(1, Math.max(0, (lv - L.lv[0] + 1) / span)))}%`;
-      b.style.flexGrow = String(span);
-      b.append(f, el('span', '', String(L.lv[0]))); b.setAttribute('aria-label', `${L.name}, levels ${L.lv[0]} to ${L.lv[1]}`);
-      b.addEventListener('click', () => { const k = map.clientWidth / WALL.w; view.scrollTo({ top: Math.max(0, L.at[1] * k - view.clientHeight * 0.4), left: Math.max(0, L.at[0] * k - view.clientWidth / 2), behavior: 'smooth' }); });
-      R0.append(b);
-    }
-    // the hero's level: within its land's segment, as far up it as the level is through the land's band
-    const i = Math.max(0, CLIMB.findIndex((L) => lv <= L.lv[1])), L = CLIMB[i < 0 ? CLIMB.length - 1 : i], t = Math.min(1, Math.max(0, (lv - L.lv[0] + 0.5) / (L.lv[1] - L.lv[0] + 1)));
-    const me = el('div', 'me'); me.append(el('em', '', `LV ${lv}`)); R0.append(me);
-    requestAnimationFrame(() => { const seg = /** @type {HTMLElement} */ (R0.children[i]); if (!seg) return; me.style.top = `${seg.offsetTop + seg.offsetHeight * (1 - t)}px`; });
-    sheet.append(R0);
   }
   // a picked pin scrolled clear of its card (the card stands over the bottom of the map)
   function inView(/** @type {any} */ p) {
