@@ -1,0 +1,42 @@
+{
+  "id": "ch4_brine_cross",
+  "kind": "chapter",
+  "title": "Brine Cross",
+  "giver": "hester_quaile",
+  "region": "tidemark",
+  "level": [
+    40,
+    75
+  ],
+  "after": [
+    "ch4_letters_of_marque",
+    "ch4_keepers_light"
+  ],
+  "summary": "The drowned fleet's crews have come down the Highmarch road and are marching west on the bridge at Brine Cross, the only way over the Brine. The League means to hold it, and Hester Quaile wants the company at its east barricade.",
+  "steps": [
+    {
+      "id": "hold",
+      "journal": "Take the road west to Brine Cross, past where the Highmarch road comes in. At the bridge's east barricade, win eight waves against the drowned with the League.",
+      "objectives": [
+        {
+          "type": "camp",
+          "camp": "brine_cross",
+          "count": 1,
+          "label": "The east barricade at Brine Cross held"
+        }
+      ]
+    }
+  ],
+  "ready": "Old Gannet broke his lamp and the drowned lay down. Go back to Hester Quaile at the Paid Toll in Tollhaven.",
+  "done": "The drowned lay down when Old Gannet broke his lamp. They came down the Highmarch road: whoever sings to them is there.",
+  "rewards": {
+    "share": 0.5,
+    "lv": 40,
+    "gold": 900
+  },
+  "dialogue": {
+    "file": "quaile",
+    "offer": "quaile_brine_offer",
+    "turnin": "quaile_brine_turnin"
+  }
+}

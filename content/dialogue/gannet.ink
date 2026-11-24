@@ -7,6 +7,10 @@
 // room is the fort's keepsake (gannets_spare_wick: the vault's chest gives it, never this file). Entry: gannet_hub.
 // Bound in by src/story/adapter.js from the sim (core.js boss_<id>; quests.js q_ = −1 locked · 0 available · 1 active
 // · 2 ready · 3 done). Flags: met_gannet. Act IV: he gives and takes in The Keeper's Light (ch4_keepers_light).
+// After Brine Cross (ch4_brine_cross, Hester's) he has carried the lamp up the road and broken it on the bridge's east
+// barricade, and the drowned have lain down (camps.js the stand). The sim sets `brine_held` (state.flags) when the stand
+// is held; it reaches Ink as flag_brine_held because npcs.js lists it in old_gannet's `flags`, as met_gannet is (this
+// file never sets it). From then his report says the light is out, and he'll say what the lamp held.
 
 VAR hero_name = ""
 VAR hero_class = ""
@@ -16,12 +20,14 @@ VAR party_size = 1
 VAR fallen_name = ""
 VAR day_part = 0
 VAR flag_met_gannet = 0
+VAR flag_brine_held = 0
 VAR boss_hesk = 0
 VAR q_ch4_keepers_light = -1
 
 == gannet_hub ==
 { flag_met_gannet == 0: -> gannet_first_meet }
 { fallen_name != "": -> gannet_greet_fallen }
+{ flag_brine_held == 1: -> gannet_greet_dark }
 -> gannet_greet_back
 
 == gannet_first_meet ==
@@ -44,8 +50,13 @@ An old man in an oilskin gone white with salt stands just inside the Lamp Fort's
 { q_ch4_keepers_light == 3: "Yard's quiet. I've swept it. Corsairs leave a lot behind them, mostly teeth." }
 -> gannet_topics
 
+// after Brine Cross: the lamp broken on the barricade, the tower dark for the first time in sixty years
+== gannet_greet_dark ==
+{&"Wind south-west. Sea slight. Light's out." He listens to himself say the last part.|Gannet is in the yard, looking up at the tower out of habit. Nothing is burning on it.|"Wind backing west. Light's out. You again."}
+-> gannet_topics
+
 == gannet_greet_fallen ==
-"Wind dropping. Light's lit. {fallen_name}'s not with you." He takes his eyes off the yard for that.
+"Wind dropping. {flag_brine_held == 1: Light's out.|Light's lit.} {fallen_name}'s not with you." He takes his eyes off the yard for that.
 "The Quay Chapel in Tollhaven will have them up. It's a long way back along the cliffs. Carry them on the landward side."
 -> gannet_topics
 
@@ -54,8 +65,10 @@ An old man in an oilskin gone white with salt stands just inside the Lamp Fort's
 + { q_ch4_keepers_light == 0 } [Can we help with the fleet? #mark: quest] -> gannet_light_offer
 + { q_ch4_keepers_light == 1 } [About the yard… #mark: quest active] -> gannet_light_active
 + { q_ch4_keepers_light == -1 } [Can we help with the fleet?] -> gannet_light_locked
-+ [What's the light for?] -> gannet_light
-+ [Who's in the yard?] -> gannet_fleet
++ { flag_brine_held == 0 } [What's the light for?] -> gannet_light
++ { flag_brine_held == 1 } [What did your lamp hold?] -> gannet_lamp_held
++ { flag_brine_held == 0 } [Who's in the yard?] -> gannet_fleet
++ { flag_brine_held == 1 } [What will you do now?] -> gannet_after
 + [What's in the lamp room?] -> gannet_wick
 + [I'll be going.] -> gannet_bye
 
@@ -103,10 +116,27 @@ Gannet walks out into his yard and stands in the middle of it, looking up. The l
 -> gannet_topics
 
 == gannet_wick ==
-"The lamp, and a chest with my spare wick in it. Trimmed. I've never lit it. It's for the night the lamp goes out."
-"It hasn't yet. If you get up there, take the wick. I'll not be needing it."
+{ flag_brine_held == 0:
+    "The lamp, and a chest with my spare wick in it. Trimmed. I've never lit it. It's for the night the lamp goes out."
+    "It hasn't yet. If you get up there, take the wick. I'll not be needing it."
+- else:
+    "An empty hook where the lamp hung, and the chest my spare wick was in."
+    "That wick was for the night the lamp went out. It went out. I find I don't want the wick. It's yours, if you've not had it."
+}
+-> gannet_topics
+
+// ── after Brine Cross: what the lamp held, now he's broken it (world doc §2.1, §3.7: the fleet's coast-lamp) ──
+== gannet_lamp_held ==
+"The imperial fleet's signal corps. They're in it, and the crews took their orders by its light. When the fleet went down off the Mole, the crews went on listening, and the lamp stayed lit."
+"While it burned they'd answer anyone who sang to them right. For a long while that was nobody. Then this spring somebody sang."
+"I could have put it out any night these sixty years. I was waiting to be told. In the end I told myself. It took me long enough."
+-> gannet_topics
+
+== gannet_after ==
+"Sweep the yard. Keep the gate. The Guild will get round to writing now, I expect, to tell me to stop."
+"I sleep at night now. I haven't since I was a Wick. It's very dark, sleeping. They tell me you get used to it."
 -> gannet_topics
 
 == gannet_bye ==
-{&"Mind the cliff path. There's less of it every winter."|Gannet has gone back to watching the yard.|"Get back along the cliffs before dark. The light's not for you."}
+{&"Mind the cliff path. There's less of it every winter."|Gannet has gone back to watching the yard.|"Get back along the cliffs before dark. {flag_brine_held == 1: There's no light out here now.|The light's not for you.}"}
 -> END

@@ -1358,7 +1358,7 @@ function buildTidemark(seed) {
   // the imperial road west, into Solmere (a crossroads: GDD v1.150, core.js)
   o.exits.push({ x0: -11, y0: cross[1] - 9, x1: -4, y1: cross[1] + 9, to: 'solmere' });
   o.arrivals = { default: { x: tollhaven[0] - 14.5, y: tollhaven[1] + 0.5 }, tollhaven: { x: tollhaven[0] - 14.5, y: tollhaven[1] + 0.5 }, solmere: { x: 4.5, y: cross[1] + 0.5 },
-    brine_cross: { x: BRIDGE[0] + 22.5, y: cross[1] + 0.5 }, gullwick: { x: gullwick[0] + 0.5, y: gullwick[1] - 2.5 },
+    brine_cross: { x: BRIDGE[0] - 15.5, y: cross[1] + 0.5 },   // (v1.151: the west bank, by the tollhouse; the east barricade is the stand's, camps.js) gullwick: { x: gullwick[0] + 0.5, y: gullwick[1] - 2.5 },
     drowned_mole: { x: ferry[0] - 2.5, y: ferry[1] - 8.5 },   // (back up the jetty, off the door)
     gull_isles: { x: isles[0] - 7.5, y: isles[1] + 3.5 }, lamp_fort: { x: lampfort[0] - 9.5, y: lampfort[1] + 2.5 } };
   o.spawn = o.arrivals.default;

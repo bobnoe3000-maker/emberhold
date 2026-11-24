@@ -320,7 +320,11 @@ Each step ends playable and checked: `npm run check`, the browser suite, and the
    held once the foes' premium compounds past 30 (`premium.js`, 1.06 a level) and the heroes' lift reads it with 2 % a
    level more to 45 (GDD v1.151 has the numbers). Pace: the Isles 10.0 min, the Lamp Fort 4.1. Tests:
    `test/tidemark-isles.test.mjs`.
-5. **Brine Cross:** the set piece, Gannet's lamp, *Brine Cross*.
+5. **Brine Cross:** the set piece, Gannet's lamp, *Brine Cross*.  **Built (GDD v1.152):** `camps.js` the stand `brine_cross` (a new kind,
+   `stand`); `battle.js` `standAllies`, `spawnStand`, the company's side with its allies (`battle.side`) and the stand's
+   end (`standHeld`); the family `drowned_fleet`; *Brine Cross* (`quests.js`, Hester's and Gannet's knots); the Journal's
+   lead. With the League the right party at 40 holds the eight waves in 146–161 s; without them it fell at wave 7 on two seeds of three.
+   Tests: `test/tidemark-brine.test.mjs`.
 6. **Highmarch (41–45):** the walls on the ramparts kit, the `palace` kit, the legionaries' shield wall, the
    Champion, Lucan, *The Seventh Voice*, Act IV's end, and the contract at 42 and 45.
 7. **The Sister's Cabin**, the Chronicle set, the side work, the spawn points.
@@ -421,6 +425,31 @@ there. After the seal it opens again with an ordinary find in that chest.
   points there.
 
 **Balance:** the smoke contract at 36 and 39. `roomlv.mjs` at 36 and 39; `boss.mjs gull_isles 40`; `pace.mjs gull_isles`.
+
+## The build sheet: Brine Cross (step 5)
+
+Every id step 5 is built against. Canon is world doc §3.7 (Brine Cross held at the east barricade, not entered; Old
+Gannet breaks his own lamp and the drowned lie down).
+
+**The stand** (`sim/camps.js`, a new kind of spawn point, `stand`): `brine_cross`, *the east barricade*, at the bridge's
+east foot where the barricade crosses the Highmarch road (`outdoor.js` the bridge's apron, `BRIDGE[0] + 18`). Level 40.
+- It's up only while *Brine Cross* is in hand and not yet held (`state.flags.brine_held`). Other times the barricade is
+  quiet, the League's people standing at it.
+- Its waves come up the road from the east (the arena's east edge): a room's wave at its level, a step tougher each wave
+  as a room's tide, an elite every fourth. `STAND_WAVES` 8 to hold it.
+- The family `drowned_fleet`: the drowned fleet's crews (sailor, drowned · cantor · elite bosun), all undead.
+- **The League fights beside you**: three of its people (`rivals.js` `makeCompany`, a fighter, a rogue and a cleric at
+  the stand's level, `steady`), on the company's side in the fight (`battle.allies`, fought through the member AI as the
+  Ring's companies are). They stand at the barricade with you, and they don't follow you out.
+- Held: the eighth wave falls, Old Gannet comes up the road with his lamp and breaks it on the barricade, and the drowned
+  lie down (`standHeld`, `state.flags.brine_held`, `campCleared` for the chapter). Walk out or fall and the stand starts
+  again from its first wave.
+
+**Story:** `ch4_brine_cross`, Hester, after *Letters of Marque* and *The Keeper's Light*, levels 40–75. Hold the east
+barricade (`{ type: 'camp', camp: 'brine_cross', count: 1 }`). Act IV runs on to Highmarch (step 6).
+
+**Balance:** the right party at 40 with the League holds the eight waves; without the League it should be a near thing.
+`tools/balance/camps.mjs --camp brine_cross` measures it.
 
 ## Decisions for the owner
 

@@ -369,6 +369,7 @@ export function createRenderer(canvas, sim, input) {
   const withExit = (p) => ({ ...p, exit: p.stairs });          // the dungeon's way back up reuses the stair sprite
   props = withExit(props);
   let banner = null;
+  let bannerNext = null;   // (a banner that follows the one up when it's done, on the renderer's clock: Brine Cross's two, v1.152)
   const sceneTitle = () => (sim.world.kind === 'dungeon' ? `${sim.world.siteName || 'The Old Barrows'} · depth ${sim.state.depth + 1}` : sim.world.name);
   const hiddenHere = (L) => !!L.site && !siteOpen(L.site, sim.state.revealed || []);   // a site not found yet has no name on the Vale
   sim.bus.on('levelChanged', () => { liveBolts.clear(); transit = { fadeFrom: 0 }; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; outMap = null; wantAtlases(); preloadFamily(); banner = { text: sceneTitle(), until: clock() + 2600 }; });
@@ -1185,7 +1186,17 @@ export function createRenderer(canvas, sim, input) {
     moment('level_up', { by: l.id, tid: l.id, x: u.x, y: u.y }, { foeBy: false, ally: true });
   });
   sim.bus.on('loot', (l) => { if (!l.salvaged) fx.beam(l.x, l.y, LOOT_RGB[l.item.r] || LOOT_RGB.common, { now: clock() }); });   // a drop: a column of light where it fell
-  sim.bus.on('wave', (w) => { banner = { text: w.cleared ? `Wave ${w.wave} cleared` : `Wave ${w.wave}`, until: clock() + (w.cleared ? 1600 : 1300), small: true }; });
+  sim.bus.on('wave', (w) => {
+    // (v1.152) a stand's waves (camps.js `stand`: Brine Cross): its first the stand's own banner, each after under its wave's number
+    if (w.of && !w.cleared && w.wave === 1) { banner = { text: 'Hold the east barricade', sub: 'the drowned march on the bridge · hold eight waves', until: clock() + 3200 }; return; }
+    banner = { text: w.cleared ? `Wave ${w.wave} cleared` : w.of ? `Wave ${w.wave} of ${w.of}` : `Wave ${w.wave}`, sub: w.of && !w.cleared ? 'another crew comes up the road, in step' : undefined, until: clock() + (w.cleared ? 1600 : 1300), small: true };
+  });
+  // (v1.152) Brine Cross held: Old Gannet breaks his lamp on the barricade, the drowned lie down (battle.js standHeld)
+  sim.bus.on('standHeld', (e) => {
+    banner = { text: 'Old Gannet breaks his lamp', sub: '“Sixty years. Somebody might have said.”', until: clock() + 4200 };
+    fx.rise(e.x, e.y, { now: clock(), life: 3.2, col: SOUL_FREE });
+    bannerNext = { text: 'The drowned lie down in the road', for: 3000, small: true };
+  });
   // bosses (battle.js): who stands in the hall, what it does, and its fall
   const bossLine = { call: ['calls his men to him', 'he stands behind them until they fall'], kindle: ['kindles the dead', 'the last one down gets back up'], line: ['holds the line', 'the dead near it take half: knock it down first'], swarm: ['drums', 'while he drums, more come out of the tunnels: put him down'],
     mud: ['stamps', 'mud comes up round your feet: step out of it'], cage: ['carries a lit cage', 'while his cage burns he mends: break it first'],
@@ -1327,6 +1338,7 @@ export function createRenderer(canvas, sim, input) {
   // had no cleric: the first HP bar drawn in a fight threw, and the frame loop stopped (a freeze).
   const maxHpOf = (m) => statsFor(m).maxHp;
   function drawBanner(now) {
+    if (bannerNext && (!banner || now > banner.until)) { banner = { text: bannerNext.text, until: now + bannerNext.for, small: bannerNext.small }; bannerNext = null; }
     if (!banner || now > banner.until) return;
     const k = vw / window.innerWidth, a = Math.min(1, (banner.until - now) / 600);
     const size = banner.small ? 16 : 20, y = (hudB + (banner.small ? 68 : 100)) * k;   // (under the room pill and a boss's bar)

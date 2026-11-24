@@ -98,6 +98,7 @@ function tidemarkLeads(state, status) {
   // (v1.151) once Low Water's done: Hesk on the Gull Isles, and Old Gannet's light at the Lamp Fort (until his chapter's taken)
   if (bosses.harbourmaster && !bosses.hesk) out.push({ id: 'hesk' });
   if (bosses.harbourmaster && status('ch4_keepers_light') <= QS.AVAILABLE) out.push({ id: 'lampfort' });
+  if (status('ch4_brine_cross') === QS.ACTIVE) out.push({ id: 'brinecross' });   // (v1.151: the east barricade, while it's in hand)
   return out;
 }
 

@@ -8,6 +8,9 @@
 // Act IV: she takes in chapter 1, Consigned (Ilse's), and gives chapter 2, Low Water, and Letters of Marque (Hesk on the
 // Gull Isles), and after Low Water points the company at Old Gannet's Lamp Fort (gannet.ink gives The Keeper's Light).
 // The name on Hesk's commission is read as a name: who Lucanus is, and that he sang on the mole, is for later chapters.
+// After both of those she gives Brine Cross (ch4_brine_cross): the drowned fleet's crews come down the Highmarch road and
+// west for the bridge, the League holds its east barricade, and Old Gannet breaks his lamp on it (docs/tidemark-plan.md,
+// step 5). She learns what his weekly report meant from the company, at the turn-in; Highmarch, Maren's chapter, is next.
 
 VAR hero_name = ""
 VAR hero_class = ""
@@ -23,6 +26,7 @@ VAR boss_hesk = 0
 VAR q_ch4_consigned = -1
 VAR q_ch4_low_water = -1
 VAR q_ch4_letters_of_marque = -1
+VAR q_ch4_brine_cross = -1
 
 == quaile_hub ==
 { q_ch4_consigned == 1 || q_ch4_consigned == 2: -> quaile_consigned_meet }
@@ -70,7 +74,9 @@ You show her Ilse's copy of the ledger's last page. She reads the line about the
 { q_ch4_low_water == 3 && with_maren == 0: "Maren's still out on the Mole? Then she's saying names at it. Fetch her in. Tell her the Chapel roof leaks. It does." }
 { q_ch4_low_water == 3: "The quays are quiet at night. I've had the watch go back to counting boats. They'd got out of the habit." }
 { q_ch4_letters_of_marque == 1: "Hesk took another League ship this week. I've added her to what he owes. It's getting to be a long slate." }
-{ q_ch4_letters_of_marque == 3: "I've had Hesk's commission copied to every port in the League. Lucanus. Nobody on this coast knows the name. They all will." }
+{ q_ch4_letters_of_marque == 3 && q_ch4_brine_cross < 1: "I've had Hesk's commission copied to every port in the League. Lucanus. Nobody on this coast knows the name. They all will." }
+{ q_ch4_brine_cross == 1: "The League's three have sent word from the bridge. Two words, and one of them was your name." }
+{ q_ch4_brine_cross == 3: "The coast east of town is dark at night now. The fishing boats keep asking me why. I tell them it's a saving on oil." }
 -> quaile_topics
 
 == quaile_greet_fallen ==
@@ -84,6 +90,9 @@ You show her Ilse's copy of the ledger's last page. She reads the line about the
 + { q_ch4_letters_of_marque == 2 } [Hesk's down. #mark: quest ready] -> quaile_marque_turnin
 + { q_ch4_letters_of_marque == 0 } [Why is the Gull Fleet late? #mark: quest] -> quaile_marque_offer
 + { q_ch4_letters_of_marque == 1 } [About Hesk… #mark: quest active] -> quaile_marque_active
++ { q_ch4_brine_cross == 2 } [The bridge held. #mark: quest ready] -> quaile_brine_turnin
++ { q_ch4_brine_cross == 0 } [What's the League doing at Brine Cross? #mark: quest] -> quaile_brine_offer
++ { q_ch4_brine_cross == 1 } [About Brine Cross… #mark: quest active] -> quaile_brine_active
 + { q_ch4_low_water == 3 } [Is the Fleet troubling anyone else?] -> quaile_lampfort
 + [What is the League?] -> quaile_league
 + [Tell me about Tollhaven.] -> quaile_tollhaven
@@ -142,6 +151,38 @@ Hester reads the name aloud. "Lucanus. An emperor's kind of name. Nobody's signe
 { with_maren == 1: Maren says two names, quietly: the masters of the last two League ships Hesk boarded. "He showed them that paper first. It made it lawful. It didn't make it anything else." }
 "Somebody sang my drowned up off the Mole, and somebody paid Hesk to clear the sea in front of them. I'd like to think that's two people."
 "If either of them wants anything inland, he crosses at Brine Cross. Everybody does. I'll have the League's people on that bridge. Come back to me."
+-> quaile_topics
+
+// ── Act IV: Brine Cross (content/quests/ch4_brine_cross.json): the drowned march on the bridge, the League holds it ──
+// (the stand: camps.js brine_cross, eight waves at the east barricade with three of the League; held, Gannet breaks his
+// lamp on it and the drowned lie down, flags.brine_held)
+== quaile_brine_offer ==
+"The drowned came up off the Mole two nights ago. Not to my quays this time. Every hull's worth went ashore and up the Highmarch road."
+"This morning they came back down it, in step, and turned west for Brine Cross. Past the bridge is the Solmere road, and at the end of that is the old capital, where they crowned emperors."
+"Whoever Lucanus is, he's sending his dead there ahead of him. The League means to hold the bridge. I've put three of ours at its east barricade. A pikeman, a crossbowman and a surgeon. Every other port sent its apologies, and a bill."
+"The tollhouse on that bridge takes a toll off everyone going west. The drowned don't carry purses. I've told the tollman to waive yours."
+"Gannet's report came in this morning, too. *Wind east. Light's lit, for now.* I've had that message every week since I took this chair, and he's never added a word to it."
++ [We'll hold the bridge. #mark: quest]
+    "The coast road west, past where the Highmarch road comes down, and on to the bridge. Stand at the barricade with the League's three and hold it until they stop coming. You'll know the League's people. They're the ones with receipts." # quest: accept ch4_brine_cross
+    -> quaile_topics
++ [Not yet.]
+    "Then the League's three hold it alone a while. They're on a day rate. I'd like it to be a short day."
+    -> quaile_topics
+
+== quaile_brine_active ==
+"West on the coast road, past the Highmarch road, to the bridge at Brine Cross. The east barricade, with the League's three. Hold it until the drowned stop coming."
+-> quaile_topics
+
+== quaile_brine_turnin ==
+{ with_maren == 1: Maren is a step behind you, with the road's dust on her hem. }
+You tell Hester about the bridge: eight crews up the road, the League's three holding with you, and then an old man behind the last of them with a lamp on his back. He broke it on the barricade, and the drowned lay down in the road. # quest: turnin ch4_brine_cross
+"Gannet. Off his headland, and past my gate with that lamp on his back, and never put his head in to say."
+"Every week, that report. I took it for weather. That light was the one thing on this coast nobody had told to stop."
+"He'll send the League a bill for that lamp, I expect. I'll pay it without counting it. Don't tell anyone in the League. They'd want me looked at."
+{ with_maren == 1: Maren says names, quietly: a bosun, two gunners, a ship's boy, men she named on the Mole. "They'll not get up again. I'll say the rest at the Chapel." }
+"They came down the Highmarch road. Whoever sang them off the Mole is up that road, behind the walls. I said Highmarch would like an emperor again. It seems one has applied."
+{ with_maren == 1: She looks at Maren. "And you'll want to go up that road, Sister. Clear it with them this time, if not with me." }
+{ with_maren == 0: "Find Maren. She'll want to go up that road, and she'll go alone. She went out to the Mole alone." }
 -> quaile_topics
 
 // after Low Water: Old Gannet's light, and the Gull Fleet at his door (gannet.ink has The Keeper's Light)

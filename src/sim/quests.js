@@ -267,6 +267,13 @@ export const QUESTS = {
     steps: [{ id: 'hold', objectives: [{ type: 'waves', site: 'lamp_fort', count: 6 }] }],
     rewards: { share: 0.35, lv: 38, gold: 640 },
   },
+  // (v1.151 step 5) Brine Cross: the drowned fleet's crews march on the bridge and the League holds it; the company stands
+  // at the east barricade (camps.js the stand) until Old Gannet breaks his lamp on it
+  ch4_brine_cross: {
+    kind: 'chapter', giver: 'hester_quaile', region: 'tidemark', level: [40, 75], after: ['ch4_letters_of_marque', 'ch4_keepers_light'],
+    steps: [{ id: 'hold', objectives: [{ type: 'camp', camp: 'brine_cross', count: 1 }] }],
+    rewards: { share: 0.5, lv: 40, gold: 900 },
+  },
   // Tamsin's chain, Showing Off (world doc v1.54 §5): the Assay's stamps off the Yards' guard-captains, the imperial
   // patterns in the Forgehall's pattern store, the Cult's spare moulds cracked on the Magma Vault's floor
   tamsin_the_stamp: {

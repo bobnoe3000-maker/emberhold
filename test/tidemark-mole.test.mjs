@@ -79,7 +79,8 @@ test('the Journal\'s leads on the Tidemark: the Harbourmaster, then Maren until 
   assert.deepEqual(openLeads(st, none, 'tidemark').map((l) => l.id), ['harbourmaster']);
   st.bosses.harbourmaster = 1; assert.deepEqual(openLeads(st, none, 'tidemark').map((l) => l.id), ['maren', 'hesk', 'lampfort']);
   st.party.push({ id: 'maren' }); assert.deepEqual(openLeads(st, none, 'tidemark').map((l) => l.id), ['hesk', 'lampfort']);   // (v1.151: the Isles and the Lamp Fort next)
-  assert.deepEqual(openLeads(st, () => 1, 'tidemark').map((l) => l.id), ['hesk'], 'Gannet\'s chapter taken: his lead goes');
+  assert.deepEqual(openLeads(st, (id) => (id === 'ch4_brine_cross' ? 0 : 1), 'tidemark').map((l) => l.id), ['hesk'], 'Gannet\'s chapter taken: his lead goes');
+  assert.deepEqual(openLeads(st, () => 1, 'tidemark').map((l) => l.id), ['hesk', 'brinecross'], '(v1.151) Brine Cross in hand: the barricade');
   st.bosses.hesk = 1; assert.deepEqual(openLeads(st, () => 3, 'tidemark'), []);
   for (const id of ['harbourmaster', 'maren']) assert.ok(story.leads[id], id);
   assert.ok(story.leadsTitle.tidemark);

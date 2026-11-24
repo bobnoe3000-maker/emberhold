@@ -16,7 +16,7 @@ test('a new game: the next chapter is Maudry\'s', () => {
   assert.deepEqual(CHAPTERS, ['ch1_smoke_over_the_vale', 'ch1_the_diggers', 'ch1_ember_in_the_fist', 'ch1_the_standard',
     'ch2_fog_on_the_canal', 'ch2_the_locks', 'ch2_the_sickpools', 'ch2_the_bells', 'ch2_the_rolls', 'ch2_the_last_office',
     'ch3_the_wickham_road', 'ch3_short_shift', 'ch3_paid_by_weight', 'ch3_gone_back_to_work', 'ch3_night_shift', 'ch3_quota',
-    'ch4_consigned', 'ch4_low_water', 'ch4_letters_of_marque', 'ch4_keepers_light']);
+    'ch4_consigned', 'ch4_low_water', 'ch4_letters_of_marque', 'ch4_keepers_light', 'ch4_brine_cross']);
   assert.deepEqual(storyStatus(sim.state, status(sim)), { kind: 'next', id: 'ch1_smoke_over_the_vale', giver: 'maudry_fenn', town: 'Thornwick' });
 });
 
@@ -60,7 +60,7 @@ test('Act II: a chapter given in Saltmere says so; every chapter told, the end i
   S.party[0].level = 13;
   assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch2_the_locks', giver: 'dace_pike', town: 'Saltmere' });
   for (const id of CHAPTERS) S.quests[id] = { st: 3, step: 0, n: [] };
-  assert.deepEqual(storyStatus(S, status(sim)), { kind: 'end', region: 'tidemark' }, 'the last chapter told is the Tidemark\'s (v1.151: Act IV to the Gull Isles and the Lamp Fort)');
+  assert.deepEqual(storyStatus(S, status(sim)), { kind: 'end', region: 'tidemark' }, 'the last chapter told is the Tidemark\'s (v1.151: Act IV to Brine Cross)');
   S.bosses = {}; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['toadking', 'choir', 'fenschronicle', 'tower', 'fensboard']);
   S.bosses = { toadking: 1 }; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['wren', 'choir', 'fenschronicle', 'tower', 'fensboard']);
   assert.deepEqual(openLeads(S, status(sim), 'fens').find((l) => l.id === 'fenschronicle'), { id: 'fenschronicle', n: 0, of: 10 });
@@ -113,11 +113,16 @@ test('Act III (v1.124): after Act II, Ilse in Thornwick sends the company north;
   delete S.quests.ch4_keepers_light; S.quests.ch4_letters_of_marque = { st: 3, step: 0, n: [] };
   const gannet = storyStatus(S, status(sim));
   assert.deepEqual([gannet.kind, gannet.id, gannet.giver, gannet.found], ['next', 'ch4_keepers_light', 'old_gannet', undefined], 'not a found companion: no card to talk from');
-  S.quests.ch4_keepers_light = { st: 3, step: 0, n: [] }; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'end', region: 'tidemark' }, 'as far as Act IV is told');
+  S.quests.ch4_keepers_light = { st: 3, step: 0, n: [] };
+  // (v1.151 step 5) Brine Cross, Hester's, after both: it waits for 40, then she has it; held and handed in, Act IV is told
+  // as far as it goes (Highmarch, Maren's, is to come)
+  assert.deepEqual(storyStatus(S, status(sim)), { kind: 'level', id: 'ch4_brine_cross', level: 40 });
+  S.party[0].level = 40; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch4_brine_cross', giver: 'hester_quaile', town: 'Tollhaven' });
+  S.quests.ch4_brine_cross = { st: 3, step: 0, n: [] }; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'end', region: 'tidemark' }, 'as far as Act IV is told');
   const C = JSON.parse(readFileSync(new URL('../content/story.json', import.meta.url), 'utf8'));
   for (const id of ['foreman', 'tamsin', 'reachboard', 'showingoff', 'reachchronicle', 'ninthvault']) assert.ok(C.leads[id], id);
   assert.ok(C.nextFound);
   assert.ok(C.end.reach.title && C.end.reach.text && C.leadsTitle.reach);
   assert.ok(C.end.tidemark.title && C.end.tidemark.text);
-  for (const id of ['harbourmaster', 'maren', 'hesk', 'lampfort']) assert.ok(C.leads[id], id);
+  for (const id of ['harbourmaster', 'maren', 'hesk', 'lampfort', 'brinecross']) assert.ok(C.leads[id], id);
 });

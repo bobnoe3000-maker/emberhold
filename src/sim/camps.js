@@ -16,9 +16,10 @@ import { mulberry32, streamSeed } from './rng.js';
 import { hypot } from './detmath.js';
 
 /**
- * @typedef {{ id: string, region: string, kind: 'camp' | 'nest', name: string, x: number, y: number, reach: number,
+ * @typedef {{ id: string, region: string, kind: 'camp' | 'nest' | 'stand', name: string, x: number, y: number, reach: number,
  *   arena: number, level: number, family: string, band: string[], min?: number, elite: number, respawn: number,
- *   posts?: [number, number][], face?: [number, number], hole?: [number, number], dress?: [string, number, number][], ring?: string }} Camp
+ *   posts?: [number, number][], face?: [number, number], hole?: [number, number], dress?: [string, number, number][], ring?: string,
+ *   stand?: { waves: number, quest: string, flag: string, from: [number, number], allies: string[] } }} Camp
  */
 // (the owner, 2026-11-10: "increase the chase radius, I have to get right on top, and respawn should be half as fast as
 // in the dungeons. Same radius and respawn rate change for the rat nest": reach 7 → 12 and 5 → 10, the arenas with them;
@@ -121,6 +122,15 @@ export const CAMPS = [
     family: 'ashbound', band: ['warrior', 'mage', 'warrior'], elite: 0.25, respawn: RESPAWN, posts: [[-2.4, 0.6], [2.4, 0.6], [0, -2.4]], face: [0, 0],
     ring: 'first_pilgrim',
     dress: [['bones', -4.4, 2.0], ['urns', -5.4, -0.8], ['bones', -2.6, 4.2], ['urns', -3.6, -3.8]] },   // (west of the Stair's track: it runs up through the east side)
+  // ── a STAND (v1.151 step 5, docs/tidemark-plan.md's build sheet): a held position, not a spawn point. Up only while its
+  // chapter is in hand and its flag isn't set; its waves come in from `from` (an offset: the road east), a room's wave at
+  // its level a step tougher each time, an elite every fourth, until `waves` have fallen; `allies` (classes) stand with the
+  // company (battle.js startCamp, rivals.js makeCompany). Held, the flag is set and it never comes up again. Brine Cross:
+  // the bridge's east barricade on the Highmarch road, the drowned fleet's crews marching on it, the League holding it,
+  // Old Gannet's lamp broken on it at the end (world doc §3.7).
+  { id: 'brine_cross', region: 'tidemark', kind: 'stand', name: 'The east barricade', x: 72, y: 172, reach: 8, arena: 12, level: 40,
+    family: 'drowned_fleet', band: ['sailor', 'drowned', 'sailor'], elite: 0, respawn: RESPAWN, posts: [[7, -2], [8, 0.4], [7, 2.6]], face: [-10, 0],
+    stand: { waves: 8, quest: 'ch4_brine_cross', flag: 'brine_held', from: [10, 0], allies: ['fighter', 'rogue', 'cleric'] } },
 ];
 export const CAMP_BY = Object.fromEntries(CAMPS.map((c) => [c.id, c]));
 /** a land's spawn points @param {string} region */
@@ -131,7 +141,9 @@ export const CAMP_ROOM = (i) => 9000 + i;
 /** a spawn point's saved state (absent: full) @param {any} state @param {string} id */
 export const campState = (state, id) => (state.camps && state.camps[id]) || { at: 0, n: 0 };
 /** is it full (its band there to fight) at the sim's time? @param {any} state @param {Camp} c */
-export const campUp = (state, c) => state.t >= campState(state, c.id).at;
+export const campUp = (state, c) => state.t >= campState(state, c.id).at && (!c.stand || standOn(state, c));
+/** a stand's up: its chapter in hand (quests.js ACTIVE, 1), its flag not yet set @param {any} state @param {Camp} c */
+export const standOn = (state, c) => !!c.stand && !(state.flags && state.flags[c.stand.flag]) && !!(state.quests && state.quests[c.stand.quest] && state.quests[c.stand.quest].st === 1);
 /** this fill's band: its kinds, the elite (one in four fills, by the clear count) and a nest's one or two
  * @param {number} seed @param {Camp} c @param {number} n the times it has been cleared */
 export function bandOf(seed, c, n) {

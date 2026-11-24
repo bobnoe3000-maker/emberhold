@@ -52,6 +52,7 @@ import { LAMPS, lampOf, CAGE_KINDS, CAGE_PICKUP_S, CAGE_REACH, countOf, credit }
 import { HAZARD, hazardAt, openGround, edgeDistances, ageHazards, tellAt, inTell } from './hazards.js';
 import { RING, ringByCamp, hpStepOf } from './ring.js';
 import { campsOf, campNear, campUp, campState, bandOf, postOf, clearCamp, CAMP_ROOM } from './camps.js';
+import { makeCompany } from './rivals.js';
 import { BOUT, modeOf, foeHpOf } from './modes.js';
 
 // class combat traits (stats are in party.js / the GDD tables; abilities in skills.js). v1.47 (the owner: "Ranged
@@ -295,6 +296,8 @@ export const FAMILIES = {
   // (v1.151) the Gull Fleet, living: its corsairs and war-hounds, its gunners and the Redhand crossbowmen on its pay, its
   // mates (the Gull Isles' two floors and the Lamp Fort)
   fleet: { melee: ['corsair', 'warhound'], ranged: ['gunner', 'crossbow'], elite: 'mate', undead: () => false },
+  // (v1.151 step 5) the drowned fleet's crews marching on Brine Cross: Gannet's lamp holds them all (camps.js the stand)
+  drowned_fleet: { melee: ['sailor', 'drowned'], ranged: ['cantor', 'cantor'], elite: 'bosun', undead: () => true },
 };
 // Bosses (M5, docs/m5-plan.md §3): a floor's stairs-down hall (sites.js `bosses`) opens with its boss and
 // an escort; once the boss falls the room goes quiet for the visit. A boss is its `like` archetype's
@@ -392,6 +395,7 @@ export const CHUTE_S = 12, CHUTE_WIND = 2.4, CHUTE_R = 1.8, CHUTE_HURT = 0.32;
 export const SCALES_S = 11, SCALES_WIND = 2.2, SCALES_R = 1.7, SCALES_HURT = 0.45, ANVIL_S = 18, ANVIL_T = 4, ANVIL_SPOIL = 0.05, FLEE_AT = 0.25;
 export const VENTS_S = 10, VENTS_WIND = 2.0, VENTS_R = 1.6, VENTS_HURT = 0.3, VENTS_MORE = 3;
 export const TIDE_S = 15, TIDE_WARN = 2.5, TIDE_T = 7, TIDE_LEVEL = 2, TIDE_MEND = 0.02;   // (v1.150: the Harbourmaster's tide)
+export const STAND_STEP = 0.08, STAND_ELITE = 4, STAND_MORE = 2;   // (v1.152, a stand's waves, camps.js `stand`: two more than a room's, a step up each, an elite every fourth. The right party at 40 with the League holds Brine Cross in 146–161 s; without them it fell at wave 7, two seeds of three)
 export const BOARD_S = 18, BOARD_WIND = 3, BOARD_R = 1.8, BOARD_N = 1, BOARD_LINES = 2, BOARD_MAX = 4, BOARD_AT = 3.5, BOARD_MIN = 4, BOARD_LANE = 0.35;   // (v1.151: Hesk's boarding)
 export const MUD_S = 9, MUD_R = 1.8, MUD_T = 6, CAGE_HP = 0.35, CAGE_MEND = 0.025, VESPERS_S = 12, VESPERS_MEND = 0.02, BELL_S = 12, FLOOD_MAX = 4, FLOOD_STEP = 0.12;
 /** does a blow on this foe land at half? A boss whose called men still stand; an Ashbound (not a boss)
@@ -529,7 +533,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // where a foe pays out.
   const NONE = [];
   const rivalsOf = () => (battle && battle.bout ? battle.bout.rivals : NONE);
-  const ours = () => (battle && battle.bout ? battle.bout.ours : battle && battle.ring ? battle.ring.all : state.party);   // (a bout: the party as fielded, the hero alone or all; the Ring: every company in it)
+  const ours = () => (battle && battle.bout ? battle.bout.ours : battle && battle.ring ? battle.ring.all : battle && battle.side ? battle.side : state.party);   // (a stand: the party and the allies with it, battle.side)   // (a bout: the party as fielded, the hero alone or all; the Ring: every company in it)
   const allies = (m) => (m && m.rival ? rivalsOf() : ours());
   const foesOf = (m, w) => (m && m.rival ? ours() : w.enemies);
   const trialsOf = (m) => (m && (m.rival || m.ally) ? m.trials : state.trials);
@@ -635,6 +639,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       const c = cells.find(ok) || cells.find(reachable) || [Math.floor(p.x), Math.floor(p.y)]; return [c[0] + 0.5, c[1] + 0.5];
     };
     if (b.tower) { spawnTower(w, b, spot); return; }            // the Mere Tower's own waves (below)
+    if (b.camp && b.camp.stand) { spawnStand(w, b); return; }    // a stand's next wave up the road (below)
     if (b.camp) { spawnCamp(w, b); return; }                     // a spawn point's band (below)
     if (!b.boss && b.hallBoss && !raidRun() && !bossGone(state, b.hallBoss)) { b.boss = b.hallBoss; b.bossUp = false; }   // (his time up mid-visit: his wave next, v1.117)
     if (b.boss && !b.bossUp) {                                   // the hall opens with its boss and an escort (no tide yet)
@@ -657,6 +662,21 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // a spawn point's band (camps.js, GDD §10.3): this fill's kinds at their posts round the fire or at the burrow's hole,
   // where they idled (no rising: already out); an elite in one fill of four, its last foe.
   // Each band a wave: cleared when it falls (step), and the next one after the spawn point's respawn if the party stays
+  // a stand's wave (camps.js `stand`): a room's wave at its level, a step tougher each (STAND_STEP), an elite every
+  // STAND_ELITE-th, coming in from the road (`from`), spread across it
+  function spawnStand(w, b) {
+    const c = b.camp, F = FAMILIES[c.family], next = b.wave + 1, eliteWave = next % STAND_ELITE === 0;
+    const n = waveSize(b.level) + STAND_MORE - (eliteWave ? 1 : 0), tough = (1 + STAND_STEP * (next - 1)) * premiumOf(b.level), ranged = Math.floor(n / 3);
+    b.tide = STAND_STEP * (next - 1);
+    for (let i = 0; i < n + (eliteWave ? 1 : 0); i++) {
+      const elite = eliteWave && i === n, k = elite ? F.elite : i < ranged ? F.ranged[i % F.ranged.length] : F.melee[(i + next) % F.melee.length];
+      const y = c.y + c.stand.from[1] + (i - (n - 1) / 2) * 1.6 + (rng() - 0.5), x = c.x + c.stand.from[0] + (i < ranged ? 1.5 : 0) + rng();
+      const [ox, oy] = isWalkable(w, x, y) ? [x, y] : openNear(w, x, y);
+      foe(w, k, b.level, ox, oy, tough, elite, F);
+    }
+    b.wave = next;
+    bus.emit('wave', { wave: b.wave, level: b.level, tide: b.tide, camp: c.id, of: c.stand.waves });
+  }
   function spawnCamp(w, b) {
     const c = b.camp, F = FAMILIES[c.family], band = bandOf(seed, c, campState(state, c.id).n);
     band.kinds.forEach((k, i) => {
@@ -758,8 +778,24 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       tide: 0, boss: null, bossUp: false, quiet: false, lastSlain: null, hazards: [], flood: 0, edge: null, size: 'large' };
     w.enemies = []; w.projectiles = [];
     rng = mulberry32(streamSeed(seed ^ (room * 7919), 0xb477));
-    bus.emit('battle', { on: true, room, level: battle.level, camp: c.id });
+    bus.emit('battle', { on: true, room, level: battle.level, camp: c.id, stand: !!c.stand });
+    if (c.stand) { standAllies(w, c); spawnStand(w, battle); return; }
     spawnCamp(w, battle);
+  }
+  // a stand's allies (camps.js `stand.allies`): a company of those classes at the stand's level, `steady` (rivals.js
+  // makeCompany, as the Ring's companies are made), whole, at the barricade on the company's side (west of the middle);
+  // on the party's side of the fight (battle.side), fought through memberTurn as the Ring's companies are
+  function standAllies(w, c) {
+    const mk = { id: c.id + '_allies', manner: 'balanced' }, members = makeCompany(mk, c.level, 'steady');
+    members.forEach((m, i) => {
+      if (c.stand.allies[i]) m.cls = m.cls || c.stand.allies[i];
+      const s = statsFor(m);
+      Object.assign(m, { id: nextId++, ally: true, company: 1, dead: 0, spawn: 0, fallen: false, down: false, downs: 0, downT: 0, dir: 2, moving: false, lvl: m.level,
+        hp: s.maxHp, mp: s.maxMp, buff: null, ward: 0, cd: 0.5 + i * 0.3, act: 0, flash: 0, poison: null, drain: null, hex: null, slow: 0, rooted: 0, ccImm: 0, fieldSlow: 1, marks: 0, stand: c.id, league: i });
+      for (const h of HOLDS) m[h] = 0;
+      placeAt(m, c.x - 3, c.y + (i - 1) * 1.6, w); m.px = m.x; m.py = m.y;
+    });
+    battle.allies = members; battle.side = [...state.party, ...members]; w.allies = members;
   }
   // a spawn point's band at its posts (a camp's round its fire, a nest's at its hole) while it's full and nobody's fighting
   // it (presentation only: no stats, no AI; battle.js
@@ -789,7 +825,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (battle && battle.ring) { endRing(why === 'left' ? 'left' : null); return; }   // (out of the Ring mid-fight: walked out on)               // (walked off the sand mid-bout: it's lost, nobody's Fallen)
     if (battle && battle.tower && why !== 'defeat') towerOut();
     battle = null; focusId = 0; pending = [];
-    if (w) { w.enemies = []; w.projectiles = []; }
+    if (w) { w.enemies = []; w.projectiles = []; if (w.allies) w.allies = []; }   // (a stand's allies stay at their barricade: they don't follow the company out)
     downedOut(why === 'left');
     bus.emit('battle', { on: false, why });
     bus.emit('partyChanged', state.party);
@@ -1212,7 +1248,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (tgt.rival && focusId === tgt.id) focusId = 0;
       if (tgt.downs >= 2 && !tgt.main && mode().fallen) fall(tgt);      // twice in one room visit (the main character stays Downed; nobody's Fallen in the Bowl)
       if (battle && battle.ring) { if (focusId === tgt.id) focusId = 0; }      // (the Ring: no wipe, they get up at the edge, ringTick)
-      else if (!allies(tgt).some(alive)) { if (battle && battle.bout) boutOver(tgt.rival ? 'won' : 'lost', 'down'); else defeat(w); }
+      else if (battle && battle.side ? !tgt.ally && !state.party.some(alive) : !allies(tgt).some(alive)) { if (battle && battle.bout) boutOver(tgt.rival ? 'won' : 'lost', 'down'); else defeat(w); }   // (a stand: lost when the party's down, the allies or not; an ally down is only an ally down)
     }
     else { tgt.dead = DEATH_T; reward(tgt); if (focusId === tgt.id) focusId = 0; }
   }
@@ -2427,7 +2463,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     p.steer = (p.steer ?? 1e9) + dt;
     ensureRuntime(w, dt);
     // last tick's positions, so the renderer can interpolate every unit between 20 Hz steps
-    for (const m of battle && battle.ring ? battle.ring.all : state.party) { m.px = m.x; m.py = m.y; }   // (the Ring: its companies' too)
+    for (const m of battle && battle.ring ? battle.ring.all : battle && battle.side ? battle.side : state.party) { m.px = m.x; m.py = m.y; }   // (the Ring: its companies' too; a stand: its allies)
     for (const e of w.enemies || []) { e.px = e.x; e.py = e.y; }
     for (const b of w.projectiles || []) { b.px = b.x; b.py = b.y; }
     const inDungeon = w.kind === 'dungeon', onLand = w.kind === 'overland';
@@ -2454,7 +2490,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
 
     // regen: ×5 out of a fight (corridors, the overland, towns); a room's lulls are a breath (×1.5 for 4 s)
     const calm = !battle, lull = !!battle && battle.between;
-    for (const m of battle && battle.bout ? [...state.party, ...battle.bout.rivals] : battle && battle.ring ? battle.ring.all : state.party) {   // (a bout: the rivals' too; the Ring: its companies')
+    for (const m of battle && battle.bout ? [...state.party, ...battle.bout.rivals] : battle && battle.ring ? battle.ring.all : battle && battle.side ? battle.side : state.party) {   // (a bout: the rivals' too; the Ring: its companies')
       if (m.down || m.fallen) continue;
       const s = statsFor(m), k = calm ? OUT_OF_BATTLE_REGEN : lull ? LULL_REGEN : 1;
       const iron = m.hp < s.maxHp * 0.3 && passiveVal(m, 'iron_hide') ? 2 : 1;                      // Iron Hide
@@ -2499,9 +2535,20 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
           const M = mode(); if (M.waves && !battle.camp && !battle.tower && !battle.boss && battle.wave >= M.waves) {   // a raid's room held: won, quiet for the run
             battle.quiet = true; bus.emit('raidRoom', { room: battle.room, wave: battle.wave });
           }
-          if (battle.camp) {                                        // a spawn point cleared: empty until its respawn (camps.js)
+          if (battle.camp && battle.camp.stand) {                   // a stand: held when its last wave falls (camps.js `stand`)
+            const c = battle.camp;
+            if (battle.wave >= c.stand.waves) {
+              (state.flags ||= {})[c.stand.flag] = 1; battle.quiet = true; clearCamp(state, c);
+              bus.emit('standHeld', { id: c.id, name: c.name, waves: battle.wave, x: c.x, y: c.y });   // (Brine Cross: Gannet's lamp broken on the barricade, the drowned lying down)
+              bus.emit('campCleared', { id: c.id, kind: c.kind, name: c.name, n: campState(state, c.id).n, at: campState(state, c.id).at });
+            }
+          } else if (battle.camp) {                                 // a spawn point cleared: empty until its respawn (camps.js)
             clearCamp(state, battle.camp);
             bus.emit('campCleared', { id: battle.camp.id, kind: battle.camp.kind, name: battle.camp.name, n: campState(state, battle.camp.id).n, at: campState(state, battle.camp.id).at });
+          }
+          if (battle.allies) for (const m of battle.allies) if (m.down && !m.fallen) {   // (a stand's allies get back up in the lull, as the party does)
+            m.down = false; m.hp = Math.max(1, Math.round(statsFor(m).maxHp * REVIVE));
+            bus.emit('combat', { t: 'rise', x: m.x, y: m.y, name: m.name });
           }
           for (const m of state.party) if (alive(m) && m.downs && (m.stood = (m.stood || 0) + 1) >= WIND) { m.downs = 0; m.stood = 0; }
           for (const m of state.party) if (m.down) {                // the fallen get back up in the lull
@@ -2514,11 +2561,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       }
       tickFields(w, dt);
       claims = new Map();
-      bodies = [...(alive(H) ? [{ x: p.x, y: p.y, src: H }] : []), ...state.party.slice(1).filter(alive), ...(battle.ring ? battle.ring.all.filter((m) => m.ally && alive(m)) : []), ...w.enemies.filter((e) => e.hp > 0 && !e.dead && !(e.spawn > 0))];   // (the Downed take up no room)
+      bodies = [...(alive(H) ? [{ x: p.x, y: p.y, src: H }] : []), ...state.party.slice(1).filter(alive), ...(battle.ring ? battle.ring.all.filter((m) => m.ally && alive(m)) : battle.allies ? battle.allies.filter(alive) : []), ...w.enemies.filter((e) => e.hp > 0 && !e.dead && !(e.spawn > 0))];   // (the Downed take up no room)
       const focus = focusId && foes.find((e) => e.id === focusId);
       // party AI (in a bout the rival company's too, through the same turn: memberTurn, below)
       state.party.forEach((m, i) => { if (!battle.bout || battle.bout.ours.includes(m)) memberTurn(m, i, foes, w, dt, p, H, focus); });
-      if (battle.ring) for (const c of battle.ring.companies) { const lead = c.find(alive); if (lead) c.forEach((m, i) => memberTurn(m, i + 1, foes, w, dt, lead, lead, null)); }   // (the Ring: each AI company after its own first)
+      if (battle.ring) for (const c of battle.ring.companies) { const lead = c.find(alive); if (lead) c.forEach((m, i) => memberTurn(m, i + 1, foes, w, dt, lead, lead, null)); }
+      if (battle.allies) { const lead = battle.allies.find(alive); if (lead) battle.allies.forEach((m, i) => { if (alive(m)) memberTurn(m, i + 1, foes, w, dt, lead, lead, null); }); }   // (a stand's allies: their own first leads them)   // (the Ring: each AI company after its own first)
       // enemy AI (leashed to the room)
       const living = ours().filter(alive);
       const hidden = living.filter((q) => !(q.buff && q.buff.smoke > 0)), targets = hidden.length ? hidden : living;   // Smoke Step: foes lose you
@@ -2556,7 +2604,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         else if (e.bolt) { if (d > (e.swarm ? e.range / 2 : e.range)) walk(t.x, t.y); else { e.moving = false; if (e.cd <= 0) attack(e, t, false, w, e); } }
         else melee(e, t, e, dt, w, false, walk);
       }
-      separate([...(alive(H) ? [{ ...H, x: p.x, y: p.y, isHero: true }] : []), ...state.party.slice(1).filter(alive), ...(battle && battle.ring ? battle.ring.all.filter((m) => m.ally && alive(m)) : []), ...w.enemies.filter((e) => !e.dead && e.spawn <= 0 && !e.inert && !e.down)], w, SEP_X, SEP_Y, 1, true);   // (a Downed hero shoves nobody: it had held a boss and the last companion apart for good; Teague's cage is carried, not shoved)
+      separate([...(alive(H) ? [{ ...H, x: p.x, y: p.y, isHero: true }] : []), ...state.party.slice(1).filter(alive), ...(battle && battle.ring ? battle.ring.all.filter((m) => m.ally && alive(m)) : battle && battle.allies ? battle.allies.filter(alive) : []), ...w.enemies.filter((e) => !e.dead && e.spawn <= 0 && !e.inert && !e.down)], w, SEP_X, SEP_Y, 1, true);   // (a Downed hero shoves nobody: it had held a boss and the last companion apart for good; Teague's cage is carried, not shoved)
     }
     // wind-ups: blows land and bolts leave on the attack clip's impact frame
     if (pending.length) { const due = []; pending = pending.filter((q) => ((q.t -= dt) > 0 ? true : (due.push(q), false))); if (battle) for (const q of due) q.fn(); }
