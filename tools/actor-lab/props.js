@@ -753,6 +753,213 @@ export const PROPS = {
   kerchief: () => hoodShell({ name: 'Kerchief', cloth: 0x8a3e24, shade: 0x3a160c, open: 0.86, rz: 0.66, tip: 0.12 }),
   // a widow's black hood and veil (Widow Pellam's)
   widowhood: () => hoodShell({ name: 'Widow_Hood', cloth: 0x262224, shade: 0x0c0a0a, open: 0.74, rz: 0.7, tip: 0.25 }),
+
+  // ── the Tidemark's people and the Drowned Mole's foes (world doc v1.69 §3.7; docs/tidemark-plan.md's build sheet) ──
+  // a drowned sailor's boarding axe: a short tarred haft, a bearded iron blade (its toe hooked down, for pulling a
+  // gunwale), a back spike; rope wound at the grip. Held as the kits' one-handers are (+y from the grip, edge +x)
+  boardingaxe: () => {
+    const g = new THREE.Group(); g.name = 'Boarding_Axe';
+    const wood = mat(0x4a3a2a, 0, 0.8), iron = mat(0xa8b0b6, 0.85, 0.32), rope = mat(0x9a8a60, 0, 0.95);
+    const haft = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 1.12, 7), wood); haft.position.y = 0.36; g.add(haft);
+    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.058, 0.26, 7), rope); grip.position.y = 0.0; g.add(grip);
+    const prof = new THREE.Shape([[0, 0.08], [0.16, 0.1], [0.32, 0.14], [0.34, 0.0], [0.3, -0.2], [0.22, -0.14], [0.1, -0.06], [0, -0.04]].map(([x, y]) => new THREE.Vector2(x, y)));
+    const blade = new THREE.Mesh(new THREE.ExtrudeGeometry(prof, { depth: 0.045, bevelEnabled: false }), iron); blade.geometry.translate(0, 0, -0.0225); blade.position.y = 0.8; blade.name = 'Boarding_Axe_Blade'; g.add(blade);
+    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.26, 5), iron); spike.rotation.z = Math.PI / 2; spike.position.set(-0.14, 0.83, 0); g.add(spike);
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, 0.1), iron); cap.position.y = 0.84; g.add(cap);
+    return g;
+  },
+  // what the drowned sailor has left of his rig over the canvas vest (the chest's space): a tarred collar, black and
+  // glossy, a frayed rope for a belt-sling across the breast, and the sea's weed hanging off him
+  sailrig: () => {
+    const g = new THREE.Group(); g.name = 'Sail_Rig';
+    const tar = mat(0x16181a, 0.1, 0.35), rope = mat(0x9a8a60, 0, 0.95), weed = mat(0x3e6a3a, 0, 0.9);
+    const collar = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.07, 6, 14), tar); collar.rotation.x = Math.PI / 2; collar.position.set(0, 0.2, -0.02); collar.name = 'Sail_Rig_Collar'; g.add(collar);
+    const flap = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.3, 0.03), tar); flap.position.set(0, 0.06, -0.3); flap.rotation.x = -0.15; flap.name = 'Sail_Rig_Collar'; g.add(flap);   // (the square collar falling down the back)
+    const curve = new THREE.CatmullRomCurve3([[-0.3, 0.2, 0.0], [-0.12, 0.02, 0.38], [0.14, -0.26, 0.38], [0.32, -0.42, 0.1], [0.26, -0.3, -0.3], [0.0, -0.04, -0.36], [-0.26, 0.18, -0.18]].map((p) => new THREE.Vector3(...p)), true);
+    g.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 30, 0.028, 5, true), rope));
+    for (const [x, z, len, a] of [[-0.2, 0.32, 0.36, -0.15], [0.16, 0.34, 0.28, 0.2], [0.24, -0.32, 0.42, 0.1], [-0.1, -0.34, 0.3, -0.1], [0.34, 0.1, 0.3, 0.3]]) {
+      const w = new THREE.Mesh(new THREE.BoxGeometry(0.05, len, 0.02), weed); w.position.set(x, 0.1 - len / 2, z); w.rotation.z = a; w.name = 'Sail_Rig_Weed'; g.add(w);
+    }
+    return g;
+  },
+  // a tarpaulin hat, the old fleet's: a low round crown and a short brim, tarred black and shining (the head bone's space)
+  tarhat: () => {
+    const g = new THREE.Group(); g.name = 'Tar_Hat'; g.scale.setScalar(0.84); g.position.y = 0.12;
+    const tar = mat(0x1a1c20, 0.15, 0.3), band = mat(0x6a7a8a, 0, 0.8);
+    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.56, 0.2, 16), tar); crown.position.set(0, 1.0, -0.04); g.add(crown);
+    const top = new THREE.Mesh(new THREE.SphereGeometry(0.52, 16, 6, 0, Math.PI * 2, 0, Math.PI / 2), tar); top.scale.y = 0.4; top.position.set(0, 1.1, -0.04); g.add(top);
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.82, 0.82, 0.05, 18), tar); brim.position.set(0, 0.9, -0.04); brim.rotation.x = 0.12; g.add(brim);
+    const rib = new THREE.Mesh(new THREE.CylinderGeometry(0.565, 0.565, 0.08, 16), band); rib.position.set(0, 0.95, -0.04); g.add(rib);
+    g.traverse((o) => { if (o.isMesh) o.name = 'Tar_Hat'; });
+    return g;
+  },
+  // the drowned bosun's chain, swung like a flail (hanging, +y down): great rusted links off the fist and a grapnel's
+  // four flukes at its end
+  anchorchain: () => {
+    const g = new THREE.Group(); g.name = 'Anchor_Chain'; g.userData.hang = true;
+    const iron = mat(0x4a4846, 0.8, 0.5), rust = mat(0x7a4a2a, 0.4, 0.75);
+    for (let k = 0; k < 7; k++) { const l = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.028, 5, 10), k % 3 === 1 ? rust : iron); l.scale.y = 1.5; l.position.y = 0.08 + k * 0.14; if (k % 2) l.rotation.y = Math.PI / 2; g.add(l); }
+    const shank = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 0.42, 7), iron); shank.position.y = 1.2; shank.name = 'Anchor_Chain_Grapnel'; g.add(shank);
+    for (let k = 0; k < 4; k++) {
+      const a = k * Math.PI / 2, f = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.034, 5, 8, Math.PI * 0.7), iron);
+      f.position.set(Math.cos(a) * 0.15, 1.42, Math.sin(a) * 0.15); f.rotation.set(0, -a, Math.PI * 1.15); f.name = 'Anchor_Chain_Grapnel'; g.add(f);
+    }
+    return g;
+  },
+  // and more of it worn (the chest's space): a heavy chain over the left shoulder and down across him to the right hip
+  chainsash: () => {
+    const g = new THREE.Group(); g.name = 'Chain_Sash';
+    const iron = mat(0x5a5856, 0.8, 0.5), rust = mat(0x8a5230, 0.4, 0.75);
+    const curve = new THREE.CatmullRomCurve3([[-0.3, 0.3, 0.0], [-0.18, 0.12, 0.42], [0.08, -0.18, 0.48], [0.34, -0.48, 0.3], [0.4, -0.52, -0.1], [0.14, -0.2, -0.44], [-0.2, 0.16, -0.36]].map((p) => new THREE.Vector3(...p)), true);
+    const n = 22, at = new THREE.Vector3(), t = new THREE.Vector3();
+    for (let i = 0; i < n; i++) {
+      curve.getPointAt(i / n, at); curve.getTangentAt(i / n, t);
+      const l = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.026, 5, 8), i % 4 === 1 ? rust : iron); l.scale.x = 1.5; l.position.copy(at);
+      l.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), t); if (i % 2) l.rotateX(Math.PI / 2); l.name = 'Chain_Sash_Link'; g.add(l);
+    }
+    return g;
+  },
+  // the Harbourmaster's bicorne, worn athwart (the head bone's space): a black half-moon of felt edged in tarnished gold,
+  // a cockade on its side
+  bicorne: () => {
+    const g = new THREE.Group(); g.name = 'Bicorne'; g.scale.set(0.8, 0.86, 0.86); g.position.y = 0.1;
+    const felt = new THREE.MeshStandardMaterial({ color: 0x1a1c24, roughness: 0.85, side: THREE.DoubleSide }), gold = mat(0xc8a048, 0.8, 0.4), sea = mat(0x3a6a64, 0, 0.8);
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.98, 0.98, 0.24, 24, 1, false, -Math.PI / 2, Math.PI), felt); body.rotation.set(Math.PI / 2, 0, 0); body.scale.set(1, 1, 0.5); body.position.set(0, 0.86, -0.05); g.add(body);
+    const edge = new THREE.Mesh(new THREE.TorusGeometry(0.98, 0.035, 5, 28, Math.PI), gold); edge.scale.set(1, 0.5, 1); edge.position.set(0, 0.86, 0.075); g.add(edge);
+    const edge2 = edge.clone(); edge2.position.z = -0.175; g.add(edge2);
+    const cock = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.04, 12), sea); cock.rotation.x = Math.PI / 2; cock.position.set(0.42, 1.08, 0.085); g.add(cock);
+    const crown = new THREE.Mesh(new THREE.SphereGeometry(0.52, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), felt); crown.scale.set(1, 0.5, 0.9); crown.position.set(0, 0.84, -0.05); g.add(crown);
+    g.traverse((o) => { if (o.isMesh) o.name = 'Bicorne'; });
+    return g;
+  },
+  // the berths' book, drowned with him (the heirloom: "Every ship that came in. None that left."): a fat ledger gone
+  // green with the sea, its pages swollen, a strap and a hank of weed off it. Under his arm, as Morrow Vane's ledger
+  berthsbook: () => {
+    const g = new THREE.Group(); g.name = 'Berths_Book'; g.scale.setScalar(0.66);
+    const cover = mat(0x3e5a4e, 0, 0.85), pages = mat(0xb8ac84, 0, 0.95), strap = mat(0x2a2420, 0, 0.9), weed = mat(0x3e6a3a, 0, 0.9);
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.52, 0.56), cover); b.position.y = 0.3; b.name = 'Berths_Book_Cover'; g.add(b);
+    const p = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.48, 0.58), pages); p.position.set(0.014, 0.3, 0); g.add(p);
+    const s = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.06, 0.6), strap); s.position.y = 0.3; g.add(s);
+    const w = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.3, 0.02), weed); w.position.set(0.1, 0.02, 0.24); w.rotation.z = 0.2; g.add(w);
+    return g;
+  },
+  // the Harbourmaster's berth-pole: a long iron-shod pole, a brass crook at its head and the berth-lamp hung off it, lit
+  // the drowned's pale sea-green (userData.glow). He swings it; the lamp goes with it
+  harbourpole: () => {
+    const g = new THREE.Group(); g.name = 'Berth_Pole';
+    const wood = mat(0x2a2622, 0, 0.8), brass = mat(0xc8a048, 0.8, 0.4), iron = mat(0x4a4c4e, 0.8, 0.45);
+    const light = new THREE.MeshStandardMaterial({ color: 0xd0f8e8, emissive: 0x50b090, emissiveIntensity: 1.4, roughness: 0.3 });
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 2.0, 7), wood); pole.position.y = 0.55; g.add(pole);
+    const shoe = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.2, 6), iron); shoe.rotation.x = Math.PI; shoe.position.y = -0.5; g.add(shoe);
+    for (const y of [0.24, 1.4]) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.06, 10), brass); b.position.y = y; g.add(b); }
+    const crook = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.035, 5, 12, Math.PI), brass); crook.position.set(0.16, 1.55, 0); g.add(crook);
+    const hook = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.14, 4), iron); hook.position.set(0.32, 1.48, 0); g.add(hook);
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.12, 6), brass); cap.position.set(0.32, 1.38, 0); g.add(cap);
+    for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3, rib = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.3, 0.025), brass); rib.position.set(0.32 + Math.cos(a) * 0.13, 1.18, Math.sin(a) * 0.13); g.add(rib); }
+    const s = new THREE.Mesh(new THREE.IcosahedronGeometry(0.11, 1), light); s.position.set(0.32, 1.18, 0); s.name = 'Berth_Lamp_Light'; s.userData.glow = 0xa0f0d0; g.add(s);
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.1, 0.05, 6), brass); base.position.set(0.32, 1.02, 0); g.add(base);
+    return g;
+  },
+  // a Gull Fleet cutlass: a short broad blade with a curve to its back, a brass shell-guard and a knuckle-bow
+  cutlass: () => {
+    const g = new THREE.Group(); g.name = 'Cutlass';
+    const steel = mat(0xc0c6cc, 0.9, 0.3), brass = mat(0xc8a048, 0.8, 0.35), grip = mat(0x2a1e18, 0, 0.85);
+    const prof = new THREE.Shape([[-0.06, 0.0], [0.07, 0.0], [0.1, 0.5], [0.13, 0.82], [0.1, 1.02], [0.0, 1.06], [-0.04, 0.86], [-0.06, 0.5]].map(([x, y]) => new THREE.Vector2(x, y)));
+    const blade = new THREE.Mesh(new THREE.ExtrudeGeometry(prof, { depth: 0.03, bevelEnabled: false }), steel); blade.geometry.translate(0, 0, -0.015); blade.position.y = 0.16; blade.name = 'Cutlass_Blade'; g.add(blade);
+    const shell = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), brass); shell.scale.set(1, 0.4, 0.8); shell.rotation.x = Math.PI; shell.position.y = 0.18; g.add(shell);
+    const bow = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.018, 4, 12, Math.PI), brass); bow.rotation.z = -Math.PI / 2; bow.position.set(0.0, 0.03, 0); bow.scale.set(1.1, 1, 1); g.add(bow);
+    const gr = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.046, 0.28, 8), grip); g.add(gr);
+    const pom = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6), brass); pom.position.y = -0.16; g.add(pom);
+    return g;
+  },
+  // the Gull Fleet's headscarf (a corsair's): the fleet's gull-beak yellow, tied tight over the hair, the knot and its
+  // two tails behind
+  headscarf: () => {
+    // (cut short of a hood: the crown and the sides down to the ears, the face open, a flap at the nape; a full
+    // hoodShell read as the hooded rogue's hood in yellow)
+    const g = new THREE.Group(); g.name = 'Headscarf'; g.userData.helm = true; g.userData.hoodRz = 0.66;
+    const C = new THREE.MeshStandardMaterial({ color: 0xc89a2a, roughness: 0.9, side: THREE.DoubleSide }), F = hoodForm(0.66);
+    const crown = new THREE.Mesh(formed(new THREE.SphereGeometry(1, 32, 12, 0, Math.PI * 2, 0, Math.PI * 0.32), F), C); crown.name = 'Headscarf_Cloth'; g.add(crown);
+    const a = 1.0, side = new THREE.Mesh(formed(new THREE.SphereGeometry(1, 36, 10, Math.PI / 2 + a, Math.PI * 2 - 2 * a, Math.PI * 0.3, Math.PI * 0.26), F), C); side.name = 'Headscarf_Cloth'; g.add(side);
+    const knot = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), C), at = F(0, 0.05, -1); knot.position.copy(at); knot.position.z -= 0.05; knot.name = 'Headscarf_Cloth'; g.add(knot);
+    for (const [s, len] of [[-1, 0.5], [1, 0.38]]) { const t = new THREE.Mesh(new THREE.BoxGeometry(0.15, len, 0.03), C); t.position.set(at.x + s * 0.09, at.y - len / 2, at.z - 0.08); t.rotation.set(0.3, 0, s * 0.2); t.name = 'Headscarf_Cloth'; g.add(t); }
+    return g;
+  },
+  // a Gull Fleet gunner's tricorne (the head bone's space): black felt cocked up in three, a corner to the front, a band
+  // of the fleet's yellow round the crown (yellow on its edges stood up at the corners like horns at 56 px)
+  tricorne: () => {
+    const g = new THREE.Group(); g.name = 'Tricorne';
+    const felt = new THREE.MeshStandardMaterial({ color: 0x202228, roughness: 0.85, side: THREE.DoubleSide }), trim = mat(0xc89a2a, 0.2, 0.7);
+    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.54, 0.34, 14), felt); crown.position.set(0, 1.04, -0.04); g.add(crown);
+    const top = new THREE.Mesh(new THREE.SphereGeometry(0.46, 14, 6, 0, Math.PI * 2, 0, Math.PI / 2), felt); top.scale.y = 0.3; top.position.set(0, 1.2, -0.04); g.add(top);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.52, 0.07, 14), trim); band.position.set(0, 0.95, -0.04); g.add(band);
+    const R = 0.66, H = 0.2;
+    for (let k = 0; k < 3; k++) {                                    // three upturned walls, a corner at the front (+z)
+      const a0 = Math.PI / 2 + k * (2 * Math.PI / 3), a1 = a0 + 2 * Math.PI / 3, p0 = new THREE.Vector3(Math.cos(a0) * R, 0, Math.sin(a0) * R), p1 = new THREE.Vector3(Math.cos(a1) * R, 0, Math.sin(a1) * R);
+      const mid = p0.clone().add(p1).multiplyScalar(0.5), len = p0.distanceTo(p1), out = mid.clone().setY(0).normalize();
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(len * 1.04, H, 0.04), felt); wall.position.set(mid.x, 0.98, mid.z - 0.04); wall.lookAt(wall.position.clone().add(out)); wall.rotateX(-0.75); g.add(wall);
+      const floor = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.9, R * 0.9, 0.04, 3), felt); if (k === 0) { floor.rotation.y = -Math.PI / 6 + Math.PI; floor.position.set(0, 0.85, -0.04); g.add(floor); }
+    }
+    g.traverse((o) => { if (o.isMesh) o.name = 'Tricorne'; });
+    return g;
+  },
+  // a Gull Fleet sash (the hips' space): the fleet's yellow wound round the waist, its ends hanging at the left hip
+  sash: () => {
+    const g = new THREE.Group(); g.name = 'Sash';
+    const C = mat(0xc89a2a, 0, 0.9), D = mat(0x8a6618, 0, 0.9);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.4, 0.16, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0xc89a2a, roughness: 0.9, side: THREE.DoubleSide })); band.scale.z = 0.85; band.position.y = 0.16; band.name = 'Sash_Band'; g.add(band);
+    const knot = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), D); knot.position.set(-0.36, 0.15, 0.16); g.add(knot);
+    for (const [dz, len, a] of [[0.12, 0.42, 0.12], [0.22, 0.34, 0.3]]) { const t = new THREE.Mesh(new THREE.BoxGeometry(0.03, len, 0.12), C); t.position.set(-0.4, 0.12 - len / 2, dz); t.rotation.x = a * 0.3; t.rotation.z = -0.1; g.add(t); }
+    return g;
+  },
+  // Hester Quaile's toll-chain (the chest's space): the Speaker's chain of office, a little harbour chain of pewter links
+  // over the shoulders to a brass toll-key on her breast. Broad and bright, so the V reads on her dark sea-coat
+  tollchain: () => {
+    const g = new THREE.Group(); g.name = 'Toll_Chain';
+    const pewter = mat(0xc8ccd0, 0.85, 0.3), dark = mat(0x6a6e74, 0.8, 0.45), brass = mat(0xd8a848, 0.85, 0.3);
+    const curve = new THREE.CatmullRomCurve3([[-0.34, 0.25, -0.06], [-0.3, 0.16, 0.22], [-0.16, 0.0, 0.4], [0, -0.08, 0.45], [0.16, 0.0, 0.4], [0.3, 0.16, 0.22], [0.34, 0.25, -0.06], [0, 0.3, -0.3]].map((p) => new THREE.Vector3(...p)), true);
+    const n = 26, at = new THREE.Vector3(), t = new THREE.Vector3();
+    for (let i = 0; i < n; i++) {
+      curve.getPointAt(i / n, at); curve.getTangentAt(i / n, t);
+      const l = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.016, 4, 8), i % 2 ? dark : pewter); l.scale.x = 1.5; l.position.copy(at);
+      l.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), t); if (i % 2) l.rotateX(Math.PI / 2); l.name = 'Toll_Chain_Link'; g.add(l);
+    }
+    const key = new THREE.Group(); key.position.set(0, -0.12, 0.47); key.rotation.x = -0.2; key.name = 'Toll_Chain_Key'; g.add(key);
+    const bow = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.022, 5, 12), brass); bow.position.y = 0.0; key.add(bow);
+    const shank = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.28, 0.03), brass); shank.position.y = -0.2; key.add(shank);
+    const bit = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.03), brass); bit.position.set(0.05, -0.31, 0); key.add(bit);
+    return g;
+  },
+  // a harbourmistress's ledger, the League's tolls: dark blue boards, brass corners
+  ledger: () => {
+    const g = PROPS.book(); g.name = 'Toll_Ledger';
+    g.traverse((o) => { if (o.isMesh && o.material.color.getHex() === 0x5a2020) { o.material = mat(0x24345a, 0, 0.8); } });
+    return g;
+  },
+  // Sister Maren's quay hook: an ash pole, an iron hook and spike at its head for drawing the drowned in to the steps, a
+  // white prayer-ribbon tied under it (the Grey Sisters' token: she says their names). Held as a staff, mid-pole
+  quayhook: () => {
+    const g = new THREE.Group(); g.name = 'Quay_Hook';
+    const wood = mat(0x8a6a44, 0, 0.8), iron = mat(0x5a5e62, 0.8, 0.45), linen = mat(0xece4d0, 0, 0.85), rope = mat(0x9a8a60, 0, 0.95);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 1.9, 7), wood); pole.position.y = 0.38; g.add(pole);
+    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.28, 6), iron); spike.position.y = 1.46; g.add(spike);
+    const hook = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.034, 5, 10, Math.PI * 1.1), iron); hook.position.set(0, 1.26, 0.13); hook.rotation.set(0, Math.PI / 2, Math.PI * 0.55); g.add(hook);
+    const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.1, 8), iron); collar.position.y = 1.28; g.add(collar);
+    const tie = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.02, 4, 10), linen); tie.rotation.x = Math.PI / 2; tie.position.y = 1.12; g.add(tie);
+    for (const [s, len] of [[-1, 0.36], [1, 0.28]]) { const r = new THREE.Mesh(new THREE.BoxGeometry(0.07, len, 0.015), linen); r.position.set(s * 0.05, 1.12 - len / 2, 0.03); r.rotation.z = s * 0.25; r.name = 'Quay_Hook_Ribbon'; g.add(r); }
+    const coil = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.022, 5, 10), rope); coil.rotation.x = Math.PI / 2; coil.position.y = 0.2; g.add(coil);
+    return g;
+  },
+  // a Grey Sister's veil for the quays (the head bone's space): the order's grey, a linen band at the brow, falling to
+  // the shoulders behind
+  sisterveil: () => {
+    const g = hoodShell({ name: 'Sister_Veil', cloth: 0x8a8a86, shade: 0x3a3a38, open: 0.8, rz: 0.66, tip: 0 });
+    const linen = mat(0xece4d0, 0, 0.85), R = hoodRing(0.66, 0.7);
+    const band = new THREE.Mesh(new THREE.TorusGeometry(1, 0.045, 5, 32, Math.PI), linen);
+    band.rotation.x = Math.PI / 2 + 0.12; band.scale.set(R.hx * 0.98, 0.505 - R.cz, 1); band.position.set(0, 0.7, R.cz); band.name = 'Sister_Veil_Band'; band.userData.onFace = true; g.add(band);
+    const veil = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.74, 0.95, 16, 1, true, Math.PI * 0.6, Math.PI * 0.8), new THREE.MeshStandardMaterial({ color: 0x8a8a86, roughness: 0.92, side: THREE.DoubleSide })); veil.position.set(0, 0.18, -0.12); veil.name = 'Sister_Veil_Cloth'; g.add(veil);
+    return g;
+  },
 };
 
 // an apron (the hips' space): a bib, a two-panel skirt, a belt

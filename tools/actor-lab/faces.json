@@ -1041,5 +1041,69 @@
   ],
   "shape": "thin",
   "expression": "surprised"
+ },
+ "corsair": {
+  "skin": "olive",
+  "hair": "crop",
+  "hairColor": "black",
+  "brows": "heavy",
+  "eyes": "narrow",
+  "iris": "brown",
+  "mouth": "grin",
+  "nose": "broad",
+  "beard": "full",
+  "beardColor": "black",
+  "marks": [
+   "earring",
+   "scar"
+  ],
+  "expression": "fierce"
+ },
+ "gunner": {
+  "skin": "fair",
+  "hair": "ponytail",
+  "hairColor": "straw",
+  "brows": "straight",
+  "eyes": "sharp",
+  "iris": "grey",
+  "mouth": "smirk",
+  "nose": "long",
+  "beard": "stubble",
+  "marks": [
+   "eyepatch"
+  ],
+  "shape": "thin"
+ },
+ "hester_quaile": {
+  "skin": "rose",
+  "hair": "bun",
+  "hairColor": "white",
+  "tieColor": "#24345a",
+  "brows": "arched",
+  "eyes": "sharp",
+  "iris": "grey",
+  "mouth": "line",
+  "nose": "hook",
+  "marks": [
+   "wrinkles"
+  ],
+  "shape": "thin",
+  "frame": "soft",
+  "expression": "stern"
+ },
+ "maren": {
+  "skin": "olive",
+  "hair": "short",
+  "hairColor": "black",
+  "brows": "straight",
+  "eyes": "round",
+  "iris": "amber",
+  "mouth": "smile",
+  "nose": "snub",
+  "marks": [
+   "scar"
+  ],
+  "frame": "soft",
+  "expression": "neutral"
  }
 }

@@ -225,7 +225,14 @@ console.log('the right party holds same-level rooms (L24/27/30):', right30Ok, ri
 const solo30 = [24, 27, 30].map((lv) => roomVisit({ lv, secs: 120 })), up30 = [24, 27, 30].map((lv) => roomVisit({ classes: FRC, lv, rl: lv + 3 }));
 const band30Ok = solo30.every((v) => v.defeated && v.waves <= 2) && up30.every((v) => v.defeated);
 console.log('a lone hero is down within 2 waves, and a room 3 up defeats the right party (L24/27/30):', band30Ok, [...solo30, ...up30].map(show).join(', '));
-const holdOk = solo1Ok && solo6Ok && rightOk && noHealOk && up3Ok && compOk && gearOk2 && right15Ok && band15Ok && right21Ok && band21Ok && right30Ok && band30Ok;
+// (v1.150) the Tidemark's first band, the Drowned Mole: the same contract at 33 (docs/tidemark-plan.md; 36–45 as their bands are built)
+const right33 = [20260807, 777].map((seed) => roomVisit({ seed, classes: FRC, lv: 33 }));
+const right33Ok = right33.every((v) => v.waves >= 10 && !v.fallenEarly);
+console.log('the right party holds same-level rooms (L33):', right33Ok, right33.map(show).join(', '));
+const solo33 = roomVisit({ lv: 33, secs: 120 }), up33 = roomVisit({ classes: FRC, lv: 33, rl: 36 });
+const band33Ok = solo33.defeated && solo33.waves <= 2 && up33.defeated;
+console.log('a lone hero is down within 2 waves, and a room 3 up defeats the right party (L33):', band33Ok, [solo33, up33].map(show).join(', '));
+const holdOk = solo1Ok && solo6Ok && rightOk && noHealOk && up3Ok && compOk && gearOk2 && right15Ok && band15Ok && right21Ok && band21Ok && right30Ok && band30Ok && right33Ok && band33Ok;
 const rl = createSim(20260807, undefined, { scene: 'dungeon' }).world, rlv = [...rl.roomLevels.values()];
 // (2026-11-02, the Vale authored: plans.js) the Old Barrows' first floor: the Cutting and the Breach at 1, the Robbed Tomb
 // (the offshoot) and the hall a level up, at 2; the entrance safe

@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "properties": {
     "id": { "type": "string", "pattern": "^frag_[a-z0-9_]+$" },
-    "region": { "enum": ["vale", "fens", "reach", "heights"] },
+    "region": { "enum": ["vale", "fens", "reach", "heights", "tidemark"] },
     "set": { "type": "string", "pattern": "^[a-z]+$" },
     "order": { "type": "integer", "minimum": 1 },
     "title": { "type": "string", "minLength": 1, "maxLength": 40 },

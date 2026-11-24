@@ -20,6 +20,8 @@ VAR boss_standard = 0
 VAR q_ch2_fog_on_the_canal = -1
 VAR q_ch2_the_last_office = -1
 VAR q_ch3_the_wickham_road = -1
+VAR q_ch3_quota = -1
+VAR q_ch4_consigned = -1
 VAR q_trial_last_rites = -1
 VAR frag_vale_count = 0
 VAR frag_vale_standing_order = 0
@@ -90,7 +92,10 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 { q_ch2_fog_on_the_canal == 3 && q_ch2_the_last_office < 2: "Reedholm writes that you're keeping Saltmere busy. Orla writes that you're keeping the Mother busy. I like Orla's letters better." }
 { q_ch2_the_last_office == 3 && q_ch3_the_wickham_road < 1: "I've copied the Abbey's ledger for Reedholm. I've kept the copy I made first. I'm still not a fool." }
 { q_ch3_the_wickham_road == 1: "The Wickham road, north, over the range. Dagny Coalbrook, in Ashgate. Give her my letter. She won't read it slowly. She'll read it standing up." }
-{ q_ch3_the_wickham_road == 3: "Dagny writes. Four lines, every week, all of them about the Assay. I've started to look forward to them, which worries me." }
+{ q_ch3_the_wickham_road == 3 && q_ch3_quota < 3: "Dagny writes. Four lines, every week, all of them about the Assay. I've started to look forward to them, which worries me." }
+{ q_ch3_quota == 3 && q_ch4_consigned < 1: "Dagny sent me Vane's ledger, wrapped in oilcloth, with four words: *You'll want the end.* She was right. I do." }
+{ q_ch4_consigned == 1: "Tollhaven, in the Tidemark. Hester Quaile, at the Paid Toll. Show her the page, and don't let her charge you for reading it." }
+{ q_ch4_consigned == 3: "Hester Quaile writes to me now. Her letters come with the postage owing. I pay it. They're worth it." }
 { frag_vale_count >= 3 && frag_vale_count < 10: "The Vale's set has more gaps than words. I've read what we have four times. It doesn't get kinder." }
 { frag_vale_count == 10: "The Vale's set is whole. All ten. I've copied it for Reedholm and kept the copy I made first, because I'm not a fool." }
 -> ilse_topics
@@ -109,6 +114,8 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 + { q_ch2_fog_on_the_canal == 1 } [About Saltmere… #mark: quest active] -> ilse_ch2_active
 + { q_ch3_the_wickham_road == 0 } [Where is the Kell Assay? #mark: quest] -> ilse_ch3_road_offer
 + { q_ch3_the_wickham_road == 1 } [About Ashgate… #mark: quest active] -> ilse_ch3_road_active
++ { q_ch4_consigned == 0 } [Where did the vessel go? #mark: quest] -> ilse_ch4_consigned_offer
++ { q_ch4_consigned == 1 } [About Tollhaven… #mark: quest active] -> ilse_ch4_consigned_active
 + { q_vale_first_page == 2 } [I found this in the barrows. #mark: quest ready] -> ilse_page_turnin
 + { q_trial_last_rites == 2 } [The Haddows' names are said. #mark: quest ready] -> ilse_trial_turnin
 + { q_trial_last_rites == 0 } [Is there anything you'd teach a cleric? #mark: quest] -> ilse_trial_offer
@@ -413,4 +420,24 @@ Ilse has the ledger open at the last page, and a map of the Provinces under it t
 
 == ilse_ch3_road_active ==
 "The Wickham road, north past the Keep and over the range. Ashgate, the wheel over the gate. Dagny Coalbrook, the Charter-Reeve. My letter, and the mark."
+-> ilse_topics
+
+// ── Act IV, chapter 1: Consigned (content/quests/ch4_consigned.json): east to Tollhaven, to its harbourmistress, who
+//    takes it in (docs/tidemark-plan.md "The story") ──
+== ilse_ch4_consigned_offer ==
+"'Go' is generous. It was sent. There's a difference, and it's on the last page."
+Ilse has Morrow Vane's ledger open on her board at the back, where something has been pasted in over the binding.
+"You'd call it his ledger. It isn't, quite: a ledger balances, and this only ever adds. And the last page is something else again. It's a consignment note."
+"One crate, pale iron, Throne measure. Consigned by the Solmere road to Brine Cross. Freight paid at Tollhaven." She turns the board round. "The hand isn't Vane's. It's a clerk's, and someone at the other end signed for it."
+"Brine Cross is the bridge on the Highmarch road, in the Tidemark. Tollhaven is the Tidemark's port, and its harbourmistress is the Speaker of the League, a Hester Quaile. I wrote to her. She answered by return, with the postage owing."
++ [We'll go to Tollhaven. #mark: quest]
+    She copies the last page out and gives you the copy, not the page. "Show her that. Ask her who paid, and what for." # quest: accept ch4_consigned
+    "Out of the Reach by the Solmere road. Don't stop in Solmere. Take the Tidemark's road on through it, over the bridge at Brine Cross, and east along the coast. Tollhaven is the one with a chain across its harbour."
+    -> ilse_topics
++ [Not yet.]
+    She closes the ledger with a thumb in the last page. "It was a day ahead of us in the Reach. I'd rather it didn't get to be a season ahead."
+    -> ilse_topics
+
+== ilse_ch4_consigned_active ==
+"The Solmere road out of the Reach, on through Solmere, over the bridge at Brine Cross and east to Tollhaven. Hester Quaile, at the Paid Toll. My copy of the last page."
 -> ilse_topics

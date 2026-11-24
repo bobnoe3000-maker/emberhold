@@ -128,6 +128,19 @@
     "furnacepriest": {
       "a": "a furnace-priest",
       "elite": "a furnace-priest with a full censer"
+    },
+    "sailor": {
+      "a": "a drowned sailor"
+    },
+    "corsair": {
+      "a": "one of the Gull Fleet's corsairs"
+    },
+    "gunner": {
+      "a": "a Gull Fleet gunner"
+    },
+    "bosun": {
+      "a": "a drowned bosun",
+      "elite": "a drowned bosun who still has his call"
     }
   }
 }

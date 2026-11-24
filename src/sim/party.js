@@ -64,6 +64,12 @@ export const WEAK = 0.9;
 // own (the character sheet shows it in green), `attr` the attributes' share; hpr / mpr are HP /
 // MP per second, the class rate growing with the pool (GDD §4) plus gear regen. `power` is the
 // ability-power bonus (Focus).
+// (v1.150, the Tidemark) past 30 a hero's HP and ATK grow as the foes' premium does (battle.js premiumOf: PREMIUM 5 % a level
+// over 3, PREMIUM_HIGH 6 % a level from 18 to 22), by premiumOf(L) / premiumOf(30): the stat lines grow in step, and the
+// premium had pulled away from the party past 30 (test/tidemark-mole.test.mjs holds the two formulas together)
+export const LIFT_FROM = 30;
+/** a hero's HP and ATK multiplier at a level: 1 to 30, then the foes' premium's growth @param {number} lv */
+export const liftOf = (lv) => (lv <= LIFT_FROM ? 1 : (1.24 + 0.05 * (lv - 3)) / (1.24 + 0.05 * (LIFT_FROM - 3)));
 export function statsFor(m) {
   const c = CLASSES[m.cls], L = m.level - 1, r1 = (v) => Math.round(v * 10) / 10, g = gearStats(m), a = attrStats(m), kg = kitGrowth(m.cls);
   const rg0 = recommendedGrowth(m.cls), rg = { hp: rg0.hp + kg.hp, mp: rg0.mp + kg.mp, atk: rg0.atk + kg.atk, def: rg0.def + kg.def };   // attributes and the kit's extra growth carry the rest
@@ -72,14 +78,15 @@ export function statsFor(m) {
   const edge = m.origin === 'redhand_deserter' ? 1 : 0;                       // origins.js: +1 ATK
   // a sellsword's own perks (companions.js; dark while it's owed wages); the company's are fought out in battle.js
   const reck = has(m, 'reckless'), pk = (id, v) => (has(m, id) ? v : 1);
-  const atk = (c.atk[0] + (c.atk[1] - rg.atk) * L + a.atk + edge + g.atk) * st.atk * weak * (reck ? STAT.reckless[0] : 1);
+  const lift = liftOf(m.level);
+  const atk = (c.atk[0] + (c.atk[1] - rg.atk) * L + a.atk + edge + g.atk) * st.atk * weak * (reck ? STAT.reckless[0] : 1) * lift;
   const def = (c.def[0] + (c.def[1] - rg.def) * L + a.def + g.def) * st.def * weak * (1 + passiveVal(m, 'iron_hide'))   // Iron Hide (GDD v1.56: a passive at 9, ranked)
     * (m.cls === 'fighter' && hasShield(m) ? SHIELD_DEF : 1) * pk('stubborn', STAT.stubborn) * (reck ? STAT.reckless[1] : 1);     // the fighter's shield
   const mpr = (c.mpr * (baseMp / c.mp[0]) + a.mpr + g.mpr) * (1 + passiveVal(m, 'kindled_mind'));                                  // Kindled Mind
   return {
-    maxHp: Math.round((baseHp + g.hp) * weak * pk('hardy', STAT.hardy)), maxMp: Math.round((baseMp + g.mp) * weak), atk: r1(atk), def: r1(def),
+    maxHp: Math.round((baseHp + g.hp) * weak * pk('hardy', STAT.hardy) * lift), maxMp: Math.round((baseMp + g.mp) * weak), atk: r1(atk), def: r1(def),
     crit: Math.min(60, r1(c.crit + a.crit + g.crit + (has(m, 'keen_eyed') ? STAT.keen_eyed : 0) + passiveVal(m, 'keen_edge'))), dodge: Math.max(0, Math.min(50, r1(c.dodge + a.dodge + g.dodge + (has(m, 'light_footed') ? STAT.light_footed : 0)))),
-    hpr: r1((c.hpr * (baseHp / c.hp[0]) + g.hpr) * pk('iron_lunged', STAT.iron_lunged)), mpr: r1(mpr), power: a.power + passiveVal(m, 'arcane_focus'), gear: g, attr: a,
+    hpr: r1((c.hpr * (baseHp / c.hp[0]) + g.hpr) * pk('iron_lunged', STAT.iron_lunged) * lift), mpr: r1(mpr), power: a.power + passiveVal(m, 'arcane_focus'), gear: g, attr: a,
   };
 }
 export function makeMember(id, name, cls, level = 1, trait = null) {

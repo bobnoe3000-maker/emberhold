@@ -539,6 +539,48 @@ export const PLANS = {
     ] },
   ] },
 
+  // ── The Drowned Mole (31–35; the Tidemark, GDD v1.150, docs/tidemark-plan.md): the sunken imperial harbour off
+  //    Gullwick. Floor 1 the old wharf on its piles (the docks kit, the Old Eel Wharf's proven rooms), floor 2 the stone
+  //    moles at low water (the mole kit: the empire's stone, weed to the tide line, wrecks on their sides). A band of
+  //    five: floor 1 at 31–33, floor 2 at 34–35 (`step` 3). The drowned sailors under Lucan's orders, the Gull Fleet's
+  //    corsairs picking the wrecks; the Harbourmaster on the outer mole's end; Sister Maren in the harbour office.
+  drowned_mole: { site: 'drowned_mole', name: 'The Drowned Mole', kind: 'wharf', base: 31, step: 3, floors: [
+    { name: 'The Wharf', spaces: [
+      { id: 'the_ferry_stage', name: 'The Ferry Stage', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'docks',
+        dress: ['dock_lamps', 'dock_cargo', 'dock_ropes'], note: 'Where Gullwick\'s ferryman puts a company ashore and pushes off again quickly. The steps down to his boat are the way out.' },
+      { id: 'the_fish_market', name: 'The Fish Market', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'docks', foes: 'wharf',
+        dress: ['fish_market', 'dock_lamps', 'dock_ropes', 'moorings'], note: 'The imperial harbour\'s market, its stalls on the boards over the water; the drowned stand at them as if the boats were due in.' },
+      { id: 'the_customs_shed', name: 'The Customs Shed', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 1, kit: 'docks', foes: 'wharf',
+        dress: ['dock_lamps', 'dock_cargo', 'chest'], note: 'The tollmen\'s shed, its ledgers swollen shut; the Gull Fleet\'s corsairs have been through the strongbox, and missed one.' },
+      { id: 'the_net_stage', name: 'The Net Stage', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 1, kit: 'docks', foes: 'wharf',
+        dress: ['dock_lamps', 'dock_ropes', 'moorings'], note: 'Where the fleet\'s nets were spread to mend; they are still spread, and something is caught in every one.' },
+      { id: 'the_long_jetty', name: 'The Long Jetty', role: 'descent', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 2, kit: 'docks', foes: 'wharf',
+        dress: ['crane', 'dock_lamps', 'dock_cargo', 'stair_down'], note: 'The deep-water berth, and at its end the old sea-wall stair down to the moles, bare at low water.' },
+    ], halls: [
+      { from: 'the_ferry_stage', to: 'the_fish_market', x: 32, y: 44, w: 10, h: 10 },
+      { from: 'the_fish_market', to: 'the_customs_shed', x: 52, y: 20, w: 10, h: 10 },
+      { from: 'the_fish_market', to: 'the_net_stage', x: 92, y: 44, w: 10, h: 10 },
+      { from: 'the_fish_market', to: 'the_long_jetty', x: 48, y: 70, w: 10, h: 10 },
+    ] },
+    { name: 'The Moles at Low Water', spaces: [
+      { id: 'the_sea_wall_stair', name: 'The Sea-Wall Stair', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'rect', lv: 3, kit: 'mole',
+        dress: ['weed', 'mole_lamps', 'stair_up'], note: 'The foot of the sea wall, the stair up to the jetty slick with weed; the tide line is over your head.' },
+      { id: 'the_inner_mole', name: 'The Inner Mole', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'rect', lv: 3, kit: 'mole', foes: 'mole',
+        dress: ['weed', 'bollards', 'mole_lamps', 'anchors'], note: 'A long stone arm out into the harbour, its bollards still standing, the water slapping either side of it.' },
+      { id: 'the_harbour_office', name: 'The Harbour Office', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'rect', lv: 4, kit: 'mole', foes: 'mole',
+        dress: ['desks', 'weed', 'chest', 'shrine'], note: 'The harbourmaster\'s office on the mole, its roof gone; a Grey Sister holding its door with a boathook, and saying the drowned\'s names at them.' },
+      { id: 'the_wreck_yard', name: 'The Wreck Yard', role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'rect', lv: 4, kit: 'mole', foes: 'mole',
+        dress: ['wrecks', 'weed', 'anchors'], note: 'Where the hulls were dragged to break and never broken: they lie on their sides, and the drowned climb out of them.' },
+      { id: 'the_outer_mole', name: 'The Outer Mole', role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'rect', lv: 4, kit: 'mole', foes: 'mole', boss: 'harbourmaster',
+        dress: ['lamp_stand', 'bollards', 'weed', 'mole_lamps'], note: 'The mole\'s end and its lamp-stand, the open sea past it. The Harbourmaster keeps the berths, as he did. Lucan sang from the lamp-stand.' },
+    ], halls: [
+      { from: 'the_sea_wall_stair', to: 'the_inner_mole', x: 30, y: 8, w: 10, h: 10 },
+      { from: 'the_inner_mole', to: 'the_harbour_office', x: 56, y: 24, w: 10, h: 10 },
+      { from: 'the_inner_mole', to: 'the_wreck_yard', x: 110, y: 8, w: 10, h: 10 },
+      { from: 'the_wreck_yard', to: 'the_outer_mole', x: 132, y: 34, w: 10, h: 10 },
+    ] },
+  ] },
+
   // ── The Old Eel Wharf (a prototype: the docks kit, docs/docks-dungeon.md; the owner, 2026-11-23, from a reference:
   //    "start two new level dressing types, docks and harbor"): the eel-men's wharf on the Fens' edge, its decks out over
   //    the black water on piles, a trial for Tollhaven's quays (world doc §3.7). No walls: each deck's edge is the water,
@@ -634,8 +676,10 @@ export function checkPlan(p) {
       if (k === 'gallery' && hi > R.gallery[1]) out.push(`${at} ${s.id}: ${hi} long, over a gallery's ${R.gallery[1]}`);
       if ((s.role === 'descent' || s.role === 'end') && k !== 'large') out.push(`${at} ${s.id}: a floor's last hall is large`);
       if (s.role === 'entrance' && k === 'small') out.push(`${at} ${s.id}: an entrance is never small`);
-      const lvLo = fi * (p.step || 1);   // (v1.144: a band of four, two levels a floor: `step`)
-      if (!p.flat && (s.lv < lvLo || s.lv > lvLo + 1)) out.push(`${at} ${s.id}: level +${s.lv} outside the floor's +${lvLo}..+${lvLo + 1}`);
+      // (v1.144: a band of four, two levels a floor: `step`; v1.150: a band of five, three on the first floor and two on
+      // the last: a floor that isn't the last spans `step` levels, the last floor two)
+      const lvLo = fi * (p.step || 1), lvHi = lvLo + (last ? 1 : Math.max(1, (p.step || 1) - 1));
+      if (!p.flat && (s.lv < lvLo || s.lv > lvHi)) out.push(`${at} ${s.id}: level +${s.lv} outside the floor's +${lvLo}..+${lvHi}`);
       for (const t of f.spaces) if (t !== s && s.x < t.x + t.w && t.x < s.x + s.w && s.y < t.y + t.h && t.y < s.y + s.h) out.push(`${at}: ${s.id} overlaps ${t.id}`);
     }
     // halls: hallMinW wide or more, 8–14 long, each joining its two spaces across a shared edge, overlapping no other

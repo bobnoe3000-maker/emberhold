@@ -1,0 +1,14 @@
+{
+  "id": "hester_quaile",
+  "name": "Hester Quaile",
+  "role": [
+    "giver"
+  ],
+  "town": "tollhaven",
+  "region": "tidemark",
+  "look": "npc_hester_quaile",
+  "portrait": "npc_hester_quaile",
+  "dialogue": "quaile",
+  "knot": "quaile_hub",
+  "note": "Speaker of the Tidemark League and harbourmistress of Tollhaven (world doc v1.69 §3.7), who tolls everything that comes in under the chain, and a question if you ask it twice. Stands by the Paid Toll's door. Takes in Consigned; gives Low Water. (Not Hester Lowe, the Vale's beekeeper: hester.ink is hers.)"
+}

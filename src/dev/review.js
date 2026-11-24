@@ -18,6 +18,7 @@ const CAST = [
   ['party', 'hero_rogue_hxbow', 'Hand xbow'], ['party', 'hero_mage', 'Mage'], ['party', 'hero_cleric', 'Cleric'], ['party', 'hero_shaman', 'Shaman'], ['party', 'hero_brannoc', 'Brannoc'],
   ['party', 'hero_wren', 'Wren'],   // (M8, Act II: the Fens' found companion)
   ['party', 'hero_tamsin', 'Tamsin'],   // (v1.124, Act III: the Reach's found companion)
+  ['party', 'hero_maren', 'Maren'],   // (v1.150, Act IV: the Tidemark's found companion)
   ['party', 'hero_wren_bow', 'Wren bow'], ['party', 'hero_wren_longbow', 'Wren long'], ['party', 'hero_wren_xbow', 'Wren xbow'], ['party', 'hero_wren_hxbow', 'Wren hxbow'],   // (her ranged looks)
   ['town', 'npc_maudry', 'Maudry'], ['town', 'npc_osric', 'Osric'], ['town', 'npc_ilse', 'Ilse'], ['town', 'npc_wendel', 'Wendel'], ['town', 'npc_bess', 'Bess'],
   ['town', 'npc_col', 'Col'], ['town', 'npc_jory', 'Jory'], ['town', 'npc_nell', 'Nell'], ['town', 'npc_hedda', 'Hedda'],
@@ -25,6 +26,7 @@ const CAST = [
   ['town', 'npc_dagny', 'Dagny'], ['town', 'npc_hob', 'Hob'], ['town', 'npc_gunnar', 'Gunnar'], ['town', 'npc_brannagh', 'Brannagh'], ['town', 'npc_mother_coke', 'Mother Coke'],
   ['town', 'npc_bel', 'Bel'], ['town', 'npc_haldor', 'Haldor'], ['town', 'npc_pellam', 'Pellam'], ['town', 'npc_wynn', 'Wynn'],   // (Ashgate's, v1.124)
   ['town', 'npc_nan_ruddock', 'Nan Ruddock'], ['town', 'npc_clerk', 'Assay clerk'],   // (Kell's Rest's, reach-plan.md the build sheet)
+  ['town', 'npc_hester_quaile', 'Hester Quaile'],   // (Tollhaven's, tidemark-plan.md the build sheet)
   ['town', 'npc_tobin', 'Tobin'], ['town', 'npc_ned', 'Ned'], ['town', 'npc_hester', 'Hester'],   // (v1.48: by the Vale's dungeons' ways in)
 ];
 

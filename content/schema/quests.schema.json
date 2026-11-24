@@ -46,7 +46,8 @@
         "vale",
         "fens",
         "reach",
-        "heights"
+        "heights",
+        "tidemark"
       ]
     },
     "level": {
@@ -299,7 +300,8 @@
                         "vale",
                         "fens",
                         "reach",
-                        "heights"
+                        "heights",
+                        "tidemark"
                       ]
                     },
                     "site": {

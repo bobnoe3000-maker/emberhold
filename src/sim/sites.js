@@ -64,6 +64,10 @@ export const SITES = {
   assay_yards: { name: 'The Assay Yards', region: 'reach', theme: 'desert', base: 23, perFloor: 2, floors: 2, span: 4, plan: true, family: 'yards', families: ['yards', 'quota'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 2: 'weighmaster' }, dress: ['yards', 'quota'], mix: 0xa55a },
   cinderworks: { name: 'The Cinderworks', region: 'reach', theme: 'ember', themes: ['ember', 'lava'], base: 27, perFloor: 2, floors: 2, span: 4, plan: true, family: 'works', families: ['works', 'vault'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 1: 'oruth', 2: 'stoker' },   // (Morrow Vane holds the furnace hall on the second floor, a side room's boss: battle.js sideBoss)
   dress: ['works', 'vault'], mix: 0xc1d3 },
+  // (v1.150) the Tidemark, 31–45 (docs/tidemark-plan.md): bands of five, three levels on the first floor and two on the
+  // second. The Drowned Mole, the sunken imperial harbour off Gullwick: its wharf, then its moles at low water; the
+  // Harbourmaster on the outer mole's end, Sister Maren in his office. Its door at the end of Gullwick's ferry jetty.
+  drowned_mole: { name: 'The Drowned Mole', region: 'tidemark', theme: 'mound', base: 31, perFloor: 3, floors: 2, span: 5, plan: true, family: 'wharf', families: ['wharf', 'mole'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 2: 'harbourmaster' }, dress: ['docks', 'mole'], mix: 0x3017 },
   ninth_vault: { name: 'The Ninth Vault', region: 'reach', theme: 'chasm', base: 30, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [5, 5], layout: 'halls', flat: true, hidden: true, secret: true, vault: 'the_quota_ledgers', dress: ['strongroom'], mix: 0x9a17 },
   // the Mere Tower (tower.js; world doc v1.23): its landing and the stair hall, where the climb goes on; Wenna Pike's punt
   // out to it from ☰ (v1.112, core.js towerGo: from wherever the company is, and back there), from level 12 (minLevel:

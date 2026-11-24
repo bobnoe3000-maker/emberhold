@@ -120,6 +120,11 @@ export const PREMIUM = 0.05;
 // (v1.126) and only to 22, PREMIUM_HIGH_TO: run on to 30 it outgrew the party (the right party at 24 held 7 and 10 waves
 // standing, at 30 six; capped at 22 they hold 10–12 from 24 to 30, and a room three up still beats them by wave 8)
 export const PREMIUM_HIGH = 0.06, PREMIUM_HIGH_TO = 22;
+// (v1.150, the Tidemark) PREMIUM runs on past 30, and the heroes grow with it from there (party.js liftOf): run on alone
+// it outgrew the party (the right party in gear at level, the contract's room over six seeds: 6/6 held at 27 and 30, 2/6
+// at 33, 1/6 at 36; a hero's stat line and a foe's grow in step, the premium alone pulled away), and capped at 30 a room
+// three up stopped being a wall (the party at 30 held a level-33 room 11 waves). Both: a same-level room as at 30, and
+// three up still a wall.
 /** a foe's toughness for its level: PREMIUM a level over 3, and PREMIUM_HIGH more a level from 18 to 22 @param {number} lv */
 export const premiumOf = (lv) => 1 + PREMIUM * Math.max(0, lv - 3) + PREMIUM_HIGH * Math.min(PREMIUM_HIGH_TO - 18, Math.max(0, lv - 18));
 // The tide (GDD §7.1): each wave of a visit is `step` tougher than the last (HP and ATK), up to a
@@ -218,6 +223,13 @@ Object.assign(ENEMIES, {
   forgewight:    { hp: 56, atk: 9.4, def: 7, crit: 5, dodge: 2, interval: 1.5, range: 2.9, speed: 2.8, xp: 14, gold: 2 },
   cinderhound:   { hp: 38, atk: 8.2, def: 3, crit: 8, dodge: 10, interval: 0.9, range: 2.4, speed: 4.4, xp: 12, gold: 1 },
   furnacepriest: { hp: 34, atk: 10.4, def: 2, crit: 5, dodge: 5, interval: 2.0, range: 13.5, speed: 2.8, xp: 15, gold: 4, bolt: 'fire' },
+  // (v1.150, the Tidemark: docs/tidemark-plan.md's build sheet) the drowned sailors of the imperial fleet, under Lucan's
+  // orders (a minion's strength, slow and hard to shift), the Gull Fleet's corsairs (a cutthroat's) and gunners (a
+  // crossbowman's, a pistol-crossbow), and the fleet's drowned bosun with his chain (a warrior's: the Mole's elite)
+  sailor:  { hp: 40, atk: 7.6, def: 5, crit: 5, dodge: 3, interval: 1.3, range: 2.9, speed: 3.0, xp: 11, gold: 1 },
+  corsair: { hp: 36, atk: 8.2, def: 3, crit: 9, dodge: 9, interval: 1.1, range: 2.8, speed: 3.6, xp: 11, gold: 3 },
+  gunner:  { hp: 35, atk: 9.4, def: 3, crit: 10, dodge: 6, interval: 1.7, range: 12.5, speed: 3.3, xp: 12, gold: 3, bolt: 'bolt' },
+  bosun:   { hp: 60, atk: 9.8, def: 6, crit: 6, dodge: 2, interval: 1.6, range: 3.4, speed: 2.7, xp: 15, gold: 3 },
 });
 export const ENEMY_KINDS = Object.keys(ENEMIES);
 /** (v1.87) the room a melee blow is struck across: every melee reach, the party's and every foe's, is this much longer than
@@ -272,6 +284,9 @@ export const FAMILIES = {
   lockcult: { melee: ['minion', 'harvester'], ranged: ['rogue', 'acolyte'], elite: 'harvester', undead: (k) => k === 'minion' || k === 'rogue' },
   harvest: { melee: ['fenghoul', 'harvester'], ranged: ['rogue', 'bogwitch'], elite: 'harvester', undead: (k) => k === 'rogue' },
   drowned: { melee: ['drowned', 'harvester'], ranged: ['rogue', 'cantor'], elite: 'harvester', undead: (k) => k === 'drowned' || k === 'cantor' || k === 'rogue' },
+  // (v1.150) the Drowned Mole: the corsairs picking the wharf and the drowned standing up under them; the moles' drowned
+  wharf: { melee: ['corsair', 'sailor'], ranged: ['gunner', 'cantor'], elite: 'bosun', undead: (k) => k === 'sailor' || k === 'cantor' || k === 'bosun' },
+  mole: { melee: ['sailor', 'drowned'], ranged: ['cantor', 'gunner'], elite: 'bosun', undead: (k) => k !== 'gunner' },
 };
 // Bosses (M5, docs/m5-plan.md §3): a floor's stairs-down hall (sites.js `bosses`) opens with its boss and
 // an escort; once the boss falls the room goes quiet for the visit. A boss is its `like` archetype's
@@ -317,6 +332,10 @@ export const GOLD_DROP = 0.35;
 //           ANVIL_SPOIL of his max HP while he works and the piece is spoiled ('bossAnvil' { …, spoiled: true })
 //   flee    (Morrow Vane) at FLEE_AT of his life he runs: gone from the hall, which counts as his fall (his time away, the
 //           story's boss objective; 'bossDown' { …, fled: true }, after 'bossFled' { id, x, y }); he pays as if he fell
+//   tide    (the Harbourmaster, v1.150) every TIDE_S s the tide comes in over the mole: told TIDE_WARN s first ('bossTide'
+//           { id, by, x, y, coming: true }), then the hall's edge floods TIDE_LEVEL bells' worth in from its walls (the
+//           hazards' flooded edge, as the Abbess's) for TIDE_T s, and goes out ('bossFlood' level 0). While it's in,
+//           the drowned standing in it mend TIDE_MEND of their HP a second. It drains when he falls.
 //   vents   (the Stoker) every VENTS_S s the floor glows where slag will vent: a tell under each of the company and
 //           VENTS_MORE more about the hall, VENTS_R across, landing VENTS_WIND s later as VENTS_HURT of max HP.
 //           'bossVents' { id, by, x, y, n }
@@ -344,11 +363,12 @@ export const BOSSES = {
   // Furnace Nine (v1.126, ring.js FURNACE): the Reach's region boss, the furnace-lamp relit and walking, slag in its belly; its
   // tells are the Kingstone's shapes, and it feeds on the fallen (battle.js ringTick)
   furnace_nine: { name: 'Furnace Nine', like: 'golem', hp: 115, atk: 1.6, def: 1.5, speed: 1.1, xp: 0, gold: 0, mech: 'ring', escort: [], range: 5.5, body: 2.4, event: true },
-  first_pilgrim: { name: 'The First Pilgrim', like: 'golem', hp: 115, atk: 1.6, def: 1.5, speed: 1.1, xp: 0, gold: 0, mech: 'ring', escort: [], range: 5.5, body: 2.4, event: true },   // (v1.147: the Heights' region boss, ring.js PILGRIM)
+  first_pilgrim: { name: 'The First Pilgrim', like: 'golem', hp: 215, atk: 3.0, def: 1.5, speed: 1.1, xp: 0, gold: 0, mech: 'ring', escort: [], range: 5.5, body: 2.4, event: true },   // (v1.147: the Heights' region boss, ring.js PILGRIM; v1.150 hp 115 → 215, atk 1.6 → 3.0: ×1.87, party.js liftOf(75), what the heroes gained at his level)
   // (v1.126, the build sheet: docs/reach-plan.md) the Reach's other four
   weighmaster: { name: 'The Weighmaster', like: 'brute', hp: 21, atk: 2.2, def: 1.7, speed: 2.8, xp: 13, gold: 32, mech: 'scales', escort: ['assay_guard', 'assay_xbow'], heirloom: 'short_weight' },
   oruth: { name: 'Oruth the Forgemaster', like: 'warrior', hp: 24, atk: 2.3, def: 1.8, speed: 2.4, xp: 14, gold: 34, mech: 'anvil', escort: ['forgewight', 'forgewight'], undead: true, heirloom: 'oruths_last_commission' },
   morrow_vane: { name: 'Morrow Vane', like: 'cutthroat', hp: 18, atk: 2.0, def: 1.5, speed: 3.0, xp: 13, gold: 40, mech: 'flee', escort: ['assay_guard', 'assay_xbow'] },
+  harbourmaster: { name: 'The Harbourmaster', like: 'bosun', hp: 21, atk: 2.3, def: 1.8, speed: 2.5, xp: 14, gold: 36, mech: 'tide', escort: ['sailor', 'bosun'], undead: true, heirloom: 'the_berths_book' },   // (v1.150, the Drowned Mole)
   stoker: { name: 'The Stoker', like: 'furnacepriest', hp: 22, atk: 2.3, def: 1.7, speed: 2.6, xp: 14, gold: 36, mech: 'vents', escort: ['cinderhound', 'furnacepriest'] },
   foreman: { name: 'The Foreman', like: 'bruiser', hp: 20, atk: 2.1, def: 1.6, speed: 2.8, xp: 13, gold: 30, mech: 'chutes', escort: ['hauler', 'archer'], heirloom: 'the_whistle' },   // (Gritch, the Cold Seam's tally cave, v1.124)
   vatwarden: { name: 'The Vatwarden', like: 'harvester', hp: 20, atk: 2.2, def: 1.6, speed: 2.7, xp: 13, gold: 30, mech: 'sluice', escort: ['fenghoul', 'bogwitch'] },
@@ -359,6 +379,7 @@ export const STALL_R = 3, ISSUE_S = 10, FELL_MAX = 6, SLUICE_S = 11, SLUICE_R = 
 export const CHUTE_S = 12, CHUTE_WIND = 2.4, CHUTE_R = 1.8, CHUTE_HURT = 0.32;
 export const SCALES_S = 11, SCALES_WIND = 2.2, SCALES_R = 1.7, SCALES_HURT = 0.45, ANVIL_S = 18, ANVIL_T = 4, ANVIL_SPOIL = 0.05, FLEE_AT = 0.25;
 export const VENTS_S = 10, VENTS_WIND = 2.0, VENTS_R = 1.6, VENTS_HURT = 0.3, VENTS_MORE = 3;
+export const TIDE_S = 15, TIDE_WARN = 2.5, TIDE_T = 7, TIDE_LEVEL = 2, TIDE_MEND = 0.02;   // (v1.150: the Harbourmaster's tide)
 export const MUD_S = 9, MUD_R = 1.8, MUD_T = 6, CAGE_HP = 0.35, CAGE_MEND = 0.025, VESPERS_S = 12, VESPERS_MEND = 0.02, BELL_S = 12, FLOOD_MAX = 4, FLOOD_STEP = 0.12;
 /** does a blow on this foe land at half? A boss whose called men still stand; an Ashbound (not a boss)
  * within LINE_R of a standing Standard @param {any} tgt @param {any[]} foes */
@@ -666,7 +687,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       crit: E.crit, dodge: E.dodge, interval: E.interval, range: B && B.range ? B.range : E.range, speed: B && B.speed ? B.speed : E.speed, bolt: E.bolt,
       xp: E.xp * (elite ? 3 : 1) * (B ? B.xp : 1), gold: E.gold * (elite ? 4 : 1) * (B ? B.gold : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 };
     if (B && B.body) { u.body = B.body; u.anchor = true; }   // (the Kingstone: ground it stands on, never shoved)
-    if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; u.swarmT = 0; u.mudT = 0; u.vesT = 0; u.bellT = 0; u.issueT = 0; u.sluiceT = 0; u.sluiceN = 0; u.chuteT = 0; u.scalesT = 0; u.anvilT = 0; u.forging = 0; u.ventsT = 0; u.mend = 0; }
+    if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; u.swarmT = 0; u.mudT = 0; u.vesT = 0; u.bellT = 0; u.issueT = 0; u.sluiceT = 0; u.sluiceN = 0; u.chuteT = 0; u.scalesT = 0; u.anvilT = 0; u.forging = 0; u.ventsT = 0; u.tideT = 0; u.tideIn = 0; u.tideTold = false; u.mend = 0; }
     w.enemies.push(u);
     return u;
   }
@@ -2266,6 +2287,19 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       e.fled = true;
       bus.emit('bossFled', { id: e.boss, x: e.x, y: e.y });
       e.hp = 0; e.dead = DEATH_T; reward(e); if (focusId === e.id) focusId = 0;
+    } else if (B.mech === 'tide' && battle) {
+      // the tide (v1.150): told, then in over the hall's edge for TIDE_T s, the drowned in it mending, then out again
+      if (e.tideIn > 0) {
+        for (const o of w.enemies || []) if (o.undead && o.hp > 0 && !o.dead && o.hp < o.maxHp && hazardAt(battle, o.x, o.y) === 'water') {
+          o.mend = (o.mend || 0) + o.maxHp * TIDE_MEND * dt; const n = Math.floor(o.mend); if (n > 0) { o.mend -= n; o.hp = Math.min(o.maxHp, o.hp + n); }
+        }
+        if ((e.tideIn -= dt) <= 0) { e.tideIn = 0; battle.flood = 0; bus.emit('bossFlood', { id: e.boss, by: e.id, level: 0, x: e.x, y: e.y }); }
+      } else if ((e.tideT += dt) >= TIDE_S) {
+        e.tideT = 0; e.tideTold = false; e.tideIn = TIDE_T;
+        if (!battle.edge) { battle.edge = edgeDistances(battle.cells); let deep = 1; for (const d of battle.edge.values()) if (d > deep) deep = d; battle.floodStep = Math.max(1, Math.round(deep * FLOOD_STEP)); }
+        battle.flood = TIDE_LEVEL;
+        bus.emit('bossFlood', { id: e.boss, by: e.id, level: battle.flood, x: e.x, y: e.y });
+      } else if (!e.tideTold && e.tideT >= TIDE_S - TIDE_WARN) { e.tideTold = true; bus.emit('bossTide', { id: e.boss, by: e.id, x: e.x, y: e.y, coming: true }); }
     } else if (B.mech === 'vents' && battle && (e.ventsT += dt) >= VENTS_S) {
       // the floor glows where the slag will vent: under each of the company, and VENTS_MORE more about the hall
       e.ventsT = 0;

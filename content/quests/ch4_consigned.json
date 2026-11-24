@@ -1,0 +1,43 @@
+{
+  "id": "ch4_consigned",
+  "kind": "chapter",
+  "title": "Consigned",
+  "giver": "sister_ilse",
+  "turnin": "hester_quaile",
+  "region": "tidemark",
+  "level": [
+    30,
+    75
+  ],
+  "after": [
+    "ch3_quota"
+  ],
+  "summary": "The last page of Morrow Vane's ledger is a consignment note: the vessel, sent by the Solmere road to Brine Cross, \"freight paid at Tollhaven\". Sister Ilse is sending you east to Tollhaven's harbourmistress.",
+  "steps": [
+    {
+      "id": "quaile",
+      "journal": "Take the Solmere road out of the Reach and on through Solmere to the Tidemark. Cross the bridge at Brine Cross, go east to Tollhaven, find Hester Quaile.",
+      "objectives": [
+        {
+          "type": "meet",
+          "npc": "hester_quaile",
+          "region": "tidemark",
+          "count": 1,
+          "label": "Talk to Hester Quaile in Tollhaven"
+        }
+      ]
+    }
+  ],
+  "ready": "You've found Hester Quaile at the Paid Toll's door. Show her Ilse's copy of the ledger's last page.",
+  "done": "Someone paid Hester's freight on a crate that never touched her quay. She has worse trouble on the quays at night.",
+  "rewards": {
+    "share": 0.35,
+    "lv": 31,
+    "gold": 720
+  },
+  "dialogue": {
+    "file": "ilse",
+    "offer": "ilse_ch4_consigned_offer",
+    "turnin": "quaile_consigned_meet"
+  }
+}

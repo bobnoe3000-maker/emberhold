@@ -53,6 +53,7 @@ export const FOUND = {
   brannoc: { name: 'Brannoc', cls: 'fighter', actor: 'hero_brannoc', trait: ['Redhand deserter', 'found in Wickham Keep'], freedBy: 'redhand_captain' },
   wren: { name: 'Wren', cls: 'rogue', actor: 'hero_wren', trait: ['Saltmere smuggler', 'found in the Boat Hall'], freedBy: 'toadking' },   // (M8, world doc v1.29 §5)
   tamsin: { name: 'Tamsin', cls: 'mage', actor: 'hero_tamsin', trait: ['Ashgate mage-smith', 'found in the Cold Seam'], freedBy: 'foreman' },   // (v1.124, world doc v1.53 §3.3)
+  maren: { name: 'Maren', cls: 'cleric', actor: 'hero_maren', trait: ['Grey Sister of the quays', 'found in the Drowned Mole'], freedBy: 'harbourmaster' },   // (v1.150, world doc v1.69 §3.7)
 };
 export const DAY_S = 3600;              // an in-game day: an hour of play (2.5 min = 1 h); 1440 (24 min) before save v15
 export const WEAK_S = 600;              // Weakened lasts 10 minutes of play

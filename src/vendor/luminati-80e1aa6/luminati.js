@@ -6742,6 +6742,20 @@ Object.assign(Ys, {
 		banner: "#2c4a70",
 		hay: "#8a8060",
 		signboard: "#4a4a52"
+	},
+	tidemark: {
+		...Xs,
+		key: "tidemark",
+		lower: ["ashlar", "#6e7276"],
+		upper: ["plaster", "#93705f"],
+		roof: ["tile", "#6a3a30"],
+		wood: "#3c3530",
+		beam: "#2a2522",
+		door: "#2f4a4c",
+		trim: "#22252a",
+		banner: "#2a5e5a",
+		hay: "#8a7c56",
+		signboard: "#3f4448"
 	}
 });
 function Zs(e, t = 1) {
@@ -11041,6 +11055,397 @@ var Bc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 				1
 			]
 		}
+	],
+	tidemark: [
+		{
+			id: "tidemark_tavern_1",
+			model: "tavern",
+			build: "tavern",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			],
+			faceX: !0
+		},
+		{
+			id: "tidemark_inn_1",
+			model: "inn",
+			build: "inn",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			]
+		},
+		{
+			id: "tidemark_shop_1",
+			model: "shop",
+			build: "shop",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			]
+		},
+		{
+			id: "tidemark_temple_1",
+			model: "temple",
+			build: "temple",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			]
+		},
+		{
+			id: "tidemark_well_1",
+			model: "well",
+			build: "well",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			]
+		},
+		{
+			id: "tidemark_house_1",
+			model: "house",
+			build: "house",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			],
+			seed: 1
+		},
+		{
+			id: "tidemark_house_2",
+			model: "house",
+			build: "house",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			],
+			seed: 2
+		},
+		{
+			id: "tidemark_house_3",
+			model: "house",
+			build: "house",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			],
+			seed: 3
+		},
+		{
+			id: "tidemark_housex_1",
+			model: "house",
+			build: "house",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			],
+			seed: 4,
+			faceX: !0
+		},
+		{
+			id: "tidemark_housex_2",
+			model: "house",
+			build: "house",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			],
+			seed: 5,
+			faceX: !0
+		},
+		{
+			id: "tidemark_farm_1",
+			model: "farm",
+			build: "farm",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			]
+		},
+		{
+			id: "tidemark_farmx_1",
+			model: "farm",
+			build: "farm",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			],
+			seed: 2,
+			faceX: !0
+		},
+		{
+			id: "tidemark_keep_1",
+			model: "keep",
+			build: "keep",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			]
+		},
+		{
+			id: "tidemark_wall_1",
+			model: "wall",
+			build: "wall",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			]
+		},
+		{
+			id: "tidemark_smith_1",
+			model: "smith",
+			build: "smith",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			],
+			faceX: !0
+		},
+		{
+			id: "tidemark_curtain_1",
+			model: "curtain",
+			build: "curtain",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			]
+		},
+		{
+			id: "tidemark_curtainy_1",
+			model: "curtain",
+			build: "curtain",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			],
+			rotY: 90
+		},
+		{
+			id: "tidemark_tower_1",
+			model: "tower",
+			build: "tower",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			]
+		},
+		{
+			id: "tidemark_gatehousey_1",
+			model: "gatehouse",
+			build: "gatehouse",
+			style: "tidemark",
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			],
+			rotY: 90
+		},
+		{
+			id: "tidemark_cottage_1",
+			model: "cottage",
+			build: "cottage",
+			style: "tidemark",
+			seed: 11,
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			]
+		},
+		{
+			id: "tidemark_cottagex_1",
+			model: "cottage",
+			build: "cottage",
+			style: "tidemark",
+			seed: 13,
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			],
+			faceX: !0
+		},
+		{
+			id: "tidemark_longhouse_1",
+			model: "longhouse",
+			build: "longhouse",
+			style: "tidemark",
+			seed: 21,
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			]
+		},
+		{
+			id: "tidemark_longhousex_1",
+			model: "longhouse",
+			build: "longhouse",
+			style: "tidemark",
+			seed: 22,
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			],
+			faceX: !0
+		},
+		{
+			id: "tidemark_workshop_1",
+			model: "workshop",
+			build: "workshop",
+			style: "tidemark",
+			seed: 31,
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			]
+		},
+		{
+			id: "tidemark_workshopx_1",
+			model: "workshop",
+			build: "workshop",
+			style: "tidemark",
+			seed: 32,
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			],
+			faceX: !0
+		},
+		{
+			id: "tidemark_foodstand_1",
+			model: "foodstand",
+			build: "foodstand",
+			style: "tidemark",
+			seed: 81,
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			]
+		},
+		{
+			id: "tidemark_standard_1",
+			model: "standard",
+			build: "standard",
+			style: "tidemark",
+			seed: 83,
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			]
+		},
+		{
+			id: "tidemark_lanewell_1",
+			model: "lanewell",
+			build: "lanewell",
+			style: "tidemark",
+			seed: 84,
+			gain: .66,
+			desat: .1,
+			tint: [
+				1,
+				.97,
+				.94
+			]
+		}
 	]
 }, V = (e, t, n) => new l({
 	color: e,
@@ -12466,7 +12871,451 @@ var Bc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 		open: .74,
 		rz: .7,
 		tip: .25
-	})
+	}),
+	boardingaxe: () => {
+		let e = new A();
+		e.name = "Boarding_Axe";
+		let t = V(4864554, 0, .8), n = V(11055286, .85, .32), r = V(10127968, 0, .95), i = new M(new k(.04, .05, 1.12, 7), t);
+		i.position.y = .36, e.add(i);
+		let a = new M(new k(.058, .058, .26, 7), r);
+		a.position.y = 0, e.add(a);
+		let o = new le([
+			[0, .08],
+			[.16, .1],
+			[.32, .14],
+			[.34, 0],
+			[.3, -.2],
+			[.22, -.14],
+			[.1, -.06],
+			[0, -.04]
+		].map(([e, t]) => new ke(e, t))), s = new M(new h(o, {
+			depth: .045,
+			bevelEnabled: !1
+		}), n);
+		s.geometry.translate(0, 0, -.0225), s.position.y = .8, s.name = "Boarding_Axe_Blade", e.add(s);
+		let c = new M(new L(.05, .26, 5), n);
+		c.rotation.z = Math.PI / 2, c.position.set(-.14, .83, 0), e.add(c);
+		let l = new M(new F(.1, .12, .1), n);
+		return l.position.y = .84, e.add(l), e;
+	},
+	sailrig: () => {
+		let e = new A();
+		e.name = "Sail_Rig";
+		let t = V(1447962, .1, .35), n = V(10127968, 0, .95), r = V(4090426, 0, .9), i = new M(new I(.25, .07, 6, 14), t);
+		i.rotation.x = Math.PI / 2, i.position.set(0, .2, -.02), i.name = "Sail_Rig_Collar", e.add(i);
+		let a = new M(new F(.46, .3, .03), t);
+		a.position.set(0, .06, -.3), a.rotation.x = -.15, a.name = "Sail_Rig_Collar", e.add(a);
+		let o = new Ge([
+			[
+				-.3,
+				.2,
+				0
+			],
+			[
+				-.12,
+				.02,
+				.38
+			],
+			[
+				.14,
+				-.26,
+				.38
+			],
+			[
+				.32,
+				-.42,
+				.1
+			],
+			[
+				.26,
+				-.3,
+				-.3
+			],
+			[
+				0,
+				-.04,
+				-.36
+			],
+			[
+				-.26,
+				.18,
+				-.18
+			]
+		].map((e) => new P(...e)), !0);
+		e.add(new M(new Ye(o, 30, .028, 5, !0), n));
+		for (let [t, n, i, a] of [
+			[
+				-.2,
+				.32,
+				.36,
+				-.15
+			],
+			[
+				.16,
+				.34,
+				.28,
+				.2
+			],
+			[
+				.24,
+				-.32,
+				.42,
+				.1
+			],
+			[
+				-.1,
+				-.34,
+				.3,
+				-.1
+			],
+			[
+				.34,
+				.1,
+				.3,
+				.3
+			]
+		]) {
+			let o = new M(new F(.05, i, .02), r);
+			o.position.set(t, .1 - i / 2, n), o.rotation.z = a, o.name = "Sail_Rig_Weed", e.add(o);
+		}
+		return e;
+	},
+	tarhat: () => {
+		let e = new A();
+		e.name = "Tar_Hat", e.scale.setScalar(.84), e.position.y = .12;
+		let t = V(1711136, .15, .3), n = V(6978186, 0, .8), r = new M(new k(.52, .56, .2, 16), t);
+		r.position.set(0, 1, -.04), e.add(r);
+		let i = new M(new j(.52, 16, 6, 0, Math.PI * 2, 0, Math.PI / 2), t);
+		i.scale.y = .4, i.position.set(0, 1.1, -.04), e.add(i);
+		let a = new M(new k(.82, .82, .05, 18), t);
+		a.position.set(0, .9, -.04), a.rotation.x = .12, e.add(a);
+		let o = new M(new k(.565, .565, .08, 16), n);
+		return o.position.set(0, .95, -.04), e.add(o), e.traverse((e) => {
+			e.isMesh && (e.name = "Tar_Hat");
+		}), e;
+	},
+	anchorchain: () => {
+		let e = new A();
+		e.name = "Anchor_Chain", e.userData.hang = !0;
+		let t = V(4868166, .8, .5), n = V(8014378, .4, .75);
+		for (let r = 0; r < 7; r++) {
+			let i = new M(new I(.075, .028, 5, 10), r % 3 == 1 ? n : t);
+			i.scale.y = 1.5, i.position.y = .08 + r * .14, r % 2 && (i.rotation.y = Math.PI / 2), e.add(i);
+		}
+		let r = new M(new k(.045, .05, .42, 7), t);
+		r.position.y = 1.2, r.name = "Anchor_Chain_Grapnel", e.add(r);
+		for (let n = 0; n < 4; n++) {
+			let r = n * Math.PI / 2, i = new M(new I(.16, .034, 5, 8, Math.PI * .7), t);
+			i.position.set(Math.cos(r) * .15, 1.42, Math.sin(r) * .15), i.rotation.set(0, -r, Math.PI * 1.15), i.name = "Anchor_Chain_Grapnel", e.add(i);
+		}
+		return e;
+	},
+	chainsash: () => {
+		let e = new A();
+		e.name = "Chain_Sash";
+		let t = V(5920854, .8, .5), n = V(9065008, .4, .75), r = new Ge([
+			[
+				-.3,
+				.3,
+				0
+			],
+			[
+				-.18,
+				.12,
+				.42
+			],
+			[
+				.08,
+				-.18,
+				.48
+			],
+			[
+				.34,
+				-.48,
+				.3
+			],
+			[
+				.4,
+				-.52,
+				-.1
+			],
+			[
+				.14,
+				-.2,
+				-.44
+			],
+			[
+				-.2,
+				.16,
+				-.36
+			]
+		].map((e) => new P(...e)), !0), i = new P(), a = new P();
+		for (let o = 0; o < 22; o++) {
+			r.getPointAt(o / 22, i), r.getTangentAt(o / 22, a);
+			let s = new M(new I(.06, .026, 5, 8), o % 4 == 1 ? n : t);
+			s.scale.x = 1.5, s.position.copy(i), s.quaternion.setFromUnitVectors(new P(1, 0, 0), a), o % 2 && s.rotateX(Math.PI / 2), s.name = "Chain_Sash_Link", e.add(s);
+		}
+		return e;
+	},
+	bicorne: () => {
+		let e = new A();
+		e.name = "Bicorne", e.scale.set(.8, .86, .86), e.position.y = .1;
+		let t = new l({
+			color: 1711140,
+			roughness: .85,
+			side: 2
+		}), n = V(13148232, .8, .4), r = V(3828324, 0, .8), i = new M(new k(.98, .98, .24, 24, 1, !1, -Math.PI / 2, Math.PI), t);
+		i.rotation.set(Math.PI / 2, 0, 0), i.scale.set(1, 1, .5), i.position.set(0, .86, -.05), e.add(i);
+		let a = new M(new I(.98, .035, 5, 28, Math.PI), n);
+		a.scale.set(1, .5, 1), a.position.set(0, .86, .075), e.add(a);
+		let o = a.clone();
+		o.position.z = -.175, e.add(o);
+		let s = new M(new k(.13, .13, .04, 12), r);
+		s.rotation.x = Math.PI / 2, s.position.set(.42, 1.08, .085), e.add(s);
+		let c = new M(new j(.52, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), t);
+		return c.scale.set(1, .5, .9), c.position.set(0, .84, -.05), e.add(c), e.traverse((e) => {
+			e.isMesh && (e.name = "Bicorne");
+		}), e;
+	},
+	berthsbook: () => {
+		let e = new A();
+		e.name = "Berths_Book", e.scale.setScalar(.66);
+		let t = V(4086350, 0, .85), n = V(12102788, 0, .95), r = V(2761760, 0, .9), i = V(4090426, 0, .9), a = new M(new F(.28, .52, .56), t);
+		a.position.y = .3, a.name = "Berths_Book_Cover", e.add(a);
+		let o = new M(new F(.24, .48, .58), n);
+		o.position.set(.014, .3, 0), e.add(o);
+		let s = new M(new F(.3, .06, .6), r);
+		s.position.y = .3, e.add(s);
+		let c = new M(new F(.04, .3, .02), i);
+		return c.position.set(.1, .02, .24), c.rotation.z = .2, e.add(c), e;
+	},
+	harbourpole: () => {
+		let e = new A();
+		e.name = "Berth_Pole";
+		let t = V(2762274, 0, .8), n = V(13148232, .8, .4), r = V(4869198, .8, .45), i = new l({
+			color: 13695208,
+			emissive: 5288080,
+			emissiveIntensity: 1.4,
+			roughness: .3
+		}), a = new M(new k(.045, .055, 2, 7), t);
+		a.position.y = .55, e.add(a);
+		let o = new M(new L(.055, .2, 6), r);
+		o.rotation.x = Math.PI, o.position.y = -.5, e.add(o);
+		for (let t of [.24, 1.4]) {
+			let r = new M(new k(.065, .065, .06, 10), n);
+			r.position.y = t, e.add(r);
+		}
+		let s = new M(new I(.16, .035, 5, 12, Math.PI), n);
+		s.position.set(.16, 1.55, 0), e.add(s);
+		let c = new M(new k(.015, .015, .14, 4), r);
+		c.position.set(.32, 1.48, 0), e.add(c);
+		let u = new M(new L(.15, .12, 6), n);
+		u.position.set(.32, 1.38, 0), e.add(u);
+		for (let t = 0; t < 6; t++) {
+			let r = t * Math.PI / 3, i = new M(new F(.025, .3, .025), n);
+			i.position.set(.32 + Math.cos(r) * .13, 1.18, Math.sin(r) * .13), e.add(i);
+		}
+		let d = new M(new v(.11, 1), i);
+		d.position.set(.32, 1.18, 0), d.name = "Berth_Lamp_Light", d.userData.glow = 10547408, e.add(d);
+		let f = new M(new k(.14, .1, .05, 6), n);
+		return f.position.set(.32, 1.02, 0), e.add(f), e;
+	},
+	cutlass: () => {
+		let e = new A();
+		e.name = "Cutlass";
+		let t = V(12633804, .9, .3), n = V(13148232, .8, .35), r = V(2760216, 0, .85), i = new le([
+			[-.06, 0],
+			[.07, 0],
+			[.1, .5],
+			[.13, .82],
+			[.1, 1.02],
+			[0, 1.06],
+			[-.04, .86],
+			[-.06, .5]
+		].map(([e, t]) => new ke(e, t))), a = new M(new h(i, {
+			depth: .03,
+			bevelEnabled: !1
+		}), t);
+		a.geometry.translate(0, 0, -.015), a.position.y = .16, a.name = "Cutlass_Blade", e.add(a);
+		let o = new M(new j(.14, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), n);
+		o.scale.set(1, .4, .8), o.rotation.x = Math.PI, o.position.y = .18, e.add(o);
+		let s = new M(new I(.14, .018, 4, 12, Math.PI), n);
+		s.rotation.z = -Math.PI / 2, s.position.set(0, .03, 0), s.scale.set(1.1, 1, 1), e.add(s);
+		let c = new M(new k(.042, .046, .28, 8), r);
+		e.add(c);
+		let l = new M(new j(.055, 8, 6), n);
+		return l.position.y = -.16, e.add(l), e;
+	},
+	headscarf: () => {
+		let e = new A();
+		e.name = "Headscarf", e.userData.helm = !0, e.userData.hoodRz = .66;
+		let t = new l({
+			color: 13146666,
+			roughness: .9,
+			side: 2
+		}), n = Xc(.66), r = new M(Qc(new j(1, 32, 12, 0, Math.PI * 2, 0, Math.PI * .32), n), t);
+		r.name = "Headscarf_Cloth", e.add(r);
+		let i = new M(Qc(new j(1, 36, 10, Math.PI / 2 + 1, Math.PI * 2 - 2, Math.PI * .3, Math.PI * .26), n), t);
+		i.name = "Headscarf_Cloth", e.add(i);
+		let a = new M(new j(.16, 10, 8), t), o = n(0, .05, -1);
+		a.position.copy(o), a.position.z -= .05, a.name = "Headscarf_Cloth", e.add(a);
+		for (let [n, r] of [[-1, .5], [1, .38]]) {
+			let i = new M(new F(.15, r, .03), t);
+			i.position.set(o.x + n * .09, o.y - r / 2, o.z - .08), i.rotation.set(.3, 0, n * .2), i.name = "Headscarf_Cloth", e.add(i);
+		}
+		return e;
+	},
+	tricorne: () => {
+		let e = new A();
+		e.name = "Tricorne";
+		let t = new l({
+			color: 2105896,
+			roughness: .85,
+			side: 2
+		}), n = V(13146666, .2, .7), r = new M(new k(.46, .54, .34, 14), t);
+		r.position.set(0, 1.04, -.04), e.add(r);
+		let i = new M(new j(.46, 14, 6, 0, Math.PI * 2, 0, Math.PI / 2), t);
+		i.scale.y = .3, i.position.set(0, 1.2, -.04), e.add(i);
+		let a = new M(new k(.5, .52, .07, 14), n);
+		a.position.set(0, .95, -.04), e.add(a);
+		let o = .66;
+		for (let n = 0; n < 3; n++) {
+			let r = Math.PI / 2 + 2 * Math.PI / 3 * n, i = r + 2 * Math.PI / 3, a = new P(Math.cos(r) * o, 0, Math.sin(r) * o), s = new P(Math.cos(i) * o, 0, Math.sin(i) * o), c = a.clone().add(s).multiplyScalar(.5), l = a.distanceTo(s), u = c.clone().setY(0).normalize(), d = new M(new F(l * 1.04, .2, .04), t);
+			d.position.set(c.x, .98, c.z - .04), d.lookAt(d.position.clone().add(u)), d.rotateX(-.75), e.add(d);
+			let f = new M(new k(o * .9, o * .9, .04, 3), t);
+			n === 0 && (f.rotation.y = -Math.PI / 6 + Math.PI, f.position.set(0, .85, -.04), e.add(f));
+		}
+		return e.traverse((e) => {
+			e.isMesh && (e.name = "Tricorne");
+		}), e;
+	},
+	sash: () => {
+		let e = new A();
+		e.name = "Sash";
+		let t = V(13146666, 0, .9), n = V(9070104, 0, .9), r = new M(new k(.42, .4, .16, 16, 1, !0), new l({
+			color: 13146666,
+			roughness: .9,
+			side: 2
+		}));
+		r.scale.z = .85, r.position.y = .16, r.name = "Sash_Band", e.add(r);
+		let i = new M(new j(.09, 8, 6), n);
+		i.position.set(-.36, .15, .16), e.add(i);
+		for (let [n, r, i] of [[
+			.12,
+			.42,
+			.12
+		], [
+			.22,
+			.34,
+			.3
+		]]) {
+			let a = new M(new F(.03, r, .12), t);
+			a.position.set(-.4, .12 - r / 2, n), a.rotation.x = i * .3, a.rotation.z = -.1, e.add(a);
+		}
+		return e;
+	},
+	tollchain: () => {
+		let e = new A();
+		e.name = "Toll_Chain";
+		let t = V(13159632, .85, .3), n = V(6975092, .8, .45), r = V(14198856, .85, .3), i = new Ge([
+			[
+				-.34,
+				.25,
+				-.06
+			],
+			[
+				-.3,
+				.16,
+				.22
+			],
+			[
+				-.16,
+				0,
+				.4
+			],
+			[
+				0,
+				-.08,
+				.45
+			],
+			[
+				.16,
+				0,
+				.4
+			],
+			[
+				.3,
+				.16,
+				.22
+			],
+			[
+				.34,
+				.25,
+				-.06
+			],
+			[
+				0,
+				.3,
+				-.3
+			]
+		].map((e) => new P(...e)), !0), a = new P(), o = new P();
+		for (let r = 0; r < 26; r++) {
+			i.getPointAt(r / 26, a), i.getTangentAt(r / 26, o);
+			let s = new M(new I(.04, .016, 4, 8), r % 2 ? n : t);
+			s.scale.x = 1.5, s.position.copy(a), s.quaternion.setFromUnitVectors(new P(1, 0, 0), o), r % 2 && s.rotateX(Math.PI / 2), s.name = "Toll_Chain_Link", e.add(s);
+		}
+		let s = new A();
+		s.position.set(0, -.12, .47), s.rotation.x = -.2, s.name = "Toll_Chain_Key", e.add(s);
+		let c = new M(new I(.06, .022, 5, 12), r);
+		c.position.y = 0, s.add(c);
+		let l = new M(new F(.035, .28, .03), r);
+		l.position.y = -.2, s.add(l);
+		let u = new M(new F(.09, .07, .03), r);
+		return u.position.set(.05, -.31, 0), s.add(u), e;
+	},
+	ledger: () => {
+		let e = Hc.book();
+		return e.name = "Toll_Ledger", e.traverse((e) => {
+			e.isMesh && e.material.color.getHex() === 5906464 && (e.material = V(2372698, 0, .8));
+		}), e;
+	},
+	quayhook: () => {
+		let e = new A();
+		e.name = "Quay_Hook";
+		let t = V(9071172, 0, .8), n = V(5922402, .8, .45), r = V(15525072, 0, .85), i = V(10127968, 0, .95), a = new M(new k(.04, .045, 1.9, 7), t);
+		a.position.y = .38, e.add(a);
+		let o = new M(new L(.05, .28, 6), n);
+		o.position.y = 1.46, e.add(o);
+		let s = new M(new I(.13, .034, 5, 10, Math.PI * 1.1), n);
+		s.position.set(0, 1.26, .13), s.rotation.set(0, Math.PI / 2, Math.PI * .55), e.add(s);
+		let c = new M(new k(.06, .06, .1, 8), n);
+		c.position.y = 1.28, e.add(c);
+		let l = new M(new I(.055, .02, 4, 10), r);
+		l.rotation.x = Math.PI / 2, l.position.y = 1.12, e.add(l);
+		for (let [t, n] of [[-1, .36], [1, .28]]) {
+			let i = new M(new F(.07, n, .015), r);
+			i.position.set(t * .05, 1.12 - n / 2, .03), i.rotation.z = t * .25, i.name = "Quay_Hook_Ribbon", e.add(i);
+		}
+		let u = new M(new I(.07, .022, 5, 10), i);
+		return u.rotation.x = Math.PI / 2, u.position.y = .2, e.add(u), e;
+	},
+	sisterveil: () => {
+		let e = $c({
+			name: "Sister_Veil",
+			cloth: 9079430,
+			shade: 3815992,
+			open: .8,
+			rz: .66,
+			tip: 0
+		}), t = V(15525072, 0, .85), n = Zc(.66, .7), r = new M(new I(1, .045, 5, 32, Math.PI), t);
+		r.rotation.x = Math.PI / 2 + .12, r.scale.set(n.hx * .98, .505 - n.cz, 1), r.position.set(0, .7, n.cz), r.name = "Sister_Veil_Band", r.userData.onFace = !0, e.add(r);
+		let i = new M(new k(.5, .74, .95, 16, 1, !0, Math.PI * .6, Math.PI * .8), new l({
+			color: 9079430,
+			roughness: .92,
+			side: 2
+		}));
+		return i.position.set(0, .18, -.12), i.name = "Sister_Veil_Cloth", e.add(i), e;
+	}
 };
 function Uc({ name: e, cloth: t, strap: n, z: r = .33 }) {
 	let i = new A();

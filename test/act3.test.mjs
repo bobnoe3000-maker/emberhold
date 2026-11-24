@@ -215,7 +215,7 @@ test('Kell\'s Rest\'s two wait at the Assay Yards\' gate (GDD v1.132: the depot 
   assert.equal(sim.state.quests.ch3_paid_by_weight.step, 1, 'then on to the Weighmaster');
 });
 
-test('Act III played on: Paid by Weight (Hob → Dagny), Gone Back to Work (Mother Coke), Night Shift (Vane runs, and it counts), Quota (Tamsin → Dagny); then it\'s over', () => {
+test('Act III played on: Paid by Weight (Hob → Dagny), Gone Back to Work (Mother Coke), Night Shift (Vane runs, and it counts), Quota (Tamsin → Dagny); then Ilse has Act IV', () => {
   const sim = after2(30, 'town', 'reach'); doneTo(sim, 'ch3_paid_by_weight');
   withTamsin(sim);
   const ev = events(sim, ['questReward', 'dialogue']);
@@ -239,7 +239,7 @@ test('Act III played on: Paid by Weight (Hob → Dagny), Gone Back to Work (Moth
   play('ch3_night_shift', 'dagny_coalbrook', 'dagny_coalbrook', { id: 'morrow_vane', fled: true }, 'cinderworks', 1);   // (his furnace hall, the second floor)
   play('ch3_quota', 'tamsin', 'dagny_coalbrook', { id: 'stoker' }, 'cinderworks', 1);
   assert.deepEqual(ev.filter((e) => e.n === 'questReward').map((e) => e.gold), [520, 580, 620, 700]);
-  assert.deepEqual(storyStatus(sim.state, (id) => sim.quests.status(id)), { kind: 'end', region: 'reach' }, 'Act III is done');
+  assert.deepEqual(storyStatus(sim.state, (id) => sim.quests.status(id)), { kind: 'next', id: 'ch4_consigned', giver: 'sister_ilse', town: 'Thornwick' }, 'Act III is done: Ilse has Act IV (v1.150)');
 });
 
 test('the chapters wait for their bands, and Quota is Tamsin\'s: from her card, while she\'s with you', () => {

@@ -7761,5 +7761,592 @@
     ]
    }
   }
+ },
+ {
+  "id": "TM1",
+  "cls": "Tidemark",
+  "label": "Drowned sailor \u00b7 the Drowned Mole (the imperial fleet's, under Lucan's orders: a tarred canvas vest and collar, a tarpaulin hat, weed on him, a boarding axe; the drowned's sea-green bone)",
+  "model": "Skeleton_Rogue",
+  "hold": {
+   "handslot.r": "boardingaxe"
+  },
+  "wear": {
+   "chest": "sailrig",
+   "head": "tarhat"
+  },
+  "hide": [
+   "Skeleton_Rogue_Hood",
+   "Skeleton_Rogue_Cape"
+  ],
+  "eyes": "0x7ad8e8",
+  "skull": true,
+  "swatches": [
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#b4d4b0",
+     "#34503c"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     0
+    ],
+    "to": [
+     "#e0d4b0",
+     "#5a5038"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#2e3a4a",
+     "#0c1018"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     0
+    ],
+    "to": [
+     "#22201e",
+     "#0a0908"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#2e3a4a",
+     "#0c1018"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "TM2",
+  "cls": "Tidemark",
+  "label": "Gull Fleet corsair \u00b7 the Drowned Mole (a cutlass, the fleet's gull-yellow headscarf and sash over a sea-grey shirt and tarred breeches)",
+  "model": "Rogue",
+  "show": [],
+  "hold": {
+   "handslot.r": "cutlass"
+  },
+  "wear": {
+   "head": "headscarf",
+   "hips": "sash"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#b8bcbc",
+     "#3e4244"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#2a2c30",
+     "#0c0c0e"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2a2c30",
+     "#0c0c0e"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2a2220",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#2a2c30",
+     "#0c0c0e"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#5a4632",
+     "#1e160e"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#5a4632",
+     "#1e160e"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#2a2c30",
+     "#0c0c0e"
+    ]
+   }
+  ],
+  "face": "corsair"
+ },
+ {
+  "id": "TM3",
+  "cls": "Tidemark",
+  "label": "Gull Fleet gunner \u00b7 the Drowned Mole (a pistol-crossbow, a black tricorne bound in the fleet's yellow, a long dark coat, a bolt case)",
+  "model": "Rogue",
+  "show": [
+   "1H_Crossbow",
+   "Rogue_Cape"
+  ],
+  "wear": {
+   "head": "tricorne",
+   "hips": [
+    "sash",
+    "boltcase"
+   ]
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#3a4048",
+     "#101418"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#2a2e36",
+     "#0c0e12"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2a2c30",
+     "#0c0c0e"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2a2220",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#2a2c30",
+     "#0c0c0e"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#5a4632",
+     "#1e160e"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#5a4632",
+     "#1e160e"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#3a4048",
+     "#101418"
+    ]
+   }
+  ],
+  "face": "gunner",
+  "pose": [
+   "1H_Ranged_Aiming",
+   0.5
+  ]
+ },
+ {
+  "id": "TM4",
+  "cls": "Tidemark",
+  "label": "The drowned bosun \u00b7 the Drowned Mole's elite (big, a navy pea-coat gone to rags, his chain over his shoulder and the grapnel-chain he swings; the drowned's sea-green bone)",
+  "model": "Skeleton_Warrior",
+  "hold": {
+   "handslot.r": "anchorchain"
+  },
+  "wear": {
+   "chest": "chainsash"
+  },
+  "hide": [
+   "Skeleton_Warrior_Helmet"
+  ],
+  "eyes": "0x7ad8e8",
+  "skull": true,
+  "swatches": [
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#b4d4b0",
+     "#34503c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#34425a",
+     "#0e1420"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     0
+    ],
+    "to": [
+     "#22201e",
+     "#0a0908"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#2e3a4a",
+     "#0c1018"
+    ]
+   }
+  ],
+  "height": 1.14,
+  "frame": {
+   "scale": {
+    "chest": 1.16,
+    "head": 0.9
+   }
+  }
+ },
+ {
+  "id": "TB1",
+  "cls": "Boss",
+  "label": "The Harbourmaster \u00b7 the Drowned Mole (the imperial harbour's master, drowned at his post: a harbour-blue coat in tarnished gold, a bicorne, the berths' book under his arm, the berth-pole and its sea-green lamp)",
+  "model": "Skeleton_Mage",
+  "hold": {
+   "handslot.r": "harbourpole",
+   "handslot.l": "berthsbook"
+  },
+  "wear": {
+   "head": "bicorne"
+  },
+  "hide": [
+   "Skeleton_Mage_Hat"
+  ],
+  "eyes": "0x9ae8d8",
+  "skull": true,
+  "swatches": [
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#b4d4b0",
+     "#34503c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#2a3a5a",
+     "#0c1220"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     0
+    ],
+    "to": [
+     "#c8a048",
+     "#4a3410"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#1e2430",
+     "#0a0c10"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     0
+    ],
+    "to": [
+     "#22201e",
+     "#0a0908"
+    ]
+   }
+  ],
+  "height": 1.08
+ },
+ {
+  "id": "N29",
+  "cls": "NPC",
+  "label": "Hester Quaile \u00b7 Speaker of the Tidemark League, harbourmistress of Tollhaven (a long harbour-blue sea-coat, the Speaker's toll-chain with its key, the League's ledger)",
+  "model": "Rogue",
+  "show": [
+   "Rogue_Cape"
+  ],
+  "hold": {
+   "handslot.r": "ledger"
+  },
+  "wear": {
+   "chest": "tollchain"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#3e5478",
+     "#121a2c"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#24324c",
+     "#0a0e18"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#3e5478",
+     "#121a2c"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2a2220",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#3e5478",
+     "#121a2c"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#c8a048",
+     "#4a3410"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#3a2a1e",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#3e5478",
+     "#121a2c"
+    ]
+   }
+  ],
+  "face": "hester_quaile",
+  "height": 0.94
+ },
+ {
+  "id": "CP4",
+  "cls": "Companion",
+  "label": "Sister Maren \u00b7 a Grey Sister, chaplain on the quays (the order's grey habit, a slate oilskin cape for the weather, a grey veil, her quay hook with its prayer-ribbon)",
+  "model": "Mage",
+  "show": [
+   "Mage_Cape"
+  ],
+  "hold": {
+   "handslot.r": "quayhook"
+  },
+  "wear": {
+   "head": "sisterveil"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#a4a49c",
+     "#46463f"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#3e4e56",
+     "#141c20"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#5e6a72",
+     "#22282c"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#4a3e30",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#3e3a36",
+     "#141210"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#c8c0a8",
+     "#5a5444"
+    ]
+   }
+  ],
+  "face": "maren",
+  "height": 0.92
  }
 ]

@@ -27,6 +27,7 @@ export const PAR = {
   barrows: [9, 14], wickham_keep: [12, 18], sunken_chapel: [14, 20],   // (medians 8.8, 11.6, 13.2 min; the Proving Pens are a trial: no stars)
   toadking_mound: [14, 20], canal_locks: [14, 21], drowned_abbey: [15, 22],   // (13.2, 13.5, 14.5)
   cold_seam: [14, 21], assay_yards: [15, 23], cinderworks: [16, 23],   // (14.0, 15.0, 15.3: re-measured for v1.144's Reach in three, two levels a floor)
+  drowned_mole: [12, 18],   // (v1.150, the Tidemark: 11.8)
   // one floor, no boss, and the secrets: pace.mjs walked to their end as the stars do (v1.146: the end room's chest, or the
   // vault), 3 seeds: medians 3.9, 5.0 (the inn, once its cellar hall had its chest), 6.6, 3.9, 7.5 min
   haddow_crypt: [4, 6], shuttered_inn: [5, 8],

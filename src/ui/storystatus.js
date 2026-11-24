@@ -44,6 +44,7 @@ export function storyStatus(state, status) {
 export function openLeads(state, status, region = 'vale') {
   if (region === 'fens') return fensLeads(state, status);
   if (region === 'reach') return reachLeads(state, status);
+  if (region === 'tidemark') return tidemarkLeads(state);
   const out = [], has = (s, k) => (s instanceof Set ? s.has(k) : Array.isArray(s) ? s.includes(k) : !!(s && s[k]));
   const bosses = state.bosses || {}, entered = state.sitesEntered, revealed = state.revealed, company = [...state.party, ...(state.bench || [])];
   if (bosses.redhand_captain && FOUND.brannoc && !company.some((m) => m.id === 'brannoc')) out.push({ id: 'brannoc' });
@@ -85,6 +86,15 @@ function reachLeads(state, status) {
   if (!has(state.revealed, 'ninth_vault') && found < reach.length) out.push({ id: 'reachchronicle', n: found, of: reach.length });
   if (has(state.revealed, 'ninth_vault') && !has(state.sitesEntered, 'ninth_vault')) out.push({ id: 'ninthvault' });
   out.push(...trialLeads(status, 24), { id: 'reachboard' });
+  return out;
+}
+
+// the Tidemark (world doc v1.69 §3.7; the first band, GDD v1.150): the Harbourmaster on the Drowned Mole, then Maren in
+// his office. (No trials here: the owner, no class trial at 36; no board yet.)
+function tidemarkLeads(state) {
+  const out = [], bosses = state.bosses || {}, company = [...state.party, ...(state.bench || [])];
+  if (!bosses.harbourmaster) out.push({ id: 'harbourmaster' });
+  else if (FOUND.maren && !company.some((m) => m.id === 'maren')) out.push({ id: 'maren' });
   return out;
 }
 

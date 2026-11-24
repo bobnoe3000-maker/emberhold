@@ -84,6 +84,11 @@ export const NPCS = {
   // Tamsin Coalbrook, Dagny's niece, a mage-smith: held at the goblins' anvil in the Cold Seam's tally cave (floor 2's
   // hall) by the Foreman, for the forge-work she can do (world doc v1.53); joins once he falls
   tamsin: { region: 'reach', found: { site: 'cold_seam', depth: 1, boss: 'foreman' }, spots: [], knot: 'tamsin_hub', flags: ['met_tamsin'] },
+  // (v1.150, the Tidemark: world doc v1.69 §3.7) Hester Quaile, Speaker of the League and harbourmistress of Tollhaven,
+  // by the Paid Toll's door, as Dagny stands at the Bellows'; Sister Maren, a Grey Sister, the quays' chaplain, holding the
+  // Drowned Mole's harbour office (floor 2's offshoot) against the drowned until the Harbourmaster falls, then she joins
+  hester_quaile: { region: 'tidemark', spots: [['tavern', [10, 1]]], knot: 'quaile_hub', flags: ['met_quaile'], kin: ['maren'] },
+  maren: { region: 'tidemark', found: { site: 'drowned_mole', depth: 1, boss: 'harbourmaster' }, spots: [], knot: 'maren_hub', flags: ['met_maren'] },
   // (v1.54, world doc §3.3 "Kell's Rest's people"; v1.57) Kell's Rest is the depot on the Reach, not a town (GDD v1.132): its
   // two are met at the Assay Yards' gate, in the way in (as Tobin is at the barrow mouth), and stay: Nan Ruddock with
   // what's left of the Redhand, and Davy Pruett, the Assay's clerk, through whom Hob's pass comes (Paid by Weight).

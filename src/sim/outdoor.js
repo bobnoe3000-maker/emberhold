@@ -1347,10 +1347,13 @@ function buildTidemark(seed) {
     { low: ['ug_grass_1', 'ug_grass_2', 'ug_grass_1'], solid: ['rock_F', 'rock_G'], foot: ['ug_grass_2'] });
 
   o.exits.push({ x0: tollhaven[0] + 1, y0: tollhaven[1] - 4, x1: tollhaven[0] + 8, y1: tollhaven[1] + 4, to: 'town', arrive: 'overland' });
+  // the Drowned Mole's door, at the end of Gullwick's ferry jetty: the ferryman rows a company out (v1.150)
+  o.exits.push({ x0: ferry[0] - 3, y0: ferry[1] - 3, x1: ferry[0] + 3, y1: ferry[1] + 1, to: 'dungeon', site: 'drowned_mole' });
   // the imperial road west, into Solmere (a crossroads: GDD v1.150, core.js)
   o.exits.push({ x0: -11, y0: cross[1] - 9, x1: -4, y1: cross[1] + 9, to: 'solmere' });
   o.arrivals = { default: { x: tollhaven[0] - 14.5, y: tollhaven[1] + 0.5 }, tollhaven: { x: tollhaven[0] - 14.5, y: tollhaven[1] + 0.5 }, solmere: { x: 4.5, y: cross[1] + 0.5 },
-    brine_cross: { x: BRIDGE[0] + 22.5, y: cross[1] + 0.5 }, gullwick: { x: gullwick[0] + 0.5, y: gullwick[1] - 2.5 } };
+    brine_cross: { x: BRIDGE[0] + 22.5, y: cross[1] + 0.5 }, gullwick: { x: gullwick[0] + 0.5, y: gullwick[1] - 2.5 },
+    drowned_mole: { x: ferry[0] - 2.5, y: ferry[1] - 8.5 } };   // (back up the jetty, off the door)
   o.spawn = o.arrivals.default;
   return o;
 }

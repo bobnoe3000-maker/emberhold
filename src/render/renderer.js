@@ -59,11 +59,15 @@ const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', ro
   // cinder hounds (built in code), the Cult's furnace-priests; the Reach's bosses, and Furnace Nine, the region boss)
   assay_guard: 'enemy_assay_guard', assay_xbow: 'enemy_assay_xbow', renegade: 'enemy_renegade', forgewight: 'enemy_forgewight',
   cinderhound: 'creature_cinderhound', furnacepriest: 'enemy_furnacepriest',
-  weighmaster: 'boss_weighmaster', oruth: 'boss_oruth', morrow_vane: 'boss_morrow_vane', stoker: 'boss_stoker', furnace_nine: 'boss_furnace_nine', first_pilgrim: 'boss_first_pilgrim' };   // (v1.53) the Cold Seam's: a slag hauler, the hod on his back; Gritch, a goblin in a dead foreman's lamp-hat   // (v1.105) the Kingstone: the golem drawn twice its size (BIG), four times a man
+  weighmaster: 'boss_weighmaster', oruth: 'boss_oruth', morrow_vane: 'boss_morrow_vane', stoker: 'boss_stoker', furnace_nine: 'boss_furnace_nine', first_pilgrim: 'boss_first_pilgrim',
+  // (v1.150, the Drowned Mole: docs/tidemark-plan.md's build sheet; tools/actor-lab variants TM1–TM4, TB1) the drowned
+  // sailors in tarred canvas and tarpaulin hats, the Gull Fleet's corsairs (a cutlass, the fleet's yellow headscarf and
+  // sash) and gunners (a pistol-crossbow, a tricorne), the drowned bosun with his chain, the Harbourmaster with his book
+  sailor: 'enemy_sailor', corsair: 'enemy_corsair', gunner: 'enemy_gunner', bosun: 'enemy_bosun', harbourmaster: 'boss_harbourmaster' };   // (v1.53) the Cold Seam's: a slag hauler, the hod on his back; Gritch, a goblin in a dead foreman's lamp-hat   // (v1.105) the Kingstone: the golem drawn twice its size (BIG), four times a man
 // the Mere Tower's wardens (sim tower.js): baked tall as the bosses are (tools/actor-lab variants W1–W10), named on the boss bar
 for (const id of Object.keys(WARDENS)) ENEMY_ACTOR[id] = 'boss_' + id.slice('warden_'.length);
 const BIG = /** @type {Record<string, number>} */ ({ kingstone: 2, furnace_nine: 1.54, first_pilgrim: 1.5 });   // (v1.147 the First Pilgrim: baked 2.7 men, drawn four)   // (Furnace Nine: baked tall as a boss, 2.6 men, drawn to the Kingstone's four)   // a kind drawn larger than its actor's model (hybrid.js: the figure's scale)
-const UNDEAD_LOOK = new Set(SKELETONS.concat(['enemy_forgewight', 'boss_oruth', 'boss_standard', 'boss_quartermaster', 'drowned_brother', 'drowned_cantor', 'boss_bellringer', 'boss_hush', 'boss_watcher', 'boss_starroom', 'boss_choir', 'boss_abbess']));   // (they rise from the ground and shamble)
+const UNDEAD_LOOK = new Set(SKELETONS.concat(['enemy_forgewight', 'boss_oruth', 'boss_standard', 'boss_quartermaster', 'drowned_brother', 'drowned_cantor', 'boss_bellringer', 'boss_hush', 'boss_watcher', 'boss_starroom', 'boss_choir', 'boss_abbess', 'enemy_sailor', 'enemy_bosun', 'boss_harbourmaster']));   // (they rise from the ground and shamble)
 // walk-cycle length in tiles (one full loop of the baked walk clip): frames advance with
 // distance, so this sets the stride — hero/companion run (Running_A), skeleton shamble
 const STRIDE = { hero: 4.5, skel: 3.2, walk: 2.2 };   // tiles a cycle, from the baked feet: the party's run ~50 px of screen travel, the Ashbound's shuffle ~36 px;
@@ -1183,7 +1187,8 @@ export function createRenderer(canvas, sim, input) {
     ring: ['stands', 'red on the ground: get out of it before it lands'],   // (the Kingstone, GDD §19 v1.105)
     chutes: ['blows the whistle', 'the shift\'s load comes down on the crosses: step off them'],
     scales: ['weighs you', 'the one with the most life left pays: step off the pan'], anvil: ['goes to his anvil', 'strike him while he works, or a wight rises re-armed'],
-    flee: ['will not be taken', 'he runs before he falls'], vents: ['opens the vents', 'the floor glows where the slag comes up: step off it'] };   // (the Foreman, v1.124)
+    flee: ['will not be taken', 'he runs before he falls'], vents: ['opens the vents', 'the floor glows where the slag comes up: step off it'],
+    tide: ['calls the tide in', 'the drowned mend in the water: keep to the middle'] };   // (the Harbourmaster, v1.150)   // (the Foreman, v1.124)
   sim.bus.on('bossWave', ({ id, name }) => { const B = BOSSES[id]; banner = { text: name, sub: (bossLine[B.mech] || ['', ''])[1], until: clock() + 3200 }; });   // (a mechanic with no line yet: the name alone, never a throw)
   // (named from the boss: the Mere Tower's wardens call, drum and kindle too)
   const bossName = (id) => ({ redhand_captain: 'Garrow', goblin_chief: 'Skarn', robed_stranger: 'The Stranger' })[id] || (BOSSES[id] ? BOSSES[id].name : 'The warden');

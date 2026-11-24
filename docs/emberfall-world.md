@@ -699,7 +699,7 @@ The east coast: the **Tidemark League** of free ports, and inland the walled mar
 - **The cut (v1.69; [tidemark-plan.md](./tidemark-plan.md)).** Three band dungeons of five levels and a secret:
   - **the Drowned Mole** (31–35): floor 1 the old wharf (the ferry stage, the fish market, the net stage, the customs
     shed, the long jetty); floor 2 the moles at low tide (the sea-wall stair, the inner mole, the wreck yard, the
-    harbour office, the outer mole's end, **the Harbourmaster**). Sister Maren is found holding the customs shed.
+    harbour office, the outer mole's end, **the Harbourmaster**). Sister Maren is found holding the harbour office, on the moles.
     Lucan sings the fleet up from the outer mole's lamp-stand.
   - **the Gull Isles** (36–40): the sea cave (the boat landing, the stores, the long gallery, the strongroom, the
     careening beach), then the hulks (the gangway, the gun deck, the hold, the wardroom, the great cabin, **Admiral

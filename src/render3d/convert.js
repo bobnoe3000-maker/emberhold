@@ -580,6 +580,10 @@ const DOCK_FILL = { sky: [0.62, 0.74, 0.98], ground: [0.34, 0.33, 0.36], lamps: 
 const RAMP_FILL = { sky: [0.86, 0.92, 1.06], ground: [0.46, 0.43, 0.4], lamps: 2.2 };
 KIT_LOOK.ramparts = { floor: ['{', '{'], wall: ']', cave: ']', hour: 21.6, mix: 0, inside: true, ramparts: true, fill: RAMP_FILL, backdrop: '#3a4656' };   // (round 2: night proper, so the houses' windows light)   // (round 1: a later hour, the windows lit; the drop's fog a mid tone, not the brightest thing on screen)
 KIT_LOOK.docks = { floor: ['_', '_'], wall: 'o', cave: 'o', hour: 21.2, mix: 0, inside: true, water: true, fill: DOCK_FILL, backdrop: '#3e4d62' };   // (round 1: the distance blue-grey, not black; round 2, lighter than the deck)
+// (v1.150) the Drowned Mole's second floor (docs/tidemark-plan.md): the empire's stone moles at low water, the same harbour
+// round them as the wharf's; wet flagstone, the stone's own face down to the water (no deck fascia, piles or rail), the
+// bollards and the mist kept; a later dusk than the wharf's, the lamps just lit
+KIT_LOOK.mole = { floor: ['w', 'w'], wall: 'o', cave: 'o', hour: 19.4, mix: 0, inside: true, water: true, stone: true, fill: DOCK_FILL, backdrop: '#465870' };
 const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KIT_LOOK.cellar, nave: KIT_LOOK.nave, cinder: KIT_LOOK.cultcut, chasm: { floor: ['U', 'm'], wall: 'x', hour: 22.8 },
   warren: KIT_LOOK.warren, ember: KIT_LOOK.ember, lava: KIT_LOOK.lava, mire: KIT_LOOK.mound, sluice: KIT_LOOK.locks, poison: KIT_LOOK.vats, water: KIT_LOOK.abbey };
 /** the fill's tint underground for the Reach's kits and themes (palette.js KIT_TINT holds the Vale's and the Fens'):
@@ -989,7 +993,7 @@ TAVERN_3D.tomb_y = TAVERN_3D.tomb; TAVERN_3D.pew_y = TAVERN_3D.pew;
 // carried on down as piles into the water; the near edges (south and east, between the camera and the fight) only a low
 // stringer and the piles' heads, a bollard now and then, so a fight is never behind a rail. Every choice a hash of the
 // tile: the same wharf every visit.
-function docksDress(W, D, open, add, trim, arches) {
+function docksDress(W, D, open, add, trim, arches, stone = false) {
   const clearOf = (x, z) => arches.every((a) => Math.abs(x - a.x) > a.span / 2 + 1.2 || Math.abs(z - a.z) > 2.5);
   // the harbour's mist (round 1: "the single strongest feature of the reference"): one layer on the water, none at the
   // decks' edges and thickening out to six tiles off them, by each water tile's distance from a deck (world.js)
@@ -1015,12 +1019,12 @@ function docksDress(W, D, open, add, trim, arches) {
     const runs = []; for (const t of ts) { const r = runs[runs.length - 1]; if (r && t === r[1]) r[1] = t + 1; else runs.push([t, t + 1]); }
     for (const [a, b] of runs) {
       const [x0, z0] = P(a), [x1, z1] = P(b);
-      trim.push({ k: 'dockedge', x0, z0, x1, z1, n, out, back });   // (the deck's edge board, its fascia down to the water)
-      for (let t = a; t <= b; t += 2) {
+      if (!stone) trim.push({ k: 'dockedge', x0, z0, x1, z1, n, out, back });   // (the deck's edge board, its fascia down to the water; a mole's is its own stone)
+      if (!stone) for (let t = a; t <= b; t += 2) {
         const [x, z] = P(Math.min(t, b)); if (!clearOf(x, z)) continue;
         trim.push({ k: 'pile', x, z, n, out, back, seed: hash('dp', key, t) % 997 });
       }
-      if (back && b - a >= 2) trim.push({ k: 'dockrail', x0, z0, x1, z1, n, out });
+      if (back && b - a >= 2 && !stone) trim.push({ k: 'dockrail', x0, z0, x1, z1, n, out });
       if (!back) for (let t = a + 3; t <= b - 3; t += 7) { const [x, z] = P(t); if (clearOf(x, z) && hash('db', key, t) % 2) trim.push({ k: 'bollard', x, z, n, out }); }
       if (back) for (let t = a + 2; t < b - 1; t += 5) { if (hash('dr', key, t) % 3) continue; const [x, z] = P(t + 0.5); trim.push({ k: 'reeds', x: r2(x + (along ? 0 : out * 1.0)), z: r2(z + (along ? out * 1.0 : 0)), seed: hash('ds', key, t) % 997 }); }   // (reeds up against the back piles, round 1)
     }
@@ -1219,7 +1223,7 @@ function dungeon(w, o = {}) {
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; const o = { id: `${ob.type}_${count[ob.type]}`, ...ob }; objects.push(o); return o; };
   const drop = (o) => { const i = objects.indexOf(o); if (i >= 0) objects.splice(i, 1); };   // (a lantern's light gone with it: a corner's stores take its bay)
   const trim = inside ? [] : null;
-  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim); if (look.water) docksDress(W, D, open, add, trim, stairLights.arches || []); if (rampart) rampartsDress(W, D, open, rampart, add, trim, stairLights.arches || []); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
+  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim); if (look.water) docksDress(W, D, open, add, trim, stairLights.arches || [], !!look.stone); if (rampart) rampartsDress(W, D, open, rampart, add, trim, stairLights.arches || []); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
   if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h) { add({ ...c.ob(X, Z), onWall: true }); if (c.sprite) sprites.push(c.sprite); }   // (onWall: on a wall's top, not the room's own)   // (what stands on the walls' tops, where the stairs didn't take the wall)
   for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity * (look.fill ? 0.45 : 1), distance: l.glow.distance * (look.fill ? 0.7 : 1), flicker: 0.08, nightOnly: false }
     : { type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });

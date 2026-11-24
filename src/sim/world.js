@@ -62,6 +62,9 @@ export const DRESS = {
   // (the owner, 2026-11-23: "two new level dressing types, docks and harbor": plans.js old_eel_wharf, docs/docks-dungeon.md;
   // a wharf's decks over open water, no walls: what's past a deck's edge is the harbour, convert.js)
   docks:    { rooms: ['storehouse', 'storehouse', 'storehouse'], decor: ['barrels', 'crates', 'lantern'], obstacles: ['pillar'] },
+  // (v1.150, docs/tidemark-plan.md) the Drowned Mole's second floor: the empire's stone moles at low water, weed to the tide
+  // line, the hulls dragged up to break and never broken; the water all round (convert.js), as the wharf's
+  mole:     { rooms: ['storehouse', 'storehouse', 'storehouse'], decor: ['barrels', 'chains', 'lantern'], obstacles: ['pillar'] },
   // (the owner, 2026-11-23: "the reaches, high up on the ramparts": plans.js high_ramparts, docs/ramparts-dungeon.md; a
   // walled town's terraces high on its ramparts, the houses at their backs and a parapet over the drop at their fronts)
   ramparts: { rooms: ['storehouse', 'storehouse', 'storehouse'], decor: ['barrels', 'crates', 'torch'], obstacles: ['pillar'] },
@@ -107,11 +110,11 @@ export const DRESS_CAP = { tomb: 6, great_tomb: 1, mourner: 2, offering: 1, hear
  *  gate-warden's chapel, a monolith in the legion's vault, said nothing) */
 const PLAN_OB = { dig: ['spoil', 'brokenpillar'], gallery: ['pillar', 'brokenpillar'], muster: ['pillar'], bailey: ['pillar'], barracks: ['pillar'], cellar: ['stalagmite', 'boulder'], nave: ['pillar', 'brokenpillar'], cultcut: ['brokenpillar', 'spoil'], binding: ['pillar'],
   mound: ['reeds'], locks: ['pillar'], vats: ['pillar'], abbey: ['pillar', 'brokenpillar'], pithead: ['boulder', 'spoil'], warren: ['stalagmite', 'boulder'],
-  yards: ['pillar', 'spoil'], quota: ['pillar'], forge: ['pillar', 'brokenpillar'], deepforge: ['pillar'], works: ['pillar', 'spoil'], vault: ['stalagmite', 'boulder'], strongroom: ['pillar'], tavern: [], tavern_cellar: [], crypt: [], ossuary: [], docks: [], ramparts: [] };   // (the tavern: nothing stood out in its floors, which are for the fight)   // (v1.126)   // (v1.124: the Cold Seam)   // (v1.102: the Fens authored)
+  yards: ['pillar', 'spoil'], quota: ['pillar'], forge: ['pillar', 'brokenpillar'], deepforge: ['pillar'], works: ['pillar', 'spoil'], vault: ['stalagmite', 'boulder'], strongroom: ['pillar'], tavern: [], tavern_cellar: [], crypt: [], ossuary: [], docks: [], mole: [], ramparts: [] };   // (the tavern: nothing stood out in its floors, which are for the fight)   // (v1.126)   // (v1.124: the Cold Seam)   // (v1.102: the Fens authored)
 const DOOR_LIGHT = { dig: 'lantern', gallery: 'candles', muster: 'torch', bailey: 'torch', barracks: 'torch', cellar: 'lantern', nave: 'candelabra', cultcut: 'candles', binding: 'candles',
   mound: 'lantern', locks: 'lantern', vats: 'lantern', abbey: 'candelabra', pithead: 'lantern', warren: 'torch',
-  yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra', tavern: 'torch', tavern_cellar: 'candles', crypt: 'candles', ossuary: 'candles', docks: 'lantern', ramparts: 'torch' };   // (the crypt's doorways a low pricket: a candelabrum crowded the threshold, round 3)   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
-const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave', yards: 'storehouse', quota: 'cellar', forge: 'muster', deepforge: 'binding', works: 'storehouse', vault: 'cave', strongroom: 'muster', tavern: 'storehouse', tavern_cellar: 'storehouse', crypt: 'crypt', ossuary: 'ossuary', docks: 'storehouse', ramparts: 'storehouse' };
+  yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra', tavern: 'torch', tavern_cellar: 'candles', crypt: 'candles', ossuary: 'candles', docks: 'lantern', mole: 'lantern', ramparts: 'torch' };   // (the crypt's doorways a low pricket: a candelabrum crowded the threshold, round 3)   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
+const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave', yards: 'storehouse', quota: 'cellar', forge: 'muster', deepforge: 'binding', works: 'storehouse', vault: 'cave', strongroom: 'muster', tavern: 'storehouse', tavern_cellar: 'storehouse', crypt: 'crypt', ossuary: 'ossuary', docks: 'storehouse', mole: 'storehouse', ramparts: 'storehouse' };
 const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', crates: 'crates', sacks: 'sacks', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', skulls: 'bones', bones: 'bones', barrels: 'barrels' };
 function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, count }) {
   // every piece through the room's caps (CAP): a recipe can't stand a second well or a fifth torch
@@ -260,7 +263,16 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       case 'dock_ropes': for (const [u, v] of [[-0.35, -1], [0.2, -1], [-0.6, 1], [0.05, 1]]) putAt(u * L, v * (Wd - 0.5), 'rope'); putAt(L * 0.4, -(Wd - 1), 'net'); putAt(-L * 0.25, Wd - 1, 'net'); break;
       case 'fish_market': for (let u = -L * 0.55; u <= L * 0.25 + 0.01; u += 5) putAt(u, -Wd, 'fishcrates'); for (const s of [-1, 1]) putAt(s * (L - 1), 0, 'fishcrates'); break;   // (the morning's catch in its crates along the back, never collected)
       case 'moorings': putAt(L * 0.35, -Wd, 'boat'); break;   // (a boat tied up off the back edge, in the water where the camera sees it: convert.js; at the near edge it was below the frame, round 2)
-      case 'crane': unit(-L * 0.3, -Wd + 1, -1, 1, -1, 0, 'crane'); break;   // (round 3: into the frame, clear of the boat)   // (the wharf's derrick at the back edge, a net of cargo on its hook)
+      case 'crane': unit(-L * 0.3, -Wd + 1, -1, 1, -1, 0, 'crane'); break;
+      // ── the moles (v1.150; plans.js drowned_mole, floor 2): the stone at low water. As the wharf, every piece at an edge
+      // and the middle left for the fight: the harbour lamps on their posts, rope coiled at the bollards, the anchors' chain
+      // laid out, the tide's pools on the stone, the wrecks along the back, the lamp-stand at the mole's end
+      case 'mole_lamps': for (const s of [-1, 1]) putAt(s * (L - 1), -Wd, 'lantern'); putAt(-L * 0.55, Wd, 'lantern'); break;
+      case 'bollards': for (const [u, v] of [[-0.45, -1], [0.3, -1], [-0.1, 1], [0.6, 1]]) putAt(u * L, v * (Wd - 0.5), 'rope'); break;
+      case 'anchors': putAt(L * 0.5, -(Wd - 1), 'chains'); putAt(-L * 0.6, Wd - 1, 'chains'); break;
+      case 'weed': for (const [u, v] of [[-0.3, -0.4], [0.35, 0.3], [-0.65, 0.3], [0.55, -0.35]]) putAt(u * L, v * Wd, 'puddle'); break;
+      case 'wrecks': for (let u = -L * 0.5, i = 0; u <= L * 0.5 + 0.01 && i < 3; u += 12, i++) putAt(u, -Wd, 'boat'); break;
+      case 'lamp_stand': putAt(0, -Wd, 'brazier'); break;   // (where Lucan sang: the mole's lamp, lit by nobody)   // (round 3: into the frame, clear of the boat)   // (the wharf's derrick at the back edge, a net of cargo on its hook)
       // ── the ramparts (the owner, 2026-11-23: "the reaches, high up on the ramparts", a reference; plans.js high_ramparts,
       // docs/ramparts-dungeon.md): a walled town's terraces up on its walls, the houses along their backs (convert.js), a
       // parapet over the drop at their fronts. Every piece by the houses or the parapet, the middle left for the fight: torches

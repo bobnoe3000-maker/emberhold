@@ -1,0 +1,120 @@
+// quaile.ink — Hester Quaile, Speaker of the Tidemark League and harbourmistress of Tollhaven (world doc v1.69 §3.7),
+// by the Paid Toll's door. Everything that comes in under the chain pays, and she tolls talk the same way: a question
+// has its price, which she names and then waives (her one device: copy-review §8; at most once a knot). Not Hester
+// Lowe, the Vale's beekeeper (hester.ink). Act IV's main giver. Entry: quaile_hub. Bound in by src/story/adapter.js
+// from the sim (sim/npcs.js varsFor: with_maren 0 / 1, her chaplain with you, party or bench; core.js boss_<id>;
+// quests.js: q_ = −1 locked · 0 available · 1 active · 2 ready · 3 done, read before this conversation counts:
+// Consigned is a word with her, so it's ready by the time she reads Ilse's page). Flags: met_quaile.
+// Act IV: she takes in chapter 1, Consigned (Ilse's), and gives chapter 2, Low Water (docs/tidemark-plan.md).
+
+VAR hero_name = ""
+VAR hero_class = ""
+VAR hero_origin = ""
+VAR hero_level = 1
+VAR party_size = 1
+VAR fallen_name = ""
+VAR day_part = 0
+VAR flag_met_quaile = 0
+VAR with_maren = 0
+VAR boss_harbourmaster = 0
+VAR q_ch4_consigned = -1
+VAR q_ch4_low_water = -1
+
+== quaile_hub ==
+{ q_ch4_consigned == 1 || q_ch4_consigned == 2: -> quaile_consigned_meet }
+{ flag_met_quaile == 0: -> quaile_first_meet }
+{ fallen_name != "": -> quaile_greet_fallen }
+-> quaile_greet_back
+
+== quaile_first_meet ==
+A tall woman in a salt-stiff coat stands by the Paid Toll's door with a slate under her arm, watching the harbour chain as if it might try to leave without paying.
+"Hester Quaile. Harbourmistress, and Speaker of the League, which is the same work with more chairs." # flag: set met_quaile
+"Talk on this quay is a penny a question. The first one's free. The League likes a customer to come back."
+-> quaile_origin
+
+== quaile_origin ==
+{
+- hero_origin == "deepdelver_fostered":
+    "Clan-raised, and this far from a mountain. You'll hate the sea for a week. Everyone from under a hill does. Then you'll only dislike it, like the rest of us."
+- hero_origin == "redhand_deserter":
+    "Redhand. Your old Company went up the Highmarch road this spring with a cart of crossbows, and paid my gate in full. I've never known the Redhand pay anything in full. It worries me."
+- hero_origin == "grey_sisters_ward":
+    "A Sisters' ward. Our chaplain's one of yours. She prays for everything on this quay and charges for none of it. It's bad for trade."
+- hero_origin == "thornwick_born":
+    "Thornwick. Your wool comes through here on its way to everywhere, and pays wharfage going out and again coming back as cloth. I like Thornwick."
+- else:
+    "You're from inland. You keep looking at the water to see if it's moving. It is. Stand back from the edge."
+}
+-> quaile_topics
+
+// ── Consigned (content/quests/ch4_consigned.json, given by Ilse): a word with her, and she takes it in ──
+== quaile_consigned_meet ==
+// (the first line says nothing to the sim: a line with effects is where the story waits and comes back with the sim's
+// variables, and coming back to this knot's first line would start the talk over from the hub, as dagny.ink explains)
+{ flag_met_quaile == 0: A tall woman in a salt-stiff coat stands by the Paid Toll's door with a slate under her arm, watching the harbour chain. | Hester Quaile is by the Paid Toll's door, watching the harbour chain. }
+You show her Ilse's copy of the ledger's last page. She reads the line about the freight, and her mouth goes thin. # flag: set met_quaile
+"Hester Quaile. Speaker of the League, harbourmistress, and it seems I've been paid. Freight paid at Tollhaven. That means paid to me. Everything at Tollhaven is paid to me."
+"I never saw this crate. It came by the Solmere road to Brine Cross and went up the Highmarch road from there. It never came near my quay. Somebody paid my freight on goods I never touched." # quest: turnin ch4_consigned
+"A harbourmistress isn't paid for nothing. I'll find out what I was paid for. That's my trouble. You can have the other one. It comes up the quays at night."
+-> quaile_topics
+
+== quaile_greet_back ==
+{&Hester is watching a boat come in under the chain. She doesn't look round until it's paid.|"{hero_name}. That's twice today. The second greeting is a penny. I'll waive it."|Hester is arguing with a carter about the width of his cart. Carts are tolled by the foot.}
+{ q_ch4_consigned == 0: "A Grey Sister in Thornwick has been writing to me about freight, with the postage owing. If she sent you, bring her page." }
+{ q_ch4_low_water == 1 && with_maren == 0: "Gullwick, and the ferry out to the Mole. Bring my chaplain back. She went out on a boat I never cleared, and I'd like a word with her about it." }
+{ q_ch4_low_water == 3 && with_maren == 1: "Sister. The ferryman's been up for his fare. I've put it on the Chapel's account." }
+{ q_ch4_low_water == 3 && with_maren == 0: "Maren's still out on the Mole? Then she's saying names at it. Fetch her in. Tell her the Chapel roof leaks. It does." }
+{ q_ch4_low_water == 3: "The quays are quiet at night. I've had the watch go back to counting boats. They'd got out of the habit." }
+-> quaile_topics
+
+== quaile_greet_fallen ==
+"You went out with {fallen_name}. I only saw you come back." She points up the quay with the slate. "The Quay Chapel, on the square. That walk is toll-free. There are a few. The League keeps a list."
+-> quaile_topics
+
+== quaile_topics ==
++ { q_ch4_low_water == 2 } [The Harbourmaster's down. #mark: quest ready] -> quaile_low_turnin
++ { q_ch4_low_water == 0 } [What comes up the quays at night? #mark: quest] -> quaile_low_offer
++ { q_ch4_low_water == 1 } [About the Mole… #mark: quest active] -> quaile_low_active
++ [What is the League?] -> quaile_league
++ [Tell me about Tollhaven.] -> quaile_tollhaven
++ [I'll be going.] -> quaile_bye
+
+// ── Act IV, chapter 2: Low Water (content/quests/ch4_low_water.json): the drowned on her quays, and her chaplain ──
+== quaile_low_offer ==
+"The Mole. The old imperial harbour off Gullwick, sunk when the empire went. At low water you can walk on its stones. Sensible people don't."
+"This month the drowned off it have been walking up my quays at night. Sailors, in what's left of the fleet's coats. They stand at the bollards as if they're waiting to be paid off. By morning they've gone back in."
+"Our chaplain, Sister Maren, took a boat out to them three nights ago. On her own. She didn't clear it with me, which is the one thing on this coast nobody does."
++ [We'll go out to the Mole. #mark: quest]
+    "The beach road to Gullwick. The ferryman will row you out. He'll want paying, and he's right to. Whatever keeps them walking, it'll be on the outer mole's end, where the old harbourmaster had his berths." # quest: accept ch4_low_water
+    { boss_harbourmaster == 1: "You've been out already? Then come and tell me properly. I'll waive the toll on the telling." }
+    -> quaile_topics
++ [Not yet.]
+    "No. They'll walk again tonight. The watch is getting used to them, which I like even less."
+    -> quaile_topics
+
+== quaile_low_active ==
+"The beach road to Gullwick, and the ferry out to the Mole. Down to the moles at low water, and out to the end of the outer one. And Maren."
+-> quaile_topics
+
+== quaile_low_turnin ==
+{ with_maren == 1: Maren comes up the quay behind you with a boathook over her shoulder. Hester looks at her for a long moment. }
+{ with_maren == 1: "You took a boat I never cleared." "You'd have said no." "I'd have charged you. It isn't the same thing." }
+{ with_maren == 0: "And Maren?" You tell her about the harbour office, the boathook in its door, and the names. Hester lets her breath go. "Still out there, then. The sea will run out of drowned before she runs out of names." }
+You tell her the rest: the outer mole, the Harbourmaster with his berths' book under his arm, and the lamp-stand at the end, where someone had stood and sung. # quest: turnin ch4_low_water
+"Sung." She says it like a cargo she's never had to clear. "The drowned don't walk up a quay for nothing. Somebody gave them a tune to walk to."
+"Singers aren't my trade. The Gull Fleet is, and it's three weeks late with its dues. Come back to me. I'll know why by then, and I won't like it."
+-> quaile_topics
+
+== quaile_league ==
+"The Tidemark League. Every free port on this coast round one table, agreeing about nothing but the price of the chain. I'm the Speaker. I speak. That was two questions, by the way."
+"Highmarch would like an emperor again. The League would like to toll him."
+-> quaile_topics
+
+== quaile_tollhaven ==
+"The quay, three jetties, two moles and the chain between their towers. Everything that comes in under the chain pays. Everything that goes out pays again. It's a simple town."
+"The Chain Locker if you want a bed. The Bonded Stores for rope and the rest. The Quay Forge if it's broken. The Paid Toll for everything else. The name is a promise."
+-> quaile_topics
+
+== quaile_bye ==
+{&"Mind the chain on your way past. It bites."|Hester has gone back to watching the chain.|"No toll on leaving. The League is generous that way."}
+-> END

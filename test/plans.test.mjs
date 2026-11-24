@@ -13,7 +13,7 @@ test('plans: every plan keeps the owner\'s rules (≤ 2 floors, ≤ 5 spaces, ha
 test('plans: each floor runs entrance → rooms → its last hall, with one offshoot, and levels climb the band', () => {
   for (const p of Object.values(PLANS)) {
     if (SITES[p.site] && SITES[p.site].arena) continue;          // (the Bowl's sand: a way in and the sand, test/bowl.test.mjs)
-    assert.ok(SITES[p.site] && ['vale', 'fens', 'reach'].includes(SITES[p.site].region), `${p.site} is a site of a land`);   // (the Reach since v1.124)
+    assert.ok(SITES[p.site] && ['vale', 'fens', 'reach', 'tidemark'].includes(SITES[p.site].region), `${p.site} is a site of a land`);   // (the Reach since v1.124, the Tidemark since v1.150)
     assert.equal(p.base, SITES[p.site].base, `${p.site}: the band's base as sites.js has it`);
     p.floors.forEach((f, fi) => {
       assert.equal(f.spaces.filter((s) => s.role === 'offshoot').length, 1, `${p.site} floor ${fi + 1}: one offshoot`);
@@ -22,7 +22,8 @@ test('plans: each floor runs entrance → rooms → its last hall, with one offs
       assert.ok(fights.length >= 2, `${p.site} floor ${fi + 1}: two rooms or more before its hall`);
       if (!p.flat) {
         assert.ok(fights.every((s) => s.lv <= /** @type {any} */ (last).lv), `${p.site} floor ${fi + 1}: no room above its hall`);
-        assert.equal(/** @type {any} */ (last).lv, fi * (p.step || 1) + 1, `${p.site} floor ${fi + 1}: the hall a level up`);   // (v1.144: `step` levels a floor, the Reach's two)
+        const up = fi === p.floors.length - 1 ? 1 : Math.max(1, (p.step || 1) - 1);   // (v1.150: a band of five's first floor spans three levels, its hall two up)
+        assert.equal(/** @type {any} */ (last).lv, fi * (p.step || 1) + up, `${p.site} floor ${fi + 1}: the hall a level up`);   // (v1.144: `step` levels a floor, the Reach's two)
       }
     });
     if (!p.flat) assert.equal(Math.max(...p.floors.flatMap((f) => f.spaces.map((s) => s.lv))), (p.floors.length - 1) * (p.step || 1) + 1, `${p.site}: the band's top`);

@@ -15,6 +15,12 @@
    "y": 104
   },
   {
+   "kind": "site",
+   "id": "drowned_mole",
+   "x": 204,
+   "y": 255
+  },
+  {
    "kind": "land",
    "id": "solmere",
    "x": -7.5,

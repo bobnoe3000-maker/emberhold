@@ -15,7 +15,8 @@ test('a new game: the next chapter is Maudry\'s', () => {
   const sim = town();
   assert.deepEqual(CHAPTERS, ['ch1_smoke_over_the_vale', 'ch1_the_diggers', 'ch1_ember_in_the_fist', 'ch1_the_standard',
     'ch2_fog_on_the_canal', 'ch2_the_locks', 'ch2_the_sickpools', 'ch2_the_bells', 'ch2_the_rolls', 'ch2_the_last_office',
-    'ch3_the_wickham_road', 'ch3_short_shift', 'ch3_paid_by_weight', 'ch3_gone_back_to_work', 'ch3_night_shift', 'ch3_quota']);
+    'ch3_the_wickham_road', 'ch3_short_shift', 'ch3_paid_by_weight', 'ch3_gone_back_to_work', 'ch3_night_shift', 'ch3_quota',
+    'ch4_consigned', 'ch4_low_water']);
   assert.deepEqual(storyStatus(sim.state, status(sim)), { kind: 'next', id: 'ch1_smoke_over_the_vale', giver: 'maudry_fenn', town: 'Thornwick' });
 });
 
@@ -52,14 +53,14 @@ test('the owner\'s save (the Stranger down, level 11): The Standard is next, fro
   for (const id of ['toadking', 'wren', 'choir', 'owed', 'tower', 'fensboard']) assert.ok(C.leads[id], id);
 });
 
-test('Act II: a chapter given in Saltmere says so; every chapter told, the end is the Reach\'s words; the Fens\' leads follow Wren', () => {
+test('Act II: a chapter given in Saltmere says so; every chapter told, the end is the Tidemark\'s words; the Fens\' leads follow Wren', () => {
   const sim = town(), S = sim.state;
   for (const id of ['ch1_smoke_over_the_vale', 'ch1_the_diggers', 'ch1_ember_in_the_fist', 'ch1_the_standard', 'ch2_fog_on_the_canal']) S.quests[id] = { st: 3, step: 0, n: [] };
   S.party[0].level = 12; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'level', id: 'ch2_the_locks', level: 13 }, 'the Locks\' band starts at 13 (v1.48)');
   S.party[0].level = 13;
   assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch2_the_locks', giver: 'dace_pike', town: 'Saltmere' });
   for (const id of CHAPTERS) S.quests[id] = { st: 3, step: 0, n: [] };
-  assert.deepEqual(storyStatus(S, status(sim)), { kind: 'end', region: 'reach' }, 'the last chapter told is the Reach\'s (v1.124: Act III\'s first two)');
+  assert.deepEqual(storyStatus(S, status(sim)), { kind: 'end', region: 'tidemark' }, 'the last chapter told is the Tidemark\'s (v1.150: Act IV\'s first two)');
   S.bosses = {}; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['toadking', 'choir', 'fenschronicle', 'tower', 'fensboard']);
   S.bosses = { toadking: 1 }; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['wren', 'choir', 'fenschronicle', 'tower', 'fensboard']);
   assert.deepEqual(openLeads(S, status(sim), 'fens').find((l) => l.id === 'fenschronicle'), { id: 'fenschronicle', n: 0, of: 10 });
@@ -98,9 +99,15 @@ test('Act III (v1.124): after Act II, Ilse in Thornwick sends the company north;
   }
   S.quests.ch3_night_shift = { st: 3, step: 0, n: [] }; S.party[0].level = 30;
   assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch3_quota', giver: 'tamsin', town: 'Ashgate', found: true }, 'a found companion\'s: from her card');
-  S.quests.ch3_quota = { st: 3, step: 0, n: [] }; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'end', region: 'reach' }, 'Act III is done');
+  S.quests.ch3_quota = { st: 3, step: 0, n: [] };
+  assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch4_consigned', giver: 'sister_ilse', town: 'Thornwick' }, 'Act III is done: Ilse has Act IV');
+  // (v1.150) Act IV's first two: Ilse sends the company to Tollhaven, where Hester Quaile gives Low Water
+  S.quests.ch4_consigned = { st: 3, step: 0, n: [] }; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'level', id: 'ch4_low_water', level: 31 });
+  S.party[0].level = 31; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch4_low_water', giver: 'hester_quaile', town: 'Tollhaven' });
+  S.quests.ch4_low_water = { st: 3, step: 0, n: [] }; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'end', region: 'tidemark' }, 'as far as Act IV is told');
   const C = JSON.parse(readFileSync(new URL('../content/story.json', import.meta.url), 'utf8'));
   for (const id of ['foreman', 'tamsin', 'reachboard', 'showingoff', 'reachchronicle', 'ninthvault']) assert.ok(C.leads[id], id);
   assert.ok(C.nextFound);
   assert.ok(C.end.reach.title && C.end.reach.text && C.leadsTitle.reach);
+  assert.ok(C.end.tidemark.title && C.end.tidemark.text);
 });

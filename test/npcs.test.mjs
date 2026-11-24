@@ -89,7 +89,7 @@ test('flags survive a save; saves from before flags load with none', () => {
 
 // ── the sim's table against the content ─────────────────────────────────────
 const defs = readdirSync('content/npcs').filter((f) => f.endsWith('.json')).map((f) => JSON.parse(readFileSync(`content/npcs/${f}`, 'utf8')));
-const REGION_TOWN = { vale: 'thornwick', fens: 'saltmere', reach: 'ashgate', heights: 'frosthold' };
+const REGION_TOWN = { vale: 'thornwick', fens: 'saltmere', reach: 'ashgate', heights: 'frosthold', tidemark: 'tollhaven' };
 
 test('content/npcs matches the sim table (ids, region, town, entry knot); looks are baked', () => {
   assert.deepEqual(defs.map((d) => d.id).sort(), Object.keys(NPCS).sort());

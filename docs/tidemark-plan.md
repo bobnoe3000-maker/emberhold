@@ -300,7 +300,15 @@ Each step ends playable and checked: `npm run check`, the browser suite, and the
    (`assets/maps/land-tidemark.jpg`); the Heights after Act IV, `kept` by Frosthold reached. No save bump was needed:
    the shape is unchanged. Tests: `test/tidemark-open.test.mjs`.
 3. **The Drowned Mole (31–35):** its floors in `plans.js`, the `mole` kit, the Harbourmaster, Maren found, *Consigned*
-   and *Low Water*, and the smoke contract at 33.
+   and *Low Water*, and the smoke contract at 33. **Built (GDD v1.150):** `plans.js` `drowned_mole` (base 31,
+   `step: 3`: three levels on the wharf, two on the moles; `checkPlan` now reads a band's step), `sites.js`
+   `drowned_mole` (`perFloor: 3`, `span: 5`), the `mole` kit and its recipes in `world.js`, `KIT_LOOK.mole` in
+   `convert.js`; the foes `sailor`, `corsair`, `gunner`, `bosun` in the `wharf` and `mole` families; the Harbourmaster's
+   `tide` (`battle.js` `TIDE_*`: told 2.5 s ahead, the hall's edges under water for 7 s every 15 s, the drowned mending
+   in it); Maren found in the harbour office; *Consigned* and *Low Water*; the heirloom *The Berths' Book*. Past 30 the
+   heroes grow with the foes' premium (`party.js` `liftOf`), which held the contract: the right party at 33 holds 5 of 6
+   seeds (2 of 6 before the lift), and the First Pilgrim was raised to match (his fight's length unchanged). Pace: a
+   median 11.8 minutes, par 12/18. Tests: `test/tidemark-mole.test.mjs`.
 4. **The Gull Isles (36–40):** the `hulk` kit, Hesk, *Letters of Marque*, the Lamp Fort and *The Keeper's Light*,
    war-hounds, and the contract at 36 and 39.
 5. **Brine Cross:** the set piece, Gannet's lamp, *Brine Cross*.

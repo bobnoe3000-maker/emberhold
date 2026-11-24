@@ -1,0 +1,14 @@
+{
+  "id": "maren",
+  "name": "Sister Maren",
+  "role": [
+    "companion"
+  ],
+  "town": "tollhaven",
+  "region": "tidemark",
+  "look": "hero_maren",
+  "portrait": "hero_maren",
+  "dialogue": "maren",
+  "knot": "maren_hub",
+  "note": "A Grey Sister, chaplain on Tollhaven's quays, who says the drowned's names at the Quay Chapel (world doc v1.69 §3.7): the Tidemark's found companion (cleric). Holds the Drowned Mole's harbour office (floor 2) with a boathook, naming the drowned at its door; joins once the Harbourmaster falls. Her own chain is to come."
+}

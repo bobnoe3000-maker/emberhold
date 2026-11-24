@@ -242,6 +242,19 @@ export const QUESTS = {
     steps: [{ id: 'stoker', objectives: [{ type: 'boss', site: 'cinderworks', boss: 'stoker', count: 1 }] }],
     rewards: { share: 0.6, lv: 30, gold: 700 },
   },
+  // (v1.150) Act IV, The Seventh Voice (world doc §6, docs/tidemark-plan.md): Ilse reads Morrow Vane's ledger, the vessel
+  // consigned by the Solmere road to Brine Cross, "freight paid at Tollhaven"; Hester Quaile there, whose quays the Mole's
+  // drowned are walking up; the Harbourmaster on the outer mole, and Maren out of his office. (To 75, as Act III runs on.)
+  ch4_consigned: {
+    kind: 'chapter', giver: 'sister_ilse', turnin: 'hester_quaile', region: 'tidemark', level: [30, 75], after: ['ch3_quota'],
+    steps: [{ id: 'quaile', objectives: [{ type: 'meet', npc: 'hester_quaile', region: 'tidemark', count: 1 }] }],
+    rewards: { share: 0.35, lv: 31, gold: 720 },
+  },
+  ch4_low_water: {
+    kind: 'chapter', giver: 'hester_quaile', region: 'tidemark', level: [31, 75], after: ['ch4_consigned'],
+    steps: [{ id: 'harbourmaster', objectives: [{ type: 'boss', site: 'drowned_mole', boss: 'harbourmaster', count: 1 }] }],   // (one who fell before counts: settle)
+    rewards: { share: 0.5, lv: 35, gold: 780 },
+  },
   // Tamsin's chain, Showing Off (world doc v1.54 §5): the Assay's stamps off the Yards' guard-captains, the imperial
   // patterns in the Forgehall's pattern store, the Cult's spare moulds cracked on the Magma Vault's floor
   tamsin_the_stamp: {
