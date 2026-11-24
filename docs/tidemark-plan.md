@@ -1,6 +1,6 @@
 # The Tidemark: a plan
 
-**Proposed (2026-11-24): for the owner's sign-off.** The owner, after the Heights were opened: *"Lets work on the next
+**Plan of record (2026-11-24).** The owner's decisions are in [the last section](#decisions-for-the-owner). The owner, after the Heights were opened: *"Lets work on the next
 level region"*. The Reach ends at 30. The Pale Heights are open for their region boss, but they have no dungeons yet,
 so a company at 31 has nowhere to climb. The next land in the climb is the **Tidemark**: levels **31–45**, Act IV,
 *The Seventh Voice* (world doc §3.7, §6).
@@ -305,6 +305,29 @@ Each step ends playable and checked: `npm run check`, the browser suite, and the
 Steps 3 to 6 each come with their chapters, so the story can be played as far as it's built.
 
 ## Decisions for the owner
+
+**Taken (2026-11-24),** the owner: *"Three bands of 5. … The Brine Cross is fine. No Class trial at 36. Otherwise go
+with your recommendations"*.
+1. Three bands of five.
+2. The Solmere crossroads card.
+3. The Heights open after Act IV. Saves that have walked into them keep them.
+4. The Grace at the top of the hour, from 40.
+5. The legionary and the war-hound new, everything else recoloured; the Tidemark's people as their own models.
+6. Brine Cross as a held position.
+7. No class trial in the Tidemark.
+8. Steps 1 to 3 first, then shown.
+
+**Asked by the owner:** what the secret dungeon and the side vault give beyond the story.
+- **The secret** (as built): opened by the land's twelve Chronicle fragments, each paying XP. Its vault gives a
+  guaranteed heirloom once. It then seals for two hours of play (`SECRET_REST`) and opens again with an ordinary find.
+  It has stars like any dungeon.
+- **A side vault** gives nothing extra today: it's an errand's step, paid by the errand.
+- **Proposed** (open, wanted by step 4): a side vault's end room gives a guaranteed keepsake once, from its errand's
+  giver (the Lamp Fort's from Old Gannet). It then seals for two hours, as a secret does, and opens again with one
+  chest at its band's level. It would apply to the Haddow Crypt and the Shuttered Inn too.
+
+The questions as they were put:
+
 
 1. **Three bands of five** (the Mole 31–35, the Isles 36–40, Highmarch 41–45), with two floors each, the secret at 45
    and the Lamp Fort as the side vault at 38? The other cut is five bands of three, which needs two more dungeons than
