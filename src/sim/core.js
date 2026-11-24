@@ -22,7 +22,7 @@ import { RANKS, PERKS, TRAIT_PERK, FOUND_PERKS } from './companions.js';
 import { createBattle, BOSSES, GOLD_DROP } from './battle.js';
 import { placeNpcs, placeFound, createTalk, stepFolk, partOf, NPCS } from './npcs.js';
 import { placeRoad, createRoad } from './road.js';
-import { createQuests, TRIAL_LEVEL, QS } from './quests.js';
+import { createQuests, TRIAL_LEVEL, QS, QUESTS } from './quests.js';
 import { LANDS, landId, SOLMERE } from './regions.js';
 import { TRIAL_CLASSES } from './skills.js';
 import { createBoard } from './board.js';
@@ -177,10 +177,12 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     bus.emit('vaultOpened', { site: curSite, heirloom: v.heirloom });
   });
   // (v1.48) a secret site seals itself once its vault is opened, every time: SECRET_REST of play, then it can be walked
-  // again on a fresh floor (its heirloom came once, above; its vault keeps an ordinary find after)
+  // again on a fresh floor (its heirloom came once, above; its vault keeps an ordinary find after). (v1.151) A side vault
+  // (`side`: its keepsake) seals the same way, unless an errand still sends the company there: its seal waits for that.
+  const sentThere = (site) => Object.entries(state.quests || {}).some(([id, q]) => q.st === QS.ACTIVE && QUESTS[id] && QUESTS[id].steps.some((st) => st.objectives.some((o) => o.site === site)));
   bus.on('looted', (e) => {
-    const v = world.vault;
-    if (e.kind !== 'chest' || !v || v.key !== `${e.tx},${e.ty}` || !SITES[curSite] || !SITES[curSite].secret) return;
+    const v = world.vault, S = SITES[curSite];
+    if (e.kind !== 'chest' || !v || v.key !== `${e.tx},${e.ty}` || !S || !(S.secret || (S.side && !sentThere(curSite)))) return;
     state.secrets[curSite] = state.t + SECRET_REST;
     bus.emit('secretSealed', { site: curSite, until: state.secrets[curSite] });
   });
@@ -1009,7 +1011,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     state.held = (Array.isArray(data.held) ? data.held : []).filter((it) => it && it.r === 'heirloom').map((it) => refreshItem({ ...it }));   // (v53: heirlooms only)
     for (const m of [...state.party, ...state.bench]) for (const s of Object.keys(m.gear || {})) if (m.gear[s]) m.gear[s] = refreshItem({ ...m.gear[s] });   // st from (base, ilv, rarity): the current formula
     state.sitesEntered = new Set((data.sitesEntered ?? []).filter((k) => SITES[k]));
-    state.secrets = {}; for (const [k, v] of Object.entries(data.secrets ?? {})) if (SITES[k] && SITES[k].secret && Number.isFinite(v)) state.secrets[k] = v;   // (v31)
+    state.secrets = {}; for (const [k, v] of Object.entries(data.secrets ?? {})) if (SITES[k] && (SITES[k].secret || SITES[k].side) && Number.isFinite(v)) state.secrets[k] = v;   // (v31)
     state.camps = campsFrom(data.camps);                                    // (v37) absent: every spawn point full
     state.stars = starsOf(data); state.starRun = starRunOf(data);          // (v57) stars.js: absent, none yet
     gatesOpen.clear(); for (const g of Array.isArray(data.gates) ? data.gates : []) if (typeof g === 'string' && /^[a-z_]+:\d+(:\d+)?$/.test(g)) gatesOpen.add(g);   // (v41) absent: none open (save.js opens an old save's floors already passed)

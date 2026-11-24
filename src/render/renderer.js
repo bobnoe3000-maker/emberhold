@@ -63,7 +63,12 @@ const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', ro
   // (v1.150, the Drowned Mole: docs/tidemark-plan.md's build sheet; tools/actor-lab variants TM1–TM4, TB1) the drowned
   // sailors in tarred canvas and tarpaulin hats, the Gull Fleet's corsairs (a cutlass, the fleet's yellow headscarf and
   // sash) and gunners (a pistol-crossbow, a tricorne), the drowned bosun with his chain, the Harbourmaster with his book
-  sailor: 'enemy_sailor', corsair: 'enemy_corsair', gunner: 'enemy_gunner', bosun: 'enemy_bosun', harbourmaster: 'boss_harbourmaster' };   // (v1.53) the Cold Seam's: a slag hauler, the hod on his back; Gritch, a goblin in a dead foreman's lamp-hat   // (v1.105) the Kingstone: the golem drawn twice its size (BIG), four times a man
+  sailor: 'enemy_sailor', corsair: 'enemy_corsair', gunner: 'enemy_gunner', bosun: 'enemy_bosun', harbourmaster: 'boss_harbourmaster',
+  // (v1.151, the Gull Isles and the Lamp Fort: tidemark-plan.md step 4's build sheet; tools/actor-lab variants CR13, TM5,
+  // TB2) the Gull Fleet's war-hounds (a mastiff in a spiked collar and studded barding, built in code on the hound's
+  // bones), its mates (the barbarian in the fleet's sea-grey and yellow, a watch-cap, a boarding pike), and Admiral Hesk
+  // (a dark-blue coat in tarnished gold, epaulettes, a plumed hat, a gilt hanger, his commission at his belt)
+  warhound: 'enemy_warhound', mate: 'enemy_mate', hesk: 'boss_hesk' };   // (v1.53) the Cold Seam's: a slag hauler, the hod on his back; Gritch, a goblin in a dead foreman's lamp-hat   // (v1.105) the Kingstone: the golem drawn twice its size (BIG), four times a man
 // the Mere Tower's wardens (sim tower.js): baked tall as the bosses are (tools/actor-lab variants W1–W10), named on the boss bar
 for (const id of Object.keys(WARDENS)) ENEMY_ACTOR[id] = 'boss_' + id.slice('warden_'.length);
 const BIG = /** @type {Record<string, number>} */ ({ kingstone: 2, furnace_nine: 1.54, first_pilgrim: 1.5 });   // (v1.147 the First Pilgrim: baked 2.7 men, drawn four)   // (Furnace Nine: baked tall as a boss, 2.6 men, drawn to the Kingstone's four)   // a kind drawn larger than its actor's model (hybrid.js: the figure's scale)
@@ -1168,6 +1173,8 @@ export function createRenderer(canvas, sim, input) {
     if (e.kind === 'scales') { moment('boss_pan', e, { r: e.r }); jolt('stamp', e.x, e.y); }
     else if (e.kind === 'vent') { moment('boss_vent', e); puffs.push({ kind: 'vent', x: e.x, y: e.y }); }
   });
+  sim.bus.on('bossBoarding', ({ id }) => { banner = { text: `${bossName(id)} calls away boarders`, sub: bossLine.boarding[1], until: clock() + 1800, small: true }; });   // (v1.151)
+  sim.bus.on('bossBoard', (e) => { if (e.cut) banner = { text: 'A line cut', sub: 'nobody comes along that one', until: clock() + 1400, small: true }; });   // (the effects pass gives a cut line its own look)
   sim.bus.on('bossFled', ({ id }) => { banner = { text: `${bossName(id)} runs`, sub: 'out by the back stair, and gone', until: clock() + 2600 }; });
   sim.bus.on('bossVents', ({ id }) => { banner = { text: `${bossName(id)} opens the vents`, sub: bossLine.vents[1], until: clock() + 1800, small: true }; });
   sim.bus.on('bossMud', (e) => { moment('boss_mud', e); jolt('stamp', e.x, e.y); });
@@ -1188,7 +1195,8 @@ export function createRenderer(canvas, sim, input) {
     chutes: ['blows the whistle', 'the shift\'s load comes down on the crosses: step off them'],
     scales: ['weighs you', 'the one with the most life left pays: step off the pan'], anvil: ['goes to his anvil', 'strike him while he works, or a wight rises re-armed'],
     flee: ['will not be taken', 'he runs before he falls'], vents: ['opens the vents', 'the floor glows where the slag comes up: step off it'],
-    tide: ['calls the tide in', 'the drowned mend in the water: keep to the middle'] };   // (the Harbourmaster, v1.150)   // (the Foreman, v1.124)
+    tide: ['calls the tide in', 'the drowned mend in the water: keep to the middle'],
+    boarding: ['calls away boarders', 'stand where a grapple lands and cut its line'] };   // (Admiral Hesk, v1.151)   // (the Harbourmaster, v1.150)   // (the Foreman, v1.124)
   sim.bus.on('bossWave', ({ id, name }) => { const B = BOSSES[id]; banner = { text: name, sub: (bossLine[B.mech] || ['', ''])[1], until: clock() + 3200 }; });   // (a mechanic with no line yet: the name alone, never a throw)
   // (named from the boss: the Mere Tower's wardens call, drum and kindle too)
   const bossName = (id) => ({ redhand_captain: 'Garrow', goblin_chief: 'Skarn', robed_stranger: 'The Stranger' })[id] || (BOSSES[id] ? BOSSES[id].name : 'The warden');

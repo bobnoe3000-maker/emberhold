@@ -141,6 +141,13 @@
     "bosun": {
       "a": "a drowned bosun",
       "elite": "a drowned bosun who still has his call"
+    },
+    "warhound": {
+      "a": "one of the Gull Fleet's war-hounds"
+    },
+    "mate": {
+      "a": "a Gull Fleet mate",
+      "elite": "a mate with a boarding pike"
     }
   }
 }

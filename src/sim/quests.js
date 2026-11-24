@@ -255,6 +255,18 @@ export const QUESTS = {
     steps: [{ id: 'harbourmaster', objectives: [{ type: 'boss', site: 'drowned_mole', boss: 'harbourmaster', count: 1 }] }],   // (one who fell before counts: settle)
     rewards: { share: 0.5, lv: 35, gold: 780 },
   },
+  // (v1.151, docs/tidemark-plan.md step 4) the Gull Fleet's commission (Hesk in the Gull Isles' great cabin; his wardroom's
+  // commission signed Lucanus), and Old Gannet's light held against the fleet at the Lamp Fort (the side vault)
+  ch4_letters_of_marque: {
+    kind: 'chapter', giver: 'hester_quaile', region: 'tidemark', level: [36, 75], after: ['ch4_low_water'],
+    steps: [{ id: 'hesk', objectives: [{ type: 'boss', site: 'gull_isles', boss: 'hesk', count: 1 }] }],
+    rewards: { share: 0.5, lv: 40, gold: 860 },
+  },
+  ch4_keepers_light: {
+    kind: 'chapter', giver: 'old_gannet', region: 'tidemark', level: [36, 75], after: ['ch4_low_water'],
+    steps: [{ id: 'hold', objectives: [{ type: 'waves', site: 'lamp_fort', count: 6 }] }],
+    rewards: { share: 0.35, lv: 38, gold: 640 },
+  },
   // Tamsin's chain, Showing Off (world doc v1.54 §5): the Assay's stamps off the Yards' guard-captains, the imperial
   // patterns in the Forgehall's pattern store, the Cult's spare moulds cracked on the Magma Vault's floor
   tamsin_the_stamp: {

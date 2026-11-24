@@ -27,6 +27,7 @@ const CAST = [
   ['town', 'npc_bel', 'Bel'], ['town', 'npc_haldor', 'Haldor'], ['town', 'npc_pellam', 'Pellam'], ['town', 'npc_wynn', 'Wynn'],   // (Ashgate's, v1.124)
   ['town', 'npc_nan_ruddock', 'Nan Ruddock'], ['town', 'npc_clerk', 'Assay clerk'],   // (Kell's Rest's, reach-plan.md the build sheet)
   ['town', 'npc_hester_quaile', 'Hester Quaile'],   // (Tollhaven's, tidemark-plan.md the build sheet)
+  ['town', 'npc_old_gannet', 'Old Gannet'],   // (the Lamp Fort's gate, tidemark-plan.md step 4's build sheet)
   ['town', 'npc_tobin', 'Tobin'], ['town', 'npc_ned', 'Ned'], ['town', 'npc_hester', 'Hester'],   // (v1.48: by the Vale's dungeons' ways in)
 ];
 

@@ -8348,5 +8348,375 @@
   ],
   "face": "maren",
   "height": 0.92
+ },
+ {
+  "id": "CR13",
+  "cls": "Creature",
+  "label": "Gull Fleet war-hound \u00b7 the Gull Isles (a war mastiff kept for boarding: heavy-jawed, a spiked iron collar, studded leather barding over its back; creatures.js warhound)",
+  "creature": {
+   "kind": "warhound"
+  },
+  "height": 0.68
+ },
+ {
+  "id": "TM5",
+  "cls": "Tidemark",
+  "label": "Gull Fleet mate \u00b7 the Gull Isles' elite (the barbarian in the corsairs' sea-grey and tarred breeches, the fleet's yellow sash, a black beard, a boarding pike)",
+  "model": "Barbarian",
+  "show": [],
+  "hold": {
+   "handslot.r": "boardingpike"
+  },
+  "wear": {
+   "head": [
+    "watchcap",
+    "beardblack"
+   ],
+   "hips": "sashwide"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#b8bcbc",
+     "#3e4244"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#3a3632",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#6a6c6e",
+     "#2a2c2e"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     0
+    ],
+    "to": [
+     "#3a3632",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#2a2c30",
+     "#0c0c0e"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2a2c30",
+     "#0c0c0e"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2a2220",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     2
+    ],
+    "to": [
+     "#5a4632",
+     "#1e160e"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     0
+    ],
+    "to": [
+     "#c8a048",
+     "#4a3410"
+    ]
+   }
+  ],
+  "face": "mate",
+  "pose": [
+   "2H_Melee_Idle",
+   0.5
+  ],
+  "height": 1.06,
+  "frame": {
+   "scale": {
+    "chest": 1.1,
+    "head": 0.85
+   }
+  }
+ },
+ {
+  "id": "TB2",
+  "cls": "Boss",
+  "label": "Admiral Grell Hesk \u00b7 the Gull Isles (a corsair with a commission: a long dark-blue coat in tarnished gold, epaulettes, the fleet's yellow sash, a plumed hat cocked up, a gilt hanger, his commission at his belt sealed in coal-red wax)",
+  "model": "Barbarian",
+  "show": [],
+  "hold": {
+   "handslot.r": "hanger"
+  },
+  "wear": {
+   "head": "cavalier",
+   "chest": "epaulettes",
+   "hips": [
+    "coatskirts",
+    "sashwide",
+    "commission"
+   ]
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2a3a62",
+     "#0c1224"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#2a3a62",
+     "#0c1224"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#b8903e",
+     "#4a3410"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     0
+    ],
+    "to": [
+     "#24345a",
+     "#0a1020"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#b8ac8a",
+     "#4a4230"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#1e1c1c",
+     "#080808"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#1e1c1c",
+     "#080808"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     2
+    ],
+    "to": [
+     "#a08a60",
+     "#3a2e1e"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     0
+    ],
+    "to": [
+     "#c8a048",
+     "#4a3410"
+    ]
+   }
+  ],
+  "face": "hesk",
+  "height": 1.04,
+  "frame": {
+   "scale": {
+    "chest": 1.1,
+    "head": 0.9
+   }
+  }
+ },
+ {
+  "id": "N30",
+  "cls": "NPC",
+  "label": "Old Gannet \u00b7 keeper of the Lamp Fort, the Lantern Guild's oldest member (very old, thin and stooped, a keeper's oilskin and sou'wester over the Guild's old bottle-green coat, a white beard, his brass hand-lamp lit warm)",
+  "model": "Mage",
+  "show": [
+   "Mage_Cape"
+  ],
+  "hold": {
+   "handslot.r": "handlamp"
+  },
+  "wear": {
+   "head": [
+    "souwester",
+    "beardwhite"
+   ]
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#46523e",
+     "#141a12"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#a8843e",
+     "#3a2c12"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#46523e",
+     "#141a12"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#7a6a4a",
+     "#2a2416"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#3a2a1e",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2a2420",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   }
+  ],
+  "face": "old_gannet",
+  "height": 0.88,
+  "frame": {
+   "bend": {
+    "spine": [
+     0.36,
+     0,
+     0
+    ],
+    "chest": [
+     0.14,
+     0,
+     0
+    ],
+    "head": [
+     -0.4,
+     0,
+     0
+    ]
+   }
+  }
  }
 ]

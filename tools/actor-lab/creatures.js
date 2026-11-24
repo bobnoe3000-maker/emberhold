@@ -711,6 +711,13 @@ function hound(o = {}) {
     for (const n of ['head', 'jaw']) { const b = R.by.get(n); b.userData.at.sub(hc).multiplyScalar(K).add(hc).add(up); }
     R.by.get('head').position.copy(R.by.get('head').userData.at).sub(R.by.get('neck').userData.at); R.by.get('jaw').position.copy(R.by.get('jaw').userData.at).sub(R.by.get('head').userData.at); }
   const root3 = R.mesh(o.glow || '#ff7a20', 1.5);
+  return { root: root3, clips: dogClips(R) };
+}
+
+// the dogs' clips (the quadruped's bones as the hound lays them out: root, pelvis, chest, neck, head, jaw, tail1–3, armU/armL/
+// paw and legU/legL/foot each side), shared by the cinder hound and the Gull Fleet's war-hound; `drop`, how far the root
+// falls when it dies onto its side (its body's height)
+function dogClips(R, { drop = 0.36 } = {}) {
   const legs = (t, A = 1) => {                                  // a lope: the fore pair and the hind pair, half a beat apart
     const q = {};
     for (const s of [1, -1]) for (const [u, l, ph] of [[`armU${s}`, `armL${s}`, s > 0 ? 0 : 0.12], [`legU${s}`, `legL${s}`, s > 0 ? 0.5 : 0.62]]) {
@@ -720,7 +727,7 @@ function hound(o = {}) {
     return q;
   };
   const tailK = (t, a = 0.2, k = 1) => ({ tail1: qe(0.15, a * S(k * t), 0), tail2: qe(0.1, a * S(k * t - 0.15), 0), tail3: qe(0, a * S(k * t - 0.3), 0) });
-  const clips = [
+  return [
     clip(R, 'Idle', 3.0, (t) => { const br = S(t * 6), lk = bell(0.4, 0.5, 0.75, t), turn = S((t - 0.4) / 0.35 * 0.5 + 0.25) * lk;
       return { q: { ...tailK(t, 0.25, 2), chest: qe(0.02 * br, 0.1 * turn, 0), neck: qe(-0.1 + 0.03 * br, 0.3 * turn, 0), head: qe(0.05, 0.3 * turn, 0), jaw: qe(0.25 + 0.12 * Math.max(0, S(t * 12)), 0, 0) }, p: { root: V(0, 0.004 * br, 0) } }; }),   // (panting, a look round)
     clip(R, 'Walk', 0.4, (t) => ({ q: { ...legs(t), ...tailK(t, 0.15, 1), root: qe(0.08 * S(t), 0, 0), neck: qe(0.06 * S(t * 2), 0, 0), jaw: qe(0.3, 0, 0) }, p: { root: V(0, 0.03 * Math.abs(S(t)), 0) } })),
@@ -728,10 +735,90 @@ function hound(o = {}) {
     clip(R, 'Attack2', 0.5, (t) => { const k = bell(0.1, 0.35, 0.8, t); return { q: { ...tailK(t, 0.25), neck: qe(0.15 * k, 0.5 * k, 0), head: qe(0, 0.4 * k, 0.3 * k), jaw: qe(0.2 + 0.7 * bell(0.15, 0.3, 0.45, t), 0, 0), chest: qe(0, 0.2 * k, 0) }, p: { root: V(0.03 * k, 0, 0.08 * k) } }; }),   // (a snap, the head turned)
     clip(R, 'Heavy', 0.9, (t) => { const c = bell(0, 0.25, 0.38, t), j = bell(0.3, 0.55, 0.85, t); return { q: { ...legs(0.25, 0.8 * j), ...tailK(t, 0.4), root: qe(0.2 * c - 0.35 * j + 0.2 * bell(0.6, 0.75, 0.95, t), 0, 0), jaw: qe(0.2 + 0.8 * j, 0, 0), legU1: qe(0.6 * c, 0, 0), 'legU-1': qe(0.6 * c, 0, 0) }, p: { root: V(0, -0.06 * c + 0.22 * j, 0.45 * ease(0.3, 0.75, t)) } }; }),   // (it crouches and springs)
     clip(R, 'Hit', 0.4, (t) => { const k = bell(0, 0.25, 1, t); return { q: { ...tailK(t, 0.5, 2), neck: qe(-0.3 * k, 0.3 * k, 0), head: qe(-0.2 * k, 0, 0), jaw: qe(0.4 * k, 0, 0) }, p: { root: V(0, 0, -0.06 * k) } }; }),
-    clip(R, 'Death', 1.0, (t) => { const k = ease(0, 0.6, t); return { q: { root: qe(0, 0, 1.5 * k), neck: qe(0.3 * k, 0, 0), jaw: qe(0.5 * k, 0, 0), armU1: qe(-0.5 * k, 0, 0), 'armU-1': qe(0.3 * k, 0, 0), legU1: qe(0.4 * k, 0, 0), 'legU-1': qe(-0.3 * k, 0, 0), ...tailK(0, 0) }, p: { root: V(0, -0.36 * k, 0) } }; }),
+    clip(R, 'Death', 1.0, (t) => { const k = ease(0, 0.6, t); return { q: { root: qe(0, 0, 1.5 * k), neck: qe(0.3 * k, 0, 0), jaw: qe(0.5 * k, 0, 0), armU1: qe(-0.5 * k, 0, 0), 'armU-1': qe(0.3 * k, 0, 0), legU1: qe(0.4 * k, 0, 0), 'legU-1': qe(-0.3 * k, 0, 0), ...tailK(0, 0) }, p: { root: V(0, -drop * k, 0) } }; }),
     clip(R, 'Cast', 1.0, (t) => { const k = bell(0.1, 0.4, 0.9, t); return { q: { ...tailK(t, 0.2), neck: qe(-0.9 * k, 0, 0), head: qe(-0.4 * k, 0, 0), jaw: qe(0.2 + 0.6 * k, 0, 0), root: qe(-0.1 * k, 0, 0) }, p: { root: V(0, 0.02 * k, 0) } }; }),   // (a howl, the muzzle up)
   ];
-  return { root: root3, clips };
+}
+
+// ── the Gull Fleet's war-hound (the Tidemark's new silhouette: tidemark-plan.md, step 4's build sheet) ────────────────
+// A war mastiff the fleet keeps for boarding (world doc v1.70 §3.7): a heavy dog, as tall as the cinder hound but twice its
+// weight, its build in front: a great square head on a thick neck, the jaw heavy and the jowls hanging, a short dark muzzle,
+// small folded ears; a deep broad chest, a short back, the haunches lower, thick straight legs, the tail docked. Fawn, the
+// mask black. An iron collar of spikes round its neck, and studded leather barding over its back edged in the fleet's
+// yellow. On the hound's bones (the quadruped's) and its clips (dogClips): where the cinder hound is a lean black lope lit
+// along its seams, this reads as a block of a dog, pale, a ring of iron at the throat and a saddle on its back.
+function warhound(o = {}) {
+  const R = new Rig(o.seed || 83);
+  const coat = new THREE.Color(o.coat || '#94704a'), coatHi = new THREE.Color('#bc9668'), coatLo = new THREE.Color('#5e4430');
+  const coatC = (p, n) => (n.y > 0.55 ? mixC(coat, coatHi, (n.y - 0.55) * 2.2) : n.y < -0.35 ? coatLo : coat);
+  const mask = new THREE.Color('#2a2220'), maskC = (p, n) => (p.z > 0.5 ? mask : coatC(p, n)), nose = new THREE.Color('#141010'), maw = new THREE.Color('#5a1e1e'), tooth = new THREE.Color('#e0d6bc');
+  const eye = new THREE.Color('#1a120c'), iron = new THREE.Color('#4a4c50'), spikeC = new THREE.Color('#b4b8bc'), leather = new THREE.Color('#4a3020'), leatherHi = new THREE.Color('#6a4630');
+  const stud = new THREE.Color('#d0a850'), fleet = new THREE.Color('#d0a030'), claw = new THREE.Color('#2a2420');
+  const root = R.bone('root', null, V(0, 0.47, 0)), pelvis = R.bone('pelvis', root, V(0, 0.48, -0.25)), chest = R.bone('chest', root, V(0, 0.5, 0.2));
+  const neck = R.bone('neck', chest, V(0, 0.56, 0.33)), head = R.bone('head', neck, V(0, 0.66, 0.43)); R.bone('jaw', head, V(0, 0.6, 0.5));
+  let tp = pelvis; const tail = [V(0, 0.54, -0.42), V(0, 0.57, -0.48), V(0, 0.58, -0.53)];
+  tail.forEach((p, i) => { tp = R.bone(`tail${i + 1}`, tp, p); });
+  for (const s of [1, -1]) {
+    const sh = R.bone(`armU${s}`, chest, V(0.15 * s, 0.46, 0.22)), el = R.bone(`armL${s}`, sh, V(0.15 * s, 0.25, 0.22)); R.bone(`paw${s}`, el, V(0.15 * s, 0.045, 0.25));
+    const hip = R.bone(`legU${s}`, pelvis, V(0.13 * s, 0.46, -0.28)), kn = R.bone(`legL${s}`, hip, V(0.13 * s, 0.28, -0.24)); R.bone(`foot${s}`, kn, V(0.13 * s, 0.1, -0.34));
+  }
+  // the body: the chest deep and broad, the back short and level, the loin barely tucked, the rump square
+  const cy = (z) => 0.5 + 0.02 * Math.max(0, z) - 0.015 * Math.max(0, -z - 0.15);
+  const prof = [[-0.4, 0], [-0.385, 0.08], [-0.34, 0.13], [-0.24, 0.14], [-0.1, 0.135], [0.04, 0.16], [0.16, 0.185], [0.27, 0.18], [0.34, 0.12], [0.38, 0]];
+  const along = (z, pts) => { for (let i = 0; i < pts.length - 1; i++) { const [z0, a] = pts[i], [z1, b] = pts[i + 1]; if (z <= z1) { const k = Math.max(0, Math.min(1, (z - z0) / (z1 - z0))); return k < 0.5 ? [[a, 1 - k], [b, k]] : [[b, k], [a, 1 - k]]; } } return [[pts[pts.length - 1][1], 1]]; };
+  const bodyW = R.skin((p) => along(p.z, [[-0.3, 'pelvis'], [-0.12, 'pelvis'], [0.0, 'root'], [0.1, 'root'], [0.2, 'chest'], [0.32, 'chest']]));
+  R.part(hull(prof, 26, cy, 1.15), bodyW, coatC);
+  R.part(blob(V(0, 0.42, 0.24), [0.15, 0.1, 0.12], [10, 8]), 'chest', coatC);                                        // (the brisket, low between the forelegs)
+  // the barding: a saddle-cloth of studded leather laid over the back from the withers to the croup, its two skirts down the
+  // flanks edged in the fleet's yellow, rows of brass studs on it
+  // (lab round 1: a cylinder over the back stood off the haunches like a crate; it follows the hull now, a hand over it)
+  const rOf = (z) => { for (let i = 0; i < prof.length - 1; i++) if (z <= prof[i + 1][0]) { const [z0, r0] = prof[i], [z1, r1] = prof[i + 1]; return r0 + (r1 - r0) * (z - z0) / Math.max(1e-6, z1 - z0); } return 0; };
+  const bz0 = -0.25, bz1 = 0.21, th0 = Math.PI - 1.12, thL = 2.24, atTh = (th, z, d = 0.016) => { const r = rOf(z) + d; return V(Math.sin(th) * r * 1.04, -Math.cos(th) * r * 1.15 + cy(z), z); };
+  const bard = new THREE.CylinderGeometry(1, 1, bz1 - bz0, segs(16, 14), 6, true, th0, thL).rotateX(Math.PI / 2), BP = bard.attributes.position;
+  for (let i = 0; i < BP.count; i++) { const z = BP.getZ(i) + (bz0 + bz1) / 2, th = Math.atan2(BP.getX(i), -BP.getY(i)), q = atTh(th < 0 ? th + 2 * Math.PI : th, z); BP.setXYZ(i, q.x, q.y, q.z); }
+  R.part(bard, bodyW, (p, n) => (n.y > 0.75 ? leatherHi : leather));
+  for (const th of [th0 + 0.03, th0 + thL - 0.03]) for (let k = 0; k < 6; k++) R.part(limb(atTh(th, bz0 + (bz1 - bz0) * k / 6, 0.02), atTh(th, bz0 + (bz1 - bz0) * (k + 1) / 6, 0.02), 0.013, 0.013, 5), bodyW, fleet);   // (its skirts' yellow edge)
+  for (const z of [bz0 + 0.004, bz1 - 0.004]) for (let k = 0; k < 8; k++) R.part(limb(atTh(th0 + thL * k / 8, z, 0.02), atTh(th0 + thL * (k + 1) / 8, z, 0.02), 0.011, 0.011, 4), bodyW, fleet);
+  for (const th of [Math.PI - 0.72, Math.PI - 0.24, Math.PI + 0.24, Math.PI + 0.72]) for (let z = bz0 + 0.06; z < bz1 - 0.03; z += 0.08) R.part(new THREE.IcosahedronGeometry(0.013, 0).translate(...atTh(th, z, 0.022).toArray()), bodyW, stud);
+  // the neck: short and thick, a dewlap under it
+  R.part(limb(V(0, 0.53, 0.26), V(0, 0.64, 0.42), 0.12, 0.1, 10), 'neck', coatC);
+  R.part(blob(V(0, 0.5, 0.36), [0.075, 0.07, 0.08], [8, 6]), 'neck', coatC);
+  // the collar: an iron band round the neck, its spikes standing out all round it
+  const cc = V(0, 0.58, 0.36), cAxis = V(0, 0.55, 0.83).normalize(), cq = new THREE.Quaternion().setFromUnitVectors(V(0, 0, 1), cAxis);
+  R.part(new THREE.TorusGeometry(0.125, 0.026, 6, segs(18, 16)).applyQuaternion(cq).translate(cc.x, cc.y, cc.z), 'neck', iron);
+  for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2 + 0.31, d = V(Math.cos(a), Math.sin(a), 0).applyQuaternion(cq), b0 = cc.clone().addScaledVector(d, 0.13), b1 = cc.clone().addScaledVector(d, 0.205);
+    R.part(limb(b0, b1, 0.022, 0.002, 5), 'neck', spikeC); }
+  // the head: a great square skull, the brow furrowed, a short broad muzzle in its black mask, the jowls hanging off it
+  R.part(blob(V(0, 0.68, 0.45), [0.115, 0.1, 0.11], [12, 9]), 'head', coatC);
+  R.part(blob(V(0, 0.72, 0.5), [0.09, 0.035, 0.05], [8, 5]), 'head', coatC);                                        // (the brow)
+  R.part(blob(V(0, 0.64, 0.57), [0.085, 0.065, 0.07], [10, 8]), 'head', maskC);                                     // the muzzle, square and short
+  R.part(blob(V(0, 0.665, 0.635), [0.034, 0.024, 0.02], [6, 4]), 'head', nose);
+  for (const s of [1, -1]) {
+    R.part(blob(V(0.06 * s, 0.6, 0.56), [0.042, 0.052, 0.06], [8, 6]), 'head', mask);                                // the jowls
+    R.part(blob(V(0.05 * s, 0.7, 0.535), [0.016, 0.013, 0.01], [6, 4]), 'head', eye);                                // the eyes, small and deep
+    R.part(placed(blob(V(0, 0, 0), [0.05, 0.055, 0.016], [8, 6]), 0.9 * s, V(0.105 * s, 0.73, 0.43)).rotateZ(0), 'head', mask);   // the ears, folded flat
+    R.part(limb(V(0.04 * s, 0.6, 0.615), V(0.04 * s, 0.575, 0.62), 0.01, 0.003, 4), 'head', tooth);                // (the fangs over the lip)
+  }
+  R.part(blob(V(0, 0.565, 0.55), [0.06, 0.03, 0.06], [8, 5]), 'jaw', mask);                                         // the lower jaw, heavy
+  R.part(blob(V(0, 0.585, 0.56), [0.045, 0.012, 0.05], [8, 4]), 'jaw', maw);
+  for (const s of [1, -1]) R.part(limb(V(0.035 * s, 0.58, 0.6), V(0.035 * s, 0.6, 0.605), 0.009, 0.003, 3), 'jaw', tooth);
+  // the tail, docked: a stub
+  R.part(limb(V(0, 0.52, -0.37), tail[0], 0.04, 0.034, 6), 'pelvis', coatC); R.part(limb(tail[0], tail[1], 0.034, 0.02, 6), 'tail1', coatC);
+  // the legs: thick and straight in front, the hind's hock well let down; big round paws
+  for (const s of [1, -1]) {
+    R.part(blob(V(0.15 * s, 0.44, 0.22), [0.07, 0.1, 0.08], [8, 6]), `armU${s}`, coatC);                              // the shoulder
+    R.part(limb(V(0.15 * s, 0.46, 0.22), V(0.15 * s, 0.25, 0.22), 0.062, 0.045), `armU${s}`, coatC);
+    R.part(limb(V(0.15 * s, 0.25, 0.22), V(0.15 * s, 0.045, 0.25), 0.042, 0.036), `armL${s}`, coat);
+    R.part(blob(V(0.15 * s, 0.03, 0.27), [0.045, 0.03, 0.055], [8, 5]), `paw${s}`, coat);
+    for (const d of [-1, 0, 1]) R.part(limb(V(0.15 * s + d * 0.02, 0.012, 0.31), V(0.15 * s + d * 0.022, 0.002, 0.33), 0.006, 0.002, 3), `paw${s}`, claw);
+    R.part(blob(V(0.13 * s, 0.45, -0.27), [0.075, 0.1, 0.09], [8, 6]), `legU${s}`, coatC);                           // the haunch
+    R.part(limb(V(0.13 * s, 0.42, -0.27), V(0.13 * s, 0.28, -0.24), 0.06, 0.045), `legU${s}`, coatC);
+    R.part(limb(V(0.13 * s, 0.28, -0.24), V(0.13 * s, 0.1, -0.34), 0.042, 0.034), `legL${s}`, coat);
+    R.part(limb(V(0.13 * s, 0.1, -0.34), V(0.13 * s, 0.025, -0.3), 0.032, 0.03), `foot${s}`, coat);
+    R.part(blob(V(0.13 * s, 0.025, -0.27), [0.042, 0.028, 0.052], [8, 5]), `foot${s}`, coat);
+  }
+  const root3 = R.mesh('#000000');
+  return { root: root3, clips: dogClips(R, { drop: 0.32 }) };
 }
 
 // ── Furnace Nine (the Reach's region boss: reach-plan.md, the build sheet) ───────────────────────────────────────────
@@ -1461,7 +1548,7 @@ const gulper = (o = {}) => toad({ ...o, gulper: true });
 // the bosses: the rat and the spider grown into kings and queens (their own colours, their own parts: king(), queen())
 const ratking = (o = {}) => rat({ fur: '#3a342e', belly: '#5a5048', furTop: '#544c44', eyes: '#ff3818', seed: 17, ...o, king: true });
 const spiderqueen = (o = {}) => spider({ body: '#1e1622', band: '#6a4864', mark: '#e2d8c2', eyes: '#78c038', seed: 37, ...o, queen: true });
-const KINDS = { rat, spider, beetle, goblin, wraith, golem, toad, gulper, ratking, spiderqueen, hound, furnace, pilgrim };
+const KINDS = { rat, spider, beetle, goblin, wraith, golem, toad, gulper, ratking, spiderqueen, hound, warhound, furnace, pilgrim };
 export const CREATURE_KINDS = Object.keys(KINDS);
 
 // ── the humanoids on KayKit's rig (the owner, 2026-11-10: "goblin and other humanoids NPCs should use the same rigging,

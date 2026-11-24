@@ -103,6 +103,12 @@ export const FX_STYLES = {
   enemy_corsair:     { col: STEEL, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 235, 190], wide: 1.1 },
   enemy_gunner:      { col: MUZZLE, attack: 'shot', attack2: 'shot', heavy: 'shot', spark: [255, 225, 170] },
   boss_harbourmaster: { col: [150, 235, 210], attack: 'arc', attack2: 'arc', heavy: 'cast', spark: [200, 245, 230], wide: 1.25 },
+  // (v1.151, the Gull Isles) the war-hound's bite and its spring (the cinder hound's shapes, no fire: a dog's teeth); the
+  // mate's pike, a thrust and a swing, its heavy brought down two-handed (the deck shakes); the Admiral's gilt hanger, a
+  // cut and a lunge, his heavy an overhead cut
+  enemy_warhound:    { col: [235, 225, 205], attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [245, 235, 215], heavySpark: [200, 170, 130] },
+  enemy_mate:        { col: STEEL, attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [255, 235, 190], heavySpark: [200, 180, 150], wide: 1.25, quake: true },
+  boss_hesk:         { col: [255, 228, 160], attack: 'arc', attack2: 'stab', heavy: 'arc', spark: [255, 236, 190], wide: 1.3, thin: true },
   boss_first_pilgrim: { col: [255, 160, 90], attack: 'arc', attack2: 'stab', heavy: 'arc', heavyCol: FIRE, spark: [255, 190, 120], heavySpark: [255, 120, 50], wide: 1.5, quake: true },   // (v1.147: the crook's swing, the Ember's sparks)
   boss_spiderqueen:  { col: [180, 230, 120], attack: 'stab', attack2: 'stab', heavy: 'arc', spark: [210, 240, 160], wide: 1.35 },
   boss_skarn:        { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 200, 130], wide: 1.25 },

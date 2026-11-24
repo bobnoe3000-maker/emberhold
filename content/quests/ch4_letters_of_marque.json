@@ -1,0 +1,42 @@
+{
+  "id": "ch4_letters_of_marque",
+  "kind": "chapter",
+  "title": "Letters of Marque",
+  "giver": "hester_quaile",
+  "region": "tidemark",
+  "level": [
+    36,
+    75
+  ],
+  "after": [
+    "ch4_low_water"
+  ],
+  "summary": "The Gull Fleet is taking League ships under a commission, a letter of marque. Hester Quaile wants to know who signed it and what they paid. Admiral Hesk keeps it aboard his flagship on the Gull Isles.",
+  "steps": [
+    {
+      "id": "hesk",
+      "journal": "Take the road past the salt marsh to the landing jetty on the bay's west shore. Admiral Hesk keeps the flagship's great cabin, on the dungeon's second floor.",
+      "objectives": [
+        {
+          "type": "boss",
+          "site": "gull_isles",
+          "boss": "hesk",
+          "count": 1,
+          "label": "Admiral Hesk"
+        }
+      ]
+    }
+  ],
+  "ready": "Hesk is down, and his commission was in the wardroom. Take it to Hester Quaile at the Paid Toll in Tollhaven.",
+  "done": "Hesk's commission is signed Lucanus and sealed in coal-red wax with a thumbprint: the wax that pays the Redhand.",
+  "rewards": {
+    "share": 0.5,
+    "lv": 40,
+    "gold": 860
+  },
+  "dialogue": {
+    "file": "quaile",
+    "offer": "quaile_marque_offer",
+    "turnin": "quaile_marque_turnin"
+  }
+}

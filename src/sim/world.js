@@ -65,6 +65,10 @@ export const DRESS = {
   // (v1.150, docs/tidemark-plan.md) the Drowned Mole's second floor: the empire's stone moles at low water, weed to the tide
   // line, the hulls dragged up to break and never broken; the water all round (convert.js), as the wharf's
   mole:     { rooms: ['storehouse', 'storehouse', 'storehouse'], decor: ['barrels', 'chains', 'lantern'], obstacles: ['pillar'] },
+  // (v1.151) the Gull Isles: the sea cave where the fleet hides its boats (the cellar's cave with the sea in it:
+  // convert.js), and the hulks moored in its lagoon (a ship's inside, its decks and ribs: convert.js)
+  seacave:  { rooms: ['cave', 'storehouse', 'cave'], decor: ['stalagmite', 'barrels', 'lantern'], obstacles: ['stalagmite', 'boulder'] },
+  hulk:     { rooms: ['storehouse', 'storehouse', 'storehouse'], decor: ['barrels', 'crates', 'lantern'], obstacles: ['pillar'] },
   // (the owner, 2026-11-23: "the reaches, high up on the ramparts": plans.js high_ramparts, docs/ramparts-dungeon.md; a
   // walled town's terraces high on its ramparts, the houses at their backs and a parapet over the drop at their fronts)
   ramparts: { rooms: ['storehouse', 'storehouse', 'storehouse'], decor: ['barrels', 'crates', 'torch'], obstacles: ['pillar'] },
@@ -110,11 +114,11 @@ export const DRESS_CAP = { tomb: 6, great_tomb: 1, mourner: 2, offering: 1, hear
  *  gate-warden's chapel, a monolith in the legion's vault, said nothing) */
 const PLAN_OB = { dig: ['spoil', 'brokenpillar'], gallery: ['pillar', 'brokenpillar'], muster: ['pillar'], bailey: ['pillar'], barracks: ['pillar'], cellar: ['stalagmite', 'boulder'], nave: ['pillar', 'brokenpillar'], cultcut: ['brokenpillar', 'spoil'], binding: ['pillar'],
   mound: ['reeds'], locks: ['pillar'], vats: ['pillar'], abbey: ['pillar', 'brokenpillar'], pithead: ['boulder', 'spoil'], warren: ['stalagmite', 'boulder'],
-  yards: ['pillar', 'spoil'], quota: ['pillar'], forge: ['pillar', 'brokenpillar'], deepforge: ['pillar'], works: ['pillar', 'spoil'], vault: ['stalagmite', 'boulder'], strongroom: ['pillar'], tavern: [], tavern_cellar: [], crypt: [], ossuary: [], docks: [], mole: [], ramparts: [] };   // (the tavern: nothing stood out in its floors, which are for the fight)   // (v1.126)   // (v1.124: the Cold Seam)   // (v1.102: the Fens authored)
+  yards: ['pillar', 'spoil'], quota: ['pillar'], forge: ['pillar', 'brokenpillar'], deepforge: ['pillar'], works: ['pillar', 'spoil'], vault: ['stalagmite', 'boulder'], strongroom: ['pillar'], tavern: [], tavern_cellar: [], crypt: [], ossuary: [], docks: [], mole: [], ramparts: [], seacave: ['stalagmite', 'boulder'], hulk: [] };   // (the tavern: nothing stood out in its floors, which are for the fight)   // (v1.126)   // (v1.124: the Cold Seam)   // (v1.102: the Fens authored)
 const DOOR_LIGHT = { dig: 'lantern', gallery: 'candles', muster: 'torch', bailey: 'torch', barracks: 'torch', cellar: 'lantern', nave: 'candelabra', cultcut: 'candles', binding: 'candles',
   mound: 'lantern', locks: 'lantern', vats: 'lantern', abbey: 'candelabra', pithead: 'lantern', warren: 'torch',
-  yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra', tavern: 'torch', tavern_cellar: 'candles', crypt: 'candles', ossuary: 'candles', docks: 'lantern', mole: 'lantern', ramparts: 'torch' };   // (the crypt's doorways a low pricket: a candelabrum crowded the threshold, round 3)   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
-const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave', yards: 'storehouse', quota: 'cellar', forge: 'muster', deepforge: 'binding', works: 'storehouse', vault: 'cave', strongroom: 'muster', tavern: 'storehouse', tavern_cellar: 'storehouse', crypt: 'crypt', ossuary: 'ossuary', docks: 'storehouse', mole: 'storehouse', ramparts: 'storehouse' };
+  yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra', tavern: 'torch', tavern_cellar: 'candles', crypt: 'candles', ossuary: 'candles', docks: 'lantern', mole: 'lantern', ramparts: 'torch', seacave: 'lantern', hulk: 'lantern' };   // (the crypt's doorways a low pricket: a candelabrum crowded the threshold, round 3)   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
+const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave', yards: 'storehouse', quota: 'cellar', forge: 'muster', deepforge: 'binding', works: 'storehouse', vault: 'cave', strongroom: 'muster', tavern: 'storehouse', tavern_cellar: 'storehouse', crypt: 'crypt', ossuary: 'ossuary', docks: 'storehouse', mole: 'storehouse', ramparts: 'storehouse', seacave: 'cave', hulk: 'storehouse' };
 const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', crates: 'crates', sacks: 'sacks', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', skulls: 'bones', bones: 'bones', barrels: 'barrels' };
 function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, count }) {
   // every piece through the room's caps (CAP): a recipe can't stand a second well or a fifth torch
@@ -544,7 +548,7 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     if (dr.dress.includes('altar')) { const ax = (W0.x0 + W0.x1) >> 1; put(ax, W0.y0 - 2, 'altar'); put(W0.x0 - 1, W0.y0 - 2, 'candelabra'); put(W0.x1, W0.y0 - 2, 'candelabra'); for (const dx of [-2, 2]) put(ax + dx, W0.y0 - 1, 'cracks'); }
   }
   clearStairs(world);
-  if (level.descentRoom && S.vault && !hasFloorBelow(site, depth)) placeVault(world, level, S.vault);
+  if (level.descentRoom && S.vault && !hasFloorBelow(site, depth)) placeVault(world, level, S.vault, !!S.side);
   // coming back up from the floor below, you arrive in the corridor nearest this floor's stairs
   // down: corridors are safe, and the descent room holds the floor's boss (GDD §3.1)
   if (level.descentRoom) {
@@ -851,12 +855,13 @@ function keepTheWaysOpen(world, level) {
 }
 
 // A vault site's last hall keeps its heirloom in a chest (sites.js `vault`): on the open tile nearest the
-// hall's middle, where the stairs down would be. world.vault = { key, heirloom }.
-function placeVault(world, level, heirloom) {
-  const r = level.descentRoom; let best = null, bd = Infinity;
+// hall's middle, where the stairs down would be. world.vault = { key, heirloom }. (v1.151) A side vault's (`side`: its
+// keepsake) stands at the back wall's middle instead: its end room is fought in, and its middle is kept open
+function placeVault(world, level, heirloom, back = false) {
+  const r = level.descentRoom, tx = r.cx, ty = back ? r.cy - r.rh + 2 : r.cy; let best = null, bd = Infinity;
   for (const [k, c] of level.cells) {
     if (c.kind !== 'floor' || c.room !== r.id || world.props.has(k)) continue;
-    const [x, y] = k.split(',').map(Number), d = (x - r.cx) * (x - r.cx) + (y - r.cy) * (y - r.cy);
+    const [x, y] = k.split(',').map(Number), d = (x - tx) * (x - tx) + (y - ty) * (y - ty);
     if (d < bd && !NONWALK.has(materialAt(world, x, y)) && !NONWALK.has(materialAt(world, x, y + 1))) { bd = d; best = k; }
   }
   if (!best) return;

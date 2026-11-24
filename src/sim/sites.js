@@ -32,7 +32,7 @@
 
 import { PLANS } from './plans.js';
 
-/** @typedef {{ name: string, region: string, theme: string | null, base: number, perFloor: number, floors: number, span?: number, plan?: boolean, family: string, rooms: [number, number] | null, layout?: 'caverns' | 'halls', flat?: boolean, hidden?: boolean, minLevel?: number, bosses?: Record<number, string>, families?: string[], themes?: string[], dress?: string[], vault?: string, band?: boolean, secret?: boolean, parked?: boolean, arena?: boolean, menu?: boolean, mix: number }} SiteDef */   // (menu: reached from ☰, no way in on its land: the Mere Tower, v1.112)
+/** @typedef {{ name: string, region: string, theme: string | null, base: number, perFloor: number, floors: number, span?: number, plan?: boolean, family: string, rooms: [number, number] | null, layout?: 'caverns' | 'halls', flat?: boolean, hidden?: boolean, minLevel?: number, bosses?: Record<number, string>, families?: string[], themes?: string[], dress?: string[], vault?: string, band?: boolean, secret?: boolean, side?: boolean, parked?: boolean, arena?: boolean, menu?: boolean, mix: number }} SiteDef */   // (menu: reached from ☰, no way in on its land: the Mere Tower, v1.112)
 /** @type {Record<string, SiteDef>} */
 export const SITES = {
   // the Hollow Vale, 1–9: a crypt, a fort that goes down into a cave, a drowned chapel; the Ninth Milestone its secret
@@ -68,6 +68,12 @@ export const SITES = {
   // second. The Drowned Mole, the sunken imperial harbour off Gullwick: its wharf, then its moles at low water; the
   // Harbourmaster on the outer mole's end, Sister Maren in his office. Its door at the end of Gullwick's ferry jetty.
   drowned_mole: { name: 'The Drowned Mole', region: 'tidemark', theme: 'mound', base: 31, perFloor: 3, floors: 2, span: 5, plan: true, family: 'wharf', families: ['wharf', 'mole'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 2: 'harbourmaster' }, dress: ['docks', 'mole'], mix: 0x3017 },
+  // (v1.151) the Gull Isles (36–40): the sea cave where the Gull Fleet hides its boats, then the hulks moored in its lagoon;
+  // Admiral Hesk in the flagship's great cabin. Its door at the landing jetty on the harbour bay's west shore.
+  gull_isles: { name: 'The Gull Isles', region: 'tidemark', theme: 'cave', themes: ['cave', 'storehouse'], base: 36, perFloor: 3, floors: 2, span: 5, plan: true, family: 'fleet', rooms: [5, 5], layout: 'halls', band: true, bosses: { 2: 'hesk' }, dress: ['seacave', 'hulk'], mix: 0x9a11 },
+  // (v1.151) the Lamp Fort (38): the Tidemark's side vault (`side`), Old Gannet's coast light on its headland with the
+  // Gull Fleet at its door; its lamp room keeps his spare wick, once (`vault`), then seals for SECRET_REST (core.js)
+  lamp_fort: { name: 'The Lamp Fort', region: 'tidemark', theme: 'storehouse', base: 38, perFloor: 0, floors: 1, plan: true, family: 'fleet', rooms: [5, 5], layout: 'halls', flat: true, side: true, vault: 'gannets_spare_wick', mix: 0x1a4f },
   ninth_vault: { name: 'The Ninth Vault', region: 'reach', theme: 'chasm', base: 30, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [5, 5], layout: 'halls', flat: true, hidden: true, secret: true, vault: 'the_quota_ledgers', dress: ['strongroom'], mix: 0x9a17 },
   // the Mere Tower (tower.js; world doc v1.23): its landing and the stair hall, where the climb goes on; Wenna Pike's punt
   // out to it from ☰ (v1.112, core.js towerGo: from wherever the company is, and back there), from level 12 (minLevel:
@@ -84,10 +90,10 @@ export const SITES = {
   // (the owner, 2026-11-22, from a reference: "Prototype a dungeon level that looks like the inside of a building.. a
   // tavern. Needs more open floor to accommodate NPC battle but the walls are up and set dressing looks great. This is a
   // new dungeon type": the tavern kit, plans.js shuttered_inn; a prototype, then placed: below)
-  shuttered_inn: { name: 'The Shuttered Inn', region: 'reach', theme: 'dread', base: 23, perFloor: 0, floors: 1, plan: true, family: 'taproom', rooms: [5, 5], layout: 'halls', flat: true, mix: 0x1ee5 },   // (the owner, 2026-11-22: "Add it as a location in game with lvl 20 NPCs.. close to town in the overworld near ashgate": on the Reach across the Kell road from Ashgate's north wall, outdoor.js REACH.inn; GDD v1.138)
+  shuttered_inn: { name: 'The Shuttered Inn', region: 'reach', theme: 'dread', base: 23, perFloor: 0, floors: 1, plan: true, family: 'taproom', rooms: [5, 5], layout: 'halls', flat: true, side: true, vault: 'hobs_spare_key', mix: 0x1ee5 },   // (the owner, 2026-11-22: "Add it as a location in game with lvl 20 NPCs.. close to town in the overworld near ashgate": on the Reach across the Kell road from Ashgate's north wall, outdoor.js REACH.inn; GDD v1.138)
   // (the owner, 2026-11-22: "do a similar dungeon style as the inside of a crypt": the crypt kit, plans.js haddow_crypt,
   // docs/crypt-dungeon.md; parked, a prototype for review, on no land yet, as the inn was)
-  haddow_crypt: { name: 'The Haddow Crypt', region: 'vale', theme: 'crypt', base: 6, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [5, 5], layout: 'halls', flat: true, mix: 0xc4e7 },   // (the owner, 2026-11-23: "put it in the vale": the Haddows' chantry north of the east road past the crossroads, outdoor.js buildOverland `crypt`; GDD v1.140),
+  haddow_crypt: { name: 'The Haddow Crypt', region: 'vale', theme: 'crypt', base: 6, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [5, 5], layout: 'halls', flat: true, side: true, vault: 'the_haddow_roll', mix: 0xc4e7 },   // (the owner, 2026-11-23: "put it in the vale": the Haddows' chantry north of the east road past the crossroads, outdoor.js buildOverland `crypt`; GDD v1.140),
   // (the owner, 2026-11-23, from a reference: "start two new level dressing types, docks and harbor": the docks kit, plans.js
   // old_eel_wharf; parked, a prototype for review, on no land yet)
   old_eel_wharf: { name: 'The Old Eel Wharf', region: 'fens', theme: 'mound', base: 12, perFloor: 0, floors: 1, plan: true, family: 'drowned', rooms: [5, 5], layout: 'halls', flat: true, parked: true, mix: 0xd0c5 },

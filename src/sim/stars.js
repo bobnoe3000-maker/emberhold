@@ -27,10 +27,10 @@ export const PAR = {
   barrows: [9, 14], wickham_keep: [12, 18], sunken_chapel: [14, 20],   // (medians 8.8, 11.6, 13.2 min; the Proving Pens are a trial: no stars)
   toadking_mound: [14, 20], canal_locks: [14, 21], drowned_abbey: [15, 22],   // (13.2, 13.5, 14.5)
   cold_seam: [14, 21], assay_yards: [15, 23], cinderworks: [16, 23],   // (14.0, 15.0, 15.3: re-measured for v1.144's Reach in three, two levels a floor)
-  drowned_mole: [12, 18],   // (v1.150, the Tidemark: 11.8)
+  drowned_mole: [11, 16], gull_isles: [10, 15],   // (v1.151, the Tidemark: 10.5, 10.0, re-measured with the heroes' lift past 30)
   // one floor, no boss, and the secrets: pace.mjs walked to their end as the stars do (v1.146: the end room's chest, or the
   // vault), 3 seeds: medians 3.9, 5.0 (the inn, once its cellar hall had its chest), 6.6, 3.9, 7.5 min
-  haddow_crypt: [4, 6], shuttered_inn: [5, 8],
+  haddow_crypt: [4, 6], shuttered_inn: [5, 8], lamp_fort: [5, 7],   // (v1.151: the Lamp Fort, 4.1)
   ninth_milestone: [7, 10], reedholm_undercroft: [4, 6], ninth_vault: [8, 12],
 };
 

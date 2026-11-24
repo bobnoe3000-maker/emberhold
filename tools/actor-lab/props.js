@@ -960,6 +960,145 @@ export const PROPS = {
     const veil = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.74, 0.95, 16, 1, true, Math.PI * 0.6, Math.PI * 0.8), new THREE.MeshStandardMaterial({ color: 0x8a8a86, roughness: 0.92, side: THREE.DoubleSide })); veil.position.set(0, 0.18, -0.12); veil.name = 'Sister_Veil_Cloth'; g.add(veil);
     return g;
   },
+
+  // ── the Gull Isles and the Lamp Fort (world doc v1.70 §3.7; docs/tidemark-plan.md's build sheet, step 4) ──
+  // a Gull Fleet mate's boarding pike: a long ash pole, a square iron spike on long langets (so a cut can't take the head
+  // off), a short back-hook for a rail, and a rag of the fleet's yellow tied under the head. Held two-handed as the
+  // reed-cutters' bill-hook is (+y from the grip)
+  boardingpike: () => {
+    const g = new THREE.Group(); g.name = 'Boarding_Pike';
+    const wood = mat(0x5a4632, 0, 0.82), iron = mat(0x8a9096, 0.85, 0.38), dark = mat(0x3a3c3e, 0.8, 0.5), rag = mat(0xc89a2a, 0, 0.9);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.052, 2.3, 7), wood); pole.position.y = 0.55; g.add(pole);
+    const butt = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.14, 6), dark); butt.rotation.x = Math.PI; butt.position.y = -0.66; g.add(butt);
+    for (const s of [-1, 1]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.36, 0.05), dark); l.position.set(s * 0.05, 1.6, 0); g.add(l); }   // (the langets)
+    const socket = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.055, 0.12, 8), dark); socket.position.y = 1.74; g.add(socket);
+    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.56, 4), iron); spike.position.y = 2.08; spike.name = 'Boarding_Pike_Head'; g.add(spike);
+    const hook = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.22, 4), iron); hook.position.set(-0.1, 1.86, 0); hook.rotation.z = 1.1; g.add(hook);
+    for (const [s, len] of [[-1, 0.3], [1, 0.22]]) { const r = new THREE.Mesh(new THREE.BoxGeometry(0.09, len, 0.02), rag); r.position.set(s * 0.05, 1.5 - len / 2, 0.04); r.rotation.z = s * 0.3; r.name = 'Boarding_Pike_Rag'; g.add(r); }
+    const tie = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.025, 4, 10), rag); tie.rotation.x = Math.PI / 2; tie.position.y = 1.5; g.add(tie);
+    return g;
+  },
+  // the fleet's sash cut for a bigger man (the barbarian's girth: the mate's and the Admiral's), as the corsair's
+  sashwide: () => { const g = PROPS.sash(); g.name = 'Sash_Wide'; g.scale.set(1.24, 1.0, 1.3); g.position.y = -0.02; return g; },
+  // a mate's watch-cap (the head bone's space): knitted wool, tarred near black, close over the skull with its brim rolled;
+  // dark where the corsairs' heads are the fleet's yellow (lab round 1: bare, his scalp read as a brown ball from above)
+  watchcap: () => {
+    const g = new THREE.Group(); g.name = 'Watch_Cap';
+    // (round 2: pulled down to the brows it took the face with it, a dark ball on dark shoulders: up off the brow now, a
+    // shade lighter than his jerkin)
+    const wool = mat(0x3e4452, 0, 0.95), roll = mat(0x4e5464, 0, 0.95);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.58, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), wool); dome.scale.set(1.0, 0.62, 1.04); dome.position.set(0, 0.72, -0.06); g.add(dome);
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.575, 0.07, 6, 20), roll); band.rotation.x = Math.PI / 2 - 0.12; band.scale.set(1.0, 1.04, 1); band.position.set(0, 0.73, -0.06); g.add(band);
+    g.traverse((o) => { if (o.isMesh) o.name = 'Watch_Cap'; });
+    return g;
+  },
+  // the mate's black beard, long enough to read from above (the face's own is under the chin from the game's camera)
+  beardblack: () => greatBeard({ name: 'Beard_Black', hair: 0x1c1612, len: 0.45 }),
+  // Admiral Hesk's hanger: an officer's short sword, a curved blade longer and slimmer than the corsairs' cutlasses, a
+  // gilt shell and knuckle-bow, a lion's-head pommel gone to a lump at 56 px; held as the kits' one-handers are
+  hanger: () => {
+    const g = new THREE.Group(); g.name = 'Hanger';
+    const steel = mat(0xd0d6dc, 0.92, 0.26), gilt = mat(0xd8b050, 0.85, 0.3), grip = mat(0x1c1a24, 0, 0.8);
+    const prof = new THREE.Shape([[-0.045, 0.0], [0.05, 0.0], [0.08, 0.5], [0.11, 0.9], [0.09, 1.14], [0.0, 1.2], [-0.03, 0.96], [-0.045, 0.5]].map(([x, y]) => new THREE.Vector2(x, y)));
+    const blade = new THREE.Mesh(new THREE.ExtrudeGeometry(prof, { depth: 0.026, bevelEnabled: false }), steel); blade.geometry.translate(0, 0, -0.013); blade.position.y = 0.17; blade.name = 'Hanger_Blade'; g.add(blade);
+    const shell = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), gilt); shell.scale.set(1, 0.4, 0.8); shell.rotation.x = Math.PI; shell.position.y = 0.18; g.add(shell);
+    const bow = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.02, 4, 12, Math.PI), gilt); bow.rotation.z = -Math.PI / 2; bow.position.set(0.0, 0.03, 0); bow.scale.set(1.1, 1, 1); g.add(bow);
+    const gr = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 0.28, 8), grip); g.add(gr);
+    const pom = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 6), gilt); pom.position.y = -0.16; g.add(pom);
+    return g;
+  },
+  // the Admiral's hat (the head bone's space): a broad black felt, its brim edged and banded in tarnished gold, a white
+  // plume off a gilt pin on its left, laid back over the crown. Held to a hat's size,
+  // not a sail's (the Harbourmaster's bicorne and the gunner's tricorne beside it: this one is round, cocked, plumed)
+  cavalier: () => {
+    const g = new THREE.Group(); g.name = 'Cavalier_Hat'; g.position.y = 0.06;
+    const felt = new THREE.MeshStandardMaterial({ color: 0x1a1c26, roughness: 0.85, side: THREE.DoubleSide }), gold = mat(0xc8a048, 0.8, 0.4);
+    const tip = mat(0xf2ead2, 0, 0.95);   // (round 3: the plume white; yellow on black read as nothing at 73 px, and the sash is the fleet's yellow)
+    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.52, 0.26, 16), felt); crown.position.set(0, 0.99, -0.04); g.add(crown);
+    const top = new THREE.Mesh(new THREE.SphereGeometry(0.46, 16, 6, 0, Math.PI * 2, 0, Math.PI / 2), felt); top.scale.y = 0.34; top.position.set(0, 1.12, -0.04); g.add(top);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.53, 0.53, 0.08, 16), gold); band.position.set(0, 0.92, -0.04); g.add(band);
+    // the brim: a round felt disc, a little down at the front (round 3: its left side turned up stood off the crown as a
+    // black fin from the game's camera, and the hat read tall; the plume and its gilt pin keep the cavalier's side)
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.04, 22), felt); brim.position.set(0, 0.88, -0.04); brim.rotation.x = 0.1; g.add(brim);
+    const pin = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 6), gold); pin.position.set(-0.46, 1.0, 0.12); g.add(pin);
+    const edge = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.022, 4, 28), gold); edge.rotation.set(Math.PI / 2 + 0.1, 0, 0); edge.position.set(0, 0.885, -0.04); g.add(edge);   // (round 2: the brim edged in gold, so the hat parts from the coat)
+    // the plume (round 2: tucked along the brim it was lost at 56 px): three feathers off the pin, up over the crown and
+    // curling back, cream with the fleet's yellow at the quill
+    for (const [k, len, a, up] of [[0, 0.78, 0.25, 0.55], [1, 0.64, 0.6, 0.4], [2, 0.56, -0.1, 0.35]]) {
+      const f = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 6), tip); f.scale.set(0.11, 0.06, len / 2);
+      f.position.set(-0.42 + 0.08 * k + Math.sin(a) * len * 0.4, 1.2 + up * len * 0.5, -0.04 - Math.cos(a) * len * 0.4); f.rotation.set(-up, a, 0.25); g.add(f);
+    }
+    g.traverse((o) => { if (o.isMesh) o.name = 'Cavalier_Hat'; });
+    return g;
+  },
+  // the skirts of the Admiral's long coat (the hips' space): dark blue broadcloth from the waist to the knee, open at the
+  // front for the legs, the edges and the turned-back corners in tarnished gold lace, two gilt buttons at the back vent
+  coatskirts: () => {
+    const g = new THREE.Group(); g.name = 'Coat_Skirts';
+    const cloth = new THREE.MeshStandardMaterial({ color: 0x1e2a48, roughness: 0.85, side: THREE.DoubleSide }), gold = mat(0xb8903e, 0.8, 0.4);
+    // (lab round 3: one flared cylinder read as a barrel from behind; two tails now, open at the front and parted at the
+    // back vent, hung nearly straight)
+    const open = 0.36, vent = 0.05, len = 0.5, top = 0.08, r0 = 0.41, r1 = 0.46;
+    for (const s of [-1, 1]) {
+      const th0 = s > 0 ? Math.PI * open : Math.PI * (1 + vent), thL = Math.PI * (1 - open - vent);
+      const sk = new THREE.Mesh(new THREE.CylinderGeometry(r0, r1, len, 12, 1, true, th0, thL), cloth); sk.position.set(0, top - len / 2, -0.02); sk.scale.z = 0.92; sk.name = 'Coat_Skirts_Cloth'; g.add(sk);
+      const hem = new THREE.Mesh(new THREE.TorusGeometry(r1 + 0.005, 0.022, 4, 14, thL), gold); hem.rotation.set(Math.PI / 2, 0, Math.PI / 2 - th0 - thL); hem.position.set(0, top - len + 0.01, -0.02); hem.scale.y = 0.92; g.add(hem);
+      for (const th of [th0, th0 + thL]) { const e = new THREE.Mesh(new THREE.BoxGeometry(0.045, len, 0.025), gold); e.position.set(Math.sin(th) * (r0 + r1) / 2, top - len / 2, Math.cos(th) * (r0 + r1) / 2 * 0.92 - 0.02); e.rotation.y = th; g.add(e); }
+    }
+    for (const y of [-0.04, -0.2]) for (const s of [-1, 1]) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 5), gold); b.position.set(s * 0.07, y, -0.47 + y * 0.25); g.add(b); }
+    return g;
+  },
+  // an officer's epaulettes (the chest's space): a gilt pad on each shoulder, its fringe hanging; tarnished, but they
+  // tell an admiral from his crew at 56 px
+  epaulettes: () => {
+    const g = new THREE.Group(); g.name = 'Epaulettes';
+    const gold = mat(0xc8a048, 0.8, 0.4), dark = mat(0x8a6a28, 0.7, 0.5);
+    for (const s of [-1, 1]) {
+      const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.15, 0.05, 12), gold); pad.position.set(s * 0.4, 0.3, -0.02); pad.rotation.z = s * -0.35; g.add(pad);
+      for (let k = 0; k < 7; k++) { const a = (k / 6 - 0.5) * 2.2, f = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.012, 0.12, 4), dark); f.position.set(s * (0.4 + 0.13 * Math.abs(Math.cos(a)) * 0.9), 0.24, -0.02 + 0.14 * Math.sin(a)); f.rotation.z = s * -0.35; g.add(f); }
+    }
+    g.traverse((o) => { if (o.isMesh) o.name = 'Epaulettes'; });
+    return g;
+  },
+  // Hesk's commission, at his belt (the hips' space, the left hip): a roll of vellum in a gilt cord, sealed in coal-red wax
+  // (world doc §3.7: signed *Lucanus*, paid in coal-red wax), the seal hung where it can be seen
+  commission: () => {
+    const g = new THREE.Group(); g.name = 'Commission';
+    const vellum = mat(0xe0d2a8, 0, 0.85), cord = mat(0xc8a048, 0.7, 0.5), wax = mat(0x9a2014, 0.05, 0.35);   // (coal-red: a red with black in it, still red at 73 px)
+    // (Stage round 1: a pencil at his hip, gone at play size; a fat roll now, its seal the size of a coin and hung outside the sash)
+    const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.62, 12), vellum); roll.name = 'Commission_Roll'; g.add(roll);
+    for (const y of [-0.2, 0.2]) { const t = new THREE.Mesh(new THREE.TorusGeometry(0.097, 0.018, 4, 12), cord); t.rotation.x = Math.PI / 2; t.position.y = y; g.add(t); }
+    const seal = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.04, 14), wax); seal.rotation.x = Math.PI / 2; seal.position.set(0, -0.08, 0.12); seal.name = 'Commission_Seal'; g.add(seal);
+    const tag = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 0.012), cord); tag.position.set(0, 0.02, 0.105); g.add(tag);
+    g.position.set(-0.42, 0.02, 0.26); g.rotation.set(0.3, 0, 0.5);
+    return g;
+  },
+  // Old Gannet's hand-lamp: a small brass lamp on a ring, a chimney of glass with its flame in it, warm (userData.glow);
+  // hung from his fingers. The coast-lamp's keeper carries a little one about the fort
+  handlamp: () => {
+    const g = new THREE.Group(); g.name = 'Hand_Lamp'; g.userData.hang = true;
+    const brass = mat(0xd0a450, 0.85, 0.32), glass = new THREE.MeshStandardMaterial({ color: 0xffd890, emissive: 0xe08a28, emissiveIntensity: 1.35, roughness: 0.3 });
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.014, 5, 12), brass); ring.position.y = 0.05; g.add(ring);
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.1, 10), brass); cap.rotation.z = Math.PI; cap.position.y = 0.15; g.add(cap);
+    const chim = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.085, 0.2, 10), glass); chim.position.y = 0.3; chim.name = 'Hand_Lamp_Glass'; chim.userData.glow = 0xffc060; g.add(chim);
+    for (let k = 0; k < 3; k++) { const a = (k / 3) * Math.PI * 2, bar = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.2, 0.016), brass); bar.position.set(Math.cos(a) * 0.088, 0.3, Math.sin(a) * 0.088); g.add(bar); }
+    const fount = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 8), brass); fount.scale.y = 0.7; fount.position.y = 0.46; g.add(fount);
+    return g;
+  },
+  // a keeper's sou'wester (the head bone's space): oilskin, the old ochre gone dark with tar and weather, a low crown and
+  // a brim short at the brow and long down the back of the neck, so it never hides the face
+  souwester: () => {
+    // (the portrait, round 2: scaled down, its crown sat inside the painted head and only the brim showed, a ring like horns;
+    // sized to the head now: the crown over the hair, the brim up off the brow)
+    const g = new THREE.Group(); g.name = 'Souwester';
+    const oil = new THREE.MeshStandardMaterial({ color: 0x9a7634, roughness: 0.45, metalness: 0.05, side: THREE.DoubleSide });
+    const crown = new THREE.Mesh(new THREE.SphereGeometry(0.58, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), oil); crown.scale.set(1, 0.62, 1.04); crown.position.set(0, 0.86, -0.06); g.add(crown);
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.74, 0.07, 20), oil); brim.position.set(0, 0.84, -0.12); brim.scale.set(1, 1, 1.1); brim.rotation.x = 0.26; g.add(brim);   // (tipped up at the brow, long down the neck)
+    g.traverse((o) => { if (o.isMesh) o.name = 'Souwester'; });
+    return g;
+  },
+  // and his beard, white and long, three hundred years of it (from above the face's own is under the chin)
+  beardwhite: () => { const g = greatBeard({ name: 'Beard_White', hair: 0xe4e0d8, len: 0.3 }); g.scale.set(0.82, 1, 0.8); g.position.z = 0.04; return g; },   // (the portrait: full size it was a ball of cotton wool)
 };
 
 // an apron (the hips' space): a bib, a two-panel skirt, a belt

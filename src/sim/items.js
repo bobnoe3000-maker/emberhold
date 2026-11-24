@@ -208,6 +208,12 @@ export const HEIRLOOMS = {
   short_weight: { base: 'ring', name: 'Short Weight', flav: 'He was never once out by a grain. Not in your favour.', aff: ['crit', 'atk', 'dodge'] },   // (the Weighmaster, v1.126)
   oruths_last_commission: { base: 'amulet', name: "Oruth's Last Commission", flav: 'Ordered three hundred years ago. Delivered.', aff: ['atk', 'def', 'hp'] },   // (Oruth, v1.126)
   the_berths_book: { base: 'charm', name: "The Berths' Book", flav: 'Every ship that came in. None that left.', aff: ['def', 'hp', 'hpr'] },   // (the Harbourmaster, v1.150)
+  the_letter_of_marque: { base: 'charm', name: 'The Letter of Marque', flav: 'Signed Lucanus. Paid in advance.', aff: ['crit', 'atk', 'hp'] },   // (Admiral Hesk, v1.151)
+  // (v1.151, the owner: "Yes to the keepsake") a side vault's keepsake, left in its end room's chest by whoever sent you
+  // there (sites.js `side`, `vault`): the Lamp Fort's from Old Gannet, the Haddow Crypt's from Sister Ilse, the Shuttered Inn's from Hob
+  gannets_spare_wick: { base: 'charm', name: "Gannet's Spare Wick", flav: 'Trimmed, and never lit. He kept it for the night the lamp went out.', aff: ['hpr', 'mp', 'def'] },
+  the_haddow_roll: { base: 'amulet', name: 'The Haddow Roll', flav: 'Every name in the crypt, in her hand. She left room at the bottom.', aff: ['mp', 'mpr', 'hpr'] },
+  hobs_spare_key: { base: 'ring', name: "Hob's Spare Key", flav: "It opens something. He wouldn't say what.", aff: ['crit', 'atk', 'hp'] },
   the_quota_ledgers: { base: 'charm', name: 'The Quota Ledgers', flav: 'Every soul the furnaces were owed, in a clerk\'s fair hand.', aff: ['mp', 'mpr', 'crit'] },   // (the Ninth Vault, v1.126)
   quota: { base: 'amulet', name: 'Quota', flav: 'It always asked for more.', aff: ['atk', 'hp', 'crit'] },   // (Furnace Nine, the Reach's region boss: world doc §10.2)
   the_whistle: { base: 'charm', name: 'The Whistle', flav: 'Blow it, and somebody somewhere goes back to work.', aff: ['atk', 'crit', 'hp'] },   // (the Foreman, the Cold Seam: v1.124)

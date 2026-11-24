@@ -581,6 +581,71 @@ export const PLANS = {
     ] },
   ] },
 
+  // ── The Gull Isles (36–40; the Tidemark, GDD v1.151, docs/tidemark-plan.md step 4): out on the isles past the salt
+  //    marsh. Floor 1 the sea cave where the Gull Fleet hides its boats (the `seacave` kit: the cellar's cave with the sea
+  //    in it), floor 2 the hulks moored in its lagoon (the `hulk` kit: a ship's inside, its decks and ribs, the hold). A
+  //    band of five, as the Mole: floor 1 at 36–38, floor 2 at 39–40 (`step` 3). Hesk in the flagship's great cabin; his
+  //    commission in the wardroom.
+  gull_isles: { site: 'gull_isles', name: 'The Gull Isles', kind: 'cave', base: 36, step: 3, floors: [
+    { name: 'The Sea Cave', spaces: [
+      { id: 'the_boat_landing', name: 'The Boat Landing', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'seacave',
+        dress: ['boats', 'dock_lamps', 'dock_ropes'], note: 'Where the fleet\'s boats put in under the cliff, the sea slapping at the rock. The landing\'s steps are the way out.' },
+      { id: 'the_smugglers_stores', name: 'The Smugglers\' Stores', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'seacave', foes: 'fleet',
+        dress: ['casks', 'dock_cargo', 'stalagmites', 'dock_lamps'], note: 'What the fleet took off League ships, stacked in the cave\'s dry end, tallied in chalk on the rock.' },
+      { id: 'the_strongroom', name: 'The Strongroom', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 1, kit: 'seacave', foes: 'fleet',
+        dress: ['ledger', 'dock_lamps', 'chest'], note: 'A fissure walled up with a ship\'s door. The fleet\'s share-out is reckoned here.' },
+      { id: 'the_long_gallery', name: 'The Long Gallery', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 1, kit: 'seacave', foes: 'fleet',
+        dress: ['stalagmites', 'drips', 'dock_lamps'], note: 'The cave\'s long arm under the isle, wet to the knee at high water. The hounds are kennelled at its end.' },
+      { id: 'the_careening_beach', name: 'The Careening Beach', role: 'descent', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 2, kit: 'seacave', foes: 'fleet',
+        dress: ['boats', 'scaffold', 'dock_lamps', 'stair_down'], note: 'A beach inside the isle where the boats are hauled over to be scraped, and the way out through the rock to the lagoon and the hulks.' },
+    ], halls: [
+      { from: 'the_boat_landing', to: 'the_smugglers_stores', x: 32, y: 44, w: 10, h: 10 },
+      { from: 'the_smugglers_stores', to: 'the_strongroom', x: 52, y: 20, w: 10, h: 10 },
+      { from: 'the_smugglers_stores', to: 'the_long_gallery', x: 92, y: 44, w: 10, h: 10 },
+      { from: 'the_smugglers_stores', to: 'the_careening_beach', x: 48, y: 70, w: 10, h: 10 },
+    ] },
+    { name: 'The Hulks', spaces: [
+      { id: 'the_gangway', name: 'The Gangway', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'rect', lv: 3, kit: 'hulk',
+        dress: ['dock_ropes', 'mole_lamps', 'stair_up'], note: 'Up the gangway from the lagoon\'s shingle and in through the first hulk\'s side, where a port was cut wide for cargo.' },
+      { id: 'the_gun_deck', name: 'The Gun Deck', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'rect', lv: 3, kit: 'hulk', foes: 'fleet',
+        dress: ['bunks', 'casks', 'mole_lamps'], note: 'The long low deck under the beams, the crew\'s hammocks slung between the guns.' },
+      { id: 'the_wardroom', name: 'The Wardroom', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'rect', lv: 4, kit: 'hulk', foes: 'fleet',
+        dress: ['desks', 'mole_lamps', 'chest'], note: 'The officers\' table, its charts held down with bottles. Hesk\'s commission is in the drawer: signed Lucanus, sealed in coal-red wax.' },
+      { id: 'the_hold', name: 'The Hold', role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'rect', lv: 4, kit: 'hulk', foes: 'fleet',
+        dress: ['casks', 'dock_cargo', 'anchors', 'mole_lamps'], note: 'Down among the ribs and the ballast, where the prizes\' cargo goes and the bilge comes up through the boards.' },
+      { id: 'the_great_cabin', name: 'The Great Cabin', role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'rect', lv: 4, kit: 'hulk', foes: 'fleet', boss: 'hesk',
+        dress: ['desks', 'dock_cargo', 'mole_lamps', 'rug'], note: 'The flagship\'s stern cabin, the whole width of her, the windows over the lagoon. Admiral Hesk keeps his table here, and his prizes\' flags.' },
+    ], halls: [
+      { from: 'the_gangway', to: 'the_gun_deck', x: 30, y: 8, w: 10, h: 10 },
+      { from: 'the_gun_deck', to: 'the_wardroom', x: 56, y: 24, w: 10, h: 10 },
+      { from: 'the_gun_deck', to: 'the_hold', x: 110, y: 8, w: 10, h: 10 },
+      { from: 'the_hold', to: 'the_great_cabin', x: 132, y: 34, w: 10, h: 10 },
+    ] },
+  ] },
+
+  // ── The Lamp Fort (38; the Tidemark's side vault, GDD v1.151): Old Gannet's coast light on its headland, a fort on the
+  //    ramparts kit with the Gull Fleet at its door. One floor; Gannet at the gate; his spare wick in the lamp room's
+  //    chest (sites.js `vault`: the keepsake, once), then it seals (`side`, core.js).
+  lamp_fort: { site: 'lamp_fort', name: 'The Lamp Fort', kind: 'ramparts', base: 38, flat: true, floors: [
+    { name: 'The Lamp Fort', spaces: [
+      { id: 'the_fort_gate', name: 'The Fort Gate', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'ramparts',
+        dress: ['rampart_torches', 'rampart_cargo'], note: 'Inside the gate, where Gannet waits with his hand-lamp. The fleet has been at the door since the spring.' },
+      { id: 'the_yard', name: 'The Yard', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'ramparts', foes: 'fleet',
+        dress: ['rampart_well', 'rampart_torches', 'rampart_cargo', 'rampart_clutter'], note: 'The fort\'s yard and its well, the barracks along the back, nobody in them but Gannet for a long time.' },
+      { id: 'the_magazine', name: 'The Magazine', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'ramparts', foes: 'fleet',
+        dress: ['rampart_torches', 'chest'], note: 'Where the oil for the lamp is kept, sixty years of it, and what the fleet wanted.' },
+      { id: 'the_curtain_walk', name: 'The Curtain Walk', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'ramparts', foes: 'fleet',
+        dress: ['rampart_torches', 'rampart_cargo'], note: 'The wall walk round the seaward side, the drop to the rocks below it.' },
+      { id: 'the_lamp_room', name: 'The Lamp Room', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'ramparts', foes: 'fleet',
+        dress: ['rampart_torches', 'rampart_clutter', 'lamp_stand'], note: 'The top of the tower and the light, kept lit. Gannet\'s spare wick is in the chest by the lamp.' },
+    ], halls: [
+      { from: 'the_fort_gate', to: 'the_yard', x: 32, y: 44, w: 10, h: 10 },
+      { from: 'the_yard', to: 'the_magazine', x: 52, y: 20, w: 10, h: 10 },
+      { from: 'the_yard', to: 'the_curtain_walk', x: 92, y: 44, w: 10, h: 10 },
+      { from: 'the_yard', to: 'the_lamp_room', x: 48, y: 70, w: 10, h: 10 },
+    ] },
+  ] },
+
   // ── The Old Eel Wharf (a prototype: the docks kit, docs/docks-dungeon.md; the owner, 2026-11-23, from a reference:
   //    "start two new level dressing types, docks and harbor"): the eel-men's wharf on the Fens' edge, its decks out over
   //    the black water on piles, a trial for Tollhaven's quays (world doc §3.7). No walls: each deck's edge is the water,

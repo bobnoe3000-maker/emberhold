@@ -11,7 +11,7 @@
 import { html, render } from 'htm/preact';
 import { useState } from 'preact/hooks';
 import { QUESTS, QS, questXp } from '../sim/quests.js';
-import { SITE_IDS } from '../sim/sites.js';
+import { SITE_IDS, SITES } from '../sim/sites.js';
 import { swallow } from './actorart.js';
 import { boardWords, boardReady, SKULLS } from './boardwords.js';
 import { FRAGMENTS, SETS } from '../sim/lore.js';
@@ -210,9 +210,10 @@ function MainTab({ sim, defOf, npcName, story, view, row, repaint }) {
     else if (st === QS.ACTIVE || st === QS.READY) out.push(html`<div key=${id} class="ch now">${dot}<div>${row(id, { meta: `Chapter ${i + 1} · ${d.giverName || npcName(d.giver)} · level ${d.level[0]}` })}</div></div>`);
     else if (i === cur) {   // in hand next, not yet given: who gives it, or the level it waits for (storystatus.js; content/story.json)
       const ss = story && storyStatus(sim.state, status);
-      const text = ss && ss.id === id ? fill((ss.found && story.nextFound) || story[ss.kind], { title: d.title, giver: ss.giver ? npcName(ss.giver) : '', town: ss.town || '', level: ss.level }) : `Opens at level ${d.level[0]}.`;
+      const place = ss && ss.at ? ((SITES[ss.at] && SITES[ss.at].name) || '').replace(/^The /, 'the ') : '';   // (a giver who stands at a site: Gannet at the Lamp Fort's gate, v1.151)
+      const text = ss && ss.id === id ? fill((ss.found && story.nextFound) || (ss.at && story.nextAt) || story[ss.kind], { title: d.title, giver: ss.giver ? npcName(ss.giver) : '', town: ss.town || '', place, level: ss.level }) : `Opens at level ${d.level[0]}.`;
       out.push(html`<div key=${id} class="ch now">${dot}<div><div class="q story"><div class="row"><div><h3>${d.title}</h3><div class="giver">Chapter ${i + 1} · next</div><div class="summary" style="margin-top:6px">${text}</div></div></div></div></div></div>`);
-    } else out.push(html`<div key=${id} class="ch">${dot}<div><div class="lock"><b>${d.title}</b>Chapter ${i + 1} · opens at level ${d.level[0]}, after ${defOf(CHAPTERS[i - 1]) ? defOf(CHAPTERS[i - 1]).title : 'the last'}</div></div></div>`);
+    } else out.push(html`<div key=${id} class="ch">${dot}<div><div class="lock"><b>${d.title}</b>Chapter ${i + 1} · opens at level ${d.level[0]}, after ${((p) => (p ? p.title : 'the last'))(defOf((QUESTS[id].after || [])[0] || CHAPTERS[i - 1]))}</div></div></div>`);
   }
   if (end && story) { const e = story.end[QUESTS[CHAPTERS[CHAPTERS.length - 1]].region || 'fens'] || story.end.fens; if (e) out.push(html`<div key="end" class="q story"><div class="row"><div><h3>${e.title}</h3><div class="summary" style="margin-top:6px">${e.text}</div></div></div></div>`); }
   else if (!end && CHAPTERS.length - 1 > upto) out.push(html`<div key="more" class="giver" style="padding-left:30px">and ${CHAPTERS.length - 1 - upto} more chapter${CHAPTERS.length - 1 - upto === 1 ? '' : 's'} after it</div>`);

@@ -21,6 +21,18 @@
    "y": 255
   },
   {
+   "kind": "site",
+   "id": "gull_isles",
+   "x": 178.5,
+   "y": 11.5
+  },
+  {
+   "kind": "site",
+   "id": "lamp_fort",
+   "x": 236.5,
+   "y": 147.5
+  },
+  {
    "kind": "land",
    "id": "solmere",
    "x": -7.5,

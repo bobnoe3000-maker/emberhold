@@ -11,6 +11,7 @@ import { attrStats, recommendedGrowth, autoAllocate, ATTRS, BUILD, BORN_POINTS }
 import { STANCE_MOD, stanceOf, passiveVal } from './skills.js';
 import { has, STAT, rollSellsword, rollPerks } from './companions.js';
 import { drawAppearance } from './appearance.js';
+import { premiumOf } from './premium.js';
 
 // Level-1 values here are the GDD table MINUS the class's level-1 starting kit (items.js
 // STARTER), so a fresh character in their kit has exactly the GDD numbers; beyond that,
@@ -66,10 +67,16 @@ export const WEAK = 0.9;
 // ability-power bonus (Focus).
 // (v1.150, the Tidemark) past 30 a hero's HP and ATK grow as the foes' premium does (battle.js premiumOf: PREMIUM 5 % a level
 // over 3, PREMIUM_HIGH 6 % a level from 18 to 22), by premiumOf(L) / premiumOf(30): the stat lines grow in step, and the
-// premium had pulled away from the party past 30 (test/tidemark-mole.test.mjs holds the two formulas together)
+// premium had pulled away from the party past 30 (test/tidemark-mole.test.mjs holds the two formulas together).
+// (v1.151) Read off premium.js, now compounding past 30 (a same-level room unchanged by the curve's shape: lift and
+// premium move together), and LIFT_EXTRA a level more to LIFT_EXTRA_TO past 30: a hero's HP and ATK kept pace with a foe's
+// (a fighter's HP ×1.161 from 30 to 36, a foe's ×1.166), but DEF's mitigation against a higher-level blow and the skills
+// stop growing at 30, and the right party held a level-36 room 8 waves, 38 4 (roomlv.mjs). With it the smoke contract's
+// right party holds 11 and 13 waves at 36, 14 and 14 at 39, and three up still beats it (premium.js PREMIUM_STEEP).
 export const LIFT_FROM = 30;
 /** a hero's HP and ATK multiplier at a level: 1 to 30, then the foes' premium's growth @param {number} lv */
-export const liftOf = (lv) => (lv <= LIFT_FROM ? 1 : (1.24 + 0.05 * (lv - 3)) / (1.24 + 0.05 * (LIFT_FROM - 3)));
+export const LIFT_EXTRA = 0.02, LIFT_EXTRA_TO = 15;   // (v1.151: 2 % a level more, to +30 % at 45: DEF's mitigation and the skills stop growing at 30)
+export const liftOf = (lv) => (lv <= LIFT_FROM ? 1 : premiumOf(lv) / premiumOf(LIFT_FROM) * (1 + LIFT_EXTRA * Math.min(LIFT_EXTRA_TO, lv - LIFT_FROM)));   // (v1.151: read off premium.js, so a steeper curve lifts the heroes in step)
 export function statsFor(m) {
   const c = CLASSES[m.cls], L = m.level - 1, r1 = (v) => Math.round(v * 10) / 10, g = gearStats(m), a = attrStats(m), kg = kitGrowth(m.cls);
   const rg0 = recommendedGrowth(m.cls), rg = { hp: rg0.hp + kg.hp, mp: rg0.mp + kg.mp, atk: rg0.atk + kg.atk, def: rg0.def + kg.def };   // attributes and the kit's extra growth carry the rest

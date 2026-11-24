@@ -212,7 +212,7 @@ with the Journal in the owner's plain voice ([copy-voice.md](./copy-voice.md)). 
 | ch4 *Consigned* (31) | Sister Ilse | Morrow Vane's ledger, the one he left in the furnace hall, has a last page: the vessel was consigned by the Solmere road to Brine Cross, "freight paid at Tollhaven". On to Tollhaven. Hester Quaile tells you the Mole's drowned have been walking up the quays at night, and a Grey Sister has gone out to them. | Brine Cross, Tollhaven |
 | ch4 *Low Water* (31–35) | Hester Quaile | Out by Gullwick's ferry to the Drowned Mole. Maren is found on the wharf. The Harbourmaster holds the outer mole, and Lucan sings the fleet up. | the Drowned Mole: Maren found |
 | ch4 *Letters of Marque* (36–40) | Hester Quaile | The Gull Fleet is taking League ships under a commission. Hesk's commission in his wardroom is signed *Lucanus*, and it was paid in coal-red wax with a thumbprint in it: the Cult's coin. | the Gull Isles |
-| ch4 *The Keeper's Light* (38, the side vault) | Old Gannet | The Gull Fleet is at the Lamp Fort's door. Gannet asks for help keeping the light, as he has for three hundred years, "because nobody told me to stop". He knows what his lamp holds. | the Lamp Fort |
+| ch4 *The Keeper's Light* (38, the side vault) | Old Gannet | The Gull Fleet is at the Lamp Fort's door. Gannet asks for help keeping the light, as he has for sixty years, "because nobody told me to stop". He knows what his lamp holds. | the Lamp Fort |
 | ch4 *Brine Cross* (40) | Hester Quaile | The drowned fleet's crews march on the bridge, and the League holds it. Old Gannet brings his lamp up the road and breaks it on the barricade. The drowned lie down. | Brine Cross (the set piece) |
 | ch4 *The Seventh Voice* (41–45) | Sister Maren | The company storms Highmarch: first the Champion on the walls, then Lucan in his palace. He's beaten, not killed. He finds the Kindler's letters on his own table and walks north. The vessel left with the Kindler days ago. Act IV ends a step behind, as Act III did. | Highmarch |
 
@@ -310,7 +310,16 @@ Each step ends playable and checked: `npm run check`, the browser suite, and the
    seeds (2 of 6 before the lift), and the First Pilgrim was raised to match (his fight's length unchanged). Pace: a
    median 11.8 minutes, par 12/18. Tests: `test/tidemark-mole.test.mjs`.
 4. **The Gull Isles (36–40):** the `hulk` kit, Hesk, *Letters of Marque*, the Lamp Fort and *The Keeper's Light*,
-   war-hounds, and the contract at 36 and 39.
+   war-hounds, and the contract at 36 and 39. **Built (GDD v1.151):** `plans.js` `gull_isles` (the sea cave on a
+   new `seacave` kit, the hulks on a new `hulk` kit) and `lamp_fort` (the ramparts kit, flat at 38); the `fleet` family
+   (the war-hound and the mate new); Hesk's `boarding` (`battle.js` `BOARD_*`: two grapples every 18 s, told 3 s ahead
+   at their landings, one boarder each unless a company member stands on the landing); the side vaults' keepsakes
+   (`sites.js` `side`, `vault`; `core.js` seals one as a secret, unless an errand still sends you there; `world.js`
+   placeVault at the end room's back wall); Old Gannet at the Lamp Fort's gate; *Letters of Marque* and *The Keeper's
+   Light*; the doors (the landing jetty past the salt marsh, the Lamp Fort's tower foot). The contract at 36 and 39
+   held once the foes' premium compounds past 30 (`premium.js`, 1.06 a level) and the heroes' lift reads it with 2 % a
+   level more to 45 (GDD v1.151 has the numbers). Pace: the Isles 10.0 min, the Lamp Fort 4.1. Tests:
+   `test/tidemark-isles.test.mjs`.
 5. **Brine Cross:** the set piece, Gannet's lamp, *Brine Cross*.
 6. **Highmarch (41–45):** the walls on the ramparts kit, the `palace` kit, the legionaries' shield wall, the
    Champion, Lucan, *The Seventh Voice*, Act IV's end, and the contract at 42 and 45.
@@ -365,6 +374,54 @@ left."*
 **Balance:** the smoke contract at 33. The right party holds a same-level room 10+ waves at 33, and the solo and
 no-healer checks hold too. `roomlv.mjs` at 33 and 36.
 
+## The build sheet: the Gull Isles and the Lamp Fort (step 4)
+
+Every id step 4 is built against. Canon is world doc §3.7 (v1.70).
+
+**The sites** (`sim/sites.js`):
+
+| id | name | levels | floors (plan kits) | families | boss | door |
+|---|---|---|---|---|---|---|
+| `gull_isles` | The Gull Isles | 36–40 (`span` 5, plan `step` 3) | 2: the Sea Cave (`seacave`, new: the cellar's cave with the sea in it), the Hulks (`hulk`, new: a ship's inside, its decks and ribs, hammocks, the hold) | `fleet` | floor 2 `hesk` | the landing jetty on the harbour bay's west shore, past the salt marsh (`TIDEMARK.isles`) |
+| `lamp_fort` | The Lamp Fort | 38 (`flat`) | 1: the fort (`ramparts`) | `fleet` | none | the tower's foot on the headland (`TIDEMARK.lampfort`) |
+
+- *The Sea Cave:* `the_boat_landing` (entrance), `the_smugglers_stores`, `the_strongroom` (offshoot), `the_long_gallery`,
+  `the_careening_beach` (descent).
+- *The Hulks:* `the_gangway` (entrance), `the_gun_deck`, `the_wardroom` (offshoot: Hesk's commission), `the_hold`,
+  `the_great_cabin` (end: **Hesk**).
+- *The Lamp Fort:* `the_fort_gate` (entrance: Gannet), `the_yard`, `the_magazine` (offshoot), `the_curtain_walk`,
+  `the_lamp_room` (end: the keepsake's chest).
+
+**Foe kinds** (`battle.js` ENEMIES; art in brackets):
+- `warhound`: melee, a minion's strength, quick and light (as the cinder hound). A mastiff in a spiked collar and
+  barding, the fleet's for boarding. New silhouette on the shared quadruped (`enemy_warhound`).
+- `mate`: melee, the elite, a warrior's strength. The fleet's mate with a boarding pike. The KayKit barbarian recoloured
+  (`enemy_mate`).
+- Kept: `corsair`, `gunner` (the Mole's), `crossbow` (the Redhand's, on the fleet's pay).
+
+**Family:** `fleet` (corsair, warhound · gunner, crossbow · elite mate), on both of the Isles' floors and in the Lamp Fort.
+
+**The boss** (art `boss_hesk`): `hesk`, Admiral Grell Hesk (mech `boarding`), like the mate. Every 18 s he calls two
+grapples: each is told 3 s ahead as a line from the hall's edge to where it lands. At its landing one of his escort
+(corsair, gunner) swings in, unless one of the company stands within 1.8 tiles of the landing, which cuts the line. Never
+more than four of his boarders are up (at two a grapple and six up, he wiped the right party at 40 six seeds of six). Heirloom `the_letter_of_marque`: *"Signed Lucanus. Paid in advance."*
+
+**Side vaults and keepsakes** (the owner's yes, 2026-11-24): `side: true` on `lamp_fort`, `haddow_crypt` and
+`shuttered_inn`, each with a `vault` (its end room's chest, `world.js` placeVault), holding its keepsake once:
+`gannets_spare_wick` (charm), `the_haddow_roll` (amulet), `hobs_spare_key` (ring), in `items.js` HEIRLOOMS. Once the
+chest is opened the vault seals for `SECRET_REST`, as a secret does, unless an active quest still has an objective
+there. After the seal it opens again with an ordinary find in that chest.
+
+**People:** `old_gannet` at the Lamp Fort's gate (`npcs.js` `found`: `lamp_fort`, floor 1, the entrance), art
+`npc_old_gannet`.
+
+**Story:**
+- `ch4_letters_of_marque`: Hester, after *Low Water*. Hesk in the great cabin. Levels 36–40.
+- `ch4_keepers_light`: Gannet, after *Low Water*. Hold the fort, six waves. Level 38. The Journal's lead `lampfort`
+  points there.
+
+**Balance:** the smoke contract at 36 and 39. `roomlv.mjs` at 36 and 39; `boss.mjs gull_isles 40`; `pace.mjs gull_isles`.
+
 ## Decisions for the owner
 
 **Taken (2026-11-24),** the owner: *"Three bands of 5. … The Brine Cross is fine. No Class trial at 36. Otherwise go
@@ -383,9 +440,10 @@ with your recommendations"*.
   guaranteed heirloom once. It then seals for two hours of play (`SECRET_REST`) and opens again with an ordinary find.
   It has stars like any dungeon.
 - **A side vault** gives nothing extra today: it's an errand's step, paid by the errand.
-- **Proposed** (open, wanted by step 4): a side vault's end room gives a guaranteed keepsake once, from its errand's
-  giver (the Lamp Fort's from Old Gannet). It then seals for two hours, as a secret does, and opens again with one
-  chest at its band's level. It would apply to the Haddow Crypt and the Shuttered Inn too.
+- **Taken** (2026-11-24, the owner: *"Yes to the keepsake, go on to the Gull Isles"*): a side vault's end room gives a
+  guaranteed keepsake once, from its errand's giver (the Lamp Fort's from Old Gannet). It then seals for two hours, as a
+  secret does, and opens again with one chest at its band's level. It applies to the Haddow Crypt and the Shuttered Inn
+  too. Built in step 4 (GDD v1.151).
 
 The questions as they were put:
 

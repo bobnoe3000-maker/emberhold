@@ -23,7 +23,7 @@ import { NPCS } from '../sim/npcs.js';
 export const CHAPTERS = Object.keys(QUESTS).filter((id) => QUESTS[id].kind === 'chapter');
 
 /** @param {any} state @param {(id: string) => number} status the sim's quest status (quests.js)
- * @returns {{ kind: 'next' | 'level' | 'end', id?: string, giver?: string, town?: string, level?: number, region?: string, found?: boolean } | null}
+ * @returns {{ kind: 'next' | 'level' | 'end', id?: string, giver?: string, town?: string, level?: number, region?: string, found?: boolean, at?: string } | null}
  * (found: the giver is a found companion, Tamsin for Quota, talked to from her card rather than in a town: content/story.json `nextFound`) */
 export function storyStatus(state, status) {
   for (const id of CHAPTERS) {
@@ -31,7 +31,7 @@ export function storyStatus(state, status) {
     if (st === QS.DONE) continue;
     if (st === QS.ACTIVE || st === QS.READY) return null;
     const d = QUESTS[id];
-    if (st === QS.AVAILABLE) return { kind: 'next', id, giver: d.giver, town: LANDS[(NPCS[d.giver] || d).region || 'vale'].town, ...(NPCS[d.giver] && NPCS[d.giver].found && FOUND[d.giver] ? { found: true } : {}) };
+    if (st === QS.AVAILABLE) { const N = NPCS[d.giver]; return { kind: 'next', id, giver: d.giver, town: LANDS[(N || d).region || 'vale'].town, ...(N && N.found && FOUND[d.giver] ? { found: true } : N && N.found ? { at: N.found.site } : {}) }; }   // (at: a giver met at a site, not a companion: Gannet at the Lamp Fort's gate, v1.151)
     if ((d.after || []).every((a) => status(a) === QS.DONE)) return { kind: 'level', id, level: d.level[0] };
     return null;
   }
@@ -44,7 +44,7 @@ export function storyStatus(state, status) {
 export function openLeads(state, status, region = 'vale') {
   if (region === 'fens') return fensLeads(state, status);
   if (region === 'reach') return reachLeads(state, status);
-  if (region === 'tidemark') return tidemarkLeads(state);
+  if (region === 'tidemark') return tidemarkLeads(state, status);
   const out = [], has = (s, k) => (s instanceof Set ? s.has(k) : Array.isArray(s) ? s.includes(k) : !!(s && s[k]));
   const bosses = state.bosses || {}, entered = state.sitesEntered, revealed = state.revealed, company = [...state.party, ...(state.bench || [])];
   if (bosses.redhand_captain && FOUND.brannoc && !company.some((m) => m.id === 'brannoc')) out.push({ id: 'brannoc' });
@@ -90,11 +90,14 @@ function reachLeads(state, status) {
 }
 
 // the Tidemark (world doc v1.69 §3.7; the first band, GDD v1.150): the Harbourmaster on the Drowned Mole, then Maren in
-// his office. (No trials here: the owner, no class trial at 36; no board yet.)
-function tidemarkLeads(state) {
+// his office; (v1.151) Hesk, and Gannet's light. (No trials here: the owner, no class trial at 36; no board yet.)
+function tidemarkLeads(state, status) {
   const out = [], bosses = state.bosses || {}, company = [...state.party, ...(state.bench || [])];
   if (!bosses.harbourmaster) out.push({ id: 'harbourmaster' });
   else if (FOUND.maren && !company.some((m) => m.id === 'maren')) out.push({ id: 'maren' });
+  // (v1.151) once Low Water's done: Hesk on the Gull Isles, and Old Gannet's light at the Lamp Fort (until his chapter's taken)
+  if (bosses.harbourmaster && !bosses.hesk) out.push({ id: 'hesk' });
+  if (bosses.harbourmaster && status('ch4_keepers_light') <= QS.AVAILABLE) out.push({ id: 'lampfort' });
   return out;
 }
 

@@ -5,7 +5,9 @@
 // from the sim (sim/npcs.js varsFor: with_maren 0 / 1, her chaplain with you, party or bench; core.js boss_<id>;
 // quests.js: q_ = −1 locked · 0 available · 1 active · 2 ready · 3 done, read before this conversation counts:
 // Consigned is a word with her, so it's ready by the time she reads Ilse's page). Flags: met_quaile.
-// Act IV: she takes in chapter 1, Consigned (Ilse's), and gives chapter 2, Low Water (docs/tidemark-plan.md).
+// Act IV: she takes in chapter 1, Consigned (Ilse's), and gives chapter 2, Low Water, and Letters of Marque (Hesk on the
+// Gull Isles), and after Low Water points the company at Old Gannet's Lamp Fort (gannet.ink gives The Keeper's Light).
+// The name on Hesk's commission is read as a name: who Lucanus is, and that he sang on the mole, is for later chapters.
 
 VAR hero_name = ""
 VAR hero_class = ""
@@ -17,8 +19,10 @@ VAR day_part = 0
 VAR flag_met_quaile = 0
 VAR with_maren = 0
 VAR boss_harbourmaster = 0
+VAR boss_hesk = 0
 VAR q_ch4_consigned = -1
 VAR q_ch4_low_water = -1
+VAR q_ch4_letters_of_marque = -1
 
 == quaile_hub ==
 { q_ch4_consigned == 1 || q_ch4_consigned == 2: -> quaile_consigned_meet }
@@ -65,6 +69,8 @@ You show her Ilse's copy of the ledger's last page. She reads the line about the
 { q_ch4_low_water == 3 && with_maren == 1: "Sister. The ferryman's been up for his fare. I've put it on the Chapel's account." }
 { q_ch4_low_water == 3 && with_maren == 0: "Maren's still out on the Mole? Then she's saying names at it. Fetch her in. Tell her the Chapel roof leaks. It does." }
 { q_ch4_low_water == 3: "The quays are quiet at night. I've had the watch go back to counting boats. They'd got out of the habit." }
+{ q_ch4_letters_of_marque == 1: "Hesk took another League ship this week. I've added her to what he owes. It's getting to be a long slate." }
+{ q_ch4_letters_of_marque == 3: "I've had Hesk's commission copied to every port in the League. Lucanus. Nobody on this coast knows the name. They all will." }
 -> quaile_topics
 
 == quaile_greet_fallen ==
@@ -75,6 +81,10 @@ You show her Ilse's copy of the ledger's last page. She reads the line about the
 + { q_ch4_low_water == 2 } [The Harbourmaster's down. #mark: quest ready] -> quaile_low_turnin
 + { q_ch4_low_water == 0 } [What comes up the quays at night? #mark: quest] -> quaile_low_offer
 + { q_ch4_low_water == 1 } [About the Mole… #mark: quest active] -> quaile_low_active
++ { q_ch4_letters_of_marque == 2 } [Hesk's down. #mark: quest ready] -> quaile_marque_turnin
++ { q_ch4_letters_of_marque == 0 } [Why is the Gull Fleet late? #mark: quest] -> quaile_marque_offer
++ { q_ch4_letters_of_marque == 1 } [About Hesk… #mark: quest active] -> quaile_marque_active
++ { q_ch4_low_water == 3 } [Is the Fleet troubling anyone else?] -> quaile_lampfort
 + [What is the League?] -> quaile_league
 + [Tell me about Tollhaven.] -> quaile_tollhaven
 + [I'll be going.] -> quaile_bye
@@ -103,6 +113,43 @@ You show her Ilse's copy of the ledger's last page. She reads the line about the
 You tell her the rest: the outer mole, the Harbourmaster with his berths' book under his arm, and the lamp-stand at the end, where someone had stood and sung. # quest: turnin ch4_low_water
 "Sung." She says it like a cargo she's never had to clear. "The drowned don't walk up a quay for nothing. Somebody gave them a tune to walk to."
 "Singers aren't my trade. The Gull Fleet is, and it's three weeks late with its dues. Come back to me. I'll know why by then, and I won't like it."
+-> quaile_topics
+
+// ── Act IV: Letters of Marque (content/quests/ch4_letters_of_marque.json): the Gull Fleet's commission ──
+== quaile_marque_offer ==
+"I said I'd know why the Gull Fleet was late with its dues. It's stopped paying them. It's taking League ships instead, crews and cargo, with a paper to say it may."
+"A letter of marque. Somebody has commissioned Admiral Grell Hesk to make war on my coast. He shows it to every master before his men go over the side, so they know it's lawful. He's very proud of it."
+"I want that paper: who signed it, and what they paid him with. He lies up on the Gull Isles with the fleet's hulks and keeps his papers aboard. There's a toll on reading another captain's letters in this harbour. For his, I'll waive it."
++ [We'll fetch Hesk's commission. #mark: quest]
+    "Out past the salt marsh to the jetty on the bay's west shore, where the fleet lands its boats. Through the sea cave to the hulks in the lagoon. Hesk keeps the flagship's great cabin, and his officers keep a wardroom." # quest: accept ch4_letters_of_marque
+    { boss_hesk == 1: "Hesk's down already? Then whatever was in his wardroom is what I want. Bring it, and the story." }
+    -> quaile_topics
++ [Not yet.]
+    "Then I lose another ship this week. I'll send you the bill."
+    -> quaile_topics
+
+== quaile_marque_active ==
+"The jetty past the salt marsh, on the bay's west shore. The sea cave, then the hulks. Hesk in his great cabin, and his papers in the wardroom. I want the one with a seal on it."
+-> quaile_topics
+
+== quaile_marque_turnin ==
+{ with_maren == 1: Maren comes in off the quay behind you and stands where she can see the slate. }
+You put the paper from Hesk's wardroom on Hester's slate: a letter of marque for the Gull Fleet, against the ships of the League, paid in advance.
+It's signed at the foot in a wide, careful hand, *Lucanus*. Under the name is a seal of coal-red wax with no crest in it, only a thumbprint. # quest: turnin ch4_letters_of_marque
+Hester reads the name aloud. "Lucanus. An emperor's kind of name. Nobody's signed like that since there were emperors."
+"Paid in advance. Hesk has never been paid in advance in his life. Somebody wanted my coast cleared, and wanted it by a date."
+"And this wax. The Redhand paid my gate this spring in purses sealed with it, for a cart of crossbows going up the Highmarch road. Ask anyone in the Reach who pays the Redhand."
+{ with_maren == 1: Maren says two names, quietly: the masters of the last two League ships Hesk boarded. "He showed them that paper first. It made it lawful. It didn't make it anything else." }
+"Somebody sang my drowned up off the Mole, and somebody paid Hesk to clear the sea in front of them. I'd like to think that's two people."
+"If either of them wants anything inland, he crosses at Brine Cross. Everybody does. I'll have the League's people on that bridge. Come back to me."
+-> quaile_topics
+
+// after Low Water: Old Gannet's light, and the Gull Fleet at his door (gannet.ink has The Keeper's Light)
+== quaile_lampfort ==
+"Old Gannet, at the Lamp Fort. His light is out on the cliffs east of town, on its headland. You'll see it from the quay at night."
+"The Gull Fleet has been at his door all month. He sends me the same message every week: *Wind north-east. Light's lit.* He thinks that's a report."
+"He says he's kept that light since before Tollhaven had a chain. I've never charged him for his oil, which is as well. If he's right, the bill would sink the League."
+"Go out and look in on him. He won't ask. I've never known him ask anyone for anything."
 -> quaile_topics
 
 == quaile_league ==

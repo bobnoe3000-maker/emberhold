@@ -45,6 +45,7 @@ import { DAY_S } from './heroes.js';
 import { inPlay, unlocked, autocastOn, rankOf, skillMult, rankCost, stanceOf, passiveVal, HEAL_BONUS, DRAIN_MEND } from './skills.js';
 import { WEAK_S } from './heroes.js';
 import { hypot, sin, cos, exp, atan2 } from './detmath.js';
+import { PREMIUM, premiumOf } from './premium.js';
 import { siteOf, bossAt } from './sites.js';
 import { gateShutOf, gateUp } from './world.js';
 import { LAMPS, lampOf, CAGE_KINDS, CAGE_PICKUP_S, CAGE_REACH, countOf, credit } from './lamps.js';
@@ -113,20 +114,19 @@ export const waveSize = (lvl) => (lvl <= 3 ? 2 : Math.min(5, 1 + Math.floor(lvl 
 // with five, a small room at 9 held 9.3 waves (the contract wants 10+); one fewer at every level made it the easiest
 // room (33 waves at 3 against 24 in a large one, 23 at 6 against 17).
 export const SIZE_CAP = { small: 4 };
-export const PREMIUM = 0.05;
 // (v1.124, the Cinder Reach) past level 18 foes carry PREMIUM_HIGH a level on top: the stat line grows by a fixed step a
 // level, so each level is a smaller share of what came before, and three levels up stopped being a wall (measured: the
 // right party at 21 held a level-24 room 12 waves standing, against the contract's defeat; at 12 → 15 it fell at wave 6)
 // (v1.126) and only to 22, PREMIUM_HIGH_TO: run on to 30 it outgrew the party (the right party at 24 held 7 and 10 waves
 // standing, at 30 six; capped at 22 they hold 10–12 from 24 to 30, and a room three up still beats them by wave 8)
-export const PREMIUM_HIGH = 0.06, PREMIUM_HIGH_TO = 22;
 // (v1.150, the Tidemark) PREMIUM runs on past 30, and the heroes grow with it from there (party.js liftOf): run on alone
 // it outgrew the party (the right party in gear at level, the contract's room over six seeds: 6/6 held at 27 and 30, 2/6
 // at 33, 1/6 at 36; a hero's stat line and a foe's grow in step, the premium alone pulled away), and capped at 30 a room
 // three up stopped being a wall (the party at 30 held a level-33 room 11 waves). Both: a same-level room as at 30, and
 // three up still a wall.
 /** a foe's toughness for its level: PREMIUM a level over 3, and PREMIUM_HIGH more a level from 18 to 22 @param {number} lv */
-export const premiumOf = (lv) => 1 + PREMIUM * Math.max(0, lv - 3) + PREMIUM_HIGH * Math.min(PREMIUM_HIGH_TO - 18, Math.max(0, lv - 18));
+// (v1.151: the curve itself is premium.js, shared with party.js liftOf; PREMIUM_STEEP compounds past 30)
+export { PREMIUM, PREMIUM_HIGH, PREMIUM_HIGH_TO, PREMIUM_PAST, PREMIUM_STEEP, premiumOf } from './premium.js';
 // The tide (GDD §7.1): each wave of a visit is `step` tougher than the last (HP and ATK), up to a
 // top (`cap`: +100 % in an ordinary room, at wave 20: a nineteenth a wave; the owner, 2026-11-11: "Room waves should be
 // 20 to reach foes at +100% not 18"). A wave at the top is followed by one back at the start,
@@ -230,6 +230,11 @@ Object.assign(ENEMIES, {
   corsair: { hp: 36, atk: 8.2, def: 3, crit: 9, dodge: 9, interval: 1.1, range: 2.8, speed: 3.6, xp: 11, gold: 3 },
   gunner:  { hp: 35, atk: 9.4, def: 3, crit: 10, dodge: 6, interval: 1.7, range: 12.5, speed: 3.3, xp: 12, gold: 3, bolt: 'bolt' },
   bosun:   { hp: 60, atk: 9.8, def: 6, crit: 6, dodge: 2, interval: 1.6, range: 3.4, speed: 2.7, xp: 15, gold: 3 },
+  // (v1.151, the Gull Isles: the build sheet in docs/tidemark-plan.md) the Gull Fleet's war-hounds, mastiffs kept for
+  // boarding (a minion's strength, as the cinder hound: quick and light, a short reach), and its mates with their
+  // boarding pikes (a warrior's: the fleet's elite, the pike's long reach)
+  warhound: { hp: 39, atk: 8.2, def: 3, crit: 8, dodge: 9, interval: 0.95, range: 2.4, speed: 4.3, xp: 12, gold: 1 },
+  mate:     { hp: 60, atk: 9.8, def: 6, crit: 6, dodge: 3, interval: 1.6, range: 3.6, speed: 2.8, xp: 15, gold: 4 },
 });
 export const ENEMY_KINDS = Object.keys(ENEMIES);
 /** (v1.87) the room a melee blow is struck across: every melee reach, the party's and every foe's, is this much longer than
@@ -287,6 +292,9 @@ export const FAMILIES = {
   // (v1.150) the Drowned Mole: the corsairs picking the wharf and the drowned standing up under them; the moles' drowned
   wharf: { melee: ['corsair', 'sailor'], ranged: ['gunner', 'cantor'], elite: 'bosun', undead: (k) => k === 'sailor' || k === 'cantor' || k === 'bosun' },
   mole: { melee: ['sailor', 'drowned'], ranged: ['cantor', 'gunner'], elite: 'bosun', undead: (k) => k !== 'gunner' },
+  // (v1.151) the Gull Fleet, living: its corsairs and war-hounds, its gunners and the Redhand crossbowmen on its pay, its
+  // mates (the Gull Isles' two floors and the Lamp Fort)
+  fleet: { melee: ['corsair', 'warhound'], ranged: ['gunner', 'crossbow'], elite: 'mate', undead: () => false },
 };
 // Bosses (M5, docs/m5-plan.md §3): a floor's stairs-down hall (sites.js `bosses`) opens with its boss and
 // an escort; once the boss falls the room goes quiet for the visit. A boss is its `like` archetype's
@@ -336,10 +344,13 @@ export const GOLD_DROP = 0.35;
 //           { id, by, x, y, coming: true }), then the hall's edge floods TIDE_LEVEL bells' worth in from its walls (the
 //           hazards' flooded edge, as the Abbess's) for TIDE_T s, and goes out ('bossFlood' level 0). While it's in,
 //           the drowned standing in it mend TIDE_MEND of their HP a second. It drains when he falls.
+//   boarding (Admiral Hesk, v1.151) every BOARD_S s two grapples (BOARD_LINES), each told BOARD_WIND s as a line from the
+//           hall's edge to where it lands, about BOARD_AT from the company's middle; at the landing BOARD_N of his escort
+//           (one: two, and six up, wiped the right party at 40 six seeds of six) swing in, unless one of the company stands within BOARD_R of it (the line cut). BOARD_MAX of his up at most.
 //   vents   (the Stoker) every VENTS_S s the floor glows where slag will vent: a tell under each of the company and
 //           VENTS_MORE more about the hall, VENTS_R across, landing VENTS_WIND s later as VENTS_HURT of max HP.
 //           'bossVents' { id, by, x, y, n }
-/** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line' | 'swarm' | 'mud' | 'cage' | 'vespers' | 'bells' | 'issue' | 'sluice' | 'chutes' | 'scales' | 'anvil' | 'flee' | 'vents', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
+/** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line' | 'swarm' | 'mud' | 'cage' | 'vespers' | 'bells' | 'issue' | 'sluice' | 'chutes' | 'scales' | 'anvil' | 'flee' | 'vents' | 'tide' | 'boarding', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
 export const BOSSES = {
   redhand_captain: { name: 'Captain Garrow', like: 'brute', hp: 22, atk: 2.3, def: 1.6, speed: 3.0, xp: 12, gold: 30, mech: 'call', escort: ['cutthroat', 'crossbow'], once: true, heirloom: 'garrows_due' },
   robed_stranger: { name: 'The Robed Stranger', like: 'acolyte', hp: 38, atk: 2.8, def: 2.5, xp: 12, gold: 25, mech: 'kindle', escort: ['minion', 'minion'], once: true },
@@ -363,11 +374,12 @@ export const BOSSES = {
   // Furnace Nine (v1.126, ring.js FURNACE): the Reach's region boss, the furnace-lamp relit and walking, slag in its belly; its
   // tells are the Kingstone's shapes, and it feeds on the fallen (battle.js ringTick)
   furnace_nine: { name: 'Furnace Nine', like: 'golem', hp: 115, atk: 1.6, def: 1.5, speed: 1.1, xp: 0, gold: 0, mech: 'ring', escort: [], range: 5.5, body: 2.4, event: true },
-  first_pilgrim: { name: 'The First Pilgrim', like: 'golem', hp: 215, atk: 3.0, def: 1.5, speed: 1.1, xp: 0, gold: 0, mech: 'ring', escort: [], range: 5.5, body: 2.4, event: true },   // (v1.147: the Heights' region boss, ring.js PILGRIM; v1.150 hp 115 → 215, atk 1.6 → 3.0: ×1.87, party.js liftOf(75), what the heroes gained at his level)
+  first_pilgrim: { name: 'The First Pilgrim', like: 'golem', hp: 280, atk: 3.9, def: 1.5, speed: 1.1, xp: 0, gold: 0, mech: 'ring', escort: [], range: 5.5, body: 2.4, event: true },   // (v1.147: the Heights' region boss, ring.js PILGRIM; v1.150 hp 115 → 215, atk 1.6 → 3.0: ×1.87, party.js liftOf(75), what the heroes gained at his level)
   // (v1.126, the build sheet: docs/reach-plan.md) the Reach's other four
   weighmaster: { name: 'The Weighmaster', like: 'brute', hp: 21, atk: 2.2, def: 1.7, speed: 2.8, xp: 13, gold: 32, mech: 'scales', escort: ['assay_guard', 'assay_xbow'], heirloom: 'short_weight' },
   oruth: { name: 'Oruth the Forgemaster', like: 'warrior', hp: 24, atk: 2.3, def: 1.8, speed: 2.4, xp: 14, gold: 34, mech: 'anvil', escort: ['forgewight', 'forgewight'], undead: true, heirloom: 'oruths_last_commission' },
   morrow_vane: { name: 'Morrow Vane', like: 'cutthroat', hp: 18, atk: 2.0, def: 1.5, speed: 3.0, xp: 13, gold: 40, mech: 'flee', escort: ['assay_guard', 'assay_xbow'] },
+  hesk: { name: 'Admiral Hesk', like: 'mate', hp: 22, atk: 2.4, def: 1.8, speed: 2.8, xp: 15, gold: 40, mech: 'boarding', escort: ['corsair', 'gunner'], heirloom: 'the_letter_of_marque' },   // (v1.151, the Gull Isles' great cabin)
   harbourmaster: { name: 'The Harbourmaster', like: 'bosun', hp: 21, atk: 2.3, def: 1.8, speed: 2.5, xp: 14, gold: 36, mech: 'tide', escort: ['sailor', 'bosun'], undead: true, heirloom: 'the_berths_book' },   // (v1.150, the Drowned Mole)
   stoker: { name: 'The Stoker', like: 'furnacepriest', hp: 22, atk: 2.3, def: 1.7, speed: 2.6, xp: 14, gold: 36, mech: 'vents', escort: ['cinderhound', 'furnacepriest'] },
   foreman: { name: 'The Foreman', like: 'bruiser', hp: 20, atk: 2.1, def: 1.6, speed: 2.8, xp: 13, gold: 30, mech: 'chutes', escort: ['hauler', 'archer'], heirloom: 'the_whistle' },   // (Gritch, the Cold Seam's tally cave, v1.124)
@@ -380,6 +392,7 @@ export const CHUTE_S = 12, CHUTE_WIND = 2.4, CHUTE_R = 1.8, CHUTE_HURT = 0.32;
 export const SCALES_S = 11, SCALES_WIND = 2.2, SCALES_R = 1.7, SCALES_HURT = 0.45, ANVIL_S = 18, ANVIL_T = 4, ANVIL_SPOIL = 0.05, FLEE_AT = 0.25;
 export const VENTS_S = 10, VENTS_WIND = 2.0, VENTS_R = 1.6, VENTS_HURT = 0.3, VENTS_MORE = 3;
 export const TIDE_S = 15, TIDE_WARN = 2.5, TIDE_T = 7, TIDE_LEVEL = 2, TIDE_MEND = 0.02;   // (v1.150: the Harbourmaster's tide)
+export const BOARD_S = 18, BOARD_WIND = 3, BOARD_R = 1.8, BOARD_N = 1, BOARD_LINES = 2, BOARD_MAX = 4, BOARD_AT = 3.5, BOARD_MIN = 4, BOARD_LANE = 0.35;   // (v1.151: Hesk's boarding)
 export const MUD_S = 9, MUD_R = 1.8, MUD_T = 6, CAGE_HP = 0.35, CAGE_MEND = 0.025, VESPERS_S = 12, VESPERS_MEND = 0.02, BELL_S = 12, FLOOD_MAX = 4, FLOOD_STEP = 0.12;
 /** does a blow on this foe land at half? A boss whose called men still stand; an Ashbound (not a boss)
  * within LINE_R of a standing Standard @param {any} tgt @param {any[]} foes */
@@ -687,7 +700,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       crit: E.crit, dodge: E.dodge, interval: E.interval, range: B && B.range ? B.range : E.range, speed: B && B.speed ? B.speed : E.speed, bolt: E.bolt,
       xp: E.xp * (elite ? 3 : 1) * (B ? B.xp : 1), gold: E.gold * (elite ? 4 : 1) * (B ? B.gold : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 };
     if (B && B.body) { u.body = B.body; u.anchor = true; }   // (the Kingstone: ground it stands on, never shoved)
-    if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; u.swarmT = 0; u.mudT = 0; u.vesT = 0; u.bellT = 0; u.issueT = 0; u.sluiceT = 0; u.sluiceN = 0; u.chuteT = 0; u.scalesT = 0; u.anvilT = 0; u.forging = 0; u.ventsT = 0; u.tideT = 0; u.tideIn = 0; u.tideTold = false; u.mend = 0; }
+    if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; u.swarmT = 0; u.mudT = 0; u.vesT = 0; u.bellT = 0; u.issueT = 0; u.sluiceT = 0; u.sluiceN = 0; u.chuteT = 0; u.scalesT = 0; u.anvilT = 0; u.forging = 0; u.ventsT = 0; u.tideT = 0; u.tideIn = 0; u.tideTold = false; u.mend = 0; u.boardT = 0; u.boards = []; }
     w.enemies.push(u);
     return u;
   }
@@ -1052,7 +1065,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   function roomTells(w) {
     const T = state.t;
     for (const t of battle.tells) {
-      if (t.done || T < t.at) continue;
+      if (t.done || T < t.at || t.kind === 'board') continue;   // (Hesk's grapples' landings are his to resolve: bossMech 'boarding')
       t.done = true; let hit = 0;
       const by = (w.enemies || []).find((o) => o.id === t.by) || { x: t.x, y: t.y, kind: 'foreman', boss: true };   // (the load still falls after he does)
       for (let i = 0; i < state.party.length; i++) {
@@ -2061,7 +2074,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const mx = i ? m.x : p.x, my = i ? m.y : p.y, F0 = fightOf(m), stance = stanceOf(m);
     // (the Kingstone's tells, GDD §19 v1.105: seen after a moment, RING.react, and stepped out of as a patch of mud is; the
     // hero when you let go a little later, RING.heroReact: watching and moving first is better. A tell doesn't slow.)
-    const seen = (t) => state.t - t.from >= reactOf(m, i), tells = !!(battle.tells && battle.tells.length);
+    const seen = (t) => t.kind !== 'board' && state.t - t.from >= reactOf(m, i), tells = !!(battle.tells && battle.tells.length);   // (Hesk's grapples' landings hurt nobody: nothing to step out of)
     const tell = tells ? tellAt(battle, mx, my, seen) : null;
     // (and once out, it doesn't walk back in to its station before the blow lands: it holds where it is, and strikes if
     // it's in reach)
@@ -2300,6 +2313,47 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         battle.flood = TIDE_LEVEL;
         bus.emit('bossFlood', { id: e.boss, by: e.id, level: battle.flood, x: e.x, y: e.y });
       } else if (!e.tideTold && e.tideT >= TIDE_S - TIDE_WARN) { e.tideTold = true; bus.emit('bossTide', { id: e.boss, by: e.id, x: e.x, y: e.y, coming: true }); }
+    } else if (B.mech === 'boarding' && battle) {
+      // boarding (v1.151): every BOARD_S s he calls BOARD_LINES grapples, each told BOARD_WIND s ahead as a line from the
+      // hall's edge to where it lands ('tell' kind 'grapple': x, y its edge end, r its length, dir, lane); at its landing
+      // BOARD_N of his escort swing in, unless one of the company stands within BOARD_R of it, which cuts the line; never
+      // more than BOARD_MAX of his boarders up ('bossBoard' { id, by, x, y, cut, n, reached })
+      for (const g of e.boards) {
+        if (g.done || state.t < g.at) continue;
+        g.done = true; if (g.tell) g.tell.done = true;
+        const cut = state.party.some((m, i) => alive(m) && hypot((i ? m.x : state.player.x) - g.x, (i ? m.y : state.player.y) - g.y) <= BOARD_R);
+        const up = (w.enemies || []).filter((o) => o.board === e.id && o.hp > 0 && !o.dead).length, n = cut || !(e.hp > 0) ? 0 : Math.max(0, Math.min(BOARD_N, BOARD_MAX - up)), came = [];
+        for (let i = 0; i < n; i++) { const [x, y] = onFloor(w, g.x + (i ? 0.9 : -0.9), g.y + (i ? 0.5 : -0.5), g.x, g.y), u = foe(w, esc[i % esc.length], e.lvl, x, y, tough, false, F); u.board = e.id; came.push({ id: u.id, x: u.x, y: u.y }); }
+        bus.emit('tellLand', { id: g.id, kind: 'grapple', x: g.ox, y: g.oy, r: g.len, dir: g.dir, arc: null, lane: BOARD_LANE, hit: 0 });
+        bus.emit('bossBoard', { id: e.boss, by: e.id, x: g.x, y: g.y, cut, n, reached: came });
+      }
+      if (e.boards.some((g) => g.done)) e.boards = e.boards.filter((g) => !g.done);
+      if ((e.boardT += dt) >= BOARD_S) {
+        e.boardT = 0;
+        const at = state.party.map((m, i) => (alive(m) ? (i ? [m.x, m.y] : [state.player.x, state.player.y]) : null)).filter(Boolean), cells = battle.cells || [];
+        if (at.length && cells.length) {
+          const cx = at.reduce((a, q) => a + q[0], 0) / at.length, cy = at.reduce((a, q) => a + q[1], 0) / at.length;
+          if (!battle.boardEdge) { battle.boardEdge = []; for (const [k, d] of edgeDistances(cells)) if (d === 1) battle.boardEdge.push(k.split(',').map(Number)); }
+          let n = 0;
+          for (let l = 0; l < BOARD_LINES; l++) {
+            // where it lands: a hall cell about BOARD_AT from the company's middle, the nearest to that of six draws
+            let land = null, ld = Infinity;
+            for (let t = 0; t < 6; t++) { const c = cells[(rng() * cells.length) | 0], x = c[0] + 0.5, y = c[1] + 0.5, d = Math.abs(hypot(x - cx, y - cy) - BOARD_AT); if (d < ld && isWalkable(w, x, y)) { ld = d; land = [x, y]; } }
+            if (!land) continue;
+            // where it's thrown from: the hall's edge nearest the landing, at least BOARD_MIN off
+            let from = null, fd = Infinity;
+            for (const [x, y] of battle.boardEdge) { const d = hypot(x + 0.5 - land[0], y + 0.5 - land[1]); if (d >= BOARD_MIN && d < fd) { fd = d; from = [x + 0.5, y + 0.5]; } }
+            if (!from) continue;
+            if (!battle.tells) { battle.tells = []; battle.tellN = 0; }
+            const g = { id: ++battle.tellN, x: land[0], y: land[1], ox: from[0], oy: from[1], len: fd, dir: atan2(land[1] - from[1], land[0] - from[0]), at: state.t + BOARD_WIND, done: false };
+            e.boards.push(g); n++;
+            // (its landing drawn as the hall's tells are, a circle filling as it winds: hybrid.js tellsOf; roomTells leaves it be)
+            battle.tells.push(g.tell = { id: g.id, kind: 'board', x: g.x, y: g.y, r: BOARD_R, from: state.t, at: g.at, hurt: 0, by: e.id, done: false });
+            bus.emit('tell', { id: g.id, kind: 'grapple', x: g.ox, y: g.oy, r: g.len, dir: g.dir, arc: null, lane: BOARD_LANE, wind: BOARD_WIND, land: { x: g.x, y: g.y, r: BOARD_R } });
+          }
+          if (n) { e.atkN = (e.atkN || 0) + 1; e.atkKind = 'heavy'; bus.emit('bossBoarding', { id: e.boss, by: e.id, x: e.x, y: e.y, n }); }
+        }
+      }
     } else if (B.mech === 'vents' && battle && (e.ventsT += dt) >= VENTS_S) {
       // the floor glows where the slag will vent: under each of the company, and VENTS_MORE more about the hall
       e.ventsT = 0;

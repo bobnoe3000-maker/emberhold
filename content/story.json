@@ -12,8 +12,8 @@
       "text": "Furnace Nine's lamp is broken and the night shift is home, forty-one of them, counted in at Ashgate's gate. The vessel's mould was empty: Morrow Vane is a day ahead on the Solmere road with what was cast in it. The rest of the Old Provinces comes in a later update."
     },
     "tidemark": {
-      "title": "Low Water is done",
-      "text": "The Harbourmaster is down and Tollhaven's quays are quiet at night. Somebody sang the drowned up from the Mole's lamp-stand, and Hester Quaile wants a name. The rest of Act IV comes in a later update. Until then, the Tidemark has work in it."
+      "title": "Hesk is down",
+      "text": "Admiral Hesk is down, and Old Gannet's Lamp Fort is his own again. Hesk's commission was signed Lucanus and sealed in coal-red wax with a thumbprint, the wax that pays the Redhand. Hester Quaile has the League's people on the bridge at Brine Cross. The rest of Act IV comes in a later update."
     }
   },
   "leadsTitle": {
@@ -45,7 +45,10 @@
     "reachchronicle": "The Reach's Chronicle: {n} of {of} pages found, in the Cold Seam, the Assay Yards, the Forgehall and the Cinderworks. Sister Ilse reads them in Thornwick.",
     "ninthvault": "The Ninth Vault is open: the quota office's strongroom, up the old track on the dead volcano's flank past Kell's Rest.",
     "harbourmaster": "The Drowned Mole, at the end of Gullwick's ferry jetty: the old harbour's moles stand bare at low water, and the Harbourmaster still keeps the berths on the outer one.",
-    "maren": "The Drowned Mole: the Harbourmaster is down, and a Grey Sister is still holding the harbour office on the moles. Go back down and bring her up."
+    "maren": "The Drowned Mole: the Harbourmaster is down, and a Grey Sister is still holding the harbour office on the moles. Go back down and bring her up.",
+    "hesk": "The Gull Isles: the landing jetty is on the harbour bay's west shore, past the salt marsh. Admiral Hesk keeps the flagship's great cabin.",
+    "lampfort": "The Lamp Fort, on its headland out along the cliffs east of Tollhaven: the Gull Fleet is in its yard, and Old Gannet is at the gate."
   },
-  "nextFound": "Next: {title}. {giver} has it for you: talk to her from her card, with her in your party."
+  "nextFound": "Next: {title}. {giver} has it for you: talk to her from her card, with her in your party.",
+  "nextAt": "Next: {title}. {giver} keeps the gate at {place}."
 }

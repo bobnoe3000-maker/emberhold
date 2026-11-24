@@ -34,6 +34,9 @@ const ROWS = [
   { name: 'Gritch, the Foreman (boss) · front', key: 'foremanf', spec: VAR.goblin_foreman, height: 0.86 * 1.3, cy: 0.58, half: 0.62, yaw: 0.3, shots: [['Idle', [0.3]], ['Attack', [0.4]], ['Cast', [0.5]]] },
   { name: 'Cinder hound · front', key: 'houndf', spec: { kind: 'hound' }, height: 0.8, cy: 0.4, half: 0.45, yaw: 0.5, shots: [['Idle', [0.3]], ['Attack', [0.4]], ['Cast', [0.5]]] },
   { name: 'Cinder hound', key: 'hound', spec: { kind: 'hound' }, height: 0.8, cy: 0.4, half: 0.6, yaw: -0.7, shots: SHOTS },
+  // (the Tidemark, world doc v1.70: the Gull Fleet's war-hound, a mastiff in a spiked collar and barding, on the hound's bones)
+  { name: 'War-hound · front', key: 'warhoundf', spec: { kind: 'warhound' }, height: 0.6, cy: 0.32, half: 0.4, yaw: 0.5, shots: [['Idle', [0.3]], ['Attack', [0.4]], ['Heavy', [0.55]]] },
+  { name: 'War-hound', key: 'warhound', spec: { kind: 'warhound' }, height: 0.6, cy: 0.3, half: 0.5, yaw: -0.7, shots: SHOTS },
   { name: 'Furnace Nine (region boss) · front', key: 'furnacef', spec: VAR.furnace, height: 2.0, cy: 1.15, half: 1.3, yaw: 0.45, shots: [['Idle', [0.3]], ['Heavy', [0.42]], ['Death', [0.99]]] },
   { name: 'Furnace Nine (region boss)', key: 'furnace', spec: VAR.furnace, height: 2.0, cy: 1.15, half: 1.4, yaw: -0.5, shots: SHOTS },
   { name: 'The First Pilgrim (region boss) · front', key: 'pilgrimf', spec: VAR.pilgrim, height: 2.2, cy: 1.2, half: 1.35, yaw: 0.35, shots: [['Idle', [0.3]], ['Cast', [0.5]], ['Heavy', [0.45]]] },

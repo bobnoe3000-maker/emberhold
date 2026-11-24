@@ -1,0 +1,14 @@
+{
+  "id": "old_gannet",
+  "name": "Old Gannet",
+  "role": [
+    "giver"
+  ],
+  "town": "tollhaven",
+  "region": "tidemark",
+  "look": "npc_old_gannet",
+  "portrait": "npc_old_gannet",
+  "dialogue": "gannet",
+  "knot": "gannet_hub",
+  "note": "Keeper of the Lamp Fort's light on its headland east of Tollhaven, and the Lantern Guild's oldest member, who has kept the light sixty years because nobody told him to stop (world doc v1.70 §3.7; docs/tidemark-plan.md). Stands inside the fort's gate (the entrance), as Tobin stands at the barrow mouth, with the Gull Fleet in his yard. Gives and takes in The Keeper's Light. He knows what his lamp holds and doesn't say: that's Brine Cross. His spare wick is the fort's keepsake, in the lamp room's chest."
+}

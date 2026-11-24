@@ -1,0 +1,41 @@
+{
+  "id": "ch4_keepers_light",
+  "kind": "chapter",
+  "title": "The Keeper's Light",
+  "giver": "old_gannet",
+  "region": "tidemark",
+  "level": [
+    36,
+    75
+  ],
+  "after": [
+    "ch4_low_water"
+  ],
+  "summary": "The Gull Fleet has come over the walls of the Lamp Fort, Old Gannet's light on the cliffs east of Tollhaven. Gannet has held the gate. He wants his yard back, and his light kept.",
+  "steps": [
+    {
+      "id": "hold",
+      "journal": "The Lamp Fort is out along the cliffs east of Tollhaven. Go in past Old Gannet at the gate and win six waves against the Gull Fleet inside.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "lamp_fort",
+          "count": 6,
+          "label": "Waves held at the Lamp Fort"
+        }
+      ]
+    }
+  ],
+  "ready": "Six waves won, and the Gull Fleet is off the walls. Go back to Old Gannet at the Lamp Fort's gate.",
+  "done": "Old Gannet has his yard back and his light lit. He still won't say what the Gull Fleet wanted with his lamp.",
+  "rewards": {
+    "share": 0.35,
+    "lv": 38,
+    "gold": 640
+  },
+  "dialogue": {
+    "file": "gannet",
+    "offer": "gannet_light_offer",
+    "turnin": "gannet_light_turnin"
+  }
+}

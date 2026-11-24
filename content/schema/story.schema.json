@@ -6,6 +6,7 @@
   "properties": {
     "$comment": { "type": "string" },
     "next": { "type": "string", "maxLength": 120 },
+    "nextAt": { "type": "string", "maxLength": 120 },
     "level": { "type": "string", "maxLength": 120 },
     "nextFound": { "type": "string", "maxLength": 120 },
     "end": { "type": "object", "additionalProperties": { "type": "object", "required": ["title", "text"], "properties": { "title": { "type": "string" }, "text": { "type": "string", "maxLength": 320 } }, "additionalProperties": false } },

@@ -89,6 +89,8 @@ export const NPCS = {
   // Drowned Mole's harbour office (floor 2's offshoot) against the drowned until the Harbourmaster falls, then she joins
   hester_quaile: { region: 'tidemark', spots: [['tavern', [10, 1]]], knot: 'quaile_hub', flags: ['met_quaile'], kin: ['maren'] },
   maren: { region: 'tidemark', found: { site: 'drowned_mole', depth: 1, boss: 'harbourmaster' }, spots: [], knot: 'maren_hub', flags: ['met_maren'] },
+  // (v1.151) Old Gannet, keeper of the Lamp Fort, the Guild's oldest member: at its gate, inside, as Tobin is at the barrow mouth
+  old_gannet: { region: 'tidemark', found: { site: 'lamp_fort', depth: 0, entrance: true }, spots: [], knot: 'gannet_hub', flags: ['met_gannet'] },
   // (v1.54, world doc §3.3 "Kell's Rest's people"; v1.57) Kell's Rest is the depot on the Reach, not a town (GDD v1.132): its
   // two are met at the Assay Yards' gate, in the way in (as Tobin is at the barrow mouth), and stay: Nan Ruddock with
   // what's left of the Redhand, and Davy Pruett, the Assay's clerk, through whom Hob's pass comes (Paid by Weight).

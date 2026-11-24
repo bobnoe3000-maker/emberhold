@@ -1105,5 +1105,58 @@
   ],
   "frame": "soft",
   "expression": "neutral"
+ },
+ "mate": {
+  "skin": "tan",
+  "hair": "bald",
+  "brows": "heavy",
+  "eyes": "narrow",
+  "iris": "grey",
+  "mouth": "grim",
+  "nose": "broad",
+  "beard": "full",
+  "beardColor": "black",
+  "marks": [
+   "earring",
+   "scar_cheek"
+  ],
+  "shape": "thick",
+  "expression": "fierce"
+ },
+ "hesk": {
+  "skin": "fair",
+  "hair": "long",
+  "hairColor": "soot",
+  "brows": "angry",
+  "eyes": "sharp",
+  "iris": "blue",
+  "mouth": "smirk",
+  "nose": "hook",
+  "beard": "goatee",
+  "beardColor": "soot",
+  "marks": [
+   "scar",
+   "wrinkles"
+  ],
+  "shape": "oblong",
+  "expression": "smug"
+ },
+ "old_gannet": {
+  "skin": "rose",
+  "hair": "receding",
+  "hairColor": "white",
+  "brows": "heavy",
+  "browColor": "white",
+  "eyes": "tired",
+  "iris": "grey",
+  "mouth": "line",
+  "nose": "long",
+  "beard": "full",
+  "beardColor": "white",
+  "marks": [
+   "wrinkles"
+  ],
+  "shape": "thin",
+  "expression": "neutral"
  }
 }

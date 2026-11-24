@@ -584,6 +584,11 @@ KIT_LOOK.docks = { floor: ['_', '_'], wall: 'o', cave: 'o', hour: 21.2, mix: 0, 
 // round them as the wharf's; wet flagstone, the stone's own face down to the water (no deck fascia, piles or rail), the
 // bollards and the mist kept; a later dusk than the wharf's, the lamps just lit
 KIT_LOOK.mole = { floor: ['w', 'w'], wall: 'o', cave: 'o', hour: 19.4, mix: 0, inside: true, water: true, stone: true, fill: DOCK_FILL, backdrop: '#465870' };
+// (v1.151) the Gull Isles (docs/tidemark-plan.md step 4): the sea cave, dark earth and rock under the isle with its wet
+// shingle, a cool fill off the water; the hulks, a ship's inside, deck planks under whole timber walls (the inn's, its frame
+// the ribs), the lanterns warm. A first look: the art pass (step 9) takes them further
+KIT_LOOK.seacave = { floor: ['d', 'U'], wall: 'D', cave: 'D', hour: 20.2, mix: 22 };
+KIT_LOOK.hulk = { floor: ['_', '#'], wall: '@', cave: '@', hour: 19.6, mix: 0, inside: true };
 const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KIT_LOOK.cellar, nave: KIT_LOOK.nave, cinder: KIT_LOOK.cultcut, chasm: { floor: ['U', 'm'], wall: 'x', hour: 22.8 },
   warren: KIT_LOOK.warren, ember: KIT_LOOK.ember, lava: KIT_LOOK.lava, mire: KIT_LOOK.mound, sluice: KIT_LOOK.locks, poison: KIT_LOOK.vats, water: KIT_LOOK.abbey };
 /** the fill's tint underground for the Reach's kits and themes (palette.js KIT_TINT holds the Vale's and the Fens'):
@@ -592,7 +597,8 @@ const AMB_TINT = { pithead: [1.08, 0.97, 0.86], warren: [1.04, 0.96, 0.88], embe
   // (round 3: the new kits' fill a step up, ~+12 %: the yards' world band 22 against the stone floors' 26 before)
   yards: [1.1, 1.04, 0.98], quota: [1.02, 1.03, 1.1], forge: [1.2, 1.0, 0.88], deepforge: [1.26, 0.94, 0.8], works: [1.22, 0.96, 0.84], vault: [1.3, 0.9, 0.76], strongroom: [1.12, 1.04, 0.96],
   // (the inn: firelight's warmth in the fill, a lit room's not a cellar's)
-  tavern: [1.3, 1.06, 0.84], tavern_cellar: [1.3, 1.06, 0.84] };
+  tavern: [1.3, 1.06, 0.84], tavern_cellar: [1.3, 1.06, 0.84],
+  seacave: [0.94, 1.0, 1.12], hulk: [1.22, 1.04, 0.86] };
 const DEFAULT_LOOK = { floor: ['k', 'm'], wall: 'x', hour: 19.4 };
 /** an overland prop of ours (gsprite.js), a spawn point's dressing (sim/camps.js) */
 const OVERLAND_OURS = new Set(['tent', 'carcass', 'burrow', 'rack', 'banner', 'standard', 'bedroll', 'reeds', 'boat', 'bound', 'urns', 'candles', 'saint']);   // (v1.68: every land's spawn points' dressing)

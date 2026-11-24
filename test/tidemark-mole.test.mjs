@@ -43,7 +43,7 @@ test('the Mole\'s foes: four kinds in two families, the drowned among them undea
 
 test('the tide: told, then in over the hall\'s edge, then out again; it drains when he falls', () => {
   const sim = createSim(20260807, undefined, { scene: 'dungeon', site: 'drowned_mole' });
-  const H = sim.state.party[0]; H.level = 60; H.attrs = null; autoAllocate(H); H.gear = starterKit(H); H.hp = statsFor(H).maxHp;   // (one who'll stand through a tide or two)
+  const H = sim.state.party[0]; H.level = 35; H.attrs = null; autoAllocate(H); H.gear = starterKit(H); H.hp = statsFor(H).maxHp;   // (his own level: the test keeps him standing; v1.151's steeper lift had a level-60 hero kill him before the tide went out)
   sim.tick();
   const s = sim.world.stairsAt, p = sim.state.player; p.x = p.px = s.x + 0.5; p.y = p.py = s.y + 1.5; sim.commands.push({ type: 'harvest', tx: s.x, ty: s.y }); sim.tick();
   const L = sim.world.level, r = L.descentRoom;
@@ -64,21 +64,31 @@ test('Maren is found when the Harbourmaster falls; Act IV opens on Quota and run
   assert.deepEqual(QUESTS.ch4_low_water.steps[0].objectives[0], { type: 'boss', site: 'drowned_mole', boss: 'harbourmaster', count: 1 });
 });
 
-test('past 30 a hero grows as the foes\' premium does: HP and ATK lifted by premiumOf(L) / premiumOf(30), nothing under 31', () => {
+test('past 30 a hero grows as the foes\' premium does: HP and ATK lifted by premiumOf(L) / premiumOf(30), 2 % a level more to 45, nothing under 31', () => {
   for (const L of [1, 18, 30]) assert.equal(liftOf(L), 1);
-  for (const L of [31, 33, 45, 75]) assert.ok(Math.abs(liftOf(L) - premiumOf(L) / premiumOf(30)) < 1e-12, `${L}`);
+  for (const L of [31, 33, 45, 75]) assert.ok(Math.abs(liftOf(L) - premiumOf(L) / premiumOf(30) * (1 + 0.02 * Math.min(15, L - 30))) < 1e-12, `${L}`);   // (v1.151: and 2 % a level more, to 45)
   const a = makeMember('a', 'A', 'fighter', 33), b = makeMember('b', 'B', 'fighter', 33);
   b.level = 30; a.attrs = b.attrs = null; autoAllocate(a); autoAllocate(b);
   assert.ok(statsFor(a).maxHp > statsFor(b).maxHp * 1.1, 'a level-33 hero stands up to a level-33 room');
 });
 
-test('the Journal\'s leads on the Tidemark: the Harbourmaster, then Maren until she walks with the company', async () => {
+test('the Journal\'s leads on the Tidemark: the Harbourmaster, then Maren until she walks with the company, then Hesk and Gannet', async () => {
   const { openLeads } = await import('../src/ui/storystatus.js');
   const story = JSON.parse((await import('node:fs')).readFileSync(new URL('../content/story.json', import.meta.url), 'utf8'));
   const st = { party: [{ id: 'hero' }], bench: [], bosses: {} }, none = () => 0;
   assert.deepEqual(openLeads(st, none, 'tidemark').map((l) => l.id), ['harbourmaster']);
-  st.bosses.harbourmaster = 1; assert.deepEqual(openLeads(st, none, 'tidemark').map((l) => l.id), ['maren']);
-  st.party.push({ id: 'maren' }); assert.deepEqual(openLeads(st, none, 'tidemark'), []);
+  st.bosses.harbourmaster = 1; assert.deepEqual(openLeads(st, none, 'tidemark').map((l) => l.id), ['maren', 'hesk', 'lampfort']);
+  st.party.push({ id: 'maren' }); assert.deepEqual(openLeads(st, none, 'tidemark').map((l) => l.id), ['hesk', 'lampfort']);   // (v1.151: the Isles and the Lamp Fort next)
+  assert.deepEqual(openLeads(st, () => 1, 'tidemark').map((l) => l.id), ['hesk'], 'Gannet\'s chapter taken: his lead goes');
+  st.bosses.hesk = 1; assert.deepEqual(openLeads(st, () => 3, 'tidemark'), []);
   for (const id of ['harbourmaster', 'maren']) assert.ok(story.leads[id], id);
   assert.ok(story.leadsTitle.tidemark);
+});
+
+test('(v1.151) past 30 the premium compounds PREMIUM_STEEP a level, so three levels up stays a wall; the straight line under it', async () => {
+  const { PREMIUM_STEEP, PREMIUM_PAST } = await import('../src/sim/premium.js');
+  const line = (L) => 1 + 0.05 * Math.max(0, L - 3) + 0.06 * Math.min(4, Math.max(0, L - 18));
+  for (const L of [1, 18, 22, 30]) assert.ok(Math.abs(premiumOf(L) - line(L)) < 1e-12, `${L}`);
+  let k = 1; for (let L = PREMIUM_PAST + 1; L <= 45; L++) { k *= PREMIUM_STEEP; assert.ok(Math.abs(premiumOf(L) - line(L) * k) < 1e-9, `${L}`); }
+  assert.ok(premiumOf(42) / premiumOf(39) > 1.15, 'three up, a stat: more than 15 % past 30');
 });
