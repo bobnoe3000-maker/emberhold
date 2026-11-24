@@ -105,8 +105,9 @@ first holds the band's first three levels, the second its last two, with the bos
   - *Floor 2, the moles at low tide:* the stair down the old sea wall (entrance), the inner mole, the wreck yard (hulls
     on their sides, the drowned climbing out of them), the harbour office (offshoot), and the outer mole's end (hall:
     **the Harbourmaster**).
-  - **Sister Maren** is found on the first floor, holding the customs shed's door against the drowned with the dockers
-    she came out with. She's the Tidemark's found companion, as Tamsin and Wren were.
+  - **Sister Maren** is found on the second floor, in the harbour office, holding its door against the drowned with a
+    boathook. She's freed when the Harbourmaster falls, as Tamsin is by the Foreman. She's the Tidemark's found
+    companion, as Tamsin and Wren were.
   - *The Harbourmaster's mechanic (proposal): the tide.* Every so often the water comes in over the mole's low
     stretches, marked first on the ground. Anyone standing in it is slowed, and the drowned in it are healed.
   - *The beat:* at the floor's end the company sees Lucan out on the outer mole's lamp-stand, singing. The drowned
@@ -310,6 +311,51 @@ Each step ends playable and checked: `npm run check`, the browser suite, and the
 9. **Art pass:** the kits and the town in 3D, the models, critic passes, captures.
 
 Steps 3 to 6 each come with their chapters, so the story can be played as far as it's built.
+
+## The build sheet: the Drowned Mole (step 3)
+
+Every id step 3 is built against, so the sim, the story, the models and the looks meet. Canon is world doc §3.7 (v1.69).
+
+**The site** (`sim/sites.js`; its door at the end of Gullwick's ferry jetty, `outdoor.js` `TIDEMARK.ferry`):
+
+| id | name | levels | floors (plan kits) | families | boss |
+|---|---|---|---|---|---|
+| `drowned_mole` | The Drowned Mole | 31–35 (`span` 5, plan `step` 3) | 2: the Wharf (`docks`), the Moles at Low Water (`mole`, new) | `wharf`, `mole` | floor 2 `harbourmaster` |
+
+A band of five puts three levels on its first floor (31–33) and two on its second (34–35). `checkPlan` allows a
+non-last floor `step − 1` levels above its first (one, as before, for a band of three or four).
+
+**Foe kinds** (`battle.js` ENEMIES; art: `renderer.js` ENEMY_ACTOR → the actor in brackets):
+- `sailor`: melee, undead. A drowned sailor of the imperial fleet, in sailcloth and tar, a boarding axe. A minion's
+  strength. The Abbey's `drowned` in a sailor's rig: `enemy_sailor`.
+- `corsair`: melee. A Gull Fleet corsair, a cutlass, a sash and a headscarf. A cutthroat's strength. The KayKit rogue
+  recoloured: `enemy_corsair`.
+- `bosun`: melee, undead, the elite. The fleet's bosun, drowned, with his chain. A warrior's strength. `enemy_bosun`.
+- `gunner`: ranged, the Gull Fleet's. A pistol-crossbow. A crossbowman's strength. `enemy_gunner`.
+- Kept: the `drowned`, the `cantor` (a drowned chaplain's soul-bolt).
+
+**Families:** `wharf` (corsair, sailor · gunner, cantor · elite bosun: the corsairs picking the wreck, the drowned
+rising), `mole` (sailor, drowned · cantor, gunner · elite bosun).
+
+**The boss** (`battle.js` BOSSES; art `boss_harbourmaster`): `harbourmaster`, the Harbourmaster (mech `tide`). The
+imperial harbour's master, drowned at his post with his berths' book under his arm. Every so often the tide comes in
+over the mole: the hall's edge floods (the hazards' flooded edge, told first), the company standing in it slowed, and
+the drowned standing in it mending. It goes out again. Heirloom `the_berths_book`: *"Every ship that came in. None that
+left."*
+
+**People** (`content/npcs`; art `npc_<id>`):
+- `hester_quaile`: Tollhaven's square, by the tavern. She gives *Low Water*.
+- `sister_maren`: found in the Mole's harbour office (`npcs.js` `found`: the site, floor 2, freed by the Harbourmaster).
+  `heroes.js` `maren`, a cleric, as Tamsin is found.
+
+**Story** (`quests.js`, `content/quests`, Ink):
+- `ch4_consigned`: Sister Ilse, from Act III's end. She reads Morrow Vane's ledger, and the company meets Hester Quaile
+  in Tollhaven. Levels 30–31.
+- `ch4_low_water`: Hester. The Harbourmaster, and Maren found. Levels 31–35.
+- Maren's own chain, `maren_*`: later.
+
+**Balance:** the smoke contract at 33. The right party holds a same-level room 10+ waves at 33, and the solo and
+no-healer checks hold too. `roomlv.mjs` at 33 and 36.
 
 ## Decisions for the owner
 

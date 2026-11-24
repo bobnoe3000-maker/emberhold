@@ -354,11 +354,11 @@ function inFrontOf(sites, x, y, depth = 30, half = 18) {
 }
 
 // forest ring around the playable area (hides the world's edge, bounds the camera)
-function forestRing(o, rng, inset, cluster = TREE_CLUSTER, single = TREE_SINGLE) {
+function forestRing(o, rng, inset, cluster = TREE_CLUSTER, single = TREE_SINGLE, skip = null) {
   const lo = -o.PAD + 4, hiX = o.W + o.PAD - 4, hiY = o.H + o.PAD - 4;
   scatter(o, rng, lo, lo, hiX, hiY, 11, (x, y) => {
     const out = Math.max(-x - inset, x - (o.W + inset), -y - inset, y - (o.H + inset));
-    if (out < 0) return null;
+    if (out < 0 || (skip && skip(x, y))) return null;   // (skip: the Tidemark's sea and beaches, v1.150)
     return out > 8 || rng() < 0.75 ? pick(rng, cluster) : pick(rng, single);
   });
   // hard edge: nothing walks past the ring
@@ -1338,7 +1338,7 @@ function buildTidemark(seed) {
     if (n > 0.58) return coast ? (rng() < 0.6 ? pick(rng, ['pine_2', 'pine_4', 'pine_5']) : pick(rng, ROCKS)) : pick(rng, TREE_SINGLE.filter((t) => /oak|birch|autumn/.test(t)));
     return rng() < 0.03 ? pick(rng, ROCKS) : null;
   });
-  forestRing(o, rng, 6);
+  forestRing(o, rng, 6, TREE_CLUSTER, TREE_SINGLE, (x, y) => { const g = groundAt(o, x, y).g; return g === G.POOL || g === G.SAND || x > 200 || y > 236; });   // (no wood on the beach or in the sea, nor past the coast)
   { const fr = mulberry32(streamSeed(seed, 4453));   // the sheep inland on the field-walled pasture
     herd(o, fr, ['sheep_1', 'sheep_2'], 74, 144, 5, 8); herd(o, fr, ['sheep_1', 'sheep_2'], 136, 230, 4, 6); }
   bound(o, () => 'fence');
