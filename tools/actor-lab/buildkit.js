@@ -221,6 +221,9 @@ Object.assign(STYLES, {
              wood: '#2a211d', beam: '#1b1613', door: '#3a2820', trim: '#191412', banner: '#7c2c18', hay: '#7a6a44', signboard: '#4a3226' },  // soot, ash, rust-red tile
   heights: { ...A_SHAPE, key: 'heights', lower: ['ashlar', '#8a8984'], upper: ['plaster', '#c9c7bf'], roof: ['slate', '#48536a'],
              wood: '#4a4038', beam: '#38312c', door: '#4a3e34', trim: '#28282c', banner: '#2c4a70', hay: '#8a8060', signboard: '#4a4a52' },  // pale limestone, cold blue slate
+  // (v1.150) the Tidemark: Tollhaven's grey harbour stone, brick-red render above it, weathered red tile; the League's sea-green
+  tidemark: { ...A_SHAPE, key: 'tidemark', lower: ['ashlar', '#6e7276'], upper: ['plaster', '#93705f'], roof: ['tile', '#6a3a30'],
+             wood: '#3c3530', beam: '#2a2522', door: '#2f4a4c', trim: '#22252a', banner: '#2a5e5a', hay: '#8a7c56', signboard: '#3f4448' },  // salt-grey stone, red tile
 });
 function kit(style, seed = 1) {
   const s = STYLES[style], g = new THREE.Group();

@@ -94,11 +94,11 @@ for (const [region, L] of Object.entries(LANDS_NEW)) {
     const sim = createSim(20260807, undefined, { scene: 'overland', region }); sim.tick();
     assert.equal(sim.world.name, L.name); assert.equal(sim.state.region, region);
     const said = []; sim.bus.on('landShut', (e) => said.push(e));
-    const shut = sim.world.exits.filter((e) => e.closed || (e.to === 'overland' && e.region && !sim.landOpen(e.region)));
+    const shut = sim.world.exits.filter((e) => e.closed || e.to === 'solmere' || (e.to === 'overland' && e.region && !sim.landOpen(e.region)));   // (v1.150: on a new slot no land past Solmere is open: its road says so)
     assert.ok(shut.length >= 1 && shut.every((e) => typeof e.shut === 'string' && e.shut.length > 20), 'every road out has its word');
     assert.deepEqual(sim.world.exits.filter((e) => e.to === 'dungeon').map((e) => e.site), open, 'a door for each open site, no other');
     if (region === 'reach') assert.ok(sim.world.exits.some((e) => e.region === 'vale' && e.arrive === 'reach' && !e.closed), 'the Wickham road home to the Vale');
-    if (region === 'heights') assert.ok(sim.world.exits.some((e) => e.region === 'reach' && e.arrive === 'heights' && !e.closed), 'the Sol road home to the Reach');
+    if (region === 'heights') assert.ok(sim.world.exits.some((e) => e.to === 'solmere' && !e.closed), 'the Sol road down to Solmere\'s crossroads (v1.150)');
     for (const e of shut) {
       const p = sim.state.player; p.x = p.px = (e.x0 + e.x1) / 2; p.y = p.py = (e.y0 + e.y1) / 2;
       for (let i = 0; i < 5; i++) sim.tick();

@@ -20,7 +20,7 @@ test('each land\'s map is in assets/maps, and its pins are the overland\'s exits
     for (const seed of [20260807, 1, 0xdeadbeef]) {
       const o = createOutdoor(seed, 'overland', r);
       const want = o.exits.filter((e) => !e.closed).map((e) => ({   // (v1.146: a shut road to a land not built has no pin)
-  kind: e.to === 'dungeon' ? 'site' : e.to === 'town' ? 'town' : 'land', id: e.site || e.region || r, x: Math.round((e.x0 + e.x1) * 5) / 10, y: Math.round((e.y0 + e.y1) * 5) / 10 }));
+  kind: e.to === 'dungeon' ? 'site' : e.to === 'town' ? 'town' : 'land', id: e.site || e.region || (e.to === 'solmere' ? 'solmere' : r), x: Math.round((e.x0 + e.x1) * 5) / 10, y: Math.round((e.y0 + e.y1) * 5) / 10 }));
       assert.deepEqual(L.pins, want, `${r} on seed ${seed}: rerun node tools/worldmap/minimap.mjs`);
     }
     assert.ok(L.w > 0 && L.h > 0 && L.px === 4);

@@ -22,6 +22,7 @@ import { createWorldMap } from './ui/worldmap.js';
 import { createStepOut } from './ui/stepout.js';
 import { createShrineCard } from './ui/shrine.js';
 import { createTowerCard } from './ui/tower.js';
+import { createCrossroads } from './ui/crossroads.js';
 import { createBowl } from './ui/bowl.js';
 import { createPartyUp } from './ui/partyup.js';
 import { createRing } from './ui/ring.js';
@@ -135,6 +136,7 @@ const worldMap = createWorldMap({ sim, toast: (m, ms) => hud.show(m, ms), inSqua
 createStepOut({ sim, partyPanel });   // the way out of a fight (GDD §7.1)
 createShrineCard({ sim });             // a shrine's blessing, offered: Use or Close (GDD §3.6)
 createTowerCard({ sim });              // the Mere Tower's landings: Climb on or Home with Wenna (GDD §17)
+createCrossroads({ sim });             // Solmere's crossroads: which road on (GDD v1.150)
 const bowl = createBowl({ sim, partyPanel });
 const partyUp = createPartyUp({ sim });         // Party Up and raids (GDD §18 v1.97): from ☰, the lobby, the run's end      // the Bowl (GDD §17 v1.85): its board from ☰, the bout's bar and speed, the result
 const ring = createRing({ sim, params, dev: DEV });

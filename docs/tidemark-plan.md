@@ -290,7 +290,14 @@ Each step ends playable and checked: `npm run check`, the browser suite, and the
    the Lamp Fort as the side vault, the houses' names), then the GDD.
 2. **The land opens:** `LANDS.tidemark`, the overland and the way in (decision 2), Tollhaven's town scene and services,
    Brine Cross and Gullwick as places, the coach, the World map, the save bump. It's walkable, with nothing to fight
-   yet.
+   yet. **Built (GDD v1.150):** `regions.js` `LANDS.tidemark` and `SOLMERE` (the crossroads: an exit `to: 'solmere'` on
+   the Reach's, the Heights' and the Tidemark's overlands, the `crossroads` event and the `solmere` command in
+   `core.js`, the card in `ui/crossroads.js`); `outdoor.js` `buildTidemark` (the sea as `sea` pools with sand
+   fringes, `G.SAND`), Tollhaven's town with its harbour, the Tidemark's town set (`buildkit.js` style `tidemark`,
+   `town.json`, `assets/env/town-tidemark`); `coach.js` Tollhaven, three days from Ashgate; the wall map
+   (`wallmap.js` `EMBERFALL.tidemark`, `LAND_AREA`, the coast in `draw.mjs`), the land tab
+   (`assets/maps/land-tidemark.jpg`); the Heights after Act IV, `kept` by Frosthold reached. No save bump was needed:
+   the shape is unchanged. Tests: `test/tidemark-open.test.mjs`.
 3. **The Drowned Mole (31–35):** its floors in `plans.js`, the `mole` kit, the Harbourmaster, Maren found, *Consigned*
    and *Low Water*, and the smoke contract at 33.
 4. **The Gull Isles (36–40):** the `hulk` kit, Hesk, *Letters of Marque*, the Lamp Fort and *The Keeper's Light*,

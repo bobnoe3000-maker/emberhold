@@ -679,7 +679,8 @@ The east coast: the **Tidemark League** of free ports, and inland the walled mar
 - **Town:** **Tollhaven**, the League's largest port, where even the harbour chain takes a toll. Large and walled
   in grey stone on its landward sides, with the gate in the west wall on the Highmarch road and **the harbour on
   the north-east**: the quay, three jetties, two moles and the chain. A salt marsh lies along the north shore and a
-  beach to the south-east, toward Gullwick. Its tavern is *The Paid Toll*. **Brine Cross** (a bridge-town) and
+  beach to the south-east, toward Gullwick. Its tavern is *The Paid Toll*; (v1.69) its inn *The Chain Locker*, its shop
+  *The Bonded Stores*, its forge *The Quay Forge*, and its shrine *the Quay Chapel*, where Sister Maren says the drowned's names. **Brine Cross** (a bridge-town) and
   **Gullwick** are waystations.
 - **The story, *The Seventh Voice*.** **Lucan Varro of Highmarch** descends from the Lady Livia's household,
   opened her sealed box, and spent four years learning the Canticle. He signs himself **Lucanus, the Seventh

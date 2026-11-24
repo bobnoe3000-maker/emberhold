@@ -1,7 +1,8 @@
 // The Pale Heights open (GDD v1.148; the owner: "Open the Heights so we can fight him in play"): a land once Act III is
 // done (Quota), the Solmere road east out of the Reach and up the Sol to the Frozen Hospice and home again, Frosthold on
 // the coach, the Heights' four spawn points (the First Pilgrim's at the Lip among them), the XP table to 75, and the
-// Developer panel's levels to 75 and its Open every land.
+// Developer panel's levels to 75 and its Open every land. (v1.150: the road is Solmere's crossroads now, and the Heights
+// open at Act IV's end, kept by a company that has stood in Frosthold: test/tidemark-open.test.mjs)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
@@ -16,21 +17,26 @@ import { isWalkable } from '../src/sim/world.js';
 const standIn = (sim, e) => { const p = sim.state.player; p.x = p.px = (e.x0 + e.x1) / 2; p.y = p.py = (e.y0 + e.y1) / 2; };
 const actIIIDone = (sim) => { for (const id of ['ch2_the_last_office', 'ch3_quota']) sim.state.quests[id] = { st: QS.DONE, step: 0, n: [] }; };
 
-test('the Solmere road: shut until Act III is done, then east to the Heights and home again; Frosthold on the coach', () => {
-  assert.equal(LANDS.heights.opens, 'ch3_quota'); assert.equal(LANDS.heights.town, 'Frosthold');
+test('the Solmere road: shut until a land beyond is open, then the crossroads up the Sol to the Heights and home again; Frosthold on the coach', () => {
+  assert.equal(LANDS.heights.opens, 'ch4_seventh_voice'); assert.equal(LANDS.heights.town, 'Frosthold'); assert.equal(LANDS.heights.kept, 'frosthold');
   const sim = createSim(11, undefined, { scene: 'overland', region: 'reach' }); sim.tick();
   sim.state.quests.ch2_the_last_office = { st: QS.DONE, step: 0, n: [] };
-  const said = []; sim.bus.on('landShut', (e) => said.push(e));
-  const east = sim.world.exits.find((e) => e.region === 'heights');
+  const said = [], asked = []; sim.bus.on('landShut', (e) => said.push(e)); sim.bus.on('crossroads', (e) => asked.push(e));
+  const east = sim.world.exits.find((e) => e.to === 'solmere');
   standIn(sim, east); for (let i = 0; i < 5; i++) sim.tick();
-  assert.equal(sim.state.region, 'reach', 'you stay'); assert.equal(said.length, 1); assert.match(said[0].line, /Solmere road/);
-  actIIIDone(sim); standIn(sim, east); for (let i = 0; i < 5; i++) sim.tick();
+  assert.equal(sim.state.region, 'reach', 'you stay'); assert.equal(said.length, 1); assert.match(said[0].line, /Solmere road/); assert.equal(asked.length, 0);
+  sim.commands.push({ type: 'solmere', land: 'heights' }); sim.tick();
+  assert.equal(sim.state.region, 'reach', 'the Heights are shut: refused');
+  actIIIDone(sim); sim.state.reached.add('frosthold'); standIn(sim, east); for (let i = 0; i < 5; i++) sim.tick();
+  assert.equal(sim.state.region, 'reach', 'Solmere is walked through, not into: the crossroads asks');
+  sim.commands.push({ type: 'solmere', land: 'heights' }); sim.tick();
   assert.equal(sim.state.region, 'heights'); assert.equal(sim.world.name, 'The Pale Heights');
   assert.ok(isWalkable(sim.world, sim.state.player.x, sim.state.player.y), 'you arrive on open ground, on the Sol road');
-  const home = sim.world.exits.find((e) => e.region === 'reach' && !e.closed);
+  const home = sim.world.exits.find((e) => e.to === 'solmere');
   standIn(sim, home); for (let i = 0; i < 5; i++) sim.tick();
+  sim.commands.push({ type: 'solmere', land: 'reach' }); sim.tick();
   assert.equal(sim.state.region, 'reach'); assert.ok(isWalkable(sim.world, sim.state.player.x, sim.state.player.y), 'back on the Reach\'s east edge');
-  assert.ok(Math.abs(sim.state.player.x - sim.world.arrivals.heights.x) < 2);
+  assert.ok(Math.abs(sim.state.player.x - sim.world.arrivals.solmere.x) < 2);
   assert.equal(COACH.frosthold.land, 'heights'); assert.equal(townOf('heights'), 'frosthold'); assert.equal(days('ashgate', 'frosthold'), 3);
 });
 
@@ -66,6 +72,7 @@ test('Open every land (the Developer panel): every road open at once on a new sl
   sim.state.created = true; sim.commands.push({ type: 'devOpenLands' }); sim.tick();
   assert.ok(sim.state.flags[DEV_LANDS] && sim.state.dev, 'flagged, a dev game');
   for (const r of Object.keys(LANDS)) assert.ok(sim.landOpen(r), r);
-  const east = sim.world.exits.find((e) => e.region === 'heights'); standIn(sim, east); for (let i = 0; i < 5; i++) sim.tick();
+  const east = sim.world.exits.find((e) => e.to === 'solmere'); standIn(sim, east); for (let i = 0; i < 5; i++) sim.tick();
+  sim.commands.push({ type: 'solmere', land: 'heights' }); sim.tick();
   assert.equal(sim.state.region, 'heights', 'the Solmere road walked');
 });

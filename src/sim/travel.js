@@ -184,6 +184,7 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
       const L = LANDS[landId(e.region)], q = L.opens && state.quests && state.quests[L.opens], open = !L.opens || (q && q.st === 3), steps = pathLen(t.tx, t.ty);
       if (steps != null) out.push({ id: 'land:' + e.region, icon: 'next', label: L.name, sub: open ? `the road there · ${steps} steps` : 'the road is shut', tx: t.tx, ty: t.ty, near: 0, steps, ...(open ? {} : { off: true }) });
     }
+    else if (e.to === 'solmere') { const steps = pathLen(t.tx, t.ty); if (steps != null) out.push({ id: 'land:solmere', icon: 'next', label: 'Solmere', sub: `the crossroads · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps }); }   // (v1.150: the imperial road into the dead capital, where the roads meet)
     else if (e.to === 'dungeon' && SITES[e.site] && siteOpen(e.site, state.revealed || [])) { const steps = pathLen(t.tx, t.ty); if (steps != null) sites.push({ ...t, site: e.site, steps }); }
   }
   for (const d of sites.sort((a, b) => a.steps - b.steps)) {

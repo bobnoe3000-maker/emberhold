@@ -23,7 +23,7 @@ import { createBattle, BOSSES, GOLD_DROP } from './battle.js';
 import { placeNpcs, placeFound, createTalk, stepFolk, partOf, NPCS } from './npcs.js';
 import { placeRoad, createRoad } from './road.js';
 import { createQuests, TRIAL_LEVEL, QS } from './quests.js';
-import { LANDS, landId } from './regions.js';
+import { LANDS, landId, SOLMERE } from './regions.js';
 import { TRIAL_CLASSES } from './skills.js';
 import { createBoard } from './board.js';
 import { createLore, SET_REVEALS } from './lore.js';
@@ -708,6 +708,13 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     }
     if (cmd.type === 'raidLeave') { if (raidOn && (raidOn.done || !battle.battle || battle.battle.quiet)) leaveRaid(raidOn.done ? 'won' : 'left'); return; }   // (never mid-fight, unless it's won)
     if (cmd.type === 'towerClimb') { if (inTower(world)) battle.towerClimb(); return; }
+    // (v1.150) on out of Solmere by another land's road: only standing in a Solmere road's mouth, to an open land that
+    // has one and isn't this land (regions.js SOLMERE)
+    if (cmd.type === 'solmere') {
+      const p = state.player, ex = world.kind === 'overland' ? oExitAt(world, p.x, p.y) : null;
+      if (!ex || ex.to !== 'solmere' || battle.battle || !solmereRoads().some((r) => r.land === cmd.land)) return;
+      travel('overland', 'solmere', undefined, cmd.land); return;
+    }
     if (cmd.type === 'towerLeave') { if (inTower(world) && towerOf(state).atLanding && battle.battle && battle.battle.tower) leaveTower(); return; }
     if (cmd.type === 'towerGo') {                          // ☰ → The Mere Tower: Wenna rows the company out from wherever it is
       const H = state.party[0], no = (reason) => bus.emit('refused', { reason });
@@ -862,6 +869,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       if (ex && ex.to === 'dungeon' && !siteOpen(ex.site, state.revealed)) { if (shut !== ex) { shut = ex; bus.emit('siteShut', { site: ex.site }); } }   // not found yet: its way in stays shut
       else if (ex && ex.to === 'dungeon' && (state.secrets[ex.site] || 0) > state.t) { if (shut !== ex) { shut = ex; bus.emit('siteSealed', { site: ex.site, mins: Math.ceil((state.secrets[ex.site] - state.t) / 60) }); } }   // a secret site resting after it was cleared
       else if (ex && ex.to === 'dungeon' && SITES[ex.site].minLevel && state.party[0].level < SITES[ex.site].minLevel) { if (shut !== ex) { shut = ex; bus.emit('siteLevel', { site: ex.site, need: SITES[ex.site].minLevel }); } }   // not yet: the Mere Tower takes a company from 12
+      else if (ex && ex.to === 'solmere') { if (shut !== ex) { shut = ex; const lands = solmereRoads(); if (lands.length) bus.emit('crossroads', { from: curRegion, lands }); else bus.emit('landShut', { region: '', line: ex.shut || '' }); } }   // (v1.150) Solmere's crossroads: the UI asks which road on (`solmere`)
       else if (ex && ex.region && !landOpen(ex.region)) { if (shut !== ex) { shut = ex; bus.emit('landShut', { region: ex.region, line: ex.shut || '' }); } }   // a land not yet opened (regions.js)
       else if (ex && ex.closed) { if (shut !== ex) { shut = ex; bus.emit('landShut', { region: '', line: ex.shut || '' }); } }   // a road out to a land not built yet (the Reach's, the Heights': outdoor.js)
       else if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive, ex.site, ex.region);
@@ -1059,7 +1067,9 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   /** the World map's tap on open ground: the nearest spot to stand on and the walk there (read-only; travel.js) @param {number} tx @param {number} ty */
   function spotNear(tx, ty) { return walkSpot({ world, state, standable }, tx, ty); }
   /** is this land open to you? (regions.js: its chapter done) @param {string} id */
-  function landOpen(id) { const L = LANDS[landId(id)]; return !L.opens || !!(state.flags && state.flags[DEV_LANDS]) || (state.quests && state.quests[L.opens] && state.quests[L.opens].st === QS.DONE) || false; }   // (DEV_LANDS: the Developer panel's Open every land, a dev game's)
+  function landOpen(id) { const L = LANDS[landId(id)]; return !L.opens || !!(state.flags && state.flags[DEV_LANDS]) || (state.quests && state.quests[L.opens] && state.quests[L.opens].st === QS.DONE) || (!!L.kept && state.reached.has(L.kept)) || false; }   // (kept, v1.150: a land already stood in stays open when its gate moves)
+  /** (v1.150) the roads on out of Solmere from the land you're in: every other open land that has one */
+  function solmereRoads() { return SOLMERE.filter((r) => r.land !== curRegion && landOpen(r.land)).map((r) => ({ land: r.land, name: LANDS[r.land].name, road: r.road })); }   // (DEV_LANDS: the Developer panel's Open every land, a dev game's)
   /** a hidden site found (a chapter's reward, the Chronicle): its way in opens on the Vale @param {string} id */
   function reveal(id) { if (SITES[id] && SITES[id].hidden && !state.revealed.has(id)) { state.revealed.add(id); bus.emit('siteRevealed', { site: id, name: SITES[id].name }); } }
   return { state, bus, commands, tick, snapshot, restore, destinations, spotNear, heroes, quests, board, lore, smith, reveal, landOpen, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; }, get focusId() { return battle.focusId; },

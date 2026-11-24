@@ -392,6 +392,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
       else if (p.kind === 'town') out.push({ ...base, label: LANDS[r].town, cls: S().reached.has(townOf(r)) ? 'lit' : 'dim', star: !!(q && q.land === r && !q.site), here: w.kind === 'town' ? 'you are here' : '' });
       // (v1.146 critic: a way out stands past the land's edge, and the picture's crop cut its pin off, the Vale's to the
       // Fens wholly) held 4 tiles inside the picture's frame
+      else if (p.id === 'solmere') out.push({ ...base, x: Math.min(Math.max(p.x, L.x0 + 4), L.x0 + L.w - 4), y: Math.min(Math.max(p.y, L.y0 + 4), L.y0 + L.h - 4), label: 'to Solmere', cls: '' });   // (v1.150: the crossroads)
       else if (LANDS[p.id]) out.push({ ...base, x: Math.min(Math.max(p.x, L.x0 + 4), L.x0 + L.w - 4), y: Math.min(Math.max(p.y, L.y0 + 4), L.y0 + L.h - 4),
         label: `to ${lower(LANDS[p.id].name)}`, cls: sim.landOpen(p.id) ? '' : 'off', star: !!(q && q.land === p.id && q.land !== r) });
     }
@@ -468,6 +469,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
         card.append(st, el('div', 'sub', n >= 3 ? 'Every star taken.' : `★ the end reached · ★★ inside ${ok} min · ★★★ inside ${qk} min with nobody down`));
       }
     } else if (p.kind === 'town') card.append(el('h3', '', LANDS[r].town), el('div', 'sub', STOP[townOf(r)] || 'a town'));
+    else if (p.id === 'solmere') card.append(el('h3', '', 'Solmere'), el('div', 'sub', 'the dead capital, where the imperial roads meet'));
     else card.append(el('h3', '', LANDS[p.id].name), el('div', 'sub', sim.landOpen(p.id) ? 'the road there' : 'the road is shut'));
     if (qt) card.append(el('div', 'sub q', `★ ${qt}`));
     // Walk there: the compass's own rows (sim travel.js), so the walk is the one the compass would make

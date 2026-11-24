@@ -68,7 +68,8 @@ const inside = (pt, poly) => { let c = false; for (let i = 0, j = poly.length - 
 // ── the land (portrait, the owner: "more elongated and taller to fit mobile portrait mode"): the island runs north to
 // south, the Heights at the top, Emberfall at the foot ────────────────────────────────────────────────────────────────
 const COAST = ragged([[300, 250], [420, 205], [520, 168], [620, 190], [720, 158], [820, 198], [900, 250], [960, 330], [1010, 420], [990, 520],
-  [1040, 620], [1062, 720], [1020, 800], [1060, 880], [1050, 960], [985, 1010], [1022, 1080], [1040, 1180], [1000, 1260], [1032, 1340],
+  [1040, 620], [1062, 720], [1020, 800], [1000, 850], [1010, 905], [1045, 930], [1046, 1000], [1068, 1038], [1046, 1075], [1040, 1130],   // (v1.150: the Tidemark's coast as its overland has it: Tollhaven's harbour bay, the Lamp Fort's headland, the bay under Gullwick)
+  [1000, 1170], [962, 1192], [1000, 1260], [1032, 1340],
   [1010, 1450], [1042, 1560], [1000, 1680], [962, 1780], [982, 1860], [900, 1940], [820, 1975], [740, 1945], [680, 2005], [620, 2080],
   [560, 2160], [480, 2200], [400, 2192], [320, 2168], [240, 2120], [200, 2040], [222, 1960], [170, 1880], [190, 1780], [160, 1680],
   [200, 1600], [262, 1560], [250, 1500], [180, 1462], [150, 1380], [190, 1300], [160, 1200], [200, 1100], [150, 1000], [172, 880],
@@ -203,7 +204,8 @@ add(`<path d="M${HEIGHTS_C[0] - 10},${HEIGHTS_C[1] + 8} v-12 l4,-6 l3,4 l3,-8 l3
 for (const k of ['thornwick', 'ashgate', 'tollhaven', 'rookstead', 'frosthold']) add(hub(...PLACES[k]));
 for (const k of ['greyholt', 'saltmere', 'reedholm', 'kells_rest', 'highmarch', 'brine', 'gullwick', 'hollin']) add(town(...PLACES[k]));
 const SITES = [...EMBER.map((e) => [e.x, e.y, e.ruin ? 'ruin' : 'site']),
-  [705, 475, 'ruin'], [696, 580, 'site'], [1108, 902, 'site'], [960, 1062, 'ruin'], [1040, 760, 'site'], [470, 760, 'ruin'], [230, 960, 'site'], [500, 880, 'ruin']];
+  [705, 475, 'ruin'], [696, 580, 'site'], [1104, 884, 'site'], [1012, 1204, 'ruin'], [1060, 1038, 'site'],   // (v1.150: the Gull Isles off the harbour, the Mole past Gullwick's ferry, the Lamp Fort on its headland, as the overland has them)
+  [470, 760, 'ruin'], [230, 960, 'site'], [500, 880, 'ruin']];
 for (const [x, y, k] of SITES) add(k === 'ruin' ? ruin(x, y) : site(x, y));
 add(`<path d="${pathOf(ragged([[652, 620], [672, 642], [690, 656], [714, 680]], false, 0.6, 3), false)}" fill="none" stroke="${INK}" stroke-width="2.6"/>`);   // the Soulcracks (v1.148: south-east of the Lip, as the overland has them)
 
@@ -222,20 +224,20 @@ const halo = `paint-order="stroke" stroke="${PAPER}" stroke-width="5" stroke-lin
 const label = (x, y, txt, size, o = {}) => add(`<text x="${x}" y="${y}" font-family="${o.sc ? 'Fell SC' : o.it ? 'Fell It' : 'Fell'}" font-size="${size}" fill="${o.fill || INK}" text-anchor="${o.anchor || 'middle'}" letter-spacing="${o.ls || 0}" ${o.halo === false ? '' : halo}${o.rot ? ` transform="rotate(${o.rot} ${x} ${y})"` : ''}${o.op ? ` opacity="${o.op}"` : ''}>${txt}</text>`);
 // the regions: spaced capitals, and the band under each in red, in whoever's hand added it later
 // (v1.143) a land a band, climbing the map: the lowest at its foot, the highest at its head
-const REG = [[300, 1770, ['THE HOLLOW VALE'], '1 – 9'], [720, 1590, ['THE GREYWATER', 'FENS'], '10 – 18'], [336, 1146, ['THE CINDER REACH'], '19 – 30'], [870, 726, ['THE TIDEMARK'], '31 – 45'], [330, 668, ['THE GREENWOOD'], '46 – 60'], [600, 300, ['THE PALE HEIGHTS'], '61 – 75']];
+const REG = [[300, 1770, ['THE HOLLOW VALE'], '1 – 9'], [720, 1590, ['THE GREYWATER', 'FENS'], '10 – 18'], [336, 1146, ['THE CINDER REACH'], '19 – 30'], [862, 1012, ['THE TIDEMARK'], '31 – 45'], [330, 668, ['THE GREENWOOD'], '46 – 60'], [600, 300, ['THE PALE HEIGHTS'], '61 – 75']];
 for (const [x, y, lines, lv] of REG) { lines.forEach((l, i) => label(x, y + i * 30, l, 28, { sc: true, ls: 4 })); label(x, y + (lines.length - 1) * 30 + 26, `levels ${lv}`, 20, { it: true, fill: RED }); }
 label(522, 1652, 'EMBERFALL', 20, { sc: true, ls: 6, op: 0.8 }); label(522, 1674, 'the Vale and the Fens', 15, { it: true, op: 0.8 });   // (v1.146: on the line between the two, above them; it stood in the Fens once they moved down)
 label(600, 1250, 'SOLMERE', 32, { sc: true, ls: 8 }); label(600, 1276, 'the dead capital · the Bowl', 17, { it: true }); label(600, 1296, 'the Great Beacon', 17, { it: true });
 label(600, 480, 'the Ember Throne', 16, { it: true });
 label(600, 1088, 'the Mere', 15, { it: true }); label(684, 1124, 'the Mere Tower', 15, { it: true, anchor: 'start' });
 const T = [['thornwick', 'Thornwick', 0, 28], ['greyholt', 'Greyholt', 44, 6], ['saltmere', 'Saltmere', 0, 26], ['reedholm', 'Reedholm', 0, 26], ['ashgate', 'Ashgate', 0, 28], ['kells_rest', 'Kell’s Rest', 0, 26],
-  ['frosthold', 'Frosthold', 0, 28], ['glass', 'the Glass Keep', 0, -14], ['tollhaven', 'Tollhaven', -12, 30], ['highmarch', 'Highmarch', 0, -16], ['brine', 'Brine Cross', 0, 26], ['gullwick', 'Gullwick', -48, 6],
+  ['frosthold', 'Frosthold', 0, 28], ['glass', 'the Glass Keep', 0, -14], ['tollhaven', 'Tollhaven', 30, -22], ['highmarch', 'Highmarch', 0, -16], ['brine', 'Brine Cross', 0, 26], ['gullwick', 'Gullwick', -48, 6],
   ['rookstead', 'Rookstead', 0, 28], ['hollin', 'Hollin Ford', 0, -14]];
 for (const [k, n, dx, dy] of T) { const [x, y] = PLACES[k]; label(x + dx, y + dy, n, ['thornwick', 'ashgate', 'tollhaven', 'rookstead', 'frosthold'].includes(k) ? 25 : 20); }
 const EMBER_DX = { canal_locks: 44, toadking_mound: -18, tithe_mill: 30, drowned_abbey: 44, haddow_crypt: -30, sunken_chapel: 36 };
 const EMBER_DY = { sunken_chapel: 26, haddow_crypt: -14 };   // (above its mark: the Vale's river runs under it)
 const S = [...EMBER.map((e) => [e.x + (EMBER_DX[e.id] || 0), e.y + (EMBER_DY[e.id] || 24), e.name]),
-  [742, 664, 'the Soulcracks'], [696, 602, 'the Praetory'], [652, 742, 'the Frozen Hospice'], [1105, 862, 'the Gull Isles'], [960, 1086, 'the Drowned Mole'], [1040, 784, 'the Lamp Fort'], [470, 784, 'the Tally-House'], [230, 984, 'the Root Granary'], [500, 904, 'the First Barn?']];
+  [742, 664, 'the Soulcracks'], [696, 602, 'the Praetory'], [652, 742, 'the Frozen Hospice'], [1104, 866, 'the Gull Isles'], [1030, 1230, 'the Drowned Mole'], [1078, 1064, 'the Lamp Fort'], [470, 784, 'the Tally-House'], [230, 984, 'the Root Granary'], [500, 904, 'the First Barn?']];
 for (const [x, y, n] of S) label(x, y, n, 17, { it: true });
 label(70, 1300, 'THE GREY SEA', 28, { sc: true, ls: 12, rot: -90, halo: false, op: 0.75 });
 label(1135, 1450, 'THE NARROW SEA', 28, { sc: true, ls: 12, rot: 90, halo: false, op: 0.75 });

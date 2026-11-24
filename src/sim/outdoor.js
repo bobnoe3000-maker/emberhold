@@ -20,8 +20,8 @@ import { campsOf } from './camps.js';
 // water you can't; DECK the boardwalks and Saltmere's square on piles, laid over either)
 // (the Reach's and the Heights' open ground, docs/reach-heights-overlands.md: SCREE is cracked earth and red rock in the
 // Reach, loose stone in the Heights; SNOW the Heights' patches. Both walked, both scattered on. Append-only.)
-export const G = { GRASS: 0, DIRT: 1, COBBLE: 2, WATER: 3, BANK: 4, FIELD: 5, MARSH: 6, POOL: 7, DECK: 8, SCREE: 9, SNOW: 10 };
-const G_MAT = ['grass', 'dirt', 'cobble', 'water', 'bank', 'field', 'marsh', 'pool', 'deck', 'scree', 'snow'];
+export const G = { GRASS: 0, DIRT: 1, COBBLE: 2, WATER: 3, BANK: 4, FIELD: 5, MARSH: 6, POOL: 7, DECK: 8, SCREE: 9, SNOW: 10, SAND: 11 };
+const G_MAT = ['grass', 'dirt', 'cobble', 'water', 'bank', 'field', 'marsh', 'pool', 'deck', 'scree', 'snow', 'sand'];   // (v1.150: the Tidemark's beaches and dunes, a sea's fringe)
 const CELL = 8;                         // spatial-index cell, tiles
 
 // ── geometry helpers ─────────────────────────────────────────────────────────
@@ -111,7 +111,7 @@ export function groundAt(o, gx, gy) {
     const u = (gx - p.cx) / p.rx, v = (gy - p.cy) / p.ry, au = Math.abs(u), av = Math.abs(v), e = au * au * au + av * av * av;
     const wob = (fbm(gx * 0.11, gy * 0.11, o.seed + 37) - 0.5) * 0.55;
     if (e < 1 + wob) { out.g = G.POOL; out.t = e; return out; }
-    if (e < 1.45 + wob) { out.g = G.MARSH; out.t = (e - 1) / 0.45; return out; }
+    if (e < 1.45 + wob) { out.g = p.sea ? G.SAND : G.MARSH; out.t = (e - 1) / 0.45; return out; }   // (a sea's fringe is its beach, v1.150)
   }
   for (const f of o.fields) {
     if (gx >= f.x0 && gx < f.x1 && gy >= f.y0 && gy < f.y1) {
@@ -147,7 +147,7 @@ function finalizeGround(o) {
     const g = groundAt(o, X - o.PAD + 0.5, Y - o.PAD + 0.5).g;
     o.tmat[Y * o.GW + X] = g;
     if (g === G.WATER || g === G.POOL) o.blocked[Y * o.GW + X] = 1;
-    if (g !== G.GRASS && g !== G.FIELD && g !== G.MARSH && g !== G.SCREE && g !== G.SNOW) o.occ[Y * o.GW + X] = 2;      // keep roads, plazas and water clear of scatter
+    if (g !== G.GRASS && g !== G.FIELD && g !== G.MARSH && g !== G.SCREE && g !== G.SNOW && g !== G.SAND) o.occ[Y * o.GW + X] = 2;      // keep roads, plazas and water clear of scatter
   }
 }
 
@@ -378,6 +378,7 @@ export const REGIONS = {
   fens:    { name: 'Saltmere',  tavern: 'The Drowned Eel',    inn: 'The Stilt House',   shop: "Rushlight's Chandlery",   smith: 'The Tidewater Forge',     temple: 'Chapel of the Grey Sisters' },
   reach:   { name: 'Ashgate',   tavern: 'The Slag & Bellows', inn: "Deepdelver's Rest", shop: 'The Ashgate Exchange', smith: 'The Ashgate Forge',       temple: 'Shrine of the Last Flame' },
   heights: { name: 'Frosthold', tavern: 'The Frozen Flagon',  inn: "Pilgrims' Hall",    shop: 'Frosthold Outfitters', smith: 'Ironpeak Smithy',         temple: 'The Monastery Chapel' },
+  tidemark: { name: 'Tollhaven', tavern: 'The Paid Toll',     inn: 'The Chain Locker',  shop: 'The Bonded Stores',    smith: 'The Quay Forge',          temple: 'The Quay Chapel' },   // (v1.150; world doc §3.7)
 };
 // The square is the home screen, and its plaques are its menu: each service's sign hangs at a set height (tiles over
 // the ground), the same in every town, not at its roof's top. A roof that changes (art critic pass 14: the shop and
@@ -401,7 +402,15 @@ function buildTown(seed, region) {
   o.roads.push({ w: 6, surface: 'dirt', pts: [[230, GY], [112, GY]] });
   o.roads.push({ w: 6, surface: 'cobble', pts: [[114, GY], [84, GY], [76, 76]] });
   o.plazas.push({ cx: 60, cy: 62, rx: 24, ry: 22 }, { cx: 36, cy: 40, rx: 8, ry: 7 });      // the square, and the temple's forecourt open to it
-  o.fields.push({ x0: 128, y0: 18, x1: 150, y1: 50, axis: 'x' }, { x0: 132, y0: 92, x1: 152, y1: 114, axis: 'y' }, { x0: 20, y0: 110, x1: 60, y1: 122, axis: 'x' });
+  // (v1.150) Tollhaven's harbour outside the walls, where the others have their north farm: the sea north-east, its
+  // beach, three jetties out over it (world doc §3.7: the harbour on the north-east); nothing is sown by the sea
+  const SEA = R === 'tidemark';
+  if (SEA) {
+    o.pools.push({ cx: 184, cy: 6, rx: 56, ry: 40, sea: true });
+    for (const x of [146, 166, 186]) o.roads.push({ w: 3, surface: 'deck', pts: [[x, 50], [x, 14]] });
+    o.roads.push({ w: 5, surface: 'deck', pts: [[134, 52], [200, 52]] });   // the quay's boards along the beach's top
+    o.fields.push({ x0: 20, y0: 110, x1: 60, y1: 122, axis: 'x' });
+  } else o.fields.push({ x0: 128, y0: 18, x1: 150, y1: 50, axis: 'x' }, { x0: 132, y0: 92, x1: 152, y1: 114, axis: 'y' }, { x0: 20, y0: 110, x1: 60, y1: 122, axis: 'x' });
   finalizeGround(o);
 
   // the square: the temple at its head (the top of the frame), the tavern and the shop, then the smithy and the inn
@@ -453,11 +462,13 @@ function buildTown(seed, region) {
   // v1.126; the art pass, docs/art-critic-pass-reach.md, found Ashgate's outskirts the Vale's farms, beasts and wheat)
   const ASH = R === 'reach';
   if (ASH) { put(o, B('workshop'), 140, 34); put(o, B('workshopx'), 144, 104); }
+  else if (SEA) { put(o, B('workshop'), 140, 64); put(o, B('workshopx'), 124, 64); put(o, B('longhousex'), 144, 104); }   // the bonded warehouses on the quay; the ropewalk's long shed
   else { put(o, B('farm'), 140, 34); put(o, B('farmx'), 144, 104); }
 
   // trees: orchards and gardens in the walls' front corners, woods beyond the back walls, the ring
   const inside = (x, y) => x > WX0 + 4 && x < WX1 - 4 && y > WY0 + 4 && y < WY1 - 4;
   scatter(o, rng, -20, -20, 160, 140, 9, (x, y) => {
+    if (SEA && x > 116 && y < 70) return null;                    // (the harbour's beach and quay: nothing grows there)
     if (inside(x, y)) return y > 84 && x > 84 && rng() < 0.5 ? pick(rng, ['oak_2', 'autumn_3', 'oak_1']) : null;   // the gardens behind the south wall
     if (x > WX0 - 8 && x < WX1 + 22 && y > WY0 - 8 && y < WY1 + 8) return null;   // the walls' verge and the moat
     if (x + y < 60 || x < 0) return rng() < 0.7 ? pick(rng, TREE_CLUSTER) : pick(rng, TREE_SINGLE);
@@ -467,7 +478,10 @@ function buildTown(seed, region) {
   forestRing(o, rng, 10);
   bound(o, () => 'fence');                                         // the fields' fences first: the beasts graze round them
   { const fr = mulberry32(streamSeed(seed, 4417));                // the farms' beasts, the houses' doorsteps
-    if (ASH) {   // the sheds' yards: slag tipped, ore in crates, the sacks and barrels of a working yard
+    if (SEA) {   // the quay's cargo, the nets drying, the ropewalk's coils
+      herd(o, fr, ['barrel', 'crate_A_small', 'crate_A_big'], 132, 60, 4, 4); herd(o, fr, ['crate_A_big', 'sack', 'barrel'], 176, 60, 4, 4);
+      herd(o, fr, ['barrel', 'sack'], 154, 112, 3, 4);
+    } else if (ASH) {   // the sheds' yards: slag tipped, ore in crates, the sacks and barrels of a working yard
       herd(o, fr, ['rock_C', 'rock_E', 'resource_stone'], 160, 34, 4, 6); herd(o, fr, ['rock_D', 'rock_C'], 142, 66, 4, 6);
       herd(o, fr, ['crate_A_small', 'barrel'], 136, 58, 2, 3); herd(o, fr, ['crate_A_big', 'sack', 'barrel'], 154, 52, 3, 4); herd(o, fr, ['resource_stone', 'rock_E'], 152, 116, 2, 3);
     } else {
@@ -475,7 +489,7 @@ function buildTown(seed, region) {
       herd(o, fr, ['hens_1'], 136, 58, 2, 3); herd(o, fr, ['hay_1', 'hay_2', 'pumpkins_1'], 154, 52, 3, 4); herd(o, fr, ['pumpkins_1', 'hay_1'], 152, 116, 2, 3);
     }
     dress(o, fr, (x, y) => hypot(x - o.hub.x, y - o.hub.y) < o.hub.r); }
-  if (!ASH) wheat(o);
+  if (!ASH && !SEA) wheat(o);
   // the undergrowth: the walls' verges (in and out), the gardens, flower patches; never the square
   undergrowth(o, -10, -10, 150, 130, 3, (x, y) => {
     if (hypot(x - o.hub.x, y - o.hub.y) < o.hub.r + 4) return -1;
@@ -640,7 +654,7 @@ function clearGround(o, cx, cy, r, named = o.pools.length) {
     const i = gi(o, tx, ty); if (i < 0) continue;
     const g = groundAt(o, tx + 0.5, ty + 0.5).g; o.tmat[i] = g;
     o.blocked[i] = g === G.WATER || g === G.POOL ? 1 : 0;
-    o.occ[i] = g !== G.GRASS && g !== G.FIELD && g !== G.MARSH && g !== G.SCREE && g !== G.SNOW ? 2 : 0;
+    o.occ[i] = g !== G.GRASS && g !== G.FIELD && g !== G.MARSH && g !== G.SCREE && g !== G.SNOW && g !== G.SAND ? 2 : 0;
   }
   for (const s of o.structs) if (inBox(s) && (STANDS.test(s.id) || /^ug_/.test(s.id))) stamp(o, s.id, s.x, s.y, STANDS.test(s.id) ? 'round' : 'none', 0.35);
   for (const [i, [b, q]] of held) { o.blocked[i] = b; o.occ[i] = q; }
@@ -1113,9 +1127,10 @@ function buildReach(seed) {
   o.exits.push({ x0: inn[0] - 1.5, y0: inn[1] + 5.5, x1: inn[0] + 4.5, y1: inn[1] + 8.5, to: 'dungeon', site: 'shuttered_inn' });   // (v1.138) the inn's door, on its +y face
   // (v1.148) the Solmere road east: through the dead capital (not a land you walk) and up the Sol to the Pale Heights,
   // open once Act III is done, the vessel a day ahead on it
-  o.exits.push({ x0: 263, y0: 180, x1: 271, y1: 198, to: 'overland', region: 'heights', arrive: 'reach',
+  // (v1.150) into Solmere, the crossroads: on to the Tidemark or up the Sol to the Heights, whichever is open (core.js)
+  o.exits.push({ x0: 263, y0: 180, x1: 271, y1: 198, to: 'solmere',
     shut: 'The Solmere road runs east, straight as the day it was laid, to the dead capital. Not yet: the night shift is still down under the Cinderworks.' });
-  o.arrivals = { default: { x: join[0] - 4.5, y: gate[1] + 0.5 }, ashgate: { x: join[0] - 4.5, y: gate[1] + 0.5 }, heights: { x: 256.5, y: 189.5 }, kells_rest: { x: kells[0] + 10.5, y: kells[1] + 4.5 },
+  o.arrivals = { default: { x: join[0] - 4.5, y: gate[1] + 0.5 }, ashgate: { x: join[0] - 4.5, y: gate[1] + 0.5 }, heights: { x: 256.5, y: 189.5 }, solmere: { x: 256.5, y: 189.5 }, kells_rest: { x: kells[0] + 10.5, y: kells[1] + 4.5 },
     vale_road: { x: 146.5, y: 255.5 }, cold_seam: { x: seam[0] - 5.5, y: seam[1] + 17.5 },
     assay_yards: { x: yards[0] + 6.5, y: yards[1] + 4.5 },   // (east of the workshop, which hid one arriving at the door: visibility.mjs)
     cinderworks: { x: works[0] + 0.5, y: works[1] + 12.5 },
@@ -1221,8 +1236,121 @@ function buildHeights(seed) {
     { low: ['ug_grass_1', 'ug_grass_2', 'ug_fern'], solid: ['rock_A', 'rock_B'], foot: ['ug_grass_2', 'ug_fern'] });
 
   o.exits.push({ x0: gate[0] - 8, y0: gate[1] - 4, x1: gate[0] - 1, y1: gate[1] + 4, to: 'town', arrive: 'overland' });
-  o.exits.push({ x0: 142, y0: 263, x1: 159, y1: 271, to: 'overland', region: 'reach', arrive: 'heights', shut: 'The road down the Sol goes to Solmere, and west on its road to the Cinder Reach. Not open to you from here.' });   // (v1.148) down the Sol to Solmere and west on its road, home to the Reach
-  o.arrivals = { default: { x: gate[0] + 22.5, y: gate[1] + 0.5 }, frosthold: { x: gate[0] + 22.5, y: gate[1] + 0.5 }, hospice: { x: hospice[0] - 1.5, y: hospice[1] + 10.5 }, reach: { x: 150.5, y: 255.5 } };
+  o.exits.push({ x0: 142, y0: 263, x1: 159, y1: 271, to: 'solmere', shut: 'The road down the Sol goes to Solmere. Not open to you from here.' });   // (v1.148) down the Sol to Solmere; (v1.150) its crossroads, on to the Reach or the Tidemark
+  o.arrivals = { default: { x: gate[0] + 22.5, y: gate[1] + 0.5 }, frosthold: { x: gate[0] + 22.5, y: gate[1] + 0.5 }, hospice: { x: hospice[0] - 1.5, y: hospice[1] + 10.5 }, reach: { x: 150.5, y: 255.5 }, solmere: { x: 150.5, y: 255.5 } };
+  o.spawn = o.arrivals.default;
+  return o;
+}
+
+// ── THE TIDEMARK (world doc §3.7, v1.69; GDD v1.150; docs/tidemark-plan.md) — the east coast ─────────────────────
+// 260 × 260, north up, as the plan's overland has it: the imperial road in from Solmere at the west, over the Brine at
+// Brine Cross (a place, not a town: its houses at the bridge's two ends, the barricade at its east end where Act IV's
+// siege comes); north from the junction up the Highmarch road to the walled march-kingdom's east gate; east on the coast
+// road to Tollhaven's west gate, its harbour north-east of its walls; south-east down the beach road to Gullwick on the
+// sand, its ferry jetty out toward the Drowned Mole. The sea is the east and the south-east, a salt marsh along the north
+// shore toward Highmarch, the Lamp Fort on its headland. Grey field-walls and sheep inland.
+export const TIDEMARK = { cross: [46, 172], join: [100, 172], highmarch: [100, 40], tollhaven: [176, 104], gullwick: [188, 226], ferry: [204, 256],
+  lampfort: [240, 148] };
+function buildTidemark(seed) {
+  const o = makeWorld(seed, 'overland', 260, 260, 90), rng = mulberry32(streamSeed(seed, 4450)), B = (t, n = 1) => `tidemark_${t}_${n}`;
+  o.name = 'The Tidemark'; o.region = 'tidemark';
+  const { cross, join, highmarch, tollhaven, gullwick, ferry, lampfort } = TIDEMARK;
+  // the sea: the east coast, Tollhaven's harbour bay north-east, the bay under Gullwick in the south-east, as the Guild's
+  // wall map has the coast (tools/worldmap/draw.mjs); each one's fringe its beach (groundAt: a sea's fringe is sand)
+  o.pools.push({ cx: 306, cy: 150, rx: 72, ry: 170, sea: true }, { cx: 226, cy: 26, rx: 56, ry: 44, sea: true },
+    { cx: 262, cy: 300, rx: 100, ry: 70, sea: true });
+  for (const [cx, cy, rx, ry] of [[112, 14, 9, 4], [134, 22, 11, 5], [154, 12, 8, 4], [126, 6, 6, 3]]) o.pools.push({ cx, cy, rx, ry });   // the salt pans, their marsh round them
+  (o.clear ||= []).push([lampfort[0], lampfort[1], 13]);       // the Lamp Fort's headland out into the sea
+  // the Brine, down out of the north, under the bridge (straight, +y, at Brine Cross), out to the sea in the south-west
+  const brine = chaikin([[36, -60], [38, 0], [42, 60], [44, 120], [46, 160], [46, 186], [52, 230], [64, 300]], 3);
+  const BRIDGE = [xAt(brine, cross[1]), cross[1]];
+  o.rivers.push({ w: 8, pts: meander(seed, brine, [BRIDGE], 4451) });
+  const ROADS = [
+    { w: 6, surface: 'dirt', imperial: true, pts: [[-30, cross[1]], [BRIDGE[0] - 14, cross[1]], [BRIDGE[0] + 14, cross[1]], join] },   // the imperial road in from Solmere, over the bridge
+    { w: 6, surface: 'dirt', imperial: true, pts: [join, [112, 140], [118, 96], [116, 60], [highmarch[0] + 2, highmarch[1]]] },        // the Highmarch road north, to its east gate
+    { w: 6, surface: 'dirt', imperial: true, pts: [join, [128, 150], [150, 118], [tollhaven[0] - 12, tollhaven[1]]] },                   // the coast road east, to Tollhaven's west gate
+    { w: 4, surface: 'dirt', pts: [[146, 124], [164, 160], [178, 196], [gullwick[0], gullwick[1] - 6]] },                                // the beach road south-east to Gullwick
+    { w: 3, surface: 'track', pts: [[168, 168], [200, 160], [lampfort[0] - 8, lampfort[1] + 2]] },                                       // out along the cliffs to the Lamp Fort
+  ].map((r) => ({ ...r, pts: fillet(r.pts, Math.max(8, r.w * 2)) }));
+  joinRoads(o, ROADS);
+  o.roads.push(...ROADS);
+  o.roads.push({ w: 3, surface: 'deck', pts: [[ferry[0] - 6, gullwick[1] + 8], [ferry[0], ferry[1]]] });   // Gullwick's ferry jetty, out toward the Mole
+  for (const x of [196, 216, 236]) o.roads.push({ w: 3, surface: 'deck', pts: [[x, 76], [x + 2, 46]] });   // Tollhaven's three jetties
+  for (const [a, b] of [[[176, 72], [192, 30]], [[252, 72], [244, 28]]]) o.roads.push({ w: 4, surface: 'deck', pts: [a, b] });   // the two moles, the chain between their ends
+  o.aprons.push({ x: gullwick[0], y: gullwick[1], r: 7 }, { x: BRIDGE[0] + 18, y: cross[1], r: 6 });
+  o.fields.push({ x0: 62, y0: 100, x1: 86, y1: 132, axis: 'y' }, { x0: 122, y0: 196, x1: 150, y1: 218, axis: 'x' }, { x0: 64, y0: 196, x1: 90, y1: 224, axis: 'y' });
+  finalizeGround(o);
+  put(o, 'bridge_90', BRIDGE[0], BRIDGE[1], 'deck');
+  // Brine Cross: the houses at the bridge's two ends, the tollhouse at its west foot, the barricade across the east one
+  for (const [id, x, y] of [[B('house', 1), BRIDGE[0] - 12, cross[1] - 10], [B('cottage'), BRIDGE[0] - 12, cross[1] + 10], [B('longhouse'), BRIDGE[0] + 13, cross[1] - 11],
+    [B('workshop'), BRIDGE[0] + 13, cross[1] + 11], [B('housex', 1), BRIDGE[0] - 22, cross[1] - 9]]) put(o, id, x, y);
+  put(o, B('standard'), BRIDGE[0] - 8, cross[1] - 4.5, 'rect', 0.1);
+  for (const [id, x, y] of [['cart_90', BRIDGE[0] + 20, cross[1] - 4], ['crate_A_big', BRIDGE[0] + 20, cross[1] + 4], ['barrel', BRIDGE[0] + 21, cross[1] + 6]]) put(o, id, x, y, 'rect', 0.1);
+  // Highmarch from outside: its walls in small, the keep over them, the gate east on its road
+  { const X0 = 52, X1 = highmarch[0], Y0 = 8, Y1 = 64, GY = highmarch[1];
+    for (const [id, x, y] of [[B('keep'), 68, 26], [B('temple'), 86, 22], [B('house', 2), 64, 50], [B('housex', 2), 86, 54], [B('house', 3), 76, 40]]) put(o, id, x, y);
+    putWall(o, B('curtain'), true, Y0, X0, X1); putWall(o, B('curtain'), true, Y1, X0, X1); putWall(o, B('curtainy'), false, X0, Y0, Y1);
+    putWall(o, B('curtainy'), false, X1, Y0, GY - 7); putWall(o, B('curtainy'), false, X1, GY + 7, Y1);
+    for (const [x, y] of [[X0, Y0], [X1, Y0], [X0, Y1], [X1, Y1], [(X0 + X1) / 2, Y0], [(X0 + X1) / 2, Y1], [X0, 36]]) put(o, B('tower'), x, y, 'round', 0.1);
+    putGate(o, B('gatehousey'), X1, GY);
+    put(o, B('standard'), X1 + 4, GY - 5, 'rect', 0.1); put(o, B('standard'), X1 + 4, GY + 5, 'rect', 0.1); }
+  // Tollhaven from outside: grey stone on its landward sides, the gate west on the coast road, its roofs inside; the
+  // harbour beyond its north wall (the jetties and the moles laid above)
+  { const X0 = tollhaven[0], X1 = 214, Y0 = 84, Y1 = 124, GY = tollhaven[1];
+    for (const [id, x, y] of [[B('temple'), 196, 96], [B('inn'), 186, 112], [B('house', 1), 204, 114], [B('workshopx'), 204, 98]]) put(o, id, x, y);
+    putWall(o, B('curtain'), true, Y0, X0, X1); putWall(o, B('curtain'), true, Y1, X0, X1); putWall(o, B('curtainy'), false, X1, Y0, Y1);
+    putWall(o, B('curtainy'), false, X0, Y0, GY - 7); putWall(o, B('curtainy'), false, X0, GY + 7, Y1);
+    for (const [x, y] of [[X0, Y0], [X1, Y0], [X0, Y1], [X1, Y1], [(X0 + X1) / 2, Y0], [(X0 + X1) / 2, Y1]]) put(o, B('tower'), x, y, 'round', 0.1);
+    putGate(o, B('gatehousey'), X0, GY);
+    put(o, B('standard'), X0 - 4, GY - 5, 'rect', 0.1); put(o, B('standard'), X0 - 4, GY + 5, 'rect', 0.1);
+    put(o, B('workshop'), 186, 78); put(o, B('longhouse'), 206, 78);                                    // the bonded warehouses on the quay
+    put(o, B('tower'), 192, 28, 'round', 0.1); put(o, B('tower'), 244, 26, 'round', 0.1); }             // the chain's towers at the moles' ends
+  // Gullwick (a place: its cottages on the Strand, the nets drying, the ferryman's post at the jetty's foot)
+  for (const [id, x, y] of [[B('cottage'), gullwick[0] - 12, gullwick[1] - 6], [B('cottagex'), gullwick[0] - 4, gullwick[1] - 14], [B('house', 2), gullwick[0] + 10, gullwick[1] - 10],
+    [B('longhousex'), gullwick[0] - 16, gullwick[1] + 6], [B('lanewell'), gullwick[0] + 2, gullwick[1] - 2]]) put(o, id, x, y, 'rect', /well/.test(id) ? 0.1 : 0.12);
+  for (const x of [gullwick[0] + 6, gullwick[0] + 12]) putRun(o, 'fence_0', x, gullwick[1] + 4);
+  for (const [id, x, y] of [['barrel', ferry[0] - 9, gullwick[1] + 6], ['crate_A_small', ferry[0] - 10, gullwick[1] + 8], ['sack', gullwick[0] - 6, gullwick[1] + 4]]) put(o, id, x, y, 'rect', 0.1);
+  // the Lamp Fort on its headland: Old Gannet's light, a tower in a wall
+  put(o, B('tower'), lampfort[0] + 2, lampfort[1] - 2, 'round', 0.1); put(o, B('wall'), lampfort[0] - 4, lampfort[1] + 4);
+  o.labels.push({ x: BRIDGE[0], y: cross[1], id: B('standard'), text: 'Brine Cross' }, { x: highmarch[0], y: highmarch[1], id: B('gatehousey'), text: 'Highmarch' },
+    { x: tollhaven[0], y: tollhaven[1], id: B('gatehousey'), text: 'Tollhaven' }, { x: gullwick[0], y: gullwick[1], id: B('cottage'), text: 'Gullwick' },
+    { x: lampfort[0], y: lampfort[1], id: B('tower'), text: 'The Lamp Fort' }, { x: 132, y: 20, text: 'The salt marsh' });
+  for (const r of ROADS) if (r.imperial) beacons(o, r.pts, B('tower'));
+
+  // THE HILLS (their own stream): Highmarch's high ground in the north-west, a range past the north and west edges
+  const mrng = mulberry32(streamSeed(seed, 4452)), F = (id) => ENV_FOOT[id] || [-10, -10, 10, 10];
+  const keepOut = [cross, join, highmarch, tollhaven, gullwick, lampfort, [BRIDGE[0] + 18, cross[1]]];
+  const sights = [[BRIDGE[0] + 18, cross[1]], [highmarch[0] + 14, highmarch[1]], [tollhaven[0] - 14, tollhaven[1]], gullwick, lampfort];
+  const sea = (x, y) => { const g = groundAt(o, x, y).g; return g === G.POOL || g === G.SAND; };
+  const clear = (x, y, r = 18) => !keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < r) && !inFrontOf(sights, x, y, 40, 22) && !sea(x, y);
+  for (const [x, y] of [[18, 40], [24, 92], [14, 132], [124, 40], [140, 66], [20, 226], [96, 234]]) {
+    const id = mrng() < 0.5 ? 'mountain_A' : 'mountain_B', jx = x + (mrng() - 0.5) * 6, jy = y + (mrng() - 0.5) * 6;
+    if (clear(jx, jy, 20) && !inFrontOf(sights, jx, jy, 72, 28) && fits(o, id, jx, jy, -1)) put(o, id, jx, jy, 'round', 0.35);
+  }
+  for (let y = -20; y < 330; ) { const id = pick(mrng, ['mountain_A', 'mountain_B', 'mountain_massif_C']), f = F(id); put(o, id, -12 - f[2] - mrng() * 10, y - f[1], 'round', 0.35); y += (f[3] - f[1]) * (0.7 + mrng() * 0.2); }
+  // THE SCATTER: oaks and birch in the Brine's valley and round Highmarch, windbent pines toward the coast, rocks on the
+  // cliffs; nothing on the beach or in the sea, a road, a place or its sightline
+  scatter(o, rng, -60, -60, 320, 320, 6, (x, y) => {
+    const out = Math.max(-x, x - 260, -y, y - 260);
+    if (out > 0) return sea(x, y) ? null : rng() < 0.6 ? pick(rng, TREE_CLUSTER) : null;
+    if (!clear(x, y, 14)) return null;
+    const n = fbm(x * 0.04, y * 0.04, o.seed + 71), coast = x > 150 || y > 200;
+    if (n > 0.58) return coast ? (rng() < 0.6 ? pick(rng, ['pine_2', 'pine_4', 'pine_5']) : pick(rng, ROCKS)) : pick(rng, TREE_SINGLE.filter((t) => /oak|birch|autumn/.test(t)));
+    return rng() < 0.03 ? pick(rng, ROCKS) : null;
+  });
+  forestRing(o, rng, 6);
+  { const fr = mulberry32(streamSeed(seed, 4453));   // the sheep inland on the field-walled pasture
+    herd(o, fr, ['sheep_1', 'sheep_2'], 74, 144, 5, 8); herd(o, fr, ['sheep_1', 'sheep_2'], 136, 230, 4, 6); }
+  bound(o, () => 'fence');
+  undergrowth(o, -10, -10, 270, 270, 5, (x, y) => { const g = groundAt(o, x, y).g;
+    return keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 12) || g === G.POOL ? -1 : g === G.SAND ? 0.06 : fbm(x * 0.07, y * 0.07, o.seed + 73) > 0.62 ? 0.4 : 0.06; },
+    { low: ['ug_grass_1', 'ug_grass_2', 'ug_grass_1'], solid: ['rock_F', 'rock_G'], foot: ['ug_grass_2'] });
+
+  o.exits.push({ x0: tollhaven[0] + 1, y0: tollhaven[1] - 4, x1: tollhaven[0] + 8, y1: tollhaven[1] + 4, to: 'town', arrive: 'overland' });
+  // the imperial road west, into Solmere (a crossroads: GDD v1.150, core.js)
+  o.exits.push({ x0: -11, y0: cross[1] - 9, x1: -4, y1: cross[1] + 9, to: 'solmere' });
+  o.arrivals = { default: { x: tollhaven[0] - 14.5, y: tollhaven[1] + 0.5 }, tollhaven: { x: tollhaven[0] - 14.5, y: tollhaven[1] + 0.5 }, solmere: { x: 4.5, y: cross[1] + 0.5 },
+    brine_cross: { x: BRIDGE[0] + 22.5, y: cross[1] + 0.5 }, gullwick: { x: gullwick[0] + 0.5, y: gullwick[1] - 2.5 } };
   o.spawn = o.arrivals.default;
   return o;
 }
@@ -1249,6 +1377,7 @@ export function createOutdoor(seed, kind, region = 'vale') {
   if (region === 'fens') return kind === 'town' ? buildWaystation(seed, 'fens') : dressCamps(buildFens(seed), 'fens');   // (M8: Saltmere, the Fens)
   if (kind === 'overland' && region === 'reach') return dressCamps(buildReach(seed), 'reach');
   if (kind === 'overland' && region === 'heights') return dressCamps(buildHeights(seed), 'heights');
+  if (kind === 'overland' && region === 'tidemark') return dressCamps(buildTidemark(seed), 'tidemark');   // (v1.150)
   return kind === 'town' ? buildTown(seed, region) : dressCamps(buildOverland(seed), 'vale');
 }
 // a land's spawn points dressed (camps.js, GDD §10.3): each piece on its tile, solid (the fire, the dead cow, the burrow…)

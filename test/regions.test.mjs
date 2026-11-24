@@ -10,9 +10,10 @@ import { migrate } from '../src/persist/save.js';
 const standAt = (sim, e) => { const p = sim.state.player; p.x = p.px = (e.x0 + e.x1) / 2; p.y = p.py = (e.y0 + e.y1) / 2; };
 const actIDone = (sim) => { sim.state.quests.ch1_ember_in_the_fist = { st: QS.DONE, step: 0, n: [] }; };
 
-test('four lands (the Reach since v1.124, the Heights since v1.148); anything else is the Vale', () => {
-  assert.deepEqual(Object.keys(LANDS), ['vale', 'fens', 'reach', 'heights']);
-  assert.equal(landId('heights'), 'heights'); assert.equal(LANDS.heights.opens, 'ch3_quota');
+test('five lands (the Reach since v1.124, the Heights since v1.148, the Tidemark since v1.150); anything else is the Vale', () => {
+  assert.deepEqual(Object.keys(LANDS), ['vale', 'fens', 'reach', 'tidemark', 'heights']);
+  assert.equal(landId('heights'), 'heights'); assert.equal(LANDS.heights.opens, 'ch4_seventh_voice');
+  assert.equal(landId('tidemark'), 'tidemark'); assert.equal(LANDS.tidemark.opens, 'ch3_quota');
   assert.equal(landId('reach'), 'reach'); assert.equal(LANDS.reach.opens, 'ch2_the_last_office');
   assert.equal(landId('fens'), 'fens'); assert.equal(landId('toString'), 'vale'); assert.equal(landId(undefined), 'vale');
 });

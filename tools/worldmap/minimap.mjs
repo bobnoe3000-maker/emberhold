@@ -26,7 +26,9 @@ const INK = '#3b2f24', PAPER = '#e9dfc6', DIM = '#6e5e4a', GOLD = '#b8862e';
 // the ground, by world.tmat (outdoor.js G): grass, dirt, cobble, water, bank, field, marsh, pool, deck
 const GROUND = { vale: ['#b4b886', '#c9a77a', '#cfc1a2', '#8fa4a6', '#b5a17a', '#d8c27c', '#8f9a72', '#7f9196', '#8a6a48'],
   fens: ['#9aa07a', '#b39a78', '#c2b69a', '#6f8478', '#9a8c6a', '#c8b47a', '#7f8a66', '#5f7470', '#8a6a48'],
-  reach: ['#8e8a82', '#a07a5e', '#b0a594', '#6e7a80', '#8c7a66', '#b8956a', '#7a746a', '#5e6a70', '#7a5a44'] };   // (v1.124: ash, rust and red rock)
+  reach: ['#8e8a82', '#a07a5e', '#b0a594', '#6e7a80', '#8c7a66', '#b8956a', '#7a746a', '#5e6a70', '#7a5a44'],   // (v1.124: ash, rust and red rock)
+  // (v1.150) the Tidemark's: sea-grey grass, the sea itself deeper than any mere, sand by the eleventh (outdoor.js G.SAND)
+  tidemark: ['#a8b088', '#c2a47c', '#c4bcaa', '#7f98a4', '#a89878', '#d2c07e', '#8a9878', '#6f8ea0', '#8a6a48', '#a09a8c', '#e8e8ea', '#e0d2a8'] };
 // what a placed piece is, by its id
 const kindOf = (id) => {
   if (/_(temple|tavern|shop|smith|inn|stilttavern|stiltinn)_\d/.test(id)) return 'svc';
@@ -76,7 +78,7 @@ const glyphOf = (id) => {
 // an overland's pins: the middle of each exit (outdoor.js exits), in tiles
 const r1 = (v) => Math.round(v * 10) / 10;
 const pinsOf = (sc) => sc.exits.filter((e) => !e.closed).map((e) => ({   // (v1.146: a shut road out, to a land not built, has no pin: it read "to the Greywater Fens" in the Fens)
-  kind: e.to === 'dungeon' ? 'site' : e.to === 'town' ? 'town' : 'land', id: e.site || e.region || sc.region, x: r1((e.x0 + e.x1) / 2), y: r1((e.y0 + e.y1) / 2) }));
+  kind: e.to === 'dungeon' ? 'site' : e.to === 'town' ? 'town' : 'land', id: e.site || e.region || (e.to === 'solmere' ? 'solmere' : sc.region), x: r1((e.x0 + e.x1) / 2), y: r1((e.y0 + e.y1) / 2) }));   // (v1.150: a road into Solmere is the crossroads' pin)
 
 const SCENES = [
   scene('thornwick', { scene: 'town', region: 'vale' }, [-22, -20, 166, 136], 'vale'),
@@ -87,6 +89,8 @@ const SCENES = [
   scene('reach', { scene: 'overland', region: 'reach' }, [-6, -36, 266, 278], 'reach'),
   scene('frosthold', { scene: 'town', region: 'heights' }, [-22, -20, 166, 136], 'heights'),   // (v1.148)
   scene('heights', { scene: 'overland', region: 'heights' }, [-6, -36, 266, 278], 'heights'),
+  scene('tollhaven', { scene: 'town', region: 'tidemark' }, [-22, -20, 166, 136], 'tidemark'),   // (v1.150)
+  scene('tidemark', { scene: 'overland', region: 'tidemark' }, [-6, -36, 266, 278], 'tidemark'),
 ];
 
 // the page: a canvas for the map (ground a tile a pixel-block, then the pieces), an SVG over it for the sheet's words

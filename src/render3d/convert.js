@@ -136,6 +136,8 @@ const REGION_LOOK = {
   // rust tile, the odd roof gone to soot, a timber upper storey dark with it: world doc §3.3)
   reach: { wall: 'slag_brick', upperWall: '', roof: 'roof_rust', roofs: ['roof_rust', 'roof_rust', 'roof_rust', 'roof_charred'], uppers: ['', '', 'wood_planks_dark'], stone: 'charred_wall' },
   heights: { wall: 'stone_brick', upperWall: '', roof: 'roof_slate' },
+  // (v1.150) Tollhaven's grey harbour stone, brick-red render over it on the inns, weathered red tile (world doc §3.7)
+  tidemark: { wall: 'stone_brick', upperWall: 'plaster', roof: 'roof_red', roofs: ['roof_red', 'roof_red', 'roof_slate'] },
 };
 const TREES = { oak: 'oak', autumn: 'autumn', birch: 'birch', pine: 'pine', dead: 'deadwood', alder: 'oak', willow: 'birch', carr: 'oak' };   // (carr, a living alder thicket, was deadwood: bare trees out on the marsh, against §3.6: the foliage critic, round 3)
 // The biomes (the owner, 2026-10-31: "create assets/tiles in the new engine to cover desert/grassland, and icy/snowy
@@ -165,7 +167,7 @@ export const BIOMES = {
     env: { climate: 'arid', dust: true } },
 };
 /** the biome a region draws in */
-export const BIOME_OF = { vale: 'vale', fens: 'grassland', reach: 'ash', heights: 'snow' };
+export const BIOME_OF = { vale: 'vale', fens: 'grassland', reach: 'ash', heights: 'snow', tidemark: 'grassland' };
 /** smooth value noise in 0..1 over a level's tiles, `cell` tiles a lattice step (presentation: a hash, no sim stream) */
 function vnoise(i, j, s, cell) {
   const x = i / cell, y = j / cell, x0 = Math.floor(x), y0 = Math.floor(y), sm = (t) => t * t * (3 - 2 * t), u = sm(x - x0), v = sm(y - y0);
@@ -181,7 +183,7 @@ function ashTurf(h, i, j) {
 }
 // our ground (outdoor.js G: grass dirt cobble water bank field marsh pool deck, the Reach's and the Heights' scree and
 // snow) as Luminati's tile and height (snow as its pale sand: Luminati's snow stone is The Bells of Evermere's own)
-const GROUND = [['g', '2'], ['.', '2'], ['c', '2'], ['~', '0'], ['s', '1'], ['F', '2'], ['G', '2'], ['o', '0'], ['b', '2'], ['d', '2'], ['s', '2']];
+const GROUND = [['g', '2'], ['.', '2'], ['c', '2'], ['~', '0'], ['s', '1'], ['F', '2'], ['G', '2'], ['o', '0'], ['b', '2'], ['d', '2'], ['s', '2'], ['s', '2']];   // (v1.150: the Tidemark's sand)
 // MARSH_FRONT: the Sunken Chapel's water reaches this far in front of its middle (sim tiles; its porch stands dry past it).
 // KEEP_FACE: Wickham Keep's door face before its middle (sim tiles: buildkit keep's front wall, 0.475 kit units, and the torch's plate).
 const MARSH_FRONT = 5, KEEP_FACE = 4.8;
@@ -335,7 +337,7 @@ function outdoor(w, region) {
     if (reach && worksAt(w, s) && /_smith_/.test(id)) { works(s, p); continue; }
     if (reach && /^(wheat|pumpkins)_/.test(id)) continue;      // (Ashgate's fields are the sim's generic town's: nothing grows green in the Reach)
     const house = HOUSES.find(([re]) => re.test(id));
-    if (house && /^(vale|fens|reach|heights)_/.test(id) && !/_stilt|_punt|_cistern|_eeltrap/.test(id)) {
+    if (house && /^(vale|fens|reach|heights|tidemark)_/.test(id) && !/_stilt|_punt|_cistern|_eeltrap/.test(id)) {
       const svc = services.get(id), hh = hash(id, s.x, s.y), { roofs, uppers, stone, ...lk } = look;
       const mine = { ...lk, ...(roofs ? { roof: roofs[hh % roofs.length] } : {}), ...(uppers && (house[1].stories || 1) > 1 ? { upperWall: uppers[(hh >>> 4) % uppers.length] } : {}) };
       add({ type: 'house', x: p.cx, z: p.cz, rotation: 0, ...(svc ? { name: svc.name } : {}), light: !!svc || hash(id, s.x) % 3 === 0,

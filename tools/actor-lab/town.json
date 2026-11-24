@@ -1909,5 +1909,396 @@
         1.0
       ]
     }
+  ],
+  "tidemark": [
+    {
+      "id": "tidemark_tavern_1",
+      "model": "tavern",
+      "build": "tavern",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ],
+      "faceX": true
+    },
+    {
+      "id": "tidemark_inn_1",
+      "model": "inn",
+      "build": "inn",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ]
+    },
+    {
+      "id": "tidemark_shop_1",
+      "model": "shop",
+      "build": "shop",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ]
+    },
+    {
+      "id": "tidemark_temple_1",
+      "model": "temple",
+      "build": "temple",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ]
+    },
+    {
+      "id": "tidemark_well_1",
+      "model": "well",
+      "build": "well",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ]
+    },
+    {
+      "id": "tidemark_house_1",
+      "model": "house",
+      "build": "house",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ],
+      "seed": 1
+    },
+    {
+      "id": "tidemark_house_2",
+      "model": "house",
+      "build": "house",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ],
+      "seed": 2
+    },
+    {
+      "id": "tidemark_house_3",
+      "model": "house",
+      "build": "house",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ],
+      "seed": 3
+    },
+    {
+      "id": "tidemark_housex_1",
+      "model": "house",
+      "build": "house",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ],
+      "seed": 4,
+      "faceX": true
+    },
+    {
+      "id": "tidemark_housex_2",
+      "model": "house",
+      "build": "house",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ],
+      "seed": 5,
+      "faceX": true
+    },
+    {
+      "id": "tidemark_farm_1",
+      "model": "farm",
+      "build": "farm",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ]
+    },
+    {
+      "id": "tidemark_farmx_1",
+      "model": "farm",
+      "build": "farm",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ],
+      "seed": 2,
+      "faceX": true
+    },
+    {
+      "id": "tidemark_keep_1",
+      "model": "keep",
+      "build": "keep",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ]
+    },
+    {
+      "id": "tidemark_wall_1",
+      "model": "wall",
+      "build": "wall",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ]
+    },
+    {
+      "id": "tidemark_smith_1",
+      "model": "smith",
+      "build": "smith",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ],
+      "faceX": true
+    },
+    {
+      "id": "tidemark_curtain_1",
+      "model": "curtain",
+      "build": "curtain",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ]
+    },
+    {
+      "id": "tidemark_curtainy_1",
+      "model": "curtain",
+      "build": "curtain",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ],
+      "rotY": 90
+    },
+    {
+      "id": "tidemark_tower_1",
+      "model": "tower",
+      "build": "tower",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ]
+    },
+    {
+      "id": "tidemark_gatehousey_1",
+      "model": "gatehouse",
+      "build": "gatehouse",
+      "style": "tidemark",
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ],
+      "rotY": 90
+    },
+    {
+      "id": "tidemark_cottage_1",
+      "model": "cottage",
+      "build": "cottage",
+      "style": "tidemark",
+      "seed": 11,
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ]
+    },
+    {
+      "id": "tidemark_cottagex_1",
+      "model": "cottage",
+      "build": "cottage",
+      "style": "tidemark",
+      "seed": 13,
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ],
+      "faceX": true
+    },
+    {
+      "id": "tidemark_longhouse_1",
+      "model": "longhouse",
+      "build": "longhouse",
+      "style": "tidemark",
+      "seed": 21,
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ]
+    },
+    {
+      "id": "tidemark_longhousex_1",
+      "model": "longhouse",
+      "build": "longhouse",
+      "style": "tidemark",
+      "seed": 22,
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ],
+      "faceX": true
+    },
+    {
+      "id": "tidemark_workshop_1",
+      "model": "workshop",
+      "build": "workshop",
+      "style": "tidemark",
+      "seed": 31,
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ]
+    },
+    {
+      "id": "tidemark_workshopx_1",
+      "model": "workshop",
+      "build": "workshop",
+      "style": "tidemark",
+      "seed": 32,
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ],
+      "faceX": true
+    },
+    {
+      "id": "tidemark_foodstand_1",
+      "model": "foodstand",
+      "build": "foodstand",
+      "style": "tidemark",
+      "seed": 81,
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ]
+    },
+    {
+      "id": "tidemark_standard_1",
+      "model": "standard",
+      "build": "standard",
+      "style": "tidemark",
+      "seed": 83,
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ]
+    },
+    {
+      "id": "tidemark_lanewell_1",
+      "model": "lanewell",
+      "build": "lanewell",
+      "style": "tidemark",
+      "seed": 84,
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.97,
+        0.94
+      ]
+    }
   ]
 }
