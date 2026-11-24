@@ -101,7 +101,7 @@ const CSS = `
 #worldmap .rail button.done { border-color: #ffd36a; }
 #worldmap .rail button.open { border-color: #b67c2a; }
 #worldmap .rail button.off { opacity: .45; border-style: dashed; }
-#worldmap .rail button span { position: absolute; left: 0; right: 0; top: 2px; font: 9px ui-monospace, Menlo, monospace; color: #efe4cf; text-shadow: 0 0 3px #000; }
+#worldmap .rail button span { position: absolute; left: 0; right: 0; bottom: 2px; font: 9px ui-monospace, Menlo, monospace; color: #efe4cf; text-shadow: 0 0 3px #000; }
 #worldmap .rail .me { position: absolute; left: -7px; right: -7px; height: 0; border-top: 3px solid #8fe07a; box-shadow: 0 0 6px #8fe07a; pointer-events: none; }
 #worldmap .rail .me em { position: absolute; right: 100%; top: -9px; margin-right: 3px; padding: 0 4px; border-radius: 4px; background: #1e3a18; color: #c8f0b0; font: 10px/16px ui-monospace, Menlo, monospace; font-style: normal; white-space: nowrap; }
 #coachCard { position: fixed; inset: 0; z-index: 13; display: grid; place-items: center; background: rgba(6,4,10,.7); opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility 0s linear .35s; pointer-events: none; }
@@ -330,9 +330,14 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
     for (const n of sheet.querySelectorAll('.rail')) n.remove();
     const R0 = el('div', 'rail'), lv = (S().party[0] && S().party[0].level) || 1, hb = view.getBoundingClientRect(), sb = sheet.getBoundingClientRect();
     R0.style.top = `${hb.top - sb.top + 8}px`; R0.style.height = `${Math.max(160, hb.height - 16)}px`;
+    // (2026-11-24, the owner, of the rail: "What does this slider mean and it doesnt seem accurate". Its fill was each
+    // land's dungeon stars, its numbers at the tops of boxes all one height, so LV 35 stood under the "31" and the Vale
+    // read half done at any level.) Now a climb of levels and nothing else: each land a box as tall as its band, its
+    // first level at its foot, gold up to the hero's level; a land not open dashed. The stars are on the dungeons
     for (const L of CLIMB) {
       const st = landState(L), b = /** @type {HTMLButtonElement} */ (el('button', st === 'far' || st === 'shut' ? 'off' : st === 'done' ? 'done' : 'open'));
-      const g = st === 'far' || st === 'shut' ? null : landStats(L.id), f = el('div', 'fill'); f.style.height = `${g && g.n ? Math.round((100 * g.got) / (g.n * 3)) : 0}%`;
+      const span = L.lv[1] - L.lv[0] + 1, f = el('div', 'fill'); f.style.height = `${Math.round(100 * Math.min(1, Math.max(0, (lv - L.lv[0] + 1) / span)))}%`;
+      b.style.flexGrow = String(span);
       b.append(f, el('span', '', String(L.lv[0]))); b.setAttribute('aria-label', `${L.name}, levels ${L.lv[0]} to ${L.lv[1]}`);
       b.addEventListener('click', () => { const k = map.clientWidth / WALL.w; view.scrollTo({ top: Math.max(0, L.at[1] * k - view.clientHeight * 0.4), left: Math.max(0, L.at[0] * k - view.clientWidth / 2), behavior: 'smooth' }); });
       R0.append(b);
