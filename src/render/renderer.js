@@ -674,6 +674,8 @@ export function createRenderer(canvas, sim, input) {
   }
   /** a unit's drawn offset from where the sim has it (0 when it has none) @param {any} u */
   const spreadOf = (u) => (u && spread.get(u)) || { x: 0, y: 0 };
+  let camWho = null, camAt = null, camFrom = null;   // (who the camera follows: the hero, or the companion you steer while the hero is Downed; render)
+  const CAM_SWAP = 450;
   let lastCam = { ox: 0, oy: 0, rx: 0, ry: 0 }, lastDrawn = 0;   // (lastDrawn: the frame's clock, so npcAt knows a drawn position is current)
   /** @type {((draws: any[], view: { hx: number, hy: number, nvw: number, ix: number, iy: number }) => void) | null} */
   let heard = null;                                   // a listener for each frame's figures (the sound); reads, never writes
@@ -686,7 +688,15 @@ export function createRenderer(canvas, sim, input) {
     if (hLeap && hLeap.at) { ix = hLeap.at.x; iy = hLeap.at.y; }
     const pz = heightAt(sim.world, Math.floor(ix), Math.floor(iy));
     const P = project(ix, iy, pz);
-    const { ox, oy } = (lastCam = camera(ix, iy, pz)); lastDrawn = now;
+    // (your hero Downed in a fight: the camera follows the companion you steer, sim.lead, easing across in CAM_SWAP ms
+    // when the one followed changes, and back to the hero when it's up)
+    const Ld = sim.lead, who = Ld || p;
+    let cx = Ld ? Ld.px + (Ld.x - Ld.px) * alpha : ix, cy = Ld ? Ld.py + (Ld.y - Ld.py) * alpha : iy;
+    if (who !== camWho) { if (camWho && camAt) camFrom = { x: camAt.x, y: camAt.y, t: now }; camWho = who; }
+    if (camFrom) { const a = Math.min(1, (now - camFrom.t) / CAM_SWAP), e = a * a * (3 - 2 * a); cx = camFrom.x + (cx - camFrom.x) * e; cy = camFrom.y + (cy - camFrom.y) * e; if (a >= 1) camFrom = null; }
+    camAt = { x: cx, y: cy };
+    const cz = Ld || camFrom ? heightAt(sim.world, Math.floor(cx), Math.floor(cy)) : pz;
+    const { ox, oy } = (lastCam = camera(cx, cy, cz)); lastDrawn = now;
 
     const t0 = performance.now();
     windGlowNow(clock());

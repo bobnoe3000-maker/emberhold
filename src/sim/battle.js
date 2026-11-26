@@ -513,7 +513,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   ringHere = (/** @type {any} */ _c) => false, onRingReach = (/** @type {any} */ _c, /** @type {number} */ _i) => {} }) {   // (the Kingstone in the map: core.js ringNow, GDD §19)
   const mode = () => modeOf(battle, raidRun());   // (this fight's rules: modes.js)
   let rng = mulberry32(streamSeed(seed, 0xb477));
-  let battle = null, nextId = 1, focusId = 0, pending = [], calmT = 0;   // calmT: seconds with no foe standing (pickCages)   // pending: blows and releases waiting on their wind-up
+  let battle = null, nextId = 1, focusId = 0, pending = [], calmT = 0, leadCtl = null;   // leadCtl: your hero Downed, the stick's or a walk's hold on the last standing (steerLead)
+    // calmT: seconds with no foe standing (pickCages)   // pending: blows and releases waiting on their wind-up
 
   // a room tile keeps its room id even where a corridor was carved through it; on the overland, a spawn point's arena
   // is its room (camps.js, GDD §10.3: a fight there is bounded as a room's is)
@@ -824,7 +825,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (battle && battle.bout) { endBout(); return; }
     if (battle && battle.ring) { endRing(why === 'left' ? 'left' : null); return; }   // (out of the Ring mid-fight: walked out on)               // (walked off the sand mid-bout: it's lost, nobody's Fallen)
     if (battle && battle.tower && why !== 'defeat') towerOut();
-    battle = null; focusId = 0; pending = [];
+    battle = null; focusId = 0; pending = []; leadCtl = null;
     if (w) { w.enemies = []; w.projectiles = []; if (w.allies) w.allies = []; }   // (a stand's allies stay at their barricade: they don't follow the company out)
     downedOut(why === 'left');
     bus.emit('battle', { on: false, why });
@@ -906,7 +907,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (!b.over) boutOver(how || 'lost', how ? 'called' : 'left');
     const w = getWorld(), res = { id: b.id, ...b.over };
     for (const { m, hp, mp } of b.kept) { m.hp = hp; m.mp = mp; m.down = false; m.downs = 0; m.buff = null; m.ward = 0; m.poison = null; m.drain = null; m.hex = null; m.slow = 0; m.rooted = 0; m.ccImm = 0; delete m.ccK; for (const k of HOLDS) m[k] = 0; }
-    battle = null; focusId = 0; pending = [];
+    battle = null; focusId = 0; pending = []; leadCtl = null;
     if (w) { w.enemies = []; w.projectiles = []; }
     bus.emit('battle', { on: false, why: 'bout' });
     bus.emit('boutEnd', res);
@@ -1151,7 +1152,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (!R.over) ringOver(how || 'left', how ? 'called' : 'left');
     const w = getWorld(), res = { ...R.over };
     for (const m of state.party) { m.down = false; m.downT = 0; m.downs = 0; m.buff = null; m.ward = 0; m.poison = null; m.drain = null; m.hex = null; m.slow = 0; m.rooted = 0; m.ccImm = 0; for (const k of HOLDS) m[k] = 0; const s = statsFor(m); m.hp = Math.max(1, Math.min(m.hp, s.maxHp)); }
-    battle = null; focusId = 0; pending = [];
+    battle = null; focusId = 0; pending = []; leadCtl = null;
     if (w) { w.enemies = []; w.projectiles = []; w.allies = []; }
     bus.emit('battle', { on: false, why: 'ring' });
     bus.emit('ringEnd', res);
@@ -1931,6 +1932,37 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // Toadking's Mound, a fight four hours long). A breadth-first walk over open tiles to the room's nearest, the way
   // kept a moment (u.back: runtime only, never saved), then followed a tile at a time; no way at all: straight, as before.
   const BACK_N = 4000;
+  // ── your hero Downed: the first companion standing is yours (the owner, 2026-11-26: "When my main char dies i cannot
+  // control my companions movement", "You should let party movement still work if the main char is down"). While the
+  // hero lies Downed in a fight (not a bout: the Bowl's sand is fought out), the stick, a tap and the compass (Step out)
+  // move the first companion standing as they move the hero: steered, it doesn't fight; a moment after you let go
+  // (AUTO_DELAY) it fights on its own again. Walked out of the fight's room or arena, the fight ends as a step-out does,
+  // and the hero is carried out with it (step, carryOut). leadCtl, runtime only (never saved; a replay sends the same
+  // commands): { vx, vy, at } the stick's last push (at: stepN), or { path } a tap's or the compass's walk, tile centres.
+  const steered = () => (battle && !battle.bout && hero().down ? state.party.slice(1).find(alive) || null : null);
+  function steerLead(m, w, dt) {
+    const C = leadCtl, F = fightOf(m);
+    if (C.path) {
+      while (C.path.length && hypot(C.path[0][0] - m.x, C.path[0][1] - m.y) < 0.35) C.path.shift();
+      if (C.path.length) { stepToward(m, C.path[0][0], C.path[0][1], F.speed, dt, w); return true; }
+      leadCtl = { vx: 0, vy: 0, at: stepN };                      // (arrived: it holds a moment, as after the stick)
+      m.moving = false; return true;
+    }
+    if (stepN - C.at <= 1 && (C.vx || C.vy)) { const k = Math.min(1, hypot(C.vx, C.vy)); stepToward(m, m.x + (C.vx / k) * 2, m.y + (C.vy / k) * 2, F.speed * k, dt, w); return true; }
+    if ((stepN - C.at) * dt < AUTO_DELAY) { m.moving = false; return true; }
+    return false;                                                  // let go: it fights on its own (until the stick again)
+  }
+  // the fight walked out of by the one you steer: the hero carried out to where it stands (open ground under the
+  // hero's body near it), and the fight's end as a step-out's (endBattle 'left': the Downed companions Fallen, the hero up)
+  function carryOut(w, m) {
+    const p = state.player, H = hero();
+    let at = null;
+    for (let r = 0; r <= 1.2 && !at; r += 0.3) for (let k = 0; k < 8 && !at; k++) { const x = m.x + r * cos((k * Math.PI) / 4), y = m.y + r * sin((k * Math.PI) / 4); if (fits(w, x, y, HERO_R) && roomAt(w, x, y) !== battle.room) at = [x, y]; }
+    const [x, y] = at || [m.x, m.y];
+    bus.emit('carriedOut', { by: m.name, name: H.name, x, y });
+    endBattle(w, 'left');
+    p.x = p.px = H.x = H.px = x; p.y = p.py = H.y = H.py = y; p.vx = p.vy = 0;
+  }
   function walkBack(u, tx, ty, speed, dt, w, room) {
     let B = u.back;
     if (!B || B.room !== room || stepN - B.at > 40 || !B.pts.length) {
@@ -2105,7 +2137,9 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   const idHash = (id) => { const t = String(id); let h = 7; for (let k = 0; k < t.length; k++) h = Math.imul(h ^ t.charCodeAt(k), 2654435761); return h >>> 0; };
   const reactOf = (m, i) => { const G = RC(); return i === 0 && !m.ally ? G.heroReact : G.react[0] + (idHash(m.id) % 1000) / 1000 * (G.react[1] - G.react[0]); };
   function memberTurn(m, i, foes, w, dt, L, LU, focus) {
-    if (!alive(m) || !foes.length) return;
+    if (!alive(m)) return;
+    if (i > 0 && leadCtl && m === steered() && steerLead(m, w, dt)) return;   // (your hero Downed: the one you steer)
+    if (!foes.length) return;
     if (battle.bout && (battle.bout.call > 0 || battle.bout.over)) { m.moving = false; return; }   // (the Crier's call; the bout called)
     if (battle.ring && battle.ring.over) { m.moving = false; return; }                             // (the Ring's over)
     if (battle.bout && statusTick(m, w, dt)) return;              // (a bout: held, as a foe is, or poisoned down)
@@ -2470,6 +2504,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     for (const e of w.enemies || []) { e.px = e.x; e.py = e.y; }
     for (const b of w.projectiles || []) { b.px = b.x; b.py = b.y; }
     const inDungeon = w.kind === 'dungeon', onLand = w.kind === 'overland';
+    { const L = battle && leadCtl ? steered() : null; if (L && roomAt(w, L.x, L.y) !== battle.room) carryOut(w, L); }   // (your hero Downed, the one you steer walked out)
     const room = inDungeon || (onLand && battle) ? roomAt(w, p.x, p.y) : -1;
     if (battle && room !== battle.room) endBattle(w, 'left');
     // (a hall where a found companion still waits, his captor fallen, is quiet: the Company left him there
@@ -2625,6 +2660,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     step,
     get battle() { return battle; },
     focus(id) { focusId = id; },
+    /** your hero Downed in a fight: the companion you steer (the first standing), else null */
+    get lead() { return steered(); },
+    /** the stick on the one you steer (a 'move' command's vector, |v| ≤ 1); false when there's nobody to steer */
+    steerMove(x, y) { if (!steered()) return false; leadCtl = { vx: x, vy: y, at: stepN }; return true; },
+    /** a walk for the one you steer (a tap, the compass): tile centres from core.js's path; false when nobody to steer */
+    steerPath(path) { if (!steered()) return false; leadCtl = { path: path.map(([x, y]) => [x, y]), at: stepN }; return true; },
     /** the foe the party is set on (0: none), for presentation to mark */
     get focusId() { return focusId; },
     /** the ground hazard's pull on the party at (x, y): HAZARD.slow in one, else 1 (core.js: the hero you steer) */
@@ -2632,7 +2673,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       const b = battle && battle.bout, H = hero(), k = b && H ? (b.call > 0 || b.over || held(H) || H.rooted > 0 ? 0 : memberSlow(H)) : 1;   // (a bout: held, rooted or slowed as a rival is)
       return battle && hazardAt(battle, x, y) ? HAZARD.slow * k : k;
     },
-    reset() { if (battle && battle.bout) endBout(); if (battle && battle.ring) endRing('left'); const was = !!battle; if (battle && battle.tower) towerOut(); battle = null; focusId = 0; pending = []; calmT = 0; if (was) downedOut(true); placeCompanions(); },   // travel mid-fight = walking out
+    reset() { if (battle && battle.bout) endBout(); if (battle && battle.ring) endRing('left'); const was = !!battle; if (battle && battle.tower) towerOut(); battle = null; focusId = 0; pending = []; leadCtl = null; calmT = 0; if (was) downedOut(true); placeCompanions(); },   // travel mid-fight = walking out
     placeCompanions,
     towerClimb,
     startBout,

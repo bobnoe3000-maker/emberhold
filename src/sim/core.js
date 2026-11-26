@@ -587,6 +587,13 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     if (!r || !walkTo(r.tx, r.ty, r.then || null, { near: r.near, label, corridors: true, room: r.room })) p.journey = null;
   }
 
+  // your hero Downed in a fight: a tap or the compass walks the first companion standing there (battle.js steerLead)
+  function leadWalk(tx, ty, near) {
+    const L = battle.lead; if (!L || !Number.isFinite(tx) || !Number.isFinite(ty)) return;
+    const path = findPath(L.x, L.y, Math.floor(tx), Math.floor(ty), standable, { near: Math.max(0, Math.min(3, Math.floor(near) || 0)) });
+    if (path) battle.steerPath(path.slice(1).map(([x, y]) => [x + 0.5, y + 0.5]));
+  }
+
   function applyCommand(cmd) {
     const p = state.player;
     if (!cmd || typeof cmd !== 'object') return;
@@ -601,7 +608,9 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       if (BASES[it.base].use === 'homeward') {             // the Homeward Scroll: back to the square of the region's town (the
         // nearest: each region has one). Read mid-fight, it's walking out, as a step-out is (battle.reset).
         if (world.kind === 'town') { bus.emit('refused', { reason: 'You are already in town' }); return; }
-        if (state.party[0].down || state.party[0].fallen) return;
+        // (your hero Downed, anyone standing reads it: the owner, 2026-11-26, "Scroll home also will not work in this
+        // scenario". Read mid-fight it's walking out, as above: the Downed companions Fallen, the hero up)
+        if (!state.party.some((m) => !m.down && !m.fallen)) return;
         state.bag.splice(i, 1);
         bus.emit('itemUsed', { uid: it.uid, base: it.base });
         travel('town', 'default');
@@ -618,7 +627,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     if (talk.command(cmd)) return;                         // talk / dialogueEffect / endTalk
     if (cmd.type === 'focus') { battle.focus(cmd.id); return; }
     if (cmd.type === 'move') {
-      if (state.party[0].down) return;                         // your hero has fallen: the others fight on
+      if (state.party[0].down) { const len = hypot(cmd.x, cmd.y); if (len >= 0.12 && Number.isFinite(len)) battle.steerMove(cmd.x / Math.max(1, len), cmd.y / Math.max(1, len)); return; }   // your hero Downed: the stick moves the first standing (battle.js steerLead)
       const len = hypot(cmd.x, cmd.y);
       if (len < 0.12) return;
       if (p.path || p.resume) { stopWalk(); p.resume = null; }  // the stick takes over from a tap / compass walk
@@ -628,7 +637,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       return;
     }
     if (cmd.type === 'goto') {                             // compass: auto-walk to a picked destination
-      if (state.party[0].down) return;
+      if (state.party[0].down) { leadWalk(cmd.tx, cmd.ty, cmd.near); return; }   // (your hero Downed: the one you steer walks it: Step out)
       p.resume = null; p.journey = null;
       if (walkTo(cmd.tx, cmd.ty, cmd.then || null, { near: cmd.near, label: cmd.label, corridors: true, room: cmd.room }) && JOURNEYS.has(cmd.journey) && p.path)
         p.journey = { kind: cmd.journey, quest: state.tracked, label: String(cmd.label || ''), legs: 0, site: SITES[cmd.site] ? cmd.site : null };   // site: a picked site's row keeps to that site
@@ -641,7 +650,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     }
     if (cmd.type === 'cancelWalk') { stopWalk(); p.resume = null; p.journey = null; return; }
     if (cmd.type === 'tap') {                              // tap on the ground: use what's there if in reach, else walk to it
-      if (state.party[0].down) return;
+      if (state.party[0].down) { leadWalk(cmd.tx, cmd.ty, 0); return; }          // (your hero Downed: the one you steer walks there)
       const dx = cmd.tx + 0.5 - p.x, dy = cmd.ty + 0.5 - p.y, inReach = Math.max(Math.abs(dx), Math.abs(dy)) <= REACH;
       const thing = propAt(world, cmd.tx, cmd.ty) || resourceAt(world, cmd.tx, cmd.ty);
       p.journey = null;                                    // a tap on the way is a new plan
@@ -1064,7 +1073,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
 
   // compass destinations for where you are now (read-only; see travel.js)
   function destinations({ inSquare = false } = {}) {
-    return quests.compass(listDestinations({ world, state, standable, heroLevel: state.party[0].level, sitesEntered: state.sitesEntered, inSquare, battleRoom: battle.battle ? battle.battle.room : -1 }), world, battle.battle);   // the tracked quest's next place first
+    const L = battle.lead, st = L ? { ...state, player: { ...state.player, x: L.x, y: L.y } } : state;   // (your hero Downed: the ways from the one you steer)
+    return quests.compass(listDestinations({ world, state: st, standable, heroLevel: state.party[0].level, sitesEntered: state.sitesEntered, inSquare, battleRoom: battle.battle ? battle.battle.room : -1 }), world, battle.battle);   // the tracked quest's next place first
   }
   /** the World map's tap on open ground: the nearest spot to stand on and the walk there (read-only; travel.js) @param {number} tx @param {number} ty */
   function spotNear(tx, ty) { return walkSpot({ world, state, standable }, tx, ty); }
@@ -1074,7 +1084,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   function solmereRoads() { return SOLMERE.filter((r) => r.land !== curRegion && landOpen(r.land)).map((r) => ({ land: r.land, name: LANDS[r.land].name, road: r.road })); }   // (DEV_LANDS: the Developer panel's Open every land, a dev game's)
   /** a hidden site found (a chapter's reward, the Chronicle): its way in opens on the Vale @param {string} id */
   function reveal(id) { if (SITES[id] && SITES[id].hidden && !state.revealed.has(id)) { state.revealed.add(id); bus.emit('siteRevealed', { site: id, name: SITES[id].name }); } }
-  return { state, bus, commands, tick, snapshot, restore, destinations, spotNear, heroes, quests, board, lore, smith, reveal, landOpen, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; }, get focusId() { return battle.focusId; },
+  return { state, bus, commands, tick, snapshot, restore, destinations, spotNear, heroes, quests, board, lore, smith, reveal, landOpen, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; }, get focusId() { return battle.focusId; }, get lead() { return battle.lead; },
     /** the raid being run (raid.js), for presentation: null, or { site, name, depth, floors, rooms, done, wave, waves, boss, t0, from } */
     get raid() { if (!raidOn) return null; const b = battle.battle; return { site: raidOn.site, name: SITES[raidOn.site].name, depth: state.depth - raidOn.top, floors: raidFloors(raidOn.site).n, rooms: raidOn.rooms, done: raidOn.done, wave: b && !b.boss ? b.wave : 0, waves: RAID.waves, boss: !!(b && b.boss), t0: raidOn.t0, from: away ? away.scene : '' }; },   // (from: the scene it set out from)
     /** the band dungeons and whether the hero can raid each now (raid.js) */
