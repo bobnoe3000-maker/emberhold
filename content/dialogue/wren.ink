@@ -5,8 +5,9 @@
 // (sim/npcs.js varsFor: joined 0 / 1, in_party 0 / 1; core.js: boss_<id> 0 / 1; quests.js: q_ = −1 locked ·
 // 0 available · 1 active · 2 ready · 3 done, s_ = the step, read before this conversation counts: Fog on the
 // Canal's last step is a word with her). Effects: flags: met_wren; `# companion: join` (heroes.js: only once the
-// Toadking has fallen); her chain, What's Owed, gated on `joined` (party or bench: she's talked to from her card on
-// either, v1.154). The rogue's level-12 trial, Dead Water, is Dace Pike's now (dace.ink; the owner, 2026-11-26: no quest
+// Toadking has fallen). She's talked to from her card, party or bench (`joined`, v1.154). Her chain, What's Owed, is
+// Dace Pike's to give since v1.155 (the owner: "move the companion chains to townspeople too"; dace.ink): she only says
+// what she's owed, and who's keeping count. The rogue's level-12 trial, Dead Water, is Dace Pike's now (dace.ink; the owner, 2026-11-26: no quest
 // needs a companion): she only says what's on her knives, and who has it off her.
 
 VAR hero_name = ""
@@ -22,9 +23,6 @@ VAR in_party = 0
 VAR boss_toadking = 0
 VAR q_ch2_fog_on_the_canal = -1
 VAR s_ch2_fog_on_the_canal = 0
-VAR q_wren_the_marker = -1
-VAR q_wren_night_boats = -1
-VAR q_wren_settled = -1
 
 == wren_hub ==
 { joined == 0 && boss_toadking == 0: -> wren_tied_early }
@@ -70,8 +68,6 @@ A small woman sits roped to the mast of an upturned boat, next to a lectern with
 // ── with you ──
 == wren_greet ==
 {&Wren falls into step and pretends she was already there.|"What? I wasn't touching anything."|Wren is flipping a coin across her knuckles. It isn't hers. It might be yours.}
-{ q_wren_settled == 3: "No marker. No boat. No debt. I keep checking my pockets for it. Habit." }
-{ q_wren_night_boats == 3 && q_wren_settled == -1: "The Cult's boat ties up under the Abbey. There's a man with a cage at the choir's door above it, though. Once he's gone, I've a fire to light." }
 -> wren_topics
 
 == wren_greet_fallen ==
@@ -80,79 +76,17 @@ Wren keeps looking back the way you came, where {fallen_name} should be, and pre
 -> wren_topics
 
 == wren_topics ==
-+ { q_wren_the_marker == 2 } [That's all three pieces of the marker. #mark: quest ready] -> wren_marker_turnin
-+ { q_wren_night_boats == 2 } [We found both your caches. #mark: quest ready] -> wren_boats_turnin
-+ { q_wren_settled == 2 } [The boat's burning. #mark: quest ready] -> wren_settled_turnin
-+ { q_wren_the_marker == 0 } [Tell me about this marker. #mark: quest] -> wren_marker_offer
-+ { q_wren_the_marker == 1 } [About the marker… #mark: quest active] -> wren_marker_active
-+ { q_wren_night_boats == 0 } [Anything else you're owed? #mark: quest] -> wren_boats_offer
-+ { q_wren_night_boats == 1 } [About your caches… #mark: quest active] -> wren_boats_active
-+ { q_wren_settled == 0 } [What would settle it? #mark: quest] -> wren_settled_offer
-+ { q_wren_settled == 1 } [About the boat… #mark: quest active] -> wren_settled_active
++ [Tell me about this marker.] -> wren_owed
 + [What's on your knives?] -> wren_knives
 + [Why did you borrow from the Cult?] -> wren_why
 + [Tell me about the Toadking.] -> wren_toadking
 + [That's all.] -> wren_bye
 
-// What's Owed, 1: The Marker (content/quests/wren_the_marker.json)
-== wren_marker_offer ==
-"A marker's a promise with a knife in it. The Cult cut mine in three and gave the pieces to three of their harvesters, the ones who lead the others. One piece is a promise. Three is a debt."
-"They work the Canal Locks. While those pieces walk around, the Cult can come and collect me, and they collect the way they collect everyone: in a cage on a pole."
-+ [We'll get them back. #mark: quest]
-    "The Locks. The ones out in front, every fifth lot, with the bigger cages. Bring me all three pieces. I want to see them burn." # quest: accept wren_the_marker
-    -> wren_topics
-+ [Not now.]
-    "Fine. I'll just walk behind you jumpier than usual."
-    -> wren_topics
-
-== wren_marker_active ==
-"The Canal Locks. Their leaders, every fifth lot. Three pieces. They won't know what they're carrying. That's the Cult: nobody knows what they're carrying."
--> wren_topics
-
-== wren_marker_turnin ==
-Wren fits the three pieces together on her knee. It's a strip of hide with her name burned into it, and a number, and a little drawing of a flame.
-She reads it once, holds it over the nearest light until it catches, and drops it before it reaches her fingers. "That's that." # quest: turnin wren_the_marker
--> wren_topics
-
-// What's Owed, 2: Night Boats (content/quests/wren_night_boats.json)
-== wren_boats_offer ==
-"Back when I ran the canal at night, I left things in the Sickpools. Nobody goes there. That was the point."
-"Now the Cult's draining the vats, and somebody's going to drain one of mine. Two chests, tied with my knot. I'd like them back before somebody in a robe opens them and learns things about the Sisters."
-+ [We'll get them. #mark: quest]
-    "The Canal Locks. Any two chests in there will be mine, probably. I hid a lot." # quest: accept wren_night_boats
-    -> wren_topics
-+ [Not now.]
-    "They've kept this long. Most things I hide do."
-    -> wren_topics
-
-== wren_boats_active ==
-"Two chests, anywhere in the Locks. Vat Seven's the likeliest. My knot's the one that looks wrong and isn't."
--> wren_topics
-
-== wren_boats_turnin ==
-Wren counts what's in them, out loud, in front of you, coin by coin. It takes a while.
-"That's a compliment, by the way. I don't count in front of anybody." # quest: turnin wren_night_boats
--> wren_topics
-
-// What's Owed, 3: Settled (content/quests/wren_settled.json)
-== wren_settled_offer ==
-"The Cult's boat. The one that ties up under the Abbey, the one the Toadking charged double. They carry everything on it: the cages, the rolls, the people who said yes."
-"I'd like to burn it. Somebody has to hold the cloister above it while I do, and it can't be me, because I'll be busy being on fire carefully."
-+ [We'll hold the cloister. #mark: quest]
-    "The Drowned Abbey, the cloister, on the first floor. Five lots of them, and I'll have it alight. Don't come looking for me. I'll come looking for you." # quest: accept wren_settled
-    -> wren_topics
-+ [Not now.]
-    "It'll still float tomorrow. That's the problem with boats."
-    -> wren_topics
-
-== wren_settled_active ==
-"The Abbey's cloister, the first floor. Hold it five waves. I'll do the rest. I like doing the rest."
--> wren_topics
-
-== wren_settled_turnin ==
-Wren smells of pitch and smoke, and is smiling with all of her face for once.
-She takes a ring off her thumb and holds it out. "I paid the Cult with this, the first time. Got it back off the boat. Take it. I'd only sell it." # quest: turnin wren_settled
-"Don't make anything of it. It's a receipt."
+// What's Owed (content/quests/wren_*.json): Dace Pike gives it since v1.155
+== wren_owed ==
+"A marker's a promise with a knife in it. The Cult cut mine in three and gave the pieces to three of their harvesters at the Locks. While they carry it, the Cult can come and collect me, in a cage on a pole."
+"There's more. Two of my caches are down at the vats, and the Cult's boat ties up under the Abbey, and I'd like to see it on fire."
+"Dace has it all on my pages. If the Cult collects me he's never paid, so he's taking an interest. Ask him at the Eel. Don't let him charge you for asking."
 -> wren_topics
 
 // ── the rogue's second trial (content/quests/trial_dead_water.json): Dace Pike gives it since v1.154 ──

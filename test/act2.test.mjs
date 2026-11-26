@@ -95,9 +95,11 @@ test('Wren: joins once the Toadking has fallen, as a rogue named Wren; a hirelin
   assert.ok(w); assert.deepEqual([w.name, w.cls, w.actor, w.rank], ['Wren', 'rogue', 'hero_wren', 'found']);
   const hired = sim.state.party.find((m) => m.id === hid); assert.ok(hired.name && hired.name !== 'Wren', 'no two of a company share a name');
   assert.ok(w.perks.length > 0);
-  // her chain: hers to give, only while she's with you
-  assert.equal(st(sim, 'wren_the_marker'), QS.AVAILABLE);
+  // her chain is Dace Pike's (v1.155): once Fog on the Canal is handed in, whether she's with you or not
+  assert.equal(st(sim, 'wren_the_marker'), QS.LOCKED, 'not before the chapter\'s done');
   const lone = after1(10); assert.equal(lone.quests.status('wren_the_marker'), QS.LOCKED);
+  lone.state.quests.ch2_fog_on_the_canal = { st: QS.DONE, step: 0, n: [] };
+  assert.equal(lone.quests.status('wren_the_marker'), QS.AVAILABLE, 'without her in the company');
 });
 
 test('freed before the chapter asked, Wren\'s word is already had; the Kindler heard before the Locks counts too', () => {
@@ -162,7 +164,8 @@ test('Settled pays The Receipt, once', () => {
   for (const id of ['wren_the_marker', 'wren_night_boats']) sim.state.quests[id] = { st: QS.DONE, step: 0, n: [] };
   sim.state.quests.wren_settled = { st: QS.READY, step: 0, n: [5] };
   const ev = events(sim, ['questReward', 'loot']);
-  talk(sim, 'wren'); effect(sim, 'quest', 'turnin', 'wren_settled'); effect(sim, 'quest', 'turnin', 'wren_settled');
+  goTo(sim, 'town', 'barrows', 0, 'fens'); talk(sim, 'dace_pike');   // (v1.155: Dace's to take in)
+  effect(sim, 'quest', 'turnin', 'wren_settled'); effect(sim, 'quest', 'turnin', 'wren_settled');
   assert.deepEqual(ev.filter((e) => e.n === 'questReward').map((e) => e.item), ['the_receipt']);
   const got = ev.filter((e) => e.n === 'loot' && e.heirloom === 'the_receipt'); assert.equal(got.length, 1);
   assert.deepEqual([got[0].item.name, got[0].item.base], ['The Receipt', 'ring']);

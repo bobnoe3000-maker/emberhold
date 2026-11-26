@@ -4,7 +4,11 @@
 // q_ = −1 locked · 0 available · 1 active · 2 ready · 3 done, and s_ = the step a quest is on, read before this
 // conversation counts: Fog on the Canal's first step is a word with him). Flags: met_dace. Act II, chapters 1–2.
 // (v1.154; the owner, 2026-11-26: no quest needs a companion) the rogue's level-12 trial, Dead Water, which was Wren's:
-// what she puts on her knives, which she paid off a page of her debts to him with.
+// what she puts on her knives, which she paid off a page of her debts to him with. (v1.155; the owner: "move the
+// companion chains to townspeople too") And Wren's chain, What's Owed (wren_the_marker, wren_night_boats,
+// wren_settled): she owes him four pages, and if the Cult collects her he's never paid, so he takes an interest. He
+// talks about her freely; nothing waits on her being found or with you. Settled's boat is fired by his sister Wenna
+// from her punt, and the ring off it is the heirloom The Receipt.
 
 VAR hero_name = ""
 VAR hero_class = ""
@@ -19,6 +23,9 @@ VAR s_ch2_fog_on_the_canal = 0
 VAR q_ch2_the_locks = -1
 VAR boss_toadking = 0
 VAR q_trial_dead_water = -1
+VAR q_wren_the_marker = -1
+VAR q_wren_night_boats = -1
+VAR q_wren_settled = -1
 
 == dace_hub ==
 { q_ch2_fog_on_the_canal == 1 && s_ch2_fog_on_the_canal == 0: -> dace_fog_meet }
@@ -61,6 +68,15 @@ You give him Sister Ilse's letter. He reads it twice, slowly, with his finger, a
 + { q_ch2_the_locks == 2 } [The Sluice is quiet. #mark: quest ready] -> dace_locks_turnin
 + { q_ch2_the_locks == 0 } [What now? #mark: quest] -> dace_locks_offer
 + { q_ch2_the_locks == 1 } [About the Locks… #mark: quest active] -> dace_locks_active
++ { q_wren_the_marker == 2 } [All three pieces of Wren's marker. #mark: quest ready] -> dace_marker_turnin
++ { q_wren_the_marker == 0 } [What does Wren owe? #mark: quest] -> dace_marker_offer
++ { q_wren_the_marker == 1 } [About the marker… #mark: quest active] -> dace_marker_active
++ { q_wren_night_boats == 2 } [Both of Wren's caches. #mark: quest ready] -> dace_boats_turnin
++ { q_wren_night_boats == 0 } [Anything else of Wren's? #mark: quest] -> dace_boats_offer
++ { q_wren_night_boats == 1 } [About her caches… #mark: quest active] -> dace_boats_active
++ { q_wren_settled == 2 } [The Cult's boat is burning. #mark: quest ready] -> dace_settled_turnin
++ { q_wren_settled == 0 } [What about the Cult's boat? #mark: quest] -> dace_settled_offer
++ { q_wren_settled == 1 } [About the boat… #mark: quest active] -> dace_settled_active
 + { q_trial_dead_water == 2 } [Five of their leaders. None of them saw us. #mark: quest ready] -> dace_dead_water_turnin
 + { q_trial_dead_water == 0 } [Would you teach a rogue anything? #mark: quest] -> dace_dead_water_offer
 + { q_trial_dead_water == 1 } [About the vats… #mark: quest active] -> dace_dead_water_active
@@ -113,6 +129,68 @@ Dace writes it all down. Then he writes *no name* beside it, and underlines that
 == dace_dead_water_turnin ==
 Dace fetches a little stoppered bottle from under the counter, the kind Pim sells oil in, and shows your rogues how much goes on an edge: one drop, worked in with a thumb, and then wipe the thumb. Twice.
 "Venom, Wren calls it. She paid off page three with it. Now you've had it too, and she's still on page four." # quest: turnin trial_dead_water
+-> dace_topics
+
+// ── What's Owed (content/quests/wren_*.json; his since v1.155, Wren's before): Wren's debts, which are his business ──
+== dace_marker_offer ==
+"Wren? Four pages. And that's only what she owes me." He doesn't open the book. He doesn't need to.
+"She borrowed off the Cult for a boat, and they hold her marker for it. A marker's a promise with a knife in it. They cut hers in three and gave the pieces to three of their harvesters, the ones that lead the others at the Locks."
+"While those pieces walk about, the Cult can come and collect her, and they don't collect in coin. If they collect her, I'm never paid. So I'm taking an interest."
++ [We'll get the pieces. #mark: quest]
+    "The Canal Locks. The leader of every fifth lot, with the cage that glows. Three pieces. They'll not know what they're carrying. Cult folk never do." # quest: accept wren_the_marker
+    -> dace_topics
++ [Not now.]
+    "Aye, well. She's kept clear of them this long. Mostly by owing me instead."
+    -> dace_topics
+
+== dace_marker_active ==
+"The Locks. Three of their leaders, every fifth lot. Each one's got a piece of her on him."
+-> dace_topics
+
+== dace_marker_turnin ==
+Dace fits the three pieces together on the counter. It's a strip of hide with Wren's name burned into it, and a number, and a little drawing of a flame.
+He reads the number, whistles low, and feeds the strip into the stove a piece at a time. "That's her off the Cult's books." # quest: turnin wren_the_marker
+"She's still in mine. Somebody has to keep her honest, and it'll not be the Cult."
+-> dace_topics
+
+== dace_boats_offer ==
+"When Wren ran the canal at night she hid things down at the vats under the Locks. Two chests, tied with her knot. She told me where, near enough, to clear half a page."
+"Now the Cult's draining the vats, and somebody in a robe's going to open one and learn things about the Sisters. Folk in Saltmere would rather they didn't. So would the Sisters."
++ [We'll fetch them up. #mark: quest]
+    "The Canal Locks, any floor. Vat Seven's the likeliest. Her knot's the one that looks wrong and isn't." # quest: accept wren_night_boats
+    -> dace_topics
++ [Not now.]
+    "They've stayed hid this long. Most of what Wren hides does."
+    -> dace_topics
+
+== dace_boats_active ==
+"Two chests with Wren's knot, down at the Locks. Vat Seven first. Don't untie the knot. You'll never tie it back."
+-> dace_topics
+
+== dace_boats_turnin ==
+Dace has you set both chests behind the counter, knots and all. He doesn't open them.
+"Wren's. They stay shut till she comes for them." He writes it down. "She'll say I opened them. I've written that I didn't, and the date." # quest: turnin wren_night_boats
+-> dace_topics
+
+== dace_settled_offer ==
+"The Cult's boat ties up under the Abbey now, the one the Toadking charged double. Everything they carry goes on it: the cages, the rolls, and the markers on half of Saltmere."
+"My sister Wenna says she'll pole round under the Abbey with a pot of pitch and set it alight from the water. She'll want the cloister above it held while she does, so nobody comes down the stair at her."
+"Wren would give her right hand to see it burn. She'd want it back after, mind."
++ [We'll hold the cloister. #mark: quest]
+    "The Drowned Abbey, the cloister, on the first floor. Five lots of them, and Wenna will have it burning. Don't go looking for her. She'll come for you." # quest: accept wren_settled
+    -> dace_topics
++ [Not now.]
+    "It'll still float tomorrow. That's the trouble with boats."
+    -> dace_topics
+
+== dace_settled_active ==
+"The Abbey's cloister, the first floor. Five waves, and keep them off the stair. Wenna does the rest."
+-> dace_topics
+
+== dace_settled_turnin ==
+Dace has the news already. Wenna came in an hour before you, smelling of pitch, and drank something he didn't charge her for.
+He takes a ring from under the counter and puts it in front of you. "She fished this off the boat before she lit it. It's Wren's. She paid the Cult with it, the first time she borrowed." # quest: turnin wren_settled
+"Wenna says it's yours, for holding the stair. Wren will want it back. Don't give it her. It's a receipt."
 -> dace_topics
 
 == dace_book ==

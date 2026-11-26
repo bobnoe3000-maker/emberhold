@@ -1,23 +1,22 @@
 {
   "id": "wren_settled",
-  "kind": "companion",
+  "kind": "errand",
   "title": "Settled",
-  "giver": "wren",
+  "giver": "dace_pike",
   "region": "fens",
   "level": [
     1,
     30
   ],
-  "companion": "wren",
   "after": [
     "wren_night_boats",
     "ch2_the_bells"
   ],
-  "summary": "The Cult's boat ties up under the Drowned Abbey. Wren would like to burn it, and needs someone to hold the door while she does.",
+  "summary": "The Cult's boat ties up under the Drowned Abbey, with its markers on half of Saltmere aboard. Dace Pike's sister Wenna will burn it from her punt, if somebody holds the cloister above.",
   "steps": [
     {
       "id": "abbey",
-      "journal": "Hold the Drowned Abbey's cloister, on its first floor, for five waves while Wren sees to the boat.",
+      "journal": "Hold the Drowned Abbey's cloister, on its first floor, for five waves while Wenna Pike fires the Cult's boat below.",
       "objectives": [
         {
           "type": "waves",
@@ -29,8 +28,8 @@
       ]
     }
   ],
-  "ready": "Tell Wren it's done: tap her card, in the party or on the bench, then Talk.",
-  "done": "The Cult's boat burned to the waterline while you held the cloister. Wren gave you the ring she'd paid her debt with.",
+  "ready": "The Cult's boat is burning. Tell Dace Pike at the Drowned Eel in Saltmere.",
+  "done": "The Cult's boat burned to the waterline while you held the cloister. Dace gave you Wren's ring, fished off it first.",
   "rewards": {
     "share": 0.45,
     "lv": 16,
@@ -38,8 +37,8 @@
     "item": "the_receipt"
   },
   "dialogue": {
-    "file": "wren",
-    "offer": "wren_settled_offer",
-    "turnin": "wren_settled_turnin"
+    "file": "dace",
+    "offer": "dace_settled_offer",
+    "turnin": "dace_settled_turnin"
   }
 }

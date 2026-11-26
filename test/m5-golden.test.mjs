@@ -75,9 +75,9 @@ test('M5 golden path: Act I, Brannoc and his chain, a trial, the whole Chronicle
   go(sim, 'dungeon', 'sunken_chapel', 0); assert.ok(fightIn(sim, () => st(sim, 'ch1_ember_in_the_fist') === QS.READY));   // (the Chancel: the first floor's hall)
   talk(sim, 'sister_ilse'); effect(sim, 'quest', 'turnin', 'ch1_ember_in_the_fist');
 
-  // Brannoc's chain, from his card: 3 sergeants in the Keep, 2 of the paymaster's chests on the Keep's second floor,
-  // 5 waves among the bound in the Sunken Chapel's Binding Crypt (v1.49)
-  const card = () => { sim.commands.push({ type: 'endTalk' }); sim.tick(); sim.commands.push({ type: 'talk', npc: 'brannoc' }); sim.tick(); };
+  // Brannoc's chain, from Osric Hale (v1.155; his card before): 3 sergeants in the Keep, 2 of the paymaster's chests in
+  // the Keep, 5 waves among the bound in the Sunken Chapel's Binding Crypt (v1.49)
+  const card = () => talk(sim, 'osric_hale');
   card(); effect(sim, 'quest', 'accept', 'brannoc_old_debts');
   go(sim, 'dungeon', 'wickham_keep', 0); assert.ok(fightIn(sim, () => st(sim, 'brannoc_old_debts') === QS.READY, firstRoom, 900), 'three sergeants');
   card(); effect(sim, 'quest', 'turnin', 'brannoc_old_debts'); card(); effect(sim, 'quest', 'accept', 'brannoc_paymasters_box');

@@ -1,15 +1,17 @@
 {
   "id": "wren_the_marker",
-  "kind": "companion",
+  "kind": "errand",
   "title": "The Marker",
-  "giver": "wren",
+  "giver": "dace_pike",
   "region": "fens",
   "level": [
     1,
     30
   ],
-  "companion": "wren",
-  "summary": "Wren's debt to the Cult is a marker, cut in three, and three harvesters carry the pieces. Until it's broken the Cult can come and collect. She'd like it broken.",
+  "after": [
+    "ch2_fog_on_the_canal"
+  ],
+  "summary": "Wren's debt to the Cult is a marker, cut in three, and three harvesters carry the pieces. Until it's broken the Cult can come and collect her. Dace Pike wants it broken: she owes him too.",
   "steps": [
     {
       "id": "locks",
@@ -24,16 +26,16 @@
       ]
     }
   ],
-  "ready": "Tell Wren it's done: tap her card, in the party or on the bench, then Talk.",
-  "done": "You took the marker's three pieces off the Cult's harvesters. Wren put them together, read them once, and burned them.",
+  "ready": "All three pieces of Wren's marker. Take them to Dace Pike at the Drowned Eel in Saltmere.",
+  "done": "Dace fitted the marker's three pieces together on his counter and fed them to the stove. Wren is off the Cult's books.",
   "rewards": {
     "share": 0.35,
     "lv": 13,
     "gold": 150
   },
   "dialogue": {
-    "file": "wren",
-    "offer": "wren_marker_offer",
-    "turnin": "wren_marker_turnin"
+    "file": "dace",
+    "offer": "dace_marker_offer",
+    "turnin": "dace_marker_turnin"
   }
 }

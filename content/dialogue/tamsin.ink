@@ -4,8 +4,9 @@
 // she can do. Entry: tamsin_hub: in the tally cave while she waits there, and from her card once she's with you (party
 // or bench). Bound in by src/story/adapter.js from the sim (sim/npcs.js varsFor: joined 0 / 1, party or bench;
 // in_party 0 / 1; core.js: boss_<id> 0 / 1). Effects: flags: met_tamsin; `# companion: join` (heroes.js: only once
-// the Foreman has fallen). She gives her own chain, Showing Off (world doc §5: tamsin_the_stamp, tamsin_the_patterns,
-// tamsin_spoiled_casting), gated on `joined` through her hub. (v1.154; the owner, 2026-11-26: no quest needs a
+// the Foreman has fallen). Her chain, Showing Off (world doc §5: tamsin_the_stamp, tamsin_the_patterns,
+// tamsin_spoiled_casting), is Haldor's to give since v1.155 (the owner: "move the companion chains to townspeople too";
+// ashgate.ink): she only says what she wants with the Assay. (v1.154; the owner, 2026-11-26: no quest needs a
 // companion) Act III's last chapter, Quota, and the mages' trial at 24, Ask the Iron, are Dagny's now (dagny.ink): Tamsin
 // only talks about them and sends you to her aunt. She isn't bound their q_ (quests.js varsFor binds a quest's giver and
 // taker), so what she says reads the bosses.
@@ -23,9 +24,6 @@ VAR in_party = 0
 VAR boss_foreman = 0
 VAR boss_stoker = 0
 VAR boss_morrow_vane = 0
-VAR q_tamsin_the_stamp = -1
-VAR q_tamsin_the_patterns = -1
-VAR q_tamsin_spoiled_casting = -1
 
 == tamsin_hub ==
 { joined == 0 && boss_foreman == 0: -> tamsin_chained_early }
@@ -82,15 +80,7 @@ Tamsin keeps looking back the way you came, for {fallen_name}.
 
 == tamsin_topics ==
 + { boss_morrow_vane == 1 && boss_stoker == 0 } [Where did the night shift go?] -> tamsin_quota_offer
-+ { q_tamsin_the_stamp == 2 } [Three of the Assay's stamps. #mark: quest ready] -> tamsin_stamp_turnin
-+ { q_tamsin_the_stamp == 0 } [What do you want with the Assay? #mark: quest] -> tamsin_stamp_offer
-+ { q_tamsin_the_stamp == 1 } [About the stamps… #mark: quest active] -> tamsin_stamp_active
-+ { q_tamsin_the_patterns == 2 } [The Forgehall's patterns. #mark: quest ready] -> tamsin_patterns_turnin
-+ { q_tamsin_the_patterns == 0 } [What did the old smiths cast? #mark: quest] -> tamsin_patterns_offer
-+ { q_tamsin_the_patterns == 1 } [About the patterns… #mark: quest active] -> tamsin_patterns_active
-+ { q_tamsin_spoiled_casting == 2 } [The moulds are cracked. #mark: quest ready] -> tamsin_casting_turnin
-+ { q_tamsin_spoiled_casting == 0 } [Could you spoil their moulds? #mark: quest] -> tamsin_casting_offer
-+ { q_tamsin_spoiled_casting == 1 } [About the moulds… #mark: quest active] -> tamsin_casting_active
++ [What do you want with the Assay?] -> tamsin_assay
 + [Would you teach a mage to ask?] -> tamsin_trial_offer
 + [Why do the clans call it showing off?] -> tamsin_showing_off
 + [What did you find in the Seam's books?] -> tamsin_books
@@ -124,65 +114,10 @@ Tamsin keeps looking back the way you came, for {fallen_name}.
 "And they've been casting something down there, in pale iron. When you go, I want to see the mould."
 -> tamsin_topics
 
-// ── Showing Off, 1: The Assay's Stamp (content/quests/tamsin_the_stamp.json) ──
-== tamsin_stamp_offer ==
-"The Assay stamps everything it weighs. Ore, iron, men. Its guard-captains carry the stamps on their belts, at the Yards."
-"I want three. I want to know their mark by feel, so when I put my thumb on something they've made I know whose it is."
-+ [We'll get you three. #mark: quest]
-    "The Yards. The captains lead every fifth lot. Brass on the collar, stamp on the belt." # quest: accept tamsin_the_stamp
-    -> tamsin_topics
-+ [Not now.]
-    "Fine. I'll practise on Haldor's."
-    -> tamsin_topics
-
-== tamsin_stamp_active ==
-"Three stamps off three captains, at the Assay Yards."
--> tamsin_topics
-
-== tamsin_stamp_turnin ==
-Tamsin turns the stamps over in her fingers, one after another, with her eyes shut.
-"Scales over a pick. Badly cut. The pick's handle is too short; whoever cut it never held one." She opens her eyes. "I'll know it now. Anywhere." # quest: turnin tamsin_the_stamp
--> tamsin_topics
-
-// ── Showing Off, 2: The Pattern Store (content/quests/tamsin_the_patterns.json) ──
-== tamsin_patterns_offer ==
-"The Forgehall was the Throne's own forge. The old smiths kept their patterns there, every shape they ever cast. If the Assay is casting something, it learned how from those shelves."
-"Bring me what's in the chests. I want to read them the way you read a letter."
-+ [We'll bring them. #mark: quest]
-    "The Forgehall. It's under the Cinderworks now: the Assay dug in from the works. Two chests, any floor you like. The pattern store's are the heavy ones." # quest: accept tamsin_the_patterns
-    -> tamsin_topics
-+ [Not now.]
-    "They've waited three hundred years to be read. Patterns are patient. Smiths aren't."
-    -> tamsin_topics
-
-== tamsin_patterns_active ==
-"The Forgehall's chests. Two. The patterns are wood and wax, wrapped in oilcloth. Don't drop them."
--> tamsin_topics
-
-== tamsin_patterns_turnin ==
-She unwraps the patterns on her knee, one at a time. Little lamps, every one the same, a shelf's worth.
-"Lamp patterns. Throne measure. Forty to a shelf." She fits one into her palm. "Each to hold one. One what, it doesn't say. It doesn't need to." # quest: turnin tamsin_the_patterns
-She wraps them up again more carefully than she unwrapped them.
--> tamsin_topics
-
-// ── Showing Off, 3: Spoiled Casting (content/quests/tamsin_spoiled_casting.json) ──
-== tamsin_casting_offer ==
-"The Cult keeps spare moulds in the Magma Vault, stacked on the floor, ready. If the first casting fails, they'll pour another."
-"I can crack them where they stand. Ask the iron in them to let go. It takes a while, and it takes quiet, and the Magma Vault isn't quiet. Hold the floor round me."
-+ [We'll hold it. #mark: quest]
-    "The Magma Vault. Five turns of the fighting. I'll be the one on her knees with her hand on a mould, looking busy. I will be." # quest: accept tamsin_spoiled_casting
-    -> tamsin_topics
-+ [Not now.]
-    "They'll still be there. Moulds don't go anywhere. That's the point of them."
-    -> tamsin_topics
-
-== tamsin_casting_active ==
-"The Magma Vault. Five waves. I'll do the rest."
--> tamsin_topics
-
-== tamsin_casting_turnin ==
-"Every one of them. Cracked through, end to end. They'll ring wrong if anyone taps them, and they'll split if anyone pours." # quest: turnin tamsin_spoiled_casting
-"The clans would say that was showing off. The clans are right. It felt wonderful."
+// ── Showing Off (content/quests/tamsin_*.json): Haldor gives it since v1.155 ──
+== tamsin_assay ==
+"Everything. Their mark, the patterns they learned from, the moulds they keep spare in case the first casting fails. If I had their stamps I'd know whose iron is whose by feel."
+"Haldor wants the same, and he'll say it was his idea. Ask him at the Forge, and let him. It makes him easier to work with."
 -> tamsin_topics
 
 // ── the mages' trial at 24 (content/quests/trial24_mage.json): Dagny gives it from Tamsin's notes (v1.154) ──

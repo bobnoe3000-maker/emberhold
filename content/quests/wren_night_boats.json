@@ -1,18 +1,17 @@
 {
   "id": "wren_night_boats",
-  "kind": "companion",
+  "kind": "errand",
   "title": "Night Boats",
-  "giver": "wren",
+  "giver": "dace_pike",
   "region": "fens",
   "level": [
     1,
     30
   ],
-  "companion": "wren",
   "after": [
     "wren_the_marker"
   ],
-  "summary": "Wren hid two caches down at the vats under the Canal Locks, back when she ran the canal at night. The Cult has started drying the vats out, and she'd like them back before it finds them.",
+  "summary": "Wren hid two caches down at the vats under the Canal Locks, back when she ran the canal at night. The Cult is drying the vats out, and Dace Pike, who knows roughly where, wants them up first.",
   "steps": [
     {
       "id": "vats",
@@ -27,16 +26,16 @@
       ]
     }
   ],
-  "ready": "Tell Wren it's done: tap her card, in the party or on the bench, then Talk.",
-  "done": "You found both of Wren's caches. She counted them in front of you, which she says is a compliment.",
+  "ready": "Both of Wren's caches. Take them to Dace Pike at the Drowned Eel in Saltmere.",
+  "done": "You found both of Wren's caches. Dace has them behind his counter, unopened, and has written down that they are.",
   "rewards": {
     "share": 0.3,
     "lv": 14,
     "gold": 180
   },
   "dialogue": {
-    "file": "wren",
-    "offer": "wren_boats_offer",
-    "turnin": "wren_boats_turnin"
+    "file": "dace",
+    "offer": "dace_boats_offer",
+    "turnin": "dace_boats_turnin"
   }
 }

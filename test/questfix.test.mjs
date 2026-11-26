@@ -16,10 +16,11 @@ const effect = (sim, tag, ...args) => { sim.commands.push({ type: 'dialogueEffec
 const talkTo = (sim, npc) => { const n = sim.world.npcs.find((q) => q.id === npc), p = sim.state.player; sim.commands.push({ type: 'endTalk' }); sim.tick(); p.x = p.px = n.x + 1; p.y = p.py = n.y - 1; sim.commands.push({ type: 'talk', npc }); sim.tick(); };
 
 // the level a quest is done at, the hardest thing it asks: a boss's hall, a floor's waves or chests, the floor reached; the site's
-// first floor where it names none; a companion's chain, no sooner than where the companion is found (Brannoc at 6)
+// first floor where it names none; no sooner than the quests it waits on (v1.155: a companion's chain, now a townsman's,
+// waits on the chapter that found the companion: Old Debts on The Diggers, Garrow at 6)
 function doneAt(d) {
-  const f = d.companion && NPCS[d.companion] && NPCS[d.companion].found, joins = f ? SITES[f.site].base + f.depth : 0;
-  return Math.max(joins, placeOf(d));
+  const at = placeOf(d); if (!(at > 0)) return at;   // (nothing in a banded dungeon: not measured here)
+  return Math.max(at, ...(d.after || []).filter((a) => QUESTS[a]).map((a) => doneAt(QUESTS[a]) || 0));
 }
 function placeOf(d) {
   const all = d.steps.flatMap((st) => st.objectives);   // (the hardest thing it asks, over its steps)

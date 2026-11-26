@@ -4,6 +4,10 @@
 // only reads them. Effects go out as tags and the sim checks each one (flags: met_osric; his
 // bounty, vale_captains_ledger: q_ = −1 locked · 0 available · 1 active · 2 ready · 3 done).
 // A choice tagged `#mark: quest` (inside its brackets) shows as a quest one.
+// (v1.155; the owner: "move the companion chains to townspeople too") He gives and takes in Brannoc's chain, Chains of
+// the Redhand (brannoc_old_debts, brannoc_paymasters_box, brannoc_standing_down), as the Watch's business: Garrow's
+// sergeants, the paymaster's coin, and the legion nobody relieved. He speaks of Brannoc, the deserter Garrow kept in the
+// cellars, but nothing waits on Brannoc being found or with you. The chain at the end is the heirloom The Broken Chain.
 
 VAR hero_name = ""
 VAR hero_class = ""
@@ -19,6 +23,10 @@ VAR q_ch1_the_diggers = -1
 VAR q_ch1_ember_in_the_fist = -1
 VAR q_trial_hold_the_keep_gate = -1
 VAR q_trial_the_long_watch = -1
+VAR q_brannoc_old_debts = -1
+VAR q_brannoc_paymasters_box = -1
+VAR q_brannoc_standing_down = -1
+VAR boss_redhand_captain = 0
 VAR frag_vale_count = 0
 VAR road_ranks = 3
 VAR chapters_done = 0
@@ -75,6 +83,15 @@ Osric looks at the space beside you where {fallen_name} should be, and writes so
 + { q_trial_the_long_watch == 2 } [We held the Mound's hall. Ten waves. #mark: quest ready] -> osric_long_watch_turnin
 + { q_trial_the_long_watch == 0 } [Is there more a fighter could learn? #mark: quest] -> osric_long_watch_offer
 + { q_trial_the_long_watch == 1 } [About the long watch… #mark: quest active] -> osric_long_watch_active
++ { q_brannoc_old_debts == 2 } [Garrow's three sergeants are down. #mark: quest ready] -> osric_debts_turnin
++ { q_brannoc_old_debts == 0 } [Any Redhand business for the Watch? #mark: quest] -> osric_debts_offer
++ { q_brannoc_old_debts == 1 } [About the sergeants… #mark: quest active] -> osric_debts_active
++ { q_brannoc_paymasters_box == 2 } [We found the paymaster's boxes. #mark: quest ready] -> osric_box_turnin
++ { q_brannoc_paymasters_box == 0 } [Where did the robes' coin go? #mark: quest] -> osric_box_offer
++ { q_brannoc_paymasters_box == 1 } [About the paymaster… #mark: quest active] -> osric_box_active
++ { q_brannoc_standing_down == 2 } [We stood with the legion. Five waves. #mark: quest ready] -> osric_standing_turnin
++ { q_brannoc_standing_down == 0 } [Who relieves the legion? #mark: quest] -> osric_standing_offer
++ { q_brannoc_standing_down == 1 } [About the legion… #mark: quest active] -> osric_standing_active
 + { q_vale_captains_ledger == 2 } [Three of the bright-eyed ones are down. #mark: quest ready] -> osric_ledger_turnin
 + { q_vale_captains_ledger == 0 } [Any bounties posted? #mark: quest] -> osric_ledger_offer
 + { q_vale_captains_ledger == 1 } [About the bounty… #mark: quest active] -> osric_ledger_active
@@ -193,6 +210,66 @@ Osric reads the page you give him twice, then a third time, which is once more t
 == osric_trial_turnin ==
 Osric stands, which he does rarely, and takes the Watch's old shield down from behind his table.
 "Feet here. Shield here. Don't look at the blade, look at the one holding it. And when they come, let them. That's the whole of it. It took me nine days to learn." # quest: turnin trial_hold_the_keep_gate
+-> osric_topics
+
+// ── Chains of the Redhand (content/quests/brannoc_*.json; his since v1.155, Brannoc's before): the Watch's business ──
+== osric_debts_offer ==
+"Garrow kept a deserter chained in the Keep's cellars as an example to the rest. A big man called Brannoc. His sergeants kept the chain oiled, and now they tell every carter on the Wickham road that he owes them."
+"A debt to the Redhand is no debt in Greyholt, which is one of the few laws Lord Pellam has ever enforced. I'd like his sergeants told so. Three of them should do."
++ [We'll settle it. #mark: quest]
+    "Wickham Keep. They lead every fifth lot in, shouting, which is how you'll know them. Three, and I'll draw a line under it." # quest: accept brannoc_old_debts
+    -> osric_topics
++ [Not now.]
+    "They'll shout at the carters a while longer. The carters are used to it."
+    -> osric_topics
+
+== osric_debts_active ==
+"Three of Garrow's sergeants, in Wickham Keep. Stay in a room long enough and one comes in shouting. They never learned not to."
+-> osric_topics
+
+== osric_debts_turnin ==
+Osric turns to a page headed *Redhand, debts claimed*. There's one line on it. He rules a line through it, slowly, with the edge of his blotter.
+"Paid in full, and by the other side. I've never once got to cross a debt out on a man's behalf. It's very satisfying. I may do it again, if anyone gives me cause." # quest: turnin brannoc_old_debts
+-> osric_topics
+
+== osric_box_offer ==
+"Garrow's paymaster kept the robes' coin apart from Garrow, in two boxes in the Keep's strongroom, off the Barracks. He trusted nobody, himself included, which is the one thing I'd have hired him for."
+"The deserter they kept chained down there will have heard them count it. I'd like to see whose seal is on the purses. Garrow never asked. The Watch is asking."
++ [We'll find the boxes. #mark: quest]
+    "Any two chests in the Keep. The strongroom's on the second floor, off the Barracks. He'd have kept them where he walked past twice a day, to be sure they were still there." # quest: accept brannoc_paymasters_box
+    -> osric_topics
++ [Not now.]
+    "The coin will stay where it is. That was always the paymaster's whole idea."
+    -> osric_topics
+
+== osric_box_active ==
+"Two chests in Wickham Keep. The strongroom off the Barracks, the second floor, is where I'd look first. Bring me a purse with its seal whole."
+-> osric_topics
+
+== osric_box_turnin ==
+Osric tips a purse onto the table and holds its wax to the light. It's red, the colour of a coal just before it goes out, with no crest in it, only a thumbprint.
+"Lords put lions on their wax. This is somebody who likes fire and doesn't want a name in my book." He wraps one seal in a clean page. "That goes to Sister Ilse. She'll know what to be worried about." # quest: turnin brannoc_paymasters_box
+-> osric_topics
+
+== osric_standing_offer ==
+"The legion under the Sunken Chapel. Bound where it stood, holding a road three centuries because the order to stand down never came. I've a page of men like that."
+"Brannoc, the deserter from the cellars, wants to stand with them once, I hear. A man who left everything he was ever in, twice, would like to stand somewhere beside men who didn't. I find I'd like it done too, by somebody, whether he's with you or not."
++ [We'll stand with them. #mark: quest]
+    "The Sunken Chapel, the Binding Crypt on the second floor, where they stand in rows the way they were stopped. Five waves, and nobody steps off the line. Take him if he'll come." # quest: accept brannoc_standing_down
+    -> osric_topics
++ [Not now.]
+    "They've stood this long. They'll not mind a while more. That's rather the trouble."
+    -> osric_topics
+
+== osric_standing_active ==
+"The Binding Crypt, the Sunken Chapel's second floor, among the bound. Five waves. Stand the way they stand."
+-> osric_topics
+
+== osric_standing_turnin ==
+Osric hears it out, and writes your company's name on the page of men nobody relieved, with a date beside it. Then he opens the drawer under his table and takes out a length of old chain.
+{ boss_redhand_captain == 1: "The Watch brought this up out of the Keep's cellars after Garrow fell. It's what he kept his deserters on. One link's gone. Whoever wore it last broke that one off and took it with him." }
+{ boss_redhand_captain == 0: "Carters found this on the Wickham road this spring. A Redhand chain, off the Keep. One link's gone. Whoever wore it last broke that one off and took it with him." }
+"The rest is no use to the Watch. Take it. Somebody who stood should have it." # quest: turnin brannoc_standing_down
 -> osric_topics
 
 == osric_watch ==

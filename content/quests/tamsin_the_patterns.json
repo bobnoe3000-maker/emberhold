@@ -1,8 +1,8 @@
 {
   "id": "tamsin_the_patterns",
-  "kind": "companion",
+  "kind": "errand",
   "title": "The Pattern Store",
-  "giver": "tamsin",
+  "giver": "haldor",
   "region": "reach",
   "level": [
     27,
@@ -11,8 +11,7 @@
   "after": [
     "tamsin_the_stamp"
   ],
-  "companion": "tamsin",
-  "summary": "The imperial smiths kept their patterns in the Forgehall, shelf on shelf. Tamsin wants to read how they cast what they cast. She thinks the Assay has.",
+  "summary": "The imperial smiths kept their patterns in the Forgehall, shelf on shelf. Haldor wants to know how they cast what they cast. He thinks the Assay already knows.",
   "steps": [
     {
       "id": "patterns",
@@ -27,16 +26,16 @@
       ]
     }
   ],
-  "ready": "Two chests of the Forgehall's patterns. Show Tamsin.",
-  "done": "Lamp patterns, forty to a shelf, each to hold one. Tamsin put them back very carefully.",
+  "ready": "Two chests of the Forgehall's patterns. Take them to Haldor at the Ashgate Forge.",
+  "done": "Lamp patterns, forty to a shelf, each to hold one. Haldor wrapped them up again very carefully.",
   "rewards": {
     "share": 0.3,
     "lv": 27,
     "gold": 300
   },
   "dialogue": {
-    "file": "tamsin",
-    "offer": "tamsin_patterns_offer",
-    "turnin": "tamsin_patterns_turnin"
+    "file": "ashgate",
+    "offer": "haldor_patterns_offer",
+    "turnin": "haldor_patterns_turnin"
   }
 }

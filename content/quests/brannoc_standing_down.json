@@ -1,22 +1,21 @@
 {
   "id": "brannoc_standing_down",
-  "kind": "companion",
+  "kind": "errand",
   "title": "Standing Down",
-  "giver": "brannoc",
+  "giver": "osric_hale",
   "region": "vale",
   "level": [
     1,
     30
   ],
-  "companion": "brannoc",
   "after": [
     "brannoc_paymasters_box"
   ],
-  "summary": "Brannoc has heard of the Third Legion, bound where it stood under the Sunken Chapel, that never deserted anything because nobody told it to stop. He'd like to stand with it once, the way he never stood with anyone.",
+  "summary": "The Third Legion stands bound under the Sunken Chapel, and never deserted anything because nobody told it to stop. Osric Hale would like somebody to stand with it once. Brannoc, the deserter, has asked after it too.",
   "steps": [
     {
       "id": "crypt",
-      "journal": "Go down to the Binding Crypt, the Sunken Chapel's second floor, where the bound stand in rows, and hold five waves there with Brannoc.",
+      "journal": "Go down to the Binding Crypt, the Sunken Chapel's second floor, where the bound stand in rows, and hold five waves there among them.",
       "objectives": [
         {
           "type": "waves",
@@ -28,8 +27,8 @@
       ]
     }
   ],
-  "ready": "Tell Brannoc it's done: tap his card, in the party or on the bench, then Talk.",
-  "done": "You held the Binding Crypt with Brannoc among the bound. He stood; they stood. He gave you his old chain, less one link.",
+  "ready": "You stood with the legion. Tell Osric Hale at the Watch post by Thornwick's well.",
+  "done": "You held the Binding Crypt among the bound. Osric gave you a Redhand deserter's chain, less one link.",
   "rewards": {
     "share": 0.45,
     "lv": 9,
@@ -37,8 +36,8 @@
     "item": "broken_chain"
   },
   "dialogue": {
-    "file": "brannoc",
-    "offer": "brannoc_standing_offer",
-    "turnin": "brannoc_standing_turnin"
+    "file": "osric",
+    "offer": "osric_standing_offer",
+    "turnin": "osric_standing_turnin"
   }
 }

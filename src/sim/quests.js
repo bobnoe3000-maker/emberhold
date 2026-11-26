@@ -31,7 +31,9 @@
 // the party or on the bench, talked to from either: npcs.js); `rewards.item` is an heirloom (items.js HEIRLOOMS) paid into the bag.
 // (v1.154; the owner, 2026-11-26: "I dont want this for any quest nor should any companion be required for a quest to
 // complete") A companion gives or takes in only that companion's own chain: chapters and trials are a townsperson's, so
-// none waits on who's in the party (test/questgivers.test.mjs).
+// none waits on who's in the party (test/questgivers.test.mjs). (v1.155; the owner: "move the companion chains to
+// townspeople too") Nor their own chains: Brannoc's is Osric Hale's (the Watch), Wren's Dace Pike's (who writes down what
+// everyone owes), Tamsin's Haldor's (the smith); every quest is a townsperson's, the companion or no.
 // A class trial (`trial`: the class) is offered while someone of that class in the company (party or
 // bench) is level 6 or more and the company hasn't done it; handed in, it teaches that class its
 // level-6 ability (state.trials, skills.js), every member of the class, for good. (M8, slice 9) A second trial
@@ -126,18 +128,18 @@ export const QUESTS = {
   },
   // Brannoc's chain, Chains of the Redhand (world doc §5, v1.7; docs/m5-plan.md §5): the debts he owes the
   // Company, the Paymaster's box, and a last stand with the legion that never deserted anything
-  brannoc_old_debts: {
-    kind: 'companion', giver: 'brannoc', companion: 'brannoc', region: 'vale', level: [1, 30],
+  brannoc_old_debts: {   // (v1.155: after Garrow's fall, when Brannoc was found, as it opened before it was Osric's)
+    kind: 'errand', giver: 'osric_hale', region: 'vale', level: [1, 30], after: ['ch1_the_diggers'],
     steps: [{ id: 'keep', objectives: [{ type: 'elites', site: 'wickham_keep', count: 3 }] }],
     rewards: { share: 0.35, lv: 6, gold: 90 },
   },
   brannoc_paymasters_box: {
-    kind: 'companion', giver: 'brannoc', companion: 'brannoc', region: 'vale', level: [1, 30], after: ['brannoc_old_debts'],
+    kind: 'errand', giver: 'osric_hale', region: 'vale', level: [1, 30], after: ['brannoc_old_debts'],
     steps: [{ id: 'strongroom', objectives: [{ type: 'loot', site: 'wickham_keep', count: 2 }] }],
     rewards: { share: 0.3, lv: 6, gold: 120 },
   },
   brannoc_standing_down: {
-    kind: 'companion', giver: 'brannoc', companion: 'brannoc', region: 'vale', level: [1, 30], after: ['brannoc_paymasters_box'],
+    kind: 'errand', giver: 'osric_hale', region: 'vale', level: [1, 30], after: ['brannoc_paymasters_box'],
     steps: [{ id: 'crypt', objectives: [{ type: 'waves', site: 'sunken_chapel', count: 5, floor: 2 }] }],   // (v1.49: among the bound in the Binding Crypt, any room: the Standard's hall goes quiet once he falls; 2026-11-02: the Chapel's second floor, its last)
     rewards: { share: 0.45, lv: 9, gold: 100, item: 'broken_chain' },
   },
@@ -290,17 +292,17 @@ export const QUESTS = {
   // Tamsin's chain, Showing Off (world doc v1.54 §5): the Assay's stamps off the Yards' guard-captains, the imperial
   // patterns in the Forgehall's pattern store, the Cult's spare moulds cracked on the Magma Vault's floor
   tamsin_the_stamp: {
-    kind: 'companion', giver: 'tamsin', companion: 'tamsin', region: 'reach', level: [23, 60],
+    kind: 'errand', giver: 'haldor', region: 'reach', level: [23, 60],
     steps: [{ id: 'yards', objectives: [{ type: 'elites', site: 'assay_yards', count: 3 }] }],
     rewards: { share: 0.35, lv: 24, gold: 260 },
   },
   tamsin_the_patterns: {
-    kind: 'companion', giver: 'tamsin', companion: 'tamsin', region: 'reach', level: [27, 60], after: ['tamsin_the_stamp'],
+    kind: 'errand', giver: 'haldor', region: 'reach', level: [27, 60], after: ['tamsin_the_stamp'],
     steps: [{ id: 'patterns', objectives: [{ type: 'loot', site: 'cinderworks', count: 2 }] }],
     rewards: { share: 0.3, lv: 27, gold: 300 },
   },
   tamsin_spoiled_casting: {
-    kind: 'companion', giver: 'tamsin', companion: 'tamsin', region: 'reach', level: [29, 60], after: ['tamsin_the_patterns'],
+    kind: 'errand', giver: 'haldor', region: 'reach', level: [29, 60], after: ['tamsin_the_patterns'],
     steps: [{ id: 'vault', objectives: [{ type: 'waves', site: 'cinderworks', count: 5, floor: 2 }] }],
     rewards: { share: 0.45, lv: 29, gold: 360 },
   },
@@ -383,18 +385,18 @@ export const QUESTS = {
     steps: [{ id: 'forge', objectives: [{ type: 'waves', site: 'assay_yards', count: 6, floor: 1 }] }],   // (v1.144: the Forgehall is 27 now; the verse is sung in the Yards' ore sheds, over the clans' own ore)
     rewards: { share: 0.3, lv: 24, gold: 240 },
   },
-  wren_the_marker: {
-    kind: 'companion', giver: 'wren', companion: 'wren', region: 'fens', level: [1, 30],
+  wren_the_marker: {   // (v1.155: once Fog on the Canal is done, Wren out of the Mound, as it opened before it was Dace's)
+    kind: 'errand', giver: 'dace_pike', region: 'fens', level: [1, 30], after: ['ch2_fog_on_the_canal'],
     steps: [{ id: 'locks', objectives: [{ type: 'elites', site: 'canal_locks', count: 3 }] }],
     rewards: { share: 0.35, lv: 13, gold: 150 },
   },
   wren_night_boats: {
-    kind: 'companion', giver: 'wren', companion: 'wren', region: 'fens', level: [1, 30], after: ['wren_the_marker'],
+    kind: 'errand', giver: 'dace_pike', region: 'fens', level: [1, 30], after: ['wren_the_marker'],
     steps: [{ id: 'vats', objectives: [{ type: 'loot', site: 'canal_locks', count: 2 }] }],
     rewards: { share: 0.3, lv: 14, gold: 180 },   // (14: since 2026-11-21 its chests can be the Locks' first floor's, at 13)
   },
   wren_settled: {                                   // (after The Bells: the hall she wants held is Brother Teague's until he falls)
-    kind: 'companion', giver: 'wren', companion: 'wren', region: 'fens', level: [1, 30], after: ['wren_night_boats', 'ch2_the_bells'],
+    kind: 'errand', giver: 'dace_pike', region: 'fens', level: [1, 30], after: ['wren_night_boats', 'ch2_the_bells'],
     steps: [{ id: 'abbey', objectives: [{ type: 'waves', site: 'drowned_abbey', count: 5, floor: 1 }] }],
     rewards: { share: 0.45, lv: 16, gold: 200, item: 'the_receipt' },
   },

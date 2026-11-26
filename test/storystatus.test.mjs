@@ -61,11 +61,12 @@ test('Act II: a chapter given in Saltmere says so; every chapter told, the end i
   assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch2_the_locks', giver: 'dace_pike', town: 'Saltmere' });
   for (const id of CHAPTERS) S.quests[id] = { st: 3, step: 0, n: [] };
   assert.deepEqual(storyStatus(S, status(sim)), { kind: 'end', region: 'tidemark' }, 'the last chapter told is the Tidemark\'s (v1.154: Act IV to its end)');
-  S.bosses = {}; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['toadking', 'choir', 'fenschronicle', 'tower', 'fensboard']);
-  S.bosses = { toadking: 1 }; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['wren', 'choir', 'fenschronicle', 'tower', 'fensboard']);
+  // (v1.155) Fog on the Canal done: Dace Pike has Wren's marker to settle ('owed'), whether she's found or not
+  S.bosses = {}; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['toadking', 'choir', 'owed', 'fenschronicle', 'tower', 'fensboard']);
+  S.bosses = { toadking: 1 }; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['wren', 'choir', 'owed', 'fenschronicle', 'tower', 'fensboard']);
   assert.deepEqual(openLeads(S, status(sim), 'fens').find((l) => l.id === 'fenschronicle'), { id: 'fenschronicle', n: 0, of: 10 });
   S.revealed = new Set(['reedholm_undercroft']); S.sitesEntered = new Set();
-  assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['wren', 'choir', 'undercroft', 'tower', 'fensboard'], 'the set whole: the Undercroft');
+  assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['wren', 'choir', 'owed', 'undercroft', 'tower', 'fensboard'], 'the set whole: the Undercroft');
 });
 
 test('a second trial on offer is a Fens lead, with its teacher\'s town', () => {

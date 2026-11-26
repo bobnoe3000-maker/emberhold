@@ -114,29 +114,35 @@ test('from his card: talk to him wherever you are while he\'s in the company and
   sim.commands.push({ type: 'talk', npc: 'brannoc' }); sim.tick(); assert.equal(ev.at(-1).n, 'dialogue', 'from the bench too (v1.154)'); assert.equal(ev.at(-1).vars.in_party, 0);
 });
 
-test('Chains of the Redhand: his to give and take in, in order, only while he\'s with you; The Broken Chain paid once', () => {
+test('Chains of the Redhand: Osric Hale\'s to give and take in (v1.155), once The Diggers is done, with or without Brannoc; in order; The Broken Chain paid once', () => {
   const sim = createSim(SEED, undefined, { scene: 'town' }); sim.tick();
   const st = (id) => sim.quests.status(id), paid = events(sim, ['questReward', 'loot']);
-  assert.equal(st('brannoc_old_debts'), QS.LOCKED, 'not before he joins');
-  sim.state.bosses.redhand_captain = 1; goTo(sim, 'dungeon', 'wickham_keep', 1); talkInHall(sim); effect(sim, 'companion', 'join');
-  assert.equal(st('brannoc_old_debts'), QS.AVAILABLE); assert.equal(st('brannoc_paymasters_box'), QS.LOCKED);
-  sim.commands.push({ type: 'endTalk' }); sim.tick();
-  const card = () => { sim.commands.push({ type: 'endTalk' }); sim.tick(); sim.commands.push({ type: 'talk', npc: 'brannoc' }); sim.tick(); };
-  card(); effect(sim, 'quest', 'accept', 'brannoc_old_debts'); assert.equal(st('brannoc_old_debts'), QS.ACTIVE);
+  assert.equal(st('brannoc_old_debts'), QS.LOCKED, 'not before Garrow\'s chapter is done');
+  sim.state.quests.ch1_the_diggers = { st: QS.DONE, step: 0, n: [] };
+  assert.ok(![...sim.state.party, ...(sim.state.bench || [])].some((m) => m.id === 'brannoc'), 'Brannoc not found');
+  assert.equal(st('brannoc_old_debts'), QS.AVAILABLE, 'his or not, Osric has it in his book'); assert.equal(st('brannoc_paymasters_box'), QS.LOCKED);
+  const osric = () => {
+    goTo(sim, 'town'); sim.commands.push({ type: 'endTalk' }); sim.tick();
+    const o = sim.world.npcs.find((q) => q.id === 'osric_hale'), p = sim.state.player; p.x = p.px = o.x + 1; p.y = p.py = o.y - 1;
+    sim.commands.push({ type: 'talk', npc: 'osric_hale' }); sim.tick();
+  };
+  osric(); effect(sim, 'quest', 'accept', 'brannoc_old_debts'); assert.equal(st('brannoc_old_debts'), QS.ACTIVE);
   // 3 sergeants in the Keep (elites), counted from the sim's own 'slain' events
   goTo(sim, 'dungeon', 'wickham_keep', 0);
   for (let i = 0; i < 3; i++) sim.bus.emit('slain', { elite: true });
   assert.equal(st('brannoc_old_debts'), QS.READY);
-  card(); effect(sim, 'quest', 'turnin', 'brannoc_old_debts'); assert.equal(st('brannoc_old_debts'), QS.DONE);
-  card(); effect(sim, 'quest', 'accept', 'brannoc_paymasters_box');
+  sim.commands.push({ type: 'talk', npc: 'brannoc' }); sim.tick(); effect(sim, 'quest', 'turnin', 'brannoc_old_debts');
+  assert.equal(st('brannoc_old_debts'), QS.READY, 'not his to take in');
+  osric(); effect(sim, 'quest', 'turnin', 'brannoc_old_debts'); assert.equal(st('brannoc_old_debts'), QS.DONE);
+  osric(); effect(sim, 'quest', 'accept', 'brannoc_paymasters_box');
   // the paymaster's boxes, anywhere in the Keep (2026-11-21: any floor's chests): another dungeon's chest doesn't count
   goTo(sim, 'dungeon', 'barrows', 1); sim.bus.emit('looted', { kind: 'chest' });
   assert.deepEqual(sim.state.quests.brannoc_paymasters_box.n, [0]);
   goTo(sim, 'dungeon', 'wickham_keep', 0); sim.bus.emit('looted', { kind: 'chest' });
   assert.deepEqual(sim.state.quests.brannoc_paymasters_box.n, [1], 'the Keep\'s first floor counts');
   goTo(sim, 'dungeon', 'wickham_keep', 1); sim.bus.emit('looted', { kind: 'chest' });
-  card(); effect(sim, 'quest', 'turnin', 'brannoc_paymasters_box'); assert.equal(st('brannoc_paymasters_box'), QS.DONE);
-  card(); effect(sim, 'quest', 'accept', 'brannoc_standing_down');
+  osric(); effect(sim, 'quest', 'turnin', 'brannoc_paymasters_box'); assert.equal(st('brannoc_paymasters_box'), QS.DONE);
+  osric(); effect(sim, 'quest', 'accept', 'brannoc_standing_down');
   // the Binding Crypt, the Sunken Chapel's second floor, among the bound (v1.49; it was the Barrows' Long Gallery): a wave
   // in the Barrows, or on the chapel's floors above, doesn't count; any room of the crypt does
   goTo(sim, 'dungeon', 'barrows', 1); sim.bus.emit('wave', { cleared: true, room: sim.world.level.descentRoom.id });
@@ -145,9 +151,8 @@ test('Chains of the Redhand: his to give and take in, in order, only while he\'s
   goTo(sim, 'dungeon', 'sunken_chapel', 1); const crypt = sim.world.level.rooms.find((r) => r !== sim.world.level.entrance && r !== sim.world.level.descentRoom);
   for (let i = 0; i < 5; i++) sim.bus.emit('wave', { cleared: true, room: crypt.id });
   assert.equal(st('brannoc_standing_down'), QS.READY);
-  assert.deepEqual(sim.destinations().filter((r) => r.id === 'quest'), [], 'no compass row: hand it in from his card');
   const bag = sim.state.bag.length;
-  card(); effect(sim, 'quest', 'turnin', 'brannoc_standing_down'); effect(sim, 'quest', 'turnin', 'brannoc_standing_down');
+  osric(); effect(sim, 'quest', 'turnin', 'brannoc_standing_down'); effect(sim, 'quest', 'turnin', 'brannoc_standing_down');
   assert.equal(st('brannoc_standing_down'), QS.DONE);
   const chain = sim.state.bag.filter((it) => it.name === 'The Broken Chain');
   assert.equal(chain.length, 1, 'the heirloom, once'); assert.equal(chain[0].r, 'heirloom'); assert.equal(sim.state.bag.length, bag + 1);
@@ -155,24 +160,25 @@ test('Chains of the Redhand: his to give and take in, in order, only while he\'s
   assert.equal(paid.find((e) => e.n === 'questReward' && e.id === 'brannoc_standing_down').item, 'broken_chain');
 });
 
-test('his quests can\'t be taken from anyone else, and can from him on the bench (v1.154: no quest waits on the party)', () => {
+test('his chain can\'t be taken from him, in the party or on the bench (v1.155: Osric\'s)', () => {
   const sim = createSim(SEED, undefined, { scene: 'town' }); sim.tick();
-  hire(sim, [0, 1]);
+  hire(sim, [0, 1]); sim.state.quests.ch1_the_diggers = { st: QS.DONE, step: 0, n: [] };
   sim.state.bosses.redhand_captain = 1; goTo(sim, 'dungeon', 'wickham_keep', 1); talkInHall(sim); effect(sim, 'companion', 'join');
   sim.commands.push({ type: 'endTalk' }); sim.tick(); goTo(sim, 'town');
   assert.equal(sim.state.bench.at(-1).id, 'brannoc');
+  sim.commands.push({ type: 'talk', npc: 'brannoc' }); sim.tick(); effect(sim, 'quest', 'accept', 'brannoc_old_debts');
+  assert.equal(sim.quests.status('brannoc_old_debts'), QS.AVAILABLE, 'benched: not his to give');
+  sim.commands.push({ type: 'endTalk' }); sim.tick();
   const osric = sim.world.npcs.find((q) => q.id === 'osric_hale'), p = sim.state.player; p.x = p.px = osric.x + 1; p.y = p.py = osric.y - 1;
   sim.commands.push({ type: 'talk', npc: 'osric_hale' }); sim.tick(); effect(sim, 'quest', 'accept', 'brannoc_old_debts');
-  assert.equal(sim.quests.status('brannoc_old_debts'), QS.AVAILABLE, 'Osric can\'t give it');
-  sim.commands.push({ type: 'talk', npc: 'brannoc' }); sim.tick(); effect(sim, 'quest', 'accept', 'brannoc_old_debts');
-  assert.equal(sim.quests.status('brannoc_old_debts'), QS.ACTIVE, 'benched: still his to give');
+  assert.equal(sim.quests.status('brannoc_old_debts'), QS.ACTIVE, 'Osric\'s');
   for (const m of sim.state.party) m.hp = statsFor(m).maxHp;
 });
 
 // the words (story adapter): chained before Garrow falls; after, he asks to come; with you, his chain
 const book = () => createStoryBook(async (f) => JSON.parse(readFileSync(`content/dialogue/${f}.json`, 'utf8')));
-async function play(knot, vars, picks) {
-  const sent = [], c = await book().open('brannoc', knot, vars, (cmd) => sent.push(cmd));
+async function play(knot, vars, picks, file = 'brannoc') {
+  const sent = [], c = await book().open(file, knot, vars, (cmd) => sent.push(cmd));
   let b = c.first; const lines = [...b.lines]; const settle = () => { while (b.waiting) { b = c.resume(vars); lines.push(...b.lines); } }; settle();
   for (const want of picks) { const ch = b.choices.find((x) => x.text.startsWith(want)); assert.ok(ch, `no "${want}" in ${b.choices.map((x) => x.text)}`); b = c.choose(ch.index); lines.push(...b.lines); settle(); }
   return { sent: sent.map((x) => `${x.tag} ${x.args.join(' ')}`), lines, choices: b.choices.map((x) => x.text) };
@@ -184,15 +190,17 @@ test('the Ink: chained and short while Garrow lives; asks to come once he\'s fal
   const ask = await play('brannoc_hub', { ...base, boss_redhand_captain: 1 }, ['Come with us.']);
   assert.deepEqual(ask.sent, ['flag set met_brannoc', 'companion join']);
   assert.deepEqual((await play('brannoc_hub', { ...base, boss_redhand_captain: 1, flag_met_brannoc: 1 }, ['Not yet.'])).sent, []);
+  // (v1.155) his chain is Osric's: Brannoc only points the way, and gives nothing
   const w = { ...base, flag_met_brannoc: 1, joined: 1, in_party: 1, boss_redhand_captain: 1 };
-  assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_old_debts: 0 }, ['Is there anything you need to settle?', "We'll settle it."])).sent, ['quest accept brannoc_old_debts']);
-  assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_old_debts: 2 }, ["That's Garrow's three sergeants down."])).sent, ['quest turnin brannoc_old_debts']);
-  assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_old_debts: 3, q_brannoc_paymasters_box: 0 }, ["Where did the robes' coin go?", "We'll find the boxes."])).sent, ['quest accept brannoc_paymasters_box']);
-  assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_paymasters_box: 2 }, ["We found the paymaster's boxes in the Keep."])).sent, ['quest turnin brannoc_paymasters_box']);
-  assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_paymasters_box: 3, q_brannoc_standing_down: 0 }, ['What do you want now?', "We'll stand with them."])).sent, ['quest accept brannoc_standing_down']);
-  assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_standing_down: 2 }, ['We stood with the legion. Five waves.'])).sent, ['quest turnin brannoc_standing_down']);
-  const topics = (await play('brannoc_hub', { ...w, q_brannoc_old_debts: -1 }, [])).choices;
-  assert.ok(!topics.some((t) => /settle/.test(t)), 'nothing offered that the sim would refuse');
+  const pointer = await play('brannoc_hub', w, ['Is there anything you need to settle?']);
+  assert.deepEqual(pointer.sent, []); assert.match(pointer.lines.join(' '), /Osric Hale/);
+  const o = { ...base, flag_met_osric: 1, boss_redhand_captain: 1 }, os = (v, picks) => play('osric_hub', { ...o, ...v }, picks, 'osric');
+  assert.deepEqual((await os({ q_brannoc_old_debts: 0 }, ['Any Redhand business for the Watch?', "We'll settle it."])).sent, ['quest accept brannoc_old_debts']);
+  assert.deepEqual((await os({ q_brannoc_old_debts: 2 }, ["Garrow's three sergeants are down."])).sent, ['quest turnin brannoc_old_debts']);
+  assert.deepEqual((await os({ q_brannoc_old_debts: 3, q_brannoc_paymasters_box: 0 }, ["Where did the robes' coin go?", "We'll find the boxes."])).sent, ['quest accept brannoc_paymasters_box']);
+  assert.deepEqual((await os({ q_brannoc_old_debts: 3, q_brannoc_paymasters_box: 2 }, ["We found the paymaster's boxes."])).sent, ['quest turnin brannoc_paymasters_box']);
+  assert.deepEqual((await os({ q_brannoc_old_debts: 3, q_brannoc_paymasters_box: 3, q_brannoc_standing_down: 0 }, ['Who relieves the legion?', "We'll stand with them."])).sent, ['quest accept brannoc_standing_down']);
+  assert.deepEqual((await os({ q_brannoc_old_debts: 3, q_brannoc_paymasters_box: 3, q_brannoc_standing_down: 2 }, ['We stood with the legion. Five waves.'])).sent, ['quest turnin brannoc_standing_down']);
 });
 
 test('he waits at the back of the hall a tile clear of its wall, so he reads as a man chained there, not one stood in the stone; reached and talked to from across the hall', () => {

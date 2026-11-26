@@ -6,6 +6,9 @@
 // Mother Coke). Entry knots: <name>_hub. Bound in by src/story/adapter.js from the sim (sim/npcs.js varsFor; day_part
 // 0 dawn · 1 day · 2 dusk · 3 night; core.js boss_<id>; quests.js q_ −1 locked · 0 available · 1 active · 2 ready ·
 // 3 done). Effects: their met_ flags; quest tags; `# service: <kind>` opens that window after the talk.
+// (v1.155; the owner: "move the companion chains to townspeople too") Haldor gives and takes in Tamsin's chain, Showing
+// Off (tamsin_the_stamp, tamsin_the_patterns, tamsin_spoiled_casting): the Assay's mark, the Forgehall's patterns and
+// the Cult's spare moulds, a smith's business. He speaks of Tamsin, who swept his floor; nothing waits on her.
 
 VAR hero_name = ""
 VAR hero_class = ""
@@ -35,6 +38,9 @@ VAR q_trial24_fighter = -1
 VAR q_trial24_rogue = -1
 VAR q_trial24_cleric = -1
 VAR q_trial24_shaman = -1
+VAR q_tamsin_the_stamp = -1
+VAR q_tamsin_the_patterns = -1
+VAR q_tamsin_spoiled_casting = -1
 
 // ── Hob, by the well: a fixer ──
 == hob_hub ==
@@ -223,6 +229,15 @@ You give her back the lamp. She takes it with both hands and sets it by the Flam
 
 == haldor_topics ==
 + { q_trial24_fighter == 2 } [The counting house held. #mark: quest ready] -> haldor_trial_turnin
++ { q_tamsin_the_stamp == 2 } [Three of the Assay's stamps. #mark: quest ready] -> haldor_stamp_turnin
++ { q_tamsin_the_stamp == 0 } [What do you make of the Assay's iron? #mark: quest] -> haldor_stamp_offer
++ { q_tamsin_the_stamp == 1 } [About the stamps… #mark: quest active] -> haldor_stamp_active
++ { q_tamsin_the_patterns == 2 } [The Forgehall's patterns. #mark: quest ready] -> haldor_patterns_turnin
++ { q_tamsin_the_patterns == 0 } [What did the old smiths cast? #mark: quest] -> haldor_patterns_offer
++ { q_tamsin_the_patterns == 1 } [About the patterns… #mark: quest active] -> haldor_patterns_active
++ { q_tamsin_spoiled_casting == 2 } [The moulds are cracked. #mark: quest ready] -> haldor_casting_turnin
++ { q_tamsin_spoiled_casting == 0 } [Could the Cult's moulds be spoiled? #mark: quest] -> haldor_casting_offer
++ { q_tamsin_spoiled_casting == 1 } [About the moulds… #mark: quest active] -> haldor_casting_active
 + { q_trial24_fighter == 0 } [What would you teach a fighter? #mark: quest] -> haldor_trial_offer
 + { q_trial24_fighter == 1 } [About the counting house… #mark: quest active] -> haldor_trial_active
 + [Can you improve this?]
@@ -249,6 +264,67 @@ You give her back the lamp. She takes it with both hands and sets it by the Flam
 == haldor_trial_turnin ==
 Haldor takes your fighter's sword, sights down it, and grunts, which is as near as he comes to praise.
 "Tempered. Now: three blades turning round you, and the man who comes inside them regrets it. Whirling Blades. It's not a trick. It's what a tempered blade does when you stop holding it so tight." # quest: turnin trial24_fighter
+-> haldor_topics
+
+// ── Showing Off (content/quests/tamsin_*.json; his since v1.155, Tamsin's before): a smith's business ──
+== haldor_stamp_offer ==
+"Bad. And it's turning up stamped as Ashgate's, at Tollhaven and Solmere, under the Assay's mark. My name's on Ashgate iron. I'd like to know theirs when I feel it."
+"Their guard-captains at the Yards carry the stamps on their belts. Bring me three. Tamsin Coalbrook asked me for the same thing once, before she went down the Seam. She wanted their mark by feel. She had the right idea. I had it first."
++ [We'll get you three. #mark: quest]
+    "The Yards at Kell's Rest. The captains lead every fifth lot. Brass on the collar, stamp on the belt." # quest: accept tamsin_the_stamp
+    -> haldor_topics
++ [Not now.]
+    "I'll go on guessing, then. I'm usually right."
+    -> haldor_topics
+
+== haldor_stamp_active ==
+"Three stamps off three captains, at the Assay Yards. Don't scratch the faces."
+-> haldor_topics
+
+== haldor_stamp_turnin ==
+Haldor turns the stamps over in his fingers, one after another, with his eyes shut.
+"Scales over a pick. Badly cut. The pick's handle is too short. Whoever cut it never held one." He opens his eyes. "Tamsin said so the first day their carts came through. I said she couldn't tell from a cart. She'll want one, to be right in person." # quest: turnin tamsin_the_stamp
+-> haldor_topics
+
+== haldor_patterns_offer ==
+"The Forgehall was the Throne's own forge. The old smiths kept their patterns there, every shape they ever cast, shelf on shelf. If the Assay is casting something up there, it learned how from those shelves."
+"Bring me what's in the chests. I want to know what they made. I'm a smith. It's professional."
++ [We'll bring them. #mark: quest]
+    "The Forgehall, under the Cinderworks: the Assay dug in to it from the works. Two chests. The pattern store's are the heavy ones." # quest: accept tamsin_the_patterns
+    -> haldor_topics
++ [Not now.]
+    "Patterns don't rust. Smiths do. Don't take too long."
+    -> haldor_topics
+
+== haldor_patterns_active ==
+"The Forgehall's chests. Two. The patterns are wood and wax, wrapped in oilcloth. Drop one and I'll hear about it from here."
+-> haldor_topics
+
+== haldor_patterns_turnin ==
+He unwraps the patterns on his anvil, one at a time. Little lamps, every one the same, a shelf's worth.
+"Lamp patterns. Throne measure. Forty to a shelf." He fits one into his palm and doesn't like the fit. "Each to hold one. One what, it doesn't say." # quest: turnin tamsin_the_patterns
+He wraps them up again, more carefully than he unwrapped them, and puts them where he can't see them from the forge.
+-> haldor_topics
+
+== haldor_casting_offer ==
+"The Cult keeps spare moulds in the Magma Vault, stacked on the floor, ready. If the first casting fails, they'll pour another."
+"A mould's easy spoiled, if you know where its seam is. A cold chisel, one tap on the seam, and it splits the first time anyone pours. It takes a while to do a stack, and the Vault won't give you a while. Hold the floor round them."
+"Tamsin would ask the iron to let go, and it would. She's quicker. Don't tell her I said."
++ [We'll hold it. #mark: quest]
+    He gives you a cold chisel, worn bright at the edge. "The Magma Vault. Five turns of the fighting by the stack, and a tap on every seam. Bring that back." # quest: accept tamsin_spoiled_casting
+    -> haldor_topics
++ [Not now.]
+    "They'll still be stacked there tomorrow. Moulds are patient. It's what they're for."
+    -> haldor_topics
+
+== haldor_casting_active ==
+"The Magma Vault. Five waves by the stack. One tap on each seam. Not two."
+-> haldor_topics
+
+== haldor_casting_turnin ==
+Haldor takes his chisel back and runs a thumb along the edge.
+"Every one? Cracked through, end to end? Then they'll ring wrong if anyone taps them, and split if anyone pours." # quest: turnin tamsin_spoiled_casting
+"Best work done in the Reach this year, and none of it's mine. I'll have to say it was my chisel."
 -> haldor_topics
 
 // ── Bel Ruddle, the Slag & Bellows: the board by the bellows ──

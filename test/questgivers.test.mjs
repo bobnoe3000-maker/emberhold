@@ -1,6 +1,6 @@
 // No quest waits on a companion in the party (v1.154; the owner, 2026-11-26: "I dont want this for any quest nor should
 // any companion be required for a quest to complete"). Chapters, trials and errands are given and taken in by people
-// who stand in the world; only a companion's own chain is theirs, and they're talked to from the bench as from the party.
+// who stand in the world; (v1.155) a companion's own chain too. They're still talked to from the bench as from the party.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
@@ -10,18 +10,16 @@ import { FOUND } from '../src/sim/heroes.js';
 
 const found = new Set(Object.keys(FOUND));
 
-test('no chapter, trial or errand is given or taken in by a companion; a companion gives only their own chain', () => {
+test('no quest is given or taken in by a companion, nor waits on one (v1.155: their own chains are townsfolk\'s too)', () => {
   for (const [id, q] of Object.entries(QUESTS)) {
     const taker = q.turnin || q.giver;
-    if (q.kind === 'companion') { assert.equal(q.giver, q.companion, `${id}: their own chain`); continue; }
     assert.ok(!found.has(q.giver), `${id}: given by ${q.giver}, a companion`);
     assert.ok(!found.has(taker), `${id}: taken in by ${taker}, a companion`);
-    assert.ok(!q.companion, `${id}: waits on ${q.companion} with the company`);
+    assert.ok(!q.companion && q.kind !== 'companion', `${id}: waits on a companion with the company`);
   }
   for (const f of readdirSync(new URL('../content/quests/', import.meta.url)).filter((f) => f.endsWith('.json'))) {
     const q = JSON.parse(readFileSync(new URL('../content/quests/' + f, import.meta.url), 'utf8'));
-    if (q.kind === 'companion') continue;
-    assert.ok(!found.has(q.giver) && !found.has(q.turnin), `${f}: a companion's`);
+    assert.ok(!found.has(q.giver) && !found.has(q.turnin) && !q.companion, `${f}: a companion's`);
   }
 });
 

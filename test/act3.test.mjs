@@ -252,25 +252,24 @@ test('the chapters wait for their bands, and Quota is Dagny\'s: no companion nee
   assert.equal(st(sim, 'ch3_quota'), QS.ACTIVE, 'from Dagny, Tamsin or no Tamsin');
 });
 
-test('the side work: Tamsin\'s chain while she\'s with you, in order; Gunnar\'s and Old Brannagh\'s, counted where they ask', () => {
+test('the side work: Tamsin\'s chain from Haldor, with or without her (v1.155), in order; Gunnar\'s and Old Brannagh\'s, counted where they ask', () => {
   const sim = after2(29, 'town', 'reach');
-  assert.equal(st(sim, 'tamsin_the_stamp'), QS.LOCKED, 'not without her');
-  withTamsin(sim);
-  assert.equal(st(sim, 'tamsin_the_stamp'), QS.AVAILABLE); assert.equal(st(sim, 'tamsin_the_patterns'), QS.LOCKED, 'in order');
+  assert.ok(!sim.state.party.some((m) => m.id === 'tamsin'), 'Tamsin not found');
+  assert.equal(st(sim, 'tamsin_the_stamp'), QS.AVAILABLE, 'Haldor\'s to give, Tamsin or no Tamsin'); assert.equal(st(sim, 'tamsin_the_patterns'), QS.LOCKED, 'in order');
   const run = (id, giver, site, depth, fire) => {
-    if (giver !== 'tamsin') goTo(sim, 'town', 'barrows', 0, 'reach');
+    goTo(sim, 'town', 'barrows', 0, 'reach');
     talk(sim, giver); effect(sim, 'quest', 'accept', id); assert.equal(st(sim, id), QS.ACTIVE, id);
     goTo(sim, 'dungeon', site, depth); fire();
     assert.equal(st(sim, id), QS.READY, id);
-    if (giver !== 'tamsin') goTo(sim, 'town', 'barrows', 0, 'reach');
+    goTo(sim, 'town', 'barrows', 0, 'reach');
     talk(sim, giver); effect(sim, 'quest', 'turnin', id); assert.equal(st(sim, id), QS.DONE, id);
   };
   const elites = (n) => () => { for (let i = 0; i < n; i++) sim.bus.emit('slain', { elite: true }); };
   const chests = (n) => () => { for (let i = 0; i < n; i++) sim.bus.emit('looted', { kind: 'chest' }); };
   const waves = (n) => () => { for (let i = 0; i < n; i++) sim.bus.emit('wave', { cleared: true, room: -1 }); };
-  run('tamsin_the_stamp', 'tamsin', 'assay_yards', 0, elites(3));
-  run('tamsin_the_patterns', 'tamsin', 'cinderworks', 0, chests(2));
-  run('tamsin_spoiled_casting', 'tamsin', 'cinderworks', 1, waves(5));
+  run('tamsin_the_stamp', 'haldor', 'assay_yards', 0, elites(3));
+  run('tamsin_the_patterns', 'haldor', 'cinderworks', 0, chests(2));
+  run('tamsin_spoiled_casting', 'haldor', 'cinderworks', 1, waves(5));
   run('gunnar_the_lease', 'gunnar_slagg', 'assay_yards', 0, chests(2));
   run('gunnar_the_row', 'gunnar_slagg', 'cinderworks', 0, elites(3));
   run('brannagh_last_wages', 'old_brannagh', 'cold_seam', 0, chests(2));

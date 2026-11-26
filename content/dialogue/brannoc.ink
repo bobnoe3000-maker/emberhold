@@ -4,8 +4,9 @@
 // from his party card once he's with you. Bound in by src/story/adapter.js from the sim
 // (sim/npcs.js varsFor: joined 0 / 1, in_party 0 / 1; core.js: boss_<id> 0 / 1); Ink only reads them.
 // Effects go out as tags the sim checks: flags: met_brannoc; `# companion: join` (heroes.js: only once
-// Garrow has fallen); his chain, Chains of the Redhand (q_ = −1 locked · 0 available · 1 active ·
-// 2 ready · 3 done).
+// Garrow has fallen). His chain, Chains of the Redhand, is Osric Hale's to give since v1.155 (the owner: "move the
+// companion chains to townspeople too"; osric.ink): Brannoc only says what he'd like settled, and who has it in his book.
+// He's talked to from his card in the party or on the bench (`joined`).
 
 VAR hero_name = ""
 VAR hero_class = ""
@@ -18,9 +19,6 @@ VAR flag_met_brannoc = 0
 VAR joined = 0
 VAR in_party = 0
 VAR boss_redhand_captain = 0
-VAR q_brannoc_old_debts = -1
-VAR q_brannoc_paymasters_box = -1
-VAR q_brannoc_standing_down = -1
 
 == brannoc_hub ==
 { joined == 0 && boss_redhand_captain == 0: -> brannoc_chained_early }
@@ -60,7 +58,6 @@ A big man sits against the back wall with a chain from his ankle to a ring in th
 // ── with you ──
 == brannoc_greet ==
 {&Brannoc falls into step and waits for you to say something first.|"Sorry. Were you going to say something? Go on."|Brannoc is turning a link of old chain over in his fingers. He puts it away when he sees you looking.}
-{ q_brannoc_standing_down == 3: "I keep thinking about them down there. Nobody came, and they stayed anyway. We came, in the end. Late. But we came." }
 -> brannoc_topics
 
 == brannoc_greet_fallen ==
@@ -69,77 +66,15 @@ Brannoc looks back the way you came, where {fallen_name} should be.
 -> brannoc_topics
 
 == brannoc_topics ==
-+ { q_brannoc_old_debts == 2 } [That's Garrow's three sergeants down. #mark: quest ready] -> brannoc_debts_turnin
-+ { q_brannoc_paymasters_box == 2 } [We found the paymaster's boxes in the Keep. #mark: quest ready] -> brannoc_box_turnin
-+ { q_brannoc_standing_down == 2 } [We stood with the legion. Five waves. #mark: quest ready] -> brannoc_standing_turnin
-+ { q_brannoc_old_debts == 0 } [Is there anything you need to settle? #mark: quest] -> brannoc_debts_offer
-+ { q_brannoc_old_debts == 1 } [About the sergeants… #mark: quest active] -> brannoc_debts_active
-+ { q_brannoc_paymasters_box == 0 } [Where did the robes' coin go? #mark: quest] -> brannoc_box_offer
-+ { q_brannoc_paymasters_box == 1 } [About the paymaster… #mark: quest active] -> brannoc_box_active
-+ { q_brannoc_standing_down == 0 } [What do you want now? #mark: quest] -> brannoc_standing_offer
-+ { q_brannoc_standing_down == 1 } [About the legion… #mark: quest active] -> brannoc_standing_active
++ [Is there anything you need to settle?] -> brannoc_settle
 + [Why did the Company dig?] -> brannoc_digging
 + [Tell me about Garrow.] -> brannoc_garrow
 + [That's all.] -> brannoc_bye
 
-// Old Debts (content/quests/brannoc_old_debts.json)
-== brannoc_debts_offer ==
-"Garrow's sergeants. The ones who kept my chain oiled. They're still in the Keep, and they think I owe them."
-"I don't. But they'll say so every time we pass, loudly, with crossbows. I'd like it settled before it follows us."
-+ [We'll settle it. #mark: quest]
-    "Three of them. They lead the others in, every so often, shouting. You'll know them by the shouting." # quest: accept brannoc_old_debts
-    -> brannoc_topics
-+ [Not now.]
-    "No. Sorry. They'll keep. They always did."
-    -> brannoc_topics
-
-== brannoc_debts_active ==
-"Wickham Keep. Three sergeants. Stay in a room long enough and one comes to you shouting. They never learned not to."
--> brannoc_topics
-
-== brannoc_debts_turnin ==
-Brannoc is quiet for a while.
-"That's done, then. I thought I'd feel something. I feel like sitting down. Sorry. I'll stand." # quest: turnin brannoc_old_debts
--> brannoc_topics
-
-// The Paymaster's Box (content/quests/brannoc_paymasters_box.json)
-== brannoc_box_offer ==
-"The paymaster kept the robes' coin in the Keep's strongroom, down in the Barracks, not with Garrow. He trusted nobody. Not Garrow, not the men, not himself. So two boxes, in two places."
-"I'd like to see whose seal is on the purses. Garrow never asked. I'm asking."
-+ [We'll find the boxes. #mark: quest]
-    "Any two chests in the Keep, on any floor. The paymaster's strongroom, off the Barracks on the second floor, has two. He'd hide them where he'd have to walk past them twice a day, to be sure they were still there." # quest: accept brannoc_paymasters_box
-    -> brannoc_topics
-+ [Not now.]
-    "The coin's not going anywhere. That was always the paymaster's whole idea."
-    -> brannoc_topics
-
-== brannoc_box_active ==
-"Two chests, anywhere in the Keep. The strongroom off the Barracks, the second floor, is where I'd look first. He'd keep them close to the doors, where he could count them on his way past."
--> brannoc_topics
-
-== brannoc_box_turnin ==
-Brannoc tips a purse into his hand and holds the wax to the light. It's red, the colour of a coal just before it goes out, with no crest in it, only a thumbprint.
-"Lords put lions on their wax. This is somebody who likes fire and doesn't like names." He pockets one. "Sorry. I'll give it to Sister Ilse. She'll want to read it twice." # quest: turnin brannoc_paymasters_box
--> brannoc_topics
-
-// Standing Down (content/quests/brannoc_standing_down.json)
-== brannoc_standing_offer ==
-"Osric says there's a legion under the Sunken Chapel, bound where it stood, that held a road for three hundred years because nobody told them to stop."
-"I left everything I was ever in. Twice. I'd like to stand somewhere once, with somebody who didn't. Even if they're dead. Especially if."
-+ [We'll stand with them. #mark: quest]
-    "The Sunken Chapel. The Binding Crypt, the second floor, where they stand in rows the way they were stopped. Five waves, and nobody steps out. Sorry. I know you'll step out if you have to. I mean I won't." # quest: accept brannoc_standing_down
-    -> brannoc_topics
-+ [Not now.]
-    "They've waited a long time. They'll understand."
-    -> brannoc_topics
-
-== brannoc_standing_active ==
-"The Sunken Chapel's Binding Crypt, the second floor, among the bound. Five waves. I've been practising standing still. It's harder than it looks."
--> brannoc_topics
-
-== brannoc_standing_turnin ==
-Brannoc takes the old chain out of his pocket, all of it but one link, and works that link open with his thumbs until it bends.
-"There. I've kept one. The rest is yours. It's not much. It held me for a year. Maybe it'll hold something for you." # quest: turnin brannoc_standing_down
+// Chains of the Redhand (content/quests/brannoc_*.json): Osric Hale gives it since v1.155
+== brannoc_settle ==
+"Garrow's sergeants say I owe them. The paymaster's boxes are still in the Keep, with whoever's seal is on the robes' coin. And there's a legion under the Sunken Chapel that never left anything. I'd like all three seen to."
+"Osric Hale has them in his book. He says they're the Watch's business. Ask him at the well. He'll write you down for it. He writes everybody down."
 -> brannoc_topics
 
 == brannoc_digging ==

@@ -1,15 +1,14 @@
 {
   "id": "tamsin_the_stamp",
-  "kind": "companion",
+  "kind": "errand",
   "title": "The Assay's Stamp",
-  "giver": "tamsin",
+  "giver": "haldor",
   "region": "reach",
   "level": [
     23,
     60
   ],
-  "companion": "tamsin",
-  "summary": "The Assay stamps its mark on everything it weighs. Its guard-captains at the Yards carry the stamps. Tamsin wants three, so she knows the mark when she sees it.",
+  "summary": "The Assay stamps its mark on everything it weighs, and its guard-captains at the Yards carry the stamps. Haldor wants three, to know the mark by feel. Tamsin Coalbrook asked him for the same once.",
   "steps": [
     {
       "id": "yards",
@@ -24,16 +23,16 @@
       ]
     }
   ],
-  "ready": "Three of the Assay's stamps. Give them to Tamsin.",
-  "done": "Tamsin knows the Assay's mark by feel now. She says it's badly cut.",
+  "ready": "Three of the Assay's stamps. Take them to Haldor at the Ashgate Forge.",
+  "done": "Haldor knows the Assay's mark by feel now. He says it's badly cut, and that Tamsin said so first.",
   "rewards": {
     "share": 0.35,
     "lv": 24,
     "gold": 260
   },
   "dialogue": {
-    "file": "tamsin",
-    "offer": "tamsin_stamp_offer",
-    "turnin": "tamsin_stamp_turnin"
+    "file": "ashgate",
+    "offer": "haldor_stamp_offer",
+    "turnin": "haldor_stamp_turnin"
   }
 }

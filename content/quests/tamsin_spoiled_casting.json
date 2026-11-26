@@ -1,8 +1,8 @@
 {
   "id": "tamsin_spoiled_casting",
-  "kind": "companion",
+  "kind": "errand",
   "title": "Spoiled Casting",
-  "giver": "tamsin",
+  "giver": "haldor",
   "region": "reach",
   "level": [
     29,
@@ -11,12 +11,11 @@
   "after": [
     "tamsin_the_patterns"
   ],
-  "companion": "tamsin",
-  "summary": "The Cult keeps spare moulds in the Magma Vault. Tamsin can crack them where they stand, if somebody holds the floor round her while she works.",
+  "summary": "The Cult keeps spare moulds in the Magma Vault. Haldor knows how to spoil a mould where it stands, with a cold chisel on its seam, if somebody holds the floor round the stack long enough.",
   "steps": [
     {
       "id": "vault",
-      "journal": "The Magma Vault, the Cinderworks' second floor: hold five waves while Tamsin spoils the moulds.",
+      "journal": "The Magma Vault, the Cinderworks' second floor: hold five waves by the Cult's spare moulds, long enough to spoil them.",
       "objectives": [
         {
           "type": "waves",
@@ -28,16 +27,16 @@
       ]
     }
   ],
-  "ready": "The Cult's spare moulds are cracked through. Tell Tamsin it's done; she'll say she knows.",
-  "done": "Nobody casts anything out of those moulds again. Tamsin is insufferable about it.",
+  "ready": "The Cult's spare moulds are cracked through. Tell Haldor at the Ashgate Forge.",
+  "done": "Nobody casts anything out of those moulds again. Haldor says it was his chisel.",
   "rewards": {
     "share": 0.45,
     "lv": 29,
     "gold": 360
   },
   "dialogue": {
-    "file": "tamsin",
-    "offer": "tamsin_casting_offer",
-    "turnin": "tamsin_casting_turnin"
+    "file": "ashgate",
+    "offer": "haldor_casting_offer",
+    "turnin": "haldor_casting_turnin"
   }
 }

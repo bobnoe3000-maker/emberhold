@@ -77,15 +77,15 @@ test('M8 golden path: Act II with Wren, her chain, a level-12 trial, the Fens se
   go(sim, 'dungeon', 'canal_locks', 0); assert.ok(fightIn(sim, () => st(sim, 'ch2_the_locks') === QS.READY), 'the Sluice');   // (the first floor's hall: v1.102)
   talk(sim, 'dace_pike'); effect(sim, 'quest', 'turnin', 'ch2_the_locks');
 
-  // Wren's chain, from her card: the marker off three of the Locks' leaders; two of her caches at Vat Seven (the Locks'
+  // Wren's chain, from Dace Pike (v1.155; her card before): the marker off three of the Locks' leaders; two of her caches at Vat Seven (the Locks'
   // third floor), none on the floors above it
-  card(sim, 'wren'); effect(sim, 'quest', 'accept', 'wren_the_marker');
+  talk(sim, 'dace_pike'); effect(sim, 'quest', 'accept', 'wren_the_marker');
   go(sim, 'dungeon', 'canal_locks', 0); assert.ok(fightIn(sim, () => st(sim, 'wren_the_marker') === QS.READY, firstRoom, 1500), 'the marker');
-  card(sim, 'wren'); effect(sim, 'quest', 'turnin', 'wren_the_marker'); card(sim, 'wren'); effect(sim, 'quest', 'accept', 'wren_night_boats');
+  talk(sim, 'dace_pike'); effect(sim, 'quest', 'turnin', 'wren_the_marker'); talk(sim, 'dace_pike'); effect(sim, 'quest', 'accept', 'wren_night_boats');
   chests(sim, 'canal_locks', 0, () => false);
   assert.ok(sim.state.quests.wren_night_boats.n[0] >= 1 || st(sim, 'wren_night_boats') === QS.READY, 'the lock halls\' chests count too (2026-11-21: a chest quest takes any floor\'s)');
   assert.ok(chests(sim, 'canal_locks', 1, () => st(sim, 'wren_night_boats') === QS.READY), 'her caches');
-  card(sim, 'wren'); effect(sim, 'quest', 'turnin', 'wren_night_boats');
+  talk(sim, 'dace_pike'); effect(sim, 'quest', 'turnin', 'wren_night_boats');
 
   // 3. The Sickpools (Vat Seven, the Locks' second floor (v1.102), where the harvesters carry their cages): three full cages broken,
   // then the Vatwarden in its hall (v1.49)
@@ -98,9 +98,9 @@ test('M8 golden path: Act II with Wren, her chain, a level-12 trial, the Fens se
   talk(sim, 'sister_orla'); effect(sim, 'quest', 'accept', 'ch2_the_bells');
   go(sim, 'dungeon', 'drowned_abbey', 0); assert.ok(fightIn(sim, () => st(sim, 'ch2_the_bells') === QS.READY, (L) => L.rooms.find((q) => q.part === 'teagues_cell')), 'Teague');
   talk(sim, 'sister_orla'); effect(sim, 'quest', 'turnin', 'ch2_the_bells');
-  card(sim, 'wren'); effect(sim, 'quest', 'accept', 'wren_settled');
+  talk(sim, 'dace_pike'); effect(sim, 'quest', 'accept', 'wren_settled');
   go(sim, 'dungeon', 'drowned_abbey', 0); assert.ok(fightIn(sim, () => st(sim, 'wren_settled') === QS.READY, firstRoom), 'the cloister held while she burns the boat');
-  card(sim, 'wren'); effect(sim, 'quest', 'turnin', 'wren_settled');
+  talk(sim, 'dace_pike'); effect(sim, 'quest', 'turnin', 'wren_settled');
   assert.equal(sim.state.bag.filter((it) => it.name === 'The Receipt').length, 1);
 
   // 5. The Rolls (v1.49; v1.102 the Choir in the first floor's hall): the Choir silenced, two chests in the Abbey, to Agnes
