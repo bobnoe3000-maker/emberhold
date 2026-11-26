@@ -1213,6 +1213,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       else { m.down = false; m.hp = Math.max(1, Math.round(statsFor(m).maxHp * 0.2)); }
     }
   }
+  // Downed with no fight to be Downed in (the owner, 2026-11-26: "2 down, but temple says i dont have anyone down"): a save
+  // made mid-fight keeps `down` (MEMBER_KEYS) but not the fight, so a reload left them at 0 HP, out of reach of the
+  // temple (it raises the Fallen) and of every fight's end. They get up as a fight's end gets them up, at 20 %.
+  function standOrphans() {
+    for (const m of state.party) if (m.down && !m.fallen) { m.down = false; m.downT = 0; m.downs = 0; m.hp = Math.max(1, Math.round(statsFor(m).maxHp * 0.2)); }
+  }
   function fall(m) {
     m.down = false; m.fallen = true; m.hp = 0; m.buff = null; m.ward = 0; m.moving = false;
     bus.emit('combat', { t: 'fallen', x: m.x, y: m.y, name: m.name });
@@ -2787,8 +2793,9 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       const b = battle && battle.bout, H = hero(), k = b && H ? (b.call > 0 || b.over || held(H) || H.rooted > 0 ? 0 : memberSlow(H)) : 1;   // (a bout: held, rooted or slowed as a rival is)
       return battle && hazardAt(battle, x, y) ? HAZARD.slow * k : k;
     },
-    reset() { if (battle && battle.bout) endBout(); if (battle && battle.ring) endRing('left'); const was = !!battle; if (battle && battle.tower) towerOut(); battle = null; focusId = 0; pending = []; leadCtl = null; calmT = 0; if (was) downedOut(true); placeCompanions(); },   // travel mid-fight = walking out
+    reset() { if (battle && battle.bout) endBout(); if (battle && battle.ring) endRing('left'); const was = !!battle; if (battle && battle.tower) towerOut(); battle = null; focusId = 0; pending = []; leadCtl = null; calmT = 0; if (was) downedOut(true); else standOrphans(); placeCompanions(); },   // travel mid-fight = walking out (no fight: nobody left Downed, standOrphans)
     placeCompanions,
+    standOrphans,
     towerClimb,
     startBout,
     endBout,

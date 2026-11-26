@@ -1001,6 +1001,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     for (const k of ['embers', 'lootN', 'uidN']) state.counters[k] = data.counters?.[k] ?? 0;
     if (Array.isArray(data.party) && data.party.length) state.party = data.party.map((m) => ({ ...m }));
     state.bench = (data.bench ?? []).map((m) => ({ ...m }));
+    for (const m of state.bench) if (m.down) m.down = false;   // (benched is never Downed: heroes.js bench)
     state.created = data.created ?? true;                   // saves from before creation already had their hero
     state.dev = data.dev === true;                          // (v34) a dev game (dev.js)
     state.temple = { freeDay: data.temple?.freeDay ?? -1 };
