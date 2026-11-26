@@ -1320,7 +1320,9 @@ function buildTidemark(seed) {
   put(o, B('tower'), lampfort[0] + 2, lampfort[1] - 2, 'round', 0.1); put(o, B('wall'), lampfort[0] - 4, lampfort[1] + 4);
   o.labels.push({ x: BRIDGE[0], y: cross[1], id: B('standard'), text: 'Brine Cross' }, { x: highmarch[0], y: highmarch[1], id: B('gatehousey'), text: 'Highmarch' },
     { x: tollhaven[0], y: tollhaven[1], id: B('gatehousey'), text: 'Tollhaven' }, { x: gullwick[0], y: gullwick[1], id: B('cottage'), text: 'Gullwick' },
-    { x: lampfort[0], y: lampfort[1], id: B('tower'), text: 'The Lamp Fort' }, { x: 132, y: 20, text: 'The salt marsh' });
+    { x: lampfort[0], y: lampfort[1], id: B('tower'), text: 'The Lamp Fort' }, { x: 132, y: 20, text: 'The salt marsh' },
+    { x: ferry[0], y: ferry[1] - 2, text: 'The ferry to the Drowned Mole', site: 'drowned_mole' },
+    { x: isles[0] - 2, y: isles[1] + 2, text: 'Boats to the Gull Isles', site: 'gull_isles' });   // (the same: the landing jetty's end, a boat waiting)   // (the owner, 2026-11-26: the jetty's end read as a dead end; the boat and the ferryman waiting in it are drawn there, render3d/convert.js)
   for (const r of ROADS) if (r.imperial) beacons(o, r.pts, B('tower'));
 
   // THE HILLS (their own stream): Highmarch's high ground in the north-west, a range past the north and west edges

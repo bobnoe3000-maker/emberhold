@@ -2209,14 +2209,14 @@ Object.assign(TYPES, {
     const L = 2.6, B = 0.36, D = 0.56;                                    // length, half the beam, the depth gunwale to keel
     // (round 1: dark tar and slate-grey deck went to one navy shape at dusk; salt-silvered oak now, the hull a weathered
     // brown, the tide line black-green under it)
-    const tar = mat(tex('planks', '#6a5848', 91)), weed = mat(tex('planks', '#33402e', 92)), deckM = mat(tex('planks', '#a49a88', 93));
+    const tar = mat(tex('planks', '#6a5848', 91)), weed = mat(tex('planks', '#33402e', 92)), deckM = mat(tex('planks', '#ae9270', 93));   // (round 2: a grey deck read as a slate roof under the sky: honey oak, bleached)
     for (const m of [tar, weed, deckM]) m.side = THREE.DoubleSide;
-    const rib = mat(null, '#3a2e24'), spar = mat(null, '#7a6c5a'), gilt = mat(null, '#a88a4a'), dark = mat(null, '#121014'), rope = mat(null, '#8a7650');
+    const rib = mat(null, '#3a2e24'), spar = mat(null, '#7a6c5a'), gilt = mat(null, '#c09a50'), dark = mat(null, '#121014'), rope = mat(null, '#8a7650'), glassD = mat(null, '#1c2c2c');
     const sail = new THREE.MeshStandardMaterial({ color: '#c4bca8', roughness: 0.95, side: THREE.DoubleSide });
     // the ship's frame (her own: x stern-ward, z to starboard), turned along the shore (stern north), heeled to seaward,
     // down by the head, settled on the reef
     const yaw = new THREE.Group(); yaw.rotation.y = Math.PI / 2 - 0.12; g.add(yaw);
-    const ship = new THREE.Group(); ship.rotation.set(0.5, 0, 0.06); ship.position.set(0, -0.02, 0); yaw.add(ship);
+    const ship = new THREE.Group(); ship.rotation.set(0.44, 0, 0.06); ship.position.set(0, -0.02, 0); yaw.add(ship);
     g.updateMatrixWorld(true); const M = ship.matrixWorld.clone();
     // her lines: t 0 at the bow, 1 at the stern; half-beam full aft of the middle, a flat transom; the sheer rising at
     // both ends; the section a U (steep sides, a round bilge, a flat floor)
@@ -2273,10 +2273,14 @@ Object.assign(TYPES, {
     // the sterncastle, Livia's cabin under it: a raised house over the last fifth, its rail; the quarter gallery's windows
     // down her starboard side (to the camera) and the stern gallery across the transom, dark, faded gilt round them
     { const t0 = 0.79, x0 = X(t0), len = L * 0.21, y = deckY(0.9), b = half(0.9) * 0.9, H = 0.26;
-      box(len, H, b * 2, tar, x0 + len / 2, y, 0, ship); box(len + 0.05, 0.035, b * 2 + 0.05, rib, x0 + len / 2, y + H, 0, ship);
+      // (round 2: a dark lid on it read as a house's roof: its top is a deck, the same oak as hers, a rail round it)
+      box(len, H, b * 2, tar, x0 + len / 2, y, 0, ship); box(len - 0.02, 0.02, b * 2 - 0.02, deckM, x0 + len / 2, y + H, 0, ship);
+      for (const sz of [-1, 1]) box(len, 0.03, 0.03, rib, x0 + len / 2, y + H + 0.08, sz * (b + 0.015), ship);
       for (const sz of [-1, 1]) for (let k = 0; k < 5; k++) box(0.025, 0.08, 0.03, rib, x0 + 0.03 + k * 0.12, y + H + 0.03, sz * (b + 0.015), ship);   // its rail's stanchions
       for (let k = 0; k < 3; k++) { const wz = -b * 0.6 + k * b * 0.6; box(0.012, 0.1, 0.09, dark, L / 2 + 0.006, y + 0.08, wz, ship); box(0.014, 0.13, 0.12, gilt, L / 2 + 0.002, y + 0.065, wz, ship); }
-      for (let k = 0; k < 3; k++) { box(0.09, 0.1, 0.012, dark, x0 + 0.08 + k * 0.17, y + 0.08, b + 0.008, ship); box(0.12, 0.13, 0.014, gilt, x0 + 0.08 + k * 0.17, y + 0.065, b + 0.003, ship); }
+      // (round 2: lost in the hull's shade: larger, in a gilt-framed band, the glass the sea's dark green)
+      box(len * 0.92, 0.17, 0.016, gilt, x0 + len / 2, y + 0.04, b + 0.004, ship);
+      for (let k = 0; k < 3; k++) box(0.11, 0.12, 0.014, glassD, x0 + 0.1 + k * 0.17, y + 0.065, b + 0.012, ship);
       box(len * 0.9, 0.03, 0.02, gilt, x0 + len / 2, y + H - 0.05, b + 0.01, ship); }                        // (a gilt moulding along her quarter)
     // the forecastle, low, and the stub of the bowsprit
     { const len = L * 0.13, y = deckY(0.07); box(len, 0.12, half(0.1) * 1.7, tar, X(0) + len / 2 + 0.07, y, 0, ship);
@@ -2298,9 +2302,9 @@ Object.assign(TYPES, {
       const m = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, len, 7), spar); m.position.copy(top).add(end).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); g.add(m);
       const at = top.clone().lerp(end, 0.6), yard = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1.0, 6), spar);
       yard.position.copy(at); yard.rotation.set(Math.PI / 2 - 0.12, 0, 0.25); g.add(yard);
-      const sg = new THREE.PlaneGeometry(0.9, 0.5, 6, 3), sp = sg.attributes.position;
+      const sg = new THREE.PlaneGeometry(1.0, 0.7, 6, 3), sp = sg.attributes.position;
       for (let i = 0; i < sp.count; i++) { const y = sp.getY(i), x = sp.getX(i); sp.setZ(i, 0.06 * Math.sin(x * 7 + y * 4)); if (y < -0.2) sp.setY(i, y + (r() - 0.3) * 0.12); }
-      sg.computeVertexNormals(); const sm = new THREE.Mesh(sg, sail); sm.position.set(at.x + 0.1, Math.max(WL + 0.03, at.y - 0.2), at.z); sm.rotation.set(-1.05, Math.PI / 2 + 0.25, 0.05); g.add(sm);
+      sg.computeVertexNormals(); const sm = new THREE.Mesh(sg, sail); sm.position.set(at.x + 0.22, Math.max(WL + 0.05, at.y - 0.16), at.z + 0.05); sm.rotation.set(-1.25, Math.PI / 2 + 0.25, 0.05);   // (round 2: lying nearer the water, to seaward, so the camera sees its face) g.add(sm);
       for (let k = 0; k < 3; k++) { const f = box(0.18 + r() * 0.1, 0.008, 0.13, sail, at.x + 0.25 + r() * 0.15, WL - 0.002, at.z - 0.3 + k * 0.28, g); f.rotation.y = r() * 2; } }   // (its rags afloat)
     // the reef: black rocks from the beach out to her landward side, weed on their tops, a few awash, the bigger ones
     // nearer her; and the ladder down her landward side to them

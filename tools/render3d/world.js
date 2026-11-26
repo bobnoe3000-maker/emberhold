@@ -1487,6 +1487,21 @@ function buildTavern(pieces) {
       b.lathe('palace_gilt', [{ y: 0, r: 0.08 }, { y: 0.03, r: 0.05 }, { y: 0.18, r: 0.025 }, { y: 0.2, r: 0.05 }], { segments: 8, at: at(0.5, y, -0.2) });
       b.tinted([1.2, 1.15, 1.0], () => b.lathe('linen', [{ y: 0, r: 0.035 }, { y: 0.2, r: 0.032 }], { segments: 7, capTop: true, at: at(0.5, y + 0.2, -0.2) }));
       b.box(tavernGlass, [0.05, 0.09, 0.05], { at: at(0.5, y + 0.46, -0.2) });
+    } else if (p.k === 'hammock') {
+      // (docs/art-critic-pass-tidemark-step7.md) a hammock on a hulk's lower deck, in place of the barracks' bunk the sim
+      // stands there: the Grace's children's deck in the Sister's Cabin, the Gull Isles' gun deck. Two stanchions, the sling
+      // of sailcloth sagging low between them on its lanyards, a blanket left rolled in it; along its wall, small
+      const R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000, HL = 0.62, sw = (R(1) - 0.5) * 0.12;
+      const at = (u, y, v = 0) => (p.n === 'x' ? [p.x + v, y, p.z + u] : [p.x + u, y, p.z + v]), rot = (a) => (p.n === 'x' ? [a, 0, 0] : [0, 0, a]);
+      b.tinted(OAK, () => { for (const sg of [-1, 1]) { b.box('furniture_wood', [0.09, 1.25, 0.09], { at: at(sg * (HL + 0.12), FL + 0.625) }); b.box('furniture_wood', [0.16, 0.05, 0.16], { at: at(sg * (HL + 0.12), FL + 1.27) }); } });
+      const N = 6, yAt = (u) => FL + 0.42 + 0.22 * (u / HL) ** 2;
+      for (let k = 0; k < N; k++) {
+        const u0 = -HL + (2 * HL * k) / N, u1 = -HL + (2 * HL * (k + 1)) / N, a = Math.atan2(yAt(u1) - yAt(u0), u1 - u0);
+        b.tinted([0.98, 0.94, 0.84], () => b.box('linen', [Math.hypot(u1 - u0, yAt(u1) - yAt(u0)) + 0.01, 0.035, 0.42], { at: at((u0 + u1) / 2, (yAt(u0) + yAt(u1)) / 2, sw), rot: rot(a) }));
+      }
+      for (const sg of [-1, 1]) { const y0 = yAt(sg * HL), y1 = FL + 1.18, u0 = sg * HL, u1 = sg * (HL + 0.1), a = Math.atan2(y1 - y0, u1 - u0);
+        b.tinted([0.62, 0.5, 0.34], () => b.box('linen', [Math.hypot(u1 - u0, y1 - y0), 0.02, 0.02], { at: at((u0 + u1) / 2, (y0 + y1) / 2, sw), rot: rot(a) })); }
+      b.tinted([0.55, 0.42, 0.36], () => b.lathe('linen', [{ y: 0, r: 0.08 }, { y: 0.28, r: 0.08 }], { segments: 7, capTop: true, at: at(-HL * 0.35 + R(2) * 0.3, FL + 0.47, sw), rot: p.n === 'x' ? [0, 0, 0] : [Math.PI / 2, 0, 0] }));
     } else if (p.k === 'ppapers') {
       // papers fallen to the floor by the table, one with its seal
       const R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;

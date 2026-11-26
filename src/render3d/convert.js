@@ -995,6 +995,8 @@ const PALACE_3D = {
   brazier: (x, z, h, k, ctx) => (ctx.wall && ctx.wall.d < 2.6 ? TAVERN_3D.brazier(x, z, h, k, ctx) : ctx.add({ ...sillPool(x, z, ctx.open), dy: 1.6, intensity: 3.2, distance: 6.5, color: '#ffc27a' })),
 };
 PALACE_3D.banner_y = PALACE_3D.banner; PALACE_3D.standard_y = PALACE_3D.standard; PALACE_3D.desk_y = PALACE_3D.desk;
+/** the palace's pieces a hulk's cabins borrow (the Sister's Cabin, the Gull Isles' second floor) */
+const HULK_LENT = new Set(['desk', 'desk_y', 'papers']);
 /** the palace's runners (convert's own, not the sim's: flat, walked over): down a long room's axis, and from the throne's
  * steps to the near wall; split round anything the sim stood on its line (a column) @returns {any[]} trim pieces */
 function palaceRunners(w, L, X, Z) {
@@ -1401,7 +1403,14 @@ function dungeon(w, o = {}) {
     if (kind === 'block') continue;                                 // (a big piece's footprint: world.js big)
     if (inside && look.ramparts && RAMP_3D[kind]) { RAMP_3D[kind](x, z, h, kind, { add, trim, open }); continue; }
     if (inside && look.water && DOCK_3D[kind]) { DOCK_3D[kind](x, z, h, kind, { add, trim, open, edge: edgeOf(open, x, z) }); continue; }
-    if (inside && look.palace && PALACE_3D[kind]) { const c = w.level.cells.get(k); PALACE_3D[kind](x, z, h, kind, { add, drop, wall: wallOf(open, W, D, x, z), trim, open, X, room: c && c.room >= 0 ? w.level.rooms[c.room] : null }); continue; }
+    // (the reliquary is the palace's piece, but the Sister's Cabin keeps one in the Grace's chapel locker, on the hulk kit;
+    // and a hulk's cabins (Livia's there, the Gull Isles' wardroom and great cabin) take the palace's writing tables and
+    // papers, not the clerk's voxel desk, whose own light burned out to a blob in the lit hulk:
+    // docs/art-critic-pass-tidemark-step7.md. The rest stay the palace's)
+    if (inside && (look.palace || kind === 'reliquary' || (look === KIT_LOOK.hulk && HULK_LENT.has(kind))) && PALACE_3D[kind]) { const c = w.level.cells.get(k); PALACE_3D[kind](x, z, h, kind, { add, drop, wall: wallOf(open, W, D, x, z), trim, open, X, room: c && c.room >= 0 ? w.level.rooms[c.room] : null }); continue; }
+    // (a hulk's lower deck, the Sister's Cabin's children's deck and the Gull Isles' gun deck: the sim's bunks hung as
+    // hammocks, along the wall they stand by; world.js buildTavern 'hammock')
+    if (inside && look === KIT_LOOK.hulk && kind === 'bunk') { const wl = wallOf(open, W, D, x, z); trim.push({ k: 'hammock', x, z, n: wl && wl.side !== 'n' ? 'x' : 'z', seed: h % 997 }); continue; }
     if (inside && TAVERN_3D[kind]) { const c = w.level.cells.get(k); TAVERN_3D[kind](x, z, h, kind, { add, drop, wall: wallOf(open, W, D, x, z), trim, open, room: c && c.room >= 0 ? w.level.rooms[c.room] : null }); continue; }
     if (DRESS_3D[kind]) add(DRESS_3D[kind](x, z, h, kind));
     else sprites.push({ prop: kind, tx, ty, x, z, ...(FLAT.has(kind) ? { flat: true } : {}) });
