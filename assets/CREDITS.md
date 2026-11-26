@@ -78,6 +78,14 @@ artists including rubberduck, Iwan "qubodup" Gabovitch and Ljudbank. They are li
 - **Synthesised by `tools/audio/synth.mjs`** (2026-11-09): `ice_1`–`ice_3.mp3`, ice cracking (Frost Nova, Glacial Tomb).
   Made from seeded noise and sines, no recording: ours, CC0.
 
+## Music — `assets/audio/music/aria/`
+- **Aria Sound Library** (free sample) by **Out of Tokens Studio** (https://outoftokensstudio.itch.io/aria-sound-library),
+  downloaded 2026-11-26: eight looping cues from its two albums, *Chrono Aria* and *Astral Cadence*, as shipped (MP3,
+  320 kbps, nothing changed). Kept for later use; the game doesn't play them yet.
+- **Licence:** the pack's own (`assets/audio/music/aria/LICENSE.md`): any number of projects, commercial or personal, no
+  royalty, no attribution required (given here as a courtesy); the recordings may not be resold or redistributed on
+  their own, registered with a content-ID system, or claimed as ours.
+
 ## The world renderer — `src/vendor/luminati-80e1aa6/`
 
 - **Luminati** (https://gitlab.com/stubborn-hug/lumina), © 2026 Luminati, MIT License
