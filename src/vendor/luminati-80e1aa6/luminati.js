@@ -9136,86 +9136,88 @@ Object.assign(nc, {
 		Lc(t, n, 0, 0, .32, .3 + n() * .1, "#302a27", !0), Lc(t, n, .22, .12, .16, .14);
 	}
 }), Object.assign(nc, { gracewreck(e, t, n) {
-	let r = .33, i = .5, a = z(ks("planks", "#4e4236", 91)), o = z(ks("planks", "#2c362a", 92)), s = z(ks("planks", "#7a7264", 93));
+	let r = 2.6, i = .36, a = .56, o = z(ks("planks", "#6a5848", 91)), s = z(ks("planks", "#33402e", 92)), c = z(ks("planks", "#a49a88", 93));
 	for (let e of [
-		a,
 		o,
-		s
+		s,
+		c
 	]) e.side = 2;
-	let c = z(null, "#2a221c"), u = z(null, "#8a7444"), d = z(null, "#121014"), f = z(null, "#6a5a40"), p = new l({
-		color: "#a8a294",
+	let u = z(null, "#3a2e24"), d = z(null, "#7a6c5a"), f = z(null, "#a88a4a"), p = z(null, "#121014"), m = z(null, "#8a7650"), h = new l({
+		color: "#c4bca8",
 		roughness: .95,
 		side: 2
-	}), m = new A();
-	m.rotation.set(.42, -.16, -.05), m.position.set(0, .06, 0), t.add(m), m.updateMatrix();
-	let h = (e) => r * Math.sqrt(Math.max(0, 1 - ((e - .58) / .6) ** 2)) * (e < .06 ? e / .06 : 1), g = (e) => i + .1 * (1 - e / .3) ** 2 * (e < .3) + .16 * Math.max(0, (e - .72) / .28) ** 1.5, _ = [];
-	for (let e = 0; e <= 20; e++) {
-		let t = e / 20, n = -1 + 2 * t, r = h(t), a = g(t), o = [];
+	}), g = new A();
+	g.rotation.y = Math.PI / 2 - .12, t.add(g);
+	let _ = new A();
+	_.rotation.set(.5, 0, .06), _.position.set(0, -.02, 0), g.add(_), t.updateMatrixWorld(!0);
+	let v = _.matrixWorld.clone(), y = (e) => i * Math.sqrt(Math.max(0, 1 - ((e - .58) / .6) ** 2)) * (e < .06 ? e / .06 : 1), b = (e) => a + .1 * (1 - e / .3) ** 2 * (e < .3) + .16 * Math.max(0, (e - .72) / .28) ** 1.5, S = (e) => -2.6 / 2 + r * e, C = [];
+	for (let e = 0; e <= 24; e++) {
+		let t = e / 24, n = S(t), r = y(t), i = b(t), o = [];
 		for (let e = 0; e <= 14; e++) {
 			let t = -1 + 2 * e / 14;
 			o.push([
 				n,
-				a - i * (1 - Math.abs(t) ** 2.6),
+				i - a * (1 - Math.abs(t) ** 2.6),
 				r * t
 			]);
 		}
-		_.push(o);
+		C.push(o);
 	}
-	let v = (e, t) => e >= 9 && e < 12 && t >= 10 && t < 13, y = new P(), b = [], S = [], C = [], w = [], T = (e, t, n, r, i, a) => {
+	let w = (e, t) => e >= 11 && e < 14 && t >= 10 && t < 13, T = new P(), E = [], D = [], ee = [], te = [], ne = (e, t, n, r, i, a) => {
 		let o = [
 			e,
 			t,
 			n
-		].map((e) => y.set(...e).applyMatrix4(m.matrix).toArray()), s = (o[0][1] + o[1][1] + o[2][1]) / 3 < .15000000000000002;
-		(s ? S : b).push(...e, ...t, ...n), (s ? w : C).push(...r, ...i, ...a);
+		].map((e) => T.set(...e).applyMatrix4(v).y), s = (o[0] + o[1] + o[2]) / 3 < .16;
+		(s ? D : E).push(...e, ...t, ...n), (s ? te : ee).push(...r, ...i, ...a);
 	};
-	for (let e = 0; e < 20; e++) for (let t = 0; t < 14; t++) {
-		if (v(e, t)) continue;
-		let n = _[e][t], i = _[e + 1][t], a = _[e + 1][t + 1], o = _[e][t + 1], s = (e) => [e * .5 * r / Ds, 0], c = (e) => e / 20 * 2 / Ds, l = [s(t)[0], c(e)], u = [s(t)[0], c(e + 1)], d = [s(t + 1)[0], c(e + 1)], f = [s(t + 1)[0], c(e)];
-		T(n, i, a, l, u, d), T(n, a, o, l, d, f);
+	for (let e = 0; e < 24; e++) for (let t = 0; t < 14; t++) {
+		if (w(e, t)) continue;
+		let n = C[e][t], a = C[e + 1][t], o = C[e + 1][t + 1], s = C[e][t + 1], c = (e) => e * .5 * i / Ds, l = (e) => e / 24 * r / Ds;
+		ne(n, a, o, [c(t), l(e)], [c(t), l(e + 1)], [c(t + 1), l(e + 1)]), ne(n, o, s, [c(t), l(e)], [c(t + 1), l(e + 1)], [c(t + 1), l(e)]);
 	}
 	{
-		let e = _[20], t = e[0][0], n = (e[0][1] + e[7][1]) / 2;
-		for (let r = 0; r < 14; r++) T(e[r], [
+		let e = C[24], t = e[0][0], n = (e[0][1] + e[7][1]) / 2;
+		for (let r = 0; r < 14; r++) ne(e[r], [
 			t,
 			n,
 			0
 		], e[r + 1], [0, 0], [.5, .5], [1, 0]);
 	}
 	for (let [e, t, n] of [[
-		b,
-		C,
-		a
-	], [
-		S,
-		w,
+		E,
+		ee,
 		o
+	], [
+		D,
+		te,
+		s
 	]]) {
 		if (!e.length) continue;
 		let r = new Fe();
-		r.setAttribute("position", new O(e, 3)), r.setAttribute("uv", new O(t, 2)), r.computeVertexNormals(), m.add(new M(r, n));
+		r.setAttribute("position", new O(e, 3)), r.setAttribute("uv", new O(t, 2)), r.computeVertexNormals(), _.add(new M(r, n));
 	}
-	for (let e = 9; e <= 12; e++) {
-		let t = e / 20, n = -1 + 2 * t, r = h(t), a = B(.035, i * .62, .04, c, n, g(t) - i * .78, r * .86, m);
-		a.rotation.x = -.22;
+	for (let e = 11; e <= 14; e++) {
+		let t = e / 24, n = y(t), r = B(.04, a * .62, .045, u, S(t), b(t) - a * .8, n * .86, _);
+		r.rotation.x = -.22;
 	}
-	B(.26, i * .5, .04, d, .050000000000000044, g(.5) - i * .72, h(.5) * .6, m);
-	for (let e of [-1, 1]) for (let t = 1; t < 20; t++) {
-		let n = t / 20, r = (t + 1) / 20, i = -1 + 2 * n, a = -1 + 2 * r, o = e * h(n), s = e * h(r), l = g(n), u = g(r);
-		if (e > 0 && t >= 9 && t < 12) continue;
-		let d = Math.hypot(a - i, s - o, u - l), f = new M(new F(d, .035, .03), c);
-		f.position.set((i + a) / 2, (l + u) / 2 + .03, (o + s) / 2), f.rotation.set(0, -Math.atan2(s - o, a - i), Math.atan2(u - l, Math.hypot(a - i, s - o))), m.add(f);
+	B(.3, a * .5, .04, p, S(.52), b(.52) - a * .74, y(.52) * .55, _);
+	for (let e of [-1, 1]) for (let t = 1; t < 24; t++) {
+		let n = t / 24, r = (t + 1) / 24, i = S(n), a = S(r), o = e * y(n), s = e * y(r), c = b(n), l = b(r);
+		if (e > 0 && t >= 11 && t < 14) continue;
+		let d = Math.hypot(a - i, s - o, l - c), f = new M(new F(d, .04, .035), u);
+		f.position.set((i + a) / 2, (c + l) / 2 + .03, (o + s) / 2), f.rotation.set(0, -Math.atan2(s - o, a - i), Math.atan2(l - c, Math.hypot(a - i, s - o))), _.add(f);
 		let p = f.clone();
-		p.position.y -= .12, p.position.z += e * .008, m.add(p);
+		p.position.y -= .14, p.position.z += e * .01, _.add(p);
 	}
-	let E = (e) => g(e) - .06;
-	for (let e = 0; e < 20; e++) {
-		let t = e / 20, n = (e + 1) / 20;
-		if (t >= .42 && n <= .56) continue;
-		let r = -1 + 2 * t, i = -1 + 2 * n, a = h(t) * .94, o = h(n) * .94, c = E(t), l = E(n), u = new Fe();
+	let re = (e) => b(e) - .06;
+	for (let e = 0; e < 24; e++) {
+		let t = e / 24, n = (e + 1) / 24;
+		if (t >= .42 && n <= .55) continue;
+		let r = S(t), i = S(n), a = y(t) * .94, o = y(n) * .94, s = re(t), l = re(n), u = new Fe();
 		u.setAttribute("position", new O([
 			r,
-			c,
+			s,
 			-a,
 			i,
 			l,
@@ -9224,13 +9226,13 @@ Object.assign(nc, {
 			l,
 			o,
 			r,
-			c,
+			s,
 			-a,
 			i,
 			l,
 			o,
 			r,
-			c,
+			s,
 			a
 		], 3)), u.setAttribute("uv", new O([
 			0,
@@ -9245,15 +9247,15 @@ Object.assign(nc, {
 			i / Ds,
 			2 * a / Ds,
 			r / Ds
-		], 2)), u.computeVertexNormals(), m.add(new M(u, s));
+		], 2)), u.computeVertexNormals(), _.add(new M(u, c));
 	}
 	{
-		let e = .49, t = -.020000000000000018;
-		B(.28, .02, h(e) * 1.6, d, t, E(e) - .12, 0, m);
-		for (let [n, r, i] of [
+		let e = .485;
+		B(.32, .02, y(e) * 1.6, p, S(e), re(e) - .12, 0, _);
+		for (let [t, n, r] of [
 			[
 				-.12,
-				-.12,
+				-.14,
 				.3
 			],
 			[
@@ -9263,130 +9265,130 @@ Object.assign(nc, {
 			],
 			[
 				-.02,
-				.18,
+				.2,
 				.9
 			]
-		]) B(.18, .015, .04, s, t + n, E(e) - .03, r, m).rotation.set(.3, i, .2);
+		]) B(.2, .015, .045, c, S(e) + t, re(e) - .03, n, _).rotation.set(.3, r, .2);
 	}
 	{
-		let e = E(.9), t = h(.9) * .9;
-		B(.4, .2, t * 2, a, .8, e, 0, m), B(.44, .03, t * 2 + .04, c, .8, e + .2, 0, m);
-		for (let n of [-1, 1]) for (let r = 0; r < 4; r++) B(.02, .07, .03, c, .6300000000000001 + r * .1, e + .23, n * (t + .01), m);
-		for (let n = 0; n < 3; n++) {
-			let r = -t * .6 + n * t * .6;
-			B(.012, .08, .08, d, 1.006, e + .06, r, m), B(.014, .1, .1, u, 1.002, e + .05, r, m);
+		let e = S(.79), t = r * .21, n = re(.9), i = y(.9) * .9, a = .26;
+		B(t, a, i * 2, o, e + t / 2, n, 0, _), B(.5960000000000001, .035, i * 2 + .05, u, e + t / 2, n + a, 0, _);
+		for (let t of [-1, 1]) for (let r = 0; r < 5; r++) B(.025, .08, .03, u, e + .03 + r * .12, n + a + .03, t * (i + .015), _);
+		for (let e = 0; e < 3; e++) {
+			let t = -i * .6 + e * i * .6;
+			B(.012, .1, .09, p, 1.306, n + .08, t, _), B(.014, .13, .12, f, 1.302, n + .065, t, _);
 		}
-		for (let n = 0; n < 2; n++) B(.08, .08, .012, d, .68 + n * .16, e + .06, t + .006, m), B(.1, .1, .014, u, .68 + n * .16, e + .05, t + .002, m);
-		B(.02, .035, t * 1.6, u, 1.01, e + .17, 0, m);
+		for (let t = 0; t < 3; t++) B(.09, .1, .012, p, e + .08 + t * .17, n + .08, i + .008, _), B(.12, .13, .014, f, e + .08 + t * .17, n + .065, i + .003, _);
+		B(t * .9, .03, .02, f, e + t / 2, n + a - .05, i + .01, _);
 	}
 	{
-		let e = E(.07);
-		B(.28, .1, h(.1) * 1.7, a, -.8, e, 0, m);
-		let t = new M(new k(.02, .03, .34, 6), c);
-		t.rotation.z = Math.PI / 2 + .35, t.position.set(-1.1, g(0) + .02, 0), m.add(t);
+		let e = r * .13, t = re(.07);
+		B(e, .12, y(.1) * 1.7, o, S(0) + e / 2 + .07, t, 0, _);
+		let n = new M(new k(.022, .034, .4, 6), d);
+		n.rotation.z = Math.PI / 2 + .35, n.position.set(S(0) - .12, b(0) + .03, 0), _.add(n);
 	}
-	let D = (e, t) => {
-		let r = -1 + 2 * e, i = E(e), a = new M(new k(.035, .04, t, 7), c);
-		a.position.set(r, i + t / 2, 0), m.add(a);
-		for (let e = 0; e < 4; e++) {
-			let a = new M(lc(.014, .07 + n() * .05, 4), c);
-			a.position.set(r + Math.cos(e * 1.6) * .02, i + t + .03, Math.sin(e * 1.6) * .02), a.rotation.set((n() - .5) * .6, 0, (n() - .5) * .6), m.add(a);
+	let ie = (e, t) => {
+		let r = S(e), i = re(e), a = new M(new k(.04, .048, t, 7), d);
+		a.position.set(r, i + t / 2, 0), _.add(a);
+		for (let e = 0; e < 5; e++) {
+			let a = new M(lc(.016, .08 + n() * .06, 4), d);
+			a.position.set(r + Math.cos(e * 1.3) * .024, i + t + .03, Math.sin(e * 1.3) * .024), a.rotation.set((n() - .5) * .6, 0, (n() - .5) * .6), _.add(a);
 		}
 	};
-	D(.22, .2), D(.5, .34);
+	ie(.22, .24), ie(.5, .42);
 	{
-		let e = E(.76);
-		D(.76, .16);
-		let t = new M(new k(.025, .032, .62, 7), c);
-		t.position.set(.56, e + .16 + .26, .2), t.rotation.set(.9, 0, -.12), m.add(t);
-		for (let [t, n] of [[[
-			.56,
-			e + .5,
-			.42
+		let e = S(.74), t = re(.74);
+		ie(.74, .18);
+		let n = new M(new k(.028, .036, .7, 7), d);
+		n.position.set(e + .05, t + .18 + .28, .22), n.rotation.set(.95, 0, -.14), _.add(n);
+		for (let [n, r] of [[[
+			e + .05,
+			t + .56,
+			.48
 		], [
-			.72,
-			E(.85) + .02,
-			-.2
+			e + .26,
+			re(.85) + .02,
+			-.22
 		]], [[
-			.56,
-			e + .5,
-			.42
+			e + .05,
+			t + .56,
+			.48
 		], [
-			.28,
-			E(.62) + .02,
-			-.25
+			e - .28,
+			re(.62) + .02,
+			-.26
 		]]]) {
-			let e = new P(...t), r = new P(...n), i = e.distanceTo(r), a = new M(new k(.004, .004, i, 3), f);
-			a.position.copy(e).add(r).multiplyScalar(.5), a.quaternion.setFromUnitVectors(new P(0, 1, 0), r.clone().sub(e).normalize()), m.add(a);
+			let e = new P(...n), t = new P(...r), i = e.distanceTo(t), a = new M(new k(.005, .005, i, 3), m);
+			a.position.copy(e).add(t).multiplyScalar(.5), a.quaternion.setFromUnitVectors(new P(0, 1, 0), t.clone().sub(e).normalize()), _.add(a);
 		}
 	}
 	{
-		let e = new P(0, E(.5) + .34, 0).applyMatrix4(m.matrix), r = new P(e.x + .42, -.02, e.z + .95), i = e.distanceTo(r), a = r.clone().sub(e).normalize(), o = new M(new k(.026, .034, i, 7), c);
+		let e = new P(S(.5), re(.5) + .42, 0).applyMatrix4(v), r = new P(e.x + 1, -.02, e.z + .28), i = e.distanceTo(r), a = r.clone().sub(e).normalize(), o = new M(new k(.03, .04, i, 7), d);
 		o.position.copy(e).add(r).multiplyScalar(.5), o.quaternion.setFromUnitVectors(new P(0, 1, 0), a), t.add(o);
-		let s = e.clone().lerp(r, .62), l = new M(new k(.016, .016, .9, 6), c);
-		l.position.copy(s), l.rotation.set(0, .5, Math.PI / 2 - .1), t.add(l);
-		let u = new x(.8, .5, 6, 3), d = u.attributes.position;
-		for (let e = 0; e < d.count; e++) {
-			let t = d.getY(e), r = d.getX(e);
-			d.setZ(e, .06 * Math.sin(r * 7 + t * 4)), t < -.2 && d.setY(e, t + (n() - .3) * .12);
+		let s = e.clone().lerp(r, .6), c = new M(new k(.018, .018, 1, 6), d);
+		c.position.copy(s), c.rotation.set(Math.PI / 2 - .12, 0, .25), t.add(c);
+		let l = new x(.9, .5, 6, 3), u = l.attributes.position;
+		for (let e = 0; e < u.count; e++) {
+			let t = u.getY(e), r = u.getX(e);
+			u.setZ(e, .06 * Math.sin(r * 7 + t * 4)), t < -.2 && u.setY(e, t + (n() - .3) * .12);
 		}
-		u.computeVertexNormals();
-		let f = new M(u, p);
-		f.position.set(s.x + .05, Math.max(.1, s.y - .18), s.z + .08), f.rotation.set(-1, .5, .06), t.add(f);
+		l.computeVertexNormals();
+		let f = new M(l, h);
+		f.position.set(s.x + .1, Math.max(.11, s.y - .2), s.z), f.rotation.set(-1.05, Math.PI / 2 + .25, .05), t.add(f);
 		for (let e = 0; e < 3; e++) {
-			let r = B(.16 + n() * .1, .008, .12, p, s.x - .2 + e * .22, .076, s.z + .3 + n() * .12, t);
+			let r = B(.18 + n() * .1, .008, .13, h, s.x + .25 + n() * .15, .078, s.z - .3 + e * .28, t);
 			r.rotation.y = n() * 2;
 		}
 	}
-	let ee = (e, r, i, a) => {
-		let o = sc(new Me(i, 0), n, i * .3, (e, t, n) => e > .55 ? dc(oc("#3a4630"), .85 + n * .25) : dc(oc("#2c2a28"), .8 + n * .3)), s = new M(o, cc());
+	let ae = (e, r, i, a) => {
+		let o = sc(new Me(i, 0), n, i * .3, (e, t, n) => e > .55 ? dc(oc(n < .5 ? "#4a5636" : "#6a6656"), .85 + n * .25) : dc(oc("#34302c"), .8 + n * .3)), s = new M(o, cc());
 		s.scale.y = a / i, s.position.set(e, a * .35, r), s.rotation.y = n() * 6, t.add(s);
 	};
-	for (let e = 0; e < 11; e++) {
-		let t = e / 10;
-		ee(-1.3 + t * .42 + (n() - .5) * .06, (n() - .5) * .36 + (1 - t) * .05, .05 + n() * .06, .08 + n() * .07 + (t > .6 ? .05 : 0));
+	for (let e = 0; e < 12; e++) {
+		let t = e / 11;
+		ae(-.95 + t * .55 + (n() - .5) * .06, (n() - .5) * .5, .06 + n() * .05 + t * .03, .09 + n() * .06 + t * .08);
 	}
 	for (let [e, t, n, r] of [
 		[
-			-.98,
-			.3,
-			.09,
+			-.5,
+			.75,
+			.1,
 			.2
 		],
 		[
-			-.86,
-			-.28,
-			.1,
-			.18
+			-.46,
+			-.85,
+			.11,
+			.22
 		],
 		[
-			-.7,
-			.42,
+			-.62,
+			1.15,
+			.08,
+			.14
+		],
+		[
+			.62,
+			1.25,
 			.07,
 			.12
 		],
 		[
-			.4,
-			.62,
-			.06,
-			.1
-		],
-		[
-			.95,
-			-.5,
+			.55,
+			-1.3,
 			.08,
-			.12
+			.13
 		]
-	]) ee(e, t, n, r);
+	]) ae(e, t, n, r);
 	{
-		let n = new P(-.76, g(.12) + .02, h(.12)).applyMatrix4(m.matrix), r = new P(n.x - .05, .12, n.z + .12), i = n.distanceTo(r), a = r.clone().sub(n).normalize(), o = new P(1, 0, 0);
+		let n = new P(S(.42), b(.42) + .02, -y(.42)).applyMatrix4(v), r = new P(n.x - .18, .14, n.z), i = n.distanceTo(r), a = r.clone().sub(n).normalize(), o = new P(0, 0, 1);
 		for (let e of [-1, 1]) {
-			let s = new M(new k(.006, .006, i, 3), f);
-			s.position.copy(n).add(r).multiplyScalar(.5).addScaledVector(o, e * .045), s.quaternion.setFromUnitVectors(new P(0, 1, 0), a), t.add(s);
+			let s = new M(new k(.007, .007, i, 3), m);
+			s.position.copy(n).add(r).multiplyScalar(.5).addScaledVector(o, e * .05), s.quaternion.setFromUnitVectors(new P(0, 1, 0), a), t.add(s);
 		}
 		for (let i = 1; i < 7; i++) {
-			let a = n.clone().lerp(r, i / 7), o = B(.1, .012, .016, e.m.wood, a.x, a.y - .006, a.z, t);
-			o.rotation.y = 0;
+			let a = n.clone().lerp(r, i / 7);
+			B(.016, .014, .11, e.m.wood, a.x, a.y - .007, a.z, t);
 		}
 	}
 } }), Object.keys(nc);

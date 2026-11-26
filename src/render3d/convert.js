@@ -245,7 +245,7 @@ const SITE_DOORS = [[/_longhouse_\d/, 'yards', 'reach_assayhouse'], [/_keep_\d/,
  *  arena cleared of scatter): char and cracked earth to its reach, slag heaps just past its arena, vents inside them */
 const FURNACE_YARD = { heaps: 20, vents: 10 };
 /** the Grace's middle east of the Sister's Cabin's door (sim tiles: outdoor.js TIDEMARK.reef), her bow on the shallows */
-const GRACE_OFF = 15;
+const GRACE_OFF = 13;
 function outdoor(w, region) {
   // the map, its approach roads (a town's exits lie past its edge) and a margin; never past the grid the sim built
   let bx0 = 0, by0 = 0, bx1 = w.W, by1 = w.H;
@@ -408,9 +408,10 @@ function outdoor(w, region) {
     }
   }
   // (v1.156) the Sister's Cabin's way in on the Tidemark's east beach: the wreck of Aurelle's Grace on her reef offshore
-  // (our kit's, town.json tidemark_wreck: her bow on the reef toward the door, the reef's rocks out to it, the ladder up
-  // her side), in the sea east of the exit, which no one walks; it stands whether her door is shut or open, as the Ninth
-  // Vault's does. GRACE_OFF: her middle that many sim tiles east of the reef (the sea's edge is 5 out, outdoor.js pools)
+  // (our kit's, town.json tidemark_wreck: broadside along the shore, the reef's rocks out to her from the beach, the
+  // ladder down her side), in the sea east of the exit, which no one walks; it stands whether her door is shut or open,
+  // as the Ninth Vault's does. GRACE_OFF: her middle that many sim tiles east of the reef (the sea's edge is 5 out,
+  // outdoor.js pools; the level ends at 258, MAX_TILES, so she lies along the shore, not out to sea)
   if (region === 'tidemark' && w.kind === 'overland' && TIDEMARK?.reef) sprites.push({ id: 'tidemark_wreck', x: X(TIDEMARK.reef[0] + GRACE_OFF), z: Z(TIDEMARK.reef[1]) });
   // the lit things on the ground (the town's braziers: a fire each, sharing Luminati's lamps)
   for (const [k, kind] of w.props || []) {
