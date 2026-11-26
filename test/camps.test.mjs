@@ -178,3 +178,24 @@ test('Step out in a spawn point\'s fight: the compass has the way out of the are
     assert.equal(sim.battle, null, `${camp.id}: walked out, the fight is over (${t} ticks)`);
   }
 });
+
+test("Glacial Tomb never freezes ice that hasn't broken: a lone mage, the rest Downed, can't hold the last foe frozen for good", async () => {
+  // (the owner, 2026-11-26: the hero Downed, one companion left and the fight never ending. Before, a lone mage froze the
+  // last foe again before its ice broke, every time, and never loosed a bolt: even the Spit's level-2 goblin stood
+  // frozen in front of a level-60 mage for good. 42 of 103 spawn-point fights left to a lone mage never ended)
+  const { makeHero, makeMember, statsFor } = await import('../src/sim/party.js');
+  const { autoAllocate } = await import('../src/sim/attributes.js'), { starterKit } = await import('../src/sim/items.js');
+  const c = SPIT, sim = createSim(1000, undefined, { scene: 'overland', region: c.region }); sim.tick();
+  const ms = ['fighter', 'shaman', 'mage'].map((cls, i) => (i ? makeMember(`c${i}`, `Mate${i}`, cls, 60) : makeHero({ cls, name: 'Hero' })));
+  ms.forEach((m, i) => { m.level = i ? 60 : c.level; m.attrs = null; autoAllocate(m); m.gear = starterKit(m); m.hp = statsFor(m).maxHp; m.mp = undefined; });
+  sim.state.party.splice(0, sim.state.party.length, ...ms); sim.state.created = true;
+  const a = (2 * Math.PI) / 8; stand(sim, c.x + Math.cos(a) * (c.reach - 0.5), c.y + Math.sin(a) * (c.reach - 0.5));
+  let over = false, refroze = 0, downed = false; sim.bus.on('defeat', () => (over = true)); sim.bus.on('campCleared', () => (over = true));
+  sim.bus.on('skill', (d) => { if (d.id === 'glacial_tomb' && d.at === 'cast') for (const e of living(sim)) if (e.frozen > 0 && hypot(e.x - d.tx, e.y - d.ty) < 3) refroze++; });
+  for (let t = 0; t < 20 * 240 && !over; t++) {
+    sim.tick();
+    if (sim.battle && !downed) { for (const q of ms.slice(0, 2)) { q.hp = 0; q.down = true; } downed = true; }
+  }
+  assert.equal(refroze, 0, 'no tomb cast on a foe still frozen');
+  assert.ok(over, 'the fight ends, won or lost, inside four minutes');
+});

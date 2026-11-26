@@ -1657,12 +1657,15 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         for (const o of hit) { shove(o, tgt.x, tgt.y, A.pull); strikeAt(aS, o, A.power * mult, w, false); o.slow = Math.max(o.slow || 0, A.slow); }
       },
     },
-    // Glacial Tomb: a knot of two within reach, or a boss or elite winding up a heavy blow
+    // Glacial Tomb: a knot of two within reach, or a boss or elite winding up a heavy blow. Never on ice that hasn't
+    // broken: its blow lands only as the ice breaks, and a second tomb before then kept it whole. A lone mage, the rest
+    // Downed, froze the last foe again and again for good; it never broke, never struck back and never came on, and the
+    // fight never ended (the owner, 2026-11-26: 42 of 103 spawn-point fights left to a lone mage, before)
     tomb: {
-      pick: (m, A, foes, _w, F) => knot(foes, m, F.range, A.radius, need(m, A)) || nearest(m, foes, (o) => up(o) && (o.boss || o.elite) && o.wind > 0.1 && o.windHeavy && !(o.ccImm > 0) && hypot(o.x - m.x, o.y - m.y) <= F.range),
+      pick: (m, A, foes, _w, F) => { const fresh = foes.filter((o) => !(o.frozen > 0) && !(o.ccImm > 0)); return knot(fresh, m, F.range, A.radius, need(m, A)) || nearest(m, fresh, (o) => up(o) && (o.boss || o.elite) && o.wind > 0.1 && o.windHeavy && hypot(o.x - m.x, o.y - m.y) <= F.range); },
       land(m, A, mult, tgt, w) {
         const hit = within(foesOf(m, w), tgt.x, tgt.y, A.radius), aS = skillStats(m); skillEv(A, 'land', m, tgt, false, hit);
-        for (const o of hit) if (hold(o, 'frozen', A.freeze)) o.thaw = { aS, power: A.power * mult };
+        for (const o of hit) if (!(o.frozen > 0) && hold(o, 'frozen', A.freeze)) o.thaw = { aS, power: A.power * mult };
       },
     },
     // Revive: a member Downed (not the Slain) while the room isn't won; once a room visit
