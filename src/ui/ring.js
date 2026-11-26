@@ -18,7 +18,7 @@
 // word is written here; names are content/arena.json's (a company by its player's, as the Bowl's board shows them).
 
 import { swallow } from './actorart.js';
-import { RING, FURNACE, PILGRIM, RINGS, windowAt, paidFor } from '../sim/ring.js';
+import { RING, FURNACE, PILGRIM, GRACE, RINGS, windowAt, paidFor } from '../sim/ring.js';
 import { LANDS } from '../sim/regions.js';
 
 const CSS = `
@@ -56,11 +56,12 @@ const CSS = `
 #ringCard button { width: 100%; min-height: 46px; border-radius: 10px; font: 600 15px Georgia, serif; background: linear-gradient(#ff9a50, #b4461c); color: #1a0c06; border: 1px solid #ffc890; }
 `;
 /** where each stands, and what its tells are called, in the lines and toasts */
-const PLACE = { kingstone: 'the old stones', furnace_nine: 'the Vault’s mouth', first_pilgrim: 'the Lip' };
+const PLACE = { kingstone: 'the old stones', furnace_nine: 'the Vault’s mouth', first_pilgrim: 'the Lip', the_grace: 'the wreckers’ beach' };
 const WORDS = {
   kingstone: { cracked: 'The Kingstone cracks · its blows come faster', stones: 'Stones fall · find the clear', stir: 'The old stones are stirring' },
   furnace_nine: { cracked: 'Furnace Nine roars white · its blows come faster', stones: 'The vents open · find the clear', stir: 'The Vault’s mouth glows', fed: 'Furnace Nine feeds on the fallen · it burns hotter' },
   first_pilgrim: { cracked: 'The eye splits · it looks faster', stones: 'The Lip sheds its glass · find the clear', stir: 'Something at the Lip is looking down', gaze: 'He looks your way · out of the light' },
+  the_grace: { cracked: 'Her master draws his second blade · he strikes faster', stones: 'Her rigging comes down · find the clear', stir: 'A ship stands in to the wreckers’ beach', broadside: 'She fires · out of the line of shot', boarders: 'Her boats come in · they’re up the beach' },
 };
 const TIER = { gold: 'Gold', silver: 'Silver', bronze: 'Bronze' }, RW = { common: 'Common', fine: 'Fine', rare: 'Rare', heirloom: 'Heirloom' };
 const mmss = (s) => { s = Math.max(0, Math.ceil(s)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
@@ -74,7 +75,7 @@ export function createRing({ sim, params, dev = false }) {
   bar.innerHTML = '<div class="top"><span>The Kingstone</span><small></small></div><div class="hp"><i></i><em></em></div><div class="sub"></div>';
   const barName = /** @type {HTMLElement} */ (bar.querySelector('.top span'));
   const barTop = /** @type {HTMLElement} */ (bar.querySelector('.top small')), barHp = /** @type {HTMLElement} */ (bar.querySelector('.hp i')), barSub = /** @type {HTMLElement} */ (bar.querySelector('.sub'));
-  const heldAs = dev && params ? params.get('ring') : null, held = heldAs === 'on' ? RING : heldAs === 'furnace' ? FURNACE : heldAs === 'pilgrim' ? PILGRIM : null;   // (localhost: a window held open, for tests and captures)
+  const heldAs = dev && params ? params.get('ring') : null, held = heldAs === 'on' ? RING : heldAs === 'furnace' ? FURNACE : heldAs === 'pilgrim' ? PILGRIM : heldAs === 'grace' ? GRACE : null;   // (localhost: a window held open, for tests and captures)
   /** @type {Record<string, any>} */ let by = {};
   fetch('./content/arena.json').then((r) => r.json()).then((d) => { by = Object.fromEntries(d.companies.map((c) => [c.id, c])); }).catch(() => {});
   const who = (id) => (by[id] && (by[id].player || by[id].name)) || 'A company';
@@ -109,6 +110,8 @@ export function createRing({ sim, params, dev = false }) {
     else if (e.t === 'stones') say(W.stones, 2000);
     else if (e.t === 'fed' && W.fed) say(W.fed, 2400);
     else if (e.t === 'gaze' && W.gaze) say(W.gaze, 1800);
+    else if (e.t === 'broadside' && W.broadside) say(W.broadside, 1800);
+    else if (e.t === 'boarders' && W.boarders) say(W.boarders, 2000);
   });
   sim.bus.on('ringLeft', () => { card.classList.remove('on'); });
 
@@ -119,11 +122,11 @@ export function createRing({ sim, params, dev = false }) {
     const me = r.parts.find((q) => q.id === r.you) || null;
     card.textContent = '';
     const add = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; card.appendChild(e); return e; };
-    const furnace = r.boss === 'furnace_nine', pilgrim = r.boss === 'first_pilgrim';
+    const furnace = r.boss === 'furnace_nine', pilgrim = r.boss === 'first_pilgrim', grace = r.boss === 'the_grace';
     add('div', 'kind', r.name || 'The Kingstone');
-    add('h2', '', won ? (furnace ? 'It goes out' : pilgrim ? 'He shuts his eye' : 'It falls back into the ring') : left ? 'You walked out on it' : 'The window shuts');
-    add('p', '', won ? `${pilgrim ? 'He' : 'It'} went down in ${mmss(r.secs)}, ${r.parties} companies round ${pilgrim ? 'him' : 'it'}. ${furnace ? 'It lights again at half past the next hour.' : pilgrim ? 'He looks again at half past the next hour.' : 'It stands again at the next hour.'}`
-      : left ? `Out of ${furnace ? 'the Vault’s mouth' : pilgrim ? 'the Lip' : 'the stones'} before the end: nothing paid for this window.` : `${pilgrim ? 'He was' : 'It was'} still standing when the window's quarter hour ran out. A minute there pays Bronze.`);
+    add('h2', '', won ? (furnace ? 'It goes out' : pilgrim ? 'He shuts his eye' : grace ? 'She stands off again' : 'It falls back into the ring') : left ? 'You walked out on it' : 'The window shuts');
+    add('p', '', won ? `${pilgrim ? 'He' : grace ? 'Her master' : 'It'} went down in ${mmss(r.secs)}, ${r.parties} companies round ${pilgrim || grace ? 'him' : 'it'}. ${furnace ? 'It lights again at half past the next hour.' : pilgrim ? 'He looks again at half past the next hour.' : grace ? 'The tide brings her in again at the next hour.' : 'It stands again at the next hour.'}`
+      : left ? `Out of ${furnace ? 'the Vault’s mouth' : pilgrim ? 'the Lip' : grace ? 'the beach' : 'the stones'} before the end: nothing paid for this window.` : `${pilgrim || grace ? 'He was' : 'It was'} still standing when the window's quarter hour ran out. A minute there pays Bronze.`);
     add('div', `tier ${r.tier || 'none'}`, r.tier ? `${TIER[r.tier]} tier` : 'No tier');
     const nums = add('div', 'nums', null);
     const kv = (k, v) => { const d = document.createElement('div'); d.append(`${k} `); const b = document.createElement('b'); b.textContent = v; d.append(b); nums.appendChild(d); };

@@ -88,6 +88,10 @@ export const NPCS = {
   // by the Paid Toll's door, as Dagny stands at the Bellows'; Sister Maren, a Grey Sister, the quays' chaplain, holding the
   // Drowned Mole's harbour office (floor 2's offshoot) against the drowned until the Harbourmaster falls, then she joins
   hester_quaile: { region: 'tidemark', spots: [['tavern', [10, 1]]], knot: 'quaile_hub', flags: ['met_quaile'], kin: ['maren'] },
+  // (v1.156) Tollhaven's two more: Mistress Fane, the harbour mage, in the square, as Hob stands in Ashgate's; Josse
+  // Wether, the Quay Chapel's sexton, by the chapel, as Old Brannagh stands by Ashgate's
+  fane: { region: 'tidemark', spots: [['hub', [11, 7]]], knot: 'fane_hub', flags: ['met_fane'] },
+  josse_wether: { region: 'tidemark', spots: [['temple', [-2, 10]]], knot: 'josse_hub', flags: ['met_josse'] },
   maren: { region: 'tidemark', found: { site: 'drowned_mole', depth: 1, boss: 'harbourmaster' }, spots: [], knot: 'maren_hub', flags: ['met_maren'] },
   // (v1.151) Old Gannet, keeper of the Lamp Fort, the Guild's oldest member: at its gate, inside, as Tobin is at the barrow mouth
   old_gannet: { region: 'tidemark', found: { site: 'lamp_fort', depth: 0, entrance: true }, spots: [], knot: 'gannet_hub', flags: ['met_gannet', 'brine_held'] },   // (brine_held: the sim's, set when Brine Cross is held; read by gannet.ink, never set there)

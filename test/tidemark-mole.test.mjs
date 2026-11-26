@@ -73,9 +73,11 @@ test('past 30 a hero grows as the foes\' premium does: HP and ATK lifted by prem
 });
 
 test('the Journal\'s leads on the Tidemark: the Harbourmaster, then Maren until she walks with the company, then Hesk and Gannet', async () => {
-  const { openLeads } = await import('../src/ui/storystatus.js');
+  const { openLeads: openLeads7 } = await import('../src/ui/storystatus.js');
   const story = JSON.parse((await import('node:fs')).readFileSync(new URL('../content/story.json', import.meta.url), 'utf8'));
   const st = { party: [{ id: 'hero' }], bench: [], bosses: {} }, none = () => 0;
+  const STEP7 = ['names', 'tidechronicle', 'cabin', 'tideboard'];   // (v1.156: their own test below)
+  const openLeads = (...a) => openLeads7(...a).filter((l) => !STEP7.includes(l.id));
   assert.deepEqual(openLeads(st, none, 'tidemark').map((l) => l.id), ['harbourmaster']);
   st.bosses.harbourmaster = 1; assert.deepEqual(openLeads(st, none, 'tidemark').map((l) => l.id), ['maren', 'hesk', 'lampfort']);
   st.party.push({ id: 'maren' }); assert.deepEqual(openLeads(st, none, 'tidemark').map((l) => l.id), ['hesk', 'lampfort']);   // (v1.151: the Isles and the Lamp Fort next)

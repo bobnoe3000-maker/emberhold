@@ -1,0 +1,41 @@
+{
+  "id": "fane_signal_powder",
+  "kind": "errand",
+  "title": "Signal Powder",
+  "giver": "fane",
+  "region": "tidemark",
+  "level": [
+    37,
+    60
+  ],
+  "after": [
+    "fane_the_chain_ward"
+  ],
+  "summary": "The Gull Fleet keeps the old navy's signal powder on the Gull Isles. Lit at night, a colour is an order at sea, and the drowned were the navy's crews. Mistress Fane wants it in the harbour before anyone lights it.",
+  "steps": [
+    {
+      "id": "isles",
+      "journal": "Open two chests anywhere in the Gull Isles, on any floor. The fleet's stores in the sea cave are the likeliest place for its powder.",
+      "objectives": [
+        {
+          "type": "loot",
+          "site": "gull_isles",
+          "count": 2,
+          "label": "Chests opened in the Gull Isles"
+        }
+      ]
+    }
+  ],
+  "ready": "Two chests of the Gull Fleet's signal powder. Take them to Mistress Fane in Tollhaven's square.",
+  "done": "The powder burned the old navy's green: all ships, close on the light. Fane sank it off the jetty, a keg at a time.",
+  "rewards": {
+    "share": 0.3,
+    "lv": 37,
+    "gold": 560
+  },
+  "dialogue": {
+    "file": "fane",
+    "offer": "fane_powder_offer",
+    "turnin": "fane_powder_turnin"
+  }
+}

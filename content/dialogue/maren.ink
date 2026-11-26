@@ -7,8 +7,9 @@
 // in_party 0 / 1; core.js: boss_<id> 0 / 1; quests.js: chapters_done, the main chapters handed in: 18 after Low Water,
 // 21 after Brine Cross, 22 after The Seventh Voice). Effects: flags: met_maren; `# companion: join` (heroes.js: only
 // once the Harbourmaster has fallen). She's talked to from her card, in the party or on the bench (v1.154). Her own
-// chain is to come, and will gate on `joined`. Act IV's last chapter, The Seventh Voice (ch4_seventh_voice), is Hester
-// Quaile's to give (v1.154; the owner, 2026-11-26: no quest needs a companion): after Brine Cross Maren says her piece
+// chain, The Names (maren_the_harbour_roll, maren_the_prize_crews, maren_said_aloud), is Josse Wether's to give and take
+// in (josse.ink; GDD v1.155): she only says what she wants and sends you to him (maren_book), quest or none. Act IV's
+// last chapter, The Seventh Voice (ch4_seventh_voice), is Hester Quaile's to give (v1.154; the owner, 2026-11-26: no quest needs a companion): after Brine Cross Maren says her piece
 // about the man who sang the drowned up, and sends you to Hester. No quest is bound to her, so she reads chapters_done
 // and the bosses, never q_.
 
@@ -90,6 +91,7 @@ Maren says {fallen_name}'s name once, quietly, the way she says the drowned's.
 == maren_topics ==
 + { chapters_done == 21 && boss_lucan == 0 } [What now, after the bridge?] -> maren_seventh_offer
 + [Whose names do you say?] -> maren_names
++ { chapters_done >= 18 } [Are the names all in the book?] -> maren_book
 + [What did you hear on the Mole?] -> maren_song
 + [Tell me about Hester.] -> maren_hester
 + [That's all.] -> maren_bye
@@ -97,6 +99,12 @@ Maren says {fallen_name}'s name once, quietly, the way she says the drowned's.
 == maren_names ==
 "Bosun. Two gunners. The cook. The boy who ran the lines." She stops there. "The fleet's. The harbour kept a muster of every crew that berthed, and the Quay Chapel had the copy. I read it until I knew it by heart."
 "The Sisters wrote names down for the empire once. I say them out loud instead. It's the same list. I'd like to think it's a different use."
+-> maren_topics
+
+// ── The Names (content/quests/maren_*.json): Josse Wether gives it since v1.155; she says what she wants and sends you to him ──
+== maren_book ==
+"A cook. A gunner. The boy who ran the lines. Those are the ones off the Mole I could only name by what they did aboard. They had names. The harbour wrote them down once, and so did the Gull Fleet, after its fashion."
+"Josse Wether keeps the book at the Quay Chapel. He's our sexton. He wants every name in it, spelled right, and he's made a list of where they'll be. Ask him for the list. It's spelled right too."
 -> maren_topics
 
 == maren_song ==

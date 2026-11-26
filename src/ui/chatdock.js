@@ -20,7 +20,8 @@ import { LANDS } from '../sim/regions.js';
 /** where each region boss stands, for the news (v1.126: Furnace Nine's at the Vault's mouth) */
 const WHERE = { kingstone: { place: 'the old stones', land: 'the Greywater Fens', dir: 'north-east of Saltmere', stir: 'The old stones are stirring', verb: 'stands' },
   furnace_nine: { place: 'the Vault’s mouth', land: 'the Cinder Reach', dir: 'up the track north of the Cinderworks', stir: 'The Vault’s mouth glows', verb: 'burns' },
-  first_pilgrim: { place: 'the Lip', land: 'the Pale Heights', dir: 'at the head of the Pilgrims’ Stair', stir: 'Something at the Lip is looking down', verb: 'stands' } };   // (v1.147)
+  first_pilgrim: { place: 'the Lip', land: 'the Pale Heights', dir: 'at the head of the Pilgrims’ Stair', stir: 'Something at the Lip is looking down', verb: 'stands' },   // (v1.147)
+  the_grace: { place: 'the wreckers’ beach', land: 'the Tidemark', dir: 'south-west of Gullwick', stir: 'A ship stands in to the wreckers’ beach', verb: 'stands in' } };   // (v1.157)
 import { CAMP_BY } from '../sim/camps.js';
 import { BOSSES } from '../sim/battle.js';
 import { SITES } from '../sim/sites.js';

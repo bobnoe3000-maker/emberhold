@@ -50,7 +50,11 @@
     "lampfort": "The Lamp Fort, on its headland out along the cliffs east of Tollhaven: the Gull Fleet is in its yard, and Old Gannet is at the gate.",
     "brinecross": "Brine Cross, on the road west of where the Highmarch road comes in: the League is holding the bridge's east barricade, and the drowned fleet's crews are marching on it.",
     "champion": "Highmarch, at the head of the Highmarch road north of the coast road: go in through the breach in its walls. The Seventh's Champion keeps the great bastion.",
-    "lucan": "Highmarch: the Champion is down. The dungeon's second floor is the Seventh's Palace, and Lucan Varro waits in its throne room."
+    "lucan": "Highmarch: the Champion is down. The dungeon's second floor is the Seventh's Palace, and Lucan Varro waits in its throne room.",
+    "tidechronicle": "The Tidemark's Chronicle: {n} of {of} letters found, in the Drowned Mole, the Gull Isles and Highmarch. Sister Ilse reads them in Thornwick.",
+    "cabin": "The Sister's Cabin is open: the wreck of Aurelle's Grace on her reef, off the east beach below the Lamp Fort. Go up her side at low water.",
+    "names": "Josse Wether has something of Maren's he wants seen to: the drowned's names. Ask him at the Quay Chapel, in Tollhaven.",
+    "tideboard": "The Lantern Guild's board, inside the Paid Toll in Tollhaven, has new Tidemark jobs every day."
   },
   "nextFound": "Next: {title}. {giver} has it for you: tap her card, in the party or on the bench, then Talk.",
   "nextAt": "Next: {title}. {giver} keeps the gate at {place}."

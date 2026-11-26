@@ -77,6 +77,9 @@ export const SITES = {
   // (v1.151) the Lamp Fort (38): the Tidemark's side vault (`side`), Old Gannet's coast light on its headland with the
   // Gull Fleet at its door; its lamp room keeps his spare wick, once (`vault`), then seals for SECRET_REST (core.js)
   lamp_fort: { name: 'The Lamp Fort', region: 'tidemark', theme: 'storehouse', base: 38, perFloor: 0, floors: 1, plan: true, family: 'fleet', rooms: [5, 5], layout: 'halls', flat: true, side: true, vault: 'gannets_spare_wick', mix: 0x1a4f },
+  // (v1.156) the Sister's Cabin (45): the Tidemark's secret, the wreck of Aurelle's Grace on her reef off the east beach,
+  // found by the Tidemark's Chronicle set (lore.js SET_REVEALS); her drowned crew below decks; no boss, the vault Livia's cabin
+  sisters_cabin: { name: "The Sister's Cabin", region: 'tidemark', theme: 'storehouse', base: 45, perFloor: 0, floors: 1, plan: true, family: 'drowned_fleet', rooms: [5, 5], layout: 'halls', flat: true, hidden: true, secret: true, vault: 'the_graces_manifest', dress: ['hulk'], mix: 0x5c4b },
   ninth_vault: { name: 'The Ninth Vault', region: 'reach', theme: 'chasm', base: 30, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [5, 5], layout: 'halls', flat: true, hidden: true, secret: true, vault: 'the_quota_ledgers', dress: ['strongroom'], mix: 0x9a17 },
   // the Mere Tower (tower.js; world doc v1.23): its landing and the stair hall, where the climb goes on; Wenna Pike's punt
   // out to it from ☰ (v1.112, core.js towerGo: from wherever the company is, and back there), from level 12 (minLevel:

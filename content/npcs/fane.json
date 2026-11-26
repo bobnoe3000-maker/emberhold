@@ -1,0 +1,14 @@
+{
+  "id": "fane",
+  "name": "Mistress Fane",
+  "role": [
+    "giver"
+  ],
+  "town": "tollhaven",
+  "region": "tidemark",
+  "look": "npc_fane",
+  "portrait": "npc_fane",
+  "dialogue": "fane",
+  "knot": "fane_hub",
+  "note": "Tollhaven's harbour mage (world doc v1.74 §3.7), who keeps the ward on the harbour chain, salt-written on its links and lettered again at every low water. By the square's well with a pot of wet salt and a brush. Tells every time by the tide (copy-review §8). Gives and takes in The Chain Ward (the drowned bosuns' whistles foul it) and Signal Powder (the Gull Fleet's, before it signals anything else)."
+}

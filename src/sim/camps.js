@@ -122,6 +122,23 @@ export const CAMPS = [
     family: 'ashbound', band: ['warrior', 'mage', 'warrior'], elite: 0.25, respawn: RESPAWN, posts: [[-2.4, 0.6], [2.4, 0.6], [0, -2.4]], face: [0, 0],
     ring: 'first_pilgrim',
     dress: [['bones', -4.4, 2.0], ['urns', -5.4, -0.8], ['bones', -2.6, 4.2], ['urns', -3.6, -3.8]] },   // (west of the Stair's track: it runs up through the east side)
+  // (v1.156, docs/tidemark-plan.md step 7) the Tidemark's four, one at each band and the Mole's two: wreckers stripping a
+  // wreck on the beach south-west of Gullwick, the drowned up out of the salt marsh by the pans, Highmarch's outriders'
+  // kennels in the fields off its road, its siege lines under the south wall. Each off every road by more than its reach,
+  // its arena clear of the others' and of Brine Cross's stand (test/camps.test.mjs)
+  { id: 'tide_wreckers', region: 'tidemark', kind: 'camp', name: "The wreckers' beach", x: 161.5, y: 246.5, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 31,
+    family: 'wharf', band: ['corsair', 'sailor', 'corsair'], elite: 0.25, respawn: RESPAWN, posts: [[-2.4, 0.6], [2.4, 0.6], [0, -2.4]], face: [0, 0],
+    ring: 'the_grace',   // (v1.157: at the top of the hour the tide brings the Grace in off this beach, ring.js GRACE)
+    dress: [['cookfire', 0, 0], ['crates', -4.4, -2.6], ['sacks', 4.4, -2.8], ['chains', 4.6, 2.4], ['bones', -4.2, 2.8]] },
+  { id: 'tide_marsh', region: 'tidemark', kind: 'camp', name: 'The salt marsh', x: 132.5, y: 38.5, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 35,
+    family: 'mole', band: ['drowned', 'sailor', 'drowned'], elite: 0.25, respawn: RESPAWN, posts: [[-2.4, 0.6], [2.4, 0.6], [0, -2.4]], face: [0, 0],
+    dress: [['bones', -4.2, 2.4], ['chains', 4.4, -2.6], ['bones', 4.2, 2.8], ['urns', -4.4, -2.8]] },
+  { id: 'tide_kennels', region: 'tidemark', kind: 'camp', name: "The outriders' kennels", x: 78.5, y: 122.5, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 39,
+    family: 'siege', band: ['warhound', 'crossbow', 'warhound'], elite: 0.25, respawn: RESPAWN, posts: [[-2.4, 0.6], [2.4, 0.6], [0, -2.4]], face: [0, 0],
+    dress: [['cookfire', 0, 0], ['tent', -4.6, -3.4], ['chains', 4.4, -2.8], ['bones', 4.4, 2.6], ['crates', -4.4, 2.6]] },
+  { id: 'tide_siege', region: 'tidemark', kind: 'camp', name: 'The siege lines', x: 65.5, y: 72.5, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 43,
+    family: 'siege', band: ['engineer', 'legionary', 'engineer'], elite: 0.3, respawn: RESPAWN, posts: [[-2.4, 0.6], [2.4, 0.6], [0, -2.4]], face: [0, 0],
+    dress: [['brazier', -4.2, -2.6], ['brazier', 4.4, -2.8], ['cart', 4.6, 2.4], ['spoil', -4.4, 2.6], ['crates', 0.4, 4.4]] },
   // ── a STAND (v1.151 step 5, docs/tidemark-plan.md's build sheet): a held position, not a spawn point. Up only while its
   // chapter is in hand and its flag isn't set; its waves come in from `from` (an offset: the road east), a room's wave at
   // its level a step tougher each time, an elite every fourth, until `waves` have fallen; `allies` (classes) stand with the

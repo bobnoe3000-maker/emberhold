@@ -9198,5 +9198,227 @@
   ],
   "face": "lucan",
   "height": 1.02
+ },
+ {
+  "id": "N32",
+  "cls": "NPC",
+  "label": "Mistress Fane \u00b7 Tollhaven's harbour mage, who keeps the salt-written ward on the harbour chain (a mage's hat and robe in sea-grey, sea-green at the cuffs and sash, her hem white with salt; a paste-brush and a pot of wet salt)",
+  "model": "Mage",
+  "show": [
+   "Mage_Hat"
+  ],
+  "hold": {
+   "handslot.r": "saltbrush",
+   "handslot.l": "saltpot"
+  },
+  "wear": {
+   "hips": "salthem"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#7a8a8c",
+     "#1a2226"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#7a8a8c",
+     "#1a2226"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2e5a4e",
+     "#0c1a16"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#4a5a5c",
+     "#121a1c"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#3e7a62",
+     "#10241c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#5a9a8a",
+     "#1a3a34"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#3e7a62",
+     "#10241c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     0
+    ],
+    "to": [
+     "#c8ccc8",
+     "#4a4e4c"
+    ]
+   }
+  ],
+  "face": "fane",
+  "height": 0.95
+ },
+ {
+  "id": "N33",
+  "cls": "NPC",
+  "label": "Josse Wether \u00b7 the Quay Chapel's sexton (older, a little bent, cropped grey hair and a grey moustache, a plain black coat over a grey shirt, the chapel's book of names clutched to his chest, its hand-bell)",
+  "model": "Rogue",
+  "show": [],
+  "hold": {
+   "handslot.r": "handbell"
+  },
+  "wear": {
+   "chest": "namebookheld",
+   "hips": "sextoncoat"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2a282a",
+     "#0a090a"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#8a8884",
+     "#2a2826"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2a282a",
+     "#0a090a"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2a2420",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#3a3634",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#3a3028",
+     "#120e0a"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#3a3028",
+     "#120e0a"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#2a282a",
+     "#0a090a"
+    ]
+   }
+  ],
+  "face": "josse_wether",
+  "height": 0.9,
+  "frame": {
+   "bend": {
+    "spine": [
+     0.16,
+     0,
+     0
+    ],
+    "head": [
+     0.05,
+     0,
+     0
+    ]
+   }
+  }
  }
 ]

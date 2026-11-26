@@ -39,6 +39,12 @@
    "y": 40
   },
   {
+   "kind": "site",
+   "id": "sisters_cabin",
+   "x": 231,
+   "y": 203
+  },
+  {
    "kind": "land",
    "id": "solmere",
    "x": -7.5,

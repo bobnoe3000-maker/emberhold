@@ -39,10 +39,10 @@ test('the spawn points stand on open ground, their posts and holes walkable, eac
 });
 
 test("a higher band's spawn point is off every road by more than its reach: a walk to a lower band's dungeon never meets it", () => {
-  for (const region of ['vale', 'fens', 'reach']) {
+  for (const region of ['vale', 'fens', 'reach', 'tidemark']) {
     const w = createSim(SEED, undefined, { scene: 'overland', region }).world, low = Math.min(...CAMPS.filter((c) => c.region === region).map((c) => c.level));
     const dseg = (px, py, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy, t = L ? Math.max(0, Math.min(1, ((px - a[0]) * dx + (py - a[1]) * dy) / L)) : 0; return Math.hypot(px - a[0] - t * dx, py - a[1] - t * dy); };
-    for (const c of CAMPS.filter((q) => q.region === region && q.level > low + 2 && !q.ring)) {   // (a region boss's ground: its own track's end, ring.js)
+    for (const c of CAMPS.filter((q) => q.region === region && q.level > low + 2 && !q.ring && q.kind !== 'stand')) {   // (a region boss's ground: its own track's end, ring.js; a stand holds the road: Brine Cross)
       let d = 1e9; for (const r of w.roads) for (let i = 1; i < r.pts.length; i++) d = Math.min(d, dseg(c.x, c.y, r.pts[i - 1], r.pts[i]) - r.w / 2);
       assert.ok(d > c.reach, `${c.id} (level ${c.level}): ${d.toFixed(1)} tiles from a road, its reach ${c.reach}`);
     }
@@ -51,8 +51,8 @@ test("a higher band's spawn point is off every road by more than its reach: a wa
 
 test("every land has three or four, each at one of its dungeons' bands (GDD §10.3 v1.68)", async () => {
   const { SITES } = await import('../src/sim/sites.js');
-  for (const region of ['vale', 'fens', 'reach']) {
-    const mine = CAMPS.filter((c) => c.region === region); assert.ok(mine.length >= 3 && mine.length <= 4, `${region}: ${mine.length}`);
+  for (const region of ['vale', 'fens', 'reach', 'tidemark']) {
+    const mine = CAMPS.filter((c) => c.region === region && c.kind !== 'stand'); assert.ok(mine.length >= 3 && mine.length <= 4, `${region}: ${mine.length}`);   // (a stand isn't a spawn point: camps.js)
     const bases = Object.values(SITES).filter((s) => s.region === region && s.band === true).map((s) => s.base).sort((a, b) => a - b);
     const bandOf = (lv) => bases.findLastIndex((b) => lv >= b);   // (a band runs from its dungeon's base to the next's)
     for (const c of mine) assert.ok(bandOf(c.level) >= 0, `${c.id} (level ${c.level}) in one of ${region}'s bands from ${bases.join(', ')}`);

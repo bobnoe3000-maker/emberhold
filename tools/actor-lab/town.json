@@ -2299,6 +2299,21 @@
         0.97,
         0.94
       ]
+    },
+    {
+      "id": "tidemark_wreck",
+      "model": "gracewreck",
+      "build": "gracewreck",
+      "style": "tidemark",
+      "seed": 47,
+      "gain": 0.66,
+      "desat": 0.14,
+      "tint": [
+        0.96,
+        0.98,
+        1.0
+      ],
+      "nofoot": true
     }
   ]
 }

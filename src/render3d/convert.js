@@ -18,7 +18,7 @@
 // §5; the overlands lose a few tiles of their edges).
 // Pure: reads the world, writes nothing to it (presentation only, AGENTS.md rule 2).
 import { ENV_FOOT } from '../sim/envfoot.js';
-import { G, REACH } from '../sim/outdoor.js';
+import { G, REACH, TIDEMARK } from '../sim/outdoor.js';
 import { FLOOR_Z } from '../sim/level.js';
 import { PROP_LIGHT } from '../render/gsprite.js';
 import { KIT_TINT } from '../render/palette.js';
@@ -244,6 +244,8 @@ const SITE_DOORS = [[/_longhouse_\d/, 'yards', 'reach_assayhouse'], [/_keep_\d/,
 /** Furnace Nine's yard (the region boss's ground, camps.js reach_mouth: the furnace yard west of the Vault's ruin, its
  *  arena cleared of scatter): char and cracked earth to its reach, slag heaps just past its arena, vents inside them */
 const FURNACE_YARD = { heaps: 20, vents: 10 };
+/** the Grace's middle east of the Sister's Cabin's door (sim tiles: outdoor.js TIDEMARK.reef), her bow on the shallows */
+const GRACE_OFF = 15;
 function outdoor(w, region) {
   // the map, its approach roads (a town's exits lie past its edge) and a margin; never past the grid the sim built
   let bx0 = 0, by0 = 0, bx1 = w.W, by1 = w.H;
@@ -405,6 +407,11 @@ function outdoor(w, region) {
       }
     }
   }
+  // (v1.156) the Sister's Cabin's way in on the Tidemark's east beach: the wreck of Aurelle's Grace on her reef offshore
+  // (our kit's, town.json tidemark_wreck: her bow on the reef toward the door, the reef's rocks out to it, the ladder up
+  // her side), in the sea east of the exit, which no one walks; it stands whether her door is shut or open, as the Ninth
+  // Vault's does. GRACE_OFF: her middle that many sim tiles east of the reef (the sea's edge is 5 out, outdoor.js pools)
+  if (region === 'tidemark' && w.kind === 'overland' && TIDEMARK?.reef) sprites.push({ id: 'tidemark_wreck', x: X(TIDEMARK.reef[0] + GRACE_OFF), z: Z(TIDEMARK.reef[1]) });
   // the lit things on the ground (the town's braziers: a fire each, sharing Luminati's lamps)
   for (const [k, kind] of w.props || []) {
     const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);
@@ -617,9 +624,11 @@ const AMB_TINT = { pithead: [1.08, 0.97, 0.86], warren: [1.04, 0.96, 0.88], embe
   seacave: [0.94, 1.0, 1.12], hulk: [1.22, 1.04, 0.86] };
 const DEFAULT_LOOK = { floor: ['k', 'm'], wall: 'x', hour: 19.4 };
 /** an overland prop of ours (gsprite.js), a spawn point's dressing (sim/camps.js) */
-const OVERLAND_OURS = new Set(['tent', 'carcass', 'burrow', 'rack', 'banner', 'standard', 'bedroll', 'reeds', 'boat', 'bound', 'urns', 'candles', 'saint']);   // (v1.68: every land's spawn points' dressing)
+const OVERLAND_OURS = new Set(['tent', 'carcass', 'burrow', 'rack', 'banner', 'standard', 'bedroll', 'reeds', 'boat', 'bound', 'urns', 'candles', 'saint', 'chains']);   // (v1.68: every land's spawn points' dressing)
 /** a spawn point's dressing Luminati builds itself, as underground (DRESS_3D) */
-const OVERLAND_3D = new Set(['crates', 'sacks', 'bones', 'barrels', 'boulder', 'spoil', 'pillar', 'brokenpillar']);
+// (step 7 of the Tidemark: the cart and the chains, every land's spawn points' since v1.68, weren't in either set and stood
+// nowhere outdoors: the Reach's haulers, the Vault's mouth, the Praetory's watch and the Tidemark's four lacked them)
+const OVERLAND_3D = new Set(['crates', 'sacks', 'bones', 'barrels', 'boulder', 'spoil', 'pillar', 'brokenpillar', 'cart']);
 /** the furniture Luminati builds itself (h: a hash of the tile, for its size and turn) */
 const DRESS_3D = {
   brazier: (x, z, h) => ({ type: 'fire', x, z, opts: { kind: 'brazier', size: 0.36, smoke: false, light: true, seed: h % 997 } }),   // (Emberlit's are small warm points: at 0.7 they bloomed into blobs, at 0.45 still big)

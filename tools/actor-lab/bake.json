@@ -8135,6 +8135,88 @@
           "to": 0.7
         }
       ]
+    },
+    {
+      "out": "npc_fane",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Idle",
+          0.4
+        ]
+      },
+      "variant": "N32",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_B",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 10,
+          "fps": 8,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 8,
+          "fps": 7,
+          "once": true,
+          "to": 0.7
+        }
+      ]
+    },
+    {
+      "out": "npc_josse_wether",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Idle",
+          0.4
+        ]
+      },
+      "variant": "N33",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_B",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 10,
+          "fps": 8,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 8,
+          "fps": 7,
+          "once": true,
+          "to": 0.7
+        }
+      ]
     }
   ]
 }

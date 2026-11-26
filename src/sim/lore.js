@@ -60,9 +60,23 @@ export const FRAGMENTS = {
   frag_reach_night_rota: { set: 'reach', order: 10, site: 'cinderworks', floor: 1, via: 'hall' },
   frag_reach_vanes_ledger: { set: 'reach', order: 11, site: 'cinderworks', floor: 2, via: 'chest' },      // left when he runs (his fall, for the story: battle.js `fled`)
   frag_reach_renewal: { set: 'reach', order: 12, site: 'cinderworks', floor: 2, via: 'boss' },           // the Stoker's, in the Magma Vault
+  // the Tidemark set (world doc §7, v1.74; docs/tidemark-plan.md step 7): the Lady Aurelle's letters to her sister Livia,
+  // four in each band dungeon, girlhood to the year before the Fall; the last, Lucan's, finds the Sister's Cabin
+  frag_tide_first_letter: { set: 'tidemark', order: 1, site: 'drowned_mole', floor: 1, via: 'chest' },
+  frag_tide_the_harbour: { set: 'tidemark', order: 2, site: 'drowned_mole', floor: 1, via: 'shrine' },
+  frag_tide_the_wedding: { set: 'tidemark', order: 3, site: 'drowned_mole', floor: 2, via: 'chest' },
+  frag_tide_the_toll: { set: 'tidemark', order: 4, site: 'drowned_mole', floor: 2, via: 'boss' },          // the Harbourmaster's
+  frag_tide_the_ship: { set: 'tidemark', order: 5, site: 'gull_isles', floor: 1, via: 'chest' },
+  frag_tide_the_lamps: { set: 'tidemark', order: 6, site: 'gull_isles', floor: 1, via: 'shrine' },
+  frag_tide_the_children: { set: 'tidemark', order: 7, site: 'gull_isles', floor: 2, via: 'chest' },
+  frag_tide_the_commission: { set: 'tidemark', order: 8, site: 'gull_isles', floor: 2, via: 'boss' },     // Hesk's, in the great cabin
+  frag_tide_the_chapel: { set: 'tidemark', order: 9, site: 'highmarch', floor: 1, via: 'chest' },
+  frag_tide_the_voices: { set: 'tidemark', order: 10, site: 'highmarch', floor: 1, via: 'boss' },         // the Champion's, on the great bastion
+  frag_tide_the_box: { set: 'tidemark', order: 11, site: 'highmarch', floor: 2, via: 'shrine' },
+  frag_tide_take_the_grace: { set: 'tidemark', order: 12, site: 'highmarch', floor: 2, via: 'boss' },      // Lucan's, when he sits down (spared: battle.js `canticle`)
 };
 /** a whole set reveals its hidden site (sites.js; world doc §7) */
-export const SET_REVEALS = { vale: 'ninth_milestone', fens: 'reedholm_undercroft', reach: 'ninth_vault' };
+export const SET_REVEALS = { vale: 'ninth_milestone', fens: 'reedholm_undercroft', reach: 'ninth_vault', tidemark: 'sisters_cabin' };
 /** the fragments of each set, in reading order */
 export const SETS = /** @type {Record<string, string[]>} */ ({});
 for (const [id, f] of Object.entries(FRAGMENTS)) (SETS[f.set] ||= []).push(id);

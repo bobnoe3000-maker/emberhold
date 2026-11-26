@@ -89,19 +89,37 @@ export const PILGRIM = {
   gaze: { every: 10, crackedEvery: 7, wind: 1.8, len: 16, lane: 1.8, n: 2, hurt: 0.7, first: 5 },   // (1.8 s: a member at a run clears a lane 1.8 wide, test/pilgrim.test.mjs)
   heirloom: 'first_light',
 };
+// The Grace (v1.157; world doc v1.75 §3.7, §10.2; docs/tidemark-plan.md step 8; the owner, 2026-11-24: "the top of the
+// hour", 2026-11-26: "Do 8 and 9 also"): the Tidemark's, at the top of the hour as the Kingstone is (a player is only ever
+// in one land; the two are told apart by the Grace's ids' tag, ':00g'), from 40, once Low Water is done (`after`). Aurelle's
+// flagship's bound crew, holding station "until recalled": at the hour the tide brings her in off the wreckers' beach
+// (camps.js `tide_wreckers`) and her master comes up the sand with his crew. His blows are the Kingstone's shapes (the
+// cutlass where the nearest stands, a stamp, a sweep, her rigging coming down); and the ship's own: **the broadside**,
+// lanes of shot across the beach from the sea (`broadside`: from `from`, a way out past the arena's edge, toward three of
+// the companies), told as the rest are; and **boarders**, a boat's worth of her crew up out of the surf every so often
+// (`boarders`, never more than `max` of them up).
+export const GRACE = {
+  ...RING, id: 'the_grace', name: 'The Grace', kind: 'the_grace', family: 'drowned_fleet', offset: 0, tag: 'g',
+  region: 'tidemark', camp: 'tide_wreckers', level: 45, minLevel: 40,
+  after: 'ch4_low_water',   // (she comes in once the company has been out to the Mole: the story's)
+  hpStep: [1, 1.85, 2.6, 3.3, 4.6],   // (Furnace Nine's but three's 2.6 and four's 3.3: at its 3.3 and 3.9 three took 7.2 min and four 7.0 to two's 5.2 and five's 4.3, regionboss.mjs)
+  broadside: { every: 13, crackedEvery: 9, wind: 2.0, len: 40, lane: 2.0, n: 3, hurt: 0.6, first: 7, from: [0.95, 0.3] },   // (from: the sea, east of the beach toward Gullwick's ferry)
+  boarders: { every: 20, crackedEvery: 15, n: 2, max: 4, kind: 'sailor', first: 12 },
+  heirloom: 'until_recalled',
+};
 /** every region boss, by id @type {Record<string, typeof RING>} */
-export const RINGS = { kingstone: RING, furnace_nine: FURNACE, first_pilgrim: PILGRIM };
+export const RINGS = { kingstone: RING, furnace_nine: FURNACE, first_pilgrim: PILGRIM, the_grace: GRACE };
 /** the region boss whose ground is this spawn point, if any @param {string} campId */
 export const ringByCamp = (campId) => Object.values(RINGS).find((R) => R.camp === campId) || null;
 const two = (n) => String(n).padStart(2, '0');
 /** the suffix a window's id carries for its boss (the Kingstone's none, the hour's top; Furnace Nine's ':30'; the First
  * Pilgrim's ':30p', the same half hour in another land) @param {typeof RING} R */
-const suffixOf = (R) => (R.offset ? ':' + two(Math.round(R.offset / 60)) + (/** @type {any} */ (R).tag || '') : '');
+const suffixOf = (R) => (R.offset || /** @type {any} */ (R).tag ? ':' + two(Math.round(R.offset / 60)) + (/** @type {any} */ (R).tag || '') : '');   // (v1.157: the Grace's ':00g', the Kingstone's hour)
 /** the region boss a window's id is for @param {string} id */
-export const ringForId = (id) => Object.values(RINGS).find((R) => (R.offset ? id.endsWith(suffixOf(R)) : !id.includes(':'))) || RING;   // (':30p' doesn't end ':30': the Pilgrim's is never Furnace Nine's)
+export const ringForId = (id) => Object.values(RINGS).find((R) => (suffixOf(R) ? id.endsWith(suffixOf(R)) : !id.includes(':'))) || RING;   // (':30p' doesn't end ':30': the Pilgrim's is never Furnace Nine's)
 
 /** a window's id, the hour it opens: 'YYYY-MM-DDTHH' @param {any} id */
-export const isWindowId = (id) => typeof id === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}(:30p?)?$/.test(id);   // (':30': Furnace Nine's; ':30p': the First Pilgrim's)
+export const isWindowId = (id) => typeof id === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}(:30p?|:00g)?$/.test(id);   // (':30': Furnace Nine's; ':30p': the First Pilgrim's; ':00g': the Grace's)
 
 /** @param {any} state */
 export function ringOf(state) {

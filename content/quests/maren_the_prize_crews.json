@@ -1,0 +1,42 @@
+{
+  "id": "maren_the_prize_crews",
+  "kind": "errand",
+  "title": "The Prize Crews",
+  "giver": "josse_wether",
+  "region": "tidemark",
+  "level": [
+    37,
+    60
+  ],
+  "after": [
+    "maren_the_harbour_roll"
+  ],
+  "summary": "Admiral Hesk kept the League crews he took below decks in his hulks on the Gull Isles, and some were never paid for. They cut their names in the beams. Josse Wether wants them copied for the book before the fleet burns the hulks.",
+  "steps": [
+    {
+      "id": "hulks",
+      "journal": "Win six waves on the Gull Isles' second floor, among the hulks, while the names are copied off the beams of the hold.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "gull_isles",
+          "count": 6,
+          "floor": 2,
+          "label": "Waves won among the hulks"
+        }
+      ]
+    }
+  ],
+  "ready": "The prize crews' names, copied off the hulks' beams. Take them to Josse Wether at the Quay Chapel in Tollhaven.",
+  "done": "The crews Hesk took are in Josse's book, once each, as the men cut them. Maren says them at the Quay Chapel now.",
+  "rewards": {
+    "share": 0.4,
+    "lv": 40,
+    "gold": 600
+  },
+  "dialogue": {
+    "file": "josse",
+    "offer": "josse_crews_offer",
+    "turnin": "josse_crews_turnin"
+  }
+}

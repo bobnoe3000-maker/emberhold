@@ -1171,14 +1171,82 @@ export const PROPS = {
     const tie = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.04, 0.28), ribbon); tie.position.set(0, 0.2, 0.01); g.add(tie);
     return g;
   },
+
+  // ── Tollhaven's two townsfolk (docs/tidemark-plan.md's build sheet, step 7; world doc v1.74 §3.7) ──
+  // Mistress Fane, the harbour mage, letters the chain's ward in wet salt at every low water: a paste-brush (a short ash
+  // handle, a tin ferrule, a broad flat head, its bristles caked white) and the pot of wet salt she dips it in, and the
+  // hem of her robe gone white with the salt of the steps. Josse Wether, the Quay Chapel's sexton: the chapel's book of
+  // the drowned's names (big, black, more ribbons in it than anyone counts), the chapel's hand-bell, a plain black coat.
+  saltbrush: () => {
+    const g = new THREE.Group(); g.name = 'Salt_Brush';
+    const ash = mat(0x8a6a44, 0, 0.8), tin = mat(0xa8acb0, 0.8, 0.4), salt = mat(0xeeeae2, 0, 0.95), wet = mat(0xc4c8c4, 0, 0.6);
+    const h = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.034, 0.5, 8), ash); h.position.y = 0.17; g.add(h);
+    const f = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.1, 0.2), tin); f.position.y = 0.46; g.add(f);
+    // (the head flat across the figure, wide enough to read at 56 px as a brush and not a stick: white on her grey sleeve)
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.2, 0.26), salt); b.position.y = 0.6; b.name = 'Salt_Brush_Head'; g.add(b);
+    const tip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.27), wet); tip.position.y = 0.72; g.add(tip);
+    return g;
+  },
+  saltpot: () => {
+    const g = new THREE.Group(); g.name = 'Salt_Pot'; g.userData.hang = true;   // (hung plumb from its rope bail: +y down)
+    const clay = mat(0x8a5a3a, 0, 0.85), rope = mat(0x9a7a4a, 0, 0.95), salt = mat(0xf0ece4, 0, 0.95);
+    const bail = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.016, 5, 12, Math.PI), rope); bail.rotation.z = Math.PI; bail.position.y = 0.16; g.add(bail);
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.1, 0.22, 10), clay); pot.position.y = 0.3; g.add(pot);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.022, 5, 12), clay); rim.rotation.x = Math.PI / 2; rim.position.y = 0.19; g.add(rim);
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.115, 0.02, 10), salt); top.position.y = 0.2; g.add(top);   // (the salt heaped to the rim)
+    const drip = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.12, 0.05), salt); drip.position.set(0.11, 0.27, 0.04); g.add(drip);
+    return g;
+  },
+  // the salt on her hem (the hips' space): a ragged white band round the bottom of the Mage's robe, higher at the front
+  // where she kneels to the chain, crusted in tongues
+  salthem: () => {
+    const g = new THREE.Group(); g.name = 'Salt_Hem';
+    const salt = new THREE.MeshStandardMaterial({ color: 0xeef0ec, roughness: 0.95, side: THREE.DoubleSide });
+    const N = 18, Y = -0.5;
+    for (let k = 0; k < N; k++) {
+      const a = (k / N) * Math.PI * 2, front = Math.max(0, Math.cos(a)), tall = 0.08 + 0.07 * front + ((k * 7) % 5) * 0.012;
+      const s = new THREE.Mesh(new THREE.BoxGeometry(0.16, tall, 0.02), salt);
+      s.position.set(Math.sin(a) * 0.5, Y + tall / 2, Math.cos(a) * 0.5); s.rotation.y = a; s.name = 'Salt_Hem'; g.add(s);
+    }
+    return g;
+  },
+  // the book of names: a sexton's register, black boards gone brown at the corners, pewter clasps, the leaves thick and
+  // pale, a fan of ribbons out of its foot (one a name for every year he's kept it, he says)
+  namebook: () => {
+    const g = book({ name: 'Book_of_Names', w: 0.5, h: 0.6, t: 0.26, cover: 0x1e1a18, edge: 0x9a9ea2, pages: 0xece2c8, clasp: 0x9a9ea2, corners: true });
+    for (const [z, c, len] of [[-0.12, 0xe8e4dc, 0.26], [-0.04, 0x8a2a24, 0.32], [0.05, 0xe8e4dc, 0.22], [0.13, 0x3e5a7a, 0.28]]) {
+      const r = new THREE.Mesh(new THREE.BoxGeometry(0.012, len, 0.035), mat(c, 0, 0.8)); r.position.set(0, 0.06 - len / 2 + 0.04, z); r.rotation.x = z * 0.6; r.name = 'Book_of_Names_Ribbon'; g.add(r);
+    }
+    return g;
+  },
+  // the same book clutched to his chest (the chest's space: its front at z ≈ 0.43), cover out, leaning on his left arm.
+  // (lab round 1: held out in the hand, as Hester holds her ledger, the two read as one silhouette at 56 px)
+  namebookheld: () => {
+    const g = new THREE.Group(); g.name = 'Book_of_Names_Held';
+    const b = PROPS.namebook(); b.rotation.set(0, Math.PI / 2, 0.22); b.position.set(0.12, -0.42, 0.5); g.add(b);
+    return g;
+  },
+  // the chapel's hand-bell (the hand, hung plumb: +y down from the grip): a turned handle and a bronze bell
+  handbell: () => {
+    const g = new THREE.Group(); g.name = 'Hand_Bell'; g.userData.hang = true;
+    const wood = mat(0x2e2018, 0, 0.8), bronze = mat(0xb08a48, 0.85, 0.35);
+    const h = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.03, 0.2, 8), wood); h.position.y = 0.06; g.add(h);
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), wood); knob.position.y = -0.05; g.add(knob);
+    const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.15, 0.24, 12, 1, true), new THREE.MeshStandardMaterial({ color: 0xb08a48, metalness: 0.85, roughness: 0.35, side: THREE.DoubleSide })); bell.position.y = 0.28; g.add(bell);
+    const crown = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), bronze); crown.rotation.x = Math.PI; crown.position.y = 0.17; g.add(crown);
+    const lip = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.018, 5, 14), bronze); lip.rotation.x = Math.PI / 2; lip.position.y = 0.4; g.add(lip);
+    return g;
+  },
+  // the sexton's coat (the hips' space): plain black broadcloth to below the knee, its edges dull black braid, no gilt
+  sextoncoat: () => coatSkirts({ name: 'Sexton_Coat', cloth: 0x1c1a1c, gold: 0x2e2a28, metal: 0.1, len: 0.62 }),
 };
 
 // a long coat's skirts (the hips' space): broadcloth from the waist down, open at the front for the legs, its edges and
 // hem laced in `gold`, two pairs of buttons at the back vent. Admiral Hesk's (dark blue, to the knee) and Lucan Varro's
 // (longer, and further out to clear the knight's plate skirt)
-function coatSkirts({ name, cloth: c, gold: gc, len = 0.5, top = 0.08, r0 = 0.41, r1 = 0.46 }) {
+function coatSkirts({ name, cloth: c, gold: gc, len = 0.5, top = 0.08, r0 = 0.41, r1 = 0.46, metal = 0.8 }) {
   const g = new THREE.Group(); g.name = name;
-  const cloth = new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, side: THREE.DoubleSide }), gold = mat(gc, 0.8, 0.4);
+  const cloth = new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, side: THREE.DoubleSide }), gold = mat(gc, metal, 0.4);
   // (lab round 3: one flared cylinder read as a barrel from behind; two tails now, open at the front and parted at the
   // back vent, hung nearly straight)
   const open = 0.36, vent = 0.05;

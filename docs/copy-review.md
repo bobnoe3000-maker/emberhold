@@ -482,6 +482,8 @@ Adopt the glossary in §8, then:
 | Dace | Fen landlord | Folksy, fen words ("Aye", "folk") | Who-owes-whom gossip (no book) | Osric's lines |
 | Kindler | Preacher | Long, warm, rhetorical questions | Calls everyone "friend" | clipped fragments |
 | Pim | Nervous chandler | Repeats himself | "Please tell Wendel" | as is |
+| Fane (v1.74) | Harbour mage, exact, impatient with mystique | Short; the state of the tide first, then "so" and what follows | Tells every time by the tide (once a knot) | a keeper's report (Gannet's), sums |
+| Josse Wether (v1.74) | Sexton, slow, gentle, a little grim | Careful, unhurried; says a name back once it's right | Spells a name out, letter by letter (once a knot) | ledgers, "reads it twice", correcting your wording |
 
 **Banned or limited phrases.** These should be counts a CI check can enforce:
 

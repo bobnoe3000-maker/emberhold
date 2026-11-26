@@ -100,6 +100,7 @@ const ORIENT = new Set(['tomb', 'pew', 'longtable', 'tbench', 'rack', 'urnshelf'
 export const DRESS_PIECES = new Set(['tomb', 'great_tomb', 'mourner', 'offering', 'hearth', 'noticeboard', 'counter', 'longtable', 'tbench', 'logpile', 'stall', 'hay', 'trough', 'hen_cart', 'well', 'cart', 'portcullis', 'iron_door', 'desk', 'shelf', 'pit', 'ladder', 'shoring', 'hives', 'bench',
   'fallen_door', 'bars', 'strongbox', 'map_table', 'ledgers', 'stockade', 'guardian', 'sarcophagus_open', 'cask_rack', 'torch', 'candelabra', 'cookfire', 'block', 'crane', 'fishcrates', 'market_stall', 'oven',
   'throne', 'reliquary',
+  'magma', 'furnace', 'anvil', 'crucible',   // (the Magma Vault's: the owner, 2026-11-26, "flowing magma and a few furnaces, anvils")
   ...[...ORIENT].map((k) => k + '_y')]);
 // what lights a doorway, by the room's kit (a brazier each side, before, in every room: the screen was a field of
 // identical fires; now the light says the place): the dig's lanterns on poles, the crypt's candles, the keep's and the
@@ -114,6 +115,7 @@ export const DRESS_CAP = { tomb: 6, great_tomb: 1, mourner: 2, offering: 1, hear
   crane: 1, fishcrates: 6, rope: 6, net: 3,   // (the wharf's: docks)
   market_stall: 2, oven: 1,   // (the ramparts')
   throne: 1, reliquary: 1,   // (the palace's: v1.154)
+  furnace: 2, anvil: 3, crucible: 2,   // (the Magma Vault's; its magma has no cap: a channel is many tiles of it)
   saint: 2, lantern: 4, candles: 4, candelabra: 4, torch: 4, brazier: 4, ladder: 1, puddle: 4, scorch: 3, straw: 6, sacks: 3, crates: 2, barrels: 2, cracks: 6 };
 /** what stands out on an authored room's floor, by its place (not the kit's whole list: a gibbet in the stables and the
  *  gate-warden's chapel, a monolith in the legion's vault, said nothing) */
@@ -280,6 +282,15 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       // where Livia's box stood, the palace's candelabra at the end walls and one by the near wall
       case 'throne': unit(-L * 0.5, -Wd + 2, -2, 2, -1, 1, 'throne'); for (const s of [-1, 1]) putAt(-L * 0.5 + s * 5, -Wd + 1, 'candelabra'); break;   // (west along the back wall: the chapel's door comes in at its middle)
       case 'reliquary': unit(L * 0.4, -Wd + 1, 0, 1, -1, 0, 'reliquary'); break;
+      // ── the Magma Vault (the owner, 2026-11-26: "The magma vault dungeon needs more dressing.. flowing magma and a few
+      // furnaces, anvils, and other appropriate dressing"): magma running in a channel along the back wall's foot, a tile
+      // wide, the room's floor left whole (impassable tiles in the fight's ground were taken out, 2026-10-04: it runs where
+      // nobody stands); a pool of it in the near far corner; the furnaces built into the back wall, a crucible by each; the
+      // anvils in the thirds, low, where the smiths stood
+      case 'magma_channel': for (let u = -L + 2; u <= L - 2 + 0.01; u += 1) putAt(u, -wall, 'magma'); break;
+      case 'magma_pool': for (const [a, b] of [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1], [1, -1]]) putAt(L * 0.62 + a, Wd * 0.45 + b, 'magma'); break;
+      case 'furnaces': for (const s of [-1, 1]) for (const v of [-Wd + 2, -Wd + 4, -Wd * 0.55]) if (unit(s * L * 0.45, v, -1, 1, -1, 0, 'furnace')) { putAt(s * L * 0.45 + s * 3, v + 1, 'crucible'); break; } break;   // (a cave's back wall curves in: step off it till it stands)
+      case 'anvils': for (const [u, v] of [[-0.28, -0.42], [0.3, -0.4], [-0.62, 0.3]]) putAt(u * L, v * Wd, 'anvil'); break;
       case 'palace_lamps': for (const s of [-1, 1]) putAt(s * (L - 1), -Wd * 0.45, 'candelabra'); putAt(-L * 0.5, Wd - 1, 'candelabra'); break;
       case 'mole_lamps': for (const s of [-1, 1]) putAt(s * (L - 1), -Wd, 'lantern'); putAt(-L * 0.55, Wd, 'lantern'); break;
       case 'bollards': for (const [u, v] of [[-0.45, -1], [0.3, -1], [-0.1, 1], [0.6, 1]]) putAt(u * L, v * (Wd - 0.5), 'rope'); break;
