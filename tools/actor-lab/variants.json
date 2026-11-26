@@ -9202,7 +9202,7 @@
  {
   "id": "N32",
   "cls": "NPC",
-  "label": "Mistress Fane \u00b7 Tollhaven's harbour mage, who keeps the salt-written ward on the harbour chain (a mage's hat and robe in sea-grey, sea-green at the cuffs and sash, her hem white with salt; a paste-brush and a pot of wet salt)",
+  "label": "Mistress Fane \u00b7 Tollhaven's harbour mage, who keeps the salt-written ward on the harbour chain (a mage's hat and robe in sea-grey, sea-green at the cuffs and sash, her hem and cuffs white with salt; a paste-brush and a pot of wet salt)",
   "model": "Mage",
   "show": [
    "Mage_Hat"
@@ -9210,9 +9210,6 @@
   "hold": {
    "handslot.r": "saltbrush",
    "handslot.l": "saltpot"
-  },
-  "wear": {
-   "hips": "salthem"
   },
   "swatches": [
    {
@@ -9298,11 +9295,31 @@
    {
     "tile": [
      3,
+     2
+    ],
+    "to": [
+     "#3e2e24",
+     "#100a08"
+    ]
+   },
+   {
+    "tile": [
+     3,
      0
     ],
     "to": [
      "#c8ccc8",
      "#4a4e4c"
+    ]
+   },
+   {
+    "tile": [
+     4,
+     0
+    ],
+    "to": [
+     "#d4d6cc",
+     "#6a6e68"
     ]
    }
   ],
@@ -9420,5 +9437,216 @@
     ]
    }
   }
+ },
+ {
+  "id": "N34",
+  "cls": "NPC",
+  "label": "Gullwick's ferryman \u00b7 decor: stood in his boat at the end of the ferry jetty (convert.js BOATS), not a townsperson (an old fisherman: a knitted cap, an oilskin smock over a blue jersey, a white beard, his quant-pole upright)",
+  "model": "Rogue",
+  "show": [],
+  "hold": {
+   "handslot.r": "ferrypole"
+  },
+  "wear": {
+   "head": "watchcap"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#a07a34",
+     "#2e2210"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#34425a",
+     "#0e1420"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#a07a34",
+     "#2e2210"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2a2420",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#3a3a3e",
+     "#121214"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#a07a34",
+     "#2e2210"
+    ]
+   }
+  ],
+  "face": {
+   "skin": "rose",
+   "hair": "short",
+   "hairColor": "white",
+   "brows": "heavy",
+   "browColor": "white",
+   "eyes": "narrow",
+   "iris": "grey",
+   "mouth": "line",
+   "nose": "broad",
+   "beard": "full",
+   "beardColor": "white",
+   "marks": [
+    "wrinkles"
+   ],
+   "shape": "round",
+   "expression": "neutral"
+  },
+  "height": 0.94
+ },
+ {
+  "id": "N35",
+  "cls": "NPC",
+  "label": "A Gull Fleet boatman \u00b7 decor: stood in the fleet's boat at the Gull Isles' landing (convert.js BOATS) (the corsairs' sea-grey and gull-yellow, the headscarf and sash, his oar tossed upright)",
+  "model": "Rogue",
+  "show": [],
+  "hold": {
+   "handslot.r": "fleetoar"
+  },
+  "wear": {
+   "head": "headscarf",
+   "hips": "sash"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#b8bcbc",
+     "#3e4244"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#2a2c30",
+     "#0c0c0e"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2a2c30",
+     "#0c0c0e"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2a2220",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#2a2c30",
+     "#0c0c0e"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#5a4632",
+     "#1e160e"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#5a4632",
+     "#1e160e"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#2a2c30",
+     "#0c0c0e"
+    ]
+   }
+  ],
+  "face": "corsair"
  }
 ]

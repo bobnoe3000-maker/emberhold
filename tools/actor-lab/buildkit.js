@@ -2192,6 +2192,51 @@ Object.assign(TYPES, {
   slagheap(S, g, r) { slagHeap(g, r, 0, 0, 0.32, 0.3 + r() * 0.1, '#302a27', true); slagHeap(g, r, 0.22, 0.12, 0.16, 0.14); },
 });
 
+// ── the Magma Vault's furnaces and crucibles (the owner, 2026-11-26: "flowing magma and a few furnaces, anvils";
+// docs/art-critic-pass-magma-vault.md). Stood by convert.js MAGMA_3D over the sim's footprint (3 tiles wide, 2 deep,
+// against the back wall), the mouth on +z (faceX: on +x). A furnace: a squat smelting furnace of black firebrick bound in
+// iron, its mouth an arch glowing white-orange from inside (unlit: the light is the world's, MAGMA_3D), a slag-crusted
+// sill, a sheet-iron hood over it narrowing into a square flue that climbs the wall; a pair of bellows at its side. A
+// crucible: a fireclay pot in an iron stand, the melt in it glowing, its long pouring shank across it.
+const FURN_GLOW = () => new THREE.MeshBasicMaterial({ color: '#ff9a3c' }), FURN_HOT = () => new THREE.MeshBasicMaterial({ color: '#ffd27a' });
+Object.assign(TYPES, {
+  magmafurnace(S, g, r) {
+    const brick = mat(tex('ashlar', '#3a302c', 87)), iron = mat(null, '#2a2624'), rust = mat(null, '#5a3424'), soot = mat(null, '#141110'), glow = FURN_GLOW(), hot = FURN_HOT();
+    const W = 0.3, D = 0.2, H = 0.34;
+    box(W, H, D, brick, 0, 0, -0.01, g);                                                        // the body
+    for (const y of [0.07, 0.2, H - 0.03]) box(W + 0.012, 0.018, D + 0.012, iron, 0, y, -0.01, g);   // its iron bands
+    for (const sx of [-1, 1]) box(0.03, H + 0.02, 0.03, iron, sx * (W / 2 + 0.005), 0, D / 2 - 0.02, g);   // corner irons
+    // the mouth: a dark arch with the fire white-orange deep in it, a sill crusted with slag
+    box(0.13, 0.13, 0.02, soot, 0, 0.05, D / 2 - 0.005, g);
+    const arch = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.02, 12, 1, false, -Math.PI / 2, Math.PI), soot); arch.rotation.x = Math.PI / 2; arch.position.set(0, 0.18, D / 2 - 0.005); g.add(arch);
+    box(0.1, 0.1, 0.01, glow, 0, 0.055, D / 2 + 0.002, g);
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.01, 12, 1, false, -Math.PI / 2, Math.PI), glow); top.rotation.x = Math.PI / 2; top.position.set(0, 0.155, D / 2 + 0.002); g.add(top);
+    box(0.06, 0.05, 0.012, hot, 0, 0.06, D / 2 + 0.004, g);                                    // (the heart of it)
+    box(0.17, 0.03, 0.05, brick, 0, 0.02, D / 2 + 0.02, g);                                    // the sill
+    for (let k = 0; k < 4; k++) box(0.03 + r() * 0.03, 0.012, 0.02, rust, -0.06 + k * 0.04, 0.05, D / 2 + 0.04, g);   // slag on it
+    // the hood and the flue: sheet iron narrowing up from the furnace's top into a square chimney against the wall
+    const hood = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.16, 0.14, 4, 1), iron); hood.rotation.y = Math.PI / 4; hood.scale.set(1.2, 1, 0.8); hood.position.set(0, H + 0.07, -0.03); g.add(hood);
+    box(0.09, 0.5, 0.08, brick, 0, H + 0.1, -0.06, g); box(0.11, 0.03, 0.1, iron, 0, H + 0.6, -0.06, g);
+    for (const y of [H + 0.25, H + 0.45]) box(0.095, 0.015, 0.085, iron, 0, y, -0.06, g);
+    // the bellows at its side, their nozzle into the furnace's flank
+    const bx = W / 2 + 0.06;
+    box(0.06, 0.012, 0.13, mat(null, '#5a3a24'), bx, 0.1, 0.0, g); box(0.06, 0.012, 0.13, mat(null, '#5a3a24'), bx, 0.16, 0.0, g);
+    box(0.05, 0.05, 0.11, mat(null, '#3a2a1e'), bx, 0.11, 0.0, g);
+    box(0.06, 0.016, 0.016, iron, W / 2 + 0.02, 0.13, -0.06, g);
+    box(0.012, 0.11, 0.012, mat(null, '#4a3a2c'), bx, 0, 0.06, g);
+  },
+  magmacrucible(S, g, r) {
+    const iron = mat(null, '#2a2624'), clay = mat(null, '#7a5a44'), glow = FURN_GLOW(), hot = FURN_HOT();
+    for (const [x, z] of [[-0.035, -0.035], [0.035, -0.035], [-0.035, 0.035], [0.035, 0.035]]) box(0.012, 0.1, 0.012, iron, x, 0, z, g);   // the stand's legs
+    box(0.09, 0.012, 0.09, iron, 0, 0.09, 0, g);
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.03, 0.07, 10), clay); pot.position.set(0, 0.135, 0); g.add(pot);
+    const melt = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.008, 10), hot); melt.position.set(0, 0.168, 0); g.add(melt);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.006, 4, 12), glow); rim.rotation.x = Math.PI / 2; rim.position.set(0, 0.17, 0); g.add(rim);
+    const lip = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.025, 4), clay); lip.rotation.z = -Math.PI / 2; lip.position.set(0.052, 0.165, 0); g.add(lip);
+    box(0.24, 0.01, 0.01, iron, -0.05, 0.15, 0.05, g).rotation.y = -0.4;                       // the pouring shank
+    box(0.05, 0.004, 0.05, glow, 0.07, 0.002, 0.02, g).rotation.y = 0.6;                         // a spill cooling on the floor
+  },
+});
 // ── the Tidemark's secret (docs/tidemark-plan.md's build sheet, step 7; world doc v1.74 §3.7) ──
 // The wreck of Aurelle's Grace, on her reef off the east beach below the Lamp Fort, where she went the night of the Fall.
 // Stood by convert.js offshore of the Sister's Cabin's way in (outdoor.js TIDEMARK.reef), in the sea, so nobody walks
@@ -2318,6 +2363,62 @@ Object.assign(TYPES, {
       for (const s of [-1, 1]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, len, 3), rope); l.position.copy(a).add(b).multiplyScalar(0.5).addScaledVector(side, s * 0.05); l.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); g.add(l); }
       for (let k = 1; k < 7; k++) { const p = a.clone().lerp(b, k / 7); box(0.016, 0.014, 0.11, S.m.wood, p.x, p.y - 0.007, p.z, g); } }
   },
+});
+// ── the Tidemark's two boats waiting at their jetties (the owner, 2026-11-26: "the overland entrance to the dungeon just
+// stops at a dead end.. should there be a waiting ferry or something else obvious?"). Stood by convert.js (BOATS) off the
+// end of Gullwick's ferry jetty (the Drowned Mole's way in) and the Gull Isles' landing jetty, in the sea: presentation
+// only, no footprint. Each is a boat moored alongside the jetty's end, its painter made fast to a post on the jetty's
+// edge, a lantern on a pole over the post (lit by night: the way in reads at dusk), the oars shipped. Her boatman is a
+// cast figure stood in her stern by hybrid.js (npc_ferryman, npc_fleet_boatman), not part of this piece. The boat runs
+// along local x (bow +x), the jetty on her +z side; model y 0 is the sea floor and WL the water (as the Grace's).
+// `look`: Gullwick's ferry, tarred black-brown with a cream strake and red-brown thwarts; the Gull Fleet's boat sea-grey
+// with the fleet's yellow along her sheer and a yellow pennant on a staff at her stern.
+function skiff(g, r, look) {
+  const L = 0.56, B = 0.17, D = 0.12, F = WL + 0.035;              // length, half-beam, depth, her floor
+  const hullM = mat(tex('planks', look.hull, 71)), strakeM = mat(null, look.strake), thwartM = mat(null, look.thwart), oak = mat(null, '#5a4430');
+  hullM.side = THREE.DoubleSide;
+  const half = (t) => B * Math.pow(Math.sin(Math.PI * Math.min(1, 0.08 + t * 0.92)), 0.55), top = (t) => F + D + 0.035 * (t > 0.7 ? ((t - 0.7) / 0.3) ** 2 : 0) + 0.01 * (t < 0.2 ? ((0.2 - t) / 0.2) ** 2 : 0);
+  const N = 14, K = 8, P = [];
+  for (let i = 0; i <= N; i++) { const t = i / N, x = -L / 2 + L * t, b = half(t), y = top(t); const row = []; for (let k = 0; k <= K; k++) { const s = -1 + (2 * k) / K; row.push([x, y - (D + 0.03) * (1 - Math.abs(s) ** 2.2), b * s]); } P.push(row); }
+  const pos = [], uv = [];
+  for (let i = 0; i < N; i++) for (let k = 0; k < K; k++) { const a = P[i][k], b = P[i + 1][k], c = P[i + 1][k + 1], d = P[i][k + 1]; pos.push(...a, ...b, ...c, ...a, ...c, ...d); const U = (q) => q * 0.06 / TEX_UNITS, V = (q) => q * L / N / TEX_UNITS; uv.push(U(k), V(i), U(k), V(i + 1), U(k + 1), V(i + 1), U(k), V(i), U(k + 1), V(i + 1), U(k + 1), V(i)); }
+  { const row = P[0], cx = row[0][0], cy = (row[0][1] + row[K >> 1][1]) / 2; for (let k = 0; k < K; k++) { pos.push(...row[k], cx, cy, 0, ...row[k + 1]); uv.push(0, 0, 0.5, 0.5, 1, 0); } }   // (her transom, aft)
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geo.computeVertexNormals();
+  g.add(new THREE.Mesh(geo, hullM));
+  // her sheer strake in her colour, the gunwale over it, both sides
+  for (const sz of [-1, 1]) for (let i = 0; i < N; i++) {
+    const t0 = i / N, t1 = (i + 1) / N, x0 = -L / 2 + L * t0, x1 = -L / 2 + L * t1, z0 = sz * half(t0), z1 = sz * half(t1), y0 = top(t0), y1 = top(t1), len = Math.hypot(x1 - x0, z1 - z0, y1 - y0);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(len, 0.026, 0.012), strakeM); m.position.set((x0 + x1) / 2, (y0 + y1) / 2 - 0.022, (z0 + z1) / 2 + sz * 0.004); m.rotation.set(0, -Math.atan2(z1 - z0, x1 - x0), Math.atan2(y1 - y0, Math.hypot(x1 - x0, z1 - z0))); g.add(m);
+    const w = new THREE.Mesh(new THREE.BoxGeometry(len, 0.014, 0.02), oak); w.position.set((x0 + x1) / 2, (y0 + y1) / 2 + 0.004, (z0 + z1) / 2); w.rotation.copy(m.rotation); g.add(w);
+  }
+  box(L * 0.8, 0.008, B * 1.3, mat(tex('planks', '#7a6a54', 72)), -0.01, F - 0.004, 0, g);              // her floorboards
+  for (const x of [-0.12, 0.08]) box(0.045, 0.014, half((x + L / 2) / L) * 1.9, thwartM, x, F + 0.07, 0, g);   // the thwarts
+  // the oars shipped along her thwarts, blades forward
+  for (const sz of [-1, 1]) { box(0.44, 0.012, 0.012, oak, 0.02, F + 0.09, sz * 0.05, g); box(0.1, 0.006, 0.035, look.blade ? mat(null, look.blade) : oak, 0.22, F + 0.09, sz * 0.05, g); }
+  const coil = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.009, 4, 10), mat(null, '#8a7650')); coil.rotation.x = Math.PI / 2; coil.position.set(0.18, F + 0.01, -0.03); g.add(coil);
+  // the post on the jetty's edge beside her bow (+z), its foot on the sea floor, a ring of rope round its head; the
+  // painter from her stem to it; over it a lantern on a pole with an arm, hung out over her
+  const px = 0.14, pz = B + 0.07, post = mat(null, '#4a3a2c'), iron = mat(null, '#2e2c2a');
+  box(0.05, 0.36, 0.05, post, px, 0, pz, g);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.012, 4, 10), mat(null, '#8a7650')); ring.rotation.x = Math.PI / 2; ring.position.set(px, 0.33, pz); g.add(ring);
+  { const A = new THREE.Vector3(L / 2 - 0.01, top(1) - 0.01, 0), Bv = new THREE.Vector3(px, 0.32, pz - 0.02), l = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, A.distanceTo(Bv), 3), mat(null, '#8a7650'));
+    l.position.copy(A).add(Bv).multiplyScalar(0.5); l.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), Bv.clone().sub(A).normalize()); g.add(l); }
+  const lx = -0.16, lz = B + 0.08;
+  box(0.035, 0.74, 0.035, post, lx, 0, lz, g); box(0.16, 0.025, 0.025, post, lx, 0.72, lz - 0.06, g).rotation.y = Math.PI / 2;
+  box(0.006, 0.05, 0.006, iron, lx, 0.67, lz - 0.13, g);
+  const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.07, 0.055), mat(null, '#e0a050')); lamp.userData.glow = true; lamp.position.set(lx, 0.63, lz - 0.13); g.add(lamp);
+  box(0.075, 0.015, 0.075, iron, lx, 0.665, lz - 0.13, g); box(0.07, 0.012, 0.07, iron, lx, 0.59, lz - 0.13, g);
+  if (look.pennant) {                                              // the Gull Fleet's: a staff at her stern, the yellow pennant off it
+    box(0.014, 0.42, 0.014, oak, -L / 2 + 0.02, top(0), 0, g);
+    const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, -0.09, 0, -0.2, -0.05, 0.02], 3)); pg.computeVertexNormals();
+    const pm = new THREE.MeshStandardMaterial({ color: look.pennant, side: THREE.DoubleSide }), pen = new THREE.Mesh(pg, pm); pen.position.set(-L / 2 + 0.02, top(0) + 0.41, 0); pen.rotation.y = 0.5; g.add(pen);
+  }
+}
+Object.assign(TYPES, {
+  // Gullwick's ferry, at the end of the ferry jetty, her bow south toward the Drowned Mole, the jetty to her west
+  ferryboat(S, g, r) { const q = new THREE.Group(); q.rotation.y = -Math.PI / 2; g.add(q); skiff(q, r, { hull: '#3e3228', strake: '#d8cca8', thwart: '#7a3a2a' }); },
+  // a Gull Fleet boat at the Gull Isles' landing, the jetty to her south
+  fleetboat(S, g, r) { skiff(g, r, { hull: '#5a6066', strake: '#d0a830', thwart: '#3a3e44', blade: '#d0a830', pennant: '#d8b030' }); },
 });
 export const BUILD_TYPES = Object.keys(TYPES);
 

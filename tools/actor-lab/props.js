@@ -1174,8 +1174,8 @@ export const PROPS = {
 
   // ── Tollhaven's two townsfolk (docs/tidemark-plan.md's build sheet, step 7; world doc v1.74 §3.7) ──
   // Mistress Fane, the harbour mage, letters the chain's ward in wet salt at every low water: a paste-brush (a short ash
-  // handle, a tin ferrule, a broad flat head, its bristles caked white) and the pot of wet salt she dips it in, and the
-  // hem of her robe gone white with the salt of the steps. Josse Wether, the Quay Chapel's sexton: the chapel's book of
+  // handle, a tin ferrule, a broad flat head, its bristles caked white) and the pot of wet salt she dips it in (her hem
+  // and cuffs white with it are her variant's swatch, variants.json N32). Josse Wether, the Quay Chapel's sexton: the chapel's book of
   // the drowned's names (big, black, more ribbons in it than anyone counts), the chapel's hand-bell, a plain black coat.
   saltbrush: () => {
     const g = new THREE.Group(); g.name = 'Salt_Brush';
@@ -1195,19 +1195,6 @@ export const PROPS = {
     const rim = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.022, 5, 12), clay); rim.rotation.x = Math.PI / 2; rim.position.y = 0.19; g.add(rim);
     const top = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.115, 0.02, 10), salt); top.position.y = 0.2; g.add(top);   // (the salt heaped to the rim)
     const drip = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.12, 0.05), salt); drip.position.set(0.11, 0.27, 0.04); g.add(drip);
-    return g;
-  },
-  // the salt on her hem (the hips' space): a ragged white band round the bottom of the Mage's robe, higher at the front
-  // where she kneels to the chain, crusted in tongues
-  salthem: () => {
-    const g = new THREE.Group(); g.name = 'Salt_Hem';
-    const salt = new THREE.MeshStandardMaterial({ color: 0xeef0ec, roughness: 0.95, side: THREE.DoubleSide });
-    const N = 18, Y = -0.5;
-    for (let k = 0; k < N; k++) {
-      const a = (k / N) * Math.PI * 2, front = Math.max(0, Math.cos(a)), tall = 0.08 + 0.07 * front + ((k * 7) % 5) * 0.012;
-      const s = new THREE.Mesh(new THREE.BoxGeometry(0.16, tall, 0.02), salt);
-      s.position.set(Math.sin(a) * 0.5, Y + tall / 2, Math.cos(a) * 0.5); s.rotation.y = a; s.name = 'Salt_Hem'; g.add(s);
-    }
     return g;
   },
   // the book of names: a sexton's register, black boards gone brown at the corners, pewter clasps, the leaves thick and
@@ -1235,6 +1222,25 @@ export const PROPS = {
     const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.15, 0.24, 12, 1, true), new THREE.MeshStandardMaterial({ color: 0xb08a48, metalness: 0.85, roughness: 0.35, side: THREE.DoubleSide })); bell.position.y = 0.28; g.add(bell);
     const crown = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), bronze); crown.rotation.x = Math.PI; crown.position.y = 0.17; g.add(crown);
     const lip = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.018, 5, 14), bronze); lip.rotation.x = Math.PI / 2; lip.position.y = 0.4; g.add(lip);
+    return g;
+  },
+  // the boatmen at the Tidemark's two jetties (convert.js BOATS, the owner: "should there be a waiting ferry or something
+  // else obvious?"): Gullwick's ferryman leans on his quant-pole, stood upright beside him, its iron shoe down in the boat;
+  // the Gull Fleet's boatman holds his oar tossed, upright, its blade up and tipped in the fleet's yellow
+  ferrypole: () => {
+    const g = new THREE.Group(); g.name = 'Ferry_Pole'; g.userData.hang = 'up';
+    const ash = mat(0x7a6448, 0, 0.85), iron = mat(0x4a4c4e, 0.8, 0.45), rope = mat(0x8a7a52, 0, 0.95);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 2.3, 7), ash); pole.position.y = -0.2; g.add(pole);
+    const shoe = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 6), iron); shoe.rotation.x = Math.PI; shoe.position.y = -1.42; g.add(shoe);
+    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.14, 7), rope); grip.position.y = 0.05; g.add(grip);
+    return g;
+  },
+  fleetoar: () => {
+    const g = new THREE.Group(); g.name = 'Fleet_Oar'; g.userData.hang = 'up';
+    const ash = mat(0x8a7454, 0, 0.85), yellow = mat(0xd0a830, 0, 0.7), grey = mat(0x8a9094, 0, 0.8);
+    const loom = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 1.7, 7), ash); loom.position.y = -0.05; g.add(loom);
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.62, 0.24), grey); blade.position.y = 1.08; g.add(blade);
+    const tip = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.16, 0.25), yellow); tip.position.y = 1.32; g.add(tip);
     return g;
   },
   // the sexton's coat (the hips' space): plain black broadcloth to below the knee, its edges dull black braid, no gilt

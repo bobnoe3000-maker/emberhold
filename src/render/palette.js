@@ -69,6 +69,8 @@ export const ELIT = {
   // (the Reach's camps, docs/art-critic-pass-reach-fx.md) canvas gone grey with ash, a soot-black hem and pole
   ash:    ['#1e1c1b', '#2f2c2a', '#433f3c', '#5c5752', '#78726b'].map(_hx),  // ash-grey canvas
   soot:   ['#0c0b0b', '#151312', '#1e1b19', '#292522', '#36312d'].map(_hx),  // soot-black hem, a charred pole
+  // (the Tidemark's camps, docs/art-critic-pass-tidemark-step7.md) Highmarch's outriders' canvas in the march's oxblood
+  oxblood: ['#1c0a0a', '#2e1012', '#44181a', '#5c2224', '#76302e'].map(_hx),  // oxblood canvas, weathered
   street: ['#1a1816', '#272420', '#36312b', '#46403a', '#59524a'].map(_hx),  // town cobbles, warm grey
   river:  ['#09131b', '#0e1d28', '#142838', '#1d394a', '#385565'].map(_hx),  // cold river water
   wheat:  ['#242011', '#353018', '#4a4222', '#61562d', '#7a6c3a'].map(_hx),  // late wheat

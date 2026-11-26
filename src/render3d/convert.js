@@ -200,7 +200,7 @@ const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, d: 2, G: 1, g: 0 };
  * The world the sim is in, as a Luminati level, and the pieces of our own art to stand in it.
  * @param {any} w the sim's world (sim.world)
  * @param {{ region?: string, stairs?: string, walls?: string, dlook?: string }} [o]
- * @returns {{ level: any, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps: number }, sprites: { id?: string, prop?: string, tx?: number, ty?: number, flat?: boolean, x: number, z: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
+ * @returns {{ level: any, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps: number }, sprites: { id?: string, prop?: string, tx?: number, ty?: number, flat?: boolean, here?: boolean, x: number, z: number }[], figures?: { name: string, x: number, z: number, air: number, row: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
  */
 export function convertWorld(w, o = {}) {
   return w.arena ? arena(w, o) : w.kind === 'dungeon' ? dungeon(w, o) : outdoor(w, o.region || w.region || 'vale');
@@ -244,6 +244,16 @@ const SITE_DOORS = [[/_longhouse_\d/, 'yards', 'reach_assayhouse'], [/_keep_\d/,
 /** Furnace Nine's yard (the region boss's ground, camps.js reach_mouth: the furnace yard west of the Vault's ruin, its
  *  arena cleared of scatter): char and cracked earth to its reach, slag heaps just past its arena, vents inside them */
 const FURNACE_YARD = { heaps: 20, vents: 10 };
+/** the Tidemark's two waiting boats (town.json tidemark_ferry, tidemark_fleetboat; buildkit.js skiff): her middle, in sim
+ *  tiles, alongside the jetty's end (outdoor.js: the ferry jetty from [198, 234] to TIDEMARK.ferry, the landing jetty from
+ *  [164, 18] to TIDEMARK.isles), her post on its edge; her lantern and the boatman's place in her stern, from her middle;
+ *  the boatman's facing (an atlas row: toward the jetty and the camera). BOAT_FLOOR: her floorboards over the sea floor,
+ *  Luminati's units (buildkit.js skiff F, 0.115 of a kit unit, × KIT_UNIT) */
+const BOATS = [
+  { site: 'drowned_mole', id: 'tidemark_ferry', at: [207.4, 254.5], lamp: [-1.2, -1.6], stern: [0, -1.6], man: 'npc_ferryman', row: 1 },
+  { site: 'gull_isles', id: 'tidemark_fleetboat', at: [177, 8.8], lamp: [-1.6, 1.2], stern: [-1.6, 0], man: 'npc_fleet_boatman', row: 1 },
+];
+const BOAT_FLOOR = 0.575;
 /** the Grace's middle east of the Sister's Cabin's door (sim tiles: outdoor.js TIDEMARK.reef), her bow on the shallows */
 const GRACE_OFF = 13;
 function outdoor(w, region) {
@@ -413,6 +423,16 @@ function outdoor(w, region) {
   // as the Ninth Vault's does. GRACE_OFF: her middle that many sim tiles east of the reef (the sea's edge is 5 out,
   // outdoor.js pools; the level ends at 258, MAX_TILES, so she lies along the shore, not out to sea)
   if (region === 'tidemark' && w.kind === 'overland' && TIDEMARK?.reef) sprites.push({ id: 'tidemark_wreck', x: X(TIDEMARK.reef[0] + GRACE_OFF), z: Z(TIDEMARK.reef[1]) });
+  // (the owner, 2026-11-26: the jetties to the Drowned Mole and the Gull Isles "just stop at a dead end") a boat waiting at
+  // each, moored off the jetty's end by its exit (outdoor.js TIDEMARK.ferry, .isles), her lantern lit by night, her
+  // boatman stood in her stern as a figure (hybrid.js: `figures`, idle, never the sim's)
+  const figures = [];
+  if (region === 'tidemark' && w.kind === 'overland') for (const bt of BOATS) {
+    if (!(w.exits || []).some((e) => e.site === bt.site)) continue;
+    sprites.push({ id: bt.id, x: X(bt.at[0]), z: Z(bt.at[1]), here: true });
+    add({ type: 'light', x: X(bt.at[0] + bt.lamp[0]), z: Z(bt.at[1] + bt.lamp[1]), dy: 3.1, color: '#ffc070', intensity: 2.6, distance: 5.5, flicker: 0.12, nightOnly: true });
+    figures.push({ name: bt.man, x: X(bt.at[0] + bt.stern[0]), z: Z(bt.at[1] + bt.stern[1]), air: BOAT_FLOOR, row: bt.row });
+  }
   // the lit things on the ground (the town's braziers: a fire each, sharing Luminati's lamps)
   for (const [k, kind] of w.props || []) {
     const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);
@@ -424,6 +444,7 @@ function outdoor(w, region) {
     else if (OVERLAND_3D.has(kind)) add(DRESS_3D[kind](x, z, hash(kind, tx, ty)));
     else if (reach && kind === 'burrow') sprites.push({ id: 'reach_slagheap', x, z });   // (the cinder hounds' den: a heap of slag, not the Vale's turf)
     else if (reach && kind === 'tent') sprites.push({ prop: kind, kind: 'tent_reach', tx, ty, x, z });   // (the renegades' and the haulers' canvas grey with ash, not the Vale's: gsprite.js)
+    else if (region === 'tidemark' && kind === 'tent') sprites.push({ prop: kind, kind: 'tent_tidemark', tx, ty, x, z });   // (Highmarch's outriders' at their kennels, in the march's oxblood: gsprite.js)
     else if (OVERLAND_OURS.has(kind)) sprites.push({ prop: kind, tx, ty, x, z });
   }
   // the land goes on past the edge: Luminati's forest border on the blocked ring and its outer scenery beyond, round every
@@ -462,7 +483,7 @@ function outdoor(w, region) {
   const town = W * D <= 96 * 96;
   const level = frame({ name: w.name || 'Emberfall', W, D, tiles, heights, objects, spawn: { x: W / 2, z: D / 2, facing: 'down' },
     environment: { timeOfDay: 17.9, border: 'forest', outerScenery: true, godRays: town, interior: false, ...B.env } });
-  return { level, sprites, origin: { x: x0, y: y0 }, stats: { ...count, sprites: sprites.length, size: W * 1000 + D } };
+  return { level, sprites, figures, origin: { x: x0, y: y0 }, stats: { ...count, sprites: sprites.length, size: W * 1000 + D } };
 }
 
 // ── a floor's ways up and down (sim/world.js placeStairsUp, placeStairsDown), in Luminati's stair tiles ─────────────────
@@ -657,6 +678,51 @@ const DRESS_3D_MORE = {
   hen_cart: (x, z) => [{ type: 'critters', x: x + 0.6, z: z + 0.9, kind: 'chicken', count: 3, radius: 1.4 }],
   map_table: (x, z) => [{ type: 'chair', x: x - 0.2, z: z + 0.8, rotation: Math.PI, opts: { style: 'stool', seed: 3 } }],
 };
+// ── the Magma Vault's pieces (sim/world.js DRESS_PIECES magma, furnace, anvil, crucible; docs/art-critic-pass-magma-vault.md)
+// A furnace is ours (town.json reach_furnace: a smelting furnace of black brick and iron built into the back wall, its hood
+// and flue into the rock, its mouth glowing), stood over its footprint (the sim's: the furnace tile at its front middle, a
+// row of `block` either side and the row behind), its mouth's fire and embers Luminati's with the furnace's light, a
+// little smoke up into its hood; a crucible ours (reach_crucible: a fireclay crucible on an iron stand, the melt in it
+// lit); an anvil Luminati's smith's (The Bells of Evermere's: a London-pattern anvil on its stump), a few turns about.
+const MAGMA_3D = {
+  furnace: (tx, ty, h, { X, Z, add, sprites, props }) => {
+    // which way it faces: its footprint's back row behind it, toward the back wall (−y: a north wall; −x: a west one)
+    const blk = (x, y) => props.get(`${x},${y}`) === 'block', faceX = !blk(tx, ty - 1) && blk(tx - 1, ty);
+    const cx = faceX ? X(tx) : X(tx + 0.5), cz = faceX ? Z(ty + 0.5) : Z(ty);                       // (the footprint's middle)
+    const mx = faceX ? X(tx + 1) : X(tx + 0.5), mz = faceX ? Z(ty + 0.5) : Z(ty + 1);               // (its mouth, on its face)
+    sprites.push({ id: faceX ? 'reach_furnacex' : 'reach_furnace', x: cx, z: cz, here: true });
+    add({ type: 'fire', x: mx, z: mz, opts: { kind: 'embers', size: 0.55, smoke: false, light: false, seed: h % 997 } });
+    add({ type: 'light', x: mx, z: r2(mz + (faceX ? 0 : 0.4)), dy: 0.9, color: '#ff7a2a', intensity: 6, distance: 6.5, flicker: 0.18, nightOnly: false });
+    add({ type: 'emitter', x: cx, z: cz, preset: 'embers', dy: 1.4, size: [0.5, 0.3, 0.3], count: 6, params: { life: [0.8, 1.8], velocity: [0, 1.2, 0] } });
+  },
+  crucible: (tx, ty, h, { X, Z, sprites }) => { sprites.push({ id: 'reach_crucible', x: X(tx + 0.5), z: Z(ty + 0.5), here: true }); },
+  anvil: (tx, ty, h, { X, Z, add }) => add({ type: 'smithy', x: X(tx + 0.5), z: Z(ty + 0.5), rotation: [0.3, -0.5, 1.1, 2.6][h % 4], opts: { kind: 'anvil', seed: h % 997 } }),
+};
+/** MAGMA_LIGHT: a light every this many of the flow's tiles (of ours), along a run: the rooms have their braziers and
+ *  torches already, and Luminati keeps the dozen nearest the camera (docs/art-critic-pass-magma-vault.md, the budget) */
+const MAGMA_LIGHT = 9;
+/** the magma, as one flow: its tiles to world.js (placeEnv `magma`: one mesh, the molten surface moving, a crust at its
+ *  open edges and a lip of black rock), a hot light along each run, embers off it here and there */
+function magmaFlow(list, X, Z, add, sprites) {
+  const on = new Set(list.map(([x, y]) => `${x},${y}`)), has = (x, y) => on.has(`${x},${y}`);
+  const cells = list.map(([x, y]) => [X(x + 0.5), Z(y + 0.5), (has(x, y - 1) ? 1 : 0) | (has(x + 1, y) ? 2 : 0) | (has(x, y + 1) ? 4 : 0) | (has(x - 1, y) ? 8 : 0)]);
+  sprites.push({ magma: { cells } });
+  // the lights: walk the tiles in order of x then y, a light every MAGMA_LIGHT; a pool's middle gets one
+  const seen = new Set(); let n = 0;
+  for (const [x, y] of [...list].sort((a, b) => a[1] - b[1] || a[0] - b[0])) {
+    if (seen.has(`${x},${y}`)) continue;
+    // its group (4-connected), lit at its middle and every MAGMA_LIGHT along it
+    const grp = [], q = [[x, y]]; seen.add(`${x},${y}`);
+    while (q.length) { const [a, b] = q.pop(); grp.push([a, b]); for (const [da, db] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const k = `${a + da},${b + db}`; if (on.has(k) && !seen.has(k)) { seen.add(k); q.push([a + da, b + db]); } } }
+    grp.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const step = Math.max(1, Math.round(grp.length / Math.max(1, Math.round(grp.length / MAGMA_LIGHT))));
+    for (let i = Math.floor(step / 2); i < grp.length; i += step) {
+      const [a, b] = grp[i];
+      add({ type: 'light', x: X(a + 0.5), z: Z(b + 0.5), dy: 0.5, color: '#ff6a22', intensity: 3.6, distance: 5.5, flicker: 0.08, nightOnly: false });
+      if (n++ % 2 === 0) add({ type: 'emitter', x: X(a + 0.5), z: Z(b + 0.5), preset: 'embers', dy: 0.15, size: [0.8, 0.1, 0.4], count: 5, params: { life: [1.0, 2.2], velocity: [0, 0.8, 0] } });
+    }
+  }
+}
 /** the light a doorway's lamp throws, intensity and reach (the dressing pass: they stand in for the braziers that lit every
  *  doorway, and the rooms read 12 % darker by them at first) */
 const DOOR_POOL = { candelabra: [7, 7], lantern: [6, 6.5], candles: [6.5, 6.5] };
@@ -739,6 +805,9 @@ const CR_BACK = 10, CR_TOP_Y = CR_BACK * 0.5;
 /** what hangs in a bay that isn't a lantern's (world.js buildTavern): a shield, a plate shelf, antlers, a peg rail with a
  * cloak and a hat, the slate of chalked tallies, herbs drying */
 const TAV_STORY = ['shield', 'shelf', 'antlers', 'pegs', 'slate', 'herbs'];
+/** a ship's (the hulk kit's: the Gull Isles' second floor, the Sister's Cabin): no antlers or drying herbs on her side,
+ *  which read as a hunting lodge's (docs/art-critic-pass-tidemark-step7.md); oilskins on pegs, a tally slate, plates */
+const SHIP_STORY = ['pegs', 'shelf', 'slate', 'shield', 'pegs', 'slate'];
 const TAV_FLOOR_Y = FLOOR * 0.5, TAV_TOP_Y = TAV_BACK * 0.5;
 /** what a back wall carries, by its stone: the inn's timber frame, its cellar's niches, the crypt's blind arcade and its
  * ossuary's bones */
@@ -774,7 +843,7 @@ function wallOf(open, W, D, x, z) {
   return !w || (n && n.d <= w.d) ? (n ? { side: 'n', z: n.z, x, d: n.d } : null) : { side: 'w', x: w.x, z, d: w.d };
 }
 /** the frame along the back walls and what hangs on them, into `trim` (world.js buildTavern) */
-function tavernDress(faces, arches, open, add, trim, roomAt = () => null) {
+function tavernDress(faces, arches, open, add, trim, roomAt = () => null, story = TAV_STORY) {
   const clearOf = (x, z) => arches.every((a) => Math.abs(x - a.x) > a.span / 2 + 1.2 || Math.abs(z - a.z) > 2.5);
   // runs along each line of faces: a north wall's (faces 's', along x) and a west wall's (faces 'e', along z)
   const lines = new Map();
@@ -807,7 +876,7 @@ function tavernDress(faces, arches, open, add, trim, roomAt = () => null) {
       // other bay (its light), and in the rest one thing each, never the same twice running; a long wall's middle bay a
       // shuttered window, the inn's name, a cool line of night through its crack
       const bays = []; for (let t = a + 2; t <= b - 2; t += 4) bays.push(t);
-      const win = b - a >= 14 ? bays[(bays.length / 2) | 0] : null, o = hash('tv', key) % TAV_STORY.length;
+      const win = b - a >= 14 ? bays[(bays.length / 2) | 0] : null, o = hash('tv', key) % story.length;
       bays.forEach((t, q) => {
         const [x, z] = P(t); if (!clearOf(x, z)) return;
         if (t === win) {
@@ -817,7 +886,7 @@ function tavernDress(faces, arches, open, add, trim, roomAt = () => null) {
           const light = add({ type: 'light', x: r2(x + (s ? 0 : 0.7)), z: r2(z + (s ? 0.7 : 0)), dy: 1.6, color: '#ffb468', intensity: 2.9, distance: 6, flicker: 0.1, nightOnly: false });
           trim.push({ k: 'lantern', x, z, n, y: TAV_FLOOR_Y + 2.6, light });
         } else {
-          const kind = TAV_STORY[(o + q) % TAV_STORY.length];
+          const kind = story[(o + q) % story.length];
           trim.push(kind === 'shield' ? { k: 'shield', x, z, n, y: TAV_FLOOR_Y + 2.05, look: hash('ts', key, t) % 5 } : { k: kind, x, z, n, y: TAV_FLOOR_Y + 1.95, seed: hash('ty', key, t) % 997 });   // (between the rail and the beam, built half again as big: round 6, "dark specks")
         }
         if ((q === 0 || q === bays.length - 1) && hash('tw2', key, t) % 3 === 0) trim.push({ k: 'web2', x, z, n, y: TAV_TOP_Y - 0.36, side: q === 0 ? 1 : -1, size: 0.6 + (hash('tz', key, t) % 5) * 0.1 });   // (a web in a corner bay now and then)
@@ -1391,18 +1460,25 @@ function dungeon(w, o = {}) {
   const trim = inside ? [] : null;
   // (the room a floor tile of Luminati's is in: a palace's bays dress by what their room was for, palaceRun)
   const roomAt = (i, j) => { if (!L.plan) return null; for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const c = cells.get(`${x0 + 2 * i + dx},${y0 + 2 * j + dy}`); if (c && c.room >= 0) return L.rooms[c.room]; } return null; };
-  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim, roomAt); if (look.palace) trim.push(...palaceRunners(w, L, X, Z)); if (look.water) docksDress(W, D, open, add, trim, stairLights.arches || [], !!look.stone); if (rampart) rampartsDress(W, D, open, rampart, add, trim, stairLights.arches || []); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
+  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim, roomAt, look === KIT_LOOK.hulk ? SHIP_STORY : TAV_STORY); if (look.palace) trim.push(...palaceRunners(w, L, X, Z)); if (look.water) docksDress(W, D, open, add, trim, stairLights.arches || [], !!look.stone); if (rampart) rampartsDress(W, D, open, rampart, add, trim, stairLights.arches || []); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
   if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h) { add({ ...c.ob(X, Z), onWall: true }); if (c.sprite) sprites.push(c.sprite); }   // (onWall: on a wall's top, not the room's own)   // (what stands on the walls' tops, where the stairs didn't take the wall)
   for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity * (look.fill ? 0.45 : 1), distance: l.glow.distance * (look.fill ? 0.7 : 1), flicker: 0.08, nightOnly: false }
     : { type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });
+  const magma = /** @type {[number, number][]} */ ([]);   // (the Magma Vault's magma tiles, of ours: built as one flow below)
   for (const [k, kind] of w.props || []) {
     const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);
     if (x < 0.5 || z < 0.5 || x > W - 0.5 || z > D - 0.5 || /^stair/.test(kind)) continue;   // (the stairs are the floor's own: stairs())
     const h = hash('p', tx, ty);
     if (kind === 'exit') { add({ type: 'lamppost', x, z, rotation: 0, opts: { style: 'arm' } }); continue; }
     if (kind === 'block') continue;                                 // (a big piece's footprint: world.js big)
+    // (the Magma Vault, the owner 2026-11-26: "flowing magma and a few furnaces, anvils"; sim/world.js magma_channel,
+    // magma_pool, furnaces, anvils) its pieces in every kit they stand in (the vault's caves, the works' hall)
+    if (kind === 'magma') { magma.push([tx, ty]); continue; }
+    if (MAGMA_3D[kind]) { MAGMA_3D[kind](tx, ty, h, { X, Z, add, sprites, props: w.props }); continue; }
     if (inside && look.ramparts && RAMP_3D[kind]) { RAMP_3D[kind](x, z, h, kind, { add, trim, open }); continue; }
-    if (inside && look.water && DOCK_3D[kind]) { DOCK_3D[kind](x, z, h, kind, { add, trim, open, edge: edgeOf(open, x, z) }); continue; }
+    // (the hulk's way in, a gangway or the Grace's reef ladder, takes the wharf's rope coils and nets: with no drawer of
+    // their own there they stood as dark hooded shapes, read as foes: docs/art-critic-pass-tidemark-step7.md)
+    if (inside && (look.water || (look === KIT_LOOK.hulk && (kind === 'rope' || kind === 'net'))) && DOCK_3D[kind]) { DOCK_3D[kind](x, z, h, kind, { add, trim, open, edge: edgeOf(open, x, z) }); continue; }
     // (the reliquary is the palace's piece, but the Sister's Cabin keeps one in the Grace's chapel locker, on the hulk kit;
     // and a hulk's cabins (Livia's there, the Gull Isles' wardroom and great cabin) take the palace's writing tables and
     // papers, not the clerk's voxel desk, whose own light burned out to a blob in the lit hulk:
@@ -1424,6 +1500,7 @@ function dungeon(w, o = {}) {
     const lit = PROP_LIGHT[kind], pool = DOOR_POOL[kind] || [3.2, 4.5];
     if (lit && kind !== 'brazier' && kind !== 'cookfire') add({ type: 'light', x, z, dy: kind === 'candelabra' ? 1.7 : 0.9, color: hex(lit), intensity: pool[0], distance: pool[1], flicker: 0.15, nightOnly: false });
   }
+  if (magma.length) magmaFlow(magma, X, Z, add, sprites);
   if (/c/.test(o.dlook || '')) edgeRubble(W, D, heights, open, add);   // (a spike: ?dlook=c|bc, docs/dungeon-look-spike.md)
   const level = frame({ name: w.siteName || 'The Old Barrows', W, D, tiles, heights, objects, spawn: { x: X(sp.x), z: Z(sp.y), facing: 'up' },
     // (black beyond the walls, as Emberlit's: a backdrop colour, which the fog takes too, so the far rooms fade to it)

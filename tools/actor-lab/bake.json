@@ -8217,6 +8217,44 @@
           "to": 0.7
         }
       ]
+    },
+    {
+      "out": "npc_ferryman",
+      "variant": "N34",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_B",
+          "frames": 10,
+          "fps": 10
+        }
+      ]
+    },
+    {
+      "out": "npc_fleet_boatman",
+      "variant": "N35",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_B",
+          "frames": 10,
+          "fps": 10
+        }
+      ]
     }
   ]
 }

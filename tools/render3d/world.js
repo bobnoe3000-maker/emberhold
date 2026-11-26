@@ -1544,11 +1544,68 @@ function buildTavern(pieces) {
 }
 const TAV_H = 3.0, TAV_FLOOR = 1.0;
 const CR_SPRING = 1.0 + 2.25;   // (where the crypt's arches spring, over a figure's head: its walls stand four units, convert.js CR_BACK)   // (a back wall's height over the floor: convert.js TAV_BACK, level 8, over the floor's 2)
+// ── the Magma Vault's magma (convert.js magmaFlow; docs/art-critic-pass-magma-vault.md) ─────────────────────────────────
+// Its tiles as one flow: each a quad laid just over the floor (Luminati's floor is a solid block of two of our tiles a
+// side: a channel one of ours wide can't be cut into it), cut into a 4 × 4 grid, every vertex carrying how far
+// it is from an open edge (a side with no magma beyond it), so the crust gathers at the banks and a run of tiles is one
+// channel, not a row of squares. The surface is the floor's own world space through value noise, two layers drifting
+// different ways slowly over time (magmaT, the frame's), banded into crust, red, orange and yellow-white; unlit (it is
+// the light), the hottest over 1 so the bloom takes it; the frame's fog over it as over the floor. A lip of black rock
+// along each open edge. One draw for the surface and one for the lip, however many tiles.
+const magmaMats = []; let magmaT = 0;
+const MAGMA_NOISE = `
+float mh(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float mn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mh(i), mh(i + vec2(1.0, 0.0)), f.x), mix(mh(i + vec2(0.0, 1.0)), mh(i + vec2(1.0, 1.0)), f.x), f.y); }`;
+function buildMagma(cells) {
+  const g = new THREE.Group(); g.name = 'ember:magma';
+  const N = 4, pos = [], crust = [], idx = [], lip = [];
+  for (const [x, z, m] of cells) {
+    const y = game.tileMap.getHeight(x, z) + 0.025, b = pos.length / 3;   // (on the floor: its block is solid, a sunk surface was hidden under it)
+    // (x, z: the tile's middle in Luminati's units; a tile of ours is half a unit)
+    for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) {
+      const u = i / N, v = j / N;
+      // distance (in tiles) to the nearest open side: n (−z) 1, e (+x) 2, s (+z) 4, w (−x) 8
+      let d = 1;
+      if (!(m & 1)) d = Math.min(d, v); if (!(m & 4)) d = Math.min(d, 1 - v); if (!(m & 8)) d = Math.min(d, u); if (!(m & 2)) d = Math.min(d, 1 - u);
+      pos.push(x - 0.25 + u * 0.5, y, z - 0.25 + v * 0.5); crust.push(d);
+    }
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const a = b + j * (N + 1) + i; idx.push(a, a + N + 1, a + 1, a + 1, a + N + 1, a + N + 2); }
+    // the lip: a low black kerb on each open side, standing over the floor
+    const k = (cx, cz, w, d) => lip.push([cx, game.tileMap.getHeight(x, z), cz, w, d]);
+    if (!(m & 1)) k(x, z - 0.26, 0.56, 0.06); if (!(m & 4)) k(x, z + 0.26, 0.56, 0.06); if (!(m & 8)) k(x - 0.26, z, 0.06, 0.56); if (!(m & 2)) k(x + 0.26, z, 0.06, 0.56);
+  }
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('crust', new THREE.Float32BufferAttribute(crust, 1)); geo.setIndex(idx);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: true });
+  const u = { value: magmaT }; mat.userData.u = u;
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.uMagmaT = u;
+    sh.vertexShader = 'attribute float crust;\nvarying float vCrust;\nvarying vec2 vMW;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vCrust = crust; vMW = (modelMatrix * vec4(position, 1.0)).xz;');
+    sh.fragmentShader = 'uniform float uMagmaT;\nvarying float vCrust;\nvarying vec2 vMW;\n' + MAGMA_NOISE + '\n' + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+  { vec2 p = vMW * 2.2;
+    float a = mn(p + vec2(uMagmaT * 0.11, uMagmaT * 0.04)), b = mn(p * 2.3 - vec2(uMagmaT * 0.07, -uMagmaT * 0.13));
+    float heat = 0.62 * a + 0.38 * b;
+    heat *= smoothstep(0.0, 0.42, vCrust);                       // (cooler toward the banks)
+    float cr = smoothstep(0.3, 0.18, heat) + smoothstep(0.12, 0.0, vCrust) * 0.85;   // (crust: the cold plates, and the banks)
+    vec3 hot = mix(vec3(0.85, 0.16, 0.03), vec3(1.6, 0.62, 0.12), smoothstep(0.35, 0.7, heat));
+    hot = mix(hot, vec3(2.1, 1.35, 0.55), smoothstep(0.72, 0.9, heat));
+    diffuseColor.rgb = mix(hot, vec3(0.09, 0.05, 0.04), clamp(cr, 0.0, 1.0)); }`);
+  };
+  mat.customProgramCacheKey = () => 'ember-magma-1';
+  const surf = new THREE.Mesh(geo, mat); surf.name = 'ember:magma:surface'; g.add(surf); magmaMats.push(mat);
+  if (lip.length) {
+    const lg = []; for (const [cx, y, cz, w, d] of lip) { const q = new THREE.BoxGeometry(w, 0.09, d); q.translate(cx, y + 0.045, cz); lg.push(q); }
+    const merged = mergeGeometries(lg); for (const q of lg) q.dispose();
+    const lm = new THREE.Mesh(merged, new THREE.MeshStandardMaterial({ color: 0x1a1412, roughness: 0.95 })); lm.castShadow = false; lm.receiveShadow = true; lm.name = 'ember:magma:lip'; g.add(lm);
+  }
+  g.userData.dispose = () => { const i = magmaMats.indexOf(mat); if (i >= 0) magmaMats.splice(i, 1); geo.dispose(); mat.dispose(); };
+  return g;
+}
 /** our art of a level gone for good: its cards (and their sheets' textures, which Sprite3D's dispose leaves: a texture a
  * card leaked every load, 199 → 288 over four trips), its arches and its kit models */
 function dropEnv(list, made) {
   for (const s of list) {
-    game.engine.scene.remove(s); s.dispose?.(); s.userData?.sheet?.dispose?.();
+    game.engine.scene.remove(s); s.dispose?.(); s.userData?.sheet?.dispose?.(); s.userData?.dispose?.();   // (dispose: the magma's, its program's clock let go)
     // a prop's sheet (standOurs) shared by every piece of its kind on the floor: let go with the last of them
     const os = s.userData?.ourSheet; if (os) os.refs--;
   }
@@ -1571,10 +1628,12 @@ async function placeEnv(list, region) {
     if (p.canvas) { standOurs(p); continue; }
     if (p.arch) { const g = buildArch(p.arch); game.engine.scene.add(g); envSprites.push(g); continue; }
     if (p.tavern) { const g = buildTavern(p.tavern.pieces); game.engine.scene.add(g); envSprites.push(g); continue; }
+    if (p.magma) { const g = buildMagma(p.magma.cells); game.engine.scene.add(g); envSprites.push(g); continue; }
     const kit = KIT.get(p.id);
     if (kit && (LANDMARKS === 'all' || (LANDMARKS === 'chosen' && !p.card) || (LANDMARKS === 'doors' && DOORS.has(p.id)))) {
       // (on the ground round it, not the tile under its middle: the chapel stands in water the converter laid under it)
-      const H = (dx, dz) => game.tileMap.getHeight(p.x + dx, p.z + dz), y = Math.max(H(0, 0), H(0, 3), H(0, -3), H(3, 0), H(-3, 0));
+      // (here: on the ground under its middle alone: a boat moored off a jetty, its deck within three units, sat on the sea floor)
+      const H = (dx, dz) => game.tileMap.getHeight(p.x + dx, p.z + dz), y = p.here ? H(0, 0) : Math.max(H(0, 0), H(0, 3), H(0, -3), H(3, 0), H(-3, 0));
       const g = kitPiece(kit, p.x, y, p.z);
       game.engine.scene.add(g); envSprites.push(g); continue;
     }
@@ -3235,6 +3294,7 @@ const api = {
       else blastLight.off();
     }
     placeSpells(f.spells || [], f.dt || 0, f.ambient?.lamps, !!(f.rings && f.rings.length), f.hazards);
+    if (magmaMats.length) { magmaT += Math.min(0.1, f.dt || 0); for (const m of magmaMats) if (m.userData.u) m.userData.u.value = magmaT; }
     // underground, the lights' flicker held to CALM_FLICKER (the owner, 2026-11-11: "Player and npc characters flicker in
     // the dungeon not overland. Probably due to torch lighting effect"): Luminati's wall torch swings its light ±38 %
     // (flicker 0.45) 2.6 times a second, and a figure by a wall, close to it, took the whole swing while the floor beyond

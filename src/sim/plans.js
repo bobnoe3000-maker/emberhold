@@ -334,21 +334,21 @@ export const PLANS = {
   //    the vault Livia's cabin at the stern (no boss: a secret's end room is its vault, as the Ninth Vault's)
   sisters_cabin: { site: 'sisters_cabin', name: "The Sister's Cabin", kind: 'vault', base: 45, flat: true, floors: [
     { name: "Aurelle's Grace", spaces: [
-      { id: 'the_reef_ladder', name: 'The Reef Ladder', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'rect', lv: 0, kit: 'hulk',
+      { id: 'the_reef_ladder', name: 'The Reef Ladder', role: 'entrance', x: 4, y: 130, w: 30, h: 24, shape: 'rect', lv: 0, kit: 'hulk',
         dress: ['dock_ropes', 'mole_lamps', 'stair_up'], note: 'Up the ladder from the reef at low water and in over her side, where the planks are gone.' },
-      { id: 'the_waist', name: 'The Waist', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'rect', lv: 0, kit: 'hulk', foes: 'drowned_fleet',
+      { id: 'the_waist', name: 'The Waist', role: 'room', x: 0, y: 66, w: 38, h: 54, shape: 'rect', lv: 0, kit: 'hulk', foes: 'drowned_fleet',
         dress: ['casks', 'anchors', 'mole_lamps'], note: 'The open deck amidships, her crew still at their stations, as they were the night she struck.' },
-      { id: 'the_chapel_locker', name: 'The Chapel Locker', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'rect', lv: 0, kit: 'hulk', foes: 'drowned_fleet',
+      { id: 'the_chapel_locker', name: 'The Chapel Locker', role: 'offshoot', x: 48, y: 80, w: 24, h: 22, shape: 'rect', lv: 0, kit: 'hulk', foes: 'drowned_fleet',
         dress: ['reliquary', 'mole_lamps', 'chest', 'shrine'], note: 'Aurelle\'s chapel aboard, small enough to kneel in. The reliquary where the box was kept is empty.' },
-      { id: 'the_childrens_deck', name: "The Children's Deck", role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'rect', lv: 0, kit: 'hulk', foes: 'drowned_fleet',
+      { id: 'the_childrens_deck', name: "The Children's Deck", role: 'room', x: 2, y: 16, w: 34, h: 40, shape: 'rect', lv: 0, kit: 'hulk', foes: 'drowned_fleet',
         dress: ['bunks', 'casks', 'mole_lamps'], note: 'The deck below, rows of small hammocks slung low, the crew walking it as if on watch.' },
-      { id: 'livias_cabin', name: "Livia's Cabin", role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'rect', lv: 0, kit: 'hulk', foes: 'drowned_fleet',
+      { id: 'livias_cabin', name: "Livia's Cabin", role: 'end', x: 48, y: 0, w: 50, h: 44, shape: 'rect', lv: 0, kit: 'hulk', foes: 'drowned_fleet',
         dress: ['vault_chest', 'desks', 'rug', 'mole_lamps'], note: 'The stern cabin, the whole width of her, where Livia slept the one night aboard. The manifest is in her chest.' },
     ], halls: [
-      { from: 'the_reef_ladder', to: 'the_waist', x: 30, y: 8, w: 10, h: 10 },
-      { from: 'the_waist', to: 'the_chapel_locker', x: 56, y: 24, w: 10, h: 10 },
-      { from: 'the_waist', to: 'the_childrens_deck', x: 110, y: 8, w: 10, h: 10 },
-      { from: 'the_childrens_deck', to: 'livias_cabin', x: 132, y: 34, w: 10, h: 10 },
+      { from: 'the_reef_ladder', to: 'the_waist', x: 14, y: 120, w: 10, h: 10 },
+      { from: 'the_waist', to: 'the_chapel_locker', x: 38, y: 86, w: 10, h: 10 },
+      { from: 'the_waist', to: 'the_childrens_deck', x: 12, y: 56, w: 10, h: 10 },
+      { from: 'the_childrens_deck', to: 'livias_cabin', x: 36, y: 26, w: 12, h: 10 },
     ] },
   ] },
   ninth_vault: { site: 'ninth_vault', name: 'The Ninth Vault', kind: 'vault', base: 30, flat: true, floors: [

@@ -227,6 +227,8 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   const AHEAD_S = 1.5;
   let aheadFor = null, builtAt = 0;
   let api = null, built = null, building = null, last = 0, origin = { x: 0, y: 0 }, lastC = null, ours = [], kept = [], oursState = '', oursCheck = 0, houses = [], ambient = null;
+  // (the boatmen stood in the Tidemark's waiting boats: convert.js BOATS, decor, never the sim's; the world they were made for)
+  let decor = /** @type {{ name: string, x: number, z: number, air: number, row: number }[]} */ ([]), decorFor = null;
   const state = { level: null, sprites: 0, loads: 0, failed: '', timing: { convert: 0, sprites: 0, load: 0 } };
   sim.bus.on('gateOpened', (e) => { gateDropAt.set(e.id, last || performance.now()); });
   // (v1.154, Highmarch) the walls' and the palace's moments in the fights' light (skillfx.js, the boss pass's pattern: a
@@ -265,6 +267,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         const t1 = performance.now(); state.timing = { convert: Math.round(t1 - t0), load: 0, sprites: 0 };
         origin = r.origin; state.level = `${r.level.width}×${r.level.depth}`; state.sprites = r.sprites.length; state.loads++;
         ours = r.sprites.filter((q) => q.prop); kept = r.sprites.filter((q) => !q.prop); oursState = propState(w, ours); ambient = r.ambient || null;
+        decor = r.figures || []; decorFor = w;
         houses = r.level.objects.filter((o) => o.type === 'house' && o.name).map((o) => ({ o, sv: (w.services || []).find((v) => v.name === o.name) })).filter((q) => q.sv);
         const sprites = r.sprites.map((q) => (q.prop ? propSprite(w, q) : q)).filter(Boolean), t2 = performance.now();
         state.timing.sprites = Math.round(t2 - t1);
@@ -334,6 +337,8 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
           if (d.uid && d.uid === sim.focusId) mark = { x: X, z: Z };   // the foe a tap set the party on (battle.js focus)
         }
       }
+      // the boatmen, idling in their boats (an NPC's idle: eight frames from the atlas's first column, at its 7 a second)
+      if (decorFor === built && decor.length) { const fr = Math.floor(now / 143) % 8; decor.forEach((f, i) => actors.push({ name: f.name, col: fr, row: f.row, x: f.x, z: f.z, air: f.air, fade: 0, flash: 0, warn: 0, key: `decor:${i}:${f.name}` })); }
       // the ground a fight churns (battle.js hazards: the Toadking's mud, the Vatwarden's sluice), welling up and sinking away
       const hazards = [];
       for (const hz of (c.battle && c.battle.hazards) || []) {
