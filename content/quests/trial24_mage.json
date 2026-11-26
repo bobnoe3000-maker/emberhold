@@ -2,16 +2,15 @@
   "id": "trial24_mage",
   "kind": "trial",
   "title": "Ask the Iron",
-  "giver": "tamsin",
+  "giver": "dagny_coalbrook",
   "region": "reach",
   "level": [
     1,
     60
   ],
-  "companion": "tamsin",
   "trial": "mage",
   "trialLv": 24,
-  "summary": "Tamsin will show a mage of yours how to ask instead of tell. By the Assay's furnace, under the Yards, where everything's hot enough to listen.",
+  "summary": "Tamsin left her aunt her notes on asking the iron instead of telling it. Dagny will lend them to a mage of yours: by the Assay's furnace, under the Yards, where everything's hot enough to listen.",
   "steps": [
     {
       "id": "furnace",
@@ -27,16 +26,16 @@
       ]
     }
   ],
-  "ready": "Eight waves under the Yards. Tell Tamsin.",
-  "done": "Your mages ask the weather now. Tamsin says it's the same as iron, only wetter.",
+  "ready": "Eight waves under the Yards. Give Tamsin's notes back to Dagny at the Slag & Bellows in Ashgate.",
+  "done": "Your mages ask the weather now. Tamsin's notes say it's the same as iron, only wetter.",
   "rewards": {
     "share": 0.3,
     "lv": 24,
     "gold": 240
   },
   "dialogue": {
-    "file": "tamsin",
-    "offer": "tamsin_trial_offer",
-    "turnin": "tamsin_trial_turnin"
+    "file": "dagny",
+    "offer": "dagny_trial_offer",
+    "turnin": "dagny_trial_turnin"
   }
 }

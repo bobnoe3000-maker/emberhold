@@ -33,6 +33,12 @@
    "y": 147.5
   },
   {
+   "kind": "site",
+   "id": "highmarch",
+   "x": 100.3,
+   "y": 40
+  },
+  {
    "kind": "land",
    "id": "solmere",
    "x": -7.5,

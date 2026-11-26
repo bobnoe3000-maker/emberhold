@@ -20,7 +20,7 @@ VAR boss_standard = 0
 VAR q_ch2_fog_on_the_canal = -1
 VAR q_ch2_the_last_office = -1
 VAR q_ch3_the_wickham_road = -1
-VAR q_ch3_quota = -1
+VAR chapters_done = 0
 VAR q_ch4_consigned = -1
 VAR q_trial_last_rites = -1
 VAR frag_vale_count = 0
@@ -92,8 +92,8 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 { q_ch2_fog_on_the_canal == 3 && q_ch2_the_last_office < 2: "Reedholm writes that you're keeping Saltmere busy. Orla writes that you're keeping the Mother busy. I like Orla's letters better." }
 { q_ch2_the_last_office == 3 && q_ch3_the_wickham_road < 1: "I've copied the Abbey's ledger for Reedholm. I've kept the copy I made first. I'm still not a fool." }
 { q_ch3_the_wickham_road == 1: "The Wickham road, north, over the range. Dagny Coalbrook, in Ashgate. Give her my letter. She won't read it slowly. She'll read it standing up." }
-{ q_ch3_the_wickham_road == 3 && q_ch3_quota < 3: "Dagny writes. Four lines, every week, all of them about the Assay. I've started to look forward to them, which worries me." }
-{ q_ch3_quota == 3 && q_ch4_consigned < 1: "Dagny sent me Vane's ledger, wrapped in oilcloth, with four words: *You'll want the end.* She was right. I do." }
+{ q_ch3_the_wickham_road == 3 && chapters_done < 16: "Dagny writes. Four lines, every week, all of them about the Assay. I've started to look forward to them, which worries me." }
+{ chapters_done >= 16 && q_ch4_consigned < 1: "Dagny sent me Vane's ledger, wrapped in oilcloth, with four words: *You'll want the end.* She was right. I do." }
 { q_ch4_consigned == 1: "Tollhaven, in the Tidemark. Hester Quaile, at the Paid Toll. Show her the page, and don't let her charge you for reading it." }
 { q_ch4_consigned == 3: "Hester Quaile writes to me now. Her letters come with the postage owing. I pay it. They're worth it." }
 { frag_vale_count >= 3 && frag_vale_count < 10: "The Vale's set has more gaps than words. I've read what we have four times. It doesn't get kinder." }

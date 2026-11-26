@@ -56,9 +56,9 @@ test('every site builds each floor in its band; the last floor has no stairs dow
   }
 });
 
-test('one dungeon a level: the open bands run 1–40 in eleven (the Reach in three of four, v1.144; the Tidemark\'s of five, v1.150), each level in exactly one; the room rule by rank', () => {
+test('one dungeon a level: the open bands run 1–45 in twelve (the Reach in three of four, v1.144; the Tidemark\'s of five, v1.150), each level in exactly one; the room rule by rank', () => {
   const bands = SITE_IDS.filter((id) => SITES[id].band);
-  assert.deepEqual(bands, ['barrows', 'wickham_keep', 'sunken_chapel', 'toadking_mound', 'canal_locks', 'drowned_abbey', 'cold_seam', 'assay_yards', 'cinderworks', 'drowned_mole', 'gull_isles']);
+  assert.deepEqual(bands, ['barrows', 'wickham_keep', 'sunken_chapel', 'toadking_mound', 'canal_locks', 'drowned_abbey', 'cold_seam', 'assay_yards', 'cinderworks', 'drowned_mole', 'gull_isles', 'highmarch']);
   for (const id of bands) { assert.ok(SITES[id].plan, `${id}: authored (the Vale 2026-11-02, the Fens v1.102)`); assert.equal(SITES[id].floors, 2, `${id}: two floors, the owner's rule`); }
   for (const id of bands) assert.equal(bandTop(SITES[id]), SITES[id].base + ({ reach: 3, tidemark: 4 }[SITES[id].region] || 2), `${id}: a band of three levels (the Reach's of four, v1.144; the Tidemark's of five, v1.150)`);
   for (let lv = 1; lv <= 40; lv++) {
@@ -154,5 +154,5 @@ test('the Drowned Abbey: two authored floors of five spaces (v1.102), 16–18; e
   assert.equal(SITES.drowned_abbey.floors, 2); assert.ok(SITES.drowned_abbey.plan); assert.deepEqual(SITES.drowned_abbey.rooms, [5, 5]);
   assert.deepEqual(Object.fromEntries(SITE_IDS.filter((id) => !SITES[id].parked).map((id) => [id, levelBand(id)])), {
     barrows: '1–3', wickham_keep: '4–6', sunken_chapel: '7–9', proving_pens: '4', ninth_milestone: '9',
-    toadking_mound: '10–12', canal_locks: '13–15', drowned_abbey: '16–18', mere_tower: '12', reedholm_undercroft: '18', cold_seam: '19–22', assay_yards: '23–26', cinderworks: '27–30', drowned_mole: '31–35', gull_isles: '36–40', lamp_fort: '38', ninth_vault: '30', shuttered_inn: '23', haddow_crypt: '6' });
+    toadking_mound: '10–12', canal_locks: '13–15', drowned_abbey: '16–18', mere_tower: '12', reedholm_undercroft: '18', cold_seam: '19–22', assay_yards: '23–26', cinderworks: '27–30', drowned_mole: '31–35', gull_isles: '36–40', highmarch: '41–45', lamp_fort: '38', ninth_vault: '30', shuttered_inn: '23', haddow_crypt: '6' });
 });

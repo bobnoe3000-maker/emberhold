@@ -86,10 +86,11 @@ test('the Journal\'s leads on the Tidemark: the Harbourmaster, then Maren until 
   assert.ok(story.leadsTitle.tidemark);
 });
 
-test('(v1.151) past 30 the premium compounds PREMIUM_STEEP a level, so three levels up stays a wall; the straight line under it', async () => {
-  const { PREMIUM_STEEP, PREMIUM_PAST } = await import('../src/sim/premium.js');
+test('(v1.151) past 30 the premium compounds PREMIUM_STEEP a level (v1.154: PREMIUM_STEEPER past 40), so three levels up stays a wall; the straight line under it', async () => {
+  const { PREMIUM_STEEP, PREMIUM_PAST, PREMIUM_STEEPER, PREMIUM_STEEPER_FROM } = await import('../src/sim/premium.js');
   const line = (L) => 1 + 0.05 * Math.max(0, L - 3) + 0.06 * Math.min(4, Math.max(0, L - 18));
   for (const L of [1, 18, 22, 30]) assert.ok(Math.abs(premiumOf(L) - line(L)) < 1e-12, `${L}`);
-  let k = 1; for (let L = PREMIUM_PAST + 1; L <= 45; L++) { k *= PREMIUM_STEEP; assert.ok(Math.abs(premiumOf(L) - line(L) * k) < 1e-9, `${L}`); }
+  let k = 1; for (let L = PREMIUM_PAST + 1; L <= 45; L++) { k *= L > PREMIUM_STEEPER_FROM ? PREMIUM_STEEPER : PREMIUM_STEEP; assert.ok(Math.abs(premiumOf(L) - line(L) * k) < 1e-9, `${L}`); }
+  assert.ok(premiumOf(48) / premiumOf(45) > 1.3, 'three up past 40: more than 30 % a stat');
   assert.ok(premiumOf(42) / premiumOf(39) > 1.15, 'three up, a stat: more than 15 % past 30');
 });

@@ -214,7 +214,7 @@ with the Journal in the owner's plain voice ([copy-voice.md](./copy-voice.md)). 
 | ch4 *Letters of Marque* (36–40) | Hester Quaile | The Gull Fleet is taking League ships under a commission. Hesk's commission in his wardroom is signed *Lucanus*, and it was paid in coal-red wax with a thumbprint in it: the Cult's coin. | the Gull Isles |
 | ch4 *The Keeper's Light* (38, the side vault) | Old Gannet | The Gull Fleet is at the Lamp Fort's door. Gannet asks for help keeping the light, as he has for sixty years, "because nobody told me to stop". He knows what his lamp holds. | the Lamp Fort |
 | ch4 *Brine Cross* (40) | Hester Quaile | The drowned fleet's crews march on the bridge, and the League holds it. Old Gannet brings his lamp up the road and breaks it on the barricade. The drowned lie down. | Brine Cross (the set piece) |
-| ch4 *The Seventh Voice* (41–45) | Sister Maren | The company storms Highmarch: first the Champion on the walls, then Lucan in his palace. He's beaten, not killed. He finds the Kindler's letters on his own table and walks north. The vessel left with the Kindler days ago. Act IV ends a step behind, as Act III did. | Highmarch |
+| ch4 *The Seventh Voice* (41–45) | Hester Quaile (Maren's before v1.154: no quest waits on a companion) | The company storms Highmarch: first the Champion on the walls, then Lucan in his palace. He's beaten, not killed. He finds the Kindler's letters on his own table and walks north. The vessel left with the Kindler days ago. Act IV ends a step behind, as Act III did. | Highmarch |
 
 Gannet's lamp is the one the canon has him break. His coast light was the Guild's beacon for the fleet's signal corps,
 and the drowned sailors are bound to it. That's why they'd answer a Voice, and why breaking it lets them lie down. It's
@@ -326,7 +326,13 @@ Each step ends playable and checked: `npm run check`, the browser suite, and the
    lead. With the League the right party at 40 holds the eight waves in 146–161 s; without them it fell at wave 7 on two seeds of three.
    Tests: `test/tidemark-brine.test.mjs`.
 6. **Highmarch (41–45):** the walls on the ramparts kit, the `palace` kit, the legionaries' shield wall, the
-   Champion, Lucan, *The Seventh Voice*, Act IV's end, and the contract at 42 and 45.
+   Champion, Lucan, *The Seventh Voice*, Act IV's end, and the contract at 42 and 45. **Built (GDD v1.154):** `plans.js`
+   `highmarch`, `sites.js` `highmarch`, the `palace` kit (`world.js`: the throne, the reliquary, the palace's candelabra;
+   its look in `convert.js`); the `siege` and `palace` families, the legionary's tower shield (`battle.js` `shieldShare`)
+   and the engineer's pitch (`pitchAt`); the Champion's `shieldwall`, Lucan's `canticle` and his sitting down (`npcs.js`
+   `lucan`, `found.after`); *The Seventh Voice* and Act IV's end (`story.json` `end.tidemark`); the heirlooms; the door at
+   the gate. The contract at 42 and 45 held once the foes' premium compounds 1.10 a level past 40 (`premium.js`). Pace: a
+   median 11.6 min. Tests: `test/tidemark-highmarch.test.mjs`.
 7. **The Sister's Cabin**, the Chronicle set, the side work, the spawn points.
 8. **The Grace** as the region boss.
 9. **Art pass:** the kits and the town in 3D, the models, critic passes, captures.
@@ -450,6 +456,64 @@ barricade (`{ type: 'camp', camp: 'brine_cross', count: 1 }`). Act IV runs on to
 
 **Balance:** the right party at 40 with the League holds the eight waves; without the League it should be a near thing.
 `tools/balance/camps.mjs --camp brine_cross` measures it.
+
+## The build sheet: Highmarch (step 6)
+
+Every id step 6 is built against. Canon is world doc §3.7 (v1.72).
+
+**The site** (`sim/sites.js`; its door is Highmarch's gate on the Highmarch road, `outdoor.js` `TIDEMARK.highmarch`):
+
+| id | name | levels | floors (plan kits) | families | bosses |
+|---|---|---|---|---|---|
+| `highmarch` | Highmarch | 41–45 (`span` 5, plan `step` 3) | 2: the Walls (`ramparts`), the Seventh's Palace (`palace`, new) | `siege`, `palace` | floor 1 `champion` (the hall), floor 2 `lucan` |
+
+- *The Walls:* `the_breach` (entrance), `the_rampart_walk`, `the_engine_tower` (offshoot), `the_gatehouse`,
+  `the_great_bastion` (descent: **the Champion**).
+- *The Seventh's Palace:* `the_courtyard` (entrance), `the_hall_of_banners`, `the_study` (offshoot: the Kindler's letters),
+  `the_chapel`, `the_throne_room` (end: **Lucan**).
+- **The `palace` kit** (new): the crypt kit's dressed stone and arcade with the tavern kit's furniture, banners down the
+  walls, and in the throne room a dais with the throne. Its pieces: `banners`, `throne`, `palace_lamps`, `tables`,
+  `reliquary` (the chapel's empty stand where the box stood).
+
+**Foe kinds** (`battle.js` ENEMIES; art in brackets):
+- `legionary`: melee, a warrior's strength. A Highmarch legionary with a **tower shield** (`shield`): a blow from in front
+  of him (within 60° of where he faces) lands at `SHIELD_K`, at `SHIELD_LOCK` when another shielded one stands within
+  `LOCK_R`, whole while he's held (stunned, frozen, knocked down). The KayKit knight in Highmarch's colours with a tower
+  shield: **new silhouette 1** (`enemy_legionary`).
+- `engineer`: ranged, a mage's strength. A siege engineer throwing pots of pitch (`bolt: 'pitch'`); where one lands it
+  burns for `PITCH_T` s (a hazard patch, `PITCH_R` across, the hazards' rule: slowed in it, the AI steps out; `PITCH_MAX`
+  burning at once). The KayKit barbarian in a leather apron (`enemy_engineer`).
+- Kept: `warhound`, `crossbow` (the Redhand's), `drowned`, `cantor`.
+
+**Families:** `siege` (legionary, warhound · engineer, crossbow · elite legionary: the walls), `palace` (legionary,
+drowned · crossbow, cantor · elite legionary: the household's guard and the drowned Lucan keeps).
+
+**The bosses** (art `boss_champion`, `boss_lucan`):
+- `champion`, the Seventh's Champion (mech `shieldwall`), like the legionary. Every `WALL_S` s (first at `WALL_FIRST`) he
+  calls his wall: up to `WALL_N` of his legionaries, those standing and new ones to make up the line, stand in a line
+  `WALL_OUT` in front of him across the way to the company, `WALL_GAP` apart, for `WALL_T` s, facing out and striking what
+  comes in reach. While two of the wall stand unheld, a blow on him from in front lands at `WALL_K`. Go round, or break
+  it with a stun or a knockdown. Heirloom `the_laurel`: *"Gilt, for the day in the capital. He polished it every night."*
+- `lucan`, Lucan Varro (mech `canticle`), like the cantor; `once`. Every `CANT_S` s (first at `CANT_FIRST`) he sings for
+  `CANT_T` s, standing still: a ring goes out from him to `CANT_R` ('tell' kind `canticle`, nothing lands where it
+  passes). Hurt for `CANT_BREAK` of his max HP while he sings, the song breaks (`bossCanticle` `{ broken: true }`).
+  Unbroken, up to `CANT_N` of the hall's fallen stand up as his where they fell (the Quartermaster's list,
+  `battle.fell`; they pay nothing again). At `SPARE_AT` of his life he stops and sits down on his own steps (`bossSpared`,
+  then `bossDown` `{ fled: true, spared: true }`): his fall for the story, as Morrow Vane's running is. Heirloom
+  `the_chapel_box`: *"Inside the lid, in her hand: never open it."*
+
+**People:** `lucan` (`npcs.js`, `found` at Highmarch's floor 2, `after`: placed only once he's been beaten; a `visitor`
+gone once `lucan_gone` is set). He's put on his steps the moment he sits down (`battle.js`), and the throne room is
+quiet while he's there. Spoken to, he reads the Kindler's letters, says his line and walks north (`# flag: set
+lucan_gone`). Art `npc_lucan`.
+
+**Story:** `ch4_seventh_voice`, Hester Quaile's (v1.154: not Maren's, so no companion is needed),
+after *Brine Cross*, levels 41–75. Three steps: the Champion; Lucan; a word with Lucan on his steps (`meet` `lucan` at
+`highmarch`). Handed in, Act IV ends (the Journal's `story.json` `end.tidemark`), and the Heights open
+(`regions.js` `opens: 'ch4_seventh_voice'`).
+
+**Balance:** the smoke contract at 42 and 45. `roomlv.mjs` at 42 and 45 (`--site highmarch`); `boss.mjs highmarch 43
+--floor 1` and `boss.mjs highmarch 45 --floor 2`; `pace.mjs highmarch`.
 
 ## Decisions for the owner
 

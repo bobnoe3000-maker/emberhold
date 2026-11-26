@@ -10,7 +10,11 @@
 // The name on Hesk's commission is read as a name: who Lucanus is, and that he sang on the mole, is for later chapters.
 // After both of those she gives Brine Cross (ch4_brine_cross): the drowned fleet's crews come down the Highmarch road and
 // west for the bridge, the League holds its east barricade, and Old Gannet breaks his lamp on it (docs/tidemark-plan.md,
-// step 5). She learns what his weekly report meant from the company, at the turn-in; Highmarch, Maren's chapter, is next.
+// step 5). She learns what his weekly report meant from the company, at the turn-in; Highmarch is next.
+// She gives and takes in that chapter, The Seventh Voice (ch4_seventh_voice; hers since v1.154, the owner, 2026-11-26:
+// no quest needs a companion, so Maren only says her piece and sends you here): Lucan beaten on his own steps, the
+// Kindler's letters, and the road north he took after the vessel, which left days before. Act IV ends a step behind,
+// and she learns what Consigned's freight paid her for.
 
 VAR hero_name = ""
 VAR hero_class = ""
@@ -23,10 +27,12 @@ VAR flag_met_quaile = 0
 VAR with_maren = 0
 VAR boss_harbourmaster = 0
 VAR boss_hesk = 0
+VAR boss_lucan = 0
 VAR q_ch4_consigned = -1
 VAR q_ch4_low_water = -1
 VAR q_ch4_letters_of_marque = -1
 VAR q_ch4_brine_cross = -1
+VAR q_ch4_seventh_voice = -1
 
 == quaile_hub ==
 { q_ch4_consigned == 1 || q_ch4_consigned == 2: -> quaile_consigned_meet }
@@ -76,7 +82,9 @@ You show her Ilse's copy of the ledger's last page. She reads the line about the
 { q_ch4_letters_of_marque == 1: "Hesk took another League ship this week. I've added her to what he owes. It's getting to be a long slate." }
 { q_ch4_letters_of_marque == 3 && q_ch4_brine_cross < 1: "I've had Hesk's commission copied to every port in the League. Lucanus. Nobody on this coast knows the name. They all will." }
 { q_ch4_brine_cross == 1: "The League's three have sent word from the bridge. Two words, and one of them was your name." }
-{ q_ch4_brine_cross == 3: "The coast east of town is dark at night now. The fishing boats keep asking me why. I tell them it's a saving on oil." }
+{ q_ch4_brine_cross == 3 && q_ch4_seventh_voice < 2: "The coast east of town is dark at night now. The fishing boats keep asking me why. I tell them it's a saving on oil." }
+{ q_ch4_seventh_voice == 1: "Maren left me a note before she went up the Highmarch road. It's the first she's ever left. I've had it framed." }
+{ q_ch4_seventh_voice == 3: "Highmarch has written to the League to ask what it owes. I wrote the answer myself. It ran to a second sheet." }
 -> quaile_topics
 
 == quaile_greet_fallen ==
@@ -93,6 +101,9 @@ You show her Ilse's copy of the ledger's last page. She reads the line about the
 + { q_ch4_brine_cross == 2 } [The bridge held. #mark: quest ready] -> quaile_brine_turnin
 + { q_ch4_brine_cross == 0 } [What's the League doing at Brine Cross? #mark: quest] -> quaile_brine_offer
 + { q_ch4_brine_cross == 1 } [About Brine Cross… #mark: quest active] -> quaile_brine_active
++ { q_ch4_seventh_voice == 2 } [Lucan's gone north. #mark: quest ready] -> quaile_seventh_turnin
++ { q_ch4_seventh_voice == 0 } [What about Highmarch? #mark: quest] -> quaile_seventh_offer
++ { q_ch4_seventh_voice == 1 } [About Highmarch… #mark: quest active] -> quaile_seventh_active
 + { q_ch4_low_water == 3 } [Is the Fleet troubling anyone else?] -> quaile_lampfort
 + [What is the League?] -> quaile_league
 + [Tell me about Tollhaven.] -> quaile_tollhaven
@@ -183,6 +194,35 @@ You tell Hester about the bridge: eight crews up the road, the League's three ho
 "They came down the Highmarch road. Whoever sang them off the Mole is up that road, behind the walls. I said Highmarch would like an emperor again. It seems one has applied."
 { with_maren == 1: She looks at Maren. "And you'll want to go up that road, Sister. Clear it with them this time, if not with me." }
 { with_maren == 0: "Find Maren. She'll want to go up that road, and she'll go alone. She went out to the Mole alone." }
+-> quaile_topics
+
+// ── Act IV, chapter 6: The Seventh Voice (content/quests/ch4_seventh_voice.json): Act IV ends a step behind ──
+== quaile_seventh_offer ==
+"Highmarch has written to the League. A herald came down the road this morning in the old harness, with a scroll, and a trumpet he didn't know how to blow."
+"Lucanus, the Seventh Voice, informs the free ports that they're his, that he'll be crowned in the capital at midsummer, and that the League's Speaker will hold the cushion. I've never held a cushion in my life."
+"His drowned are lying in the road, so he's lost his fleet. He still has his walls, his legionaries, and a Champion on the great bastion. The League's engines have made a breach. I'd like someone to walk through it."
+{ with_maren == 1: "Maren means to go. She told me so in writing, which is new. I'd rather she went with you than on her own." }
+"There's a toll on the Highmarch road, a silver penny a head. I'll waive yours and bill Lucanus."
++ [We'll go into Highmarch. #mark: quest]
+    "North up the Highmarch road, where it leaves the coast road this side of the bridge. In at the breach. His Champion holds the walls, and past them is his palace. He'll be in the throne room, I expect, practising with the cushion." # quest: accept ch4_seventh_voice
+    { boss_lucan == 1: "You've been in already? Then go back and hear what he has to say for himself. I want it word for word." }
+    -> quaile_topics
++ [Not yet.]
+    "Then Highmarch keeps its walls a while longer. They're paid for, at least. His fleet never was."
+    -> quaile_topics
+
+== quaile_seventh_active ==
+"The Highmarch road, north off the coast road. In at the breach, along the walls to the Champion's bastion, then the palace and Lucanus in his throne room. Bring me back whatever he has to say."
+-> quaile_topics
+
+== quaile_seventh_turnin ==
+{ with_maren == 1: Maren comes in off the quay behind you and leans the boathook on the Paid Toll's doorpost. }
+You tell Hester about Highmarch: the Champion on his bastion, Lucan sitting down on his own steps, the Kindler's letters left unopened on his table, and the road north he took after them. # quest: turnin ch4_seventh_voice
+"Walked. Up to the Heights, in a coat cut for a coronation. He'll know all about the cold by the second night."
+"And the crate went north with this Kindler days before you got there." She taps the slate. "Freight paid at Tollhaven. I said I'd find out what I was paid for. I was paid to watch the sea while it went up the road."
+"The League will vote it a victory at the next table: the bridge held, the coast is quiet, and nobody's being crowned in the capital this year. Then they'll argue about who pays for the dinner."
+{ with_maren == 1: Maren straightens the boathook. "I told him he had a good voice. I left out the part about the harbour." }
+"If you're going after them, it's west over the bridge to Solmere, and north up the Sol from there to the Heights. The bridge takes a silver penny going west. Yours is waived. I've put it on Highmarch's account."
 -> quaile_topics
 
 // after Low Water: Old Gannet's light, and the Gull Fleet at his door (gannet.ink has The Keeper's Light)

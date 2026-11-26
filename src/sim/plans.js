@@ -623,6 +623,48 @@ export const PLANS = {
     ] },
   ] },
 
+  // ── Highmarch (41–45; the Tidemark, GDD v1.154, docs/tidemark-plan.md step 6): the walled march-kingdom at the head of
+  //    the Highmarch road, stormed. Floor 1 the walls under siege, in through the breach the League's engines made (the
+  //    ramparts kit: the drop and the mist below), the Seventh's Champion holding the great bastion; floor 2 the Seventh's
+  //    Palace (the `palace` kit: the crypt's dressed stone, the tavern's furniture, banners, the throne), Lucan on his
+  //    throne. A band of five, as the Mole: floor 1 at 41–43, floor 2 at 44–45 (`step` 3).
+  highmarch: { site: 'highmarch', name: 'Highmarch', kind: 'ramparts', base: 41, step: 3, floors: [
+    { name: 'The Walls', spaces: [
+      { id: 'the_breach', name: 'The Breach', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'ramparts',
+        dress: ['rampart_torches', 'rampart_cargo'], note: 'Where the League\'s engines brought the curtain down: in over the rubble, the gate the way out.' },
+      { id: 'the_rampart_walk', name: 'The Rampart Walk', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'ramparts', foes: 'siege',
+        dress: ['rampart_torches', 'rampart_cargo', 'rampart_clutter'], note: 'The wall walk, the march-town\'s roofs at its back and the drop into the mist at its front. The legionaries hold it shield to shield.' },
+      { id: 'the_engine_tower', name: 'The Engine Tower', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 1, kit: 'ramparts', foes: 'siege',
+        dress: ['rampart_torches', 'chest'], note: 'Where the engineers keep the pitch and the throwing-arm, and the march\'s pay for them.' },
+      { id: 'the_gatehouse', name: 'The Gatehouse', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 1, kit: 'ramparts', foes: 'siege',
+        dress: ['rampart_torches', 'rampart_well', 'rampart_cargo'], note: 'The gate\'s winding-room over the road, the portcullis down, the hounds kennelled under the stair.' },
+      { id: 'the_great_bastion', name: 'The Great Bastion', role: 'descent', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 2, kit: 'ramparts', foes: 'siege', boss: 'champion',
+        dress: ['rampart_torches', 'rampart_clutter', 'stair_down'], note: 'The wall\'s great bastion over the town, and the stair down into the palace yard. The Seventh\'s Champion has drilled the wall here four years for a coronation.' },
+    ], halls: [
+      { from: 'the_breach', to: 'the_rampart_walk', x: 32, y: 44, w: 10, h: 10 },
+      { from: 'the_rampart_walk', to: 'the_engine_tower', x: 52, y: 20, w: 10, h: 10 },
+      { from: 'the_rampart_walk', to: 'the_gatehouse', x: 92, y: 44, w: 10, h: 10 },
+      { from: 'the_rampart_walk', to: 'the_great_bastion', x: 48, y: 70, w: 10, h: 10 },
+    ] },
+    { name: 'The Seventh\'s Palace', spaces: [
+      { id: 'the_courtyard', name: 'The Courtyard', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'rect', lv: 3, kit: 'palace',
+        dress: ['palace_lamps', 'stair_up'], note: 'The palace yard at the bastion stair\'s foot, the household\'s banners still out for the day in the capital.' },
+      { id: 'the_hall_of_banners', name: 'The Hall of Banners', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'rect', lv: 3, kit: 'palace', foes: 'palace',
+        dress: ['banners', 'standards', 'palace_lamps'], note: 'The long hall, the legions\' standards down both walls: every one the empire raised, and some it never did.' },
+      { id: 'the_study', name: 'The Study', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'rect', lv: 4, kit: 'palace', foes: 'palace',
+        dress: ['desks', 'palace_lamps', 'chest'], note: 'Lucan\'s study. The Kindler\'s letters are on the table, under the paperweight, unopened.' },
+      { id: 'the_chapel', name: 'The Chapel', role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'rect', lv: 4, kit: 'palace', foes: 'palace',
+        dress: ['reliquary', 'palace_lamps', 'rug'], note: 'Where Livia\'s box stood three hundred years. Its stand is empty and its lid lies on the floor.' },
+      { id: 'the_throne_room', name: 'The Throne Room', role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'rect', lv: 4, kit: 'palace', foes: 'palace', boss: 'lucan',
+        dress: ['throne', 'banners', 'palace_lamps'], note: 'The throne on its dais, the dais\'s steps. Lucan sings from the throne and sits down on the steps.' },
+    ], halls: [
+      { from: 'the_courtyard', to: 'the_hall_of_banners', x: 30, y: 8, w: 10, h: 10 },
+      { from: 'the_hall_of_banners', to: 'the_study', x: 56, y: 24, w: 10, h: 10 },
+      { from: 'the_hall_of_banners', to: 'the_chapel', x: 110, y: 8, w: 10, h: 10 },
+      { from: 'the_chapel', to: 'the_throne_room', x: 132, y: 34, w: 10, h: 10 },
+    ] },
+  ] },
+
   // ── The Lamp Fort (38; the Tidemark's side vault, GDD v1.151): Old Gannet's coast light on its headland, a fort on the
   //    ramparts kit with the Gull Fleet at its door. One floor; Gannet at the gate; his spare wick in the lamp room's
   //    chest (sites.js `vault`: the keepsake, once), then it seals (`side`, core.js).

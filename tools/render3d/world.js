@@ -573,6 +573,25 @@ function skull(b, p, u, y, s, v) {
   b.box(cryptDark, sz(p, 0.16 * s, 0.24 * s, 0.05 * s), { at: on(p, u, y - 0.48 * s, v + 0.72 * s) });   // (the nose)
 }
 let tavernGlass = null, tavernWeb = null, tavernWebFill = null, tavernEmber = null, tavernNight = null, tavernNightHi = null, tavernStar = null, tavernGrime = null;
+// the Seventh's Palace's cloth (docs/art-critic-pass-palace.md), tints on its pale weave: the household's blue (a march
+// kingdom's, gold on it), then the legions' in the hall of banners, every one the empire raised and some it never did:
+// crimson, ochre, green, black, purple; the runner a deeper blue than the banners, so it reads under the figures' rings
+const PAL_BANNER = [[0.26, 0.34, 0.86], [0.78, 0.16, 0.13], [0.86, 0.6, 0.18], [0.2, 0.44, 0.24], [0.2, 0.18, 0.2], [0.46, 0.2, 0.52]];
+const PAL_RUNNER = [0.2, 0.26, 0.66];
+// its windows' glass: the hour's sky (frame() sets it from the sim's clock: palaceSkyAt), the yard's lit warm from inside;
+// the patch their light lays on the floor
+let palaceSky = null, palaceLit = null, palacePatch = null, palaceHour = -1;
+const palaceSkyMat = () => (palaceSky ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#8fa6c8'), fog: false }));
+/** the sky through a palace window at an hour of Luminati's clock (hybrid.js hourOf): dawn rose, a pale gold day, an amber
+ *  dusk, a deep blue night; the floor's patch the same light, weaker by night @type {[number, string, number][]} [hour, sky, patch strength] */
+const PALACE_SKY = [[0, '#26334f', 0.12], [5.5, '#3a4466', 0.14], [7, '#e8b49a', 0.3], [9, '#f2e4c2', 0.42], [16.5, '#f0dcb0', 0.42], [18.4, '#ffb070', 0.38], [20, '#8a5a70', 0.22], [21.5, '#2c3858', 0.12], [24, '#26334f', 0.12]];
+const PALACE_SKY_C = PALACE_SKY.map(([, c]) => new THREE.Color(c)), _palSky = { col: new THREE.Color(), k: 0 };
+function palaceSkyAt(h) {
+  const T = PALACE_SKY; let i = 0; while (i < T.length - 2 && h >= T[i + 1][0]) i++;
+  const u = Math.max(0, Math.min(1, (h - T[i][0]) / Math.max(1e-3, T[i + 1][0] - T[i][0])));
+  _palSky.col.copy(PALACE_SKY_C[i]).lerp(PALACE_SKY_C[i + 1], u); _palSky.k = T[i][2] + (T[i + 1][2] - T[i][2]) * u;
+  return _palSky;
+}
 function buildTavern(pieces) {
   const f = game.world.factory, b = f.builder(), FL = 1.0, TOP = FL + TAV_H, furn = [], webTris = [], loose = [], own = [];   // (loose: kept whole, never merged: a sprite; own: this build's own materials and textures, gone with it)
   tavernGlass ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffb45e').multiplyScalar(2.2), fog: false });
@@ -796,11 +815,36 @@ function buildTavern(pieces) {
       // ── the crypt (convert.js cryptRun, docs/crypt-dungeon.md): a pier of the blind arcade, its base and its capital
       // where the arches spring, on up to the cornice
       const u = p.end * 0.2, PH = (p.top || TOP) - FL;
+      if (p.pal) {
+        // (the palace's: a marble pilaster on a porphyry base, its capital gilt where the arches spring, a gilt astragal
+        // under it; the shaft a step paler than the wall so the bays read, docs/art-critic-pass-palace.md)
+        b.tinted([1.12, 1.1, 1.06], () => b.box('palace_cap', sz(p, 0.62, PH, 0.36), { at: on(p, u, FL + PH / 2, 0.18) }));
+        b.tinted([0.96, 0.95, 0.94], () => b.box('palace_cap', sz(p, 0.4, PH - 0.9, 0.04), { at: on(p, u, FL + 0.45 + (PH - 0.9) / 2, 0.37) }));   // (its sunk panel)
+        b.box('palace_porphyry', sz(p, 0.78, 0.5, 0.46), { at: on(p, u, FL + 0.25, 0.23) });
+        b.tinted([1.25, 1.22, 1.15], () => b.box('palace_cap', sz(p, 0.82, 0.06, 0.5), { at: on(p, u, FL + 0.53, 0.25) }));
+        b.box('palace_gilt', sz(p, 0.78, 0.2, 0.48), { at: on(p, u, CR_SPRING + 0.1, 0.24) });
+        b.box('palace_gilt', sz(p, 0.66, 0.06, 0.42), { at: on(p, u, CR_SPRING - 0.1, 0.21) });
+        b.tinted([1.2, 1.18, 1.12], () => b.box('palace_cap', sz(p, 0.86, 0.1, 0.52), { at: on(p, u, CR_SPRING + 0.25, 0.26) }));
+        continue;
+      }
       b.tinted([1.02, 1.0, 0.97], () => b.box('crypt_wall', sz(p, 0.6, PH, 0.34), { at: on(p, u, FL + PH / 2, 0.17) }));
       b.tinted([0.92, 0.9, 0.88], () => b.box('crypt_cap', sz(p, 0.74, 0.32, 0.42), { at: on(p, u, FL + 0.16, 0.21) }));
       b.tinted([1.18, 1.15, 1.08], () => { b.box('crypt_cap', sz(p, 0.72, 0.16, 0.44), { at: on(p, u, CR_SPRING + 0.08, 0.22) }); b.box('crypt_cap', sz(p, 0.62, 0.1, 0.38), { at: on(p, u, CR_SPRING - 0.05, 0.19) }); });
     } else if (p.k === 'cornice' || p.k === 'plinth') {
       const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { ...p, x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 };
+      if (p.pal) {
+        // (the palace's: a marble cornice, a gilt fillet along it; at the foot a porphyry dado to a figure's knee, a marble
+        // rail over it: the room's darkest band, so the floor's edge reads)
+        if (p.k === 'cornice') {
+          b.tinted([1.12, 1.1, 1.04], () => b.box('palace_cap', sz(q, len, 0.3, 0.36), { at: on(q, 0, p.y, 0.18) }));
+          b.box('palace_gilt', sz(q, len, 0.05, 0.38), { at: on(q, 0, p.y - 0.17, 0.19) });
+          b.tinted([1.3, 1.26, 1.18], () => b.box('palace_top', sz(q, len, 0.12, 0.58), { at: on(q, 0, p.y + 0.21, 0.0) }));
+        } else {
+          b.box('palace_porphyry', sz(q, len, 0.62, 0.08), { at: on(q, 0, FL + 0.31, 0.04) });
+          b.tinted([1.18, 1.15, 1.08], () => b.box('palace_cap', sz(q, len, 0.07, 0.13), { at: on(q, 0, FL + 0.65, 0.065) }));
+        }
+        continue;
+      }
       if (p.k === 'cornice') {
         b.tinted([1.05, 1.02, 0.97], () => b.box('crypt_cap', sz(q, len, 0.28, 0.32), { at: on(q, 0, p.y, 0.16) }));
         b.tinted([1.3, 1.26, 1.18], () => b.box('crypt_cap', sz(q, len, 0.04, 0.36), { at: on(q, 0, p.y + 0.15, 0.18) }));   // (its top edge lit, so the wall's line reads)
@@ -814,17 +858,20 @@ function buildTavern(pieces) {
       // would rise past the cornice): the bay's back a shade darker, the arch's voussoirs over it from the capitals, a
       // keystone at its crown
       const R = p.w / 2 - 0.05, RV = Math.min(R, (p.top || TOP) - 0.42 - CR_SPRING), N = 13, pt = (th, k) => [Math.cos(th) * (R + k), CR_SPRING + Math.sin(th) * (RV + k)];
-      b.tinted([0.42, 0.36, 0.3], () => {
-        b.box('crypt_wall', sz(p, 2 * R, CR_SPRING - FL - 0.26, 0.02), { at: on(p, 0, (CR_SPRING + FL + 0.26) / 2, 0.01) });
-        b.lathe('crypt_wall', [{ y: 0, r: 0 }, { y: 0.001, r: R }, { y: 0.02, r: R }, { y: 0.021, r: 0 }], { segments: 20, at: on(p, 0, CR_SPRING, 0.0), rot: p.n === 'z' ? [Math.PI / 2, 0, 0] : [0, 0, -Math.PI / 2], scale: p.n === 'z' ? [1, 1, RV / R] : [RV / R, 1, 1] });
+      const WT = p.pal ? 'palace_wall' : 'crypt_wall', CT = p.pal ? 'palace_cap' : 'crypt_cap';   // (the palace's in its own stone)
+      // (the palace's bay back a smooth warm plaster, round 1: its ashlar turned round the arch's head read as a barrel's end)
+      b.tinted(p.pal ? [0.86, 0.78, 0.66] : [0.42, 0.36, 0.3], () => {
+        b.box(p.pal ? 'palace_top' : WT, sz(p, 2 * R, CR_SPRING - FL - 0.26, 0.02), { at: on(p, 0, (CR_SPRING + FL + 0.26) / 2, 0.01) });
+        b.lathe(p.pal ? 'palace_top' : WT, [{ y: 0, r: 0 }, { y: 0.001, r: R }, { y: 0.02, r: R }, { y: 0.021, r: 0 }], { segments: 20, at: on(p, 0, CR_SPRING, 0.0), rot: p.n === 'z' ? [Math.PI / 2, 0, 0] : [0, 0, -Math.PI / 2], scale: p.n === 'z' ? [1, 1, RV / R] : [RV / R, 1, 1] });
       });
-      b.tinted([1.52, 1.46, 1.34], () => {
+      b.tinted(p.pal ? [1.2, 1.17, 1.1] : [1.52, 1.46, 1.34], () => {
         for (let k = 0; k < N; k++) {
           const t0 = (k / N) * Math.PI, t1 = ((k + 1) / N) * Math.PI, [u0, y0] = pt(t0, 0.11), [u1, y1] = pt(t1, 0.11);
-          b.box('crypt_cap', sz(p, Math.hypot(u1 - u0, y1 - y0) + 0.03, 0.3, 0.4), { at: on(p, (u0 + u1) / 2, (y0 + y1) / 2, 0.2), rot: tilt(p, -Math.atan2(y1 - y0, u1 - u0)) });
+          b.box(CT, sz(p, Math.hypot(u1 - u0, y1 - y0) + 0.03, 0.3, 0.4), { at: on(p, (u0 + u1) / 2, (y0 + y1) / 2, 0.2), rot: tilt(p, -Math.atan2(y1 - y0, u1 - u0)) });
         }
       });
-      b.tinted([1.62, 1.55, 1.42], () => b.box('crypt_cap', sz(p, 0.36, 0.52, 0.44), { at: on(p, 0, CR_SPRING + RV + 0.14, 0.22) }));   // (the keystone)
+      if (p.pal) b.box('palace_gilt', sz(p, 0.34, 0.5, 0.44), { at: on(p, 0, CR_SPRING + RV + 0.14, 0.22) });   // (its keystone gilt)
+      else b.tinted([1.62, 1.55, 1.42], () => b.box('crypt_cap', sz(p, 0.36, 0.52, 0.44), { at: on(p, 0, CR_SPRING + RV + 0.14, 0.22) }));   // (the keystone)
     } else if (p.k === 'loculi') {
       // the burial shelves: two tiers of two, most sealed with a slab and a name; one open on a shroud, one on a skull
       const R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
@@ -867,8 +914,8 @@ function buildTavern(pieces) {
       b.tinted([1.2, 1.15, 1.0], () => b.lathe('linen', [{ y: 0, r: 0.04 }, { y: 0.16, r: 0.036 }], { segments: 7, capTop: true, at: on(p, 0.26, y + 0.1, 0.3) }));
       b.box(tavernGlass, [0.04, 0.07, 0.04], { at: on(p, 0.26, y + 0.31, 0.3) });
     } else if (p.k === 'sconce') {
-      // an iron sconce on a pier: a plate, an arm, a dish with three candles burning
-      b.tinted(TAV_IRON, () => { b.box('metal', sz(p, 0.2, 0.42, 0.04), { at: on(p, 0, p.y, 0.32) }); b.box('metal', sz(p, 0.05, 0.05, 0.42), { at: on(p, 0, p.y - 0.12, 0.52) }); b.lathe('metal', [{ y: 0, r: 0.05 }, { y: 0.03, r: 0.2 }, { y: 0.06, r: 0.21 }], { segments: 10, at: on(p, 0, p.y - 0.12, 0.72) }); });
+      // an iron sconce on a pier: a plate, an arm, a dish with three candles burning (the palace's gilt)
+      b.tinted(p.gilt ? [1, 1, 1] : TAV_IRON, () => { const M = p.gilt ? 'palace_gilt' : 'metal'; b.box(M, sz(p, 0.2, 0.42, 0.04), { at: on(p, 0, p.y, 0.32) }); b.box(M, sz(p, 0.05, 0.05, 0.42), { at: on(p, 0, p.y - 0.12, 0.52) }); b.lathe(M, [{ y: 0, r: 0.05 }, { y: 0.03, r: 0.2 }, { y: 0.06, r: 0.21 }], { segments: 10, at: on(p, 0, p.y - 0.12, 0.72) }); });
       for (const [du, dv, h] of [[-0.1, 0, 0.22], [0.08, -0.04, 0.3], [0.02, 0.09, 0.17]]) {
         b.tinted([1.2, 1.15, 1.0], () => b.lathe('linen', [{ y: 0, r: 0.04 }, { y: h, r: 0.036 }], { segments: 7, capTop: true, at: on(p, du, p.y - 0.06, 0.72 + dv) }));
         b.box(tavernGlass, [0.065, 0.13, 0.065], { at: on(p, du, p.y - 0.06 + h + 0.08, 0.72 + dv) });
@@ -1214,12 +1261,15 @@ function buildTavern(pieces) {
         b.box(tavernGlass, [0.065, 0.13, 0.065], { at: [p.x + du, FL + 0.95 + h + 0.08, p.z + dv] });
       }
     } else if (p.k === 'candelabra') {
-      // an iron candle-stand, a man's height: three feet, the stem, a bar across with five candles burning
-      b.tinted(TAV_IRON, () => {
-        for (let k = 0; k < 3; k++) { const a = (k / 3) * Math.PI * 2; b.box('metal', [0.36, 0.05, 0.06], { at: [p.x + Math.cos(a) * 0.15, FL + 0.03, p.z + Math.sin(a) * 0.15], rot: [0, -a, 0] }); }
-        b.tube('metal', [p.x, FL, p.z], [p.x, FL + 1.85, p.z], 0.045, 0.035, { segments: 6 });
-        b.box('metal', [1.0, 0.05, 0.05], { at: [p.x, FL + 1.85, p.z] });
-        for (const u of [-0.45, -0.22, 0, 0.22, 0.45]) b.lathe('metal', [{ y: 0, r: 0.03 }, { y: 0.04, r: 0.08 }, { y: 0.06, r: 0.08 }], { segments: 8, at: [p.x + u, FL + 1.87, p.z] });
+      // an iron candle-stand, a man's height: three feet, the stem, a bar across with five candles burning (the palace's
+      // gilt, a knop on its stem and its feet scrolled out wider)
+      b.tinted(p.gilt ? [1, 1, 1] : TAV_IRON, () => {
+        const M = p.gilt ? 'palace_gilt' : 'metal';
+        for (let k = 0; k < 3; k++) { const a = (k / 3) * Math.PI * 2; b.box(M, [p.gilt ? 0.46 : 0.36, 0.05, 0.06], { at: [p.x + Math.cos(a) * 0.15, FL + 0.03, p.z + Math.sin(a) * 0.15], rot: [0, -a, 0] }); }
+        b.tube(M, [p.x, FL, p.z], [p.x, FL + 1.85, p.z], 0.045, 0.035, { segments: 6 });
+        if (p.gilt) for (const y of [0.55, 1.25]) b.lathe(M, [{ y: -0.06, r: 0.04 }, { y: 0, r: 0.1 }, { y: 0.06, r: 0.04 }], { segments: 8, at: [p.x, FL + y, p.z] });
+        b.box(M, [1.0, 0.05, 0.05], { at: [p.x, FL + 1.85, p.z] });
+        for (const u of [-0.45, -0.22, 0, 0.22, 0.45]) b.lathe(M, [{ y: 0, r: 0.03 }, { y: 0.04, r: 0.08 }, { y: 0.06, r: 0.08 }], { segments: 8, at: [p.x + u, FL + 1.87, p.z] });
       });
       for (const [u, h] of [[-0.45, 0.2], [-0.22, 0.28], [0, 0.34], [0.22, 0.26], [0.45, 0.18]]) {
         b.tinted([1.2, 1.15, 1.0], () => b.lathe('linen', [{ y: 0, r: 0.035 }, { y: h, r: 0.032 }], { segments: 7, capTop: true, at: [p.x + u, FL + 1.92, p.z] }));
@@ -1262,6 +1312,186 @@ function buildTavern(pieces) {
         b.tinted([1.2, 1.15, 1.0], () => b.lathe('linen', [{ y: 0, r: 0.04 }, { y: 0.3, r: 0.036 }], { segments: 7, capTop: true, at: on(p, sg * 0.85, y + 0.65, 0.55) }));
         b.box(tavernGlass, [0.05, 0.09, 0.05], { at: on(p, sg * 0.85, y + 1.0, 0.55) });
       }
+    } else if (p.k === 'pbanner') {
+      // ── the Seventh's Palace (convert.js palaceRun, PALACE_3D; docs/art-critic-pass-palace.md) ──────────────────────
+      // a banner hung in a bay from a gilt rod under the arch: the cloth to a figure's shoulder, its foot cut in two tails,
+      // a gilt border; the household's a gold laurel and a crown on blue, a legion's a gilt eagle over its tablet
+      const L0 = p.look || 0, K = p.big ? 1.12 : 1, W = 1.3 * K, top = CR_SPRING + 0.9, len = 2.5 * K, bot = top - len, v = 0.22;
+      const C = PAL_BANNER[L0 % PAL_BANNER.length];
+      b.box('palace_gilt', sz(p, W + 0.45, 0.07, 0.07), { at: on(p, 0, top + 0.05, v) });
+      for (const sg of [-1, 1]) { b.lathe('palace_gilt', [{ y: -0.06, r: 0.03 }, { y: 0, r: 0.08 }, { y: 0.08, r: 0.06 }, { y: 0.16, r: 0 }], { segments: 8, at: on(p, sg * (W / 2 + 0.24), top + 0.02, v) }); b.box('palace_gilt', sz(p, 0.04, 0.4, 0.04), { at: on(p, sg * (W / 2 + 0.05), top + 0.24, v - 0.08), rot: tilt(p, sg * 0.5) }); }   // (its finials, its cords up to the wall)
+      b.tinted(C, () => {
+        b.box('palace_weave', sz(p, W, len - 0.42, 0.035), { at: on(p, 0, top - (len - 0.42) / 2, v) });
+        for (const sg of [-1, 1]) b.box('palace_weave', sz(p, W * 0.4, 0.44, 0.035), { at: on(p, sg * W * 0.3, bot + 0.2, v) });   // (the two tails, the notch between)
+      });
+      b.box('palace_gilt', sz(p, W + 0.02, 0.07, 0.045), { at: on(p, 0, top - 0.06, v + 0.005) });
+      for (const sg of [-1, 1]) { b.box('palace_gilt', sz(p, 0.06, len - 0.1, 0.045), { at: on(p, sg * (W / 2 - 0.03), top - (len - 0.1) / 2, v + 0.005) }); b.box('palace_gilt', sz(p, W * 0.4, 0.05, 0.045), { at: on(p, sg * W * 0.3, bot + 0.02, v + 0.005) }); }
+      const cy = top - 0.95 * K, dv = v + 0.03;
+      if (!L0) {
+        // the household's: a laurel wreath, ten leaves round, its ribbon tails; a crown over it
+        for (let k = 0; k < 12; k++) { if (k === 3) continue; const a = (k / 12) * Math.PI * 2 - Math.PI / 2, r = 0.3 * K; b.box('palace_gilt', sz(p, 0.15 * K, 0.07 * K, 0.02), { at: on(p, Math.cos(a) * r, cy + Math.sin(a) * r, dv), rot: tilt(p, a + Math.PI / 2 + 0.5) }); }
+        for (const sg of [-1, 1]) b.box('palace_gilt', sz(p, 0.05, 0.26 * K, 0.02), { at: on(p, sg * 0.1, cy - 0.42 * K, dv), rot: tilt(p, sg * 0.35) });
+        b.box('palace_gilt', sz(p, 0.42 * K, 0.1 * K, 0.025), { at: on(p, 0, cy + 0.52 * K, dv) });
+        for (const du of [-0.17, 0, 0.17]) b.box('palace_gilt', sz(p, 0.07 * K, du ? 0.16 * K : 0.22 * K, 0.025), { at: on(p, du * K, cy + (du ? 0.63 : 0.66) * K, dv) });
+      } else {
+        // a legion's: a gilt eagle, its wings up, over the legion's tablet (its number in three bars)
+        b.box('palace_gilt', sz(p, 0.12, 0.34, 0.025), { at: on(p, 0, cy + 0.1, dv) });
+        for (const sg of [-1, 1]) { b.box('palace_gilt', sz(p, 0.4, 0.09, 0.025), { at: on(p, sg * 0.2, cy + 0.24, dv), rot: tilt(p, sg * 0.55) }); b.box('palace_gilt', sz(p, 0.22, 0.07, 0.025), { at: on(p, sg * 0.36, cy + 0.42, dv), rot: tilt(p, sg * 1.1) }); }
+        b.box('palace_gilt', sz(p, 0.1, 0.09, 0.025), { at: on(p, 0.03, cy + 0.32, dv) });
+        b.tinted([0.3, 0.26, 0.22], () => b.box('palace_cap', sz(p, 0.62, 0.26, 0.025), { at: on(p, 0, cy - 0.32, dv) }));
+        for (let k = 0; k < 1 + (p.seed % 3); k++) b.box('palace_gilt', sz(p, 0.05, 0.17, 0.03), { at: on(p, -0.08 + k * 0.1, cy - 0.32, dv + 0.005) });
+      }
+    } else if (p.k === 'pwindow') {
+      // a tall round-headed window: marble jambs and an arch of voussoirs, a gilt keystone, leaded lights, the hour's sky
+      // through them (palaceSky: frame() turns it with the hour, so a day reads as day and a dusk as dusk; the yard's lit
+      // from inside, warm); the household's blue drapes tied back either side; where its light lands, a patch on the floor
+      // barred by its leading
+      const W = 1.15, R = W / 2, sill = FL + 1.0, H = 1.9, ty = sill + H, glass = p.lit ? (palaceLit ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffb060').multiplyScalar(1.15), fog: false })) : palaceSkyMat();
+      b.box(glass, sz(p, W, H, 0.02), { at: on(p, 0, sill + H / 2, 0.03) });
+      b.lathe(glass, [{ y: 0, r: 0 }, { y: 0.001, r: R }, { y: 0.02, r: R }, { y: 0.021, r: 0 }], { segments: 16, at: on(p, 0, ty, 0.028), rot: p.n === 'z' ? [Math.PI / 2, 0, 0] : [0, 0, -Math.PI / 2] });
+      b.tinted([0.12, 0.11, 0.1], () => {   // (the leading)
+        b.box('metal', sz(p, 0.05, H + R * 0.95, 0.04), { at: on(p, 0, sill + (H + R * 0.95) / 2, 0.06) });
+        for (const k of [0.33, 0.66, 1]) b.box('metal', sz(p, W, 0.04, 0.04), { at: on(p, 0, sill + H * k, 0.06) });
+      });
+      b.tinted([1.16, 1.13, 1.06], () => {
+        for (const sg of [-1, 1]) b.box('palace_cap', sz(p, 0.24, H + 0.05, 0.3), { at: on(p, sg * (R + 0.12), sill + H / 2, 0.15) });
+        b.box('palace_cap', sz(p, W + 0.6, 0.14, 0.42), { at: on(p, 0, sill - 0.05, 0.21) });
+        const N = 9; for (let k = 0; k < N; k++) { const t0 = (k / N) * Math.PI, t1 = ((k + 1) / N) * Math.PI, rr = R + 0.12, u0 = Math.cos(t0) * rr, y0 = ty + Math.sin(t0) * rr, u1 = Math.cos(t1) * rr, y1 = ty + Math.sin(t1) * rr; b.box('palace_cap', sz(p, Math.hypot(u1 - u0, y1 - y0) + 0.03, 0.24, 0.3), { at: on(p, (u0 + u1) / 2, (y0 + y1) / 2, 0.15), rot: tilt(p, -Math.atan2(y1 - y0, u1 - u0)) }); }
+      });
+      b.box('palace_gilt', sz(p, 0.2, 0.3, 0.34), { at: on(p, 0, ty + R + 0.14, 0.17) });
+      b.tinted(PAL_BANNER[0], () => { for (const sg of [-1, 1]) { b.box('palace_weave', sz(p, 0.34, 1.6, 0.1), { at: on(p, sg * (R + 0.46), ty - 0.55, 0.32) }); b.box('palace_weave', sz(p, 0.22, 1.25, 0.1), { at: on(p, sg * (R + 0.42), sill - 0.0, 0.32), rot: tilt(p, -sg * 0.12) }); } });
+      for (const sg of [-1, 1]) { b.box('palace_gilt', sz(p, 0.3, 0.06, 0.13), { at: on(p, sg * (R + 0.45), ty - 1.36, 0.33) }); b.box('palace_gilt', sz(p, W + 1.4, 0.06, 0.06), { at: on(p, 0, ty + R + 0.36, 0.34) }); }   // (the tie-backs, the rail)
+      palacePatch ||= new THREE.MeshBasicMaterial({ color: new THREE.Color(p.lit ? '#ffb060' : '#e8d4b0'), map: barPatch(), transparent: true, opacity: 0.32, depthWrite: false, fog: false, blending: THREE.AdditiveBlending });
+      if (!p.lit) { const C0 = on(p, -0.8, FL + 0.02, 0.45), C1 = on(p, 0.8, FL + 0.02, 0.45), C2 = on(p, 0.8, FL + 0.02, 2.3), C3 = on(p, -0.8, FL + 0.02, 2.3); b.quad(palacePatch, p.n === 'z' ? [C3, C2, C1, C0] : [C0, C1, C2, C3], p.n === 'z' ? [[0, 0], [1, 0], [1, 1], [0, 1]] : [[0, 1], [1, 1], [1, 0], [0, 0]]); }
+    } else if (p.k === 'parms') {
+      // the household's arms carved over a bay: a marble cartouche, the shield on it blue, its border and the laurel gilt,
+      // a crown over the whole
+      const y = FL + 2.1;
+      b.tinted([1.14, 1.1, 1.04], () => b.lathe('palace_cap', [{ y: 0, r: 0 }, { y: 0.001, r: 0.6 }, { y: 0.07, r: 0.6 }, { y: 0.071, r: 0 }], { segments: 18, at: on(p, 0, y, 0.04), rot: p.n === 'z' ? [Math.PI / 2, 0, 0] : [0, 0, -Math.PI / 2], scale: p.n === 'z' ? [1, 1, 1.28] : [1.28, 1, 1] }));
+      b.tinted(PAL_BANNER[0], () => { b.box('palace_weave', sz(p, 0.62, 0.5, 0.04), { at: on(p, 0, y + 0.1, 0.12) }); b.box('palace_weave', sz(p, 0.44, 0.44, 0.04), { at: on(p, 0, y - 0.15, 0.12), rot: tilt(p, Math.PI / 4) }); });
+      b.box('palace_gilt', sz(p, 0.68, 0.06, 0.05), { at: on(p, 0, y + 0.36, 0.14) });
+      for (const sg of [-1, 1]) { b.box('palace_gilt', sz(p, 0.05, 0.52, 0.05), { at: on(p, sg * 0.32, y + 0.1, 0.14) }); b.box('palace_gilt', sz(p, 0.05, 0.46, 0.05), { at: on(p, sg * 0.16, y - 0.3, 0.14), rot: tilt(p, sg * 0.79) }); }
+      for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2, r = 0.13; b.box('palace_gilt', sz(p, 0.08, 0.04, 0.03), { at: on(p, Math.cos(a) * r, y + 0.08 + Math.sin(a) * r, 0.155), rot: tilt(p, a + 1.9) }); }
+      b.box('palace_gilt', sz(p, 0.5, 0.1, 0.06), { at: on(p, 0, y + 0.84, 0.1) }); for (const du of [-0.2, 0, 0.2]) b.box('palace_gilt', sz(p, 0.08, du ? 0.16 : 0.22, 0.06), { at: on(p, du, y + 0.98, 0.1) });
+    } else if (p.k === 'pstandard') {
+      // a legion's standard on a weighted foot: the pole, its phalerae, a crossbar with the colours hung from it, fringed,
+      // tassels at its ends, a gilt eagle over all (the legions': convert.js PALACE_3D.standard)
+      const C = PAL_BANNER[(p.look || 1) % PAL_BANNER.length], top = FL + 3.5, cb = top - 0.45;   // (round 1: taller, its colours bigger: at 0.9 a unit it read as a street sign)
+      b.tinted([0.55, 0.45, 0.3], () => { b.lathe('metal', [{ y: 0, r: 0.34 }, { y: 0.1, r: 0.32 }, { y: 0.16, r: 0.2 }, { y: 0.26, r: 0.08 }], { segments: 12, at: [p.x, FL, p.z] }); });
+      b.tube('palace_gilt', [p.x, FL + 0.2, p.z], [p.x, top, p.z], 0.04, 0.035, { segments: 6 });
+      for (const y of [1.15, 1.45, 1.75]) b.lathe('palace_gilt', [{ y: 0, r: 0 }, { y: 0.001, r: 0.11 }, { y: 0.03, r: 0.1 }, { y: 0.031, r: 0 }], { segments: 10, at: [p.x, FL + y, p.z + 0.045], rot: [Math.PI / 2, 0, 0] });
+      b.box('palace_gilt', [1.35, 0.07, 0.07], { at: [p.x, cb, p.z] });
+      b.tinted(C, () => b.box('palace_weave', [1.2, 1.35, 0.035], { at: [p.x, cb - 0.7, p.z + 0.05] }));
+      b.box('palace_gilt', [1.22, 0.07, 0.045], { at: [p.x, cb - 1.38, p.z + 0.05] });
+      for (let k = 0; k < 11; k++) b.box('palace_gilt', [0.03, 0.14, 0.03], { at: [p.x - 0.57 + k * 0.114, cb - 1.47, p.z + 0.05] });
+      for (const sg of [-1, 1]) b.lathe('palace_gilt', [{ y: 0, r: 0.05 }, { y: 0.06, r: 0.03 }, { y: 0.2, r: 0.05 }, { y: 0.22, r: 0 }], { segments: 7, at: [p.x + sg * 0.7, cb - 0.25, p.z] });
+      b.tinted([1.3, 1.2, 1.0], () => b.box('palace_cap', [0.62, 0.3, 0.04], { at: [p.x, cb - 0.62, p.z + 0.075] }));
+      for (const sg of [-1, 1]) b.box('palace_gilt', [0.42, 0.09, 0.04], { at: [p.x + sg * 0.2, cb - 0.25, p.z + 0.075], rot: [0, 0, sg * 0.5] });   // (its eagle's wings on the cloth)   // (the legion's tablet on its colours)
+      b.box('palace_gilt', [0.14, 0.24, 0.12], { at: [p.x, top + 0.12, p.z] });
+      for (const sg of [-1, 1]) b.box('palace_gilt', [0.3, 0.07, 0.05], { at: [p.x + sg * 0.15, top + 0.22, p.z], rot: [0, 0, -sg * 0.6] });
+    } else if (p.k === 'column') {
+      // a column out on the floor: a porphyry plinth, a marble shaft with a gilt capital, a gilt urn on it
+      b.box('palace_porphyry', [0.72, 0.32, 0.72], { at: [p.x, FL + 0.16, p.z] });
+      b.tinted([1.15, 1.12, 1.06], () => {
+        b.lathe('palace_cap', [{ y: 0, r: 0.36 }, { y: 0.08, r: 0.36 }, { y: 0.14, r: 0.31 }, { y: 0.2, r: 0.29 }, { y: 2.0, r: 0.25 }, { y: 2.06, r: 0.28 }], { segments: 14, at: [p.x, FL + 0.32, p.z] });   // (round 1: stouter, a post at 0.4 across)
+        b.box('palace_cap', [0.62, 0.1, 0.62], { at: [p.x, FL + 2.62, p.z] });
+      });
+      b.lathe('palace_gilt', [{ y: 0, r: 0.22 }, { y: 0.16, r: 0.3 }, { y: 0.2, r: 0.31 }], { segments: 12, at: [p.x, FL + 2.38, p.z] });
+      b.tinted([0.72, 0.62, 0.5], () => b.lathe('palace_gilt', [{ y: 0, r: 0.1 }, { y: 0.06, r: 0.17 }, { y: 0.26, r: 0.23 }, { y: 0.4, r: 0.15 }, { y: 0.44, r: 0.18 }, { y: 0.5, r: 0.17 }, { y: 0.56, r: 0.05 }, { y: 0.64, r: 0 }], { segments: 12, at: [p.x, FL + 2.67, p.z] }));   // (round 1: an urn, lidded and a duller gilt: bright and pointed it read as a flame)
+    } else if (p.k === 'runner') {
+      // a runner (convert.js palaceRunners): the household's blue, a gilt border in from each edge, a darker band down its
+      // middle, fringed at its ends; flat on the floor, walked over
+      const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { ...p, x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 }, ax = Math.abs(p.x1 - p.x0) >= Math.abs(p.z1 - p.z0), y = FL + 0.012;
+      const box = (mat, a, w, dy, la, ww) => b.box(mat, ax ? [la, dy, ww] : [ww, dy, la], { at: ax ? [q.x + a, y + dy / 2, q.z + w] : [q.x + w, y + dy / 2, q.z + a] });
+      b.tinted(PAL_RUNNER, () => box('palace_weave', 0, 0, 0.02, len, p.w));
+      for (const sg of [-1, 1]) { box('palace_gilt', 0, sg * (p.w / 2 - 0.16), 0.024, len - 0.2, 0.07); box(cryptDark, 0, sg * (p.w / 2 - 0.02), 0.022, len, 0.04); }
+      b.tinted([0.13, 0.16, 0.42], () => box('palace_weave', 0, 0, 0.023, len - 0.5, 0.36));   // (a darker band down its middle: round 1, gilt lozenges there read as coins)
+      for (const sg of [-1, 1]) for (let k = -4; k <= 4; k++) box('palace_gilt', sg * (len / 2 + 0.06), k * (p.w / 9), 0.02, 0.12, 0.03);
+    } else if (p.k === 'throne') {
+      // the throne on its dais against the back wall (convert.js PALACE_3D.throne): three marble steps, gilt at their
+      // nosings, the runner up their middle; the throne, gilt, its back and seat the household's blue, a crown over its
+      // back; the crown itself on a red cushion on the seat, waiting; behind, the cloth of estate under its tester
+      const wz = p.z, X0 = p.x;
+      let y = FL;
+      for (const [w, d] of [[3.1, 2.0], [2.6, 1.55], [2.1, 1.1]]) {
+        b.tinted([1.12, 1.09, 1.03], () => b.box('palace_cap', [w, 0.2, d], { at: [X0, y + 0.1, wz + d / 2] }));
+        b.box('palace_gilt', [w + 0.02, 0.04, 0.05], { at: [X0, y + 0.18, wz + d + 0.005] });
+        b.tinted(PAL_RUNNER, () => { b.box('palace_weave', [0.85, 0.02, d - 0.02], { at: [X0, y + 0.21, wz + d / 2] }); b.box('palace_weave', [0.85, 0.2, 0.02], { at: [X0, y + 0.1, wz + d + 0.012] }); });
+        y += 0.2;
+      }
+      const sz2 = wz + 0.58, sy = y;   // (the throne's middle, the dais's top)
+      b.box('palace_gilt', [1.08, 0.5, 0.8], { at: [X0, sy + 0.25, sz2] });
+      b.tinted(PAL_BANNER[0], () => { b.box('palace_weave', [0.84, 0.36, 0.02], { at: [X0, sy + 0.27, sz2 + 0.405] }); b.box('palace_weave', [0.9, 0.12, 0.66], { at: [X0, sy + 0.56, sz2 + 0.02] }); });
+      b.box('palace_gilt', [1.12, 1.95, 0.16], { at: [X0, sy + 1.0, sz2 - 0.38] });
+      b.tinted(PAL_BANNER[0], () => b.box('palace_weave', [0.78, 1.35, 0.02], { at: [X0, sy + 1.1, sz2 - 0.295] }));
+      for (const sg of [-1, 1]) {
+        b.box('palace_gilt', [0.13, 0.36, 0.74], { at: [X0 + sg * 0.5, sy + 0.78, sz2] });
+        b.lathe('palace_gilt', [{ y: 0, r: 0.08 }, { y: 0.06, r: 0.11 }, { y: 0.14, r: 0.07 }, { y: 0.18, r: 0 }], { segments: 9, at: [X0 + sg * 0.5, sy + 0.95, sz2 + 0.36] });   // (the arms' lion-knobs)
+        b.lathe('palace_gilt', [{ y: 0, r: 0.07 }, { y: 0.14, r: 0.1 }, { y: 0.26, r: 0 }], { segments: 9, at: [X0 + sg * 0.5, sy + 1.97, sz2 - 0.38] });   // (the back's finials)
+      }
+      // the crest: a crown over the back
+      b.box('palace_gilt', [0.6, 0.14, 0.12], { at: [X0, sy + 2.06, sz2 - 0.38] });
+      for (const du of [-0.24, -0.12, 0, 0.12, 0.24]) b.box('palace_gilt', [0.07, du === 0 ? 0.34 : Math.abs(du) > 0.2 ? 0.2 : 0.26, 0.1], { at: [X0 + du, sy + 2.2 + (du === 0 ? 0.04 : 0), sz2 - 0.38] });
+      b.lathe('palace_gilt', [{ y: 0, r: 0 }, { y: 0.06, r: 0.08 }, { y: 0.14, r: 0 }], { segments: 8, at: [X0, sy + 2.42, sz2 - 0.38] });
+      // the crown on its cushion on the seat
+      cryptOx ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#6e1e20') });
+      b.box(cryptOx, [0.44, 0.1, 0.36], { at: [X0, sy + 0.67, sz2 + 0.06] });
+      b.lathe('palace_gilt', [{ y: 0, r: 0.13 }, { y: 0.09, r: 0.14 }, { y: 0.1, r: 0.12 }, { y: 0.01, r: 0.11 }], { segments: 12, at: [X0, sy + 0.72, sz2 + 0.06] });
+      for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; b.box('palace_gilt', [0.04, 0.09, 0.04], { at: [X0 + Math.cos(a) * 0.13, sy + 0.86, sz2 + 0.06 + Math.sin(a) * 0.13] }); }
+      // the cloth of estate behind, the household's blue to the tester, its border and the laurel gilt; the tester over it,
+      // its valance fringed, finials at its front corners
+      const cw = 2.7, c0 = FL + 0.6, c1 = FL + 3.95;
+      b.tinted(PAL_BANNER[0], () => b.box('palace_weave', [cw, c1 - c0, 0.04], { at: [X0, (c0 + c1) / 2, wz + 0.04] }));
+      for (const sg of [-1, 1]) b.box('palace_gilt', [0.07, c1 - c0, 0.05], { at: [X0 + sg * (cw / 2 - 0.06), (c0 + c1) / 2, wz + 0.065] });
+      b.box('palace_gilt', [cw, 0.07, 0.05], { at: [X0, c0 + 0.04, wz + 0.065] });
+      { const cy = c1 - 0.85; for (let k = 0; k < 14; k++) { if (k === 4 || k === 10) continue; const a = (k / 14) * Math.PI * 2 - Math.PI / 2, r = 0.42; b.box('palace_gilt', [0.2, 0.08, 0.03], { at: [X0 + Math.cos(a) * r, cy + Math.sin(a) * r, wz + 0.075], rot: [0, 0, a + Math.PI / 2 + 0.5] }); } }
+      b.tinted(PAL_BANNER[0], () => { b.box('palace_weave', [cw + 0.3, 0.2, 1.1], { at: [X0, c1 + 0.12, wz + 0.55] }); b.box('palace_weave', [cw + 0.32, 0.36, 0.04], { at: [X0, c1 - 0.06, wz + 1.1] }); for (const sg of [-1, 1]) b.box('palace_weave', [0.04, 0.36, 1.08], { at: [X0 + sg * (cw / 2 + 0.16), c1 - 0.06, wz + 0.56] }); });
+      b.box('palace_gilt', [cw + 0.36, 0.06, 0.06], { at: [X0, c1 - 0.25, wz + 1.13] });
+      b.box('palace_gilt', [cw + 0.36, 0.06, 0.06], { at: [X0, c1 + 0.23, wz + 1.13] });
+      for (let k = 0; k < 15; k++) b.box('palace_gilt', [0.04, 0.12, 0.03], { at: [X0 - (cw + 0.2) / 2 + k * ((cw + 0.2) / 14), c1 - 0.32, wz + 1.13] });
+      for (const sg of [-1, 1]) b.lathe('palace_gilt', [{ y: 0, r: 0.06 }, { y: 0.1, r: 0.1 }, { y: 0.24, r: 0 }], { segments: 8, at: [X0 + sg * (cw / 2 + 0.15), c1 + 0.22, wz + 1.1] });
+    } else if (p.k === 'reliquary') {
+      // the chapel's reliquary (convert.js PALACE_3D.reliquary): a marble stand on its step, a gilt tray, the oxblood
+      // cushion with the box's print in it and nothing on it; the box's lid, gilt and gabled, on the floor beside it where
+      // it fell; over it on the wall an empty arched niche rimmed in gilt; two candles left at its foot
+      b.tinted([1.1, 1.07, 1.0], () => { b.box('palace_cap', [0.9, 0.16, 0.9], { at: [p.x, FL + 0.08, p.z] }); b.lathe('palace_cap', [{ y: 0, r: 0.3 }, { y: 0.1, r: 0.22 }, { y: 0.82, r: 0.17 }, { y: 0.9, r: 0.24 }], { segments: 12, at: [p.x, FL + 0.16, p.z] }); });
+      b.box('palace_gilt', [0.62, 0.07, 0.5], { at: [p.x, FL + 1.1, p.z] });
+      cryptOx ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#6e1e20') });
+      b.box(cryptOx, [0.5, 0.08, 0.38], { at: [p.x, FL + 1.17, p.z] });
+      b.box(cryptDark, [0.32, 0.01, 0.22], { at: [p.x, FL + 1.215, p.z] });   // (where the box stood three hundred years)
+      { const lx = p.x + 0.95, lz = p.z + 0.75, ry = 0.7, c = Math.cos(ry), sn = Math.sin(ry), at = (u, y, w) => [lx + u * c + w * sn, y, lz - u * sn + w * c];
+        b.box('palace_gilt', [0.5, 0.06, 0.34], { at: at(0, FL + 0.03, 0), rot: [0, ry, 0] });
+        for (const sg of [-1, 1]) b.box('palace_gilt', [0.5, 0.04, 0.22], { at: at(0, FL + 0.12, sg * 0.08), rot: [sg * 0.62, ry, 0] });
+        b.lathe('palace_gilt', [{ y: 0, r: 0.04 }, { y: 0.05, r: 0.05 }, { y: 0.1, r: 0 }], { segments: 7, at: at(0, FL + 0.2, 0) }); }
+      if (p.wz != null) {
+        const q = { x: p.x, z: p.wz, n: 'z' }, y = FL + 1.45;
+        b.box(cryptDark, sz(q, 0.8, 1.15, 0.02), { at: on(q, 0, y + 0.58, 0.03) });
+        b.lathe(cryptDark, [{ y: 0, r: 0 }, { y: 0.001, r: 0.4 }, { y: 0.02, r: 0.4 }, { y: 0.021, r: 0 }], { segments: 14, at: on(q, 0, y + 1.15, 0.03), rot: [Math.PI / 2, 0, 0] });
+        for (const sg of [-1, 1]) b.box('palace_gilt', sz(q, 0.06, 1.15, 0.05), { at: on(q, sg * 0.43, y + 0.58, 0.05) });
+        const N = 7; for (let k = 0; k < N; k++) { const t0 = (k / N) * Math.PI, t1 = ((k + 1) / N) * Math.PI, rr = 0.43; b.box('palace_gilt', sz(q, Math.hypot(Math.cos(t1) - Math.cos(t0), Math.sin(t1) - Math.sin(t0)) * rr + 0.02, 0.06, 0.05), { at: on(q, (Math.cos(t0) + Math.cos(t1)) / 2 * rr, y + 1.15 + (Math.sin(t0) + Math.sin(t1)) / 2 * rr, 0.05), rot: tilt(q, -Math.atan2(Math.sin(t1) - Math.sin(t0), Math.cos(t1) - Math.cos(t0))) }); }
+        b.tinted([1.12, 1.08, 1.0], () => b.box('palace_cap', sz(q, 1.0, 0.1, 0.24), { at: on(q, 0, y - 0.04, 0.12) }));
+      }
+      for (const [du, h] of [[-0.62, 0.28], [-0.5, 0.18]]) { b.tinted([1.2, 1.15, 1.0], () => b.lathe('linen', [{ y: 0, r: 0.045 }, { y: h, r: 0.04 }], { segments: 7, capTop: true, at: [p.x + du, FL, p.z + 0.5] })); b.box(tavernGlass, [0.05, 0.09, 0.05], { at: [p.x + du, FL + h + 0.06, p.z + 0.5] }); }
+    } else if (p.k === 'desktop') {
+      // on Lucan's writing table: the Kindler's letters, four, their red seals whole, under a gilt paperweight; or the
+      // other table's inkstand, its quill, a book open; a candle in a gilt stick on each
+      const c = Math.cos(p.rot || 0), sn = Math.sin(p.rot || 0), at = (lx, y, lz) => [p.x + lx * c + lz * sn, y, p.z - lx * sn + lz * c], y = FL + (p.y - TAV_FLOOR);
+      if (p.letters) {
+        for (let k = 0; k < 4; k++) { const a = (k - 1.5) * 0.18; b.tinted([1.08, 1.03, 0.9], () => b.box('linen', [0.34, 0.03, 0.24], { at: at(-0.15, y + 0.02 + k * 0.032, 0.02), rot: [0, (p.rot || 0) + a, 0] })); b.box(cryptOx ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#6e1e20') }), [0.07, 0.015, 0.07], { at: at(-0.15 + Math.cos(a) * 0.02, y + 0.04 + k * 0.032, 0.02), rot: [0, (p.rot || 0) + a, 0] }); }
+        b.lathe('palace_gilt', [{ y: 0, r: 0.11 }, { y: 0.05, r: 0.1 }, { y: 0.1, r: 0.05 }, { y: 0.13, r: 0 }], { segments: 10, at: at(-0.15, y + 0.15, 0.02) });   // (the paperweight on them)
+      } else {
+        b.tinted([0.2, 0.18, 0.18], () => b.box('metal', [0.22, 0.08, 0.14], { at: at(-0.3, y + 0.04, -0.12) }));
+        b.tinted([1.2, 1.18, 1.1], () => b.tube('linen', at(-0.26, y + 0.08, -0.12), at(-0.12, y + 0.36, -0.2), 0.012, 0.03, { segments: 4 }));
+        for (const sg of [-1, 1]) b.tinted([1.1, 1.05, 0.92], () => b.box('linen', [0.26, 0.025, 0.34], { at: at(0.12 + sg * 0.14, y + 0.03 + 0.02, 0.06), rot: [0, p.rot || 0, -sg * 0.12] }));
+      }
+      b.lathe('palace_gilt', [{ y: 0, r: 0.08 }, { y: 0.03, r: 0.05 }, { y: 0.18, r: 0.025 }, { y: 0.2, r: 0.05 }], { segments: 8, at: at(0.5, y, -0.2) });
+      b.tinted([1.2, 1.15, 1.0], () => b.lathe('linen', [{ y: 0, r: 0.035 }, { y: 0.2, r: 0.032 }], { segments: 7, capTop: true, at: at(0.5, y + 0.2, -0.2) }));
+      b.box(tavernGlass, [0.05, 0.09, 0.05], { at: at(0.5, y + 0.46, -0.2) });
+    } else if (p.k === 'ppapers') {
+      // papers fallen to the floor by the table, one with its seal
+      const R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+      for (let k = 0; k < 4; k++) b.tinted([1.05, 1.0, 0.88], () => b.box('linen', [0.32, 0.012, 0.24], { at: [p.x + (R(k) - 0.5) * 0.8, FL + 0.008 + k * 0.004, p.z + (R(k + 5) - 0.5) * 0.6], rot: [0, R(k + 9) * 3, 0] }));
+      b.box(cryptOx ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#6e1e20') }), [0.06, 0.012, 0.06], { at: [p.x + (R(0) - 0.5) * 0.8, FL + 0.016, p.z + (R(5) - 0.5) * 0.6] });
     } else if (p.k === 'furn') {
       const r = f[p.type](p.x, FL, p.z, p.opts || {}), o = r.object || r.group;
       if (!o) continue;
@@ -1287,7 +1517,7 @@ function buildTavern(pieces) {
     for (const q of geos) if (q !== merged) q.dispose();
     if (!merged) continue;
     const mesh = new THREE.Mesh(merged, m);
-    const lit = m === tavernGlass || m === tavernEmber || m === tavernNight || m === tavernNightHi || m === tavernStar || m === tavernGrime || m === cryptDark || m === cryptDamp || m === cryptPatch || m === cryptGold || m === cryptOx || m === cryptSky || m === cryptBrass || m === dockGlint || m === dockMist || m === rampFog;
+    const lit = m === tavernGlass || m === tavernEmber || m === tavernNight || m === tavernNightHi || m === tavernStar || m === tavernGrime || m === cryptDark || m === cryptDamp || m === cryptPatch || m === cryptGold || m === cryptOx || m === cryptSky || m === cryptBrass || m === dockGlint || m === dockMist || m === rampFog || m === palaceSky || m === palaceLit || m === palacePatch;
     mesh.castShadow = !lit && m !== tavernWeb; mesh.receiveShadow = !lit;
     g.add(mesh);
   }
@@ -1609,6 +1839,24 @@ function tavernFlags(s, K, R, worn) {
   });
   return { normal: 2.0 };
 }
+/** a polished marble slab, one a tile (the palace's floor, laid in a checker by convert.js): a hairline joint round it and
+ * a bevel lit inside that, the stone's cloud soft and broad, a vein or two wandering across it (a contour of a second
+ * field), kept narrow in tone; low relief: it's polished */
+function marbleSlab(s, K, R, seed) {
+  // (round 1, docs/art-critic-pass-palace.md: a 64 px texture spans four of Luminati's tiles, so one slab to it put a black
+  // joint every four tiles over the checker, "a grout grid": sixteen slabs to it now, one a tile, a hairline joint in a
+  // mid tone, each slab its own cloud)
+  const w = s.w, h = s.h, S = 16, N = K.field(w, h, 6, 6, seed, { oct: 3 }), V = K.field(w, h, 3, 3, seed + 3, { oct: 3 }), at = (t) => R[Math.max(1, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
+  s.each((x, y, i) => {
+    const lx = x % S, ly = y % S, e = Math.min(lx, ly, S - 1 - lx, S - 1 - ly);
+    if (lx === 0 || ly === 0) { s.set(x, y, R[0]); s.hf[i] = 0.45; return; }   // (the joint, a hairline)
+    let t = 0.5 + (N[i] - 0.5) * 0.26 + (K.hash2(Math.floor(x / S), Math.floor(y / S), seed + 7) - 0.5) * 0.1;
+    const v = Math.abs(V[i] - 0.5); if (v < 0.015) t -= 0.14 * (1 - v / 0.015);   // (a vein)
+    if (e < 1) t += lx === 1 || ly === 1 ? 0.05 : -0.04;                        // (the bevel)
+    s.set(x, y, at(Math.max(0, Math.min(1, t)))); s.hf[i] = 0.9 + (N[i] - 0.5) * 0.06;
+  });
+  return { normal: 0.6 };
+}
 // cinders, cobbles in charcoal without their moss, red sand as rust-stained mud, red rock iron-dark, dry grass ash-grey, ash a step darker;
 // and the dungeons' stone for the Reach's other sites and the Fens' kits (below).
 let reachLib = null;
@@ -1721,6 +1969,38 @@ registerTextureSet((K) => {
     // the cellar's rough rubble: stones of all sizes in thick dark mortar
     tavern_rubble: { px: [48, 48], normalScale: 0.9, gen: (s) => tavernRubble(s, K, P(['#4a433b', '#5c544a', '#6a6156', '#776d61', '#84796c', '#918577']), K.parseColor('#7e7468')) },   // (round 6: big stones, three or four to a wall's height, in a light mortar: the cobble read as bark)
     tavern_cap: { px: [32, 32], normalScale: 0.5, gen: recolor('wood_planks_dark', P(['#2a1c13', '#3a281b', '#4a3423', '#5a402b', '#6a4c33', '#7a583c'])) },   // (round 4: the wall tops a warm oak, not a black band)
+    // the Seventh's Palace (v1.154, docs/art-critic-pass-palace.md): a polished floor, one marble slab a tile laid in a broad
+    // checker (convert.js `checker`), honey and rose-grey, a vein wandering through each, a hairline joint, kept close in
+    // tone so the fight's figures hold their outline on it; the yard's flags; walls of warm honey limestone, a step warmer
+    // and paler than the crypt's; the carving stone a cream marble; the dado a red porphyry; the cloth a pale weave to be
+    // tinted (the household's blue, the legions' colours); gold leaf
+    palace_flag: { px: [64, 64], normalScale: 0.35, gen: (s) => marbleSlab(s, K, P(['#6a5a48', '#8c7a63', '#98866e', '#a4927a', '#ae9c84', '#b8a68e', '#c2b098']), 981) },
+    palace_flag2: { px: [64, 64], normalScale: 0.35, gen: (s) => marbleSlab(s, K, P(['#5e4e46', '#76645c', '#806d65', '#8a766e', '#947f76', '#9e897f', '#a89288']), 987) },   // (round 1: a step nearer the honey, the checker quieter under the fight)
+    palace_yard: { px: [64, 64], normalScale: 0.75, gen: (s) => tavernFlags(s, K, P(['#3a342c', '#6e665a', '#797064', '#847a6d', '#8f8476', '#9a8f80', '#a59a8a']), false) },
+    palace_wall: { px: [48, 48], normalScale: 0.7, gen: (s, ctx) => ashlar(s, ctx, K, P(['#86705a', '#977f65', '#a88f72', '#b89f80', '#c6ad8d', '#d2ba99', '#dcc5a6', '#e4cfb2']), ['#7e6a54', '#706048'], ['#c09a6a', '#a8a090']) },
+    palace_top: { px: [32, 32], normalScale: 0.3, gen: (s) => { const N = K.field(s.w, s.h, 4, 4, 991, { oct: 2 }), R = P(['#968a76', '#a49882', '#b2a58e', '#beb19a', '#c9bca4']); s.each((x, y, i) => { s.set(x, y, at(R, Math.max(0, Math.min(1, 0.5 + (N[i] - 0.5) * 0.6)))); s.hf[i] = 0.6; }); return { normal: 1 }; } },
+    palace_sill: { px: [48, 48], normalScale: 0.6, gen: (s, ctx) => ashlar(s, ctx, K, P(['#6e5e4c', '#7c6a56', '#8a7660', '#98836b', '#a58f76', '#b09a81', '#b9a38a', '#c1ab92']), ['#6a5a48', '#5e503f'], ['#9a8262', '#8a8276']) },   // (round 1: a honey stone a step under the walls, not a fort's brown)
+    palace_sill_top: { px: [32, 32], normalScale: 0.3, gen: (s) => { const N = K.field(s.w, s.h, 4, 4, 993, { oct: 2 }), R = P(['#86796a', '#938676', '#a09382', '#ad9f8e', '#b8ab98']); s.each((x, y, i) => { s.set(x, y, at(R, Math.max(0, Math.min(1, 0.5 + (N[i] - 0.5) * 0.6)))); s.hf[i] = 0.6; }); return { normal: 1 }; } },
+    palace_cap: { px: [32, 32], normalScale: 0.3, gen: (s) => {
+      const N = K.field(s.w, s.h, 3, 3, 995, { oct: 3 }), R = P(['#857d70', '#978f82', '#a9a193', '#b9b1a3', '#c7bfb1', '#d3cbbd']);
+      s.each((x, y, i) => { let t = 0.45 + (N[i] - 0.5) * 0.4; if (K.hash2(x, y, 997) > 0.985) t -= 0.18; s.set(x, y, at(R, Math.max(0, Math.min(1, t)))); s.hf[i] = 0.7 + (N[i] - 0.5) * 0.2; });
+      return { normal: 1.0 };
+    } },
+    palace_porphyry: { px: [32, 32], normalScale: 0.3, gen: (s) => {
+      const N = K.field(s.w, s.h, 4, 4, 999, { oct: 3 }), R = P(['#2e1a18', '#3c2220', '#4a2b27', '#58342f', '#663e37', '#744840']);
+      s.each((x, y, i) => { let t = 0.45 + (N[i] - 0.5) * 0.5; const q = K.hash2(x, y, 1001); if (q > 0.96) t += 0.35; s.set(x, y, at(R, Math.max(0, Math.min(1, t)))); s.hf[i] = 0.8; });
+      return { normal: 0.8 };
+    } },
+    palace_weave: { px: [32, 32], normalScale: 0.45, gen: (s) => {
+      const R = P(['#a8a49c', '#b8b4ac', '#c6c2ba', '#d2cec6', '#dcd8d0']);
+      s.each((x, y, i) => { const w = ((x + (y >> 1)) & 1) ? 0.62 : 0.42, t = w + (K.hash2(x >> 2, y >> 2, 1003) - 0.5) * 0.18; s.set(x, y, at(R, Math.max(0, Math.min(1, t)))); s.hf[i] = 0.5 + (w - 0.5); });
+      return { normal: 0.9 };
+    } },
+    palace_gilt: { px: [32, 32], normalScale: 0.4, gen: (s) => {
+      const N = K.field(s.w, s.h, 4, 4, 1005, { oct: 2 }), R = P(['#6a4a18', '#86601e', '#a07826', '#ba922e', '#d2aa40', '#e2c058', '#eed272']);
+      s.each((x, y, i) => { const t = 0.55 + (N[i] - 0.5) * 0.6 + (K.hash2(x, y, 1007) > 0.93 ? 0.25 : 0); s.set(x, y, at(R, Math.max(0, Math.min(1, t)))); s.hf[i] = 0.6 + (N[i] - 0.5) * 0.3; });
+      return { normal: 1.0 };
+    } },
   };
 });
 
@@ -2048,12 +2328,19 @@ const WRIM_GEO = new THREE.RingGeometry(0.88, 1, 40), LANE_GEO = new THREE.Plane
 // the Kingstone's sweep (GDD §19 v1.105, battle.js ringTells): a 120° fan from its middle, filling out to its rim; its
 // rim the arc alone (the fan's straight sides drawn as lanes)
 const CONE_ARC = (2 * Math.PI) / 3, CONE_GEO = new THREE.CircleGeometry(1, 36, -CONE_ARC / 2, CONE_ARC), CRIM_GEO = new THREE.RingGeometry(0.93, 1, 36, 1, -CONE_ARC / 2, CONE_ARC);
+// (v1.154) Lucan's Canticle (battle.js 'canticle' tells): a song, not a blow, so none of the warnings' red. Its front a pale
+// gold band going out (BAND), a thin line where it will end (THIN), the song's waves running out from him to the front,
+// each a ring scalloped like a sound's wave (WAVE, turning); broken, the band cracks into arcs thrown out (SHARD)
+const THIN_GEO = new THREE.RingGeometry(0.965, 1, 72), BAND_GEO = new THREE.RingGeometry(0.88, 1, 72);
+const WAVE_GEO = (() => { const n = 120, L = 16, pos = [], idx = []; for (let i = 0; i <= n; i++) { const a = (i / n) * Math.PI * 2, r = 1 + 0.022 * Math.sin(L * a); pos.push(Math.cos(a) * (r - 0.03), Math.sin(a) * (r - 0.03), 0, Math.cos(a) * r, Math.sin(a) * r, 0); } for (let i = 0; i < n; i++) idx.push(2 * i, 2 * i + 1, 2 * i + 2, 2 * i + 1, 2 * i + 3, 2 * i + 2); const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); return g; })();
+const SHARD_GEO = (() => { const g = []; for (let k = 0; k < 9; k++) { const a0 = (k / 9) * Math.PI * 2 + 0.12 * Math.sin(k * 2.3); g.push(new THREE.RingGeometry(0.9, 1, 8, 1, a0, (Math.PI * 2) / 9 - 0.22 - 0.06 * (k % 3))); } return mergeGeo(g); })();
 const groundMat = () => new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, toneMapped: false });
-const groundPools = { ring: [], disc: [], rim: [], focus: [], wfill: [], wrim: [], lane: [], cone: [], crim: [] };
-const GEO = { ring: RING_GEO, disc: DISC_GEO, rim: RIM_GEO, focus: FOCUS_GEO, wfill: DISC_GEO, wrim: WRIM_GEO, lane: LANE_GEO, cone: CONE_GEO, crim: CRIM_GEO };
+const groundPools = { ring: [], disc: [], rim: [], focus: [], wfill: [], wrim: [], lane: [], cone: [], crim: [], thin: [], band: [], wave: [], shard: [] };
+const GEO = { ring: RING_GEO, disc: DISC_GEO, rim: RIM_GEO, focus: FOCUS_GEO, wfill: DISC_GEO, wrim: WRIM_GEO, lane: LANE_GEO, cone: CONE_GEO, crim: CRIM_GEO, thin: THIN_GEO, band: BAND_GEO, wave: WAVE_GEO, shard: SHARD_GEO };
+const TWO_SIDED = new Set(['wave', 'shard']);   // (built here, their winding not three's: drawn from either side)
 function groundMesh(kind, n) {
   const p = groundPools[kind];
-  while (p.length <= n) { const m = new THREE.Mesh(GEO[kind], groundMat()); m.rotation.x = -Math.PI / 2; m.renderOrder = 2; m.visible = false; game.engine.scene.add(m); p.push(m); }
+  while (p.length <= n) { const m = new THREE.Mesh(GEO[kind], groundMat()); if (TWO_SIDED.has(kind)) m.material.side = THREE.DoubleSide; m.rotation.x = -Math.PI / 2; m.renderOrder = 2; m.visible = false; game.engine.scene.add(m); p.push(m); }
   return p[n];
 }
 function placeGround(m, x, z, r, col, a) {
@@ -2070,6 +2357,8 @@ function placeLane(m, x, z, tx, tz, u, w, col, a) {
   m.material.color.setRGB(col[0] / 255, col[1] / 255, col[2] / 255, THREE.SRGBColorSpace); m.material.opacity = a;
 }
 const WARN = [255, 86, 30], WARN_HOT = [255, 238, 220], WARN_INK = [24, 6, 4];
+// (v1.154) the Canticle's: a pale gold, a near-white at its moments, a warm dark under its front so it holds on a lit floor
+const SONG = [255, 222, 150], SONG_HOT = [255, 246, 222], SONG_INK = [44, 32, 12];
 // (v1.147) the First Pilgrim's gaze: the Ember's orange, hotter than the warnings' red; his sigil a deep red
 const GAZE = [255, 150, 50], SIGIL = [235, 36, 28], SIGIL_HOT = [255, 92, 60], GAZE_EYE = 4.3, GAZE_FWD = 0.45;   // (the eye's height over his feet and how far before them, units: round G2, measured on his model in the gaze's frames, drawn ×1.5)
 // a beam: a cylinder from his eye to the lane's far end, additive, unlit, pooled
@@ -2206,8 +2495,30 @@ function freeSpell(rec) {
   for (const h of rec.quads) SK.quads.free(h);
   if (rec.gf >= 0) SK.frost.free(rec.gf);
 }
-/** the frame's spells: start, animate, end @param {any[]} spells @param {number} dt @param {number} [lamps] @param {boolean} [fight] */
-function placeSpells(spells, dt, lamps, fight) {
+// (v1.154) burning pitch (battle.js hazards 'pitch', hybrid.js): over the tar pool and its rim (frame()), flames licking up
+// across it, embers glowing on it, a smoke wisp off it; as it lands, a splash of fire. Kept a patch at a time by its key,
+// its quads freed with it. The brightest patch lights the floor round it (the spells' light, when no spell wants it)
+const pitchLive = new Map(), pitchSeen = new Set();
+function placePitch(list, K, H, vx, vz) {
+  pitchSeen.clear(); let best = null;
+  for (const h of list || []) {
+    if (h.kind !== 'pitch') continue;
+    pitchSeen.add(h.key);
+    let rec = pitchLive.get(h.key);
+    if (!rec) { rec = { quads: [0, 1, 2, 3, 4].map(() => K.quads.alloc()), embers: K.quads.alloc(), splash: K.quads.alloc(), smoke: K.quads.alloc(), seed: (Math.abs(Math.round(h.x * 97 + h.z * 31)) % 97) + 1 }; pitchLive.set(h.key, rec); }
+    const y = H(h.x, h.z), g = h.a, t = h.age, s0 = rec.seed;
+    rec.quads.forEach((q0, i) => { const a = (i / 5) * Math.PI * 2 + s0 * 0.7, rr = h.r * (i ? 0.55 : 0.05) * (0.8 + 0.2 * ((s0 + i) % 3)), wob = 0.8 + 0.25 * Math.sin(t * 7 + i * 1.9 + s0);
+      q(q0, { frame: 'bruteFlames', index: Math.floor(t * 12 + i * 1.7) % 4, x: h.x + Math.cos(a) * rr + vx * 0.05, y: y + 0.3 * wob * g, z: h.z + Math.sin(a) * rr + vz * 0.05, mode: 'billboard', scale: (i ? 0.42 : 0.55) * wob * g, r: 1.7, g: 0.78, b: 0.26, a: g > 0.05 ? 1 : 0, halo: 1 }); });
+    q(rec.embers, { frame: 'dragonEmbers', index: Math.floor(t * 3) % 2, x: h.x, y: y + 0.035, z: h.z, mode: 'flat', scale: (h.r * 2) / 3, r: 1.5, g: 0.55, b: 0.18, a: g > 0.05 ? 0.9 : 0 });
+    q(rec.splash, { frame: 'dragonBlast', index: Math.min(5, Math.floor(t * 16)), x: h.x + vx * 0.2, y: y + 0.4, z: h.z + vz * 0.2, mode: 'billboard', scale: 0.55, r: 1.9, g: 0.95, b: 0.35, a: t < 0.36 ? 1 : 0, halo: 1 });
+    { const ph = (t * 0.45 + s0 * 0.13) % 1; q(rec.smoke, { frame: 'dust', index: Math.min(2, Math.floor(ph * 3)), x: h.x + 0.2 * Math.sin(t + s0), y: y + 0.5 + 1.1 * ph, z: h.z, mode: 'billboard', scale: 1.0 + 1.2 * ph, r: 0.14, g: 0.12, b: 0.11, a: 0.7 * (1 - ph) * g }); }
+    const k = 0.35 * g + (t < 0.3 ? 0.6 * (1 - t / 0.3) : 0); if (!best || k > best.k) best = { x: h.x, z: h.z, k, color: [2.0, 0.85, 0.28] };
+  }
+  for (const [key, rec] of pitchLive) if (!pitchSeen.has(key)) { for (const q0 of [...rec.quads, rec.embers, rec.splash, rec.smoke]) K.quads.free(q0); pitchLive.delete(key); }
+  return best;
+}
+/** the frame's spells: start, animate, end @param {any[]} spells @param {number} dt @param {number} [lamps] @param {boolean} [fight] @param {any[]} [hazards] */
+function placeSpells(spells, dt, lamps, fight, hazards) {
   if (!SK && !fight && !spells.length) return;                // (made as the first fight starts: warmed before anyone casts)
   const K = spellKit(); if (!K) return;
   if (K.warmN > 0 && --K.warmN === 0) { K.crystals.unwarm(); K.frost.unwarm(); K.dome.unwarm(); K.blades.unwarm(); K.rocks.unwarm(); K.bells.unwarm(); K.quads.free(K.warmQuad); }
@@ -2303,6 +2614,18 @@ function placeSpells(spells, dt, lamps, fight) {
       // Arcane Ward's ring under the warded ally (it read better than a dome on three people), a slow pulse
       if (!rec.ring) { rec.ring = K.quads.alloc(); rec.quads.push(rec.ring); rec.t = 0; } rec.t += dt;
       q(rec.ring, { frame: 'partyWardRing', x: S.x, y: H(S.x, S.z) + 0.05, z: S.z, mode: 'flat', scale: 0.85 + 0.05 * Math.sin(rec.t * 4), rot: rec.t * 0.5, r: WARD[0], g: WARD[1], b: WARD[2], a: 0.9 * smooth(rec.t / 0.25), halo: 1 });
+    } else if (S.id === 'pitch_fly') {
+      // (v1.154) a siege engineer's pot of pitch in flight (hybrid.js: battle.js bolt 'pitch'): a dark clay pot tumbling on
+      // its arc, from his hand over the heads to where it breaks, its rag alight on top, black smoke left behind it
+      if (!rec.pot) { rec.pot = K.quads.alloc(); rec.fire = K.quads.alloc(); rec.smoke = [0, 1, 2, 3].map(() => K.quads.alloc()); rec.quads.push(rec.pot, rec.fire, ...rec.smoke); rec.t = 0; } rec.t += dt;
+      const u = clamp01(S.k), dist = Math.hypot(S.tx - S.fx, S.tz - S.fz), arc = 0.45 + 0.28 * dist;
+      const at = (w) => { const x = S.fx + (S.tx - S.fx) * w, z = S.fz + (S.tz - S.fz) * w; return [x, H(x, z) + 1.25 * (1 - w) + 0.15 * w + arc * Math.sin(Math.PI * w), z]; };
+      const [px, py, pz] = at(u);
+      q(rec.pot, { frame: 'boulder', index: Math.floor(rec.t * 8) % 2, x: px, y: py, z: pz, mode: 'billboard', scale: 0.6, rot: rec.t * 9, r: 0.13, g: 0.09, b: 0.07, a: 1 });   // (round 2: darker, at 0.3 it read as a pale acorn)
+      q(rec.fire, { frame: 'bruteFlames', index: Math.floor(rec.t * 12) % 4, x: px + vx * 0.05, y: py + 0.26, z: pz + vz * 0.05, mode: 'billboard', scale: 0.5, r: 2.0, g: 0.95, b: 0.32, a: 1, halo: 1 });   // (round 2: before the pot, bigger: its rag alight read from across the walk)
+      rec.smoke.forEach((h, i) => { const w = u - 0.05 * (i + 1); if (w <= 0) { q(h, { frame: 'dust', x: 0, y: -500, z: 0, a: 0 }); return; } const [sx, sy, sz] = at(w);
+        q(h, { frame: 'dust', index: Math.min(2, i), x: sx, y: sy + 0.08 * i, z: sz, mode: 'billboard', scale: 0.9 + 0.35 * i, r: 0.07, g: 0.06, b: 0.06, a: 0.75 - 0.18 * i }); });
+      const lt = { x: px, z: pz, k: 0.45, color: [2.0, 0.9, 0.3] }; if (!light || lt.k > light.k) light = lt;
     } else if (S.id === 'firebolt_fly') {
       // the Firebolt in flight: Luminati's ember bolt riding it
       if (!rec.bolt) { rec.bolt = K.quads.alloc(); rec.quads.push(rec.bolt); rec.t = 0; } rec.t += dt;
@@ -2320,6 +2643,7 @@ function placeSpells(spells, dt, lamps, fight) {
     }
   }
   for (const [key, rec] of spellLive) if (!seen.has(key)) { freeSpell(rec); spellLive.delete(key); }
+  { const lt = placePitch(hazards, K, H, vx, vz); if (lt && (!light || lt.k > light.k)) light = lt; }
   if (spellLight) {
     if (light && light.k > 0.02) spellLight.set(light.x, H(light.x, light.z) + 1.4, light.z, { color: light.color, intensity: 2.6 * light.k / (lamps ?? 1), distance: 6.5, decay: 1.5, flicker: 0.08 });
     else spellLight.off();
@@ -2706,6 +3030,13 @@ const api = {
     cam.x = f.focus[0]; cam.y = f.focus[1]; cam.z = f.focus[2]; cam.ppu = f.ppu;
     if (Number.isFinite(f.hour) && Math.abs((game.lighting?.timeOfDay ?? -1) - f.hour) > 0.004) game.setTime(f.hour);
     if (f.weather && game.weather?.weather !== f.weather) game.setWeather(f.weather);
+    // a palace's windows: the hour's sky in the glass, its light on the floor (docs/art-critic-pass-palace.md); only when
+    // the hour has moved, no allocation otherwise
+    if (palaceSky && Number.isFinite(f.hour) && Math.abs(f.hour - palaceHour) > 0.02) {
+      palaceHour = f.hour; const s = palaceSkyAt(f.hour);
+      palaceSky.color.copy(s.col).multiplyScalar(0.4 + 1.1 * s.k);   // (round 1: the dusk's glass a step down, under the candles)
+      if (palacePatch) { palacePatch.color.copy(s.col); palacePatch.opacity = s.k; }
+    }
     if (game.lighting?.settings) { game.lighting.settings.fogMul = 1 + 0.6 * (f.fog || 0); game.lighting.settings.pointLightMul = f.ambient?.lamps ?? 1; }   // (the sim's fog: the air a little thicker, Emberlit's overlay drifting its banks over it; underground, the lamps the game's)
     if (f.hero && game.player) { hidePlayer(); game.player.position.set(f.hero[0], game.tileMap.getHeight(f.hero[0], f.hero[1]), f.hero[1]); }
     // the people: as models (placeFigure), or each atlas's pool filled in the order drawn; the rest hidden
@@ -2740,10 +3071,18 @@ const api = {
     for (const [sheet, p] of pools) { const n = used.get(sheet) || 0; for (let i = n; i < p.length; i++) if (p[i].visible) p[i].visible = false; }
     sweepFigures();
     // the fight's ground
-    const nk = { ring: 0, disc: 0, rim: 0, focus: 0, wfill: 0, wrim: 0, lane: 0, cone: 0, crim: 0 };
+    const nk = { ring: 0, disc: 0, rim: 0, focus: 0, wfill: 0, wrim: 0, lane: 0, cone: 0, crim: 0, thin: 0, band: 0, wave: 0, shard: 0 };
     for (const r of f.rings || []) placeGround(groundMesh('ring', nk.ring++), r.x, r.z, 1, r.col, r.a);
     if (f.mark) { const m = groundMesh('focus', nk.focus++); placeGround(m, f.mark.x, f.mark.z, 1, [255, 226, 150], 0.7 + 0.2 * Math.sin(focusSpin * 4)); m.rotation.z = focusSpin; focusSpin += (f.dt || 0) * 0.9; }
-    for (const h of f.hazards || []) { placeGround(groundMesh('disc', nk.disc++), h.x, h.z, h.r, h.col, 0.82 * h.a); placeGround(groundMesh('rim', nk.rim++), h.x, h.z, h.r, h.rim, 0.42 * h.a); }
+    for (const h of f.hazards || []) {
+      // (v1.154: burning pitch, a tar pool with a hot rim, its rim breathing as it burns; its flames and its embers Luminati's
+      // quads, placeSpells' placePitch)
+      const beat = h.kind === 'pitch' ? 0.8 + 0.2 * Math.sin(performance.now() * 0.009 + h.x * 5.3) : 1;
+      placeGround(groundMesh('disc', nk.disc++), h.x, h.z, h.r, h.col, (h.kind === 'pitch' ? 0.9 : 0.82) * h.a);
+      // (round 1: its rim a hard ember ring read as an elite's foot-ring: a soft glow in the tar instead, the rim faint)
+      placeGround(groundMesh('rim', nk.rim++), h.x, h.z, h.r, h.rim, (h.kind === 'pitch' ? 0.22 * beat : 0.42) * h.a);
+      if (h.kind === 'pitch') placeGround(groundMesh('wfill', nk.wfill++), h.x, h.z, h.r * 0.85, [255, 92, 20], 0.32 * beat * h.a);
+    }
     for (const w of f.warns || []) {                           // the foes' warnings
       const g = w.heavy ? 1 : 0.62, out = w.hit > 0 ? w.hit : 1, e = 1 - (1 - w.p) * (1 - w.p);
       if (!w.lane) {
@@ -2763,6 +3102,35 @@ const api = {
     // 'vent' the floor glowing slag-orange, its heart hotter as it comes, not the Kingstone's red)
     let np = 0, nbm = 0, sigil = null; gazeFlare = 0;
     for (const t of f.tells || []) {
+      // (v1.154) Lucan's Canticle: a song going out from him, not a blow coming (nothing lands where it passes). Its front a
+      // pale gold band out to where it is (p: the song's share sung), a warm dark line under it so it holds on the lit
+      // marble; a thin line at its full reach, where it ends, so the time left reads; the song's waves running out from
+      // his feet to the front, scalloped like a sound's, turning, fading as they go; the floor it has passed over washed a
+      // breath of gold. Sung out: a flash out at its reach as the fallen stand (skillfx.js's columns). Broken (`broke`): the
+      // band cracks into arcs thrown out and turning, gone in 0.7 s (docs/art-critic-pass-palace.md)
+      if (t.kind === 'canticle') {
+        const R = t.r, front = Math.max(0.2, R * t.p), out = t.hit > 0 ? t.hit : 1;
+        if (t.broke) {
+          // (round 1: the front cracking alone was lost under the melee at his feet: its reach's line breaks too, out past it)
+          const k = 1 - t.hit, m = groundMesh('shard', nk.shard++), m2 = groundMesh('shard', nk.shard++);
+          placeGround(m, t.x, t.z, front + 1.4 * k + 0.2, k < 0.15 ? SONG_HOT : SONG, 0.95 * t.hit); if (m.visible) m.rotation.z = 0.5 * k;
+          placeGround(m2, t.x, t.z, R * (1 + 0.22 * k), k < 0.15 ? SONG_HOT : SONG, 0.75 * t.hit); if (m2.visible) m2.rotation.z = -0.35 * k + 0.2;
+          placeGround(groundMesh('disc', nk.disc++), t.x, t.z, front, SONG_HOT, 0.12 * t.hit * t.hit);
+          continue;
+        }
+        const live = t.hit > 0 ? 0 : 1, ph0 = t.age * 0.7;
+        placeGround(groundMesh('thin', nk.thin++), t.x, t.z, R, SONG, 0.45 * out);
+        placeGround(groundMesh('disc', nk.disc++), t.x, t.z, front, SONG, 0.06 * out);
+        placeGround(groundMesh('thin', nk.thin++), t.x, t.z, front + 0.08, SONG_INK, 0.45 * out);
+        placeGround(groundMesh('band', nk.band++), t.x, t.z, front, live ? SONG : SONG_HOT, (0.72 + 0.25 * t.p) * out);
+        for (let k = 0; k < 3; k++) {
+          const ph = (ph0 + k / 3) % 1, m = groundMesh('wave', nk.wave++);
+          placeGround(m, t.x, t.z, Math.max(0.25, front * ph), SONG, 0.5 * Math.sin(ph * Math.PI) * live);
+          if (m.visible) m.rotation.z = (k % 2 ? -1 : 1) * t.age * 0.35;
+        }
+        if (!live) placeGround(groundMesh('band', nk.band++), t.x, t.z, R * (1 + 0.18 * (1 - t.hit)), SONG_HOT, 0.85 * t.hit);
+        continue;
+      }
       const e = 1 - (1 - t.p) * (1 - t.p), hot = t.hit > 0, col = hot ? WARN_HOT : WARN, out = hot ? t.hit : 1;
       // (v1.147) the First Pilgrim's gaze: a lane from his feet, filling outward as it winds, its edges dark; his sight
       // along it, a thin line from the eye in the wind's last part; landed, the beam, white-hot in its orange, gone in
@@ -2829,6 +3197,8 @@ const api = {
       wispSlots = [...withWisp].filter((sl) => !had.has(sl)).concat([...loaned()].filter((sl) => !withBlast.has(sl))); showWisps();
       for (const rec of spellLive.values()) if (SK) freeSpell(rec);
       spellLive.clear();
+      if (SK) for (const rec of pitchLive.values()) for (const q0 of [...rec.quads, rec.embers, rec.splash, rec.smoke]) SK.quads.free(q0);
+      pitchLive.clear();
     }
     if (carryLight && f.hero) {
       const k = Math.max(0, Math.min(1, f.carry ?? 0)), hx = f.hero[0] + 0.35, hz = f.hero[1] + 0.35;
@@ -2849,7 +3219,7 @@ const api = {
       else if (eye) blastLight.set(eye.x, eye.y, eye.z, { color: [2.0, 1.05, 0.4], intensity: 12 * gazeFlare / (f.ambient?.lamps ?? 1), distance: 9, decay: 1.4, flicker: 0.1 });   // (the gaze's flare: the eye lights the ground round him as it burns, v1.147)
       else blastLight.off();
     }
-    placeSpells(f.spells || [], f.dt || 0, f.ambient?.lamps, !!(f.rings && f.rings.length));
+    placeSpells(f.spells || [], f.dt || 0, f.ambient?.lamps, !!(f.rings && f.rings.length), f.hazards);
     // underground, the lights' flicker held to CALM_FLICKER (the owner, 2026-11-11: "Player and npc characters flicker in
     // the dungeon not overland. Probably due to torch lighting effect"): Luminati's wall torch swings its light ±38 %
     // (flicker 0.45) 2.6 times a second, and a figure by a wall, close to it, took the whole swing while the floor beyond

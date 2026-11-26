@@ -1033,21 +1033,7 @@ export const PROPS = {
   },
   // the skirts of the Admiral's long coat (the hips' space): dark blue broadcloth from the waist to the knee, open at the
   // front for the legs, the edges and the turned-back corners in tarnished gold lace, two gilt buttons at the back vent
-  coatskirts: () => {
-    const g = new THREE.Group(); g.name = 'Coat_Skirts';
-    const cloth = new THREE.MeshStandardMaterial({ color: 0x1e2a48, roughness: 0.85, side: THREE.DoubleSide }), gold = mat(0xb8903e, 0.8, 0.4);
-    // (lab round 3: one flared cylinder read as a barrel from behind; two tails now, open at the front and parted at the
-    // back vent, hung nearly straight)
-    const open = 0.36, vent = 0.05, len = 0.5, top = 0.08, r0 = 0.41, r1 = 0.46;
-    for (const s of [-1, 1]) {
-      const th0 = s > 0 ? Math.PI * open : Math.PI * (1 + vent), thL = Math.PI * (1 - open - vent);
-      const sk = new THREE.Mesh(new THREE.CylinderGeometry(r0, r1, len, 12, 1, true, th0, thL), cloth); sk.position.set(0, top - len / 2, -0.02); sk.scale.z = 0.92; sk.name = 'Coat_Skirts_Cloth'; g.add(sk);
-      const hem = new THREE.Mesh(new THREE.TorusGeometry(r1 + 0.005, 0.022, 4, 14, thL), gold); hem.rotation.set(Math.PI / 2, 0, Math.PI / 2 - th0 - thL); hem.position.set(0, top - len + 0.01, -0.02); hem.scale.y = 0.92; g.add(hem);
-      for (const th of [th0, th0 + thL]) { const e = new THREE.Mesh(new THREE.BoxGeometry(0.045, len, 0.025), gold); e.position.set(Math.sin(th) * (r0 + r1) / 2, top - len / 2, Math.cos(th) * (r0 + r1) / 2 * 0.92 - 0.02); e.rotation.y = th; g.add(e); }
-    }
-    for (const y of [-0.04, -0.2]) for (const s of [-1, 1]) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 5), gold); b.position.set(s * 0.07, y, -0.47 + y * 0.25); g.add(b); }
-    return g;
-  },
+  coatskirts: () => coatSkirts({ name: 'Coat_Skirts', cloth: 0x1e2a48, gold: 0xb8903e }),
   // an officer's epaulettes (the chest's space): a gilt pad on each shoulder, its fringe hanging; tarnished, but they
   // tell an admiral from his crew at 56 px
   epaulettes: () => {
@@ -1099,8 +1085,178 @@ export const PROPS = {
   },
   // and his beard, white and long, three hundred years of it (from above the face's own is under the chin)
   beardwhite: () => { const g = greatBeard({ name: 'Beard_White', hair: 0xe4e0d8, len: 0.3 }); g.scale.set(0.82, 1, 0.8); g.position.z = 0.04; return g; },   // (the portrait: full size it was a ball of cotton wool)
+
+  // ── Highmarch (world doc v1.72 §3.7; docs/tidemark-plan.md's build sheet, step 6) ──
+  // Highmarch's colours: the old legions' oxblood and bronze, the empire it wants back (not the Redhand's bright red on
+  // grey iron, nor the Gull Fleet's sea-grey and yellow). A legionary's tower shield (the hand slot's space, as the kits'
+  // shields: its face +z, tall along y): new silhouette 1, so a line of them reads as a wall. KayKit's Rectangle_Shield is
+  // 0.88 × 1.19; this one is 1.04 × 1.62, curved round the body, oxblood with a bronze rim, a bronze boss on a raised
+  // spine and the march's gilt wings either side of it. Its meshes are named *Shield* so the weapon anchors skip it
+  towershield: () => towerShield({ name: 'Tower_Shield', face: 0x6e1c1e, back: 0x3a2418, metal: 0xb4883c, wings: 0xd8b050 }),
+  // the Champion's: the same shield, its rim and boss gilt, a gilt laurel round the boss for his day in the capital
+  championshield: () => towerShield({ name: 'Champion_Shield', face: 0x6e1c1e, back: 0x3a2418, metal: 0xd4aa4c, wings: 0xe8c460, laurel: true }),
+  // a legionary's short sword (held as the kits' one-handers: +y from the grip): a broad leaf blade 0.72 long, half the
+  // knight's sword, a bronze guard and a round bronze pommel. Stabbed, not swung (the bake's attack is a thrust)
+  gladius: () => shortSword({ name: 'Gladius', steel: 0xc4cad0, fit: 0xb4883c }),
+  // the Champion's: the same blade, gilt at the hilt
+  championsword: () => shortSword({ name: 'Champion_Sword', steel: 0xd0d6dc, fit: 0xd4aa4c, len: 0.84 }),
+  // a legionary's helm (the head bone's space): a bronze bowl, a brow band, cheek guards and a flared neck guard, and a
+  // crest of oxblood horsehair front to back: from the game's camera the crest and the shield are what say *legion*
+  galea: () => galea({ name: 'Galea', metal: 0x9a7438, band: 0xb4883c, crest: 0xa02824 }),   // (lab round 2: the crest in the shield's oxblood went black on the bronze at play size: a brighter red)
+  // the Champion's (an officer's of the old harness): gilt, its crest worn side to side, as the legions' centurions wore
+  // theirs, and a gilt laurel round the bowl: the Laurel his heirloom is, the day in the capital
+  championhelm: () => galea({ name: 'Champion_Helm', metal: 0xc89c44, band: 0xe0b858, crest: 0x8a2024, transverse: true, laurel: 0xe8c460 }),
+  // a soldier's oxblood tunic skirt and its leather strips (the hips' space), under the knight's plate: the legions' kilt
+  pteruges: () => {
+    const g = new THREE.Group(); g.name = 'Pteruges';
+    const cloth = new THREE.MeshStandardMaterial({ color: 0x6e1c1e, roughness: 0.9, side: THREE.DoubleSide }), leather = mat(0x4a3222, 0, 0.85), stud = mat(0xb4883c, 0.85, 0.35);
+    const kilt = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.47, 0.34, 16, 1, true), cloth); kilt.position.set(0, -0.08, 0); kilt.name = 'Pteruges_Kilt'; g.add(kilt);
+    for (let k = 0; k < 12; k++) {
+      const a = (k / 12) * Math.PI * 2, s = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.3, 0.025), leather);
+      s.position.set(Math.sin(a) * 0.45, -0.06, Math.cos(a) * 0.45); s.rotation.set(Math.cos(a) * 0.14, a, -Math.sin(a) * 0.14); s.name = 'Pteruges_Strip'; g.add(s);
+      const b = new THREE.Mesh(new THREE.SphereGeometry(0.022, 5, 4), stud); b.position.set(Math.sin(a) * 0.462, -0.17, Math.cos(a) * 0.462); g.add(b);
+    }
+    return g;
+  },
+  // a siege engineer's pot of pitch (the hand slot's space, carried by its bail and hung plumb): a squat clay pot sealed
+  // with pitch, a rope bail, and a lit rag in its neck (userData.glow: the ember plane), the fuse he lights before he throws
+  pitchpot: () => {
+    const g = new THREE.Group(); g.name = 'Pitch_Pot'; g.userData.hang = true;
+    const clay = mat(0x8a5a36, 0, 0.85), pitch = mat(0x161214, 0.2, 0.3), rope = mat(0x9a8458, 0, 0.95);
+    const rag = new THREE.MeshStandardMaterial({ color: 0xffb050, emissive: 0xd06010, emissiveIntensity: 1.4, roughness: 0.6 });
+    const bail = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.018, 4, 12, Math.PI), rope); bail.rotation.z = Math.PI; bail.position.y = 0.16; g.add(bail);
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 9), clay); body.scale.set(1, 0.86, 1); body.position.y = 0.42; body.name = 'Pitch_Pot_Body'; g.add(body);
+    const drip = new THREE.Mesh(new THREE.SphereGeometry(0.205, 12, 6, 0, Math.PI * 2, 0, Math.PI * 0.32), pitch); drip.scale.set(1, 0.86, 1); drip.rotation.x = Math.PI; drip.position.y = 0.42; g.add(drip);   // (pitch run down from the neck: the pot's black top as it hangs)
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.08, 10), pitch); neck.position.y = 0.26; g.add(neck);
+    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.16, 6), rag); flame.rotation.z = Math.PI; flame.position.y = 0.16; flame.name = 'Pitch_Pot_Rag'; flame.userData.glow = 0xff8a30; g.add(flame);
+    return g;
+  },
+  // a siege engineer's padded cap (the head bone's space): quilted oxblood wool close over the skull, a leather band, the
+  // ear-flaps tied up; Highmarch's colour on a man in a leather apron
+  arminghat: () => {
+    const g = new THREE.Group(); g.name = 'Arming_Cap';
+    const wool = mat(0x6e2424, 0, 0.95), seam = mat(0x3a1414, 0, 0.95), band = mat(0x4a3222, 0, 0.85);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.6, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), wool); dome.scale.set(1, 0.66, 1.04); dome.position.set(0, 0.6, -0.04); g.add(dome);
+    for (const a of [-0.5, 0, 0.5]) { const q = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.016, 4, 16, Math.PI), seam); q.rotation.set(0, Math.PI / 2 + a, 0); q.scale.set(1.45, 1.0, 1); q.position.set(0, 0.62, -0.04); g.add(q); }
+    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.61, 0.61, 0.08, 16), band); b.position.set(0, 0.62, -0.04); g.add(b);
+    for (const s of [-1, 1]) { const f = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.18, 0.24), wool); f.position.set(s * 0.6, 0.66, -0.06); f.rotation.z = s * 0.5; g.add(f); }
+    g.traverse((o) => { if (o.isMesh) o.name = 'Arming_Cap'; });
+    return g;
+  },
+  // a siege engineer's leather apron (the smith's cut): tan cowhide, so it parts from his soot-dark jerkin at play size
+  pitchapron: () => apronOf({ name: 'Pitch_Apron', cloth: 0x9a6434, strap: 0x2e1f18 }),
+  // Lucan Varro's circlet (the head bone's space): a narrow gilt band over his hair, a point at the brow set with a
+  // coal-red stone (his wax's red). Not a crown yet: he means to be crowned in the capital
+  circlet: () => {
+    const g = new THREE.Group(); g.name = 'Circlet';
+    const gilt = mat(0xe0b850, 0.9, 0.25), stone = mat(0x9a1a14, 0.1, 0.25);
+    // (lab round 1: at the cap's 0.6 it rode round the painted head like a halo; drawn in to the hair, low on the brow)
+    const r = 0.47, band = new THREE.Mesh(new THREE.TorusGeometry(r, 0.035, 5, 28), gilt); band.rotation.x = Math.PI / 2 - 0.2; band.scale.set(1, 1.1, 1); band.position.set(0, 0.7, 0.0); g.add(band);
+    const point = new THREE.Mesh(new THREE.ConeGeometry(0.065, 0.18, 4), gilt); point.position.set(0, 0.82, r * 1.1 + 0.01); point.rotation.x = 0.2; g.add(point);
+    const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.055, 0), stone); gem.position.set(0, 0.77, r * 1.1 + 0.05); g.add(gem);
+    for (const s of [-1, 1]) for (const k of [1, 2]) { const l = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 4), gilt); l.scale.set(1.5, 0.6, 0.6); const a = s * k * 0.38; l.position.set(Math.sin(a) * r, 0.72 + 0.02 * k, Math.cos(a) * r * 1.1); l.rotation.set(0, a, s * 0.5); g.add(l); }   // (two gilt leaves either side of the point)
+    g.traverse((o) => { if (o.isMesh) o.name = 'Circlet'; });
+    return g;
+  },
+  // the skirts of Lucan's long coat: black broadcloth to below the knee, laced in gilt (coatSkirts, longer and set out
+  // round the knight's plate)
+  lucancoat: () => coatSkirts({ name: 'Lucan_Coat', cloth: 0x1a1618, gold: 0xc8a048, len: 0.66, top: 0.12, r0: 0.45, r1: 0.53 }),
+  // the Kindler's letters, in Lucan's hand (held as a book is, along +y from the grip): a sheaf of folded letters tied
+  // with a faded ribbon, the top one open
+  letters: () => {
+    const g = new THREE.Group(); g.name = 'Letters';
+    const paper = mat(0xe4d6b4, 0, 0.9), old = mat(0xc8b48a, 0, 0.9), ribbon = mat(0x6a1a1c, 0, 0.8);
+    for (let k = 0; k < 4; k++) { const s = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.34, 0.26), k % 2 ? old : paper); s.position.set(-0.03 + k * 0.022, 0.24, (k % 2) * 0.02); s.rotation.x = (k - 1.5) * 0.06; g.add(s); }
+    const open = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.42, 0.34), paper); open.position.set(0.07, 0.3, 0.08); open.rotation.set(0.2, 0, -0.12); open.name = 'Letters_Open'; g.add(open);
+    const tie = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.04, 0.28), ribbon); tie.position.set(0, 0.2, 0.01); g.add(tie);
+    return g;
+  },
 };
 
+// a long coat's skirts (the hips' space): broadcloth from the waist down, open at the front for the legs, its edges and
+// hem laced in `gold`, two pairs of buttons at the back vent. Admiral Hesk's (dark blue, to the knee) and Lucan Varro's
+// (longer, and further out to clear the knight's plate skirt)
+function coatSkirts({ name, cloth: c, gold: gc, len = 0.5, top = 0.08, r0 = 0.41, r1 = 0.46 }) {
+  const g = new THREE.Group(); g.name = name;
+  const cloth = new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, side: THREE.DoubleSide }), gold = mat(gc, 0.8, 0.4);
+  // (lab round 3: one flared cylinder read as a barrel from behind; two tails now, open at the front and parted at the
+  // back vent, hung nearly straight)
+  const open = 0.36, vent = 0.05;
+  for (const s of [-1, 1]) {
+    const th0 = s > 0 ? Math.PI * open : Math.PI * (1 + vent), thL = Math.PI * (1 - open - vent);
+    const sk = new THREE.Mesh(new THREE.CylinderGeometry(r0, r1, len, 12, 1, true, th0, thL), cloth); sk.position.set(0, top - len / 2, -0.02); sk.scale.z = 0.92; sk.name = name + '_Cloth'; g.add(sk);
+    const hem = new THREE.Mesh(new THREE.TorusGeometry(r1 + 0.005, 0.022, 4, 14, thL), gold); hem.rotation.set(Math.PI / 2, 0, Math.PI / 2 - th0 - thL); hem.position.set(0, top - len + 0.01, -0.02); hem.scale.y = 0.92; g.add(hem);
+    for (const th of [th0, th0 + thL]) { const e = new THREE.Mesh(new THREE.BoxGeometry(0.045, len, 0.025), gold); e.position.set(Math.sin(th) * (r0 + r1) / 2, top - len / 2, Math.cos(th) * (r0 + r1) / 2 * 0.92 - 0.02); e.rotation.y = th; g.add(e); }
+  }
+  for (const y of [-0.04, -0.2]) for (const s of [-1, 1]) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 5), gold); b.position.set(s * 0.07, y, -(r0 + 0.06) + y * 0.25); g.add(b); }
+  return g;
+}
+// a tower shield (the hand slot's space: the face +z, tall along y): a slice of a cylinder of radius R round the man
+// behind it, `face` on its front and `back` (the wood) behind, a `metal` rim, a boss on a spine, two `wings` either side
+// of the boss; `laurel`, a gilt wreath round the boss. Every mesh is named *Shield* (lab.js: no weapon anchor on it)
+function towerShield({ name, face, back, metal, wings, laurel = false }) {
+  const g = new THREE.Group(); g.name = name;
+  const R = 0.95, L = 1.12, H = 1.62, zF = 0.3, zc = zF - R;   // (the front at the middle 0.3 out, where the kit's shields sit)
+  const F = new THREE.MeshStandardMaterial({ color: face, roughness: 0.75, metalness: 0.05 }), B = mat(back, 0, 0.9);
+  const M = new THREE.MeshStandardMaterial({ color: metal, metalness: 0.85, roughness: 0.35, side: THREE.DoubleSide }), W = mat(wings, 0.9, 0.3);
+  const front = new THREE.Mesh(new THREE.CylinderGeometry(R, R, H, 16, 1, true, -L / 2, L), F); front.position.z = zc; g.add(front);
+  // its back, the wood: the shell turned inside out (lab round 2: a BackSide material, the bake's own passes, which keep
+  // no side, drew as nothing, and from behind the shield was a gilt frame round a hole)
+  const rg = new THREE.CylinderGeometry(R - 0.05, R - 0.05, H, 16, 1, true, -L / 2, L), ix = rg.index.array;
+  for (let i = 0; i < ix.length; i += 3) { const t = ix[i + 1]; ix[i + 1] = ix[i + 2]; ix[i + 2] = t; }
+  const nm = rg.attributes.normal.array; for (let i = 0; i < nm.length; i++) nm[i] = -nm[i];
+  const rear = new THREE.Mesh(rg, B); rear.position.z = zc; g.add(rear);
+  for (const y of [-H / 2, H / 2]) { const r = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.015, R + 0.015, 0.08, 16, 1, true, -L / 2 - 0.01, L + 0.02), M); r.position.set(0, y, zc); g.add(r);
+    const cap = new THREE.Mesh(new THREE.RingGeometry(R - 0.05, R + 0.015, 16, 1, -L / 2, L), M); cap.rotation.x = -Math.PI / 2; cap.rotation.z = -Math.PI / 2; cap.position.set(0, y, zc); g.add(cap); }   // (its top edge, seen from the game's camera)
+  for (const s of [-1, 1]) { const a = s * L / 2, e = new THREE.Mesh(new THREE.BoxGeometry(0.07, H + 0.04, 0.08), M); e.position.set(Math.sin(a) * (R - 0.02), 0, zc + Math.cos(a) * (R - 0.02)); e.rotation.y = a; g.add(e); }
+  const spine = new THREE.Mesh(new THREE.BoxGeometry(0.08, H - 0.1, 0.035), M); spine.position.z = zF + 0.012; g.add(spine);
+  const bossPlate = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.36, 0.03), M); bossPlate.position.z = zF + 0.01; g.add(bossPlate);
+  const boss = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), M); boss.rotation.x = Math.PI / 2; boss.scale.set(1, 0.75, 1); boss.position.z = zF + 0.02; g.add(boss);
+  for (const s of [-1, 1]) for (const [dy, len, tilt] of [[0.1, 0.36, 0.6], [0.0, 0.3, 0.3]]) {   // the march's wings: two broad feathers up and out from the boss, each side (lab round 1: three thin ones read as a spider's legs)
+    const x = s * (0.2 + len * 0.4), f = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 5), W); f.scale.set(len / 2, 0.065, 0.022);
+    f.position.set(x, dy + 0.06, zc + Math.sqrt(R * R - x * x) + 0.01); f.rotation.set(0, Math.asin(x / R), s * tilt); g.add(f);
+  }
+  if (laurel) for (let k = 0; k < 14; k++) {                                // the laurel: leaves on a ring round the boss
+    const a = (k / 14) * Math.PI * 2, x = Math.cos(a) * 0.27, y = Math.sin(a) * 0.27, l = new THREE.Mesh(new THREE.SphereGeometry(1, 6, 4), W);
+    l.scale.set(0.06, 0.03, 0.015); l.position.set(x, y, zc + Math.sqrt(R * R - x * x) + 0.03); l.rotation.set(0, 0, a + Math.PI / 2 + 0.5); g.add(l);
+  }
+  g.traverse((o) => { if (o.isMesh) o.name = name; });
+  return g;
+}
+// a short sword (+y from the grip): a broad leaf blade, a guard, a round pommel, in `fit`
+function shortSword({ name, steel: s, fit, len = 0.72 }) {
+  const g = new THREE.Group(); g.name = name;
+  const steel = mat(s, 0.9, 0.28), F = mat(fit, 0.85, 0.35), grip = mat(0x2a1a14, 0, 0.85), k = len / 0.72;
+  const prof = new THREE.Shape([[-0.07, 0], [0.07, 0], [0.062, 0.36], [0.078, 0.52], [0, 0.72], [-0.078, 0.52], [-0.062, 0.36]].map(([x, y]) => new THREE.Vector2(x * 1.1, y * k)));
+  const blade = new THREE.Mesh(new THREE.ExtrudeGeometry(prof, { depth: 0.03, bevelEnabled: false }), steel); blade.geometry.translate(0, 0, -0.015); blade.position.y = 0.15; blade.name = name + '_Blade'; g.add(blade);
+  const guard = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.07, 0.12), F); guard.position.y = 0.12; g.add(guard);
+  const gr = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 0.22, 8), grip); gr.position.y = -0.01; g.add(gr);
+  const pom = new THREE.Mesh(new THREE.SphereGeometry(0.085, 10, 8), F); pom.scale.y = 0.75; pom.position.y = -0.15; g.add(pom);
+  return g;
+}
+// a legion helm (the head bone's space; the kettle's frame: the skull's top near 1.05): a bowl, a brow band, cheek
+// guards, a neck guard flared behind, and a horsehair crest on a holder, front to back or (`transverse`) side to side;
+// `laurel` a gilt wreath round the bowl, from behind each ear to the temples
+function galea({ name, metal, band: bc, crest: cc, transverse = false, laurel = 0 }) {
+  const g = new THREE.Group(); g.name = name;
+  const M = new THREE.MeshStandardMaterial({ color: metal, metalness: 0.8, roughness: 0.38, side: THREE.DoubleSide }), Bd = mat(bc, 0.85, 0.32);
+  const C = new THREE.MeshStandardMaterial({ color: cc, roughness: 0.95, side: THREE.DoubleSide });
+  const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.61, 16, 9, 0, Math.PI * 2, 0, Math.PI / 2), M); bowl.scale.set(1, 0.74, 1.06); bowl.position.set(0, 0.62, -0.03); g.add(bowl);
+  const brow = new THREE.Mesh(new THREE.TorusGeometry(0.615, 0.045, 5, 28), Bd); brow.rotation.x = Math.PI / 2; brow.scale.set(1, 1.06, 1); brow.position.set(0, 0.64, -0.03); g.add(brow);
+  const peak = new THREE.Mesh(new THREE.CylinderGeometry(0.66, 0.7, 0.04, 16, 1, false, -0.7, 1.4), Bd); peak.position.set(0, 0.62, 0.0); g.add(peak);   // (the brow's lip)
+  for (const s of [-1, 1]) { const ch = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.3, 0.24), M); ch.position.set(s * 0.5, 0.5, 0.26); ch.rotation.set(0.12, s * 0.4, s * -0.06); g.add(ch); }   // the cheek guards (lab round 1: out at the bowl's rim they stood off the head like ears; tucked in along the cheeks)
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.8, 0.16, 16, 1, true, Math.PI * 0.62, Math.PI * 0.76), M); neck.position.set(0, 0.56, -0.04); g.add(neck);
+  const holder = new THREE.Mesh(new THREE.BoxGeometry(transverse ? 0.5 : 0.08, 0.1, transverse ? 0.08 : 0.5), Bd); holder.position.set(0, 1.07, -0.03); g.add(holder);
+  const crest = new THREE.Mesh(new THREE.CylinderGeometry(transverse ? 0.76 : 0.56, transverse ? 0.76 : 0.56, transverse ? 0.12 : 0.09, 18, 1, false, 0, Math.PI), C);   // (lab round 1: the transverse one at the legionary's size read as his crest from the game's camera: wider and thicker)
+  crest.rotation.set(0, transverse ? Math.PI / 2 : 0, Math.PI / 2); crest.scale.set(transverse ? 0.7 : 0.62, 1, 1); crest.position.set(0, 1.08, -0.05); crest.name = name + '_Crest'; g.add(crest);
+  if (laurel) { const Lm = mat(laurel, 0.9, 0.28);
+    for (const s of [-1, 1]) for (let k = 0; k < 7; k++) {                // leaves from behind the ear (a = π) round to the temple
+      const a = Math.PI - (k / 6) * Math.PI * 0.62, l = new THREE.Mesh(new THREE.SphereGeometry(1, 6, 4), Lm); l.scale.set(0.1, 0.045, 0.03);
+      l.position.set(s * Math.sin(a) * 0.64, 0.72 + 0.02 * Math.sin(k), Math.cos(a) * 0.68 - 0.03); l.rotation.set(0, s * a + Math.PI / 2, s * (0.45 + (k % 2) * 0.3)); g.add(l);
+    } }
+  g.traverse((o) => { if (o.isMesh && !o.name) o.name = name; });
+  return g;
+}
 // an apron (the hips' space): a bib, a two-panel skirt, a belt
 function apronOf({ name, cloth, strap, z = 0.33 }) {
   const g = new THREE.Group(); g.name = name;

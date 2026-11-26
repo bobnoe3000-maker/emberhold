@@ -29,7 +29,7 @@
       ]
     }
   ],
-  "ready": "Tell Wren it's done: tap her party card, then Talk.",
+  "ready": "Tell Wren it's done: tap her card, in the party or on the bench, then Talk.",
   "done": "The Cult's boat burned to the waterline while you held the cloister. Wren gave you the ring she'd paid her debt with.",
   "rewards": {
     "share": 0.45,

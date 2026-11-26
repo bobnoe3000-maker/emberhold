@@ -104,6 +104,13 @@ export const LEGEND = {
   // the ramparts (docs/ramparts-dungeon.md): the street behind each terrace the houses stand on, and the parapet's stone
   ']': { top: 'rampart_cobble', side: 'rampart_wall', walkable: false }, '[': { top: 'rampart_top', side: 'rampart_wall', walkable: false },
   '{': { top: 'rampart_cobble', side: 'rampart_wall', walkable: true },   // (its terraces' cobbles, quieter than the town's: round 1, "the foes lost in the speckle")
+  // the Seventh's Palace (v1.154, docs/tidemark-plan.md step 6; docs/art-critic-pass-palace.md): polished marble flags laid
+  // in a broad checker of honey and rose-grey, the courtyard's yard flags, walls of warm dressed limestone under a marble
+  // arcade (palaceRun), the near sills a step darker (painted by world.js, ours)
+  '(': { top: 'palace_flag', side: 'palace_wall', walkable: true }, ')': { top: 'palace_flag2', side: 'palace_wall', walkable: true },
+  '/': { top: 'palace_yard', side: 'palace_wall', walkable: true },
+  '|': { top: 'palace_top', side: 'palace_wall', walkable: false },
+  '?': { top: 'palace_sill_top', side: 'palace_sill', walkable: false },
   // a dungeon's stairs (Luminati's stair tiles, its own characters for them): each climbs one level toward its side
   '^': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'N', walkable: true }, v: { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'S', walkable: true },
   '>': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'E', walkable: true }, '<': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'W', walkable: true },
@@ -589,6 +596,15 @@ KIT_LOOK.mole = { floor: ['w', 'w'], wall: 'o', cave: 'o', hour: 19.4, mix: 0, i
 // the ribs), the lanterns warm. A first look: the art pass (step 9) takes them further
 KIT_LOOK.seacave = { floor: ['d', 'U'], wall: 'D', cave: 'D', hour: 20.2, mix: 22 };
 KIT_LOOK.hulk = { floor: ['_', '#'], wall: '@', cave: '@', hour: 19.6, mix: 0, inside: true };
+// (v1.154) the Seventh's Palace (docs/tidemark-plan.md step 6, docs/art-critic-pass-palace.md): a march-kingdom's seat
+// dressed for a coronation that never came. The crypt kit's dressed stone and arcade, warmer and grander (palaceRun): honey
+// limestone under marble piers with gilt capitals, the household's banners in the bays, tall windows with the hour's sky
+// in them; a polished floor in a broad checker (`checker`: by the tile, not a scatter), a runner down the long rooms and up
+// to the throne (palaceRunners), the courtyard in yard flags (`yard`); the tavern kit's furniture in the study, the throne
+// on its dais, the chapel's empty reliquary (PALACE_3D). Lit as a lived-in house is: a warm fill and a pool at each
+// fighting room's middle (`pools`, as the crypt's), the candelabra gilt
+const PALACE_FILL = { sky: [1.1, 1.02, 0.92], ground: [0.62, 0.52, 0.42], lamps: 2.1 };
+KIT_LOOK.palace = { floor: ['(', ')'], yard: '/', wall: '|', cave: '|', hour: 19.6, mix: 0, checker: true, pools: true, inside: true, palace: true, fill: PALACE_FILL };
 const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KIT_LOOK.cellar, nave: KIT_LOOK.nave, cinder: KIT_LOOK.cultcut, chasm: { floor: ['U', 'm'], wall: 'x', hour: 22.8 },
   warren: KIT_LOOK.warren, ember: KIT_LOOK.ember, lava: KIT_LOOK.lava, mire: KIT_LOOK.mound, sluice: KIT_LOOK.locks, poison: KIT_LOOK.vats, water: KIT_LOOK.abbey };
 /** the fill's tint underground for the Reach's kits and themes (palette.js KIT_TINT holds the Vale's and the Fens'):
@@ -716,18 +732,22 @@ const TAV_STORY = ['shield', 'shelf', 'antlers', 'pegs', 'slate', 'herbs'];
 const TAV_FLOOR_Y = FLOOR * 0.5, TAV_TOP_Y = TAV_BACK * 0.5;
 /** what a back wall carries, by its stone: the inn's timber frame, its cellar's niches, the crypt's blind arcade and its
  * ossuary's bones */
-const WALL_STYLE = { '+': 'cellar', '*': 'crypt', ':': 'ossuary' };
+const WALL_STYLE = { '+': 'cellar', '*': 'crypt', ':': 'ossuary', '|': 'palace' };
+/** the styles whose back walls stand the crypt's four units, under an arcade (the palace's grander, its own pieces) */
+const ARCADED = new Set(['crypt', 'ossuary', 'palace']);
+/** a stone's near sill, a step darker (the crypt's limestone, the palace's) */
+const SILL_OF = { ':': ';', '*': ';', '|': '?' };
 /** the walls' heights for a building's inside; the back faces, for its frame @returns {{ i: number, j: number, n: 's' | 'e' }[]} */
 function tavernWalls(W, D, heights, open, looks, tiles) {
   const faces = [];
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
     if (heights[j][i] !== String(WALL)) continue;
     const s = open(i, j + 1), e = open(i + 1, j), near = open(i - 1, j) || open(i, j - 1) || (!s && !e && open(i - 1, j - 1));
-    if (near && !(s || e)) { heights[j][i] = String(TAV_NEAR); if (tiles[j][i] === ':' || tiles[j][i] === '*') tiles[j][i] = ';'; continue; }   // a near wall: a sill (the ossuary's in ashlar: its bones on the outside read as a cliff of skulls, round 4)
+    if (near && !(s || e)) { heights[j][i] = String(TAV_NEAR); if (SILL_OF[tiles[j][i]]) tiles[j][i] = SILL_OF[tiles[j][i]]; continue; }   // a near wall: a sill (the ossuary's in ashlar: its bones on the outside read as a cliff of skulls, round 4)
     if (!(s || e || open(i + 1, j + 1))) continue;
     const style = WALL_STYLE[tiles[j][i]] || 'tavern', rough = style === 'cellar';   // (the crypt's arcade, the ossuary's bones: by their stone too)
-    heights[j][i] = near ? String(TAV_NEAR) : (style === 'crypt' || style === 'ossuary' ? CR_BACK.toString(36) : String(TAV_BACK));              // (a wall with the floor on its camera side too stays low: it would stand in front of a fight)
-    if (near) { if (style === 'crypt' || style === 'ossuary') tiles[j][i] = ';'; continue; }
+    heights[j][i] = near ? String(TAV_NEAR) : (ARCADED.has(style) ? CR_BACK.toString(36) : String(TAV_BACK));              // (a wall with the floor on its camera side too stays low: it would stand in front of a fight)
+    if (near) { if (ARCADED.has(style)) tiles[j][i] = SILL_OF[tiles[j][i]] || ';'; continue; }
     // (rough: the wall's own stone is the cellar's rubble, so it takes no frame; the frame follows the texture, and a
     // timber run ends at a post where the rubble starts: round 6, "a visible seam")
     if (s) faces.push({ i, j, n: 's', rough, style });
@@ -744,7 +764,7 @@ function wallOf(open, W, D, x, z) {
   return !w || (n && n.d <= w.d) ? (n ? { side: 'n', z: n.z, x, d: n.d } : null) : { side: 'w', x: w.x, z, d: w.d };
 }
 /** the frame along the back walls and what hangs on them, into `trim` (world.js buildTavern) */
-function tavernDress(faces, arches, open, add, trim) {
+function tavernDress(faces, arches, open, add, trim, roomAt = () => null) {
   const clearOf = (x, z) => arches.every((a) => Math.abs(x - a.x) > a.span / 2 + 1.2 || Math.abs(z - a.z) > 2.5);
   // runs along each line of faces: a north wall's (faces 's', along x) and a west wall's (faces 'e', along z)
   const lines = new Map();
@@ -756,7 +776,8 @@ function tavernDress(faces, arches, open, add, trim) {
     const runs = []; for (const t of ts) { const r = runs[runs.length - 1]; if (r && t === r[1]) r[1] = t + 1; else runs.push([t, t + 1]); }
     for (const [a, b] of runs) {
       if (b - a < 2) continue;
-      if (style === 'crypt' || style === 'ossuary') { (style === 'crypt' ? cryptRun : ossuaryRun)(a, b, { key, s, n, P, add, trim, clearOf }); continue; }
+      if (style === 'palace') { palaceRun(a, b, { key, s, n, P, add, trim, clearOf, roomAt }); continue; }
+      if (ARCADED.has(style)) { (style === 'crypt' ? cryptRun : ossuaryRun)(a, b, { key, s, n, P, add, trim, clearOf }); continue; }
       if (cellar) {
         // a cellar's wall: no frame; a niche with its candles every four tiles (every other one a light), a ham or a
         // string of onions on a hook between
@@ -798,7 +819,7 @@ function tavernDress(faces, arches, open, add, trim) {
     if (f.n !== 's') continue;
     const i = f.i, j = f.j + 1;                                    // the floor tile south of this face
     if (open(i - 1, j) || open(i - 1, j - 1) || hash('tw', i, j) % 2) continue;   // (a west wall beside it: an inside corner)
-    if (clearOf(i, j) && f.style !== 'crypt' && f.style !== 'ossuary') trim.push({ k: 'web', x: i, z: j, y: TAV_TOP_Y - 0.25 });   // (the crypt's corner webs read as white X's: round 3)
+    if (clearOf(i, j) && !ARCADED.has(f.style)) trim.push({ k: 'web', x: i, z: j, y: TAV_TOP_Y - 0.25 });   // (and none in a palace: it's kept)   // (the crypt's corner webs read as white X's: round 3)
   }
 }
 // ── a crypt's back walls (the Haddow Crypt, docs/crypt-dungeon.md): a blind arcade of pale stone. A pier at each end of a
@@ -862,6 +883,131 @@ function ossuaryRun(a, b, { key, s, n, P, add, trim, clearOf }) {
       trim.push({ k: 'skullniche', x, z, n, y: TAV_FLOOR_Y, seed: hash('on', key, t) % 997, light });
     } else trim.push({ k: 'boneshelf', x, z, n, y: TAV_FLOOR_Y, seed: hash('os', key, t) % 997 });
   }
+}
+// ── the Seventh's Palace's back walls (v1.154, docs/art-critic-pass-palace.md): the crypt's arcade made grand. Marble
+// piers with gilt capitals every four tiles, a cornice over and a dark marble dado along the foot, a round arch over each
+// bay; in each bay what its room was for: the household's banners, blue and gold (the hall of banners: the legions'
+// standards, every one the empire raised and some it never did), tall windows with the hour's sky in them (a long north
+// wall's middle bay, the chapel's, the study's), the study's books, the chapel's saints, the yard's lit windows on the
+// house's front. A gilt sconce on every other pier, every other one its light. Every choice a hash of the tile: the same
+// palace every visit. (`roomAt`: the room a bay looks into, by its plan id.)
+const PALACE_STORY = { the_hall_of_banners: ['pbanner'], the_study: ['books', 'books', 'pwindow'], the_chapel: ['saint', 'pwindow'], the_courtyard: ['pwindow', 'pbanner'], the_throne_room: ['pbanner', 'pwindow'] };
+const PALACE_ANY = ['pbanner', 'pwindow', 'parms'];
+function palaceRun(a, b, { key, s, n, P, add, trim, clearOf, roomAt }) {
+  const [x0, z0] = P(a), [x1, z1] = P(b);
+  const part = (t) => { const [x, z] = P(t); return roomAt(Math.floor(x), Math.floor(z))?.part || ''; };
+  trim.push({ k: 'cornice', x0, z0, x1, z1, n, y: CR_TOP_Y - 0.15, pal: 1 });
+  trim.push({ k: 'plinth', x0, z0, x1, z1, n, pal: 1 });
+  const piers = [a, b]; for (let t = a + 4; t <= b - 3; t += 4) piers.push(t);
+  piers.sort((p, q) => p - q);
+  piers.forEach((t, q) => {
+    const [x, z] = P(t); if (!clearOf(x, z)) return;
+    const end = t === a ? 1 : t === b ? -1 : 0;
+    trim.push({ k: 'pier', x, z, n, end, top: CR_TOP_Y, pal: 1 });
+    if (!end && q % 2 === 1) {
+      const light = q % 4 === 1 ? add({ type: 'light', x: r2(x + (s ? 0 : 0.4)), z: r2(z + (s ? 0.4 : 0)), dy: 2.1, color: '#ffbe6e', intensity: 3.6, distance: 4.6, flicker: 0.12, nightOnly: false }) : null;
+      trim.push({ k: 'sconce', x, z, n, y: TAV_FLOOR_Y + 2.1, light, gilt: 1 });
+    }
+  });
+  const bays = []; for (let q = 0; q < piers.length - 1; q++) if (piers[q + 1] - piers[q] >= 3) bays.push([(piers[q] + piers[q + 1]) / 2, piers[q + 1] - piers[q]]);
+  const win = b - a >= 14 ? bays[(bays.length / 2) | 0]?.[0] : null, o = hash('pv', key) % 6;
+  bays.forEach(([t, w], q) => {
+    const [x, z] = P(t); if (!clearOf(x, z)) return;
+    trim.push({ k: 'arcade', x, z, n, w: w - 0.5, y: TAV_FLOOR_Y, top: CR_TOP_Y, pal: 1 });
+    const pt = part(t), list = PALACE_STORY[pt] || PALACE_ANY, seed = hash('pk', key, t) % 997;
+    const kind = t === win && pt !== 'the_hall_of_banners' ? 'pwindow' : list[(o + q) % list.length];
+    if (kind === 'pwindow') {
+      const yard = pt === 'the_courtyard';   // (the yard's are the house's own windows, lit from inside; the rest the sky's)
+      const light = add({ type: 'light', x: r2(x + (s ? 0 : 1.2)), z: r2(z + (s ? 1.2 : 0)), dy: 1.3, color: yard ? '#ffc27a' : '#f2dcb8', intensity: 2.4, distance: 4.2, flicker: 0, nightOnly: false });
+      trim.push({ k: 'pwindow', x, z, n, y: TAV_FLOOR_Y, seed, lit: yard ? 1 : 0, light });
+    } else if (kind === 'books') trim.push({ k: 'furn', type: 'shelf', x: r2(x + (s ? 0 : 0.32)), z: r2(z + (s ? 0.32 : 0)), rot: s ? 0 : Math.PI / 2, s: 1.4, opts: { kind: 'books', width: 2.0, height: 2.4, seed } });
+    // (the hall's: a legion's colours each, `look` 1…5; elsewhere the household's, 0)
+    else if (kind === 'pbanner') trim.push({ k: 'pbanner', x, z, n, look: pt === 'the_hall_of_banners' ? 1 + (hash('pl', key, t) % 5) : 0, seed });
+    else trim.push({ k: kind, x, z, n, y: TAV_FLOOR_Y, seed });
+  });
+}
+/** what a palace piece put against a wall takes from it: the bay's own story round it (a banner, a window and its light,
+ * the arms, the books), so nothing hangs behind a throne or a banner of the sim's */
+function clearPalaceBay(trim, drop, wall, x, z, half) {
+  if (!wall) return;
+  for (let i = trim.length - 1; i >= 0; i--) {
+    const t = trim[i]; if (!['pbanner', 'pwindow', 'parms', 'saint', 'furn', 'sconce'].includes(t.k) || (t.k === 'furn' && t.type !== 'shelf')) continue;
+    const on = wall.side === 'n' ? t.n === 'z' && Math.abs(t.z - wall.z) < 0.5 && Math.abs(t.x - x) < half : t.n === 'x' && Math.abs(t.x - wall.x) < 0.5 && Math.abs(t.z - z) < half;
+    const shelf = t.k === 'furn' && (wall.side === 'n' ? Math.abs(t.z - wall.z) < 0.6 && Math.abs(t.x - x) < half : Math.abs(t.x - wall.x) < 0.6 && Math.abs(t.z - z) < half);
+    if (on || shelf) { if (t.light) drop(t.light); trim.splice(i, 1); }
+  }
+}
+// the palace's furniture (sim/world.js 'throne', 'reliquary', 'palace_lamps' and the plan's banners, standards, desks),
+// built by world.js buildTavern in the one batch
+const PALACE_LIGHT = '#ffbf72';
+const PALACE_3D = {
+  // the throne on its dais (the sim's footprint five tiles by three, against the back wall): three steps of marble, gilt
+  // at their nosings, the runner up their middle; the throne gilt and blue, the crown waiting on its cushion on the seat;
+  // behind it the cloth of estate under its tester. Its own light, warm, from above and in front (docs/art-critic-pass-
+  // palace.md). Lucan sits down on these steps at the end of his fight.
+  throne: (x, z, h, k, { trim, add, wall, drop }) => {
+    if (wall?.side !== 'n') return;
+    clearPalaceBay(trim, drop, wall, x, z, 2.4);
+    trim.push({ k: 'throne', x, z: wall.z, n: 'z', seed: h % 997 });
+    add({ type: 'light', x, z: r2(wall.z + 2.6), dy: 2.6, color: '#ffd9a0', intensity: 6.5, distance: 6.5, flicker: 0, nightOnly: false });
+  },
+  // the chapel's reliquary: a marble stand, its cushion empty, the box's lid on the floor beside it; an empty niche over
+  reliquary: (x, z, h, k, { trim, add, wall, drop }) => {
+    const cx = r2(x + 0.25), cz = wall?.side === 'n' ? r2(wall.z + 0.6) : r2(z - 0.25);
+    clearPalaceBay(trim, drop, wall, cx, cz, 1.6);
+    trim.push({ k: 'reliquary', x: cx, z: cz, wz: wall?.side === 'n' ? wall.z : null, seed: h % 997 });
+    add({ type: 'light', x: cx, z: r2(cz + 0.9), dy: 1.6, color: '#ffd090', intensity: 3.2, distance: 3.6, flicker: 0.1, nightOnly: false });
+  },
+  // a banner of the sim's on a back wall: the household's, the bay's own story round it gives way
+  banner: (x, z, h, k, { trim, wall, drop }) => {
+    if (!wall || wall.d > 2.2) return;
+    const wx = wall.side === 'n' ? x : wall.x, wz = wall.side === 'n' ? wall.z : z;
+    clearPalaceBay(trim, drop, wall, wx, wz, 1.6);
+    trim.push({ k: 'pbanner', x: wx, z: wz, n: wall.side === 'n' ? 'z' : 'x', look: 0, big: 1, seed: h % 997 });
+  },
+  // a legion's standard, free-standing a step out from the wall: its pole on a weighted foot, the colours on a crossbar
+  standard: (x, z, h, k, { trim }) => trim.push({ k: 'pstandard', x, z, look: [1, 2, 3, 5][h % 4], seed: h % 997 }),   // (round 2: never the black, which read as a sign on its pole)
+  candelabra: (x, z, h, k, { trim, add }) => { trim.push({ k: 'candelabra', x, z, gilt: 1 }); add({ type: 'light', x, z, dy: 1.4, color: PALACE_LIGHT, intensity: 5.2, distance: 6.2, flicker: 0.12, nightOnly: false }); },
+  // a column out on the floor (the sim's obstacle): marble on a square plinth, a gilt capital, an urn on it
+  pillar: (x, z, h, k, { trim }) => trim.push({ k: 'column', x, z, seed: h % 997 }),
+  // Lucan's study (the tavern's furniture): a writing table at the inn's scale, a chair at it, its candle and light; the
+  // west one the Kindler's letters under the paperweight, unopened, the east one an inkstand and an open book
+  desk: (x, z, h, k, { trim, add, room, X }) => {
+    const rot = k === 'desk_y' ? Math.PI / 2 : 0, letters = !room || x < X(room.cx + 0.5);
+    trim.push({ k: 'furn', type: 'table', x, z, rot, s: TAV_S, opts: { shape: 'rect', width: 1.5, depth: 0.85, cloth: false, items: false, candle: false, seed: h % 997 } });
+    trim.push({ k: 'furn', type: 'chair', x: r2(x - (rot ? 0.95 : 0)), z: r2(z - (rot ? 0 : 0.95)), rot: rot ? -Math.PI / 2 : 0, s: TAV_S, opts: { style: 'chair', seed: h % 997 } });
+    trim.push({ k: 'desktop', x, z, rot, y: TAV_FLOOR_Y + 0.82 * TAV_S, letters: letters ? 1 : 0, seed: h % 997 });
+    add({ type: 'light', x, z, dy: 0.82 * TAV_S + 0.35, color: '#ffc27a', intensity: 1.6, distance: 2.4, flicker: 0.16, nightOnly: false });
+  },
+  papers: (x, z, h, k, { trim }) => trim.push({ k: 'ppapers', x, z, seed: h % 997 }),
+  // a way in's pair of lights (the courtyard's, by the near sill): a broad soft warmth hung higher, not the cellar's low
+  // hot pool (round 1: two glowing squares on the yard's flags); by a back wall, the inn's fire basket
+  brazier: (x, z, h, k, ctx) => (ctx.wall && ctx.wall.d < 2.6 ? TAVERN_3D.brazier(x, z, h, k, ctx) : ctx.add({ ...sillPool(x, z, ctx.open), dy: 1.6, intensity: 3.2, distance: 6.5, color: '#ffc27a' })),
+};
+PALACE_3D.banner_y = PALACE_3D.banner; PALACE_3D.standard_y = PALACE_3D.standard; PALACE_3D.desk_y = PALACE_3D.desk;
+/** the palace's runners (convert's own, not the sim's: flat, walked over): down a long room's axis, and from the throne's
+ * steps to the near wall; split round anything the sim stood on its line (a column) @returns {any[]} trim pieces */
+function palaceRunners(w, L, X, Z) {
+  const out = [], solid = new Set(['pillar', 'column', 'candelabra', 'standard', 'standard_y', 'desk', 'desk_y', 'chest', 'brazier']);
+  for (const r of L.rooms) {
+    if (r.kit !== 'palace' || r.role === 'entrance') continue;
+    let throne = null; const block = [];
+    for (const [k, v] of w.props) { const c = L.cells.get(k); if (!c || c.room !== r.id) continue; const [tx, ty] = k.split(',').map(Number); if (v === 'throne') throne = [tx, ty]; else if (solid.has(v)) block.push([tx, ty]); }
+    // [from, to] along the run's axis (sim tiles), its line across, and which way it runs
+    let along, line, from, to;
+    if (throne) { along = false; line = throne[0]; from = throne[1] + 2; to = r.cy + r.rh - 3; }
+    else if (r.rw >= 2.4 * r.rh) { along = true; line = r.cy; from = r.cx - r.rw + 5; to = r.cx + r.rw - 5; }
+    else continue;
+    const cuts = block.filter(([bx, by]) => Math.abs((along ? by : bx) - line) <= 2).map(([bx, by]) => (along ? bx : by)).sort((p, q) => p - q);
+    let a = from;
+    for (const c of [...cuts, Infinity]) {
+      const b = Math.min(to, c - 1.6);
+      if (b - a >= 3) out.push(along ? { k: 'runner', x0: X(a), z0: Z(line + 0.5), x1: X(b + 1), z1: Z(line + 0.5), w: 1.5, seed: hash('ru', r.id, a) % 997 }
+        : { k: 'runner', x0: X(line + 0.5), z0: Z(a), x1: X(line + 0.5), z1: Z(b + 1), w: 1.5, seed: hash('ru', r.id, a) % 997 });
+      a = c + 2.6; if (a > to) break;
+    }
+  }
+  return out;
 }
 /** the inn's furniture, set against the wall the sim stood it by (ctx.wall: wallOf). Luminati's interiors are built to
  * its own folk; our figures stand half again as tall (the 3× models), and at Luminati's size a long table read smaller
@@ -1165,13 +1311,15 @@ function dungeon(w, o = {}) {
   const looks = new Array(W * D).fill(null);
   // a tile is floor when any of its four of ours is (a corridor one of ours wide stays open); standing water where two are
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
-    let floor = 0, wet = 0, lk = null;
+    let floor = 0, wet = 0, lk = null, rm = -1;
     for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
       const k = `${x0 + 2 * i + dx},${y0 + 2 * j + dy}`, c = cells.get(k);
-      if (c && c.kind === 'floor') { floor++; if (!lk || c.room >= 0) lk = roomLook(c); }
+      if (c && c.kind === 'floor') { floor++; if (!lk || c.room >= 0) { lk = roomLook(c); if (c.room >= 0) rm = c.room; } }
       if (pools.has(k)) wet++;
     }
-    if (floor) { looks[j * W + i] = lk; tiles[j][i] = wet >= 2 ? 'P' : hash('d', i, j) % 100 < (lk.mix ?? 18) ? lk.floor[1] : lk.floor[0]; heights[j][i] = '2'; }
+    // (a palace's: its marble in a checker by the tile, its yard in flags: KIT_LOOK.palace)
+    const yard = lk && lk.yard && L.plan && rm >= 0 && L.rooms[rm]?.role === 'entrance';
+    if (floor) { looks[j * W + i] = lk; tiles[j][i] = wet >= 2 ? 'P' : yard ? lk.yard : lk.checker ? lk.floor[(i + j) & 1] : hash('d', i, j) % 100 < (lk.mix ?? 18) ? lk.floor[1] : lk.floor[0]; heights[j][i] = '2'; }
   }
   // a crypt's ledger stones in a row down each fighting room's long axis (round 3: scattered, they were lost), flat, so
   // the floor stays open
@@ -1181,7 +1329,7 @@ function dungeon(w, o = {}) {
   // small pools the floor went dead), the founder's vault lit by his own
   const roomPools = [], rings = [];
   if (L.plan) for (const r of L.rooms) {
-    if (!KIT_LOOK[r.kit]?.ledgers || r === L.entrance) continue;
+    if (!(KIT_LOOK[r.kit]?.ledgers || KIT_LOOK[r.kit]?.pools) || r === L.entrance) continue;
     const along = r.rw >= r.rh;
     // (round 9: one broad low pool at the middle, so the fight stands on the brightest open floor; the ossuary none at
     // its sides, its niches' candles enough: stacked there they burned like a bonfire)
@@ -1229,7 +1377,9 @@ function dungeon(w, o = {}) {
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; const o = { id: `${ob.type}_${count[ob.type]}`, ...ob }; objects.push(o); return o; };
   const drop = (o) => { const i = objects.indexOf(o); if (i >= 0) objects.splice(i, 1); };   // (a lantern's light gone with it: a corner's stores take its bay)
   const trim = inside ? [] : null;
-  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim); if (look.water) docksDress(W, D, open, add, trim, stairLights.arches || [], !!look.stone); if (rampart) rampartsDress(W, D, open, rampart, add, trim, stairLights.arches || []); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
+  // (the room a floor tile of Luminati's is in: a palace's bays dress by what their room was for, palaceRun)
+  const roomAt = (i, j) => { if (!L.plan) return null; for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const c = cells.get(`${x0 + 2 * i + dx},${y0 + 2 * j + dy}`); if (c && c.room >= 0) return L.rooms[c.room]; } return null; };
+  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim, roomAt); if (look.palace) trim.push(...palaceRunners(w, L, X, Z)); if (look.water) docksDress(W, D, open, add, trim, stairLights.arches || [], !!look.stone); if (rampart) rampartsDress(W, D, open, rampart, add, trim, stairLights.arches || []); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
   if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h) { add({ ...c.ob(X, Z), onWall: true }); if (c.sprite) sprites.push(c.sprite); }   // (onWall: on a wall's top, not the room's own)   // (what stands on the walls' tops, where the stairs didn't take the wall)
   for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity * (look.fill ? 0.45 : 1), distance: l.glow.distance * (look.fill ? 0.7 : 1), flicker: 0.08, nightOnly: false }
     : { type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });
@@ -1241,6 +1391,7 @@ function dungeon(w, o = {}) {
     if (kind === 'block') continue;                                 // (a big piece's footprint: world.js big)
     if (inside && look.ramparts && RAMP_3D[kind]) { RAMP_3D[kind](x, z, h, kind, { add, trim, open }); continue; }
     if (inside && look.water && DOCK_3D[kind]) { DOCK_3D[kind](x, z, h, kind, { add, trim, open, edge: edgeOf(open, x, z) }); continue; }
+    if (inside && look.palace && PALACE_3D[kind]) { const c = w.level.cells.get(k); PALACE_3D[kind](x, z, h, kind, { add, drop, wall: wallOf(open, W, D, x, z), trim, open, X, room: c && c.room >= 0 ? w.level.rooms[c.room] : null }); continue; }
     if (inside && TAVERN_3D[kind]) { const c = w.level.cells.get(k); TAVERN_3D[kind](x, z, h, kind, { add, drop, wall: wallOf(open, W, D, x, z), trim, open, room: c && c.room >= 0 ? w.level.rooms[c.room] : null }); continue; }
     if (DRESS_3D[kind]) add(DRESS_3D[kind](x, z, h, kind));
     else sprites.push({ prop: kind, tx, ty, x, z, ...(FLAT.has(kind) ? { flat: true } : {}) });

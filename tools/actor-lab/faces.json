@@ -1158,5 +1158,68 @@
   ],
   "shape": "thin",
   "expression": "neutral"
+ },
+ "legionary": {
+  "skin": "olive",
+  "hair": "crop",
+  "hairColor": "black",
+  "brows": "straight",
+  "eyes": "narrow",
+  "iris": "brown",
+  "mouth": "line",
+  "nose": "long",
+  "beard": "stubble",
+  "beardColor": "black",
+  "shape": "normal",
+  "expression": "stern"
+ },
+ "engineer": {
+  "skin": "rose",
+  "hair": "crop",
+  "hairColor": "brown",
+  "brows": "heavy",
+  "eyes": "tired",
+  "iris": "hazel",
+  "mouth": "grim",
+  "nose": "broad",
+  "beard": "short",
+  "beardColor": "soot",
+  "marks": [
+   "scar_cheek"
+  ],
+  "shape": "round",
+  "expression": "stern"
+ },
+ "champion": {
+  "skin": "tan",
+  "hair": "crop",
+  "hairColor": "grey",
+  "brows": "heavy",
+  "browColor": "grey",
+  "eyes": "sharp",
+  "iris": "grey",
+  "mouth": "grim",
+  "nose": "hook",
+  "beard": "short",
+  "beardColor": "grey",
+  "marks": [
+   "scar",
+   "wrinkles"
+  ],
+  "shape": "thick",
+  "expression": "stern"
+ },
+ "lucan": {
+  "skin": "fair",
+  "hair": "long",
+  "hairColor": "black",
+  "brows": "thin",
+  "eyes": "round",
+  "iris": "grey",
+  "mouth": "line",
+  "nose": "long",
+  "shape": "oblong",
+  "frame": "strong",
+  "expression": "neutral"
  }
 }

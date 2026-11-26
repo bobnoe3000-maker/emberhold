@@ -28,7 +28,10 @@
 // Chapters and chains (M5): `after` names the quests that must be done first; `turnin` names who takes
 // it in (default: its giver); `reveal` names hidden sites its hand-in reveals (sites.js). A found
 // companion's chain (Brannoc's) is given and taken in by him (`companion`: only while he's with you, in
-// the party or on the bench); `rewards.item` is an heirloom (items.js HEIRLOOMS) paid into the bag.
+// the party or on the bench, talked to from either: npcs.js); `rewards.item` is an heirloom (items.js HEIRLOOMS) paid into the bag.
+// (v1.154; the owner, 2026-11-26: "I dont want this for any quest nor should any companion be required for a quest to
+// complete") A companion gives or takes in only that companion's own chain: chapters and trials are a townsperson's, so
+// none waits on who's in the party (test/questgivers.test.mjs).
 // A class trial (`trial`: the class) is offered while someone of that class in the company (party or
 // bench) is level 6 or more and the company hasn't done it; handed in, it teaches that class its
 // level-6 ability (state.trials, skills.js), every member of the class, for good. (M8, slice 9) A second trial
@@ -238,7 +241,7 @@ export const QUESTS = {
     rewards: { share: 0.5, lv: 29, gold: 620 },
   },
   ch3_quota: {
-    kind: 'chapter', giver: 'tamsin', turnin: 'dagny_coalbrook', region: 'reach', level: [30, 60], after: ['ch3_night_shift'],
+    kind: 'chapter', giver: 'dagny_coalbrook', region: 'reach', level: [30, 60], after: ['ch3_night_shift'],   // (v1.154: Dagny's; the owner, 2026-11-26: "nor should any companion be required for a quest")
     steps: [{ id: 'stoker', objectives: [{ type: 'boss', site: 'cinderworks', boss: 'stoker', count: 1 }] }],
     rewards: { share: 0.6, lv: 30, gold: 700 },
   },
@@ -273,6 +276,16 @@ export const QUESTS = {
     kind: 'chapter', giver: 'hester_quaile', region: 'tidemark', level: [40, 75], after: ['ch4_letters_of_marque', 'ch4_keepers_light'],
     steps: [{ id: 'hold', objectives: [{ type: 'camp', camp: 'brine_cross', count: 1 }] }],
     rewards: { share: 0.5, lv: 40, gold: 900 },
+  },
+  // (v1.154 step 6) The Seventh Voice, Act IV's end: Hester's; Highmarch stormed, the Champion on the walls,
+  // Lucan in his palace, beaten, not killed, and a word with him on his steps (npcs.js lucan); Hester takes it in, and the
+  // Heights open (regions.js)
+  ch4_seventh_voice: {
+    kind: 'chapter', giver: 'hester_quaile', region: 'tidemark', level: [41, 75], after: ['ch4_brine_cross'],
+    steps: [{ id: 'champion', objectives: [{ type: 'boss', site: 'highmarch', boss: 'champion', count: 1 }] },
+      { id: 'lucan', objectives: [{ type: 'boss', site: 'highmarch', boss: 'lucan', count: 1 }] },
+      { id: 'letters', objectives: [{ type: 'meet', npc: 'lucan', site: 'highmarch', count: 1 }] }],
+    rewards: { share: 0.6, lv: 45, gold: 1000 },
   },
   // Tamsin's chain, Showing Off (world doc v1.54 §5): the Assay's stamps off the Yards' guard-captains, the imperial
   // patterns in the Forgehall's pattern store, the Cult's spare moulds cracked on the Magma Vault's floor
@@ -322,7 +335,7 @@ export const QUESTS = {
     rewards: { share: 0.3, lv: 12, gold: 120 },
   },
   trial_dead_water: {                                // Wren: the harvesters' leaders at the vats, unseen (v1.48: the Locks')
-    kind: 'trial', giver: 'wren', companion: 'wren', trial: 'rogue', trialLv: 12, region: 'fens', level: [1, 30],
+    kind: 'trial', giver: 'dace_pike', trial: 'rogue', trialLv: 12, region: 'fens', level: [1, 30],   // (v1.154: Dace's, at the Drowned Eel: a trial never waits on a companion with you, the owner)
     steps: [{ id: 'vats', objectives: [{ type: 'elites', site: 'canal_locks', count: 5 }] }],
     rewards: { share: 0.3, lv: 12, gold: 120 },
   },
@@ -356,7 +369,7 @@ export const QUESTS = {
     rewards: { share: 0.3, lv: 24, gold: 240 },
   },
   trial24_mage: {                                    // Tamsin: by the assay furnace, ask the iron
-    kind: 'trial', giver: 'tamsin', companion: 'tamsin', trial: 'mage', trialLv: 24, region: 'reach', level: [1, 60],
+    kind: 'trial', giver: 'dagny_coalbrook', trial: 'mage', trialLv: 24, region: 'reach', level: [1, 60],   // (v1.154: Dagny's, from her niece's notes)
     steps: [{ id: 'furnace', objectives: [{ type: 'waves', site: 'assay_yards', count: 8, floor: 2 }] }],
     rewards: { share: 0.3, lv: 24, gold: 240 },
   },

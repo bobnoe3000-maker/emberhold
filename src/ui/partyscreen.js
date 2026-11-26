@@ -68,7 +68,7 @@ function Sellsword(m, benched) {
   const names = m.perks.map((id) => perkWord(id).name).join(', ') + (m.hidden ? ', one kept back' : '');
   return html`<br />${names || 'no perks'}${m.rank && m.rank !== 'found' ? html`<br />${loyaltyWord(m)} · ${wageLine(m, benched)}` : ''}${m.owed > 0 ? html`<br /><span class="owed">Owed ${m.owed} gold · perks dark until paid at a tavern</span>` : ''}`;
 }
-function Member({ m, i, slot, bench, onSheet, send }) {
+function Member({ m, i, slot, bench, onSheet, send, onTalk }) {
   const [arm, setArm] = useState(false);
   useEffect(() => { if (!arm) return; const t = setTimeout(() => setArm(false), 3000); return () => clearTimeout(t); }, [arm]);
   const cls = 'pslot' + (m.main ? ' main' : '') + (m.fallen ? ' fallen' : '');
@@ -78,11 +78,12 @@ function Member({ m, i, slot, bench, onSheet, send }) {
       ${!bench ? html`<button class="pri" onClick=${() => onSheet(i)}>Details</button>` : ''}
       ${!bench && !m.main ? html`<button onClick=${() => send({ type: 'dismiss', id: m.id })}>To bench</button>` : ''}
       ${bench ? bench.map((t) => html`<button key=${t.slot} class="pri" onClick=${() => send({ type: 'swap', slot: t.slot, id: m.id })}>${t.label}</button>`) : ''}
+      ${bench && FOUND[m.id] && !m.fallen ? html`<button onClick=${() => onTalk(m.id)}>Talk</button>` : ''}
       ${bench && !FOUND[m.id] ? html`<button class=${'del' + (arm ? ' arm' : '')} onClick=${() => (arm ? send({ type: 'release', id: m.id }) : setArm(true))}>${arm ? 'Sure? For good' : 'Dismiss for good'}</button>` : ''}
     </div></div>`;
 }
 
-function PartyScreen({ sim, onClose, onSheet, note, send }) {
+function PartyScreen({ sim, onClose, onSheet, note, send, onTalk }) {
   const S = sim.state, [you, a, b] = S.party;
   // where a bench member can go: the first empty companion slot, or either companion's place
   const bench = S.party.length < 3 ? [{ slot: S.party.length, label: 'Join' }] : [{ slot: 1, label: `↔ ${a.name}` }, { slot: 2, label: `↔ ${b.name}` }];
@@ -97,7 +98,7 @@ function PartyScreen({ sim, onClose, onSheet, note, send }) {
     ${b ? html`<${Member} key=${b.id} m=${b} i=${2} slot=${3} onSheet=${onSheet} send=${send} />` : html`<div class="pslot empty">slot 3 · hire at a tavern, or bring someone from the bench</div>`}
     <h3>The bench · ${S.bench.length}</h3>
     ${S.bench.some((m) => !FOUND[m.id]) ? html`<div class="sub">The bench draws half wages. Dismiss a sellsword for good and their wage stops (what they're owed is written off); their Fine and better gear goes into the bag.</div>` : ''}
-    ${S.bench.length ? S.bench.map((m) => html`<${Member} key=${m.id} m=${m} bench=${bench} onSheet=${onSheet} send=${send} />`)
+    ${S.bench.length ? S.bench.map((m) => html`<${Member} key=${m.id} m=${m} bench=${bench} onSheet=${onSheet} send=${send} onTalk=${onTalk} />`)
       : html`<div class="sub">Nobody yet. Hire when your party is full and they wait here.</div>`}
   </div>`;
 }
@@ -110,7 +111,7 @@ export function createPartyScreen({ sim, openSheet }) {
   let note = '';
   const isOpen = () => wrap.classList.contains('on');
   const send = (cmd) => { note = ''; sim.commands.push(cmd); };
-  const draw = () => { if (isOpen()) render(html`<${PartyScreen} sim=${sim} note=${note} send=${send} onClose=${close} onSheet=${(i) => { close(); openSheet(i); }} />`, wrap); };
+  const draw = () => { if (isOpen()) render(html`<${PartyScreen} sim=${sim} note=${note} send=${send} onClose=${close} onSheet=${(i) => { close(); openSheet(i); }} onTalk=${(id) => { close(); send({ type: 'talk', npc: id }); }} />`, wrap); };   // (v1.154: a found companion on the bench is talked to from here: their own errands never need them in the party)
   function open() { note = ''; wrap.classList.add('on'); draw(); }
   function close() { wrap.classList.remove('on'); render(null, wrap); }
   wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });

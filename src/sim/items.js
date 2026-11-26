@@ -208,6 +208,8 @@ export const HEIRLOOMS = {
   short_weight: { base: 'ring', name: 'Short Weight', flav: 'He was never once out by a grain. Not in your favour.', aff: ['crit', 'atk', 'dodge'] },   // (the Weighmaster, v1.126)
   oruths_last_commission: { base: 'amulet', name: "Oruth's Last Commission", flav: 'Ordered three hundred years ago. Delivered.', aff: ['atk', 'def', 'hp'] },   // (Oruth, v1.126)
   the_berths_book: { base: 'charm', name: "The Berths' Book", flav: 'Every ship that came in. None that left.', aff: ['def', 'hp', 'hpr'] },   // (the Harbourmaster, v1.150)
+  the_laurel: { base: 'amulet', name: 'The Laurel', flav: 'Gilt, for the day in the capital. He polished it every night.', aff: ['def', 'hp', 'atk'] },   // (the Seventh's Champion, v1.154)
+  the_chapel_box: { base: 'charm', name: 'The Box from the Chapel', flav: 'Inside the lid, in her hand: never open it.', aff: ['mp', 'crit', 'mpr'] },   // (Lucan, v1.154)
   the_letter_of_marque: { base: 'charm', name: 'The Letter of Marque', flav: 'Signed Lucanus. Paid in advance.', aff: ['crit', 'atk', 'hp'] },   // (Admiral Hesk, v1.151)
   // (v1.151, the owner: "Yes to the keepsake") a side vault's keepsake, left in its end room's chest by whoever sent you
   // there (sites.js `side`, `vault`): the Lamp Fort's from Old Gannet, the Haddow Crypt's from Sister Ilse, the Shuttered Inn's from Hob

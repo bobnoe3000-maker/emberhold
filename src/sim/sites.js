@@ -71,6 +71,9 @@ export const SITES = {
   // (v1.151) the Gull Isles (36–40): the sea cave where the Gull Fleet hides its boats, then the hulks moored in its lagoon;
   // Admiral Hesk in the flagship's great cabin. Its door at the landing jetty on the harbour bay's west shore.
   gull_isles: { name: 'The Gull Isles', region: 'tidemark', theme: 'cave', themes: ['cave', 'storehouse'], base: 36, perFloor: 3, floors: 2, span: 5, plan: true, family: 'fleet', rooms: [5, 5], layout: 'halls', band: true, bosses: { 2: 'hesk' }, dress: ['seacave', 'hulk'], mix: 0x9a11 },
+  // (v1.154) Highmarch (41–45): the walls under siege, in through the breach, the Seventh's Champion on the great bastion;
+  // then the Seventh's Palace, Lucan on his throne (he's beaten, not killed: battle.js `canticle`). Its door is the gate.
+  highmarch: { name: 'Highmarch', region: 'tidemark', theme: 'storehouse', themes: ['storehouse', 'crypt'], base: 41, perFloor: 3, floors: 2, span: 5, plan: true, family: 'siege', families: ['siege', 'palace'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 1: 'champion', 2: 'lucan' }, dress: ['ramparts', 'palace'], mix: 0x41a7 },
   // (v1.151) the Lamp Fort (38): the Tidemark's side vault (`side`), Old Gannet's coast light on its headland with the
   // Gull Fleet at its door; its lamp room keeps his spare wick, once (`vault`), then seals for SECRET_REST (core.js)
   lamp_fort: { name: 'The Lamp Fort', region: 'tidemark', theme: 'storehouse', base: 38, perFloor: 0, floors: 1, plan: true, family: 'fleet', rooms: [5, 5], layout: 'halls', flat: true, side: true, vault: 'gannets_spare_wick', mix: 0x1a4f },

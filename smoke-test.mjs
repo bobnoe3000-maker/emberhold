@@ -239,7 +239,14 @@ console.log('the right party holds same-level rooms (L36, L39):', rightIslesOk, 
 const bandIsles = [36, 39].map((lv) => [roomVisit({ lv, secs: 120 }), roomVisit({ classes: FRC, lv, rl: lv + 3 })]);
 const bandIslesOk = bandIsles.every(([solo, up]) => solo.defeated && solo.waves <= 2 && up.defeated);
 console.log('a lone hero is down within 2 waves, and a room 3 up defeats the right party (L36, L39):', bandIslesOk, bandIsles.flat().map(show).join(', '));
-const holdOk = solo1Ok && solo6Ok && rightOk && noHealOk && up3Ok && compOk && gearOk2 && right15Ok && band15Ok && right21Ok && band21Ok && right30Ok && band30Ok && right33Ok && band33Ok && rightIslesOk && bandIslesOk;
+// (v1.154) the Tidemark's third band, Highmarch (41–45): the contract at 42 and 45
+const rightHigh = [42, 45].map((lv) => [20260807, 777].map((seed) => ({ lv, ...roomVisit({ seed, classes: FRC, lv }) }))).flat();
+const rightHighOk = rightHigh.every((v) => v.waves >= 10 && !v.fallenEarly);
+console.log('the right party holds same-level rooms (L42, L45):', rightHighOk, rightHigh.map((v) => `${v.lv}: ${show(v)}`).join(', '));
+const bandHigh = [42, 45].map((lv) => [roomVisit({ lv, secs: 120 }), roomVisit({ classes: FRC, lv, rl: lv + 3 })]);
+const bandHighOk = bandHigh.every(([solo, up]) => solo.defeated && solo.waves <= 2 && up.defeated);
+console.log('a lone hero is down within 2 waves, and a room 3 up defeats the right party (L42, L45):', bandHighOk, bandHigh.flat().map(show).join(', '));
+const holdOk = solo1Ok && solo6Ok && rightOk && noHealOk && up3Ok && compOk && gearOk2 && right15Ok && band15Ok && right21Ok && band21Ok && right30Ok && band30Ok && right33Ok && band33Ok && rightIslesOk && bandIslesOk && rightHighOk && bandHighOk;
 const rl = createSim(20260807, undefined, { scene: 'dungeon' }).world, rlv = [...rl.roomLevels.values()];
 // (2026-11-02, the Vale authored: plans.js) the Old Barrows' first floor: the Cutting and the Breach at 1, the Robbed Tomb
 // (the offshoot) and the hall a level up, at 2; the entrance safe

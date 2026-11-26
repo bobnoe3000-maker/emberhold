@@ -54,6 +54,9 @@ const C = {
   warn: [255, 70, 28], warnHot: [255, 236, 214],
   // the proposed statuses: the stun's stars, a root's green, a knocked-down figure's dust
   stun: [255, 236, 150], root: [130, 230, 90],
+  // (v1.154, Highmarch; docs/art-critic-pass-palace.md) a tower shield's glance, white steel; the Champion's wall in his
+  // laurel's gilt and the shields' steel; Lucan's song a pale gold, never the warnings' red (nothing lands where it goes)
+  glance: [214, 226, 255], glanceHot: [255, 250, 236], gilt: [255, 206, 110], steel: [190, 210, 240], song: [255, 222, 150], songHot: [255, 246, 220],
 };
 /** how long each moment lasts, s */
 const LIFE = { shield_wall: 0.95, second_wind: 1.2, backstab: 0.6, smoke_step: 1.3, venom: 0.8, firebolt: 1.3,
@@ -63,7 +66,12 @@ const LIFE = { shield_wall: 0.95, second_wind: 1.2, backstab: 0.6, smoke_step: 1
 const MORE = { warn: 0.6, ward_break: 0.7, level_up: 1.8, boss_issue: 1.3, boss_call: 1.1, boss_kindle: 1.4, boss_swarm: 1.2, boss_vespers: 1.3, boss_bells: 1.6, boss_mud: 0.8,
   // (the Reach's: Oruth at his anvil for the event's own t (battle.js ANVIL_T), a wight re-armed, a piece spoiled; the
   // Weighmaster weighing, his pan landing; the Stoker's slag venting)
-  boss_forge: 4, boss_arm: 1.3, boss_spoil: 1.5, boss_scales: 0.9, boss_pan: 0.8, boss_vent: 0.7 };
+  boss_forge: 4, boss_arm: 1.3, boss_spoil: 1.5, boss_scales: 0.9, boss_pan: 0.8, boss_vent: 0.7,
+  // (Highmarch's, v1.154: a tower shield's glance; the Champion's wall called; Lucan's song begun, broken, sung out; his
+  // sitting down)
+  glance: 0.26, boss_wall: 1.2, boss_sing: 1.1, boss_song_broken: 0.9, boss_song_sung: 1.5, boss_spared: 2.6 };
+/** the most glances drawn at once (a line of tower shields turns a blow every few frames: the oldest goes) */
+const GLANCE_MAX = 6;
 export const FIGHT_MOMENTS = Object.freeze(Object.keys(MORE));
 /** the tiers' moments (GDD §5.1 v1.55, docs/skill-trees-proposal.md: the owner reviewed them on the page), life s */
 const PROPOSED = { earthshatter: 1.0, whirling_blades: 5, glacial_tomb: 0.9, blizzard: 6, binding_roots: 0.7 };
@@ -568,6 +576,87 @@ export function createSkillFX(P) {
         const x = Tq.sx + Math.cos(a) * sp * tt, y = Tq.sy - 6 + Math.sin(a) * sp * 0.5 * tt - 90 * tt + 240 * tt * tt; if (y > Tq.sy + 4) continue; disc(x, y, 1.4, 1.2 * k, 1); }
       flush(C.slagHot, 1.1);
     },
+
+    // ── Highmarch's (v1.154, docs/art-critic-pass-palace.md) ─────────────────────────────────────────────────────────
+    // a blow turned by a tower shield ('combat' glance): a short white spark off the shield's face, four glints thrown off
+    // it, and a ring of struck metal going out round it; small and quick, as it fires often in a shield wall
+    glance(ctx) {
+      const { t, Tq, seed } = ctx, u = clamp01(t / 0.22), x = Tq.sx + 7 + (rnd(seed, 1) - 0.5) * 4, y = Tq.sy - 20 + (rnd(seed, 2) - 0.5) * 6;
+      over(Tq, 0.95);
+      if (t < 0.09) { const f = 1 - t / 0.09; star(x, y, 4 + 5 * (1 - f), 1.6 * f); disc(x, y, 2.4, 1.2 * f, 1); }
+      for (let i = 0; i < 4; i++) { const a = -Math.PI / 2 + (rnd(seed, i + 3) - 0.5) * 2.4, d0 = 2 + 10 * ease(u), d1 = d0 + 3 * (1 - u); seg(x + Math.cos(a) * d0, y + Math.sin(a) * d0 + 20 * t * t, x + Math.cos(a) * d1, y + Math.sin(a) * d1 + 20 * t * t, 0.2 * (1 - u), 1.2 * (1 - u)); }
+      flush(C.glanceHot, 1.2);
+      over(Tq, 0.9); oval(x, y, 3 + 8 * ease(u), 4 + 9 * ease(u), 0.8 * (1 - u), 1); flush(C.glance);
+    },
+    // the Champion calls his wall ('bossWall'): two gilt rings off him; the line drawn on the floor out from its middle
+    // through the places he calls them to; at each place a tower shield's outline standing up in steel and a ring at its
+    // foot, one after another along the line
+    boss_wall(ctx) {
+      const { t, k, Cq, R } = ctx;
+      under(Cq); for (const d of [0, 0.16]) { const u = clamp01((t - d) / 0.45); if (u > 0 && u < 1) ring(Cq, 0.4 + 1.9 * ease(u), 1.15 * (1 - u), 1.6); } flush(C.gilt);
+      if (t < 0.4) { over(Cq, 0.6); star(Cq.sx, Cq.sy - 50, 9, 1.2 * (1 - t / 0.4)); flush(C.gilt); }
+      if (R.length > 1) {
+        const s = ease(clamp01((t - 0.08) / 0.3)), m = (R.length - 1) / 2, g = k;
+        for (let i = 0; i < R.length - 1; i++) {
+          const a = R[i], b = R[i + 1], lo = Math.abs(i + 0.5 - m) / (m + 0.5); if (s <= lo) continue;
+          const f = clamp01((s - lo) * (m + 0.5)); depth((a.key + b.key) / 2 - 0.25, (a.sy + b.sy) / 2, a.h);
+          const cx = (a.sx + b.sx) / 2, cy = (a.sy + b.sy) / 2; seg(cx - (cx - a.sx) * f, cy - (cy - a.sy) * f, cx + (b.sx - cx) * f, cy + (b.sy - cy) * f, 1.4 * g, 1.4 * g, 1.8);   // (round 1: heavier, gilt on lit cobbles was lost)
+          flush(C.gilt);
+        }
+      }
+      R.forEach((q, i) => {
+        const s = clamp01((t - 0.12 - i * 0.07) / 0.18); if (s <= 0) return;
+        const f = k * (s < 1 ? s : 1), x = q.sx, y0 = q.sy - 4, y1 = q.sy - 4 - 30 * s;
+        over(q, 0.55); seg(x - 8, y0, x - 8, y1, 1.0 * f, 1.0 * f, 0.9); seg(x + 8, y0, x + 8, y1, 1.0 * f, 1.0 * f, 0.9); seg(x - 8, y0, x + 8, y0, 0.8 * f, 0.8 * f, 0.9);
+        oval(x, y1, 8, 3.5, 1.0 * f, 1, Math.PI, TAU); seg(x, y0 - 3, x, y1 + 2, 0.35 * f, 0.35 * f, 0.6);
+        if (t - 0.12 - i * 0.07 < 0.3) star(x, (y0 + y1) / 2, 7, 1.2 * (1 - (t - 0.12 - i * 0.07) / 0.3));
+        flush(C.steel, 1.2);
+        under(q); ring(q, 0.35 + 0.35 * ease(s), 0.9 * f, 1.3); flush(C.gilt);
+      });
+    },
+    // Lucan lifts his voice ('bossSing'): a thin pale column of song up from him, five notes rising off it, a ring
+    // breathing out at his feet (his singing holds while it lasts: bossAuras; the ring going out: Luminati, world.js)
+    boss_sing(ctx) {
+      const { t, k, Cq } = ctx, s = clamp01(t / 0.25);
+      over(Cq, 0.4); column(Cq.sx, Cq.sy, 74 * s, 2.6, 0.85 * k); flush(C.song);
+      over(Cq, 0.75);
+      for (let i = 0; i < 5; i++) { const v = clamp01(t * 1.3 - i * 0.12); if (v <= 0 || v >= 1) continue; const x = Cq.sx + Math.sin(i * 2.1 + v * 4) * 11, y = Cq.sy - 50 - v * 40; disc(x, y, 1.9, 1.4 * (1 - v), 1); seg(x + 1.9, y, x + 1.9, y - 7, 1.0 * (1 - v), 0.4 * (1 - v)); }
+      flush(C.songHot, 1.2);
+      under(Cq); { const u = clamp01(t / 0.55); ring(Cq, 0.4 + 1.3 * ease(u), 1.1 * (1 - u), 1.5); } flush(C.song);
+    },
+    // the song broken ('bossCanticle' broken: hurt enough while he sang, his breath goes): a dull crack of gold off him,
+    // shards of it thrown out and falling, the notes dropping dark
+    boss_song_broken(ctx) {
+      const { t, k, Cq, seed } = ctx;
+      if (t < 0.16) { const f = 1 - t / 0.16; over(Cq, 0.8); star(Cq.sx, Cq.sy - 44, 10 + 6 * (1 - f), 1.4 * f); disc(Cq.sx, Cq.sy - 44, 7, 0.8 * f, 1.4); flush(C.songHot, 1.2); }
+      over(Cq, 0.7);
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * TAU + rnd(seed, i) * 0.4, sp = 34 + 40 * rnd(seed, i + 5), x0 = Cq.sx + Math.cos(a) * 8, y0 = Cq.sy - 44 + Math.sin(a) * 10;
+        const x = x0 + Math.cos(a) * sp * t, y = y0 + Math.sin(a) * sp * 0.6 * t + 140 * t * t; seg(x, y, x - Math.cos(a + 1.2) * 4, y - Math.sin(a + 1.2) * 4, 0.9 * k, 0.3 * k, 0.6);
+      }
+      flush(C.song, 1.1);
+      under(Cq); ring(Cq, 0.5 + 0.6 * ease(clamp01(t / 0.3)), 0.7 * k, 1.3); flush(C.song, 0.8);
+    },
+    // the song sung out ('bossCanticle' unbroken): the hall's fallen stand up as his where they fell, each in a pale gold
+    // column with a ring at its feet, a wavering thread of the song from him to each
+    boss_song_sung(ctx) {
+      const { t, k, Cq, R } = ctx, s = clamp01(t / 0.3);
+      for (const q of R) {
+        if (t < 0.8 && Math.hypot(Cq.sx - q.sx, Cq.sy - q.sy) > 6) { over(q, 0.2); const g = 0.55 * (1 - t / 0.8), dx = q.sx - Cq.sx, dy = q.sy - Cq.sy;
+          for (let i = 0; i <= 36; i++) { const u = i / 36, w = Math.sin(u * Math.PI * 4 - t * 14) * 3; mark(Cq.sx + dx * u - (dy / 60) * w, Cq.sy - 36 + dy * u + (dx / 60) * w - 8 * Math.sin(u * Math.PI), g); } flush(C.song); }
+        over(q, 0.4); column(q.sx, q.sy, 64 * s, 3.4, 1.1 * k); flush(C.song);
+        under(q); ring(q, 0.3 + 0.9 * ease(s), 1.0 * k, 1.4); pool(q, 0.55, 0.4 * k); flush(C.songHot);
+      }
+    },
+    // Lucan sits down ('bossSpared'): quiet. No flash, no flourish: the song's last light settling, a few motes drifting
+    // down round him, a faint ring drawing in to his feet
+    boss_spared(ctx) {
+      const { t, k, Cq, seed } = ctx, g = clamp01(t / 0.4) * k;
+      over(Cq, 0.5);
+      for (let i = 0; i < 9; i++) { const v = ((t * 0.35) + rnd(seed, i)) % 1, a = rnd(seed, i + 9) * TAU, r = 6 + 10 * rnd(seed, i + 17); disc(Cq.sx + Math.cos(a) * r, Cq.sy - 60 + v * 56 + Math.sin(a) * 3, 1.3, 0.55 * g * Math.sin(v * Math.PI), 1); }
+      flush(C.song, 0.8);
+      under(Cq); ring(Cq, 1.6 - 1.2 * ease(clamp01(t / 2.2)), 0.45 * g, 1.2); flush(C.song, 0.7);
+    },
   };
   /** Oruth's anvil on the screen, from where he stands (FORGE_AT: in front of him; its depth a sim x + y, as a figure's) */
   const anvilOf = (Cq) => ({ sx: Cq.sx + (FORGE_AT.dx - FORGE_AT.dy) * 8, sy: Cq.sy + (FORGE_AT.dx + FORGE_AT.dy) * 4, h: Cq.h, key: Cq.key + FORGE_AT.dx + FORGE_AT.dy });
@@ -670,6 +759,24 @@ export function createSkillFX(P) {
         flush(C.singHot); under(v); { const p = (t % 1.4) / 1.4; ring(v, 0.4 + 0.9 * p, 0.9 * (1 - p), 1.3); } flush(C.sing);   // (her song going out over the floor)
       }
     }
+    // (v1.154) Lucan singing (battle.js e.singing, the Canticle): notes going up off him while he sings, a slow breath of
+    // gold out over the floor at his feet; the Champion while his wall holds (two or more of it standing unheld: battle.js
+    // shieldK): a gilt thread from each of the wall to him and a shield over him, his front covered
+    for (const v of foes) {
+      const u = v.u; if (!u.boss) continue;
+      if (u.singing > 0) {
+        over(v, 0.6); for (let i = 0; i < 4; i++) { const s = (t * 0.6 + i / 4) % 1, x = v.sx + Math.sin(s * 8 + i * 1.7) * 9, y = v.sy - 52 - s * 40; disc(x, y, 1.8, 1.3 * Math.sin(s * Math.PI), 1); seg(x + 1.8, y, x + 1.8, y - 6, 1.0 * Math.sin(s * Math.PI), 0.4 * Math.sin(s * Math.PI)); }
+        flush(C.songHot); under(v); { const p = (t % 1.2) / 1.2; ring(v, 0.5 + 1.0 * p, 0.8 * (1 - p), 1.3); } flush(C.song);
+      }
+      if (u.wallUp > 0) {
+        const wall = foes.filter((o) => o.u.wallOf === u.id && !(o.u.stun > 0 || o.u.frozen > 0 || o.u.knocked > 0));
+        if (wall.length >= 2) {
+          over(v, 0.3); for (const o of wall) { const f = 0.3 + 0.12 * Math.sin(t * 4 + o.u.id); seg(o.sx, o.sy - 26, v.sx, v.sy - 34, f, f * 0.5, 0.3); }
+          const x = v.sx, y = v.sy - 68, pu = 0.8 + 0.2 * Math.sin(t * 5);
+          oval(x, y, 6, 7.5, 1.4 * pu, 1.1, -0.15, Math.PI + 0.15); seg(x - 6, y, x + 6, y, 1.4 * pu, 1.4 * pu, 0.5); flush(C.gilt);
+        }
+      }
+    }
     // the dead mending while one sings
     const singing = foes.some((v) => v.u.singer != null && !(v.u.spawn > 0) && up(at.get('e' + v.u.singer)));
     if (singing) for (const v of foes) {
@@ -678,9 +785,13 @@ export function createSkillFX(P) {
     }
   }
 
-  return {
-    /** a skill's moment begins (the sim's 'skill' event) @param {any} e @param {number} now */
-    event(e, now) { if (MOMENT[e.id]) { live.push({ e, t0: now, seed: (n++ % 997) + 1 }); if (live.length > 40) live.shift(); } },
+  const api = {
+    /** a skill's moment begins (the sim's 'skill' event) @param {any} e @param {number} now (−1: when it's first drawn) */
+    event(e, now) {
+      if (!MOMENT[e.id]) return;
+      if (e.id === 'glance') { let g = 0; for (let i = live.length - 1; i >= 0; i--) if (live[i].e.id === 'glance' && ++g >= GLANCE_MAX) live.splice(i, 1); }
+      live.push({ e, t0: now, seed: (n++ % 997) + 1 }); if (live.length > 40) live.shift();
+    },
     /** the fight's other moments (a ward breaking, a level gained, a boss's mechanic): the renderer hands its event as a
      *  moment's { id: 'ward_break' | 'level_up' | 'boss_…', by, foeBy (the one it starts from is a foe), tid, ally, x, y,
      *  tx, ty, reached } @param {any} e @param {number} now */
@@ -696,7 +807,8 @@ export function createSkillFX(P) {
       const foes = units.filter((v) => v.foe && v.u && !v.u.dead && v.u.hp > 0);
       auras(now, units); gainK = BOSS; bossAuras(now, units, at); gainK = 1;
       for (let i = live.length - 1; i >= 0; i--) {
-        const L = live[i], e = L.e, t = (now - L.t0) / 1000, life = e.life || LIFE[e.id] || MORE[e.id] || PROPOSED[e.id] || 1;
+        const L = live[i]; if (L.t0 < 0) L.t0 = now;   // (a moment from outside the renderer: fightMoment, its clock from its first frame)
+        const e = L.e, t = (now - L.t0) / 1000, life = e.life || LIFE[e.id] || MORE[e.id] || PROPOSED[e.id] || 1;
         if (t >= life) { live.splice(i, 1); continue; } if (t < 0) continue;
         const Cq = find(at, !!e.foeBy, e.by, e.x, e.y, proj), Tq = find(at, !e.ally, e.tid, e.tx, e.ty, proj);
         const R = (e.reached || []).map((o) => find(at, e.id !== 'bless' && e.id !== 'ancestors_breath', o.id, o.x, o.y, proj));
@@ -709,4 +821,14 @@ export function createSkillFX(P) {
     /** (for checks) the moments under way */
     get live() { return live.length; },
   };
+  current = api;
+  return api;
 }
+/** the renderer's skill effects, the one made last (fightMoment hands it moments) */
+let current = null;
+/**
+ * a fight's moment from outside the renderer (render3d/hybrid.js: Highmarch's shield glances, the Champion's wall, Lucan's
+ * song and his sitting down), drawn as the renderer's own are; its clock starts at the next frame drawn. Shapes as
+ * renderer.js moment()'s: { id, by, foeBy, tid, ally, x, y, tx, ty, reached, life? } @param {any} e
+ */
+export function fightMoment(e) { if (current) current.event(e, -1); }

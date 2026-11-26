@@ -3,6 +3,8 @@
 // what they owe. Entry: dace_hub. Bound in by src/story/adapter.js from the sim (sim/npcs.js varsFor; quests.js:
 // q_ = −1 locked · 0 available · 1 active · 2 ready · 3 done, and s_ = the step a quest is on, read before this
 // conversation counts: Fog on the Canal's first step is a word with him). Flags: met_dace. Act II, chapters 1–2.
+// (v1.154; the owner, 2026-11-26: no quest needs a companion) the rogue's level-12 trial, Dead Water, which was Wren's:
+// what she puts on her knives, which she paid off a page of her debts to him with.
 
 VAR hero_name = ""
 VAR hero_class = ""
@@ -16,6 +18,7 @@ VAR q_ch2_fog_on_the_canal = -1
 VAR s_ch2_fog_on_the_canal = 0
 VAR q_ch2_the_locks = -1
 VAR boss_toadking = 0
+VAR q_trial_dead_water = -1
 
 == dace_hub ==
 { q_ch2_fog_on_the_canal == 1 && s_ch2_fog_on_the_canal == 0: -> dace_fog_meet }
@@ -58,6 +61,9 @@ You give him Sister Ilse's letter. He reads it twice, slowly, with his finger, a
 + { q_ch2_the_locks == 2 } [The Sluice is quiet. #mark: quest ready] -> dace_locks_turnin
 + { q_ch2_the_locks == 0 } [What now? #mark: quest] -> dace_locks_offer
 + { q_ch2_the_locks == 1 } [About the Locks… #mark: quest active] -> dace_locks_active
++ { q_trial_dead_water == 2 } [Five of their leaders. None of them saw us. #mark: quest ready] -> dace_dead_water_turnin
++ { q_trial_dead_water == 0 } [Would you teach a rogue anything? #mark: quest] -> dace_dead_water_offer
++ { q_trial_dead_water == 1 } [About the vats… #mark: quest active] -> dace_dead_water_active
 + [What's in the book?] -> dace_book
 + [Tell me about Saltmere.] -> dace_saltmere
 + [I'll be going.] -> dace_bye
@@ -86,6 +92,27 @@ You give him Sister Ilse's letter. He reads it twice, slowly, with his finger, a
 You tell him about the man in the plain coat: how kind he was, how he wouldn't give his name, how he stepped down into the Cult's boat as if somebody had held it for him.
 Dace writes it all down. Then he writes *no name* beside it, and underlines that, and sits looking at it. # quest: turnin ch2_the_locks
 "Pim'll want to see you. Pim always wants to see somebody, but this time he means it. His cart's by the cistern."
+-> dace_topics
+
+// ── the rogue's second trial (content/quests/trial_dead_water.json; his since v1.154, Wren's before) ──
+== dace_dead_water_offer ==
+"A rogue? Aye, I've something. Not mine, mind. Wren's. She owed me a page and paid it off in what she knows, and I've had it ever since."
+"There's a green in the Sickpools that doesn't kill quick. It's patient. The eel-men put a drop on the gaff for the big ones, and the big ones come in quiet in the end."
+"The Cult's harvesters at the vats, the ones out in front with the full cages, wade in it all day and never look behind them. Nothing behind them ever moved. Get behind five before they turn round, and I'll show your rogues what to put on a blade, and how much."
++ [We'll get behind five. #mark: quest]
+    "The Canal Locks, down at the vats. The ones out in front, every fifth lot, with the full cages. Mind your footing at the edges. Folk who go in that water come out quiet." # quest: accept trial_dead_water
+    -> dace_topics
++ [Not now.]
+    "Suit yourself. The vats'll still be green."
+    -> dace_topics
+
+== dace_dead_water_active ==
+"The Locks' vats. Five of their leaders, from behind. Folk say they never look. Folk are mostly right about that sort of thing."
+-> dace_topics
+
+== dace_dead_water_turnin ==
+Dace fetches a little stoppered bottle from under the counter, the kind Pim sells oil in, and shows your rogues how much goes on an edge: one drop, worked in with a thumb, and then wipe the thumb. Twice.
+"Venom, Wren calls it. She paid off page three with it. Now you've had it too, and she's still on page four." # quest: turnin trial_dead_water
 -> dace_topics
 
 == dace_book ==

@@ -7839,6 +7839,302 @@
           "to": 0.7
         }
       ]
+    },
+    {
+      "out": "enemy_legionary",
+      "variant": "TM6",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Blocking",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "attack",
+          "clip": "1H_Melee_Attack_Stab",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "1H_Melee_Attack_Chop",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "Block_Attack",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 4
+        },
+        {
+          "key": "hit",
+          "clip": "Block_Hit",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death_A",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        }
+      ],
+      "gain": 0.6,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.15
+      }
+    },
+    {
+      "out": "enemy_engineer",
+      "variant": "TM7",
+      "glow": 3,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "attack",
+          "clip": "Throw",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "Throw",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "Throw",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 4
+        },
+        {
+          "key": "hit",
+          "clip": "Hit_A",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death_A",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        }
+      ],
+      "gain": 0.6,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.15
+      }
+    },
+    {
+      "out": "boss_champion",
+      "variant": "TB3",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Blocking",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "attack",
+          "clip": "1H_Melee_Attack_Stab",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "1H_Melee_Attack_Slice_Diagonal",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "Block_Attack",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 4
+        },
+        {
+          "key": "hit",
+          "clip": "Block_Hit",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death_A",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        }
+      ],
+      "px": 73,
+      "gain": 0.6,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.15
+      }
+    },
+    {
+      "out": "boss_lucan",
+      "variant": "TB4",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "attack",
+          "clip": "Spellcast_Shoot",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "Spellcast_Raise",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3,
+          "to": 0.55
+        },
+        {
+          "key": "heavy",
+          "clip": "Spellcast_Long",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5
+        },
+        {
+          "key": "hit",
+          "clip": "Hit_A",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Sit_Floor_Down",
+          "frames": 8,
+          "fps": 10,
+          "once": true
+        }
+      ],
+      "px": 73,
+      "gain": 0.6,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.15
+      }
+    },
+    {
+      "out": "npc_lucan",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Use_Item",
+          0.45
+        ]
+      },
+      "variant": "N31",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_B",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 10,
+          "fps": 8,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 8,
+          "fps": 7,
+          "once": true,
+          "to": 0.7
+        }
+      ]
     }
   ]
 }

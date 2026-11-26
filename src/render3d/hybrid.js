@@ -36,7 +36,8 @@ import { propAt, gateUp } from '../sim/world.js';
 import { createOutdoor } from '../sim/outdoor.js';
 import { shrineKind } from '../sim/shrines.js';
 import { hash2 } from '../sim/rng.js';
-import { WARN_R } from '../render/skillfx.js';
+import { WARN_R, fightMoment } from '../render/skillfx.js';
+import { PITCH_R } from '../sim/battle.js';
 
 // the sim's four parts of the day (dawn · day · dusk · night, PART_S each) on Luminati's clock: where each part begins
 // (dusk is Luminati's golden hour and sunset: Emberlit's dusk is a warm low sun, the game's old fixed look; held across
@@ -101,8 +102,33 @@ const bitCanvases = new WeakMap();
  *  falling stones a circle, its sweep a fan from its middle toward dir @param {any} sim @param {{ x: number, y: number }} origin */
 function tellsOf(sim, origin) {
   const b = sim.battle, T = sim.state.t; if (!b || !b.tells || !b.tells.length) return [];
-  return b.tells.map((t) => ({ kind: t.kind, x: (t.x - origin.x) / 2, z: (t.y - origin.y) / 2, r: t.r / 2, dx: t.dir == null ? 1 : Math.cos(t.dir), dz: t.dir == null ? 0 : Math.sin(t.dir),
-    p: Math.max(0, Math.min(1, (T - t.from) / Math.max(0.05, t.at - t.from))), hit: t.done ? Math.max(0, 1 - (T - t.at) / 0.6) : 0, w: t.lane ? t.lane / 2 : 0 }));   // (w: a lane's width, the First Pilgrim's gaze, v1.147)
+  return b.tells.map((t) => {
+    // (v1.154) Lucan's Canticle: its ring held where it stood when the song ended; ended early (`done` before its time:
+    // the song broken, battle.js bossMech 'canticle'), `broke` 1 and it shatters (world.js), else it finishes and fades
+    if (t.kind === 'canticle') {
+      let end = songEnd.get(t); if (end === undefined && t.done) songEnd.set(t, (end = T));
+      const at = end ?? T, broke = end !== undefined && end < t.at - 0.1 ? 1 : 0;
+      return { kind: t.kind, x: (t.x - origin.x) / 2, z: (t.y - origin.y) / 2, r: t.r / 2, dx: 1, dz: 0, w: 0, broke,
+        p: Math.max(0, Math.min(1, (at - t.from) / Math.max(0.05, t.at - t.from))), hit: end !== undefined ? Math.max(0, 1 - (T - end) / 0.7) : 0, age: T - t.from };
+    }
+    return { kind: t.kind, x: (t.x - origin.x) / 2, z: (t.y - origin.y) / 2, r: t.r / 2, dx: t.dir == null ? 1 : Math.cos(t.dir), dz: t.dir == null ? 0 : Math.sin(t.dir),
+      p: Math.max(0, Math.min(1, (T - t.from) / Math.max(0.05, t.at - t.from))), hit: t.done ? Math.max(0, 1 - (T - t.at) / 0.6) : 0, w: t.lane ? t.lane / 2 : 0 };   // (w: a lane's width, the First Pilgrim's gaze, v1.147)
+  });
+}
+/** when a song's tell ended (the sim's clock), by its tell: presentation's own, never on the sim's object */
+const songEnd = new WeakMap();
+// (v1.154) the engineers' pots of pitch in flight (battle.js bolt 'pitch'): each one's own id for Luminati's look (world.js
+// placeSpells 'pitch_fly': an arcing pot, its flame and smoke), matched to the bolt Emberlit stood for it (`bits`), which
+// isn't drawn: a pot is its own look
+const potIds = new WeakMap(); let potN = 0; const pots = [];
+/** the pitch pot a bolt drawn at sim (x, y) is: the one whose last step it lies on (its interpolated place), or null */
+function potAt(list, x, y) {
+  for (const b of list) {
+    const ax = b.px ?? b.x, ay = b.py ?? b.y, dx = b.x - ax, dy = b.y - ay, L2 = dx * dx + dy * dy;
+    const u = L2 > 1e-6 ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / L2)) : 0;
+    if (Math.hypot(ax + dx * u - x, ay + dy * u - y) < 0.35) return b;
+  }
+  return null;
 }
 // a figure's key, the same each frame (a unit, an NPC's presence, a crowd walker, a picket: renderer.js `u` / `who`), so
 // Luminati keeps its model, mid-clip and mid-turn (world.js placeFigure); a draw with none is keyed by order there
@@ -202,7 +228,16 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   let aheadFor = null, builtAt = 0;
   let api = null, built = null, building = null, last = 0, origin = { x: 0, y: 0 }, lastC = null, ours = [], kept = [], oursState = '', oursCheck = 0, houses = [], ambient = null;
   const state = { level: null, sprites: 0, loads: 0, failed: '', timing: { convert: 0, sprites: 0, load: 0 } };
-  sim.bus.on('gateOpened', (e) => { gateDropAt.set(e.id, last || performance.now()); });   // (it sinks from the frame it fell on: the frames' clock)   // (timing: the last load's parts, ms, for checks)
+  sim.bus.on('gateOpened', (e) => { gateDropAt.set(e.id, last || performance.now()); });
+  // (v1.154, Highmarch) the walls' and the palace's moments in the fights' light (skillfx.js, the boss pass's pattern: a
+  // moment from the one it starts from to those it reaches): a tower shield turning a blow, the Champion's wall called,
+  // Lucan's song begun, broken or sung out, and his sitting down
+  const mom = (id, e, more = {}) => fightMoment({ id, by: e.by ?? null, foeBy: true, tid: e.tid ?? e.by ?? null, ally: false, x: e.x, y: e.y, tx: e.tx ?? e.x, ty: e.ty ?? e.y, reached: [], ...more });
+  sim.bus.on('combat', (c) => { if (c.t === 'glance') mom('glance', { by: c.id, x: c.x, y: c.y }); });
+  sim.bus.on('bossWall', (e) => mom('boss_wall', e, { reached: (e.reached || []).map((o) => ({ x: o.x, y: o.y })), dir: e.dir }));   // (the places in the line, not the men walking to them)
+  sim.bus.on('bossSing', (e) => mom('boss_sing', e, { life: 1.1 }));
+  sim.bus.on('bossCanticle', (e) => mom(e.broken ? 'boss_song_broken' : 'boss_song_sung', e, { reached: e.reached || [] }));
+  sim.bus.on('bossSpared', (e) => mom('boss_spared', { x: e.x, y: e.y }));   // (it sinks from the frame it fell on: the frames' clock)   // (timing: the last load's parts, ms, for checks)
   renderer.setExternal({
     // a tap on a service's building, as Luminati draws it (renderer.js serviceAt): each named house's box (its footprint,
     // its walls and roof) through Luminati's camera, the nearest of those under the finger
@@ -264,9 +299,19 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       const ppu = (NATIVE_PER_UNIT * c.S) / c.k;              // CSS px a unit
       const actors = [], rings = [], beasts = [], bits = [];
       let mark = null;
+      pots.length = 0; for (const b of sim.world.projectiles || []) if (b.kind === 'pitch') pots.push(b);
+      const potsNow = [];
       for (const d of draws) {
         if (d.lift !== undefined && d.sp && !d.atl) {             // a held or flying piece (Teague's cage, a bolt): its ground point, lifted
           const u = (d.fx - c.ox) / HW, v = (d.fy - c.oy + d.h) / HH, x = (u + v) / 2, y = (v - u) / 2;
+          const pot = pots.length ? potAt(pots, x, y) : null;
+          if (pot) {                                               // a pot of pitch: Luminati's look, from its own flight (world.js)
+            let id = potIds.get(pot); if (!id) potIds.set(pot, (id = ++potN));
+            const sx = pot.sx ?? pot.x, sy = pot.sy ?? pot.y, tx = pot.tgt ? pot.tgt.x : pot.x, ty = pot.tgt ? pot.tgt.y : pot.y, done = Math.hypot(x - sx, y - sy), left = Math.hypot(tx - x, ty - y);
+            potsNow.push({ key: 'pot:' + id, id: 'pitch_fly', seed: id, age: pot.t || 0, land: null, x: (x - origin.x) / 2, z: (y - origin.y) / 2, tx: (tx - origin.x) / 2, tz: (ty - origin.y) / 2,
+              fx: (sx - origin.x) / 2, fz: (sy - origin.y) / 2, r: 0, k: done / Math.max(0.01, done + left), reached: [] });
+            continue;
+          }
           bits.push({ canvas: bitCanvas(d.sp, !!d.glow), ax: d.sp.ax, ay: d.sp.ay, x: (x - origin.x) / 2, z: (y - origin.y) / 2, lift: d.lift, glow: d.glow ? 1 : 0, flash: (d.look && d.look.flash) || 0 });
           continue;
         }
@@ -292,10 +337,14 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       // the ground a fight churns (battle.js hazards: the Toadking's mud, the Vatwarden's sluice), welling up and sinking away
       const hazards = [];
       for (const hz of (c.battle && c.battle.hazards) || []) {
+        if (hz.until <= sim.state.t) continue;
         const fade = Math.max(0, Math.min(1, (hz.until - sim.state.t) / 0.8, (sim.state.t - (hz.from ?? -1e9)) / 0.4));
+        // (v1.154: the engineers' pitch, burning: drawn at the size it slows, PITCH_R, a tar-black pool and an ember rim,
+        // its flames Luminati's: world.js placePitch; age, key: its splash as it lands, its flames kept by the patch)
+        if (hz.kind === 'pitch') { hazards.push({ kind: 'pitch', key: `${hz.from}:${hz.x}:${hz.y}`, age: sim.state.t - (hz.from ?? 0), x: (hz.x - origin.x) / 2, z: (hz.y - origin.y) / 2, r: (hz.r || PITCH_R) / 2, col: [16, 10, 6], rim: [255, 120, 36], a: fade }); continue; }
         hazards.push({ x: (hz.x - origin.x) / 2, z: (hz.y - origin.y) / 2, r: (hz.r * Math.SQRT2) / 2, col: hz.kind === 'sluice' ? [24, 40, 14] : [26, 20, 14], rim: hz.kind === 'sluice' ? [104, 132, 52] : [128, 104, 64], a: fade });
       }
-      state.actors = actors.length; state.rings = rings.length;   // (dev: what this frame stood up)
+      state.actors = actors.length; state.rings = rings.length; state.pots = potsNow.length;   // (dev: what this frame stood up)
       const p = sim.state.player, wx = sim.world.kind === 'dungeon' ? null : weatherNow(sim);
       const arena = !!sim.world.arena;                       // (the Bowl's Quarry Ring: a bright day, whatever the hour, convert.js arena)
       api.frame({ dt, focus: [(mx - origin.x) / 2, GROUND_Y, (my - origin.y) / 2], ppu, hour: arena ? ARENA_HOUR : hourOf(c.t ?? sim.state.t),
@@ -305,7 +354,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         // Frost Nova and Turn Undead in Luminati's looks (renderer.js spellsNow): their reach at Emberlit's size, as the warnings
         spells: (c.spells || []).map((S) => ({ key: S.key, id: S.id, seed: S.seed, age: S.age, land: S.land, x: (S.x - origin.x) / 2, z: (S.y - origin.y) / 2,
           tx: (S.tx - origin.x) / 2, tz: (S.ty - origin.y) / 2, r: (S.r * Math.SQRT2) / 2, k: S.k || 0, reached: S.reached.map((o) => ({ x: (o.x - origin.x) / 2, z: (o.y - origin.y) / 2 })),
-          fx: ((S.fx ?? S.x) - origin.x) / 2, fz: ((S.fy ?? S.y) - origin.y) / 2, air: S.air || 0, hit: S.hit ?? null })),   // (fx, fz: where a leap or a dash began)
+          fx: ((S.fx ?? S.x) - origin.x) / 2, fz: ((S.fy ?? S.y) - origin.y) / 2, air: S.air || 0, hit: S.hit ?? null })).concat(potsNow),   // (fx, fz: where a leap or a dash began; the pitch pots in flight, above)
         // a foe's warning (renderer.js warnsNow): a heavy blow's ring at Emberlit's size (its circles drawn ×√2), a shot's lane
         warns: (c.warns || []).map((w) => ({ x: (w.x - origin.x) / 2, z: (w.y - origin.y) / 2, tx: (w.tx - origin.x) / 2, tz: (w.ty - origin.y) / 2,
           r: ((w.boss ? WARN_R.boss : WARN_R.heavy) * Math.SQRT2) / 2, w: ((w.heavy ? 0.6 : 0.4) * Math.SQRT2) / 2, p: w.p, hit: w.hit, heavy: w.heavy, lane: w.lane })),

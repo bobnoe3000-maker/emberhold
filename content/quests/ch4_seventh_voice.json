@@ -1,0 +1,68 @@
+{
+  "id": "ch4_seventh_voice",
+  "kind": "chapter",
+  "title": "The Seventh Voice",
+  "giver": "hester_quaile",
+  "region": "tidemark",
+  "level": [
+    41,
+    75
+  ],
+  "after": [
+    "ch4_brine_cross"
+  ],
+  "summary": "Whoever sang the drowned up off the Mole is in Highmarch: Lucan Varro, who signs himself Lucanus, the Seventh Voice. Hester Quaile wants the company through his walls and into his palace.",
+  "steps": [
+    {
+      "id": "champion",
+      "journal": "Take the Highmarch road north off the coast road to Highmarch's gate, and go into the dungeon. The Seventh's Champion holds the walls' great bastion.",
+      "objectives": [
+        {
+          "type": "boss",
+          "site": "highmarch",
+          "boss": "champion",
+          "count": 1,
+          "label": "The Seventh's Champion"
+        }
+      ]
+    },
+    {
+      "id": "lucan",
+      "journal": "Go down to the dungeon's second floor, the Seventh's Palace. Lucan Varro is in the throne room at its end. Beat him.",
+      "objectives": [
+        {
+          "type": "boss",
+          "site": "highmarch",
+          "boss": "lucan",
+          "count": 1,
+          "label": "Lucan Varro"
+        }
+      ]
+    },
+    {
+      "id": "letters",
+      "journal": "Lucan is beaten and has sat down on the throne room's steps. Talk to him there before he goes.",
+      "objectives": [
+        {
+          "type": "meet",
+          "npc": "lucan",
+          "site": "highmarch",
+          "count": 1,
+          "label": "A word with Lucan"
+        }
+      ]
+    }
+  ],
+  "ready": "Lucan read the Kindler's letters and walked north after him. Go back to Hester Quaile at the Paid Toll in Tollhaven.",
+  "done": "Lucan walked north after the vessel, which left with the Kindler days ago. The Pilgrims' Stair is open. Act IV is done.",
+  "rewards": {
+    "share": 0.6,
+    "lv": 45,
+    "gold": 1000
+  },
+  "dialogue": {
+    "file": "quaile",
+    "offer": "quaile_seventh_offer",
+    "turnin": "quaile_seventh_turnin"
+  }
+}

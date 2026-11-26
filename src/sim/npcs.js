@@ -91,6 +91,9 @@ export const NPCS = {
   maren: { region: 'tidemark', found: { site: 'drowned_mole', depth: 1, boss: 'harbourmaster' }, spots: [], knot: 'maren_hub', flags: ['met_maren'] },
   // (v1.151) Old Gannet, keeper of the Lamp Fort, the Guild's oldest member: at its gate, inside, as Tobin is at the barrow mouth
   old_gannet: { region: 'tidemark', found: { site: 'lamp_fort', depth: 0, entrance: true }, spots: [], knot: 'gannet_hub', flags: ['met_gannet', 'brine_held'] },   // (brine_held: the sim's, set when Brine Cross is held; read by gannet.ink, never set there)
+  // (v1.154) Lucan Varro, beaten, not killed: on his throne room's steps once he's sat down (`after`: placed only when his
+  // boss has fallen, battle.js puts him there the moment he does); a visitor, gone north once he's said his piece
+  lucan: { region: 'tidemark', found: { site: 'highmarch', depth: 1, boss: 'lucan', after: true }, visitor: 'lucan_gone', spots: [], knot: 'lucan_hub', flags: ['lucan_gone'] },
   // (v1.54, world doc §3.3 "Kell's Rest's people"; v1.57) Kell's Rest is the depot on the Reach, not a town (GDD v1.132): its
   // two are met at the Assay Yards' gate, in the way in (as Tobin is at the barrow mouth), and stay: Nan Ruddock with
   // what's left of the Redhand, and Davy Pruett, the Assay's clerk, through whom Hob's pass comes (Paid by Weight).
@@ -237,8 +240,9 @@ export function createTalk({ state, bus, getWorld, walkTo, canStand, moreVars = 
   if (!state.flags) state.flags = {};
   let talking = null;                             // the NPC id of the open conversation (runtime only)
   const npcHere = (id) => (getWorld().npcs || []).find((n) => n.id === id) || null;
-  // a found companion in the party, up: you talk to him from his card, wherever you are (a visitor never joins)
-  const withYou = (id) => !!NPCS[id] && !!NPCS[id].found && !NPCS[id].visitor && state.party.some((m) => m.id === id && !m.down && !m.fallen);
+  // a found companion in the company, up: you talk to him from his card, wherever you are (a visitor never joins); (v1.154)
+  // on the bench too, from the roster (the owner, 2026-11-26: no quest waits on a companion being in the party)
+  const withYou = (id) => !!NPCS[id] && !!NPCS[id].found && !NPCS[id].visitor && [...state.party, ...(state.bench || [])].some((m) => m.id === id && !m.down && !m.fallen);
   const withParty = (id) => [...state.party, ...(state.bench || [])].some((m) => m.id === id);
   const dist = (n) => { const p = state.player; return hypot(n.x - p.x, n.y - p.y); };
 

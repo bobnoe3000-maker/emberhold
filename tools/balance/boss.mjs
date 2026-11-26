@@ -48,6 +48,9 @@ for (const seed of seeds) {
   let fell = false, defeat = false, downs = 0, fallen = 0, low = 1, calls = 0, mech = 0;
   let who = ''; sim.bus.on('bossWave', (e) => { who = e.id; }); sim.bus.on('bossDown', () => { fell = true; }); sim.bus.on('defeat', () => { defeat = true; }); sim.bus.on('bossCall', () => calls++);
   for (const k of ['bossChutes', 'bossMud', 'bossCage', 'bossVespers', 'bossFlood', 'bossSwarm', 'bossKindle']) sim.bus.on(k, () => mech++);
+  // (v1.154) Highmarch's: the Champion's wall, Lucan's songs (broken or sung through, and how many they stood up)
+  let walls = 0, songs = 0, broke = 0, raised = 0, glance = 0; sim.bus.on('bossWall', () => walls++); sim.bus.on('bossSing', () => songs++);
+  sim.bus.on('bossCanticle', (e) => { if (e.broken) broke++; else raised += e.reached.length; }); sim.bus.on('combat', (c) => { if (c.t === 'glance') glance++; });
   let loads = 0, loadHits = 0; sim.bus.on('tellLand', (e) => { if (e.kind === 'load') { loads++; loadHits += e.hit; } });   // (the Foreman's, v1.124: how many fell, how many found somebody)
   sim.bus.on('combat', (c) => { if (c.t === 'down') downs++; }); sim.bus.on('fallen', () => fallen++);
   const dealt = {}; if (process.env.DMG) sim.bus.on('combat', (c) => { if (c.t === 'hit' && !c.party) dealt[c.src] = (dealt[c.src] || 0) + c.amount; });   // DMG=1: damage a second by member
@@ -56,6 +59,6 @@ for (const seed of seeds) {
   const t0 = sim.state.t, hall = sim.world.roomLevels.get(r.id);
   for (let i = 0; i < 20 * 300 && !fell && !defeat; i++) { sim.tick(); if (!defeat) { low = Math.min(low, frac()); bossLeft(); }
     if (process.env.TRACE && i % 60 === 0 && !defeat) console.log('  ', (i / 20).toFixed(0) + 's', 'foes', (sim.world.enemies || []).filter((e) => e.hp > 0).map((e) => `${e.kind}${e.boss ? '*' : ''}:${Math.round(100 * e.hp / e.maxHp)}%@${e.x.toFixed(0)},${e.y.toFixed(0)}`).join(' '), '| party', sim.state.party.map((m) => `${m.cls}:${m.down ? 'D' : Math.round(100 * m.hp / statsFor(m).maxHp) + '%'}@${(m.x || 0).toFixed(0)},${(m.y || 0).toFixed(0)}`).join(' ')); }
-  console.log(`${site} ${who || '(no boss)'} hall L${hall} · party L${HL} seed ${seed}: ${fell ? 'BOSS DOWN' : defeat ? `DEFEAT (boss at ${Math.round(bossHp * 100)}%)` : 'still fighting'} ${(sim.state.t - t0).toFixed(0)}s · lowest ${Math.round(low * 100)}% · downs ${downs} · fallen ${fallen}${calls ? ' · calls ' + calls : ''}${mech ? ' · mechanic ×' + mech : ''}${loads ? ` · loads ${loadHits}/${loads} hit` : ''}${heldT ? ` · held ${Math.round(100 * heldT / Math.max(0.05, bossT))} %` : ''}`);
+  console.log(`${site} ${who || '(no boss)'} hall L${hall} · party L${HL} seed ${seed}: ${fell ? 'BOSS DOWN' : defeat ? `DEFEAT (boss at ${Math.round(bossHp * 100)}%)` : 'still fighting'} ${(sim.state.t - t0).toFixed(0)}s · lowest ${Math.round(low * 100)}% · downs ${downs} · fallen ${fallen}${calls ? ' · calls ' + calls : ''}${mech ? ' · mechanic ×' + mech : ''}${loads ? ` · loads ${loadHits}/${loads} hit` : ''}${heldT ? ` · held ${Math.round(100 * heldT / Math.max(0.05, bossT))} %` : ''}${walls ? ` · walls ${walls}` : ''}${songs ? ` · songs ${songs} (broken ${broke}, raised ${raised})` : ''}${glance ? ` · glanced ${glance}` : ''}`);
   if (process.env.DMG) console.log('  dps', Object.entries(dealt).map(([k, v]) => `${k} ${(v / Math.max(1, sim.state.t - t0)).toFixed(1)}`).join(' · '));
 }

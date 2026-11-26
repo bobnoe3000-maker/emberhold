@@ -24,7 +24,7 @@
       ]
     }
   ],
-  "ready": "Tell Brannoc it's done: tap his party card, then Talk.",
+  "ready": "Tell Brannoc it's done: tap his card, in the party or on the bench, then Talk.",
   "done": "You defeated the three sergeants who kept Brannoc's chain oiled. He said nothing, and stood up straighter.",
   "rewards": {
     "share": 0.35,

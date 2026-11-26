@@ -4,14 +4,13 @@
   "trial": "rogue",
   "trialLv": 12,
   "title": "Dead Water",
-  "giver": "wren",
+  "giver": "dace_pike",
   "region": "fens",
   "level": [
     1,
     30
   ],
-  "companion": "wren",
-  "summary": "Wren says the harvesters' leaders at the vats never look behind them, because nothing down there ever has. Get behind five, and she'll teach your rogues what she puts on her knives (the rogue's level-12 skill).",
+  "summary": "Dace Pike says the harvesters' leaders at the vats never look behind them, because nothing down there ever has. Get behind five, and he'll show your rogues what Wren puts on her knives (the rogue's level-12 skill).",
   "steps": [
     {
       "id": "vats",
@@ -26,16 +25,16 @@
       ]
     }
   ],
-  "ready": "Tell Wren it's done: tap her party card, then Talk.",
-  "done": "Wren taught your rogues Venom, and wouldn't say where she learned it.",
+  "ready": "Five of their leaders, unseen. Tell Dace Pike at the Drowned Eel in Saltmere.",
+  "done": "Dace taught your rogues Venom. Wren taught it him, to clear a page of what she owes.",
   "rewards": {
     "share": 0.3,
     "lv": 12,
     "gold": 120
   },
   "dialogue": {
-    "file": "wren",
-    "offer": "wren_dead_water_offer",
-    "turnin": "wren_dead_water_turnin"
+    "file": "dace",
+    "offer": "dace_dead_water_offer",
+    "turnin": "dace_dead_water_turnin"
   }
 }

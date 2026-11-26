@@ -24,7 +24,7 @@ export const CHAPTERS = Object.keys(QUESTS).filter((id) => QUESTS[id].kind === '
 
 /** @param {any} state @param {(id: string) => number} status the sim's quest status (quests.js)
  * @returns {{ kind: 'next' | 'level' | 'end', id?: string, giver?: string, town?: string, level?: number, region?: string, found?: boolean, at?: string } | null}
- * (found: the giver is a found companion, Tamsin for Quota, talked to from her card rather than in a town: content/story.json `nextFound`) */
+ * (found: the giver is a found companion, Dagny for Quota (v1.154; Tamsin's before), talked to from her card rather than in a town: content/story.json `nextFound`) */
 export function storyStatus(state, status) {
   for (const id of CHAPTERS) {
     const st = status(id);
@@ -99,6 +99,9 @@ function tidemarkLeads(state, status) {
   if (bosses.harbourmaster && !bosses.hesk) out.push({ id: 'hesk' });
   if (bosses.harbourmaster && status('ch4_keepers_light') <= QS.AVAILABLE) out.push({ id: 'lampfort' });
   if (status('ch4_brine_cross') === QS.ACTIVE) out.push({ id: 'brinecross' });   // (v1.151: the east barricade, while it's in hand)
+  // (v1.154) once Brine Cross is held: Highmarch, the Champion on its walls, then Lucan in his palace
+  if ((state.flags || {}).brine_held && !bosses.champion) out.push({ id: 'champion' });
+  else if ((state.flags || {}).brine_held && !bosses.lucan) out.push({ id: 'lucan' });
   return out;
 }
 

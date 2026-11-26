@@ -16,7 +16,7 @@ test('a new game: the next chapter is Maudry\'s', () => {
   assert.deepEqual(CHAPTERS, ['ch1_smoke_over_the_vale', 'ch1_the_diggers', 'ch1_ember_in_the_fist', 'ch1_the_standard',
     'ch2_fog_on_the_canal', 'ch2_the_locks', 'ch2_the_sickpools', 'ch2_the_bells', 'ch2_the_rolls', 'ch2_the_last_office',
     'ch3_the_wickham_road', 'ch3_short_shift', 'ch3_paid_by_weight', 'ch3_gone_back_to_work', 'ch3_night_shift', 'ch3_quota',
-    'ch4_consigned', 'ch4_low_water', 'ch4_letters_of_marque', 'ch4_keepers_light', 'ch4_brine_cross']);
+    'ch4_consigned', 'ch4_low_water', 'ch4_letters_of_marque', 'ch4_keepers_light', 'ch4_brine_cross', 'ch4_seventh_voice']);
   assert.deepEqual(storyStatus(sim.state, status(sim)), { kind: 'next', id: 'ch1_smoke_over_the_vale', giver: 'maudry_fenn', town: 'Thornwick' });
 });
 
@@ -60,7 +60,7 @@ test('Act II: a chapter given in Saltmere says so; every chapter told, the end i
   S.party[0].level = 13;
   assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch2_the_locks', giver: 'dace_pike', town: 'Saltmere' });
   for (const id of CHAPTERS) S.quests[id] = { st: 3, step: 0, n: [] };
-  assert.deepEqual(storyStatus(S, status(sim)), { kind: 'end', region: 'tidemark' }, 'the last chapter told is the Tidemark\'s (v1.151: Act IV to Brine Cross)');
+  assert.deepEqual(storyStatus(S, status(sim)), { kind: 'end', region: 'tidemark' }, 'the last chapter told is the Tidemark\'s (v1.154: Act IV to its end)');
   S.bosses = {}; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['toadking', 'choir', 'fenschronicle', 'tower', 'fensboard']);
   S.bosses = { toadking: 1 }; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['wren', 'choir', 'fenschronicle', 'tower', 'fensboard']);
   assert.deepEqual(openLeads(S, status(sim), 'fens').find((l) => l.id === 'fenschronicle'), { id: 'fenschronicle', n: 0, of: 10 });
@@ -98,7 +98,7 @@ test('Act III (v1.124): after Act II, Ilse in Thornwick sends the company north;
     S.party[0].level = lv; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id, giver, town });
   }
   S.quests.ch3_night_shift = { st: 3, step: 0, n: [] }; S.party[0].level = 30;
-  assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch3_quota', giver: 'tamsin', town: 'Ashgate', found: true }, 'a found companion\'s: from her card');
+  assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch3_quota', giver: 'dagny_coalbrook', town: 'Ashgate' }, 'Dagny\'s (v1.154: no chapter waits on a companion)');
   S.quests.ch3_quota = { st: 3, step: 0, n: [] };
   assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch4_consigned', giver: 'sister_ilse', town: 'Thornwick' }, 'Act III is done: Ilse has Act IV');
   // (v1.150) Act IV's first two: Ilse sends the company to Tollhaven, where Hester Quaile gives Low Water
@@ -118,7 +118,10 @@ test('Act III (v1.124): after Act II, Ilse in Thornwick sends the company north;
   // as far as it goes (Highmarch, Maren's, is to come)
   assert.deepEqual(storyStatus(S, status(sim)), { kind: 'level', id: 'ch4_brine_cross', level: 40 });
   S.party[0].level = 40; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch4_brine_cross', giver: 'hester_quaile', town: 'Tollhaven' });
-  S.quests.ch4_brine_cross = { st: 3, step: 0, n: [] }; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'end', region: 'tidemark' }, 'as far as Act IV is told');
+  S.quests.ch4_brine_cross = { st: 3, step: 0, n: [] }; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'level', id: 'ch4_seventh_voice', level: 41 });
+  // (v1.154 step 6) The Seventh Voice, Maren's (Hester's: v1.154, no chapter waits on a companion): from 41; handed in, Act IV is told
+  S.party[0].level = 41; const seventh = storyStatus(S, status(sim)); assert.deepEqual([seventh.kind, seventh.id, seventh.giver], ['next', 'ch4_seventh_voice', 'hester_quaile']);
+  S.quests.ch4_seventh_voice = { st: 3, step: 0, n: [] }; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'end', region: 'tidemark' }, 'Act IV is told');
   const C = JSON.parse(readFileSync(new URL('../content/story.json', import.meta.url), 'utf8'));
   for (const id of ['foreman', 'tamsin', 'reachboard', 'showingoff', 'reachchronicle', 'ninthvault']) assert.ok(C.leads[id], id);
   assert.ok(C.nextFound);

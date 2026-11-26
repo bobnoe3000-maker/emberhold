@@ -10,8 +10,12 @@
 export const PREMIUM = 0.05;
 export const PREMIUM_HIGH = 0.06, PREMIUM_HIGH_TO = 22;
 export const PREMIUM_PAST = 30, PREMIUM_STEEP = 1.06;
+// (v1.154) and steeper still past PREMIUM_STEEPER_FROM: three up stayed 1.25 a stat while the heroes went on gaining skills,
+// so the contract's three-up room took longer each band to beat the right party (178 s at 33, 236 at 36, 252 at 39, 262 at
+// 42) and at 45 it held (a level-48 room, 300 s, the lowest 34 %). Same-level rooms don't move (the lift reads this curve).
+export const PREMIUM_STEEPER_FROM = 40, PREMIUM_STEEPER = 1.10;
 const STEEP = [1];
-for (let i = 1; i <= 120; i++) STEEP.push(STEEP[i - 1] * PREMIUM_STEEP);
+for (let i = 1; i <= 120; i++) STEEP.push(STEEP[i - 1] * (PREMIUM_PAST + i > PREMIUM_STEEPER_FROM ? PREMIUM_STEEPER : PREMIUM_STEEP));
 /** @param {number} lv */
 export const premiumOf = (lv) => (1 + PREMIUM * Math.max(0, lv - 3) + PREMIUM_HIGH * Math.min(PREMIUM_HIGH_TO - 18, Math.max(0, lv - 18)))
   * STEEP[Math.min(STEEP.length - 1, Math.max(0, Math.floor(lv) - PREMIUM_PAST))];

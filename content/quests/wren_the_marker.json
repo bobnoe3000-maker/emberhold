@@ -24,7 +24,7 @@
       ]
     }
   ],
-  "ready": "Tell Wren it's done: tap her party card, then Talk.",
+  "ready": "Tell Wren it's done: tap her card, in the party or on the bench, then Talk.",
   "done": "You took the marker's three pieces off the Cult's harvesters. Wren put them together, read them once, and burned them.",
   "rewards": {
     "share": 0.35,

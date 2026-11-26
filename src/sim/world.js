@@ -69,6 +69,9 @@ export const DRESS = {
   // convert.js), and the hulks moored in its lagoon (a ship's inside, its decks and ribs: convert.js)
   seacave:  { rooms: ['cave', 'storehouse', 'cave'], decor: ['stalagmite', 'barrels', 'lantern'], obstacles: ['stalagmite', 'boulder'] },
   hulk:     { rooms: ['storehouse', 'storehouse', 'storehouse'], decor: ['barrels', 'crates', 'lantern'], obstacles: ['pillar'] },
+  // (v1.154) Highmarch's second floor, the Seventh's Palace: the crypt kit's dressed stone and arcade, the tavern kit's
+  // furniture, banners down the walls, and in the throne room a dais with the throne (convert.js)
+  palace:   { rooms: ['crypt', 'storehouse', 'crypt'], decor: ['candelabra', 'banner', 'crates'], obstacles: ['pillar'] },
   // (the owner, 2026-11-23: "the reaches, high up on the ramparts": plans.js high_ramparts, docs/ramparts-dungeon.md; a
   // walled town's terraces high on its ramparts, the houses at their backs and a parapet over the drop at their fronts)
   ramparts: { rooms: ['storehouse', 'storehouse', 'storehouse'], decor: ['barrels', 'crates', 'torch'], obstacles: ['pillar'] },
@@ -96,6 +99,7 @@ const ORIENT = new Set(['tomb', 'pew', 'longtable', 'tbench', 'rack', 'urnshelf'
 /** the pieces the dressing pass added (keepTheWaysOpen clears them like any decor when they shut a way) */
 export const DRESS_PIECES = new Set(['tomb', 'great_tomb', 'mourner', 'offering', 'hearth', 'noticeboard', 'counter', 'longtable', 'tbench', 'logpile', 'stall', 'hay', 'trough', 'hen_cart', 'well', 'cart', 'portcullis', 'iron_door', 'desk', 'shelf', 'pit', 'ladder', 'shoring', 'hives', 'bench',
   'fallen_door', 'bars', 'strongbox', 'map_table', 'ledgers', 'stockade', 'guardian', 'sarcophagus_open', 'cask_rack', 'torch', 'candelabra', 'cookfire', 'block', 'crane', 'fishcrates', 'market_stall', 'oven',
+  'throne', 'reliquary',
   ...[...ORIENT].map((k) => k + '_y')]);
 // what lights a doorway, by the room's kit (a brazier each side, before, in every room: the screen was a field of
 // identical fires; now the light says the place): the dig's lanterns on poles, the crypt's candles, the keep's and the
@@ -109,16 +113,17 @@ export const DRESS_CAP = { tomb: 6, great_tomb: 1, mourner: 2, offering: 1, hear
   ledgers: 1, rug: 1, coins: 2, papers: 2, boat: 3, vat: 6, guardian: 2, cookfire: 2, desk: 2, cart: 2, fallen_door: 2, hives: 2, bench: 2, standard: 2, banner: 2, hay: 3, tent: 3,
   crane: 1, fishcrates: 6, rope: 6, net: 3,   // (the wharf's: docks)
   market_stall: 2, oven: 1,   // (the ramparts')
+  throne: 1, reliquary: 1,   // (the palace's: v1.154)
   saint: 2, lantern: 4, candles: 4, candelabra: 4, torch: 4, brazier: 4, ladder: 1, puddle: 4, scorch: 3, straw: 6, sacks: 3, crates: 2, barrels: 2, cracks: 6 };
 /** what stands out on an authored room's floor, by its place (not the kit's whole list: a gibbet in the stables and the
  *  gate-warden's chapel, a monolith in the legion's vault, said nothing) */
 const PLAN_OB = { dig: ['spoil', 'brokenpillar'], gallery: ['pillar', 'brokenpillar'], muster: ['pillar'], bailey: ['pillar'], barracks: ['pillar'], cellar: ['stalagmite', 'boulder'], nave: ['pillar', 'brokenpillar'], cultcut: ['brokenpillar', 'spoil'], binding: ['pillar'],
   mound: ['reeds'], locks: ['pillar'], vats: ['pillar'], abbey: ['pillar', 'brokenpillar'], pithead: ['boulder', 'spoil'], warren: ['stalagmite', 'boulder'],
-  yards: ['pillar', 'spoil'], quota: ['pillar'], forge: ['pillar', 'brokenpillar'], deepforge: ['pillar'], works: ['pillar', 'spoil'], vault: ['stalagmite', 'boulder'], strongroom: ['pillar'], tavern: [], tavern_cellar: [], crypt: [], ossuary: [], docks: [], mole: [], ramparts: [], seacave: ['stalagmite', 'boulder'], hulk: [] };   // (the tavern: nothing stood out in its floors, which are for the fight)   // (v1.126)   // (v1.124: the Cold Seam)   // (v1.102: the Fens authored)
+  yards: ['pillar', 'spoil'], quota: ['pillar'], forge: ['pillar', 'brokenpillar'], deepforge: ['pillar'], works: ['pillar', 'spoil'], vault: ['stalagmite', 'boulder'], strongroom: ['pillar'], tavern: [], tavern_cellar: [], crypt: [], ossuary: [], docks: [], mole: [], ramparts: [], seacave: ['stalagmite', 'boulder'], hulk: [], palace: ['pillar'] };   // (the tavern: nothing stood out in its floors, which are for the fight)   // (v1.126)   // (v1.124: the Cold Seam)   // (v1.102: the Fens authored)
 const DOOR_LIGHT = { dig: 'lantern', gallery: 'candles', muster: 'torch', bailey: 'torch', barracks: 'torch', cellar: 'lantern', nave: 'candelabra', cultcut: 'candles', binding: 'candles',
   mound: 'lantern', locks: 'lantern', vats: 'lantern', abbey: 'candelabra', pithead: 'lantern', warren: 'torch',
-  yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra', tavern: 'torch', tavern_cellar: 'candles', crypt: 'candles', ossuary: 'candles', docks: 'lantern', mole: 'lantern', ramparts: 'torch', seacave: 'lantern', hulk: 'lantern' };   // (the crypt's doorways a low pricket: a candelabrum crowded the threshold, round 3)   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
-const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave', yards: 'storehouse', quota: 'cellar', forge: 'muster', deepforge: 'binding', works: 'storehouse', vault: 'cave', strongroom: 'muster', tavern: 'storehouse', tavern_cellar: 'storehouse', crypt: 'crypt', ossuary: 'ossuary', docks: 'storehouse', mole: 'storehouse', ramparts: 'storehouse', seacave: 'cave', hulk: 'storehouse' };
+  yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra', tavern: 'torch', tavern_cellar: 'candles', crypt: 'candles', ossuary: 'candles', docks: 'lantern', mole: 'lantern', ramparts: 'torch', seacave: 'lantern', hulk: 'lantern', palace: 'candelabra' };   // (the crypt's doorways a low pricket: a candelabrum crowded the threshold, round 3)   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
+const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave', yards: 'storehouse', quota: 'cellar', forge: 'muster', deepforge: 'binding', works: 'storehouse', vault: 'cave', strongroom: 'muster', tavern: 'storehouse', tavern_cellar: 'storehouse', crypt: 'crypt', ossuary: 'ossuary', docks: 'storehouse', mole: 'storehouse', ramparts: 'storehouse', seacave: 'cave', hulk: 'storehouse', palace: 'crypt' };
 const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', crates: 'crates', sacks: 'sacks', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', skulls: 'bones', bones: 'bones', barrels: 'barrels' };
 function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, count }) {
   // every piece through the room's caps (CAP): a recipe can't stand a second well or a fifth torch
@@ -271,6 +276,11 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       // ── the moles (v1.150; plans.js drowned_mole, floor 2): the stone at low water. As the wharf, every piece at an edge
       // and the middle left for the fight: the harbour lamps on their posts, rope coiled at the bollards, the anchors' chain
       // laid out, the tide's pools on the stone, the wrecks along the back, the lamp-stand at the mole's end
+      // ── the Seventh's Palace (v1.154): the throne on its dais at the throne room's back wall, the chapel's empty stand
+      // where Livia's box stood, the palace's candelabra at the end walls and one by the near wall
+      case 'throne': unit(-L * 0.5, -Wd + 2, -2, 2, -1, 1, 'throne'); for (const s of [-1, 1]) putAt(-L * 0.5 + s * 5, -Wd + 1, 'candelabra'); break;   // (west along the back wall: the chapel's door comes in at its middle)
+      case 'reliquary': unit(L * 0.4, -Wd + 1, 0, 1, -1, 0, 'reliquary'); break;
+      case 'palace_lamps': for (const s of [-1, 1]) putAt(s * (L - 1), -Wd * 0.45, 'candelabra'); putAt(-L * 0.5, Wd - 1, 'candelabra'); break;
       case 'mole_lamps': for (const s of [-1, 1]) putAt(s * (L - 1), -Wd, 'lantern'); putAt(-L * 0.55, Wd, 'lantern'); break;
       case 'bollards': for (const [u, v] of [[-0.45, -1], [0.3, -1], [-0.1, 1], [0.6, 1]]) putAt(u * L, v * (Wd - 0.5), 'rope'); break;
       case 'anchors': putAt(L * 0.5, -(Wd - 1), 'chains'); putAt(-L * 0.6, Wd - 1, 'chains'); break;

@@ -25,7 +25,7 @@ const SOUL = [120, 255, 150], BILE = [190, 230, 110], MUZZLE = [255, 200, 120], 
 const REDHAND = [255, 92, 70], EMBER = [255, 140, 40];   // (art pass 9) the Company's red; the Cult's ember
 
 // a projectile's colour by its kind (the sim's bolt kinds: battle.js), for its trail, halo, floor glow and burst
-export const BOLT_RGB = { fire: [255, 130, 40], soul: [170, 130, 255], hex: [150, 240, 90], spirit: [120, 235, 215], marsh: [190, 240, 200], bolt: [200, 210, 230], arrow: [235, 225, 200], web: [232, 230, 214], firespit: [255, 110, 30] };   // (web: v1.58, a spinner's spat silk)
+export const BOLT_RGB = { fire: [255, 130, 40], soul: [170, 130, 255], hex: [150, 240, 90], spirit: [120, 235, 215], marsh: [190, 240, 200], bolt: [200, 210, 230], arrow: [235, 225, 200], web: [232, 230, 214], firespit: [255, 110, 30], pitch: [255, 150, 50] };   // (web: v1.58, a spinner's spat silk; pitch: v1.154, an engineer's pot, lit)
 
 // per atlas: effect per attack clip, colours; spark = the colour of the sparks its blows raise
 export const FX_STYLES = {
@@ -109,6 +109,14 @@ export const FX_STYLES = {
   enemy_warhound:    { col: [235, 225, 205], attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [245, 235, 215], heavySpark: [200, 170, 130] },
   enemy_mate:        { col: STEEL, attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [255, 235, 190], heavySpark: [200, 180, 150], wide: 1.25, quake: true },
   boss_hesk:         { col: [255, 228, 160], attack: 'arc', attack2: 'stab', heavy: 'arc', spark: [255, 236, 190], wide: 1.3, thin: true },
+  // (v1.154, Highmarch) the legionary's short sword, thrust and chopped from behind his shield, his heavy the shield driven
+  // into you (no blade in it: a glint at the point and the ground shaken); the engineer's pitch-pot, its rag flaring as he
+  // winds up to throw; the Champion's gilt sword and his bash, wider; Lucan's sword-point lit as he sings, the soul's lilac
+  // in a bolt and the Canticle's gold in the long cast
+  enemy_legionary:   { col: [235, 205, 150], attack: 'stab', attack2: 'arc', heavy: 'stab', spark: [255, 230, 185], heavySpark: [215, 175, 110], quake: true },
+  enemy_engineer:    { col: EMBER, attack: 'cast', attack2: 'cast', heavy: 'cast', heavyCol: FIRE, spark: [255, 170, 80], heavySpark: [255, 120, 40], burn: true },
+  boss_champion:     { col: [255, 215, 130], attack: 'stab', attack2: 'arc', heavy: 'stab', spark: [255, 232, 170], heavySpark: [230, 190, 110], wide: 1.25, quake: true },
+  boss_lucan:        { col: [200, 180, 255], attack: 'cast', attack2: 'cast', heavy: 'cast', heavyCol: HOLY, spark: [220, 205, 255], heavySpark: [255, 225, 160] },
   boss_first_pilgrim: { col: [255, 160, 90], attack: 'arc', attack2: 'stab', heavy: 'arc', heavyCol: FIRE, spark: [255, 190, 120], heavySpark: [255, 120, 50], wide: 1.5, quake: true },   // (v1.147: the crook's swing, the Ember's sparks)
   boss_spiderqueen:  { col: [180, 230, 120], attack: 'stab', attack2: 'stab', heavy: 'arc', spark: [210, 240, 160], wide: 1.35 },
   boss_skarn:        { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 200, 130], wide: 1.25 },

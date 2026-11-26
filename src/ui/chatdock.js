@@ -283,7 +283,8 @@ export function createChatDock({ sim, partyPanel, ring, chat, questTitle = (id) 
   const RW = { rare: 'Rare', heirloom: 'Heirloom' };
   const on = (/** @type {string} */ k, /** @type {(e: any) => void} */ f) => sim.bus.on(k, f);
   on('levelUp', (e) => event('company', `${e.name} reaches level ${e.level}`));
-  on('bossDown', (e) => { if (!e.raid && !e.tower) event('company', `${e.name} falls`, { sub: e.first ? 'something was left behind · back in 30 min' : 'back in 30 min · the room fights on' }); else event('company', `${e.name} falls`); });
+  on('bossDown', (e) => { if (e.spared) { event('company', `${e.name} sits down`, { sub: 'on his own steps: beaten, not killed' }); return; }   // (Lucan, v1.154)
+    if (!e.raid && !e.tower) event('company', `${e.name} falls`, { sub: e.first ? 'something was left behind · back in 30 min' : 'back in 30 min · the room fights on' }); else event('company', `${e.name} falls`); });
   on('gateOpened', (e) => event('company', 'A gate is down', { sub: e.hall ? 'the way to the hall is open' : 'the way on is open' }));
   on('lampBroken', (e) => event('company', `${e.name} breaks`, { sub: e.first ? `${e.held} souls go free` : 'its line lies down' }));
   on('cageBroken', (e) => event('company', `${e && e.by ? `${e.by} breaks a cage` : 'A cage breaks'} · a soul goes free`));

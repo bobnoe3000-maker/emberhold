@@ -215,7 +215,7 @@ test('Kell\'s Rest\'s two wait at the Assay Yards\' gate (GDD v1.132: the depot 
   assert.equal(sim.state.quests.ch3_paid_by_weight.step, 1, 'then on to the Weighmaster');
 });
 
-test('Act III played on: Paid by Weight (Hob → Dagny), Gone Back to Work (Mother Coke), Night Shift (Vane runs, and it counts), Quota (Tamsin → Dagny); then Ilse has Act IV', () => {
+test('Act III played on: Paid by Weight (Hob → Dagny), Gone Back to Work (Mother Coke), Night Shift (Vane runs, and it counts), Quota (Dagny\'s, v1.154); then Ilse has Act IV', () => {
   const sim = after2(30, 'town', 'reach'); doneTo(sim, 'ch3_paid_by_weight');
   withTamsin(sim);
   const ev = events(sim, ['questReward', 'dialogue']);
@@ -237,21 +237,19 @@ test('Act III played on: Paid by Weight (Hob → Dagny), Gone Back to Work (Moth
   play('ch3_paid_by_weight', 'hob', 'dagny_coalbrook', { id: 'weighmaster' }, 'assay_yards', 1);
   play('ch3_gone_back_to_work', 'mother_coke', 'mother_coke', { id: 'oruth' }, 'cinderworks', 0);   // (v1.144: the Forgehall, the Cinderworks' first floor)
   play('ch3_night_shift', 'dagny_coalbrook', 'dagny_coalbrook', { id: 'morrow_vane', fled: true }, 'cinderworks', 1);   // (his furnace hall, the second floor)
-  play('ch3_quota', 'tamsin', 'dagny_coalbrook', { id: 'stoker' }, 'cinderworks', 1);
+  play('ch3_quota', 'dagny_coalbrook', 'dagny_coalbrook', { id: 'stoker' }, 'cinderworks', 1);
   assert.deepEqual(ev.filter((e) => e.n === 'questReward').map((e) => e.gold), [520, 580, 620, 700]);
   assert.deepEqual(storyStatus(sim.state, (id) => sim.quests.status(id)), { kind: 'next', id: 'ch4_consigned', giver: 'sister_ilse', town: 'Thornwick' }, 'Act III is done: Ilse has Act IV (v1.150)');
 });
 
-test('the chapters wait for their bands, and Quota is Tamsin\'s: from her card, while she\'s with you', () => {
+test('the chapters wait for their bands, and Quota is Dagny\'s: no companion needed (v1.154; the owner: "nor should any companion be required")', () => {
   const sim = after2(24, 'town', 'reach'); doneTo(sim, 'ch3_gone_back_to_work');
   assert.equal(st(sim, 'ch3_gone_back_to_work'), QS.LOCKED, '25');
   for (const [id, lv] of [['ch3_paid_by_weight', 23], ['ch3_gone_back_to_work', 27], ['ch3_night_shift', 29], ['ch3_quota', 30]]) assert.equal(QUESTS[id].level[0], lv, id);   // (v1.144: bands of four)
   doneTo(sim, 'ch3_quota'); sim.state.party[0].level = 30;
-  sim.commands.push({ type: 'talk', npc: 'tamsin' }); sim.tick(); effect(sim, 'quest', 'accept', 'ch3_quota');
-  assert.equal(st(sim, 'ch3_quota'), QS.AVAILABLE, 'she\'s still in the Seam: no talk, no quest');
-  withTamsin(sim); goTo(sim, 'overland', 'barrows', 0, 'reach');
-  sim.commands.push({ type: 'talk', npc: 'tamsin' }); sim.tick(); effect(sim, 'quest', 'accept', 'ch3_quota');
-  assert.equal(st(sim, 'ch3_quota'), QS.ACTIVE, 'from her card, out on the land');
+  assert.ok(!sim.state.party.some((m) => m.id === 'tamsin') && !(sim.state.bench || []).some((m) => m.id === 'tamsin'), 'Tamsin nowhere in the company');
+  talk(sim, 'dagny_coalbrook'); effect(sim, 'quest', 'accept', 'ch3_quota');
+  assert.equal(st(sim, 'ch3_quota'), QS.ACTIVE, 'from Dagny, Tamsin or no Tamsin');
 });
 
 test('the side work: Tamsin\'s chain while she\'s with you, in order; Gunnar\'s and Old Brannagh\'s, counted where they ask', () => {
@@ -297,10 +295,10 @@ test('the trials at 24: offered once someone of the class is 24 and its 12 is do
   goTo(sim, 'town', 'barrows', 0, 'reach'); talk(sim, 'haldor'); effect(sim, 'quest', 'turnin', 'trial24_fighter');
   assert.equal(sim.state.trials.fighter24, 1); assert.deepEqual(ev.map((e) => [e.cls, e.lv]), [['fighter', 24]]);
   assert.ok(unlocked(sim.state.party[0], blades, sim.state.trials), `${blades.name}: open`);
-  // kept in a save; Tamsin teaches the mages' only while she's with you
+  // kept in a save; the mages' is Dagny's (v1.154), Tamsin with the company or not
   const back = createSim(1); back.restore(snap(sim)); assert.equal(back.state.trials.fighter24, 1, 'the 24 survives a save');
-  sim.state.party[0].cls = 'mage'; sim.state.trials = { mage: 1, mage12: 1 }; assert.equal(st(sim, 'trial24_mage'), QS.LOCKED, 'not without Tamsin');   // (the hero as the save now has him: a restore makes him anew)
-  withTamsin(sim); assert.equal(st(sim, 'trial24_mage'), QS.AVAILABLE);
+  sim.state.party[0].cls = 'mage'; sim.state.trials = { mage: 1, mage12: 1 }; assert.equal(st(sim, 'trial24_mage'), QS.AVAILABLE, 'no Tamsin needed');   // (the hero as the save now has him: a restore makes him anew)
+  assert.equal(QUESTS.trial24_mage.giver, 'dagny_coalbrook');
 });
 
 test('the Reach\'s Chronicle: twelve, in its three dungeons (v1.144); the last one reveals the Ninth Vault; Oruth\'s apron plate is his when he lies down', () => {
@@ -323,7 +321,7 @@ test('the Ink for the rest of the act: each offer takes its quest, each hand-in 
     ['ashgate', 'coke_hub', { flag_met_coke: 1, q_ch3_gone_back_to_work: 2 }, ["Oruth's asleep."], 'turnin', 'ch3_gone_back_to_work'],
     ['dagny', 'dagny_hub', { flag_met_dagny: 1, q_ch3_the_wickham_road: 3, q_ch3_night_shift: 0 }, ['The rolls name the Cinderworks.', "We'll open the pens."], 'accept', 'ch3_night_shift'],
     ['dagny', 'dagny_hub', { flag_met_dagny: 1, q_ch3_the_wickham_road: 3, q_ch3_night_shift: 2 }, ['Morrow Vane ran.'], 'turnin', 'ch3_night_shift'],
-    ['tamsin', 'tamsin_hub', { joined: 1, in_party: 1, q_ch3_quota: 0 }, ['The night shift went down.', "We'll go down."], 'accept', 'ch3_quota'],
+    ['dagny', 'dagny_hub', { flag_met_dagny: 1, q_ch3_the_wickham_road: 3, q_ch3_quota: 0 }, ['Where did the night shift go?', "We'll go down."], 'accept', 'ch3_quota'],
     ['dagny', 'dagny_hub', { flag_met_dagny: 1, q_ch3_the_wickham_road: 3, q_ch3_quota: 2 }, ["Furnace Nine's lamp is broken."], 'turnin', 'ch3_quota'],
     ['ashgate', 'haldor_hub', { flag_met_haldor: 1, q_trial24_fighter: 2 }, ['The counting house held.'], 'turnin', 'trial24_fighter'],
     ['ashgate', 'gunnar_hub', { flag_met_gunnar: 1, q_gunnar_the_lease: 0 }, ['What did you sign?', "We'll fetch it."], 'accept', 'gunnar_the_lease'],

@@ -28,7 +28,7 @@
       ]
     }
   ],
-  "ready": "Tell Brannoc it's done: tap his party card, then Talk.",
+  "ready": "Tell Brannoc it's done: tap his card, in the party or on the bench, then Talk.",
   "done": "You held the Binding Crypt with Brannoc among the bound. He stood; they stood. He gave you his old chain, less one link.",
   "rewards": {
     "share": 0.45,

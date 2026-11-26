@@ -4,8 +4,13 @@
 // naming the drowned at its door. Her device: she names the dead, by name or by what they did aboard, before she says
 // anything else about them (copy-review §8). Entry: maren_hub: in the harbour office while she holds it, and from her
 // party card once she's with you. Bound in by src/story/adapter.js from the sim (sim/npcs.js varsFor: joined 0 / 1,
-// in_party 0 / 1; core.js: boss_<id> 0 / 1). Effects: flags: met_maren; `# companion: join` (heroes.js: only once
-// the Harbourmaster has fallen). Her own chain is to come.
+// in_party 0 / 1; core.js: boss_<id> 0 / 1; quests.js: chapters_done, the main chapters handed in: 18 after Low Water,
+// 21 after Brine Cross, 22 after The Seventh Voice). Effects: flags: met_maren; `# companion: join` (heroes.js: only
+// once the Harbourmaster has fallen). She's talked to from her card, in the party or on the bench (v1.154). Her own
+// chain is to come, and will gate on `joined`. Act IV's last chapter, The Seventh Voice (ch4_seventh_voice), is Hester
+// Quaile's to give (v1.154; the owner, 2026-11-26: no quest needs a companion): after Brine Cross Maren says her piece
+// about the man who sang the drowned up, and sends you to Hester. No quest is bound to her, so she reads chapters_done
+// and the bosses, never q_.
 
 VAR hero_name = ""
 VAR hero_class = ""
@@ -18,7 +23,8 @@ VAR flag_met_maren = 0
 VAR joined = 0
 VAR in_party = 0
 VAR boss_harbourmaster = 0
-VAR q_ch4_low_water = -1
+VAR boss_lucan = 0
+VAR chapters_done = 0
 
 == maren_hub ==
 { joined == 0 && boss_harbourmaster == 0: -> maren_held_early }
@@ -71,7 +77,9 @@ A Grey Sister stands in the harbour office's doorway with a boathook held across
 // ── with you ──
 == maren_greet ==
 {&Maren is saying names under her breath. She finishes the one she's on before she looks up.|"I'm listening. I can say names and listen at once. It's most of a chaplain's work."|Maren falls into step, the boathook over her shoulder. She brought it back from the Mole. She says it has been more use than the psalter.}
-{ q_ch4_low_water == 3: "The quays are quiet at night now. Hester says it's the first thing on this coast she's had for nothing." }
+{ chapters_done >= 18 && chapters_done < 21: "The quays are quiet at night now. Hester says it's the first thing on this coast she's had for nothing." }
+{ chapters_done == 21: "Highmarch. I've been working out what to say to him. So far it's mostly names." }
+{ chapters_done >= 22: "He'll be on the Sol by now, in that coat. I said a prayer for him last night. It's the work. It doesn't mean I liked it." }
 -> maren_topics
 
 == maren_greet_fallen ==
@@ -80,6 +88,7 @@ Maren says {fallen_name}'s name once, quietly, the way she says the drowned's.
 -> maren_topics
 
 == maren_topics ==
++ { chapters_done == 21 && boss_lucan == 0 } [What now, after the bridge?] -> maren_seventh_offer
 + [Whose names do you say?] -> maren_names
 + [What did you hear on the Mole?] -> maren_song
 + [Tell me about Hester.] -> maren_hester
@@ -99,6 +108,14 @@ Maren says {fallen_name}'s name once, quietly, the way she says the drowned's.
 == maren_hester ==
 "Hester tolls everything: the chain, the gate, the quay, a question if you ask it twice. She has never once tolled the Chapel. She says she's waiting for it to turn a profit."
 "She'd have stopped me going out to the Mole. That's why I didn't ask."
+-> maren_topics
+
+// ── Act IV, chapter 6: The Seventh Voice (content/quests/ch4_seventh_voice.json): Hester gives it (v1.154); Maren's piece ──
+== maren_seventh_offer ==
+Maren says names, one after another: the two League masters Hesk boarded, the gunner at the harbour office door, the boy who ran the lines. She stops when she has run out of the ones she means.
+"That's what he owes. The man who sang them up. He's in Highmarch, and the drowned came down that road from him, in step."
+"Hester's people say his walls are full of legionaries in the old harness, drilling for a coronation. He means to be crowned in the capital. I'd like a word with him before he goes."
+"I said I'd tell him he has a good voice. Hester has the League's say on Highmarch. Ask her at the Paid Toll, and I'll come up the road with you. I've even told her I'm going, in writing. It's a first."
 -> maren_topics
 
 == maren_bye ==

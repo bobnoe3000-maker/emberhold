@@ -97,7 +97,7 @@ test('a full party puts him on the bench; he can be benched and swapped, never r
   goTo(back, 'dungeon', 'wickham_keep', 1); assert.equal(him(back), undefined, 'a loaded game doesn\'t put him back in the hall');
 });
 
-test('from his card: talk to him wherever you are while he\'s in the party and up; not from the bench, not while you\'re Downed', () => {
+test('from his card: talk to him wherever you are while he\'s in the company and up (v1.154: the bench too); not while you\'re Downed', () => {
   const sim = createSim(SEED, undefined, { scene: 'town' }); sim.tick();
   sim.state.bosses.redhand_captain = 1; goTo(sim, 'dungeon', 'wickham_keep', 1); talkInHall(sim); effect(sim, 'companion', 'join');
   sim.commands.push({ type: 'endTalk' }); sim.tick();
@@ -111,7 +111,7 @@ test('from his card: talk to him wherever you are while he\'s in the party and u
   const n = ev.length; sim.state.party[0].down = true; sim.commands.push({ type: 'talk', npc: 'brannoc' }); sim.tick(); sim.state.party[0].down = false;
   assert.equal(ev.length, n + 0, 'not while you\'re Downed');
   goTo(sim, 'town'); sim.commands.push({ type: 'dismiss', id: 'brannoc' }); sim.tick();
-  sim.commands.push({ type: 'talk', npc: 'brannoc' }); sim.tick(); assert.equal(ev.length, n, 'not from the bench');
+  sim.commands.push({ type: 'talk', npc: 'brannoc' }); sim.tick(); assert.equal(ev.at(-1).n, 'dialogue', 'from the bench too (v1.154)'); assert.equal(ev.at(-1).vars.in_party, 0);
 });
 
 test('Chains of the Redhand: his to give and take in, in order, only while he\'s with you; The Broken Chain paid once', () => {
@@ -155,7 +155,7 @@ test('Chains of the Redhand: his to give and take in, in order, only while he\'s
   assert.equal(paid.find((e) => e.n === 'questReward' && e.id === 'brannoc_standing_down').item, 'broken_chain');
 });
 
-test('his quests can\'t be taken from anyone else, or from him while he\'s on the bench', () => {
+test('his quests can\'t be taken from anyone else, and can from him on the bench (v1.154: no quest waits on the party)', () => {
   const sim = createSim(SEED, undefined, { scene: 'town' }); sim.tick();
   hire(sim, [0, 1]);
   sim.state.bosses.redhand_captain = 1; goTo(sim, 'dungeon', 'wickham_keep', 1); talkInHall(sim); effect(sim, 'companion', 'join');
@@ -165,7 +165,7 @@ test('his quests can\'t be taken from anyone else, or from him while he\'s on th
   sim.commands.push({ type: 'talk', npc: 'osric_hale' }); sim.tick(); effect(sim, 'quest', 'accept', 'brannoc_old_debts');
   assert.equal(sim.quests.status('brannoc_old_debts'), QS.AVAILABLE, 'Osric can\'t give it');
   sim.commands.push({ type: 'talk', npc: 'brannoc' }); sim.tick(); effect(sim, 'quest', 'accept', 'brannoc_old_debts');
-  assert.equal(sim.quests.status('brannoc_old_debts'), QS.AVAILABLE, 'benched: no talk, no quest');
+  assert.equal(sim.quests.status('brannoc_old_debts'), QS.ACTIVE, 'benched: still his to give');
   for (const m of sim.state.party) m.hp = statsFor(m).maxHp;
 });
 

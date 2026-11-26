@@ -5,7 +5,9 @@
 // (sim/npcs.js varsFor: joined 0 / 1, in_party 0 / 1; core.js: boss_<id> 0 / 1; quests.js: q_ = −1 locked ·
 // 0 available · 1 active · 2 ready · 3 done, s_ = the step, read before this conversation counts: Fog on the
 // Canal's last step is a word with her). Effects: flags: met_wren; `# companion: join` (heroes.js: only once the
-// Toadking has fallen); her chain, What's Owed.
+// Toadking has fallen); her chain, What's Owed, gated on `joined` (party or bench: she's talked to from her card on
+// either, v1.154). The rogue's level-12 trial, Dead Water, is Dace Pike's now (dace.ink; the owner, 2026-11-26: no quest
+// needs a companion): she only says what's on her knives, and who has it off her.
 
 VAR hero_name = ""
 VAR hero_class = ""
@@ -23,7 +25,6 @@ VAR s_ch2_fog_on_the_canal = 0
 VAR q_wren_the_marker = -1
 VAR q_wren_night_boats = -1
 VAR q_wren_settled = -1
-VAR q_trial_dead_water = -1
 
 == wren_hub ==
 { joined == 0 && boss_toadking == 0: -> wren_tied_early }
@@ -88,9 +89,7 @@ Wren keeps looking back the way you came, where {fallen_name} should be, and pre
 + { q_wren_night_boats == 1 } [About your caches… #mark: quest active] -> wren_boats_active
 + { q_wren_settled == 0 } [What would settle it? #mark: quest] -> wren_settled_offer
 + { q_wren_settled == 1 } [About the boat… #mark: quest active] -> wren_settled_active
-+ { q_trial_dead_water == 2 } [Five of their leaders. None of them saw us. #mark: quest ready] -> wren_dead_water_turnin
-+ { q_trial_dead_water == 0 } [What's on your knives? #mark: quest] -> wren_dead_water_offer
-+ { q_trial_dead_water == 1 } [About the vats… #mark: quest active] -> wren_dead_water_active
++ [What's on your knives?] -> wren_knives
 + [Why did you borrow from the Cult?] -> wren_why
 + [Tell me about the Toadking.] -> wren_toadking
 + [That's all.] -> wren_bye
@@ -156,25 +155,10 @@ She takes a ring off her thumb and holds it out. "I paid the Cult with this, the
 "Don't make anything of it. It's a receipt."
 -> wren_topics
 
-// ── the rogue's second trial (content/quests/trial_dead_water.json; world doc v1.30) ──
-== wren_dead_water_offer ==
+// ── the rogue's second trial (content/quests/trial_dead_water.json): Dace Pike gives it since v1.154 ──
+== wren_knives ==
 "On my knives? Something from the Sickpools. Don't lick them." She turns one so the edge catches the light. It's faintly green.
-"The vats. What's in them doesn't kill you fast. It's patient. The harvesters' leaders wade about in it all day and never look behind them, because nothing behind them ever moved."
-"Get behind five of them before they turn round, and I'll show your rogues what to put on a blade, and how much. How much is the important part."
-+ [Show us. #mark: quest]
-    "Five. The ones out in front, with the full cages. Quietly. If they see you, it doesn't count, and also they'll see you." # quest: accept trial_dead_water
-    -> wren_topics
-+ [Not now.]
-    "Fine. Mind the green ones."
-    -> wren_topics
-
-== wren_dead_water_active ==
-"Five of the harvesters' leaders, down at the Locks' vats. From behind. They never look."
--> wren_topics
-
-== wren_dead_water_turnin ==
-Wren takes a little stoppered bottle out of her boot, the kind Pim sells oil in, and shows your rogues how much goes on an edge: one drop, worked in with a thumb, and then wipe the thumb. Twice.
-"That's venom. It's not clever. It's just patient. Be patient and you'll be fine." # quest: turnin trial_dead_water
+"Dace knows how much goes on an edge. I showed him, to clear a page. Ask him at the Eel and he'll teach your rogues. He'll tell them he thought of it himself."
 -> wren_topics
 
 == wren_why ==

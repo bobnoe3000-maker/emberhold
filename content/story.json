@@ -12,8 +12,8 @@
       "text": "Furnace Nine's lamp is broken and the night shift is home, forty-one of them, counted in at Ashgate's gate. The vessel's mould was empty: Morrow Vane is a day ahead on the Solmere road with what was cast in it. The rest of the Old Provinces comes in a later update."
     },
     "tidemark": {
-      "title": "Brine Cross held",
-      "text": "The drowned fleet's crews came down the Highmarch road for the bridge, and the east barricade held. Old Gannet broke his own lamp on it, and the drowned lay down: they were bound to his light. Whoever sang them up off the Mole is in Highmarch. Highmarch, and the rest of Act IV, come in a later update."
+      "title": "Act IV is done",
+      "text": "Lucan Varro was beaten on his own steps, not killed. He read the Kindler's letters, left unopened on his own table, and walked north to the Heights after the vessel, which left with the Kindler days ago. The Pilgrims' Stair, through Solmere, is open. The rest of the Old Provinces comes in a later update."
     }
   },
   "leadsTitle": {
@@ -48,8 +48,10 @@
     "maren": "The Drowned Mole: the Harbourmaster is down, and a Grey Sister is still holding the harbour office on the moles. Go back down and bring her up.",
     "hesk": "The Gull Isles: the landing jetty is on the harbour bay's west shore, past the salt marsh. Admiral Hesk keeps the flagship's great cabin.",
     "lampfort": "The Lamp Fort, on its headland out along the cliffs east of Tollhaven: the Gull Fleet is in its yard, and Old Gannet is at the gate.",
-    "brinecross": "Brine Cross, on the road west of where the Highmarch road comes in: the League is holding the bridge's east barricade, and the drowned fleet's crews are marching on it."
+    "brinecross": "Brine Cross, on the road west of where the Highmarch road comes in: the League is holding the bridge's east barricade, and the drowned fleet's crews are marching on it.",
+    "champion": "Highmarch, at the head of the Highmarch road north of the coast road: go in through the breach in its walls. The Seventh's Champion keeps the great bastion.",
+    "lucan": "Highmarch: the Champion is down. The dungeon's second floor is the Seventh's Palace, and Lucan Varro waits in its throne room."
   },
-  "nextFound": "Next: {title}. {giver} has it for you: talk to her from her card, with her in your party.",
+  "nextFound": "Next: {title}. {giver} has it for you: tap her card, in the party or on the bench, then Talk.",
   "nextAt": "Next: {title}. {giver} keeps the gate at {place}."
 }

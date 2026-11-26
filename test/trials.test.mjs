@@ -22,9 +22,9 @@ function talk(sim, npc) {
 const say = (sim, verb, id) => { sim.commands.push({ type: 'dialogueEffect', tag: 'quest', args: [verb, id] }); sim.tick(); };
 const trialSkill = (cls, lv = 6) => SKILLS[cls].find((s) => s.trial && s.lv === lv);
 // (M8, slice 9; world doc v1.30) the second trials, at 12, taught for the Fens
-const TRIALS12 = { fighter: ['trial_the_long_watch', 'osric_hale'], rogue: ['trial_dead_water', 'wren'], mage: ['trial_lamp_oil', 'pim_rushlight'], cleric: ['trial_vigil', 'mother_agnes'], shaman: ['trial_the_old_water', 'col'] };
+const TRIALS12 = { fighter: ['trial_the_long_watch', 'osric_hale'], rogue: ['trial_dead_water', 'dace_pike'], mage: ['trial_lamp_oil', 'pim_rushlight'], cleric: ['trial_vigil', 'mother_agnes'], shaman: ['trial_the_old_water', 'col'] };
 
-const TRIALS24 = { fighter: 'haldor', rogue: 'hob', mage: 'tamsin', cleric: 'old_brannagh', shaman: 'mother_coke' };
+const TRIALS24 = { fighter: 'haldor', rogue: 'hob', mage: 'dagny_coalbrook', cleric: 'old_brannagh', shaman: 'mother_coke' };
 test('three trial abilities per class, the level-6, level-12 and level-24 ones, each wanting its own trial', () => {
   assert.deepEqual(TRIAL_CLASSES, ['fighter', 'rogue', 'mage', 'cleric', 'shaman']);
   for (const cls of TRIAL_CLASSES) {
@@ -61,9 +61,9 @@ test('the second trial: offered at 12, once the class\'s first is done, by its t
   assert.equal(st(), QS.DONE); assert.deepEqual(ev, [{ cls: 'fighter', id, lv: 12 }], 'once');
   assert.deepEqual(sim.state.trials, { fighter: 1, fighter12: 1 });
   assert.ok(unlocked(makeMember('h', 'H', 'fighter', 13), trialSkill('fighter', 12), sim.state.trials), 'Second Wind, for a fighter hired later too');
-  // Wren's is hers to give, only while she's with you
+  // (v1.154) Dace's, at the Drowned Eel: no companion needed (the owner: "nor should any companion be required for a quest")
   const w = town(); w.state.party[0].cls = 'rogue'; w.state.party[0].level = 12; w.state.trials = { rogue: 1 };
-  assert.equal(w.quests.status('trial_dead_water'), QS.LOCKED, 'Wren not found');
+  assert.equal(w.quests.status('trial_dead_water'), QS.AVAILABLE, 'Wren nowhere, and it\'s on offer');
 });
 
 test('a trial is offered while someone of its class in the company is level 6+, by its teacher only; done, the whole class knows it', () => {

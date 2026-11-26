@@ -4,7 +4,9 @@
 // src/story/adapter.js from the sim (sim/npcs.js varsFor: with_tamsin 0 / 1, her niece with you, party or bench;
 // core.js boss_<id>; quests.js: q_ = −1 locked · 0 available · 1 active · 2 ready · 3 done, and s_ = the step, read
 // before this conversation counts: The Wickham Road is a word with her, so it's ready by the time she reads the letter).
-// Flags: met_dagny. Act III: she takes in chapters 1, 3 and 6, and gives 2 and 5 (v1.54: Act III as told, world doc §6).
+// Flags: met_dagny. Act III: she takes in chapters 1, 3 and 6, and gives 2 and 5 (v1.54: Act III as told, world doc §6),
+// and (v1.154; the owner, 2026-11-26: no quest waits on a companion) 6 too, Quota, which was Tamsin's, and the mages'
+// trial at 24, Ask the Iron, from her niece's notes (Tamsin's own chain stays hers).
 
 VAR hero_name = ""
 VAR hero_class = ""
@@ -22,6 +24,7 @@ VAR q_ch3_short_shift = -1
 VAR q_ch3_paid_by_weight = -1
 VAR q_ch3_night_shift = -1
 VAR q_ch3_quota = -1
+VAR q_trial24_mage = -1
 VAR boss_morrow_vane = 0
 VAR boss_stoker = 0
 VAR frag_reach_count = 0
@@ -70,7 +73,8 @@ You give her Sister Ilse's letter. She reads it standing up, fast, and then the 
 { q_ch3_short_shift == 3 && with_tamsin == 1: "Tamsin. Wipe your face. No, the other side. Both sides." }
 { q_ch3_short_shift == 3 && with_tamsin == 0: "Tamsin's still down the Seam? Then she's mending something, and she'll come up when it's mended. Go and fetch her. Tell her it's broken up here." }
 { q_ch3_paid_by_weight == 1: "Hob's sent you to the Yards. Hob sends everyone somewhere. This time he's right. Don't tell him." }
-{ q_ch3_night_shift == 3 && q_ch3_quota < 2: "The pens are empty. They didn't come home. They went down. Tamsin says she knows where. Tamsin always knows where." }
+{ q_ch3_quota == 1: "Every clan in the moot has somebody down that Vault. The moot's stopped arguing. I don't like it." }
+{ q_ch3_night_shift == 3 && q_ch3_quota < 1: "The pens are empty. They didn't come home. They went down. Tamsin says she knows where. Tamsin always knows where." }
 { q_ch3_quota == 3: "Forty-one home. I've counted them three times. I'll count them again tonight." }
 -> dagny_topics
 
@@ -87,6 +91,11 @@ You give her Sister Ilse's letter. She reads it standing up, fast, and then the 
 + { q_ch3_night_shift == 0 } [The rolls name the Cinderworks. #mark: quest] -> dagny_night_offer
 + { q_ch3_night_shift == 1 } [About the Cinderworks… #mark: quest active] -> dagny_night_active
 + { q_ch3_quota == 2 } [Furnace Nine's lamp is broken. #mark: quest ready] -> dagny_quota_turnin
++ { q_ch3_quota == 0 } [Where did the night shift go? #mark: quest] -> dagny_quota_offer
++ { q_ch3_quota == 1 } [About the Magma Vault… #mark: quest active] -> dagny_quota_active
++ { q_trial24_mage == 2 } [Eight waves under the Yards. #mark: quest ready] -> dagny_trial_turnin
++ { q_trial24_mage == 0 } [Is there anything here for a mage? #mark: quest] -> dagny_trial_offer
++ { q_trial24_mage == 1 } [About Tamsin's notes… #mark: quest active] -> dagny_trial_active
 + { frag_reach_count == 12 } [The Reach's Chronicle is whole.] -> dagny_set
 + [The night shift?] -> dagny_night_shift
 + [What's the charter-moot?] -> dagny_moot
@@ -167,13 +176,51 @@ You tell her how it went: Vane fighting beside the Assay's men, never once rude,
 "He left his ledger. Of course he did. A man like that always leaves the paperwork for somebody else."
 -> dagny_topics
 
-// ── Act III, chapter 6: Quota (content/quests/ch3_quota.json, given by Tamsin): Act III ends a day behind ──
+// ── Act III, chapter 6: Quota (content/quests/ch3_quota.json; hers since v1.154, Tamsin's before): Act III ends a day behind ──
+== dagny_quota_offer ==
+"The pens were empty because they took them down. Under the Cinderworks, into the Magma Vault, to a furnace the Assay numbers Nine. Tamsin says she can hear it from here. I've stopped asking her what it sounds like."
+"A furnace-priest keeps its lamp. The Stoker. Break the lamp and whatever's in it goes free, and whoever's still alive down there walks out on their own feet."
+"The moot says a Charter-Reeve doesn't go down holes. The moot's never been down a hole. Bring them up for me."
++ [We'll go down. #mark: quest]
+    "Up the track to the Cinderworks, and down under the furnace hall into the Vault. Mind where the floor glows. Tamsin says it eats what falls in it. And she wants to see whatever they've been casting down there, so look at the mould for her." # quest: accept ch3_quota
+    { boss_stoker == 1: "You've been down already? Then come and tell me how many walked out." }
+    -> dagny_topics
++ [Not yet.]
+    "Then I'll tell the moot tomorrow. It'll want the day to argue about it anyway."
+    -> dagny_topics
+
+== dagny_quota_active ==
+"The Cinderworks, up the track, and down into the Magma Vault under it. The Stoker, and his lamp. Then bring them home."
+-> dagny_topics
+
 == dagny_quota_turnin ==
 They come up the track behind you: the night shift, what's left of it, blinking at the day. Dagny counts them in at the gate with her fingers, one at a time, and doesn't stop when the count goes wrong.
 "Forty-one. There were more on the rolls." She keeps counting anyway. Then she stops.
-"And the thing they were feeding? Tamsin says the mould was empty. Cast and gone. On the Solmere road, a day ahead of you, with a polite man." # quest: turnin ch3_quota
+"And the thing they were feeding?" You tell her about the mould on the casting floor, empty. "Cast and gone, then. On the Solmere road, a day ahead of you, with a polite man." # quest: turnin ch3_quota
 "Write to your Sister in Thornwick. Tell her it's on the Solmere road. She'll know what to be frightened of. I don't, and I'd rather not learn."
 "We got them home. Most of them. The moot will call that a win. Let it. I'll know."
+-> dagny_topics
+
+// ── the mages' trial at 24 (content/quests/trial24_mage.json; hers since v1.154, from Tamsin's notes) ──
+== dagny_trial_offer ==
+"Not from me. I can't light a candle without a flint." She takes a sheet from under the table leg, both sides covered in a small, fast hand with drawings in the margins. "Tamsin can. These are her notes on asking the iron. She wrote them for the moot. The moot used them to level the table."
+"She says a mage tells the fire what to do, and that's loud, and asking's quieter and reaches further. Stand by the assay furnace under the Yards, where everything's hot enough to listen, and hold eight waves without shouting at the air."
+"I understood every word of it, and none of the sentences."
++ [Eight waves. #mark: quest]
+    "The Yards' cellars, by the furnace. Take the notes, and bring them back. She'll ask after them, and I'll get the blame." # quest: accept trial24_mage
+    -> dagny_topics
++ [Not yet.]
+    "Then they go back under the table leg."
+    -> dagny_topics
+
+== dagny_trial_active ==
+"The Yards' cellars, by the assay furnace. Eight waves. Ask, don't tell. That's her first line. It's underlined."
+-> dagny_topics
+
+== dagny_trial_turnin ==
+You give back Tamsin's notes. Dagny turns them over to the back, where there's one line more, underlined twice, and reads it out. "Then ask the weather. Not for fire. For cold, over a knot of them, and keep asking."
+Your mage tries it there in the doorway, and the air over the step frosts white. # quest: turnin trial24_mage
+"Blizzard, she calls it. She says it's iron, only wetter." Dagny looks at the frost on her step. "I'll have someone salt that before the moot comes out."
 -> dagny_topics
 
 // ── the Reach's Chronicle, whole (world doc v1.54 §7) ──

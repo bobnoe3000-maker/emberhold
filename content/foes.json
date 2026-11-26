@@ -148,6 +148,13 @@
     "mate": {
       "a": "a Gull Fleet mate",
       "elite": "a mate with a boarding pike"
+    },
+    "legionary": {
+      "a": "a Highmarch legionary",
+      "elite": "a legionary of the Seventh's guard"
+    },
+    "engineer": {
+      "a": "a siege engineer with a pot of pitch"
     }
   }
 }

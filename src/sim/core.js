@@ -99,7 +99,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   // till the run wins the room before it, whatever the slot has opened
   const raidFloor = (w, d) => { if (!raidOn || curScene !== 'dungeon') return w; w.npcs = []; w.raid = true; w.raidTop = raidOn.top; w.gateShut = gateShutOf(w.gates, (id) => raidOn.gates.has(id)); return w; };
   const buildWorld = (d) => raidFloor(shutGate(placeRoad(placeFound(placeNpcs(curScene === 'dungeon' ? createWorld(levelSeed(d), override, d, curSite) : createOutdoor(baseSeed, curScene, curRegion), isWalkable, oBlock, clock ? partOf(clock.t) : 0),
-    isWalkable, (id) => !!clock && (NPCS[id].visitor ? !(clock.flags || {})[NPCS[id].visitor] : ![...clock.party, ...clock.bench].some((m) => m.id === id))), clock)), d);   // a found companion waits in his hall until he joins, a visitor until he's gone (npcs.js); the dead hold the barrows road (road.js)
+    isWalkable, (id) => !!clock && !(NPCS[id].found.after && !(clock.bosses || {})[NPCS[id].found.boss]) && (NPCS[id].visitor ? !(clock.flags || {})[NPCS[id].visitor] : ![...clock.party, ...clock.bench].some((m) => m.id === id))), clock)), d);   // (`after`: only once his boss has fallen, Lucan, v1.154)   // a found companion waits in his hall until he joins, a visitor until he's gone (npcs.js); the dead hold the barrows road (road.js)
 
   let world = buildWorld(0);
   const bus = createBus();

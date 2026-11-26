@@ -2,8 +2,7 @@
   "id": "ch3_quota",
   "kind": "chapter",
   "title": "Quota",
-  "giver": "tamsin",
-  "turnin": "dagny_coalbrook",
+  "giver": "dagny_coalbrook",
   "region": "reach",
   "level": [
     30,
@@ -12,7 +11,7 @@
   "after": [
     "ch3_night_shift"
   ],
-  "summary": "The night shift went down into the Magma Vault, under the Cinderworks, to Furnace Nine. Tamsin wants to go after them, and break the lamp that's keeping them.",
+  "summary": "The night shift went down into the Magma Vault, under the Cinderworks, to Furnace Nine. Dagny wants them brought up, and the lamp that's keeping them broken.",
   "steps": [
     {
       "id": "stoker",
@@ -36,8 +35,8 @@
     "gold": 700
   },
   "dialogue": {
-    "file": "tamsin",
-    "offer": "tamsin_quota_offer",
+    "file": "dagny",
+    "offer": "dagny_quota_offer",
     "turnin": "dagny_quota_turnin"
   }
 }

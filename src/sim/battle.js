@@ -236,6 +236,12 @@ Object.assign(ENEMIES, {
   // boarding pikes (a warrior's: the fleet's elite, the pike's long reach)
   warhound: { hp: 39, atk: 8.2, def: 3, crit: 8, dodge: 9, interval: 0.95, range: 2.4, speed: 4.3, xp: 12, gold: 1 },
   mate:     { hp: 60, atk: 9.8, def: 6, crit: 6, dodge: 3, interval: 1.6, range: 3.6, speed: 2.8, xp: 15, gold: 4 },
+  // (v1.154, Highmarch: the build sheet in docs/tidemark-plan.md step 6) the march-kingdom's legionaries (a warrior's
+  // strength, a little less body for the tower shield, `shield`: a blow from in front glances, SHIELD_K, more where two
+  // stand shoulder to shoulder, none while held) and its siege engineers (a mage's, a pot of pitch that burns where it
+  // lands: PITCH_*)
+  legionary: { hp: 48, atk: 9.2, def: 6, crit: 5, dodge: 2, interval: 1.5, range: 3.0, speed: 2.7, xp: 14, gold: 3, shield: true },
+  engineer:  { hp: 34, atk: 10.0, def: 2, crit: 5, dodge: 5, interval: 2.1, range: 12.0, speed: 2.8, xp: 14, gold: 3, bolt: 'pitch' },
 });
 export const ENEMY_KINDS = Object.keys(ENEMIES);
 /** (v1.87) the room a melee blow is struck across: every melee reach, the party's and every foe's, is this much longer than
@@ -298,6 +304,10 @@ export const FAMILIES = {
   fleet: { melee: ['corsair', 'warhound'], ranged: ['gunner', 'crossbow'], elite: 'mate', undead: () => false },
   // (v1.151 step 5) the drowned fleet's crews marching on Brine Cross: Gannet's lamp holds them all (camps.js the stand)
   drowned_fleet: { melee: ['sailor', 'drowned'], ranged: ['cantor', 'cantor'], elite: 'bosun', undead: () => true },
+  // (v1.154) Highmarch: its walls under siege (the legionaries and their hounds, the engineers and the Redhand's
+  // crossbowmen in the march's pay), and the Seventh's Palace (the household's guard and the drowned Lucan keeps)
+  siege: { melee: ['legionary', 'warhound'], ranged: ['engineer', 'crossbow'], elite: 'legionary', undead: () => false },
+  palace: { melee: ['legionary', 'drowned'], ranged: ['crossbow', 'cantor'], elite: 'legionary', undead: (k) => k === 'drowned' || k === 'cantor' },
 };
 // Bosses (M5, docs/m5-plan.md §3): a floor's stairs-down hall (sites.js `bosses`) opens with its boss and
 // an escort; once the boss falls the room goes quiet for the visit. A boss is its `like` archetype's
@@ -350,10 +360,20 @@ export const GOLD_DROP = 0.35;
 //   boarding (Admiral Hesk, v1.151) every BOARD_S s two grapples (BOARD_LINES), each told BOARD_WIND s as a line from the
 //           hall's edge to where it lands, about BOARD_AT from the company's middle; at the landing BOARD_N of his escort
 //           (one: two, and six up, wiped the right party at 40 six seeds of six) swing in, unless one of the company stands within BOARD_R of it (the line cut). BOARD_MAX of his up at most.
+//   shieldwall (the Seventh's Champion, v1.154) every WALL_S s (first at WALL_FIRST) he calls his wall: up to WALL_N of his
+//           legionaries (those standing, and new ones to make up the line) stand in a line WALL_OUT in front of him across
+//           the way to the company, WALL_GAP apart, for WALL_T s, facing out and striking what comes in reach; while two of
+//           it stand unheld, a blow on him from in front lands at WALL_K. 'bossWall' { id, by, x, y, n, reached, dir }
+//   canticle (Lucan, v1.154) every CANT_S s (first at CANT_FIRST) he sings for CANT_T s, standing still: a ring goes out
+//           from him to CANT_R ('tell' kind 'canticle', nothing lands). Hurt CANT_BREAK of his max HP in it and the song
+//           breaks; unbroken, up to CANT_N of the hall's fallen (the Quartermaster's list) stand up as his where they fell,
+//           paying nothing again ('bossCanticle' { id, by, x, y, broken, reached }). At SPARE_AT of his life he sits down on
+//           his steps: beaten, not killed ('bossSpared', then 'bossDown' { …, fled: true, spared: true }); his fall for the
+//           story, as Vane's running is; in the story he's put on his steps to be spoken to (npcs.js lucan)
 //   vents   (the Stoker) every VENTS_S s the floor glows where slag will vent: a tell under each of the company and
 //           VENTS_MORE more about the hall, VENTS_R across, landing VENTS_WIND s later as VENTS_HURT of max HP.
 //           'bossVents' { id, by, x, y, n }
-/** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line' | 'swarm' | 'mud' | 'cage' | 'vespers' | 'bells' | 'issue' | 'sluice' | 'chutes' | 'scales' | 'anvil' | 'flee' | 'vents' | 'tide' | 'boarding', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
+/** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line' | 'swarm' | 'mud' | 'cage' | 'vespers' | 'bells' | 'issue' | 'sluice' | 'chutes' | 'scales' | 'anvil' | 'flee' | 'vents' | 'tide' | 'boarding' | 'shieldwall' | 'canticle', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
 export const BOSSES = {
   redhand_captain: { name: 'Captain Garrow', like: 'brute', hp: 22, atk: 2.3, def: 1.6, speed: 3.0, xp: 12, gold: 30, mech: 'call', escort: ['cutthroat', 'crossbow'], once: true, heirloom: 'garrows_due' },
   robed_stranger: { name: 'The Robed Stranger', like: 'acolyte', hp: 38, atk: 2.8, def: 2.5, xp: 12, gold: 25, mech: 'kindle', escort: ['minion', 'minion'], once: true },
@@ -383,6 +403,8 @@ export const BOSSES = {
   oruth: { name: 'Oruth the Forgemaster', like: 'warrior', hp: 24, atk: 2.3, def: 1.8, speed: 2.4, xp: 14, gold: 34, mech: 'anvil', escort: ['forgewight', 'forgewight'], undead: true, heirloom: 'oruths_last_commission' },
   morrow_vane: { name: 'Morrow Vane', like: 'cutthroat', hp: 18, atk: 2.0, def: 1.5, speed: 3.0, xp: 13, gold: 40, mech: 'flee', escort: ['assay_guard', 'assay_xbow'] },
   hesk: { name: 'Admiral Hesk', like: 'mate', hp: 22, atk: 2.4, def: 1.8, speed: 2.8, xp: 15, gold: 40, mech: 'boarding', escort: ['corsair', 'gunner'], heirloom: 'the_letter_of_marque' },   // (v1.151, the Gull Isles' great cabin)
+  champion: { name: "The Seventh's Champion", like: 'legionary', hp: 20, atk: 2.7, def: 1.8, speed: 2.5, xp: 15, gold: 42, mech: 'shieldwall', escort: ['legionary', 'engineer'], heirloom: 'the_laurel' },
+  lucan: { name: 'Lucan Varro', like: 'cantor', hp: 64, atk: 3.6, def: 2.2, speed: 2.6, xp: 16, gold: 48, mech: 'canticle', escort: ['legionary', 'cantor'], once: true, heirloom: 'the_chapel_box' },
   harbourmaster: { name: 'The Harbourmaster', like: 'bosun', hp: 21, atk: 2.3, def: 1.8, speed: 2.5, xp: 14, gold: 36, mech: 'tide', escort: ['sailor', 'bosun'], undead: true, heirloom: 'the_berths_book' },   // (v1.150, the Drowned Mole)
   stoker: { name: 'The Stoker', like: 'furnacepriest', hp: 22, atk: 2.3, def: 1.7, speed: 2.6, xp: 14, gold: 36, mech: 'vents', escort: ['cinderhound', 'furnacepriest'] },
   foreman: { name: 'The Foreman', like: 'bruiser', hp: 20, atk: 2.1, def: 1.6, speed: 2.8, xp: 13, gold: 30, mech: 'chutes', escort: ['hauler', 'archer'], heirloom: 'the_whistle' },   // (Gritch, the Cold Seam's tally cave, v1.124)
@@ -396,6 +418,9 @@ export const SCALES_S = 11, SCALES_WIND = 2.2, SCALES_R = 1.7, SCALES_HURT = 0.4
 export const VENTS_S = 10, VENTS_WIND = 2.0, VENTS_R = 1.6, VENTS_HURT = 0.3, VENTS_MORE = 3;
 export const TIDE_S = 15, TIDE_WARN = 2.5, TIDE_T = 7, TIDE_LEVEL = 2, TIDE_MEND = 0.02;   // (v1.150: the Harbourmaster's tide)
 export const STAND_STEP = 0.08, STAND_ELITE = 4, STAND_MORE = 2;   // (v1.152, a stand's waves, camps.js `stand`: two more than a room's, a step up each, an elite every fourth. The right party at 40 with the League holds Brine Cross in 146–161 s; without them it fell at wave 7, two seeds of three)
+export const SHIELD_K = 0.6, SHIELD_LOCK = 0.45, LOCK_R = 2.4, SHIELD_FRONT = 0.5, PITCH_R = 1.3, PITCH_T = 5, PITCH_MAX = 3;   // (v1.154: the legionaries' tower shields, the engineers' pitch)
+export const WALL_S = 15, WALL_FIRST = 3, WALL_N = 3, WALL_T = 9, WALL_OUT = 2.4, WALL_GAP = 1.6, WALL_K = 0.5;   // (v1.154: the Champion's wall)
+export const CANT_S = 16, CANT_FIRST = 6, CANT_T = 5, CANT_R = 7, CANT_BREAK = 0.06, CANT_N = 3, SPARE_AT = 0.1;   // (v1.154: Lucan's Canticle)
 export const BOARD_S = 18, BOARD_WIND = 3, BOARD_R = 1.8, BOARD_N = 1, BOARD_LINES = 2, BOARD_MAX = 4, BOARD_AT = 3.5, BOARD_MIN = 4, BOARD_LANE = 0.35;   // (v1.151: Hesk's boarding)
 export const MUD_S = 9, MUD_R = 1.8, MUD_T = 6, CAGE_HP = 0.35, CAGE_MEND = 0.025, VESPERS_S = 12, VESPERS_MEND = 0.02, BELL_S = 12, FLOOD_MAX = 4, FLOOD_STEP = 0.12;
 /** does a blow on this foe land at half? A boss whose called men still stand; an Ashbound (not a boss)
@@ -406,6 +431,19 @@ export function halved(tgt, foes) {
   if (tgt.boss && tgt.cage && foes.some((o) => o.id === tgt.cage && up(o))) return true;   // Teague's cage still lit
   if (tgt.undead && !tgt.boss) return foes.some((o) => o.boss === 'standard' && up(o) && hypot(o.x - tgt.x, o.y - tgt.y) < LINE_R);
   return false;
+}
+/** (v1.154) is `by` in front of `tgt` (within 60° of where it faces, SHIELD_FRONT)? @param {any} tgt @param {any} by */
+export const frontOf = (tgt, by) => { const fl = hypot(tgt.fx || 0, tgt.fy || 0), dx = by.x - tgt.x, dy = by.y - tgt.y, d = hypot(dx, dy); return fl > 0.01 && d > 0.01 && ((tgt.fx || 0) * dx + (tgt.fy || 0) * dy) / (fl * d) > SHIELD_FRONT; };
+const heldNow = (e) => e.stun > 0 || e.frozen > 0 || e.knocked > 0;
+/** what share of a blow from `by` lands on a foe (v1.154): a legionary's tower shield turns one from in front (SHIELD_K,
+ *  SHIELD_LOCK shoulder to shoulder with another, within LOCK_R), none while he's held; the Champion's front, while two of
+ *  his wall stand unheld (WALL_K) @param {any} tgt @param {any} by @param {any[]} foes */
+export function shieldShare(tgt, by, foes) {
+  if (!by || by.x === undefined) return 1;
+  const up = (o) => o.hp > 0 && !o.dead && !heldNow(o);
+  if (tgt.shield && !heldNow(tgt) && frontOf(tgt, by)) return foes.some((o) => o !== tgt && o.shield && up(o) && hypot(o.x - tgt.x, o.y - tgt.y) <= LOCK_R) ? SHIELD_LOCK : SHIELD_K;
+  if (tgt.boss && BOSSES[tgt.boss] && BOSSES[tgt.boss].mech === 'shieldwall' && frontOf(tgt, by) && foes.filter((o) => o.wallOf === tgt.id && up(o)).length >= 2) return WALL_K;
+  return 1;
 }
 /** the foes a nova reaches from `m`: within its radius, standing (not rising), and Ashbound only for
  * Turn Undead (`undead`) @param {any} A @param {any[]} foes @param {any} m */
@@ -718,10 +756,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const hp = Math.round(E.hp * scale * tough * (elite ? 2.5 : 1) * (B ? B.hp : 1) * foeHpOf(M, lvl));
     const u = { id: nextId++, kind: k, undead: B ? !!B.undead : F.undead(k), elite: elite || !!B, lvl, x, y, hp, maxHp: hp,
       atk: E.atk * atkScale * tough * (elite ? 1.3 : 1) * (B ? B.atk : 1) * M.foeAtk, def: E.def * scale * (B ? B.def : 1),
-      crit: E.crit, dodge: E.dodge, interval: E.interval, range: B && B.range ? B.range : E.range, speed: B && B.speed ? B.speed : E.speed, bolt: E.bolt,
+      crit: E.crit, dodge: E.dodge, interval: E.interval, range: B && B.range ? B.range : E.range, speed: B && B.speed ? B.speed : E.speed, bolt: E.bolt, shield: !B && !!E.shield,
       xp: E.xp * (elite ? 3 : 1) * (B ? B.xp : 1), gold: E.gold * (elite ? 4 : 1) * (B ? B.gold : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 };
     if (B && B.body) { u.body = B.body; u.anchor = true; }   // (the Kingstone: ground it stands on, never shoved)
-    if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; u.swarmT = 0; u.mudT = 0; u.vesT = 0; u.bellT = 0; u.issueT = 0; u.sluiceT = 0; u.sluiceN = 0; u.chuteT = 0; u.scalesT = 0; u.anvilT = 0; u.forging = 0; u.ventsT = 0; u.tideT = 0; u.tideIn = 0; u.tideTold = false; u.mend = 0; u.boardT = 0; u.boards = []; }
+    if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; u.swarmT = 0; u.mudT = 0; u.vesT = 0; u.bellT = 0; u.issueT = 0; u.sluiceT = 0; u.sluiceN = 0; u.chuteT = 0; u.scalesT = 0; u.anvilT = 0; u.forging = 0; u.ventsT = 0; u.tideT = 0; u.tideIn = 0; u.tideTold = false; u.mend = 0; u.boardT = 0; u.boards = []; u.wallT = WALL_S - WALL_FIRST; u.cantT = CANT_S - CANT_FIRST; u.singing = 0; u.songHp = 0; }
     w.enemies.push(u);
     return u;
   }
@@ -1102,7 +1140,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   function roomTells(w) {
     const T = state.t;
     for (const t of battle.tells) {
-      if (t.done || T < t.at || t.kind === 'board') continue;   // (Hesk's grapples' landings are his to resolve: bossMech 'boarding')
+      if (t.done || T < t.at || t.kind === 'board' || t.kind === 'canticle') continue;   // (Lucan's song's ring lands nothing: bossMech 'canticle')   // (Hesk's grapples' landings are his to resolve: bossMech 'boarding')
       t.done = true; let hit = 0;
       const by = (w.enemies || []).find((o) => o.id === t.by) || { x: t.x, y: t.y, kind: 'foreman', boss: true };   // (the load still falls after he does)
       for (let i = 0; i < state.party.length; i++) {
@@ -1208,6 +1246,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     let dmg = r.dmg;
     { const k = mode().dmg; if (k !== 1) dmg = Math.max(1, Math.round(dmg * k)); }   // (a bout: blows between companies land at BOUT.dmg)
     if (!isParty && battle && guardedHalf(tgt, w)) dmg = Math.max(1, Math.ceil(dmg / 2));   // Garrow's men stand / the Standard holds the line
+    if (!isParty && battle && !r.raw && !r.dot) { const k = shieldK(tgt, att.src || att, w); if (k < 1) { dmg = Math.max(1, Math.round(dmg * k)); bus.emit('combat', { t: 'glance', x: tgt.x, y: tgt.y, id: tgt.id }); } }   // (v1.154: a tower shield; the Champion's wall)
     // (the Kingstone's hits, r.raw: a share of max HP as it stands, GDD §19 v1.106; the guards' shares don't thin it: the
     // second hit unhealed came in at a third, its 70 % undone. A ward still soaks it; Lifeline still saves.)
     if (isParty && battle && !r.raw) { const tot = fieldAt('totem', tgt.x, tgt.y, tgt); if (tot) dmg = Math.max(1, Math.round(dmg * (1 - tot.A.guardK))); }   // its side's Spirit Totem's guard
@@ -1240,7 +1279,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       tgt.hp = Math.max(1, Math.round(statsFor(tgt).maxHp * SWORN_RISE)); (battle.sworn ||= []).push(tgt.id);   // Sworn: once a room visit, gets up from it
       bus.emit('combat', { t: 'rise', x: tgt.x, y: tgt.y, name: tgt.name });
     }
-    if (tgt.hp <= 0 && tgt.boss && !tgt.fled && BOSSES[tgt.boss].mech === 'flee') tgt.hp = 1;   // (Vane is never brought down: he runs, bossMech, the next tick)
+    if (tgt.hp <= 0 && tgt.boss && !tgt.fled && (BOSSES[tgt.boss].mech === 'flee' || BOSSES[tgt.boss].mech === 'canticle')) tgt.hp = 1;   // (Vane is never brought down: he runs, bossMech, the next tick; nor Lucan: he sits down, v1.154)
     if (tgt.hp > 0) return;
     if (isParty) {
       if (battle) battle.lastBlow = { kind: by.kind || '', elite: !!by.elite, boss: by.boss || '', on: tgt.name || '' };   // (the defeat recap: who brought them down)
@@ -1254,12 +1293,23 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     else { tgt.dead = DEATH_T; reward(tgt); if (focusId === tgt.id) focusId = 0; }
   }
   const guardedHalf = (tgt, w) => halved(tgt, w.enemies);
+  /** where a spared boss sits down (v1.154): on the open tile in front of his hall's throne (the dais's front row and one
+   *  more, world.js 'throne'), else where he stood @returns {[number, number]} */
+  function stepsOf(w, e) {
+    for (const [k, v] of w.props || []) {
+      if (v !== 'throne') continue;
+      const [tx, ty] = k.split(',').map(Number);
+      for (let d = 2; d <= 4; d++) for (const [dx, dy] of [[0, d], [d, 0], [0, -d], [-d, 0]]) { const x = tx + dx + 0.5, y = ty + dy + 0.5; if (isWalkable(w, x, y) && roomAt(w, x, y) === roomAt(w, e.x, e.y)) return [x, y]; }
+    }
+    return [e.x, e.y];
+  }
+  const shieldK = (tgt, by, w) => shieldShare(tgt, by, w.enemies || []);
   function reward(e) {
     if (e.inert) { freeing(e); return; }
     if (battle && battle.ring) { if (e.id === battle.ring.boss) ringOver('won', 'fell'); return; }   // (the Ring: nothing pays in the fight; the Kingstone's fall ends it)                         // Teague's cage: no XP, no coin, its soul goes free
     // the Quartermaster's ranks (issue): a fallen one he can stand up again, the last to fall first (FELL_MAX kept);
     // one he already stood up pays nothing again, no XP, coin, souls or count, so a hall he holds is no farm
-    if (battle && !e.boss && battle.boss && BOSSES[battle.boss].mech === 'issue') { (battle.fell ||= []).push({ kind: e.kind, x: e.x, y: e.y, elite: !!e.elite }); if (battle.fell.length > FELL_MAX) battle.fell.shift(); }
+    if (battle && !e.boss && battle.boss && (BOSSES[battle.boss].mech === 'issue' || BOSSES[battle.boss].mech === 'canticle')) { (battle.fell ||= []).push({ kind: e.kind, x: e.x, y: e.y, elite: !!e.elite }); if (battle.fell.length > FELL_MAX) battle.fell.shift(); }
     if (e.issued) { if (battle) battle.lastSlain = { x: e.x, y: e.y }; return; }
     if (battle && battle.tower) { towerReward(e); return; }
     const living = state.party.filter(alive), M = mode();
@@ -1276,9 +1326,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     bus.emit('combat', { t: 'xp', x: e.x, y: e.y, amount: share });
     if (e.boss) bossCleared(e);
     if (e.boss && !M.story) { if (battle) battle.quiet = true; bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first: false, x: e.x, y: e.y, lvl: e.lvl, raid: true, room: battle ? battle.room : null }); }   // (a raid's: not the story's, no time away)
-    else if (e.boss) { const first = !(state.bosses || {})[e.boss]; (state.bosses ||= {})[e.boss] = ((state.bosses || {})[e.boss] || 0) + 1; if (battle) { battle.boss = null; if ((getWorld().npcs || []).some((n) => n.found && n.boss === e.boss)) battle.quiet = true; }   // (one he held waits there to be spoken to: quiet for that)
+    else if (e.boss) { const first = !(state.bosses || {})[e.boss]; (state.bosses ||= {})[e.boss] = ((state.bosses || {})[e.boss] || 0) + 1;
+      if (e.spared) { const W = getWorld(), at = stepsOf(W, e); if (W.npcs && !W.npcs.some((n) => n.id === e.boss) && !(state.flags || {})[e.boss + '_gone']) W.npcs.push({ id: e.boss, found: true, visitor: true, boss: e.boss, x: at[0], y: at[1], px: at[0], py: at[1] }); }   // (v1.154: Lucan on his steps, to be spoken to: npcs.js)
+      if (battle) { battle.boss = null; if ((getWorld().npcs || []).some((n) => n.found && n.boss === e.boss)) battle.quiet = true; }   // (one he held waits there to be spoken to: quiet for that)
       (state.bossBack ||= {})[e.boss] = state.t + BOSS_BACK;   // (gone for BOSS_BACK: his room's waves the floor's own till then, v1.117)
-      bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first, x: e.x, y: e.y, lvl: e.lvl, ...(e.fled ? { fled: true } : {}) }); }   // (core.js pays its heirloom / loot; the room fights on; Vane fled, v1.126)
+      bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first, x: e.x, y: e.y, lvl: e.lvl, ...(e.fled ? { fled: true } : {}), ...(e.spared ? { spared: true } : {}) }); }   // (core.js pays its heirloom / loot; the room fights on; Vane fled, v1.126)
     else if (battle) battle.lastSlain = { x: e.x, y: e.y };
     if (e.elite && !e.boss) onDrop('elite', e.lvl, e.x, e.y);           // elites often carry gear
     bus.emit('slain', { kind: e.kind, elite: !!e.elite, lvl: e.lvl });   // (quests count elites)
@@ -1878,9 +1930,18 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     }
     pending.push({ t: heavy ? WINDUP_HEAVY : WINDUP, fn: () => {
       if (!standing()) return;                               // cut down mid-swing
-      if (bolt) { const d = hypot(tgt.x - att.x, tgt.y - att.y); w.projectiles.push({ x: att.x, y: att.y, px: att.x, py: att.y, sx: att.x, sy: att.y, tgt, t: 0, dur: d / BOLT_SPEED, kind: ab && att.cls === 'mage' ? 'fire' : bolt, skill: ab ? ab.id : null, hit }); }   // (skill: the renderer draws an ability's own bolt)
+      const land = !isPartyAtt && bolt === 'pitch' ? () => { const x = tgt.x, y = tgt.y; hit(); pitchAt(x, y); } : hit;   // (v1.154: the engineers' pitch burns where it lands)
+      if (bolt) { const d = hypot(tgt.x - att.x, tgt.y - att.y); w.projectiles.push({ x: att.x, y: att.y, px: att.x, py: att.y, sx: att.x, sy: att.y, tgt, t: 0, dur: d / BOLT_SPEED, kind: ab && att.cls === 'mage' ? 'fire' : bolt, skill: ab ? ab.id : null, hit: land }); }   // (skill: the renderer draws an ability's own bolt)
       else hit();
     } });
+  }
+
+  /** a pot of pitch lands (v1.154): a burning patch PITCH_R across for PITCH_T s (hazards.js: slowed in it, the AI steps
+   *  out), PITCH_MAX burning at once in a fight @param {number} x @param {number} y */
+  function pitchAt(x, y) {
+    if (!battle || !battle.hazards) return;
+    if (battle.hazards.filter((h) => h.kind === 'pitch' && h.until > state.t).length >= PITCH_MAX) return;
+    battle.hazards.push({ kind: 'pitch', x, y, r: PITCH_R, from: state.t, until: state.t + PITCH_T });
   }
 
   // ── movement ────────────────────────────────────────────────────────────────
@@ -2101,14 +2162,14 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const mem = isMember(e);
     if (e.poison) {                                                     // Venom ticks once a second
       e.poison.t -= dt; e.poison.acc += dt;
-      while (e.poison && e.poison.acc >= 1 && e.hp > 0) { e.poison.acc -= 1; applyHit(e.poison.by, e, { dmg: Math.max(1, Math.round(e.poison.dps)), crit: false }, mem, w); }
+      while (e.poison && e.poison.acc >= 1 && e.hp > 0) { e.poison.acc -= 1; applyHit(e.poison.by, e, { dmg: Math.max(1, Math.round(e.poison.dps)), crit: false, dot: true }, mem, w); }
       if (e.poison && e.poison.t <= 0) e.poison = null;
       if (e.hp <= 0) return 'gone';
     }
     if (e.drain) {                                                      // Spirit Drain ticks once a second, a stack's worth each
       const d = e.drain; d.t -= dt; d.acc += dt;
       while (e.drain && d.acc >= 1 && e.hp > 0) {
-        d.acc -= 1; const n = Math.max(1, Math.round(d.dps * d.n)); applyHit(d.by, e, { dmg: n, crit: false }, mem, w);
+        d.acc -= 1; const n = Math.max(1, Math.round(d.dps * d.n)); applyHit(d.by, e, { dmg: n, crit: false, dot: true }, mem, w);
         let low = null, lo = 1; for (const q of allies(d.by)) if (alive(q)) { const f = q.hp / statsFor(q).maxHp; if (f < lo) { lo = f; low = q; } }
         if (low) { const back = Math.max(1, Math.round(n * DRAIN_MEND * healK())); low.hp = Math.min(statsFor(low).maxHp, low.hp + back); }
         if (passiveVal(d.by, 'old_ways') && !d.by.down) d.by.mp = Math.min(statsFor(d.by).maxMp, d.by.mp + 1);   // Old Ways
@@ -2147,7 +2208,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const mx = i ? m.x : p.x, my = i ? m.y : p.y, F0 = fightOf(m), stance = stanceOf(m);
     // (the Kingstone's tells, GDD §19 v1.105: seen after a moment, RING.react, and stepped out of as a patch of mud is; the
     // hero when you let go a little later, RING.heroReact: watching and moving first is better. A tell doesn't slow.)
-    const seen = (t) => t.kind !== 'board' && state.t - t.from >= reactOf(m, i), tells = !!(battle.tells && battle.tells.length);   // (Hesk's grapples' landings hurt nobody: nothing to step out of)
+    const seen = (t) => t.kind !== 'board' && t.kind !== 'canticle' && state.t - t.from >= reactOf(m, i), tells = !!(battle.tells && battle.tells.length);   // (Hesk's grapples' landings hurt nobody: nothing to step out of)
     const tell = tells ? tellAt(battle, mx, my, seen) : null;
     // (and once out, it doesn't walk back in to its station before the blow lands: it holds where it is, and strikes if
     // it's in reach)
@@ -2427,6 +2488,53 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
           if (n) { e.atkN = (e.atkN || 0) + 1; e.atkKind = 'heavy'; bus.emit('bossBoarding', { id: e.boss, by: e.id, x: e.x, y: e.y, n }); }
         }
       }
+    } else if (B.mech === 'shieldwall' && battle) {
+      // his wall (v1.154): every WALL_S s up to WALL_N of his legionaries (the standing, then new ones) take a line WALL_OUT
+      // in front of him across the way to the company's middle, WALL_GAP apart, for WALL_T s (the AI below holds them
+      // there); while two stand unheld his front is covered (shieldK)
+      if (e.wallUp > 0 && (e.wallUp -= dt) <= 0) { e.wallUp = 0; for (const o of w.enemies || []) if (o.wallOf === e.id) o.wallAt = null; }
+      if ((e.wallT += dt) >= WALL_S) {
+        e.wallT = 0;
+        const at = state.party.map((m, i) => (alive(m) ? (i ? [m.x, m.y] : [state.player.x, state.player.y]) : null)).filter(Boolean);
+        if (at.length) {
+          const cx = at.reduce((a, q) => a + q[0], 0) / at.length, cy = at.reduce((a, q) => a + q[1], 0) / at.length, d = hypot(cx - e.x, cy - e.y) || 1, nx = (cx - e.x) / d, ny = (cy - e.y) / d;
+          const mine = (w.enemies || []).filter((o) => o.wallOf === e.id && o.hp > 0 && !o.dead), reached = [];
+          for (let i = 0; i < WALL_N; i++) {
+            const off = (i - (WALL_N - 1) / 2) * WALL_GAP, [sx, sy] = onFloor(w, e.x + nx * WALL_OUT - ny * off, e.y + ny * WALL_OUT + nx * off, e.x, e.y);
+            let o = mine[i];
+            if (!o) { o = foe(w, 'legionary', e.lvl, ...onFloor(w, e.x - nx + (i - 1) * 0.9, e.y - ny + (i - 1) * 0.9, e.x, e.y), tough, false, F); o.wallOf = e.id; }
+            o.wallAt = { x: sx, y: sy, fx: nx, fy: ny }; reached.push({ id: o.id, x: sx, y: sy });
+          }
+          e.wallUp = WALL_T; e.atkN = (e.atkN || 0) + 1; e.atkKind = 'heavy';
+          bus.emit('bossWall', { id: e.boss, by: e.id, x: e.x, y: e.y, n: reached.length, reached, dir: atan2(ny, nx) });
+        }
+      }
+    } else if (B.mech === 'canticle' && battle) {
+      // the Canticle (v1.154): he sings CANT_T s, standing still, a ring going out from him; hurt CANT_BREAK of his life in
+      // it and it breaks, else up to CANT_N of the hall's fallen stand up as his; at SPARE_AT he sits down (his fall)
+      if (!e.fled && e.hp > 0 && e.hp <= e.maxHp * SPARE_AT) {
+        e.fled = true; e.spared = true; e.singing = 0;
+        if (e.song) e.song.done = true;
+        bus.emit('bossSpared', { id: e.boss, x: e.x, y: e.y });
+        e.hp = 0; e.dead = DEATH_T; reward(e); if (focusId === e.id) focusId = 0;
+      } else if (e.singing > 0) {
+        if (e.songHp - e.hp >= e.maxHp * CANT_BREAK) { e.singing = 0; if (e.song) e.song.done = true; bus.emit('bossCanticle', { id: e.boss, by: e.id, x: e.x, y: e.y, broken: true, reached: [] }); }
+        else if ((e.singing -= dt) <= 0) {
+          e.singing = 0; if (e.song) e.song.done = true;
+          const reached = [];
+          for (let i = 0; i < CANT_N && battle.fell && battle.fell.length; i++) {
+            const f = battle.fell.pop(), [x, y] = onFloor(w, f.x, f.y, e.x, e.y), u = foe(w, f.kind, e.lvl, x, y, tough, f.elite, F); u.issued = true; reached.push({ id: u.id, x: u.x, y: u.y });
+          }
+          bus.emit('bossCanticle', { id: e.boss, by: e.id, x: e.x, y: e.y, broken: false, reached });
+        }
+      } else if ((e.cantT += dt) >= CANT_S) {
+        e.cantT = 0; e.singing = CANT_T; e.songHp = e.hp;
+        if (!battle.tells) { battle.tells = []; battle.tellN = 0; }
+        // (its ring drawn as the hall's tells are, filling as he sings: hybrid.js tellsOf; roomTells leaves it be)
+        battle.tells.push(e.song = { id: ++battle.tellN, kind: 'canticle', x: e.x, y: e.y, r: CANT_R, from: state.t, at: state.t + CANT_T, hurt: 0, by: e.id, done: false });
+        bus.emit('tell', { id: e.song.id, kind: 'canticle', x: e.x, y: e.y, r: CANT_R, dir: null, arc: null, wind: CANT_T });
+        bus.emit('bossSing', { id: e.boss, by: e.id, x: e.x, y: e.y, t: CANT_T });
+      }
     } else if (B.mech === 'vents' && battle && (e.ventsT += dt) >= VENTS_S) {
       // the floor glows where the slag will vent: under each of the company, and VENTS_MORE more about the hall
       e.ventsT = 0;
@@ -2624,6 +2732,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         if (e.boss) bossMech(e, w, dt);
         if (statusTick(e, w, dt)) continue;                                  // (Downed by its poison, or held)
         if (e.forging > 0) { e.moving = false; continue; }                  // (Oruth at his anvil: v1.126)
+        if (e.singing > 0) { e.moving = false; continue; }                  // (Lucan singing: v1.154)
         if (battle.ring && e.id === battle.ring.boss) { kingTurn(e, w, dt); continue; }   // (the Kingstone: its own walk and its tells)
         const slow = memberSlow(e); if (e.slow > 0) e.slow -= dt;           // Frost Nova; Caltrops, Blizzard
         const walk = (gx, gy) => (e.rooted > 0 ? (e.moving = false) : chase(e, gx, gy, e.speed * slow, dt, w));   // (a root stops its feet, not its blows)
@@ -2637,7 +2746,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         // Choir 3 of 3 down to 0 of 3 at 14, Old Skarn 3 of 3 to 1 of 3 at 5): the Choir's cantors sing in the stalls, at
         // its side, and what Skarn's drum brings out closes to half its reach before it shoots
         const sing = e.singer ? w.enemies.find((o) => o.id === e.singer && o.hp > 0 && !o.dead) : null;
-        if (sing && hypot(sing.x - e.x, sing.y - e.y) > STALL_R) { walk(sing.x, sing.y); if (d <= e.range && e.cd <= 0) attack(e, t, false, w, e); }
+        const wall = e.wallAt && w.enemies.some((o) => o.id === e.wallOf && o.hp > 0 && !o.dead) ? e.wallAt : null;   // (the Champion's wall: its place in the line, v1.154)
+        if (wall) {
+          if (hypot(wall.x - e.x, wall.y - e.y) > 0.5) { walk(wall.x, wall.y); if (d <= e.range && e.cd <= 0) attack(e, t, false, w, e); }
+          else { e.moving = false; if (d <= e.range) { if (e.cd <= 0) attack(e, t, false, w, e); } else { e.fx = wall.fx; e.fy = wall.fy; } }   // (facing out, shields to the company)
+        }
+        else if (sing && hypot(sing.x - e.x, sing.y - e.y) > STALL_R) { walk(sing.x, sing.y); if (d <= e.range && e.cd <= 0) attack(e, t, false, w, e); }
         else if (sing) { e.moving = false; if (d <= e.range && e.cd <= 0) attack(e, t, false, w, e); }
         else if (e.bolt) { if (d > (e.swarm ? e.range / 2 : e.range)) walk(t.x, t.y); else { e.moving = false; if (e.cd <= 0) attack(e, t, false, w, e); } }
         else melee(e, t, e, dt, w, false, walk);

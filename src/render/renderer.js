@@ -68,7 +68,12 @@ const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', ro
   // TB2) the Gull Fleet's war-hounds (a mastiff in a spiked collar and studded barding, built in code on the hound's
   // bones), its mates (the barbarian in the fleet's sea-grey and yellow, a watch-cap, a boarding pike), and Admiral Hesk
   // (a dark-blue coat in tarnished gold, epaulettes, a plumed hat, a gilt hanger, his commission at his belt)
-  warhound: 'enemy_warhound', mate: 'enemy_mate', hesk: 'boss_hesk' };   // (v1.53) the Cold Seam's: a slag hauler, the hod on his back; Gritch, a goblin in a dead foreman's lamp-hat   // (v1.105) the Kingstone: the golem drawn twice its size (BIG), four times a man
+  warhound: 'enemy_warhound', mate: 'enemy_mate', hesk: 'boss_hesk',
+  // (v1.154, Highmarch: tidemark-plan.md step 6's build sheet; tools/actor-lab variants TM6, TM7, TB3, TB4) the march's
+  // legionaries (the knight in oxblood and bronze, a crested helm, a tower shield carried in front: new silhouette 1), its
+  // siege engineers (the barbarian in a leather apron, a lit pot of pitch), the Seventh's Champion (gilt harness, a crest
+  // worn side to side, the Laurel round his helm) and Lucan Varro (light plate under a black long coat, a gilt circlet)
+  legionary: 'enemy_legionary', engineer: 'enemy_engineer', champion: 'boss_champion', lucan: 'boss_lucan' };   // (v1.53) the Cold Seam's: a slag hauler, the hod on his back; Gritch, a goblin in a dead foreman's lamp-hat   // (v1.105) the Kingstone: the golem drawn twice its size (BIG), four times a man
 // the Mere Tower's wardens (sim tower.js): baked tall as the bosses are (tools/actor-lab variants W1–W10), named on the boss bar
 for (const id of Object.keys(WARDENS)) ENEMY_ACTOR[id] = 'boss_' + id.slice('warden_'.length);
 const BIG = /** @type {Record<string, number>} */ ({ kingstone: 2, furnace_nine: 1.54, first_pilgrim: 1.5 });   // (v1.147 the First Pilgrim: baked 2.7 men, drawn four)   // (Furnace Nine: baked tall as a boss, 2.6 men, drawn to the Kingstone's four)   // a kind drawn larger than its actor's model (hybrid.js: the figure's scale)
@@ -1186,6 +1191,10 @@ export function createRenderer(canvas, sim, input) {
   });
   sim.bus.on('bossBoarding', ({ id }) => { banner = { text: `${bossName(id)} calls away boarders`, sub: bossLine.boarding[1], until: clock() + 1800, small: true }; });   // (v1.151)
   sim.bus.on('bossBoard', (e) => { if (e.cut) banner = { text: 'A line cut', sub: 'nobody comes along that one', until: clock() + 1400, small: true }; });   // (the effects pass gives a cut line its own look)
+  sim.bus.on('bossWall', ({ id }) => { banner = { text: `${bossName(id)} calls his wall`, sub: bossLine.shieldwall[1], until: clock() + 1800, small: true }; });   // (v1.154)
+  sim.bus.on('bossSing', ({ id }) => { banner = { text: `${bossName(id)} sings`, sub: bossLine.canticle[1], until: clock() + 1800, small: true }; });
+  sim.bus.on('bossCanticle', ({ broken, reached }) => { banner = broken ? { text: 'His breath goes', sub: 'the song breaks', until: clock() + 1500, small: true } : reached.length ? { text: 'The fallen get up', sub: 'his now', until: clock() + 1500, small: true } : banner; });
+  sim.bus.on('bossSpared', ({ id }) => { banner = { text: `${bossName(id)} sits down`, sub: 'on his own steps: beaten, not killed', until: clock() + 3200 }; });
   sim.bus.on('bossFled', ({ id }) => { banner = { text: `${bossName(id)} runs`, sub: 'out by the back stair, and gone', until: clock() + 2600 }; });
   sim.bus.on('bossVents', ({ id }) => { banner = { text: `${bossName(id)} opens the vents`, sub: bossLine.vents[1], until: clock() + 1800, small: true }; });
   sim.bus.on('bossMud', (e) => { moment('boss_mud', e); jolt('stamp', e.x, e.y); });
@@ -1217,7 +1226,9 @@ export function createRenderer(canvas, sim, input) {
     scales: ['weighs you', 'the one with the most life left pays: step off the pan'], anvil: ['goes to his anvil', 'strike him while he works, or a wight rises re-armed'],
     flee: ['will not be taken', 'he runs before he falls'], vents: ['opens the vents', 'the floor glows where the slag comes up: step off it'],
     tide: ['calls the tide in', 'the drowned mend in the water: keep to the middle'],
-    boarding: ['calls away boarders', 'stand where a grapple lands and cut its line'] };   // (Admiral Hesk, v1.151)   // (the Harbourmaster, v1.150)   // (the Foreman, v1.124)
+    boarding: ['calls away boarders', 'stand where a grapple lands and cut its line'],
+    shieldwall: ['calls his wall', 'shields turn blows from the front: go round, or knock one down'],   // (the Seventh's Champion, v1.154)
+    canticle: ['sings the Canticle', 'hurt him while he sings, or the fallen get up'] };   // (Lucan, v1.154)   // (Admiral Hesk, v1.151)   // (the Harbourmaster, v1.150)   // (the Foreman, v1.124)
   sim.bus.on('bossWave', ({ id, name }) => { const B = BOSSES[id]; banner = { text: name, sub: (bossLine[B.mech] || ['', ''])[1], until: clock() + 3200 }; });   // (a mechanic with no line yet: the name alone, never a throw)
   // (named from the boss: the Mere Tower's wardens call, drum and kindle too)
   const bossName = (id) => ({ redhand_captain: 'Garrow', goblin_chief: 'Skarn', robed_stranger: 'The Stranger' })[id] || (BOSSES[id] ? BOSSES[id].name : 'The warden');
@@ -1231,8 +1242,9 @@ export function createRenderer(canvas, sim, input) {
   sim.bus.on('bossVespers', () => { banner = { text: 'Another sister stands to sing', sub: bossLine.vespers[1], until: clock() + 2000, small: true }; });
   sim.bus.on('bossFlood', ({ level }) => { banner = level ? { text: 'A bell · the water rises', sub: bossLine.bells[1], until: clock() + 2000, small: true } : { text: 'The water goes down', until: clock() + 1800, small: true }; });
   sim.bus.on('bossKindle', ({ id }) => { banner = { text: `${bossName(id)} kindles the dead`, sub: bossLine.kindle[1], until: clock() + 2000, small: true }; });
-  sim.bus.on('bossDown', (e) => { if (e.x !== undefined) jolt('bossDown', e.x, e.y); else jolt('bossDown', sim.state.player.x, sim.state.player.y); });
-  sim.bus.on('bossDown', ({ name, first, tower, raid }) => { if (raid) { banner = { text: `${name} falls`, until: clock() + 2600 }; return; } const back = `back in ${Math.round(BOSS_BACK / 60)} min · the room fights on`; banner = { text: `${name} falls`, sub: tower ? `a landing · the satchel is banked${first ? ' · something was left behind' : ''}` : first ? `${back} · something was left behind` : back, until: clock() + 3200 }; });
+  sim.bus.on('bossDown', (e) => { if (e.spared) return; if (e.x !== undefined) jolt('bossDown', e.x, e.y); else jolt('bossDown', sim.state.player.x, sim.state.player.y); });
+  // (Vane runs, Lucan sits down: their own banners stand, v1.154)
+  sim.bus.on('bossDown', ({ name, first, tower, raid, fled, spared }) => { if (fled || spared) return; if (raid) { banner = { text: `${name} falls`, until: clock() + 2600 }; return; } const back = `back in ${Math.round(BOSS_BACK / 60)} min · the room fights on`; banner = { text: `${name} falls`, sub: tower ? `a landing · the satchel is banked${first ? ' · something was left behind' : ''}` : first ? `${back} · something was left behind` : back, until: clock() + 3200 }; });
   sim.bus.on('tideTurned', () => { banner = { text: 'The room falls back', sub: 'the tide turns: the next climb starts here', until: clock() + 2200, small: true }; });
   sim.bus.on('battle', (b) => { if (b.on && sim.raid) { const R = sim.raid; banner = { text: sim.battle && sim.battle.boss ? bossName(sim.battle.boss) : `Level ${b.level} room`, sub: sim.battle && sim.battle.boss ? 'a raid' : gateRoom() ? `a raid · hold ${R.waves} waves to drop the gate` : `a raid · hold ${R.waves} waves`, until: clock() + 1800 }; return; }
     if (b.on) banner = sim.world.site === 'mere_tower' ? { text: 'The Mere Tower', sub: `the stair hall · wave ${(sim.state.tower || {}).wave + 1}`, until: clock() + 1600 } : { text: `Level ${b.level} room`, sub: gateRoom() ? `${dangerWord(b.level)} · hold ${gateRoom().waves} waves to drop the gate` : dangerWord(b.level), until: clock() + (gateRoom() ? 2200 : 1100) }; });

@@ -27,7 +27,7 @@
       ]
     }
   ],
-  "ready": "Tell Brannoc it's done: tap his party card, then Talk.",
+  "ready": "Tell Brannoc it's done: tap his card, in the party or on the bench, then Talk.",
   "done": "The paymaster's boxes in the Keep's strongroom: coal-red wax on every purse, no crest. Brannoc kept one seal.",
   "rewards": {
     "share": 0.3,
