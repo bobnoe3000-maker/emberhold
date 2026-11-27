@@ -1,6 +1,6 @@
 # The Pilgrims' Stair and the Praetory: a mountain pass, and a fort frozen through
 
-*2026-11-27 · **Prototype**: four critic rounds on the pass, three on the frostkeep (§4). Both sites are parked: they
+*2026-11-27 · **Prototype**: eight critic rounds on the pass, seven on the frostkeep (§4). Both sites are parked: they
 are on no land. Reach them with `?scene=dungeon&region=heights&site=pilgrims_stair` (or `site=praetory`).*
 
 These are [dungeon-looks-plan.md](./dungeon-looks-plan.md) items 13 and 10, track 6, "the ice". Item 13 came from the
@@ -81,10 +81,11 @@ The converter is src/render3d/convert.js (`KIT_LOOK.pass`, `.gully`, `passBridge
 - **The drop:** each ledge's south and east edges (the faces the camera sees) carry a rock face down to −11.
   - Chunks of rock jut from the face, and a lip of snow runs along its top: the references' inked edge.
   - A veil of cloud hangs over the face's foot.
-  - Below that lies a floor of billowed cloud. Over the drop a veil thickens with each tile's distance from a ledge,
-    clear at the edges, as the wharf's mist does.
-  - The backdrop is the cloud's own pale, `#c4cfdc`.
-  - Four mountains stand far off, out of the cloud, their tops under the ledges.
+  - Below that the cloud has form (round 5 on). Banks of it stand in the drop, wide flat lumps (`cloudbank`) lit by the
+    sun from above and the blue fill from below, so their undersides fall into shadow. Under them is a deep blue-grey
+    floor of billowed cloud, and one thin veil over the drop, clear at the edges.
+  - The backdrop is a blue-grey, `#8ea3c8`, and the grade's vignette (`PASS_GRADE`) darkens the frame toward its edges.
+  - Six mountains stand far off, their tops out of the cloud and under the ledges.
 - **The bridges:**
   - The planks are tile `æ`: `pass_plank` over `pass_truss`, weathered dark, with snow in the seams.
   - `buildPass` adds a timber post at each corner and every 2.4 units, a hand rope and a lower one sagging between
@@ -95,8 +96,11 @@ The converter is src/render3d/convert.js (`KIT_LOOK.pass`, `.gully`, `passBridge
     emissive mask). Its open edges are lit pale blue and banked with snow.
   - **The frozen fall:** a sheet and thirteen columns of the same ice, backed by three tall blocks of brown rock, with
     one cool light.
-  - **The crystals:** Luminati's own ice (crag `spire` and rock `ice`, the season kit's), with one cool light for every
-    other cluster.
+  - **The crystals** (round 5): ours, six to eight faceted prisms leaning out from a root, vivid blue and lit from
+    inside, with a halo on the snow and a cool light for every other cluster. Luminati's own ice glowed at 0.15 and read
+    as grey-blue slabs.
+  - **The pools' rim** (round 5): a bright cyan line, with its light laid out over the snow bank in a strip that fades
+    from the rim. The ice's body is a deep blue.
 - **The light:** a cold, high day held whatever the clock says.
   - `held: 10.6` is passed through `hybrid.js` as the converter's `hour`.
   - `PASS_KEYFRAMES` is Luminati's day with a whiter, weaker sun, a blue shade, and the cloud's colour for the air.
@@ -104,7 +108,12 @@ The converter is src/render3d/convert.js (`KIT_LOOK.pass`, `.gully`, `passBridge
   - The level is open (`interior: false`): Luminati's sun and shadows, and the outdoor tilt-shift.
   - The fighters' rings are drawn at 0.9 alpha on the snow, as on the Bowl's sand.
   - The hero's ember-wisp is off.
-- **The falling snow:** Luminati's `snow` preset in a box that follows the camera, 600 flakes at 0.15–0.24.
+- **The falling snow** (round 6): our own, 1,400 points in one draw, each falling on the shared clock (`uTime`) and
+  wrapping, drifting a little sideways, 2.6 px a flake times the screen's density. Luminati's `snow` preset never
+  showed in this level.
+- **The palette** (round 5): the snow pale blues with deeper blue shadows and the lit tops near white; the rock
+  slate-navy with a cyan-lit edge along each facet's upper left; the fill and the shade bluer, the sun whiter
+  (`PASS_FILL`, `PASS_KEYFRAMES`); the picture's saturation up a seventh (`PASS_GRADE`).
 - **The pilgrims' things** (`buildPass`):
   - **Prayer posts:** a 2.9-unit pole and crossbar, strips of faded cloth in five colours, a bell, a snow cap and stones
     at the foot. At a doorway the post carries the doorway's lantern and its light.
@@ -119,12 +128,17 @@ The converter is `KIT_LOOK.frostkeep`, `frostDress` and `FROST_3D`. The builder 
 - **The walls:** the barracks' walls, ragged tops and all (`ruinWalls`), in `frost_wall`. That is grey-blue ashlar with
   rime along each block's top and in patches over its face. Tile `é`.
 - **The floor:** `frost_flag` (tile `ê`), grey flags with rime in their joints.
+  - **The snow drifted across it** (round 7): a tile of snow (`ë`) against every wall's foot, and over the floor our
+    own drifts, low soft lumps in broad patches by value noise, thinnest under the fight. Snow by the tile in the open
+    read as square blocks.
   - Round 2 had Luminati's `frost_cobble` (`R`), as the plan asked. Its blue read navy under the fort's cold fill.
-- **Icicles:** along every back wall's top, in runs of one height, long and short (`icicles`).
+- **Icicles:** along every back wall's top, in runs of one height (`icicles`). Since round 5 they are big enough to
+  read on a phone: up to half a figure long, thick, fewer.
+- **The glaze** (round 5): a blue ice glaze, translucent and faintly lit, down the back walls' lower courses.
 - **The doors:** where a hall meets a room, the tiles are trodden snow (`h`), with a drift (Luminati's `snow` rock) to
   one side.
 - **The guard:** each `frozen_guard` is our `bound` legionary (gsprite.js) inside a faceted block of clear ice. The ice is
-  a mesh of its own, drawn through, with rime at its foot.
+  a mesh of its own, drawn through, with rime at its foot. Since round 5 it glows faintly blue, with a halo on the floor.
 - **The fill:** `FROST_FILL` is cold, a step lighter than underground's violet: the barracks' dungeon ambient through a
   blue tint read navy. The braziers and torches stay warm against it.
 
@@ -145,6 +159,9 @@ the Stair (the same template, room for room), and Wickham Keep's barracks floor 
 | 2: the snow a step down and bluer, the rock a low plinth under faceted blocks, the scour in the texture | 7 | 6.5 | 6 | 8 | 6 | 6.5 | 5.5 | **6.5** |
 | 3: the veils joined, the blocks kept off the fall, the shrine and the stair's arch, the fall bigger, the cairns dark | 7.5 | 7 | 7 | 8 | 6.5 | 7 | 6.5 | **7** |
 | 4: shadows off the drop and the peaks, fewer pines (the perf pass), the flakes bigger | 7.5 | 7 | 7 | 8 | 6.5 | 7 | 6.5 | **7** |
+| 5 (the coordinator's notes): the saturated palette, our glowing crystals and pools, the cloud's banks, the vignette | 8 | 7.5 | 7.5 | 8 | 7.5 | 7.5 | 6.5 | **7.5** |
+| 6: our own falling snow, the banks darker | 8 | 7.5 | 7.5 | 8 | 7.5 | 7.5 | 7 | **7.5** |
+| 7–8: the banks wide and flat, blue-grey, fewer, the dark floor between; the flakes scattered | 8.5 | 7.5 | 7.5 | 8 | 8 | 8 | 7 | **8** |
 
 What each round fixed:
 
@@ -165,14 +182,24 @@ The fights read, judged on the Stage's live effects in the First Turn ([fx sheet
 - Frost Nova's burst, Glacial Tomb and Arcane Ward read.
 - Flare's faint warm ring is as faint here as it is on stone.
 
-Round 4's verdict. The Stair Foot and the First Turn are the references' snowfield: big blocks of dark rock, snow on
-their tops, a pool frozen blue in the corner, pines, the crystals glowing, the ledge's inked edge over the drop. The
-gully's brown rock and its frozen fall are the third reference's. What holds it under 8:
+Round 4's verdict: the Stair Foot and the First Turn were the references' snowfield, but the palette was grey and
+white, the ice small grey-blue slabs, and the cloud below the far ledges a pale blank across half the frame.
 
-- **The cloud** below the far ledges (the gully, the Cloud Ledge) is a pale blank across half the frame. Its billows
-  are lost in the fog and the outdoor tilt-shift. It wants blue-grey depth, as in ice-2: a darker floor of cloud, or a
-  bank of mist rising at the edges.
-- **The falling snow** barely reads: white flecks over white.
+Rounds 5–8 (the coordinator's four notes):
+
+- **Round 5** found the cloud floor's tiling commented out by a merged comment since round 2: its billows had been
+  stretched to one across the whole sheet, which was half of the blank.
+- **Round 6:** the banks at near white read as more snow, a field of boulders below the ledges.
+- **Round 7:** a flake attenuated by the camera's distance was under a pixel; in pixels now.
+- **Round 8:** the flakes' positions came from consecutive draws of one hash and fell on a line; a stream now.
+
+Round 8's verdict. Every room reads as the references' pass at a phone's size: blue snow under white tops, navy rock in
+blocks with cyan edges and snow on them, pools frozen deep blue inside a cyan rim, crystals glowing blue. Below the ledges
+is cloud with form. What still holds it from more:
+
+- **The cloud** is still the palest thing in the gully's and the Cloud Ledge's lower halves: the bank lumps are
+  faceted (twenty-face icosahedra) and the fog lays the backdrop over them.
+- **The falling snow** reads only against the cloud and the rock.
 - **The frozen river** under the river bridge is seen only from the First Turn. Ice-3's broken bridges and spray are
   not built.
 
@@ -184,13 +211,17 @@ gully's brown rock and its frozen fall are the third reference's. What holds it 
 | 1: rime walls, frost cobbles, icicles, guards in ice | 5 | 6 | 5 | 7 | 3.5 | 4.5 | 4.5 | **5** |
 | 2: a cold fill of its own, the ice shells bigger and clearer, no pillars | 6 | 6.5 | 6 | 7.5 | 6 | 5.5 | 5.5 | **6** |
 | 3: our frosted flags in place of the blue cobble | 6.5 | 6.5 | 6.5 | 7.5 | 6 | 6.5 | 6 | **6.5** |
+| 4 (the coordinator's notes): the glaze, big icicles, the guard's ice glowing, snow by the tile across the floor | 7 | 7 | 7 | 7.5 | 6.5 | 6.5 | 6 | **7** |
+| 5: the snow at the walls' feet only (the tiles read as square blocks), Luminati's drifts | 6.5 | 7 | 6.5 | 7.5 | 6.5 | 7 | 6.5 | **6.5** |
+| 6–7: our soft drifts over the floor (round 6 in the cap's texture, camouflage; 7 plain snow), thinnest under the fight | 7.5 | 7 | 7.5 | 7.5 | 7 | 7.5 | 7 | **7.5** |
 
-Round 3's verdict. The Watch Gate and the Guard Hall read as a fort gone to ice. The walls are rimed white, the guard
-stands in clear ice at the doors and down the walls, and the torches are warm against the cold. What holds it under 7:
+Round 7's verdict. The fort reads as frozen, not just cold: snow drifted over the flags and banked at the walls, the
+lower courses glazed blue, icicles along every top, the guard in faintly glowing ice. The torches are warm against it.
+What holds it under 8:
 
-- **The icicles** read as white specks at the game's zoom. They want to be longer and fewer.
-- **The rime joints** of the floor form a strong light grid.
 - **The candle piers** on the walls' tops (`ruinWalls`) aren't a frozen fort's.
+- **The walls' rime** reads a warm grey against the torches; it could be bluer.
+- **The world past the walls** is underground's black. A fort in the open would want the pass's sky.
 
 ## 5. The numbers
 
@@ -201,10 +232,15 @@ stands in clear ice at the doors and down the walls, and the torches are warm ag
   | Floor | Room | Draws | Triangles |
   |---|---|---|---|
   | High Ramparts (the kit it replaces) | Market Terrace | 83 | 215,977 |
-  | Pilgrims' Stair | First Turn | 92 (+11 %) | 174,824 (−19 %) |
-  | Pilgrims' Stair | Red Gully | 93 | 176,114 |
+  | Pilgrims' Stair, round 4 | First Turn | 92 (+11 %) | 174,824 (−19 %) |
+  | Pilgrims' Stair, round 8 | First Turn | 95 (+14.5 %) | 187,080 (−13 %) |
+  | Pilgrims' Stair, round 8 | Red Gully | 96 | 188,370 |
   | Wickham Keep (floor 1) | the bailey's second room | 122 | 198,055 |
-  | Praetory | Guard Hall | 117 (−4 %) | 198,355 (±0) |
+  | Praetory, round 3 | Guard Hall | 117 (−4 %) | 198,355 (±0) |
+  | Praetory, round 7 | Guard Hall | 121 (−1 %) | 207,613 (+5 %) |
+
+  Round 8's cost is the cloud's banks (about 100 lumps, no shadows), the snow (one draw) and the halos. The drifts at
+  80 faces took the Praetory to +20 % triangles; at 20 faces it is +5 %.
 
   - **The perf pass:** the cliffs' faces, the veils, the river and the mountains cast no shadow (`buildPass`'s second
     batch), the rock's blocks are 20 faces each, and at most eight pines stand on the rock.
@@ -215,7 +251,10 @@ stands in clear ice at the doors and down the walls, and the torches are warm ag
 - **Sheets** (scratch, out of the repo):
   - `scratchpad/looks/ice/sheet-refs.jpg`: the references beside every room;
   - `sheet-before-after.jpg`: the ramparts and the barracks against the pass and the frostkeep;
-  - `fx2/sheet.jpg` and `fx3/sheet.jpg`: the fights on the snow.
+  - `fx2/sheet.jpg` and `fx3/sheet.jpg`: the fights on the snow;
+  - `sheet-refs-r8.jpg` and `sheet-r4-r8.jpg`: round 8 beside the references, and against round 4;
+  - `fx4/sheet.jpg` and `fx5/sheet.jpg`: the fights on round 8's blue snow and on the Praetory's drifts. The rings,
+    the crossbows' lanes, Frost Nova and Glacial Tomb all read.
 
 ## 6. Left for when the Heights are built
 
