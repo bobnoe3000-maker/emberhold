@@ -771,6 +771,34 @@ export const PLANS = {
     ], halls: [] },
   ] },
 
+  // ── The Root Granary (a prototype: the greenwood kit, docs/greenwood-dungeon.md; docs/dungeon-looks-plan.md item 12,
+  //    from the owner's two references): its way in under the great oaks (world doc §3.8; dungeon-catalog.md §4.5), the
+  //    first floor, open air under the canopy. No walls: the trunks, root-banks and mossed boulders bound each glade
+  //    (convert.js). The Tithe Road runs ruled straight through it west to east; the empire's arcade stands at the back of
+  //    one glade, the granary's door at the side of the last, steps up into the dark. The floor the one-floor template's
+  //    (dungeon-catalog.md §1); the end's door on its west side (a gateway at its north edge stood in front of the oaks'
+  //    glade). Every piece at an edge, the middles open. `tithe_road`, `arcade`, `falls` and `granary_door` are the
+  //    renderer's (no sim piece: convert.js); the rest are world.js recipes.
+  root_granary: { site: 'root_granary', name: 'The Root Granary', kind: 'wood', base: 56, flat: true, floors: [
+    { name: 'Under the Oaks', spaces: [
+      { id: 'the_tithe_road', name: 'The Tithe Road', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'greenwood',
+        dress: ['tithe_road', 'wood_lamps', 'mossy_boulders'], note: 'Where the road comes in under the oaks, its flags still in a line under the moss.' },
+      { id: 'the_great_oaks', name: 'The Great Oaks', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'greenwood', foes: 'ashbound',
+        dress: ['tithe_road', 'ruin_blocks', 'mossy_boulders', 'wood_lamps'], note: 'The oldest of the oaks, and the road between them. The reeves\' carts came this way.' },
+      { id: 'the_falls', name: 'The Falls', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'greenwood', foes: 'ashbound',
+        dress: ['falls', 'mossy_boulders'], note: 'A glade under the falls, ferns to the knee, the spray in the air.' },
+      { id: 'the_arcade', name: 'The Arcade', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'greenwood', foes: 'ashbound',
+        dress: ['arcade', 'tithe_road', 'ruin_blocks', 'chest'], note: 'The empire built a gallery here to count the carts past. The moss has the gallery now.' },
+      { id: 'the_granary_door', name: 'The Granary Door', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'greenwood', foes: 'ashbound',
+        dress: ['granary_door', 'ruin_blocks', 'wood_lamps', 'chest'], note: 'The granary\'s door in under the roots, and the steps up to it. The clans sealed it the night no carts came.' },
+    ], halls: [
+      { from: 'the_tithe_road', to: 'the_great_oaks', x: 32, y: 44, w: 10, h: 10 },
+      { from: 'the_great_oaks', to: 'the_falls', x: 52, y: 20, w: 10, h: 10 },
+      { from: 'the_great_oaks', to: 'the_arcade', x: 92, y: 44, w: 10, h: 10 },
+      { from: 'the_great_oaks', to: 'the_granary_door', x: 48, y: 70, w: 10, h: 10 },
+    ] },
+  ] },
+
 };
 
 /** a space's size class by its sides (PLAN_RULES) @param {{ w: number, h: number }} s */

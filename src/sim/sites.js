@@ -107,6 +107,12 @@ export const SITES = {
   // parked, a prototype for review, on no land yet)
   high_ramparts: { name: 'The High Ramparts', region: 'reach', theme: 'dread', base: 22, perFloor: 0, floors: 1, plan: true, family: 'yards', rooms: [5, 5], layout: 'halls', flat: true, parked: true, mix: 0x4a3b },
   scrag_warren: { name: 'The Scrag Warren', region: 'reach', theme: 'warren', base: 2, perFloor: 1, floors: 2, family: 'goblin', rooms: [6, 6], parked: true, mix: 0x6b1d },
+  // (2026-11-27, docs/dungeon-looks-plan.md item 12, the owner's two references; docs/greenwood-dungeon.md) the Root
+  // Granary's way in under the great oaks (world doc §3.8; dungeon-catalog.md §4.5, 56–60): the greenwood kit, open air
+  // under the canopy, the empire's ruins in the moss. Parked, a prototype on a land not built yet (regions.js has no
+  // Greenwood: its region is the wall map's id, and the stair up comes out on the Vale as any land the sim doesn't
+  // know); its foes the Ashbound for now (the tithe's dead were Ashbound, §3.8), no story, no boss
+  root_granary: { name: 'The Root Granary', region: 'greenwood', theme: 'mire', base: 56, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [5, 5], layout: 'halls', flat: true, parked: true, mix: 0x6a77 },
 };
 export const SITE_IDS = Object.keys(SITES);
 
