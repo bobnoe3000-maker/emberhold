@@ -218,15 +218,15 @@ export const PLANS = {
   cold_seam: { site: 'cold_seam', name: 'The Cold Seam', kind: 'seam', base: 19, step: 2, floors: [
     { name: 'The Old Pithead', spaces: [
       { id: 'the_shaft_head', name: 'The Shaft Head', role: 'entrance', x: 0, y: 0, w: 32, h: 28, shape: 'rect', lv: 0, kit: 'pithead',
-        dress: ['timbers', 'lanterns', 'crates'], note: 'The cage landing at the foot of the shaft, the cage itself long gone; the shaft\'s ladder up to the day is the way out. Timbered, dry, cold.' },
+        dress: ['timbers', 'rails', 'lanterns', 'crates'], note: 'The cage landing at the foot of the shaft, the cage itself long gone; the shaft\'s ladder up to the day is the way out. Timbered, dry, cold.' },
       { id: 'the_lamp_room', name: 'The Lamp Room', role: 'room', x: 42, y: 0, w: 38, h: 30, shape: 'rect', lv: 0, kit: 'pithead', foes: 'pithead',
         dress: ['racks', 'lanterns', 'barrels'], note: 'Where the shift took its lamps and left its tallies: the racks still hang with them, two hundred lamps, none lit. Old Brannagh kept this room.' },
       { id: 'the_pay_office', name: 'The Pay Office', role: 'offshoot', x: 90, y: 4, w: 24, h: 22, shape: 'rect', lv: 1, kit: 'pithead', foes: 'pithead',
         dress: ['bars', 'pay_chests', 'ledger', 'chests'], note: 'The Seam\'s last wages behind the grille, in their strongboxes, never paid out: the Seam closed on a Friday.' },
       { id: 'the_long_gallery', name: 'The Long Gallery', role: 'room', x: 28, y: 40, w: 60, h: 40, shape: 'cave', lv: 0, kit: 'pithead', foes: 'pithead',
-        dress: ['timbers', 'carts', 'rubble', 'drips'], note: 'The main gallery, timbered every few paces, the rails for the carts down its middle; a stretch of roof came in years ago and the way goes round it.' },
+        dress: ['rails', 'timbers', 'carts', 'rubble', 'drips'], note: 'The main gallery, timbered every few paces, the rails for the carts down its middle; a stretch of roof came in years ago and the way goes round it.' },
       { id: 'the_winding_room', name: 'The Winding Room', role: 'descent', x: 34, y: 90, w: 50, h: 44, shape: 'rect', lv: 1, kit: 'pithead', foes: 'pithead',
-        dress: ['windlasses', 'lanterns', 'stair_down'], note: 'The winding gear for the deep shaft, its great wheel overhead; the goblins\' ladder goes down the old shaft beside it.' },
+        dress: ['windlasses', 'timbers', 'lanterns', 'stair_down'], note: 'The winding gear for the deep shaft, its great wheel overhead; the goblins\' ladder goes down the old shaft beside it.' },
     ], halls: [
       { from: 'the_shaft_head', to: 'the_lamp_room', x: 32, y: 9, w: 10, h: 10 },
       { from: 'the_lamp_room', to: 'the_pay_office', x: 80, y: 10, w: 10, h: 10 },
@@ -235,15 +235,15 @@ export const PLANS = {
     ] },
     { name: 'The Warren', spaces: [
       { id: 'the_breakthrough', name: 'The Breakthrough', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'cave', lv: 2, kit: 'warren',
-        dress: ['rubble', 'lanterns', 'stair_up'], note: 'Where the goblins broke through out of the range into the cut stone: raw rock one side, the Deepdelvers\' dressed wall the other.' },
+        dress: ['rubble', 'robbed_shoring', 'lanterns', 'stair_up'], note: 'Where the goblins broke through out of the range into the cut stone: raw rock one side, the Deepdelvers\' dressed wall the other.' },
       { id: 'the_burrow_hall', name: 'The Burrow Hall', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'cave', lv: 2, kit: 'warren', foes: 'warren',
-        dress: ['bedrolls', 'cookfires', 'sacks'], note: 'A long burrow the goblins sleep in, in shifts: the bedrolls are never cold.' },
+        dress: ['bedrolls', 'cookfires', 'robbed_shoring', 'sacks'], note: 'A long burrow the goblins sleep in, in shifts: the bedrolls are never cold.' },
       { id: 'the_larder', name: 'The Larder', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'cave', lv: 3, kit: 'warren', foes: 'warren',
         dress: ['barrels', 'bones', 'chest', 'shrine'], note: 'What the warren eats, hung and stacked; better not to look at the bottom of the pile.' },
       { id: 'the_spoil_cut', name: 'The Spoil Cut', role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'cave', lv: 3, kit: 'warren', foes: 'warren',
-        dress: ['carts', 'rubble', 'lanterns'], note: 'Where the goblins tip what they dig, by the cartload: the old carts, stolen off the Seam\'s rails, and a heap to the roof.' },
+        dress: ['tipped_cart', 'carts', 'rubble', 'lanterns'], note: 'Where the goblins tip what they dig, by the cartload: the old carts, stolen off the Seam\'s rails, and a heap to the roof.' },
       { id: 'the_tally_cave', name: 'The Tally Cave', role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'cave', lv: 3, kit: 'warren', foes: 'warren', boss: 'foreman',
-        dress: ['scaffold', 'ladders', 'braziers', 'drips'], note: 'The Foreman\'s cave: the old chutes come down through its roof from the gallery above, and he has chalked his crosses on the floor under them. His tally covers the walls. Tamsin Coalbrook at the goblins\' anvil, on a chain.' },
+        dress: ['scaffold', 'ladders', 'robbed_shoring', 'braziers', 'drips'], note: 'The Foreman\'s cave: the old chutes come down through its roof from the gallery above, and he has chalked his crosses on the floor under them. His tally covers the walls. Tamsin Coalbrook at the goblins\' anvil, on a chain.' },
     ], halls: [
       { from: 'the_breakthrough', to: 'the_burrow_hall', x: 30, y: 8, w: 10, h: 10, rough: true },
       { from: 'the_burrow_hall', to: 'the_larder', x: 56, y: 24, w: 10, h: 10, rough: true },
@@ -277,11 +277,11 @@ export const PLANS = {
       { id: 'the_cage_store', name: 'The Cage Store', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'cave', lv: 2, kit: 'quota', foes: 'quota',
         dress: ['bars', 'chains', 'lanterns'], note: 'The night shift\'s chains on the walls, a hook for each, and a number chalked over each hook.' },
       { id: 'the_ledger_room', name: 'The Ledger Room', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'cave', lv: 3, kit: 'quota', foes: 'quota',
-        dress: ['rolls', 'desks', 'chest', 'shrine'], note: 'The rolls of the night shift, by name and weight: the company\'s proof, if anyone will read it.' },
+        dress: ['rolls', 'desks', 'desk_rows', 'chest', 'shrine'], note: 'The rolls of the night shift, by name and weight: the company\'s proof, if anyone will read it.' },
       { id: 'the_assay_furnace', name: 'The Assay Furnace', role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'cave', lv: 3, kit: 'quota', foes: 'quota',
         dress: ['braziers', 'carts', 'crates'], note: 'Where the ore is tried: a small furnace kept hot, crucibles in rows, the slag of every sample swept into a heap.' },
       { id: 'the_quota_office', name: 'The Quota Office', role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'cave', lv: 3, kit: 'quota', foes: 'quota', boss: 'weighmaster',
-        dress: ['desks', 'ledger', 'braziers', 'banners'], note: 'The Weighmaster\'s office: his brass scale on its stand, the week\'s quota chalked on a board, and a column headed QUOTA in every book.' },
+        dress: ['desks', 'ledger', 'desk_rows', 'strongbox', 'braziers', 'banners'], note: 'The Weighmaster\'s office: his brass scale on its stand, the week\'s quota chalked on a board, and a column headed QUOTA in every book.' },
     ], halls: [
       { from: 'the_cellar_stair', to: 'the_cage_store', x: 30, y: 8, w: 10, h: 10, rough: true },
       { from: 'the_cage_store', to: 'the_ledger_room', x: 56, y: 24, w: 10, h: 10, rough: true },
@@ -543,15 +543,15 @@ export const PLANS = {
   //    vault where the fair copy lies (world doc §7: The Fair Copy, its heirloom, in the end room's chest: world.js placeVault).
   reedholm_undercroft: { site: 'reedholm_undercroft', name: 'The Reedholm Undercroft', kind: 'crypt', base: 18, flat: true, floors: [
     { name: 'The Undercroft', spaces: [
-      { id: 'the_key_stair', name: 'The Key Stair', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'crypt',
+      { id: 'the_key_stair', name: 'The Key Stair', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'fenbrick',
         dress: ['candelabra_ends', 'crypt_corners'], note: 'The stair down from the priory\'s low door. The key was on its nail by the door. It always was.' },
-      { id: 'the_copy_room', name: 'The Copy Room', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'crypt', foes: 'ashbound',
+      { id: 'the_copy_room', name: 'The Copy Room', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'fenbrick', foes: 'ashbound',
         dress: ['desks', 'rolls', 'candelabra_pair', 'crypt_corners'], note: 'Where the binding rolls were written out fair: the copyists\' desks along the walls, the ink dry in its horns.' },
-      { id: 'the_clergy_chapel', name: 'The Clergy\'s Chapel', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'crypt', foes: 'ashbound',
+      { id: 'the_clergy_chapel', name: 'The Clergy\'s Chapel', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'fenbrick', foes: 'ashbound',
         dress: ['chantry_altar', 'chantry_pews', 'shrine'], note: 'The binding clergy\'s own chapel, where a roll was blessed before it was bound.' },
-      { id: 'the_bone_room', name: 'The Bone Room', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'ossuary', foes: 'ashbound',
+      { id: 'the_bone_room', name: 'The Bone Room', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'fenbones', foes: 'ashbound',
         dress: ['candelabra_ends', 'crypt_corners', 'chest'], note: 'The priory\'s dead, brought down when the water came into the Abbey.' },
-      { id: 'the_fair_copy', name: 'The Fair Copy', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'crypt', foes: 'ashbound',
+      { id: 'the_fair_copy', name: 'The Fair Copy', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'fenbrick', foes: 'ashbound',
         dress: ['vault_chest', 'tombs_near', 'tombs_side', 'founder_lights', 'rolls', 'crypt_corners'], note: 'The copyists in their tombs, and between them the chest with the fair copy: every name, in a better hand than it was ever written in.' },
     ], halls: [
       { from: 'the_key_stair', to: 'the_copy_room', x: 32, y: 44, w: 10, h: 10 },
