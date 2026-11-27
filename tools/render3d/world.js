@@ -581,6 +581,7 @@ function skull(b, p, u, y, s, v) {
   for (const sg of [-1, 1]) b.box(cryptDark, sz(p, 0.36 * s, 0.34 * s, 0.05 * s), { at: on(p, u + sg * 0.3 * s, y - 0.12 * s, v + 0.72 * s) });   // (the eyes)
   b.box(cryptDark, sz(p, 0.16 * s, 0.24 * s, 0.05 * s), { at: on(p, u, y - 0.48 * s, v + 0.72 * s) });   // (the nose)
 }
+let countGlass = null;   // (the counting house's cool lamp glass: buildTavern clamp)
 let tavernGlass = null, tavernWeb = null, tavernWebFill = null, tavernEmber = null, tavernNight = null, tavernNightHi = null, tavernStar = null, tavernGrime = null;
 // the Seventh's Palace's cloth (docs/art-critic-pass-palace.md), tints on its pale weave: the household's blue (a march
 // kingdom's, gold on it), then the legions' in the hall of banners, every one the empire raised and some it never did:
@@ -602,7 +603,7 @@ function palaceSkyAt(h) {
   return _palSky;
 }
 function buildTavern(pieces) {
-  const f = game.world.factory, b = f.builder(), FL = 1.0, TOP = FL + TAV_H, furn = [], webTris = [], loose = [], own = [];   // (loose: kept whole, never merged: a sprite; own: this build's own materials and textures, gone with it)
+  const f = game.world.factory, b0 = f.builder(), FL = 1.0, TOP = FL + TAV_H, furn = [], webTris = [], loose = [], own = [];   // (loose: kept whole, never merged: a sprite; own: this build's own materials and textures, gone with it)
   tavernGlass ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffb45e').multiplyScalar(2.2), fog: false });
   cryptDark ||= new THREE.MeshBasicMaterial({ color: '#0d0a08' });
   tavernWeb ||= new THREE.MeshBasicMaterial({ color: '#cfc9bf', transparent: true, opacity: 0.45, depthWrite: false });   // (round 3: grey-white, a third opaque)
@@ -612,7 +613,11 @@ function buildTavern(pieces) {
   const sz = (p, w, h, d) => (p.n === 'z' ? [w, h, d] : [d, h, w]);
   const tilt = (p, a) => (p.n === 'z' ? [0, 0, -a] : [a, 0, 0]);   // (leaning toward +u by a radians, in the wall's plane)
   const STORY_S = new Set(['shelf', 'antlers', 'pegs', 'slate', 'herbs']);
+  // (the Reedholm Undercroft's arcade, docs/art-critic-pass-stone.md: the crypt's own pieces, marked `fen` by convert.js,
+  // built in the reed town's brick and lime in place of the crypt's limestone: the same builder, its materials renamed)
+  const fenB = new Proxy(b0, { get: (t, k) => { const v = t[k]; if (typeof v !== 'function') return v; return FEN_DRAWS.has(k) ? (m, ...a) => v.call(t, FEN_MAT[m] || m, ...a) : v.bind(t); } });
   for (const p of pieces) {
+    const b = p.fen && FEN_KINDS.has(p.k) ? fenB : b0;
     const big = STORY_S.has(p.k) || p.k === 'plaque' || p.k === 'saint' || p.k === 'mourner' || p.k === 'greattomb' || p.k === 'hatchment';   // (the bay's story items built half again as big about their anchor: round 6, "dark specks")
     if (big) { const S = p.k === 'plaque' ? 1.8 : p.k === 'saint' ? 1.45 : p.k === 'mourner' ? 1.38 : p.k === 'greattomb' ? 1.3 : p.k === 'hatchment' ? 1.3 : 1.95, A = p.k === 'plaque' ? on(p, 0, FL + 1.7, 0) : p.k === 'saint' || p.k === 'mourner' || p.k === 'greattomb' ? [p.x, FL, p.z] : on(p, 0, p.y, 0);   // (round 6: the founder's canopy 1.3×, the vault's showpiece; the hatchments 1.8 across)
       b.pushMatrix(new THREE.Matrix4().makeTranslation(A[0], A[1], A[2]).multiply(new THREE.Matrix4().makeScale(S, S, S)).multiply(new THREE.Matrix4().makeTranslation(-A[0], -A[1], -A[2]))); }   // (the crypt's tablet half again as big: round 1)
@@ -1516,6 +1521,194 @@ function buildTavern(pieces) {
       const R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
       for (let k = 0; k < 4; k++) b.tinted([1.05, 1.0, 0.88], () => b.box('linen', [0.32, 0.012, 0.24], { at: [p.x + (R(k) - 0.5) * 0.8, FL + 0.008 + k * 0.004, p.z + (R(k + 5) - 0.5) * 0.6], rot: [0, R(k + 9) * 3, 0] }));
       b.box(cryptOx ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#6e1e20') }), [0.06, 0.012, 0.06], { at: [p.x + (R(0) - 0.5) * 0.8, FL + 0.016, p.z + (R(5) - 0.5) * 0.6] });
+    } else if (p.k === 'eeltraps') {
+      // ── the Reedholm Undercroft (docs/art-critic-pass-stone.md): the eel-men's traps hung in a bay to dry, three wicker
+      // bottles on cords from a peg rail, mouth up, a coil of line on the last peg
+      const y = FL + 2.3, R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;   // (round 4: hung from the arch's spring, at a man's head: at the bay's foot they were lost behind the candles)
+      b.tinted(OAK, () => { b.box('furniture_wood', sz(p, 2.0, 0.1, 0.08), { at: on(p, 0, y, 0.04) }); for (const u of [-0.65, 0, 0.65]) b.box('furniture_wood', sz(p, 0.06, 0.06, 0.2), { at: on(p, u, y, 0.14) }); });
+      for (const [k, u] of [[0, -0.65], [1, 0], [2, 0.65]]) {
+        if (k === 2 && R(5) < 0.5) { b.tinted(DOCK_ROPE, () => { for (const [r, dy] of [[0.2, -0.18], [0.17, -0.26]]) b.lathe('linen', [{ y: 0, r }, { y: 0.06, r: r + 0.01 }], { segments: 9, at: on(p, u, y + dy, 0.2), rot: p.n === 'z' ? [Math.PI / 2, 0, 0] : [0, 0, -Math.PI / 2] }); }); continue; }   // (a coil of line on the last peg, now and then)
+        const L = 1.05 + R(k) * 0.25, top = y - 0.12, a = (R(k + 3) - 0.5) * 0.12;
+        b.tinted([0.62, 0.5, 0.36], () => b.box('linen', sz(p, 0.02, 0.14, 0.02), { at: on(p, u, top + 0.05, 0.2) }));
+        b.tinted([1.6, 1.42, 1.1], () => b.lathe('reed_mat', [{ y: -L, r: 0.05 }, { y: -L + 0.12, r: 0.11 }, { y: -L * 0.45, r: 0.2 }, { y: -0.12, r: 0.22 }, { y: -0.04, r: 0.19 }, { y: 0, r: 0.2 }], { segments: 10, at: on(p, u, top, 0.26), rot: tilt(p, a) }));
+        b.tinted([0.46, 0.38, 0.28], () => b.lathe('reed_mat', [{ y: 0, r: 0.2 }, { y: 0.01, r: 0.06 }], { segments: 10, at: on(p, u, top + 0.005, 0.26), rot: tilt(p, a) }));   // (its funnel, dark down the mouth)
+        for (const f2 of [0.3, 0.62]) b.tinted([0.5, 0.42, 0.3], () => b.lathe('reed_mat', [{ y: 0, r: 0.0 }, { y: 0.001, r: 0.205 - f2 * 0.08 }, { y: 0.04, r: 0.205 - f2 * 0.08 }, { y: 0.041, r: 0 }], { segments: 10, at: on(p, u, top - L * f2, 0.26), rot: tilt(p, a) }));   // (its hoops)
+      }
+    } else if (p.k === 'nets') {
+      // an eel-net hung from three pegs to dry: a tarred mesh sagging between them, the cork floats along its head line
+      const W2 = 2.2, H2 = 1.5, y0 = FL + 2.4, sag = (u) => 0.18 * (1 - (2 * u / W2) ** 2);
+      b.tinted(OAK, () => { b.box('furniture_wood', sz(p, W2 + 0.2, 0.08, 0.08), { at: on(p, 0, y0 + 0.06, 0.04) }); });
+      const pt = (u, dy) => on(p, u, y0 - dy - sag(u) * (1 - dy / H2 * 0.5) * (dy > 0 ? 1 : 0), 0.08 + dy * 0.05);
+      b.tinted([0.22, 0.19, 0.16], () => { const N2 = 6; for (let a2 = 0; a2 < N2; a2++) for (let c2 = 0; c2 < 4; c2++) { const u0 = -W2 / 2 + (a2 / N2) * W2, u1 = -W2 / 2 + ((a2 + 1) / N2) * W2, d0 = (c2 / 4) * H2 * (1 - Math.abs(u0) / W2 * 0.4), d1 = ((c2 + 1) / 4) * H2 * (1 - Math.abs(u0) / W2 * 0.4); b.quad('linen', [pt(u0, d0), pt(u1, d0), pt(u1, d1), pt(u0, d1)], [[0, 0], [1, 0], [1, 1], [0, 1]]); } });   // (its body, the tar dark)
+      b.tinted([1.0, 0.86, 0.62], () => {
+        for (let k = 0; k <= 10; k++) { const u = -W2 / 2 + (k / 10) * W2, dEnd = H2 * (1 - Math.abs(u) / W2 * 0.4); b.tube('linen', pt(u, 0), pt(u * 0.92, dEnd), 0.012, 0.012, { segments: 3 }); }
+        for (let c2 = 1; c2 <= 6; c2++) for (let k = 0; k < 10; k++) { const u0 = -W2 / 2 + (k / 10) * W2, u1 = u0 + W2 / 10, d = (c2 / 6) * H2 * 0.92; b.tube('linen', pt(u0, d * (1 - Math.abs(u0) / W2 * 0.4)), pt(u1, d * (1 - Math.abs(u1) / W2 * 0.4)), 0.012, 0.012, { segments: 3 }); }
+      });
+      b.tinted([1.3, 0.98, 0.56], () => { for (let k = 0; k <= 6; k++) { const u = -W2 / 2 + 0.12 + (k / 6) * (W2 - 0.24); b.lathe('furniture_wood', [{ y: 0, r: 0.06 }, { y: 0.05, r: 0.075 }, { y: 0.11, r: 0 }], { segments: 6, at: pt(u, 0.06) }); } });
+    } else if (p.k === 'reedmat') {
+      // reed matting laid on the brick (convert.js fenMats): a length of split reed in a basket weave, its edges bound in a
+      // darker plait, its ends frayed; flat, walked over
+      const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 }, ax = Math.abs(p.x1 - p.x0) >= Math.abs(p.z1 - p.z0), y = FL + 0.012;
+      const box = (mat, a, w2, dy, la, ww) => b.box(mat, ax ? [la, dy, ww] : [ww, dy, la], { at: ax ? [q.x + a, y + dy / 2, q.z + w2] : [q.x + w2, y + dy / 2, q.z + a] });
+      // (round 1: one length read as a road painted yellow down the room: mats a few units long, a gap between, a step
+      // darker and each its own tone)
+      const n = Math.max(1, Math.round(len / 4.2)), ml = len / n, R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+      for (let m = 0; m < n; m++) {
+        const c = -len / 2 + (m + 0.5) * ml, L2 = ml - 0.5 - R(m) * 0.3, k2 = 0.62 + R(m + 9) * 0.1, off = (R(m + 5) - 0.5) * 0.16;
+        b.tinted([k2, k2 * 0.95, k2 * 0.86], () => box('reed_mat', c, off, 0.018, L2, p.w));
+        b.tinted([0.4, 0.35, 0.28], () => { for (const sg of [-1, 1]) box('reed_mat', c, off + sg * (p.w / 2 - 0.05), 0.022, L2, 0.08); });
+        b.tinted([0.58, 0.52, 0.42], () => { for (const sg of [-1, 1]) for (let k = -4; k <= 4; k++) box('reed_mat', c + sg * (L2 / 2 + 0.05), off + k * (p.w / 9), 0.016, 0.12, 0.035); });
+      }
+    } else if (p.k === 'shoringset') {
+      // ── the Cold Seam (convert.js MINE_3D; round 4: the timber weathered pale, grey-tan, so a set reads on the dark rock
+      // at a phone's size, the old brown lost on it): a shoring set against the rock, two squared props and a cap beam over them, a
+      // wedge at each joint, lagging boards behind; against a near wall only the props' stumps; the warren's robbed (broken)
+      const O = (u, y, v) => on(p, u, y, v * (p.out || 1)), R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+      const WOOD = [1.55, 1.38, 1.15], WOOD_LIT = [1.9, 1.72, 1.45], PH2 = p.near ? 0.85 : 2.3, US = [-0.85, 0.85];   // (round 1: at the inn's oak they stood black on the dark rock)
+      b.tinted(WOOD, () => {
+        US.forEach((u, k) => {
+          if (p.broken && k === 1) { b.box('furniture_wood', sz(p, 0.3, 0.45, 0.3), { at: O(u, FL + 0.22, 0.28) }); b.box('furniture_wood', sz(p, 0.3, 1.9, 0.3), { at: O(u - 0.55, FL + 0.75, 0.55), rot: tilt(p, 1.05) }); return; }   // (the prop knocked out: its stump, the rest of it fallen against its neighbour)
+          b.box('furniture_wood', sz(p, 0.3, PH2, 0.3), { at: O(u, FL + PH2 / 2, 0.28), rot: tilt(p, (R(k) - 0.5) * 0.05) });
+        });
+        if (!p.near) {
+          if (p.broken) b.box('furniture_wood', sz(p, 2.1, 0.26, 0.26), { at: O(-0.1, FL + 1.25, 0.3), rot: tilt(p, -0.95) });   // (the cap down, one end on its prop, the other on the floor)
+          else b.box('furniture_wood', sz(p, 2.3, 0.28, 0.3), { at: O(0, FL + PH2 + 0.14, 0.26) });
+        }
+      });
+      if (!p.near && !p.broken) b.tinted(WOOD_LIT, () => { b.box('furniture_wood', sz(p, 2.3, 0.04, 0.31), { at: O(0, FL + PH2 + 0.29, 0.26) }); for (const u of US) b.box('furniture_wood', sz(p, 0.2, 0.12, 0.08), { at: O(u, FL + PH2 - 0.05, 0.4) }); });   // (its top lit; the wedges)
+      b.tinted([1.1, 0.96, 0.8], () => { const rows = p.near ? [0.3, 0.62] : [0.4, 0.95, 1.5, 2.05]; rows.forEach((y, k) => { if (p.broken && R(k + 7) < 0.6) return; b.box('furniture_wood', sz(p, 1.75, 0.3, 0.05), { at: O(0, FL + y, 0.1), rot: tilt(p, (R(k + 3) - 0.5) * 0.06) }); }); });   // (the lagging)
+      if (p.broken) b.tinted([1.2, 1.05, 0.88], () => b.box('furniture_wood', sz(p, 1.4, 0.06, 0.3), { at: O(0.4, FL + 0.04, 0.95), rot: [0, R(9) * 0.8, 0] }));   // (a board split off on the floor)
+      if (p.lamp) {   // (a lamp hung on an iron hook from the cap's middle, out over the gallery)
+        b.tinted(TAV_IRON, () => { b.box('metal', sz(p, 0.04, 0.04, 0.5), { at: O(0, FL + PH2 + 0.05, 0.62) }); b.box('metal', sz(p, 0.03, 0.2, 0.03), { at: O(0, FL + PH2 - 0.06, 0.86) }); b.box('metal', sz(p, 0.24, 0.05, 0.24), { at: O(0, FL + PH2 - 0.18, 0.86) }); b.box('metal', sz(p, 0.22, 0.05, 0.22), { at: O(0, FL + PH2 - 0.52, 0.86) }); });
+        b.box(tavernGlass, sz(p, 0.16, 0.28, 0.16), { at: O(0, FL + PH2 - 0.35, 0.86) });
+      }
+    } else if (p.k === 'rails') {
+      // the rails, a run: two iron rails on timber sleepers, flat, walked over (the fight crosses them); rust on the iron,
+      // its top worn bright
+      const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 }, ax = Math.abs(p.x1 - p.x0) >= Math.abs(p.z1 - p.z0), y = FL + 0.01;
+      const box = (a, w2, y0, la, ww, hh) => b.box('metal', ax ? [la, hh, ww] : [ww, hh, la], { at: ax ? [q.x + a, y0, q.z + w2] : [q.x + w2, y0, q.z + a] });
+      b.tinted([0.36, 0.28, 0.22], () => { for (let a = -len / 2 + 0.3; a <= len / 2 - 0.2; a += 0.6) b.box('furniture_wood', ax ? [0.2, 0.05, 1.05] : [1.05, 0.05, 0.2], { at: ax ? [q.x + a, y + 0.025, q.z] : [q.x, y + 0.025, q.z + a] }); });
+      b.tinted([0.46, 0.36, 0.3], () => { for (const sg of [-1, 1]) box(0, sg * 0.34, y + 0.08, len, 0.07, 0.07); });
+      b.tinted([0.95, 0.9, 0.84], () => { for (const sg of [-1, 1]) box(0, sg * 0.34, y + 0.118, len, 0.05, 0.008); });
+    } else if (p.k === 'orecart') {
+      // an ore cart: a plank tub banded in iron on four small iron wheels, ore heaped in it; on the rails it runs along them;
+      // tipped (the warren's) on its side, its ore spilled out by it
+      const R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+      b.push([p.x, FL + (p.rail ? 0.1 : 0), p.z], [0, p.rot || 0, 0]);
+      if (p.tipped) { b.push([0, 0.38, 0], [Math.PI / 2 - 0.06, 0, 0]); }
+      b.tinted([1.4, 1.2, 0.98], () => { b.box('furniture_wood', [1.2, 0.5, 0.78], { at: [0, 0.48, 0] }); });   // (round 2: lighter: the cart stood a black box on the rails)
+      b.tinted([0.55, 0.5, 0.48], () => {
+        for (const sg of [-1, 1]) { b.box('metal', [1.24, 0.07, 0.07], { at: [0, 0.72, sg * 0.4] }); b.box('metal', [1.24, 0.07, 0.07], { at: [0, 0.27, sg * 0.4] }); b.box('metal', [0.07, 0.52, 0.82], { at: [sg * 0.6, 0.48, 0] }); }
+        b.box('metal', [1.0, 0.08, 0.5], { at: [0, 0.2, 0] });
+        for (const sx of [-0.38, 0.38]) for (const sz2 of [-0.34, 0.34]) b.lathe('metal', [{ y: 0, r: 0 }, { y: 0.001, r: 0.16 }, { y: 0.07, r: 0.16 }, { y: 0.071, r: 0 }], { segments: 10, at: [sx, 0.16, sz2 + Math.sign(sz2) * 0.02], rot: [Math.PI / 2, 0, 0] });
+      });
+      if (!p.tipped) b.tinted([0.85, 0.78, 0.72], () => { b.lathe('crag', [{ y: 0, r: 0.5 }, { y: 0.14, r: 0.42 }, { y: 0.26, r: 0.2 }, { y: 0.32, r: 0 }], { segments: 8, at: [0, 0.68, 0], scale: [1.15, 1, 0.75] }); });
+      if (p.tipped) b.pop();
+      b.pop();
+      if (p.tipped) b.tinted([0.5, 0.46, 0.44], () => { const c = Math.cos(p.rot || 0), sn = Math.sin(p.rot || 0); for (let k = 0; k < 5; k++) { const lx = (R(k) - 0.5) * 1.2, lz = 0.95 + R(k + 5) * 0.6; b.lathe('crag', [{ y: 0, r: 0.16 + R(k + 9) * 0.1 }, { y: 0.12, r: 0.12 }, { y: 0.2, r: 0 }], { segments: 6, at: [p.x + lx * c + lz * sn, FL, p.z - lx * sn + lz * c] }); } });
+    } else if (p.k === 'hooklamp') {
+      // a miner's lamp on an iron hook from a post at the wall, its glass lit warm (its light: convert.js MINE_3D.lantern)
+      const O = (u, y, v) => on(p, u, y, v * (p.out || 1)), PH2 = p.near ? 1.3 : 2.4, v0 = p.free ? 0 : 0.18;
+      b.tinted([1.4, 1.25, 1.05], () => b.box('furniture_wood', sz(p, 0.2, PH2, 0.2), { at: O(0, FL + PH2 / 2, v0) }));
+      b.tinted(TAV_IRON, () => {
+        b.box('metal', sz(p, 0.05, 0.05, 0.6), { at: O(0, FL + PH2 - 0.25, v0 + 0.36) });
+        b.box('metal', sz(p, 0.04, 0.22, 0.04), { at: O(0, FL + PH2 - 0.37, v0 + 0.64) });
+        b.box('metal', sz(p, 0.26, 0.05, 0.26), { at: O(0, FL + PH2 - 0.5, v0 + 0.64) });
+        b.box('metal', sz(p, 0.24, 0.05, 0.24), { at: O(0, FL + PH2 - 0.86, v0 + 0.64) });
+        for (const [du, dv] of [[-0.1, -0.1], [0.1, -0.1], [-0.1, 0.1], [0.1, 0.1]]) b.box('metal', sz(p, 0.025, 0.36, 0.025), { at: O(du, FL + PH2 - 0.68, v0 + 0.64 + dv) });
+      });
+      b.box(tavernGlass, sz(p, 0.17, 0.3, 0.17), { at: O(0, FL + PH2 - 0.68, v0 + 0.64) });
+    } else if (p.k === 'mladder') {
+      // a ladder up the rock: two poles, rungs lashed across, its foot out from the wall
+      const O = (u, y, v) => on(p, u, y, v * (p.out || 1)), H3 = p.near ? 1.2 : 2.9;
+      b.tinted([1.4, 1.25, 1.05], () => {
+        for (const sg of [-1, 1]) b.tube('furniture_wood', O(sg * 0.28, FL, 0.95), O(sg * 0.28, FL + H3, 0.12), 0.055, 0.05, { segments: 5 });
+        for (let y = 0.3; y < H3 - 0.1; y += 0.34) { const v = 0.95 - (y / H3) * 0.83; b.tube('furniture_wood', O(-0.3, FL + y, v), O(0.3, FL + y, v), 0.035, 0.035, { segments: 4 }); }
+      });
+    } else if (p.k === 'minerock') {
+      // a heap of broken rock (a spoil heap's, where the roof came in): three lumps of the cave's crag, in the mine's batch
+      const R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+      b.tinted([0.62, 0.56, 0.52], () => { for (let k = 0; k < 3; k++) { const r = p.r * (k ? 0.6 + R(k) * 0.25 : 1), a = R(k + 3) * 6.28, d = k ? p.r * 0.8 : 0; b.lathe('crag', [{ y: 0, r }, { y: r * 0.55, r: r * 0.8 }, { y: r * 1.05, r: r * 0.3 }, { y: r * 1.2, r: 0 }], { segments: 6, at: [p.x + Math.cos(a) * d, FL, p.z + Math.sin(a) * d], rot: [0, R(k + 7) * 3, 0] }); } });
+    } else if (p.k === 'fallenprop') {
+      // where the roof came in: a prop snapped and down across the fall, its splintered end up
+      b.tinted([1.4, 1.25, 1.05], () => { b.box('furniture_wood', [2.0, 0.26, 0.26], { at: [p.x, FL + 0.3, p.z], rot: [0, p.rot || 0, 0.16] }); b.box('furniture_wood', [0.9, 0.22, 0.22], { at: [p.x + 0.4, FL + 0.14, p.z + 0.6], rot: [0, (p.rot || 0) + 1.2, 0] }); });
+    } else if (p.k === 'ccornice' || p.k === 'wainscot') {
+      // ── a counting house (item 9): its cornice, pale stone, lit along its top; its wainscot, dark oak to a figure's knee
+      const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { ...p, x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 };
+      if (p.k === 'ccornice') {
+        b.tinted([1.02, 1.02, 1.0], () => b.box('count_top', sz(q, len, 0.26, 0.3), { at: on(q, 0, p.y, 0.15) }));
+        b.tinted([1.3, 1.3, 1.26], () => b.box('count_top', sz(q, len, 0.04, 0.34), { at: on(q, 0, p.y + 0.14, 0.17) }));
+        b.tinted([1.15, 1.15, 1.12], () => b.box('count_top', sz(q, len, 0.12, 0.55), { at: on(q, 0, p.y + 0.2, 0.0) }));
+      } else {
+        b.tinted([0.42, 0.33, 0.26], () => b.box('furniture_wood', sz(q, len, 0.95, 0.07), { at: on(q, 0, FL + 0.475, 0.035) }));
+        b.tinted(OAK_LIT, () => b.box('furniture_wood', sz(q, len, 0.07, 0.12), { at: on(q, 0, FL + 0.98, 0.06) }));
+      }
+    } else if (p.k === 'cpillar') {
+      // a counting house's pier out on the floor: a square shaft of its pale dressed stone on a plinth, a plain capital to
+      // the cornice's height; a broken one a stump, its drum fallen beside it
+      // (the visibility rule, level-design-rules.md §1.1: a man's height and slim, so the figure behind it stays in view; at
+      // the cornice's height and two-thirds of a unit across it hid the cage store's middle whole)
+      const H4 = p.broken ? 0.7 : 1.75;
+      b.tinted([1.0, 1.0, 0.98], () => b.box('count_top', [0.7, 0.24, 0.7], { at: [p.x, FL + 0.12, p.z] }));
+      b.tinted([1.06, 1.06, 1.04], () => b.box('count_wall', [0.44, H4, 0.44], { at: [p.x, FL + 0.24 + H4 / 2, p.z] }));
+      if (!p.broken) b.tinted([1.12, 1.12, 1.1], () => b.box('count_top', [0.62, 0.2, 0.62], { at: [p.x, FL + 0.24 + H4 + 0.1, p.z] }));
+      else b.tinted([0.98, 0.98, 0.96], () => b.box('count_wall', [1.2, 0.6, 0.6], { at: [p.x + 0.9, FL + 0.3, p.z + 0.5], rot: [0, 0.6, 0] }));
+    } else if (p.k === 'cpilaster') {
+      const u = p.end * 0.18, PH = (p.top || TOP) - FL;
+      b.tinted([1.08, 1.08, 1.06], () => b.box('count_wall', sz(p, 0.55, PH, 0.26), { at: on(p, u, FL + PH / 2, 0.13) }));
+      b.tinted([1.0, 1.0, 0.98], () => { b.box('count_top', sz(p, 0.7, 0.3, 0.34), { at: on(p, u, FL + 0.15, 0.17) }); b.box('count_top', sz(p, 0.68, 0.16, 0.34), { at: on(p, u, FL + PH - 0.35, 0.17) }); });
+    } else if (p.k === 'clamp' || p.k === 'clampstand') {
+      // the clerk's cool lamp: on an iron bracket from a pilaster, or on its own iron stand by a desk; a cold white glass
+      countGlass ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#d6e2f6').multiplyScalar(1.9), fog: false });
+      if (p.k === 'clamp') {
+        const v = 0.7, y = p.y - 0.55;
+        b.tinted(TAV_IRON, () => { b.box('metal', sz(p, 0.05, 0.05, v + 0.05), { at: on(p, 0, p.y, v / 2) }); b.box('metal', sz(p, 0.02, 0.32, 0.02), { at: on(p, 0, p.y - 0.17, v) }); b.box('metal', sz(p, 0.3, 0.05, 0.3), { at: on(p, 0, y + 0.2, v) }); b.box('metal', sz(p, 0.26, 0.05, 0.26), { at: on(p, 0, y - 0.18, v) }); });
+        b.box(countGlass, sz(p, 0.2, 0.32, 0.2), { at: on(p, 0, y, v) });
+      } else {
+        b.tinted(TAV_IRON, () => { b.tube('metal', [p.x, FL, p.z], [p.x, FL + 1.75, p.z], 0.04, 0.035, { segments: 6 }); for (let k = 0; k < 3; k++) { const a = (k / 3) * Math.PI * 2; b.tube('metal', [p.x, FL + 0.35, p.z], [p.x + Math.cos(a) * 0.32, FL, p.z + Math.sin(a) * 0.32], 0.025, 0.025, { segments: 4 }); } b.box('metal', [0.32, 0.05, 0.32], { at: [p.x, FL + 2.13, p.z] }); b.box('metal', [0.3, 0.05, 0.3], { at: [p.x, FL + 1.77, p.z] }); });
+        b.box(countGlass, [0.22, 0.32, 0.22], { at: [p.x, FL + 1.95, p.z] });
+      }
+    } else if (p.k === 'tally' || p.k === 'quotaboard') {
+      // a tally board on the wall: an oak frame, the board slate-dark, the week's chalk in fives (four strokes and one
+      // across), row on row; the house's quota board bigger, a heading struck across its top and its columns ruled
+      const big2 = p.k === 'quotaboard', BW = big2 ? 2.5 : 1.5, BH = big2 ? 1.5 : 1.05, y = p.y + (big2 ? 0.15 : 0), R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+      b.tinted(OAK_LIT, () => b.box('furniture_wood', sz(p, BW + 0.14, BH + 0.14, 0.06), { at: on(p, 0, y, 0.03) }));
+      b.tinted([0.2, 0.21, 0.23], () => b.box('metal', sz(p, BW, BH, 0.02), { at: on(p, 0, y, 0.065) }));
+      b.tinted([1.7, 1.7, 1.66], () => {
+        const rows = big2 ? 4 : 4, top = y + BH / 2 - (big2 ? 0.42 : 0.18);
+        if (big2) { b.box('linen', sz(p, BW * 0.6, 0.06, 0.01), { at: on(p, 0, y + BH / 2 - 0.16, 0.078) }); for (const c of [-0.42, 0, 0.42]) b.box('linen', sz(p, 0.015, BH - 0.4, 0.01), { at: on(p, c * BW, y - 0.12, 0.078) }); }
+        for (let r = 0; r < rows; r++) {
+          const n5 = 1 + Math.floor(R(r) * (big2 ? 2 : 3)), y0 = top - r * (big2 ? 0.26 : 0.22);
+          for (let g = 0; g < n5; g++) {
+            const u0 = -BW / 2 + 0.16 + g * 0.36 + (big2 ? 0.05 : 0);
+            for (let k = 0; k < 4; k++) b.box('linen', sz(p, 0.018, 0.13, 0.01), { at: on(p, u0 + k * 0.06, y0, 0.078) });
+            b.box('linen', sz(p, 0.26, 0.018, 0.01), { at: on(p, u0 + 0.09, y0, 0.08), rot: tilt(p, 0.45) });
+          }
+        }
+      });
+    } else if (p.k === 'cbook') {
+      // on a clerk's desk: the day's book open, an ink horn and its quill; the Weighmaster's a second book shut on the first
+      const c = Math.cos(p.rot || 0), sn = Math.sin(p.rot || 0), at = (lx, y, lz) => [p.x + lx * c + lz * sn, y, p.z - lx * sn + lz * c], y = FL + (p.y - TAV_FLOOR);
+      b.tinted([0.5, 0.3, 0.22], () => b.box('furniture_wood', [0.62, 0.03, 0.44], { at: at(-0.1, y + 0.015, 0), rot: [0, p.rot || 0, 0] }));
+      for (const sg of [-1, 1]) b.tinted([1.12, 1.07, 0.94], () => b.box('linen', [0.28, 0.02, 0.4], { at: at(-0.1 + sg * 0.15, y + 0.04, 0), rot: [0, p.rot || 0, -sg * 0.08] }));
+      b.tinted([0.16, 0.15, 0.15], () => b.lathe('metal', [{ y: 0, r: 0.05 }, { y: 0.1, r: 0.06 }, { y: 0.12, r: 0.03 }], { segments: 8, at: at(0.36, y, -0.1) }));
+      b.tinted([1.2, 1.18, 1.1], () => b.tube('linen', at(0.36, y + 0.1, -0.1), at(0.46, y + 0.38, -0.2), 0.01, 0.03, { segments: 4 }));
+      if (p.own) b.tinted([0.62, 0.28, 0.22], () => b.box('furniture_wood', [0.5, 0.08, 0.36], { at: at(0.3, y + 0.04, 0.16), rot: [0, (p.rot || 0) + 0.3, 0] }));
+    } else if (p.k === 'chainring') {
+      // the clerk's chain: from the desk's leg to an iron ring let into the floor in front of it
+      const c = Math.cos(p.rot || 0), sn = Math.sin(p.rot || 0), at = (lx, y, lz) => [p.x + lx * c + lz * sn, y, p.z - lx * sn + lz * c], o2 = p.out || 1;
+      const A = at(-0.6, FL + 0.12, 0.3 * o2), Bp = at(-0.9, FL + 0.03, 1.15 * o2);
+      b.tinted([0.3, 0.29, 0.3], () => {
+        for (let k = 0; k < 12; k++) { const t0 = k / 12, t1 = (k + 1) / 12, P0 = [A[0] + (Bp[0] - A[0]) * t0, A[1] + (Bp[1] - A[1]) * t0 - Math.sin(t0 * Math.PI) * 0.06, A[2] + (Bp[2] - A[2]) * t0], P1 = [A[0] + (Bp[0] - A[0]) * t1, A[1] + (Bp[1] - A[1]) * t1 - Math.sin(t1 * Math.PI) * 0.06, A[2] + (Bp[2] - A[2]) * t1]; b.tube('metal', P0, P1, k % 2 ? 0.02 : 0.03, k % 2 ? 0.02 : 0.03, { segments: 4 }); }
+        for (let k = 0; k < 10; k++) { const a0 = (k / 10) * Math.PI * 2, a1 = ((k + 1) / 10) * Math.PI * 2; b.tube('metal', [Bp[0] + Math.cos(a0) * 0.13, FL + 0.03, Bp[2] + Math.sin(a0) * 0.13], [Bp[0] + Math.cos(a1) * 0.13, FL + 0.03, Bp[2] + Math.sin(a1) * 0.13], 0.03, 0.03, { segments: 4 }); }
+        b.box('metal', [0.2, 0.02, 0.2], { at: [Bp[0], FL + 0.01, Bp[2]] });
+      });
+    } else if (p.k === 'strongbox') {
+      // the Assay's strongbox: oak bound in iron, a domed lid, a brass padlock on its hasp
+      const c = Math.cos(p.rot || 0), sn = Math.sin(p.rot || 0), at = (lx, y, lz) => [p.x + lx * c + lz * sn, y, p.z - lx * sn + lz * c], ry = [0, p.rot || 0, 0];
+      b.tinted([0.62, 0.46, 0.34], () => { b.box('furniture_wood', [1.2, 0.62, 0.72], { at: at(0, FL + 0.31, 0), rot: ry }); b.box('furniture_wood', [1.2, 0.16, 0.66], { at: at(0, FL + 0.7, 0), rot: ry }); });
+      b.tinted([0.32, 0.31, 0.32], () => { for (const lx of [-0.45, 0, 0.45]) b.box('metal', [0.08, 0.82, 0.76], { at: at(lx, FL + 0.4, 0), rot: ry }); b.box('metal', [1.24, 0.06, 0.76], { at: at(0, FL + 0.6, 0), rot: ry }); });
+      b.tinted([1.5, 1.15, 0.5], () => b.box('metal', [0.16, 0.18, 0.06], { at: at(0, FL + 0.52, 0.4), rot: ry }));   // (its padlock, brass: the iron's material tinted, no draw of its own)
     } else if (p.k === 'furn') {
       const r = f[p.type](p.x, FL, p.z, p.opts || {}), o = r.object || r.group;
       if (!o) continue;
@@ -1524,7 +1717,7 @@ function buildTavern(pieces) {
     if (big) b.pop();
   }
   // merged a material at a time (the trim, the furniture): what three can merge, the attributes all of them carry
-  const built = b.build('ember:tavern').group; built.updateMatrixWorld(true);
+  const built = b0.build('ember:tavern').group; built.updateMatrixWorld(true);
   const by = new Map();
   for (const root of [built, ...furn]) root.traverse((o) => {
     if (!o.isMesh || Array.isArray(o.material)) return;
@@ -1541,7 +1734,7 @@ function buildTavern(pieces) {
     for (const q of geos) if (q !== merged) q.dispose();
     if (!merged) continue;
     const mesh = new THREE.Mesh(merged, m);
-    const lit = m === tavernGlass || m === tavernEmber || m === tavernNight || m === tavernNightHi || m === tavernStar || m === tavernGrime || m === cryptDark || m === cryptDamp || m === cryptPatch || m === cryptGold || m === cryptOx || m === cryptSky || m === cryptBrass || m === dockGlint || m === dockMist || m === rampFog || m === palaceSky || m === palaceLit || m === palacePatch;
+    const lit = m === tavernGlass || m === tavernEmber || m === tavernNight || m === tavernNightHi || m === tavernStar || m === tavernGrime || m === cryptDark || m === cryptDamp || m === cryptPatch || m === cryptGold || m === cryptOx || m === cryptSky || m === cryptBrass || m === dockGlint || m === dockMist || m === rampFog || m === palaceSky || m === palaceLit || m === palacePatch || m === countGlass;
     mesh.castShadow = !lit && m !== tavernWeb; mesh.receiveShadow = !lit;
     g.add(mesh);
   }
@@ -1552,6 +1745,9 @@ function buildTavern(pieces) {
   return g;
 }
 const TAV_H = 3.0, TAV_FLOOR = 1.0;
+/** the crypt's pieces the Undercroft builds in its own brick, and how (fenB, buildTavern) */
+const FEN_KINDS = new Set(['pier', 'cornice', 'plinth', 'arcade', 'skullniche', 'lightwell']), FEN_DRAWS = new Set(['box', 'lathe', 'tube', 'quad', 'poly', 'tri']);
+const FEN_MAT = { crypt_wall: 'fen_brick', crypt_cap: 'fen_lime', crypt_top: 'fen_top' };
 const CR_SPRING = 1.0 + 2.25;   // (where the crypt's arches spring, over a figure's head: its walls stand four units, convert.js CR_BACK)   // (a back wall's height over the floor: convert.js TAV_BACK, level 8, over the floor's 2)
 // ── the Magma Vault's magma (convert.js magmaFlow; docs/art-critic-pass-magma-vault.md) ─────────────────────────────────
 // Its tiles as one flow: each a quad laid just over the floor (Luminati's floor is a solid block of two of our tiles a
@@ -2039,6 +2235,76 @@ function marbleSlab(s, K, R, seed) {
   });
   return { normal: 0.6 };
 }
+/** the reed town's brick (docs/art-critic-pass-stone.md, the Reedholm Undercroft): narrow bricks in stretcher bond, four
+ * texels a course and ten or so long, each its own tone of a dark fen red in a narrow band, a pale lime mortar; lime-wash
+ * over it in patches, flaking at their edges so the brick shows through; a damp bloom here and there. `R` the brick, `M`
+ * the mortar, `L` the wash, `wash` how much of the wall it covers (0…1) */
+function fenBrick(s, K, R, M, L, wash, seed) {
+  const w = s.w, h = s.h, CH = 4, N = K.field(w, h, 3, 3, seed, { oct: 3 }), D = K.field(w, h, 5, 5, seed + 3, { oct: 2 }), at = (t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
+  s.each((x, y, i) => {
+    const row = Math.floor(y / CH), ly = y % CH, off = (row % 2) * 5 + Math.floor(K.hash2(row, 1, seed + 5) * 2), BL = 10, lx = (x + off) % BL, k = Math.floor((x + off) / BL);
+    const mortar = ly === CH - 1 || lx === BL - 1;
+    let col, hf;
+    if (mortar) { col = M; hf = 0.08; }
+    else {
+      let t = 0.32 + K.hash2(row, k, seed + 7) * 0.4 + (N[i] - 0.5) * 0.12;
+      if (ly === 0) t += 0.1;                                                          // (each brick lit along its top)
+      if (K.hash2(x, y, seed + 9) > 0.94) t -= 0.14;
+      col = at(Math.max(0, Math.min(1, t))); hf = 0.55 + (ly === 0 ? 0.25 : 0) + (N[i] - 0.5) * 0.1;
+    }
+    // the lime-wash: where the low field is high, a pale coat over brick and joint alike, its edge ragged, the odd flake off
+    const c = (D[i] - (1 - wash)) / 0.12;
+    if (c > 0 && K.hash2(x >> 1, y >> 1, seed + 11) > 0.18 - Math.min(0.15, c * 0.05)) { const l = Math.min(0.9, 0.45 + c * 0.25); col = K.mixColor(col, L[(K.hash2(x, y >> 1, seed + 13) > 0.6) ? 1 : 0], l); hf = Math.max(hf, 0.5); }
+    else if (N[i] < 0.26) col = K.mixColor(col, '#1c1814', 0.28);                     // (the damp coming through)
+    s.set(x, y, col); s.hf[i] = hf;
+  });
+  return { normal: 1.8 };
+}
+/** the fen brick paviors (the Undercroft's floor): bricks on edge in a herringbone, two by one, a dull red-brown gone dark
+ * with the damp and the boots, mud in the joints */
+function fenPavers(s, K, R, MUD, seed) {
+  const w = s.w, h = s.h, N = K.field(w, h, 4, 4, seed, { oct: 3 }), at = (t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
+  const U = 4;   // (a cell four texels: a brick two cells by one, half a unit by a quarter; the lay's lattice (1, 1), (2, −2) cells wraps at 16)
+  s.each((x, y, i) => {
+    const cx = Math.floor(x / U), cy = Math.floor(y / U), r = (((cx - cy) % 4) + 4) % 4, px = x % U, py = y % U;
+    let horiz, lx, ly, id;
+    if (r <= 1) { horiz = true; lx = r * U + px; ly = py; const k = (cx - r + cy) / 2, m = (cx - r - cy) / 4; id = (((k % 16) + 16) % 16) * 31 + ((m % 4) + 4) % 4; }
+    else { horiz = false; const e = r === 2 ? 1 : 0; lx = px; ly = e * U + py; const k = cx - 2 + (cy + 1 - e - (cx - 2)) / 2, m = (cx - 2 - (cy + 1 - e)) / 4; id = 1000 + (((k % 16) + 16) % 16) * 31 + ((m % 4) + 4) % 4; }
+    const L = horiz ? 2 * U : U, Hh = horiz ? U : 2 * U;
+    if (lx === L - 1 || ly === Hh - 1) { s.set(x, y, MUD); s.hf[i] = 0.1; return; }
+    let t = 0.3 + K.hash2(id, 1, seed + 3) * 0.42 + (N[i] - 0.5) * 0.16;
+    if (ly === 0 || lx === 0) t += 0.07;
+    if (K.hash2(x >> 2, y >> 2, seed + 7) > 0.84) t -= 0.12;   // (worn dark by the boots)
+    s.set(x, y, at(Math.max(0, Math.min(1, t)))); s.hf[i] = 0.6 + (ly === 0 ? 0.2 : 0) + (N[i] - 0.5) * 0.12;
+  });
+  return { normal: 1.6 };
+}
+/** peat cut with a spade (the Undercroft's near sills, dug out of the fen's peat and left): dark fibrous brown in cut
+ * blocks, each course a spade's depth with its cut face a shade lighter at the top, root threads paler through it */
+function fenPeat(s, K, R, seed) {
+  const w = s.w, h = s.h, N = K.field(w, h, 8, 3, seed, { oct: 3 }), F = K.field(w, h, 24, 4, seed + 1, { oct: 2 }), at = (t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
+  s.each((x, y, i) => {
+    const row = Math.floor(y / 8), ly = y % 8, off = Math.floor(K.hash2(row, 3, seed + 3) * 16), lx = (x + off) % 16;
+    if (ly === 7 || lx === 15) { s.set(x, y, R[0]); s.hf[i] = 0.1; return; }   // (between the cut blocks)
+    let t = 0.35 + K.hash2(row, Math.floor((x + off) / 16), seed + 5) * 0.2 + (N[i] - 0.5) * 0.3 + (F[i] > 0.66 ? 0.18 : 0);   // (the fibre)
+    if (ly <= 1) t += 0.12;
+    if (K.hash2(x, y, seed + 9) > 0.985) t += 0.4;   // (a root thread, pale)
+    s.set(x, y, at(Math.max(0, Math.min(1, t)))); s.hf[i] = 0.5 + (N[i] - 0.5) * 0.3 + (ly <= 1 ? 0.2 : 0);
+  });
+  return { normal: 1.6 };
+}
+/** reed matting (the Undercroft's floor, the eel traps' wicker): split reed in a basket weave, four strands a block, each
+ * block across its neighbours, pale straw gone grey-brown, darker where it's worn */
+function reedWeave(s, K, R, seed) {
+  const w = s.w, h = s.h, B = 8, N = K.field(w, h, 4, 4, seed, { oct: 2 }), at = (t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
+  s.each((x, y, i) => {
+    const across = ((Math.floor(x / B) + Math.floor(y / B)) & 1) === 0, q = across ? y % 2 : x % 2, along = across ? x % B : y % B;
+    let t = 0.5 + (q ? -0.18 : 0.1) + (N[i] - 0.5) * 0.25 + (K.hash2(across ? y : x, Math.floor((across ? x : y) / B), seed + 3) - 0.5) * 0.18;
+    if (along === 0 || along === B - 1) t -= 0.16;   // (where a strand goes under)
+    s.set(x, y, at(Math.max(0, Math.min(1, t)))); s.hf[i] = q ? 0.4 : 0.75;
+  });
+  return { normal: 1.4 };
+}
 // cinders, cobbles in charcoal without their moss, red sand as rust-stained mud, red rock iron-dark, dry grass ash-grey, ash a step darker;
 // and the dungeons' stone for the Reach's other sites and the Fens' kits (below).
 let reachLib = null;
@@ -2186,6 +2452,25 @@ registerTextureSet((K) => {
       s.each((x, y, i) => { const t = 0.55 + (N[i] - 0.5) * 0.6 + (K.hash2(x, y, 1007) > 0.93 ? 0.25 : 0); s.set(x, y, at(R, Math.max(0, Math.min(1, t)))); s.hf[i] = 0.6 + (N[i] - 0.5) * 0.3; });
       return { normal: 1.0 };
     } },
+    // ── the Reedholm Undercroft (docs/dungeon-looks-plan.md item 6, docs/art-critic-pass-stone.md): the reed town's narrow
+    // dark-red brick in a lime mortar, lime-washed in patches; its dressings (the piers' faces, the arches, the cornice) the
+    // same brick under a heavier wash; the brick paviors underfoot in a herringbone; the near sills cut in peat; the bone
+    // room's bones packed in peat; split reed woven into mats
+    fen_brick: { px: [48, 48], normalScale: 0.8, gen: (s) => fenBrick(s, K, P(['#3a1c16', '#4a231b', '#5a2b20', '#683326', '#763b2b', '#844531']), K.parseColor('#8a7f6e'), P(['#b7ad98', '#a69d8a']), 0.3, 1101) },
+    fen_lime: { px: [32, 32], normalScale: 0.6, gen: (s) => fenBrick(s, K, P(['#4a2a20', '#5c3326', '#6c3d2d', '#7a4634']), K.parseColor('#9a907e'), P(['#bdb39e', '#ada490']), 0.72, 1105) },
+    fen_top: { px: [32, 32], normalScale: 0.4, gen: (s) => { const N = K.field(s.w, s.h, 4, 4, 1107, { oct: 2 }), R = P(['#3e2c24', '#4a362c', '#564034', '#614a3c']); s.each((x, y, i) => { s.set(x, y, at(R, Math.max(0, Math.min(1, 0.5 + (N[i] - 0.5) * 0.8)))); s.hf[i] = 0.6; }); return { normal: 1 }; } },
+    fen_paver: { px: [64, 64], normalScale: 0.7, gen: (s) => fenPavers(s, K, P(['#4c3c32', '#58463a', '#634f42', '#6e584a', '#786252', '#836b5a']), K.parseColor('#31291f'), 1111) },   // (round 1: a dull brown-red a step lighter: the dark red floor swallowed the cult's maroon)
+    fen_peat: { px: [32, 32], normalScale: 0.8, gen: (s) => fenPeat(s, K, P(['#1a120d', '#251a12', '#302217', '#3a2a1c', '#463322', '#523c28']), 1113) },
+    fen_peat_top: { px: [32, 32], normalScale: 0.5, gen: (s) => fenPeat(s, K, P(['#221911', '#2c2117', '#36291c', '#403021', '#4a3826', '#3e4a28']), 1115) },
+    fen_bones: { px: [48, 48], normalScale: 1.0, gen: (s) => { const r = ossuaryBones(s, K), PEAT = P(['#221810', '#2c2016']); s.each((x, y, i) => { if (s.hf[i] <= 0.2) s.set(x, y, PEAT[K.hash2(x >> 1, y >> 1, 1117) > 0.5 ? 1 : 0]); }); return r; } },
+    reed_mat: { px: [32, 32], normalScale: 0.6, gen: (s) => reedWeave(s, K, P(['#4e4230', '#5e5038', '#6e5e42', '#7e6c4c', '#8c7a56', '#988660']), 1119) },
+    // ── a counting house (item 9, the look `counting`): dressed pale stone, cool and fine-jointed, a clerk's office swept;
+    // pale flags underfoot, one in seven scuffed by the stools; the near sills a step darker
+    count_wall: { px: [48, 48], normalScale: 0.6, gen: (s, ctx) => ashlar(s, ctx, K, P(['#77777a', '#88888a', '#99989a', '#aaa9a8', '#b8b6b2', '#c4c1bb', '#cdcac3', '#d6d2ca']), ['#6e6c6a', '#646260'], ['#a8a296', '#9aa0a8']) },
+    count_sill: { px: [48, 48], normalScale: 0.6, gen: (s, ctx) => ashlar(s, ctx, K, P(['#56565a', '#626266', '#6e6e72', '#7a7a7d', '#868588', '#908f91', '#99989a', '#a2a1a2']), ['#4e4e50', '#46464a'], ['#8a8478', '#7e8490']) },
+    count_top: { px: [32, 32], normalScale: 0.3, gen: (s) => { const N = K.field(s.w, s.h, 4, 4, 1121, { oct: 2 }), R = P(['#8e8c88', '#9c9a96', '#aaa7a2', '#b6b3ad', '#c1beb7']); s.each((x, y, i) => { s.set(x, y, at(R, Math.max(0, Math.min(1, 0.5 + (N[i] - 0.5) * 0.6)))); s.hf[i] = 0.6; }); return { normal: 1 }; } },
+    count_flag: { px: [64, 64], normalScale: 0.7, gen: (s) => tavernFlags(s, K, P(['#2e2c2a', '#575350', '#615d59', '#6b6762', '#75706b', '#7f7a74', '#89837c']), false) },   // (round 1: two steps down and warmer: the swept pale flags lit the office like a ward)
+    count_flag_worn: { px: [64, 64], normalScale: 0.7, gen: (s) => tavernFlags(s, K, P(['#2a2826', '#4e4b48', '#585552', '#625f5b', '#6c6864', '#76716c', '#7f7a74']), true) },
   };
 });
 
