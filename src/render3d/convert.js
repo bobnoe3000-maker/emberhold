@@ -113,6 +113,14 @@ export const LEGEND = {
   // arcade (palaceRun), the near sills a step darker (painted by world.js, ours)
   '(': { top: 'palace_flag', side: 'palace_wall', walkable: true }, ')': { top: 'palace_flag2', side: 'palace_wall', walkable: true },
   '/': { top: 'palace_yard', side: 'palace_wall', walkable: true },
+  // water indoors (docs/water-indoors.md): the Fens' own stone, a pale blue-grey ashlar gone green at the waterline and weed
+  // below it (the Canal Locks); the abbey's pale stone above its flood line, darker and weeded under it; a channel's deep
+  // water (sunk, Luminati's own water over it); its banks, each kit's floor over its own walling down into the channel; the
+  // abbey garth's drowned turf (painted by world.js, ours; a channel's bridges are the wharf's decks, `_`)
+  'α': { top: 'crag', side: 'fen_wall', walkable: false }, 'β': { top: 'crag', side: 'abbey_wall', walkable: false },
+  'γ': { top: 'riverbed', side: 'fen_wall', water: true, walkable: false },
+  'ε': { top: 'wet_flag', side: 'fen_wall', walkable: true }, 'ζ': { top: 'sick_flag', side: 'fen_wall', walkable: true },
+  'η': { top: 'abbey_flag', side: 'abbey_wall', walkable: true }, 'θ': { top: 'drowned_turf', side: 'abbey_wall', walkable: true },
   '|': { top: 'palace_top', side: 'palace_wall', walkable: false },
   '?': { top: 'palace_sill_top', side: 'palace_sill', walkable: false },
   // the Reedholm Undercroft (docs/dungeon-looks-plan.md item 6; docs/art-critic-pass-stone.md): the reed town's brick, narrow
@@ -691,6 +699,17 @@ Object.assign(KIT_LOOK, {
   mound: { floor: ['t', 'b'], wall: 'u', cave: 'E', hour: 19.6, mix: 10 }, locks: { floor: ['w', 'c'], wall: 'B', cave: 'W', hour: 20.4 },
   vats: { floor: ['z', 'w'], wall: 'W', cave: 'W', hour: 20.0 }, abbey: { floor: ['p', 'm'], wall: 'C', cave: 'C', hour: 21.2 },
 });
+// Water indoors (docs/water-indoors.md; docs/dungeon-looks-plan.md items 3–5): `wet` names a kit's water (world.js
+// WET_LOOKS: its shin-deep sheet over the sim's pools and its channels' deep water), `bank` the letter a floor tile takes
+// beside a channel (its walling down into the water), `garth` the floor of a room open to the sky (plans.js dress 'garth').
+// The Locks and Vat Seven in the Fens' own ashlar, the Abbey in its own pale stone (the Vale nave's sandstone before);
+// the Sunken Chapel's nave keeps its sandstone, its water the river's.
+Object.assign(KIT_LOOK.locks, { wall: 'α', cave: 'α', wet: 'canal', bank: 'ε' });
+Object.assign(KIT_LOOK.vats, { wall: 'α', cave: 'α', wet: 'sick', bank: 'ζ' });
+Object.assign(KIT_LOOK.abbey, { wall: 'β', cave: 'β', wet: 'abbey', bank: 'η', garth: 'θ' });
+Object.assign(KIT_LOOK.nave, { wet: 'chapel' });
+/** a channel's water under the floor (Luminati's units: the floor's top at 1, its bed at 0) */
+const WET_WL = 0.62;   // (round 5: deeper, plainly under the floor; 0.72, then 0.8 in round 2)
 // a building's inside (the Shuttered Inn, docs/tavern-dungeon.md): its flagstones, its stone walls, an evening's hour; its
 // walls stand whole (tavernWalls, below), not ruined
 KIT_LOOK.tavern = { floor: ['#', '='], wall: '@', cave: '@', hour: 19.2, mix: 14, inside: true };
@@ -2233,7 +2252,9 @@ function dungeon(w, o = {}) {
     }
     // (a palace's: its marble in a checker by the tile, its yard in flags: KIT_LOOK.palace)
     const yard = lk && lk.yard && L.plan && rm >= 0 && L.rooms[rm]?.role === 'entrance';
-    if (floor) { looks[j * W + i] = lk; tiles[j][i] = wet >= 2 ? 'P' : yard ? lk.yard : lk.checker ? lk.floor[(i + j) & 1] : hash('d', i, j) % 100 < (lk.mix ?? 18) ? lk.floor[1] : lk.floor[0]; heights[j][i] = '2'; }
+    // (a wet kit's pools are its water's sheet over the floor, not the riverbed: wetDress; a garth's floor its turf)
+    const garth = lk && lk.garth && L.plan && rm >= 0 && L.rooms[rm]?.dress?.includes('garth');
+    if (floor) { looks[j * W + i] = lk; tiles[j][i] = wet >= 2 && !lk.wet ? 'P' : garth ? lk.garth : yard ? lk.yard : lk.checker ? lk.floor[(i + j) & 1] : hash('d', i, j) % 100 < (lk.mix ?? 18) ? lk.floor[1] : lk.floor[0]; heights[j][i] = '2'; }
   }
   // (the Vale's stone, docs/dungeon-looks-plan.md items 1, 2: a hall takes the look of the room it leads from, the nearer
   // one: a passage between two of the barrow's rooms is the barrow's, the cellars' rough way down the cave's, not the
@@ -2300,6 +2321,9 @@ function dungeon(w, o = {}) {
   const crown = o.walls === 'plain' || inside || look.forest ? null : ruinWalls(W, D, tiles, heights, open, barrowy ? (i, j) => LIFT_OF[tiles[j][i]] || 0 : null);   // (the walls' ragged tops, below; ?walls=plain: level boxes, as before)
   const stairLights = stairs(w, x0, y0, W, D, tiles, heights, o.stairs !== 'plain');
   if (look.forest) { const ST = { '^': '\u16AA', '<': '\u16AB', v: '\u16AC', '>': '\u16AD' }; for (const row of tiles) for (let i = 0; i < row.length; i++) if (ST[row[i]]) row[i] = ST[row[i]]; }   // (the greenwood's way up in the empire's grey steps)
+  // water indoors (docs/water-indoors.md): the channels sunk now, once the walls round them are cut as the floor's
+  const wetLook = [look, ...(L.plan ? L.rooms.map((r) => KIT_LOOK[r.kit]) : [])].find((k) => k && k.wet) || null;
+  const wet = wetLook ? wetGround(w, { x0, y0, W, D, X, Z, tiles, heights, looks, roomLook }) : null;
   const objects = [], count = {}, sprites = [];
   // (an arch over each way, built by world.js in the floor's own stone: GDD v1.57, docs/dungeon-stairs-proposal.md;
   // ?stairs=plain the stairs as they were)
@@ -2324,6 +2348,7 @@ function dungeon(w, o = {}) {
   }
   if (pass) passDress(W, D, pass, heights, looks, add, ptrim, passB, [...(stairLights.arches || []).map((a) => ({ x: a.x, z: a.z, r: a.span / 2 + 1.5 })), ...[...(w.props || [])].filter(([, k]) => k === 'pass_icefall' || k === 'pass_shrine').map(([k, kind]) => { const [tx, ty] = k.split(',').map(Number); return { x: X(tx + 0.5), z: Z(ty + 0.5), r: kind === 'pass_icefall' ? 3.2 : 2.6 }; })]);
   if (look.frost) frostDress(W, D, tiles, heights, open, w, x0, y0, add, ptrim, roomAt);
+  if (wet) { if (wet.trim.length) sprites.push({ wet: { pieces: wet.trim } }); for (const sh of wet.sheets) sprites.push({ shallows: sh }); for (const l of wet.lights) add(l); }
   if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h) { add({ ...c.ob(X, Z), onWall: true }); if (c.sprite) sprites.push(c.sprite); }   // (onWall: on a wall's top, not the room's own)   // (what stands on the walls' tops, where the stairs didn't take the wall)
   for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity * (look.fill && look.inside ? 0.45 : 1), distance: l.glow.distance * (look.fill && look.inside ? 0.7 : 1), flicker: 0.08, nightOnly: false }
     : { type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });
@@ -2341,6 +2366,7 @@ function dungeon(w, o = {}) {
     // (the Magma Vault, the owner 2026-11-26: "flowing magma and a few furnaces, anvils"; sim/world.js magma_channel,
     // magma_pool, furnaces, anvils) its pieces in every kit they stand in (the vault's caves, the works' hall)
     if (kind === 'magma') { magma.push([tx, ty]); continue; }
+    if (WET_PROPS.has(kind)) continue;                              // (deep water: the floor's own, wetGround)
     if (MAGMA_3D[kind]) { MAGMA_3D[kind](tx, ty, h, { X, Z, add, sprites, props: w.props }); continue; }
     if (look.pass && kind === 'pass_ice') { passIce.push([x, z]); continue; }   // (a frozen pool's ice, gathered: one pool, its rim lit)
     if (inside && look.pass && PASS_3D[kind]) { PASS_3D[kind](x, z, h, kind, { add, trim, ptrim, open, heights, wall: wallOf(open, W, D, x, z) }); continue; }
@@ -2384,17 +2410,148 @@ function dungeon(w, o = {}) {
     if (lit && kind !== 'brazier' && kind !== 'cookfire') add({ type: 'light', x, z, dy: kind === 'candelabra' ? 1.7 : 0.9, color: hex(lit), intensity: pool[0], distance: pool[1], flicker: 0.15, nightOnly: false });
   }
   if (magma.length) magmaFlow(magma, X, Z, add, sprites);
+  if (wet && wet.sheets.length) { const lamps = wetLamps(objects, wet.sheets); for (const sh of wet.sheets) sh.lamps = lamps; }
   if (rails.size) mine.push(...railRuns(rails, X, Z));
   if (mine.length) sprites.push({ tavern: { pieces: mine } });
   if (ptrim) { if (passIce.length) ptrim.push({ k: 'pool', cells: passIce }); sprites.push({ pass: { pieces: ptrim } }); }
   const level = frame({ name: w.siteName || 'The Old Barrows', W, D, tiles, heights, objects, spawn: { x: X(sp.x), z: Z(sp.y), facing: 'up' },
     // (black beyond the walls, as Emberlit's: a backdrop colour, which the fog takes too, so the far rooms fade to it)
     environment: look.forest ? { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: false, dust: true, greenwood: true, backdrop: look.backdrop }   // (open air, the air ours: world.js greenwoodAir; past the edges the mist and the gloom, not Luminati's outer woods: round 1, its bright autumn clumps stood at the frame's foot)
-      : { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: !look.open, backdrop: look.backdrop || '#040306', ...(look.water ? { harbour: true } : {}), ...(look.pass ? { pass: true } : {}) },   // (open: the pass, under the sky)
-    water: look.water ? { flow: [0.03, 0.05], reflect: 0.45, neutral: 0.7 } : null, waterLevel: look.water ? DOCK_WL : 0.4 });   // (a harbour's water nearly still, the fog's colour in it: world.js harbourAir)
+      : { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: !look.open, backdrop: look.backdrop || '#040306', ...(look.water ? { harbour: true } : {}), ...(look.pass ? { pass: true } : {}), ...(wet ? { wet: wetLook.wet } : {}) },   // (open: the pass, under the sky)
+    // (a channel's water still, its own colours: world.js wetAir)
+    water: look.water ? { flow: [0.03, 0.05], reflect: 0.45, neutral: 0.7 } : wet && wet.deep ? { flow: [0.01, 0.02], reflect: 0.12, neutral: 0.5 } : null, waterLevel: look.water ? DOCK_WL : wet && wet.deep ? WET_WL : 0.4 });   // (a harbour's water nearly still, the fog's colour in it: world.js harbourAir)
   if (look.vents) vents(W, D, heights, open, add, look.vents);   // (the vault's and the deep forges' ember beds)
   const amb = ambientOf(kit || gen?.kit || (AMB_TINT[w.theme] ? w.theme : kit));
-  return { level, sprites, ambient: amb, ...(look.held != null ? { hour: look.held } : {}), origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D } };   // (hour: a look's held hour, the pass's day: hybrid.js)
+  return { level, sprites, ambient: amb, ...(look.held != null ? { hour: look.held } : {}), origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D, ...(wet ? { deep: wet.deep, deepPartial: wet.partial, shallow: wet.sheets.reduce((n, q) => n + q.cells.length / 4, 0) } : {}) } };   // (hour: a look's held hour, the pass's day: hybrid.js)
+}
+
+// ── water indoors (docs/water-indoors.md; docs/dungeon-looks-plan.md items 3–5) ──────────────────────────────────────────
+// One way of drawing water inside walls, for any kit with `wet` (KIT_LOOK):
+//   · shin-deep water over a floor: the sim's pools (world.pools: a room's `pools`, or its whole floor with `flood`),
+//     walked in. A sheet a hand over the floor (world.js buildShallows), the floor seen through it, rippling, the lamps'
+//     light broken on it, its edge soft; every figure's feet a little under it, the rings and warnings drawn over it.
+//   · deep water: the sim's `channel` (blocked, as the magma is), and its `lockgate` and `sluice` bands. A tile of
+//     Luminati's whose four of ours are all of it is sunk to the bed and Luminati's own water laid over it, under the floor
+//     (WET_WL); the floor beside it takes its kit's `bank` (its walling down into the water), a coping kerb along the edge;
+//     the sim's bridges (world.bridges) the wharf's plank decks across it, railed; a lock gate's leaves and a sluice's
+//     board and winch wheel stood in it.
+// Nothing here touches the sim; every choice is the tile's, so a floor looks the same every visit.
+const WET_PROPS = new Set(['channel', 'lockgate', 'sluice']);
+const STAIR_TILE = /[\^v<>]/;
+/** the garth's light: the sky's, cold, from high over the open roof */
+const GARTH_SKY = { color: '#a8bcdc', intensity: 7, distance: 13, dy: 5 };
+function wetGround(w, { x0, y0, W, D, X, Z, tiles, heights, looks, roomLook }) {
+  const L = w.level, cells = L.cells, props = w.props, bridges = w.bridges || new Set(), trim = [], lights = [];
+  const SUB = [[0, 0], [1, 0], [0, 1], [1, 1]], subOf = (i, j) => SUB.map(([dx, dy]) => `${x0 + 2 * i + dx},${y0 + 2 * j + dy}`);
+  const deepAt = new Uint8Array(W * D), piece = new Array(W * D).fill(null), isBridge = new Uint8Array(W * D);
+  let deep = 0, partial = 0;
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    if (heights[j][i] !== '2' || STAIR_TILE.test(tiles[j][i])) continue;
+    const ks = subOf(i, j), kinds = ks.map((k) => props.get(k));
+    const n = kinds.filter((k) => WET_PROPS.has(k)).length;
+    if (n === 4) { deepAt[j * W + i] = 1; piece[j * W + i] = kinds.find((k) => k !== 'channel') || null; tiles[j][i] = 'γ'; heights[j][i] = '0'; deep++; }
+    else if (n) partial++;
+    else if (ks.filter((k) => bridges.has(k)).length >= 2) { isBridge[j * W + i] = 1; tiles[j][i] = '_'; }
+  }
+  const D4 = /** @type {[number, number, string][]} */ ([[0, -1, 'n'], [1, 0, 'e'], [0, 1, 's'], [-1, 0, 'w']]), dAt = (i, j) => i >= 0 && j >= 0 && i < W && j < D && deepAt[j * W + i] === 1;
+  const floorAt = (i, j) => i >= 0 && j >= 0 && i < W && j < D && heights[j][i] === '2' && !STAIR_TILE.test(tiles[j][i]);
+  // a near wall (between the camera and the water: south or east of it) cut to the floor's height, a quay's edge, so the
+  // channel and its gates are seen over it (round 1: at the ruin's three to five it hid all but a sliver of the Lock Gate's)
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    // (its water beside it, or a step of floor away: a channel's rows begin on an even tile, so one of ours may lie between)
+    const h = parseInt(heights[j][i], 36); if (!(h > 2) || !(dAt(i, j - 1) || dAt(i - 1, j) || dAt(i - 1, j - 1) || (floorAt(i, j - 1) && dAt(i, j - 2)) || (floorAt(i - 1, j) && dAt(i - 2, j)))) continue;
+    if (dAt(i, j + 1) || dAt(i + 1, j)) continue;   // (a wall with water on its far side too: between two channels, left)
+    if (floorAt(i, j + 1) || floorAt(i + 1, j)) continue;   // (one with the room on its camera side is a back wall)
+    heights[j][i] = '2';   // (round 3: knee-high still hid the water behind it, a sliver at the camera's angle: flush, a quay's edge)
+  }
+  // the banks: a floor tile beside the water takes its kit's walling down into it
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    if (!floorAt(i, j) || isBridge[j * W + i] || !D4.some(([di, dj]) => dAt(i + di, j + dj))) continue;
+    const lk = looks[j * W + i]; if (lk && lk.bank) tiles[j][i] = lk.bank;
+  }
+  // the kerbs along the banks and the rails along the bridges' open sides, in runs along each edge line
+  const lines = new Map(), push = (key, t) => (lines.get(key) || lines.set(key, []).get(key)).push(t);
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    if (!dAt(i, j)) continue;
+    for (const [di, dj, s] of D4) {
+      const ii = i + di, jj = j + dj;
+      // (the far side, north or west, whatever stands there: the wall or the bank reflected in the water under it)
+      if ((s === 'n' || s === 'w') && !dAt(ii, jj)) { if (s === 'n') push(`wrefl|z|${j}|-1`, i); else push(`wrefl|x|${i}|-1`, j); }
+      if (!floorAt(ii, jj)) continue;
+      const kind = isBridge[jj * W + ii] ? 'wrail' : 'wkerb';
+      // keyed by the edge line and which way the bank lies (out: from the water toward it)
+      if (s === 'n') push(`${kind}|z|${j}|-1`, i); else if (s === 's') push(`${kind}|z|${j + 1}|1`, i); else if (s === 'w') push(`${kind}|x|${i}|-1`, j); else push(`${kind}|x|${i + 1}|1`, j);
+    }
+  }
+  for (const [key, ts] of lines) {
+    ts.sort((a, b) => a - b);
+    const [k, n, c0, o] = key.split('|'), c = +c0, out = +o, P = (t) => (n === 'z' ? [t, c] : [c, t]);
+    const runs = []; for (const t of ts) { const r = runs[runs.length - 1]; if (r && t === r[1]) r[1] = t + 1; else runs.push([t, t + 1]); }
+    for (const [a, b] of runs) { const [ax, az] = P(a), [bx, bz] = P(b); trim.push({ k, x0: ax, z0: az, x1: bx, z1: bz, n, out, seed: hash('wk', key, a) % 997 }); }
+  }
+  // the lock gates and the sluice boards: each band of them across its channel, one piece
+  const seen = new Uint8Array(W * D);
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    const kd = piece[j * W + i]; if (!kd || seen[j * W + i]) continue;
+    const grp = [], q = [[i, j]]; seen[j * W + i] = 1;
+    while (q.length) { const [a, b] = q.pop(); grp.push([a, b]); for (const [da, db] of D4) { const aa = a + da, bb = b + db; if (aa >= 0 && bb >= 0 && aa < W && bb < D && !seen[bb * W + aa] && piece[bb * W + aa] === kd) { seen[bb * W + aa] = 1; q.push([aa, bb]); } } }
+    const xs = grp.map((g) => g[0]), zs = grp.map((g) => g[1]), ix0 = Math.min(...xs), ix1 = Math.max(...xs) + 1, iz0 = Math.min(...zs), iz1 = Math.max(...zs) + 1;
+    const across = ix1 - ix0 >= iz1 - iz0 ? 'x' : 'z';   // (the band spans the channel: its long side)
+    // (which ends of it meet a bank, not a wall: a lock gate's balance beam lies out over a bank)
+    const ends = across === 'x' ? [floorAt(ix0 - 1, iz0), floorAt(ix1, iz0)] : [floorAt(ix0, iz0 - 1), floorAt(ix0, iz1)];
+    trim.push({ k: kd, x: r2((ix0 + ix1) / 2), z: r2((iz0 + iz1) / 2), across, span: across === 'x' ? ix1 - ix0 : iz1 - iz0, ends, seed: hash('wg', i, j) % 997 });
+  }
+  // the shin-deep water: the sim's pools, by the room's water, a sim tile a cell (a garth's open to the sky)
+  // (each cell's corners that touch dry floor, NW NE SE SW as bits 1–4 over the sky's bit 0: there its edge goes soft;
+  // against a wall or a channel the water runs right up to it)
+  const sheets = new Map(), pools = w.pools || new Set();
+  const dry = (x, y) => { const k = `${x},${y}`, c = cells.get(k); return !!c && c.kind === 'floor' && !pools.has(k) && !WET_PROPS.has(props.get(k) || ''); };
+  const isFloorCell = (x, y) => { const c = cells.get(`${x},${y}`); return !!c && c.kind === 'floor'; };
+  const CORNERS = [[[-1, 0], [0, -1], [-1, -1]], [[1, 0], [0, -1], [1, -1]], [[1, 0], [0, 1], [1, 1]], [[-1, 0], [0, 1], [-1, 1]]];
+  for (const k of pools) {
+    const c = cells.get(k); if (!c || c.kind !== 'floor') continue;
+    const lk = roomLook(c); if (!lk || !lk.wet) continue;
+    const ci = k.indexOf(','), tx = +k.slice(0, ci), ty = +k.slice(ci + 1), i = Math.floor((tx - x0) / 2), j = Math.floor((ty - y0) / 2);
+    if (!floorAt(i, j) || isBridge[j * W + i]) continue;   // (never over a stair, the well or a bridge)
+    const room = c.room >= 0 ? L.rooms[c.room] : null, sky = room && room.dress && room.dress.includes('garth') ? 1 : 0;
+    const s = sheets.get(lk.wet) || sheets.set(lk.wet, { look: lk.wet, cells: [] }).get(lk.wet);
+    // (bits 1–4 its corners on dry floor, 5–8 those against a wall: a bright line at both; round 5)
+    let f = sky; CORNERS.forEach((cs, q) => { if (cs.some(([dx, dy]) => dry(tx + dx, ty + dy))) f |= 2 << q; if (cs.some(([dx, dy]) => !isFloorCell(tx + dx, ty + dy))) f |= 32 << q; });
+    // (how near the wall behind it, away from the camera: the wall's reflection lies on the water in front of it)
+    let refl = 0; for (const [dx, dy] of [[-1, 0], [0, -1]]) for (let d = 1; d <= 6; d++) if (!isFloorCell(tx + dx * d, ty + dy * d)) { refl = Math.max(refl, 1 - (d - 1) / 6); break; }
+    s.cells.push(X(tx + 0.5), Z(ty + 0.5), f, r2(refl));
+  }
+  // (a garth open to the sky: its light, and a drizzle falling into it alone, the one room with no roof over it)
+  if (L.plan) for (const r of L.rooms) if (r.dress && r.dress.includes('garth')) {
+    lights.push({ type: 'light', x: X(r.cx + 0.5), z: Z(r.cy + 0.5), dy: GARTH_SKY.dy, color: GARTH_SKY.color, intensity: GARTH_SKY.intensity, distance: GARTH_SKY.distance, flicker: 0, nightOnly: false });
+    lights.push({ type: 'emitter', x: X(r.cx + 0.5), z: Z(r.cy + 0.5), preset: 'rain', dy: 3.5, size: [r2(r.rw), 7, r2(r.rh)], count: 260, params: { followCamera: false, bounds: [r2(r.rw), 7, r2(r.rh)], alpha: 0.32, velocity: [0, -9, 0] } });
+  }
+  // (a drowned hall's windows, on its back wall, the garth's side: a cold light high up, dust in it, caught on the water;
+  // round 5, the dorter and the chapter-house read as dark empty halls)
+  if (L.plan) for (const r of L.rooms) if (r.dress && r.dress.includes('windows')) {
+    const along = r.x1 - r.x0 >= r.y1 - r.y0;
+    for (const sg of [-1, 1]) {
+      const x = along ? X(r.cx + sg * r.rw * 0.4 + 0.5) : X(r.x0 + 2.5), z = along ? Z(r.y0 + 2.5) : Z(r.cy + sg * r.rh * 0.4 + 0.5);
+      lights.push({ type: 'light', x, z, dy: WINDOW_LIGHT.dy, color: WINDOW_LIGHT.color, intensity: WINDOW_LIGHT.intensity, distance: WINDOW_LIGHT.distance, flicker: 0, nightOnly: false });
+      lights.push({ type: 'emitter', x, z: r2(z + 0.8), preset: 'dust', dy: 1.8, size: [1.3, 3.4, 1.3], count: 16, params: { color: '#d4e2ff' } });
+    }
+  }
+  return { trim, sheets: [...sheets.values()], lights, deep, partial };
+}
+/** a drowned hall's window light (`windows`), cold, from high on its back wall */
+const WINDOW_LIGHT = { color: '#a8bfe8', intensity: 6, distance: 9.5, dy: 3.4 };
+/** the lamps a sheet of water shows: every light near it, its height over the floor, colour and strength (world.js
+ *  buildShallows lays a soft warm streak under each, toward the camera, where its reflection falls) */
+function wetLamps(objects, sheets) {
+  const near = new Set(); for (const sh of sheets) for (let k = 0; k < sh.cells.length; k += 4) near.add(`${Math.floor(sh.cells[k])},${Math.floor(sh.cells[k + 1])}`);
+  const close = (x, z) => { for (let dz = -5; dz <= 5; dz++) for (let dx = -5; dx <= 5; dx++) if (near.has(`${Math.floor(x) + dx},${Math.floor(z) + dz}`)) return true; return false; };
+  const out = [];
+  for (const o of objects) {
+    if (o.onWall) continue;
+    const L = o.type === 'light' ? [o.dy ?? 1, o.color, o.intensity] : o.type === 'wallTorch' ? [o.dy ?? 1.4, '#ffa850', 4] : o.type === 'fire' && o.opts?.light ? [0.9, '#ff9a48', 5] : null;
+    if (L && close(o.x, o.z)) out.push({ x: o.x, z: o.z, h: L[0], color: L[1], i: Math.min(8, L[2]) });
+  }
+  return out.sort((a, b) => b.i - a.i).slice(0, 24);
 }
 
 /** the Cold Seam's rails (sim/world.js 'rail', a tile of ours each) as runs along x or y, for world.js 'rails' @returns {any[]} */
