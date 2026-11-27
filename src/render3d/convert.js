@@ -244,6 +244,10 @@ const SITE_DOORS = [[/_longhouse_\d/, 'yards', 'reach_assayhouse'], [/_keep_\d/,
 /** Furnace Nine's yard (the region boss's ground, camps.js reach_mouth: the furnace yard west of the Vault's ruin, its
  *  arena cleared of scatter): char and cracked earth to its reach, slag heaps just past its arena, vents inside them */
 const FURNACE_YARD = { heaps: 20, vents: 10 };
+/** the Grace's place in her window (sim tiles): in Gullwick's bay east-south-east of the wreckers' camp (161.5, 246.5),
+ *  past the arena's edge where her broadside's lanes begin (about 189, 255), lying east and west so she fits the level
+ *  (its edge at y 258) and the bay (the beach at y 240 above her) */
+const GRACE_SHIP = [186, 252];
 /** the Tidemark's two waiting boats (town.json tidemark_ferry, tidemark_fleetboat; buildkit.js skiff): her middle, in sim
  *  tiles, alongside the jetty's end (outdoor.js: the ferry jetty from [198, 234] to TIDEMARK.ferry, the landing jetty from
  *  [164, 18] to TIDEMARK.isles), her post on its edge; her lantern and the boatman's place in her stern, from her middle;
@@ -423,6 +427,10 @@ function outdoor(w, region) {
   // as the Ninth Vault's does. GRACE_OFF: her middle that many sim tiles east of the reef (the sea's edge is 5 out,
   // outdoor.js pools; the level ends at 258, MAX_TILES, so she lies along the shore, not out to sea)
   if (region === 'tidemark' && w.kind === 'overland' && TIDEMARK?.reef) sprites.push({ id: 'tidemark_wreck', x: X(TIDEMARK.reef[0] + GRACE_OFF), z: Z(TIDEMARK.reef[1]) });
+  // (v1.157) the Grace herself, the region boss's ship, hove to in Gullwick's bay off the wreckers' beach, where her
+  // broadside comes from (ring.js GRACE.broadside.from, past the arena's edge); stood always, shown only while her window
+  // is open (world.js: `ring`, the frame's ringOn from hybrid.js)
+  if (region === 'tidemark' && w.kind === 'overland') sprites.push({ id: 'tidemark_graceship', x: X(GRACE_SHIP[0]), z: Z(GRACE_SHIP[1]), here: true, ring: 'the_grace' });
   // (the owner, 2026-11-26: the jetties to the Drowned Mole and the Gull Isles "just stop at a dead end") a boat waiting at
   // each, moored off the jetty's end by its exit (outdoor.js TIDEMARK.ferry, .isles), her lantern lit by night, her
   // boatman stood in her stern as a figure (hybrid.js: `figures`, idle, never the sim's)
@@ -683,7 +691,8 @@ const DRESS_3D_MORE = {
 // and flue into the rock, its mouth glowing), stood over its footprint (the sim's: the furnace tile at its front middle, a
 // row of `block` either side and the row behind), its mouth's fire and embers Luminati's with the furnace's light, a
 // little smoke up into its hood; a crucible ours (reach_crucible: a fireclay crucible on an iron stand, the melt in it
-// lit); an anvil Luminati's smith's (The Bells of Evermere's: a London-pattern anvil on its stump), a few turns about.
+// lit); an anvil ours too (reach_anvil, on its stump, a bar hot on its face: Luminati's smith's stood unlit and unseen),
+// turned one of two ways.
 const MAGMA_3D = {
   furnace: (tx, ty, h, { X, Z, add, sprites, props }) => {
     // which way it faces: its footprint's back row behind it, toward the back wall (−y: a north wall; −x: a west one)
@@ -696,11 +705,11 @@ const MAGMA_3D = {
     add({ type: 'emitter', x: cx, z: cz, preset: 'embers', dy: 1.4, size: [0.5, 0.3, 0.3], count: 6, params: { life: [0.8, 1.8], velocity: [0, 1.2, 0] } });
   },
   crucible: (tx, ty, h, { X, Z, sprites }) => { sprites.push({ id: 'reach_crucible', x: X(tx + 0.5), z: Z(ty + 0.5), here: true }); },
-  anvil: (tx, ty, h, { X, Z, add }) => add({ type: 'smithy', x: X(tx + 0.5), z: Z(ty + 0.5), rotation: [0.3, -0.5, 1.1, 2.6][h % 4], opts: { kind: 'anvil', seed: h % 997 } }),
+  anvil: (tx, ty, h, { X, Z, sprites }) => { sprites.push({ id: h % 2 ? 'reach_anvilx' : 'reach_anvil', x: X(tx + 0.5), z: Z(ty + 0.5), here: true }); },
 };
 /** MAGMA_LIGHT: a light every this many of the flow's tiles (of ours), along a run: the rooms have their braziers and
  *  torches already, and Luminati keeps the dozen nearest the camera (docs/art-critic-pass-magma-vault.md, the budget) */
-const MAGMA_LIGHT = 9;
+const MAGMA_LIGHT = 12;
 /** the magma, as one flow: its tiles to world.js (placeEnv `magma`: one mesh, the molten surface moving, a crust at its
  *  open edges and a lip of black rock), a hot light along each run, embers off it here and there */
 function magmaFlow(list, X, Z, add, sprites) {

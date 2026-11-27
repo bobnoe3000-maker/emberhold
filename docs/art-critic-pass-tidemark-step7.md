@@ -34,7 +34,8 @@ Captures, 390 × 844 at dpr 1 (the rooms at dpr 2), from the game's camera
 `tools/capture/out/tidemark-step7/`:
 - `wreck-sheet.png`: the Grace from the door and wide, at day, dusk and night, and as a baked card;
 - `cast/sheet.jpg`: Fane, Josse and the two boatmen beside Hester and Old Gannet on the Stage, at play size;
-- `cabin-sheet.png`: the Cabin's five rooms (and the Gull Isles' gun deck, the same kit);
+- `cabin-sheet.png`: the Cabin's five rooms on the first layout (and the Gull Isles' gun deck, the same kit);
+  `cabin-sheet-r2.png`: on her own layout;
 - `boats-sheet.png`: both jetties before and after, by day, dusk and night;
 - `camps-sheet.png`: the four spawn points, and the Reach's haulers' road before and after;
 - `sand-sheet.png`: the drifted sand as shipped, and a margin tried and rejected.
@@ -143,10 +144,16 @@ desks, papers, a rug and the vault's chest.
 Fixes 3 to 6 are the hulk kit's, so the Gull Isles' second floor (the gangway, the gun deck's hammocks "slung between
 the guns", the wardroom and the great cabin) has them too. That floor was shot again, and it holds.
 
-**For the sim (not changed here):** the Cabin's five spaces have the same rectangles as the Gull Isles' second floor
-(`plans.js`: the gangway 30 × 26 at 0, 0, the gun deck 70 × 22 at 40, 2, and so on). Drawn in the one kit, the two read
-as one ship twice. A different footprint for the Grace (narrower and longer, Livia's cabin across the stern) would let
-her be her own.
+**The Grace's own layout** (round 2, after the coordinator's `plans.js` change: the round 1 rooms had the Gull Isles'
+second floor's rectangles, one ship twice). Now she runs bow to stern up the screen:
+- the reef ladder at her foot;
+- the waist above it, long and narrow (38 × 54), her crew at their stations;
+- the chapel locker off the waist's side;
+- the children's deck above, the hammocks down both its long walls;
+- Livia's cabin across her stern at the top, the whole width of her.
+
+Shot again: `cabin-sheet-r2.png` (and the plan, `docs/img/dungeon/vale-sisters_cabin.png`, from
+`tools/dungeon/vale-plans.mjs`). Every piece above still draws.
 
 ## The spawn points
 

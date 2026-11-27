@@ -1243,6 +1243,29 @@ export const PROPS = {
     const tip = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.16, 0.25), yellow); tip.position.y = 1.32; g.add(tip);
     return g;
   },
+  // ── the Grace's master (GDD v1.157; docs/art-critic-pass-tidemark.md): a drowned sea captain, a man's size, the
+  // drowned's sea-green bone. His cocked hat (the Gull Fleet's tricorne's shape, black felt gone green-black, its gold
+  // lace tarnished, weed off its brim); his naval coat's skirts, sodden black-blue, the lace tarnished, weed hanging off
+  // the hem; the stern-lantern of his ship on his belt, lit the drowned's pale sea-green (userData.glow, hung plumb)
+  gracehat: () => {
+    const g = PROPS.tricorne(); g.name = 'Grace_Hat';
+    const felt = new THREE.MeshStandardMaterial({ color: 0x1e2624, roughness: 0.9, side: THREE.DoubleSide }), lace = mat(0xb0903e, 0.5, 0.5), weed = mat(0x3e7048, 0, 0.9);
+    g.traverse((o) => { if (o.isMesh) o.material = o.material.color.getHex() === 0xc89a2a ? lace : felt; });
+    for (const [x, z, len] of [[-0.5, 0.1, 0.32], [0.46, -0.2, 0.26], [0.1, -0.6, 0.4], [-0.3, -0.5, 0.22]]) { const w = new THREE.Mesh(new THREE.BoxGeometry(0.06, len, 0.03), weed); w.position.set(x, 0.92 - len / 2, z); w.rotation.z = x * 0.3; w.name = 'Grace_Hat'; g.add(w); }
+    return g;
+  },
+  gracecoat: () => {
+    const g = coatSkirts({ name: 'Grace_Coat', cloth: 0x2e4050, gold: 0x9a7e3c, metal: 0.4, len: 0.62 });
+    const weed = mat(0x3e7048, 0, 0.9);
+    for (let k = 0; k < 9; k++) { const a = Math.PI * 0.45 + (k / 8) * Math.PI * 1.1, len = 0.12 + ((k * 7) % 5) * 0.04, w = new THREE.Mesh(new THREE.BoxGeometry(0.05, len, 0.02), weed); w.position.set(Math.sin(a) * 0.47, 0.08 - 0.62 - len / 2 + 0.04, Math.cos(a) * 0.45); w.rotation.y = a; w.name = 'Grace_Coat_Weed'; g.add(w); }
+    return g;
+  },
+  sternlantern: () => {
+    const g = new THREE.Group(); g.name = 'Stern_Lantern';
+    const L = PROPS.lantern(); L.scale.setScalar(0.62); L.position.set(0.42, -0.06, 0.16);
+    L.traverse((o) => { if (o.isMesh && o.userData.glow) { o.material = new THREE.MeshStandardMaterial({ color: 0xa8f0dc, emissive: 0x5ad8b4, emissiveIntensity: 1.4, roughness: 0.3 }); o.userData.glow = 0x8ee8cc; } });
+    g.add(L); return g;
+  },
   // the sexton's coat (the hips' space): plain black broadcloth to below the knee, its edges dull black braid, no gilt
   sextoncoat: () => coatSkirts({ name: 'Sexton_Coat', cloth: 0x1c1a1c, gold: 0x2e2a28, metal: 0.1, len: 0.62 }),
 };

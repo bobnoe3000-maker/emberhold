@@ -2201,8 +2201,8 @@ Object.assign(TYPES, {
 const FURN_GLOW = () => new THREE.MeshBasicMaterial({ color: '#ff9a3c' }), FURN_HOT = () => new THREE.MeshBasicMaterial({ color: '#ffd27a' });
 Object.assign(TYPES, {
   magmafurnace(S, g, r) {
-    const brick = mat(tex('ashlar', '#3a302c', 87)), iron = mat(null, '#2a2624'), rust = mat(null, '#5a3424'), soot = mat(null, '#141110'), glow = FURN_GLOW(), hot = FURN_HOT();
-    const W = 0.3, D = 0.2, H = 0.34;
+    const brick = mat(tex('ashlar', '#4a3c34', 87)), iron = mat(null, '#2a2624'), rust = mat(null, '#5a3424'), sheet = mat(null, '#6a4632'), soot = mat(null, '#141110'), glow = FURN_GLOW(), hot = FURN_HOT();
+    const W = 0.3, D = 0.2, H = 0.42;   // (round 3: at 0.34, a figure's height, they read as ovens in the big caves)
     box(W, H, D, brick, 0, 0, -0.01, g);                                                        // the body
     for (const y of [0.07, 0.2, H - 0.03]) box(W + 0.012, 0.018, D + 0.012, iron, 0, y, -0.01, g);   // its iron bands
     for (const sx of [-1, 1]) box(0.03, H + 0.02, 0.03, iron, sx * (W / 2 + 0.005), 0, D / 2 - 0.02, g);   // corner irons
@@ -2215,7 +2215,7 @@ Object.assign(TYPES, {
     box(0.17, 0.03, 0.05, brick, 0, 0.02, D / 2 + 0.02, g);                                    // the sill
     for (let k = 0; k < 4; k++) box(0.03 + r() * 0.03, 0.012, 0.02, rust, -0.06 + k * 0.04, 0.05, D / 2 + 0.04, g);   // slag on it
     // the hood and the flue: sheet iron narrowing up from the furnace's top into a square chimney against the wall
-    const hood = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.16, 0.14, 4, 1), iron); hood.rotation.y = Math.PI / 4; hood.scale.set(1.2, 1, 0.8); hood.position.set(0, H + 0.07, -0.03); g.add(hood);
+    const hood = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.16, 0.14, 4, 1), sheet);   // (round 1: black iron was lost on the black wall: rusted sheet now) hood.rotation.y = Math.PI / 4; hood.scale.set(1.2, 1, 0.8); hood.position.set(0, H + 0.07, -0.03); g.add(hood);
     box(0.09, 0.5, 0.08, brick, 0, H + 0.1, -0.06, g); box(0.11, 0.03, 0.1, iron, 0, H + 0.6, -0.06, g);
     for (const y of [H + 0.25, H + 0.45]) box(0.095, 0.015, 0.085, iron, 0, y, -0.06, g);
     // the bellows at its side, their nozzle into the furnace's flank
@@ -2226,15 +2226,33 @@ Object.assign(TYPES, {
     box(0.012, 0.11, 0.012, mat(null, '#4a3a2c'), bx, 0, 0.06, g);
   },
   magmacrucible(S, g, r) {
-    const iron = mat(null, '#2a2624'), clay = mat(null, '#7a5a44'), glow = FURN_GLOW(), hot = FURN_HOT();
-    for (const [x, z] of [[-0.035, -0.035], [0.035, -0.035], [-0.035, 0.035], [0.035, 0.035]]) box(0.012, 0.1, 0.012, iron, x, 0, z, g);   // the stand's legs
-    box(0.09, 0.012, 0.09, iron, 0, 0.09, 0, g);
-    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.03, 0.07, 10), clay); pot.position.set(0, 0.135, 0); g.add(pot);
-    const melt = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.008, 10), hot); melt.position.set(0, 0.168, 0); g.add(melt);
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.006, 4, 12), glow); rim.rotation.x = Math.PI / 2; rim.position.set(0, 0.17, 0); g.add(rim);
-    const lip = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.025, 4), clay); lip.rotation.z = -Math.PI / 2; lip.position.set(0.052, 0.165, 0); g.add(lip);
-    box(0.24, 0.01, 0.01, iron, -0.05, 0.15, 0.05, g).rotation.y = -0.4;                       // the pouring shank
-    box(0.05, 0.004, 0.05, glow, 0.07, 0.002, 0.02, g).rotation.y = 0.6;                         // a spill cooling on the floor
+    // (round 1: a small pot on a post with a pale disc of melt read as a lit table lamp: a big fireclay crucible now, in a
+    // squat iron cradle, tipped toward its lip, the melt orange, a ladle's shank across it)
+    const iron = mat(null, '#3a3230'), clay = mat(null, '#8a6448'), glow = FURN_GLOW();
+    for (const sx of [-1, 1]) { box(0.016, 0.09, 0.016, iron, sx * 0.07, 0, -0.03, g); box(0.016, 0.09, 0.016, iron, sx * 0.07, 0, 0.03, g); box(0.016, 0.016, 0.08, iron, sx * 0.07, 0.085, 0, g); }   // the cradle's ends
+    const pot = new THREE.Group(); pot.position.set(0, 0.1, 0); pot.rotation.z = -0.32; g.add(pot);
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.042, 0.1, 12), clay); body.position.y = 0.02; pot.add(body);
+    // (round 2: the melt a bright full disc still read as a lampshade: smaller, red-orange, a skin of slag over half of it)
+    const melt = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.01, 12), new THREE.MeshBasicMaterial({ color: '#e0601e' })); melt.position.y = 0.068; pot.add(melt);
+    const skin = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.046, 0.012, 12, 1, false, 0, Math.PI * 0.9), mat(null, '#3a2a24')); skin.position.y = 0.07; pot.add(skin);
+    const lip = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.035, 4), clay); lip.rotation.z = -Math.PI / 2; lip.position.set(0.068, 0.06, 0); pot.add(lip);
+    for (const sx of [-1, 1]) { const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.02, 6), iron); tr.rotation.x = Math.PI / 2; tr.position.set(0, 0.03, sx * 0.065); pot.add(tr); }   // its trunnions
+    box(0.26, 0.012, 0.012, iron, -0.04, 0.2, 0.06, g).rotation.y = -0.5;                      // the ladle's shank
+    const ladle = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.018, 0.02, 8), iron); ladle.position.set(0.07, 0.195, 0.12); g.add(ladle);
+    const spill = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 0.006, 10), mat(null, '#c85a20')); spill.position.set(0.1, 0.003, 0.0); spill.scale.set(1.3, 1, 0.8); g.add(spill);   // a spill gone dull red
+  },
+  // an anvil on its stump (ours, not Luminati's smith's, which stood unlit and unseen at the floor's thirds): a dark iron
+  // anvil with its horn, a bar of iron hot on its face (unlit: what reads it in the dark), tongs and a hammer by it
+  magmaanvil(S, g, r) {
+    const iron = mat(null, '#3e3a38'), face = mat(null, '#5a5654'), stump = mat(tex('planks', '#4a3626', 63)), hot = FURN_GLOW();
+    const st = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.065, 0.09, 10), stump); st.position.y = 0.045; g.add(st);
+    box(0.05, 0.03, 0.04, iron, 0, 0.09, 0, g);                                               // the waist
+    box(0.12, 0.035, 0.05, face, 0, 0.12, 0, g);                                               // the face
+    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.07, 6), iron); horn.rotation.z = Math.PI / 2; horn.position.set(0.09, 0.14, 0); g.add(horn);
+    box(0.02, 0.02, 0.04, iron, -0.068, 0.12, 0, g);                                           // the heel
+    box(0.09, 0.012, 0.016, hot, -0.005, 0.161, 0.004, g).rotation.y = 0.35;                   // the hot bar
+    box(0.14, 0.008, 0.008, iron, 0.02, 0.162, 0.03, g).rotation.y = 0.5;                      // the tongs on it
+    box(0.008, 0.07, 0.008, mat(null, '#5a4430'), -0.09, 0, 0.06, g); box(0.035, 0.022, 0.022, iron, -0.09, 0.07, 0.06, g);   // a hammer stood by
   },
 });
 // ── the Tidemark's secret (docs/tidemark-plan.md's build sheet, step 7; world doc v1.74 §3.7) ──
@@ -2362,6 +2380,65 @@ Object.assign(TYPES, {
       const len = a.distanceTo(b), dir = b.clone().sub(a).normalize(), side = new THREE.Vector3(0, 0, 1);
       for (const s of [-1, 1]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, len, 3), rope); l.position.copy(a).add(b).multiplyScalar(0.5).addScaledVector(side, s * 0.05); l.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); g.add(l); }
       for (let k = 1; k < 7; k++) { const p = a.clone().lerp(b, k / 7); box(0.016, 0.014, 0.11, S.m.wood, p.x, p.y - 0.007, p.z, g); } }
+  },
+});
+// ── the Grace herself, the Tidemark's region boss's set piece (GDD v1.157; docs/art-critic-pass-tidemark.md): Aurelle's
+// flagship as she comes in at the top of the hour, standing off the wreckers' beach in Gullwick's bay. Stood by
+// convert.js (GRACE_SHIP) and shown by world.js only while her window is open (hybrid.js: the window's clock). The wreck's
+// lines whole: her hull upright, black with the sea, weed hanging from her wale; three masts standing, the courses set
+// and gone to rags, grey-green; her sterncastle's gallery lit the drowned's pale sea-green and her stern-lantern on its
+// bracket over the transom lit the same; a long pennant. Hove to, her side to the beach (+z: the camera's), her bow east.
+Object.assign(TYPES, {
+  graceship(S, g, r) {
+    const L = 2.2, B = 0.3, D = 0.5;
+    const hullM = mat(tex('planks', '#3a3430', 95)), weedM = mat(null, '#2a3a2a'), deckM = mat(tex('planks', '#6a6050', 96)), rib = mat(null, '#2a221c');
+    const spar = mat(null, '#4a4034'), gilt = mat(null, '#8a7a4a'), ghost = new THREE.MeshBasicMaterial({ color: '#8ee8cc' }), rope = mat(null, '#5a4e3a');
+    const rag = new THREE.MeshStandardMaterial({ color: '#8a9488', roughness: 1, side: THREE.DoubleSide, transparent: true, opacity: 0.92 });
+    hullM.side = THREE.DoubleSide;
+    const half = (t) => B * Math.sqrt(Math.max(0, 1 - ((t - 0.58) / 0.6) ** 2)) * (t < 0.06 ? t / 0.06 : 1);
+    const gun = (t) => D + 0.1 * (1 - t / 0.3) ** 2 * (t < 0.3 ? 1 : 0) + 0.16 * Math.max(0, (t - 0.72) / 0.28) ** 1.5;
+    const X = (t) => L / 2 - L * t;                                 // (her bow east, +x: t 0 at the bow)
+    const ship = new THREE.Group(); ship.rotation.z = 0.03; ship.position.y = -0.12; g.add(ship);   // (sitting down in the water, a little by the head)
+    const N = 22, K = 12, pos = [], uv = [];
+    const pt = (i, k) => { const t = i / N, b = half(t), s = -1 + (2 * k) / K; return [X(t), gun(t) - D * (1 - Math.abs(s) ** 2.6), b * s]; };
+    for (let i = 0; i < N; i++) for (let k = 0; k < K; k++) { const a = pt(i, k), b = pt(i + 1, k), c = pt(i + 1, k + 1), d = pt(i, k + 1); pos.push(...a, ...b, ...c, ...a, ...c, ...d);
+      const U = (q) => q * 0.5 * B / TEX_UNITS, V = (q) => (q / N) * L / TEX_UNITS; uv.push(U(k), V(i), U(k), V(i + 1), U(k + 1), V(i + 1), U(k), V(i), U(k + 1), V(i + 1), U(k + 1), V(i)); }
+    for (let k = 0; k < K; k++) { const a = pt(N, k), c = pt(N, k + 1), m = [X(1), (pt(N, 0)[1] + pt(N, K >> 1)[1]) / 2, 0]; pos.push(...a, ...m, ...c); uv.push(0, 0, 0.5, 0.5, 1, 0); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geo.computeVertexNormals();
+    ship.add(new THREE.Mesh(geo, hullM));
+    // the deck, the wale and the weed off it
+    for (let i = 0; i < N; i++) { const t0 = i / N, t1 = (i + 1) / N, len = Math.abs(X(t1) - X(t0)), b = (half(t0) + half(t1)) / 2;
+      box(len + 0.004, 0.012, b * 1.86, deckM, (X(t0) + X(t1)) / 2, (gun(t0) + gun(t1)) / 2 - 0.06, 0, ship);
+      for (const sz of [-1, 1]) { box(len + 0.004, 0.035, 0.03, rib, (X(t0) + X(t1)) / 2, (gun(t0) + gun(t1)) / 2 - 0.15, sz * b, ship); if (i % 2 === 0 && r() < 0.8) box(0.02, 0.08 + r() * 0.12, 0.01, weedM, (X(t0) + X(t1)) / 2, (gun(t0) + gun(t1)) / 2 - 0.3 - r() * 0.05, sz * (b + 0.012), ship); } }
+    // the sterncastle and the forecastle, the gallery lit sea-green
+    { const len = L * 0.2, x0 = X(1) + len / 2, y = gun(0.9) - 0.06, b = half(0.9) * 0.92;
+      box(len, 0.24, b * 2, hullM, x0, y, 0, ship); box(len + 0.04, 0.03, b * 2 + 0.04, rib, x0, y + 0.24, 0, ship);
+      box(len * 0.92, 0.16, 0.014, gilt, x0, y + 0.04, b + 0.004, ship);
+      for (let k = 0; k < 3; k++) box(0.1, 0.11, 0.014, ghost, X(1) + 0.08 + k * 0.15, y + 0.065, b + 0.012, ship);
+      for (let k = 0; k < 3; k++) box(0.014, 0.1, 0.08, ghost, X(1) - 0.006, y + 0.07, -b * 0.6 + k * b * 0.6, ship);
+      // the stern-lantern: a great lantern on a bracket over the transom, lit
+      box(0.12, 0.02, 0.02, rib, X(1) - 0.06, y + 0.32, 0, ship);
+      const lan = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 0.1, 8), ghost); lan.position.set(X(1) - 0.12, y + 0.29, 0); ship.add(lan);
+      box(0.08, 0.02, 0.08, gilt, X(1) - 0.12, y + 0.34, 0, ship); }
+    { const len = L * 0.12; box(len, 0.12, half(0.1) * 1.7, hullM, X(0) - len / 2 - 0.08, gun(0.08) - 0.06, 0, ship);
+      const bs = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.03, 0.55, 6), spar); bs.rotation.z = -(Math.PI / 2 - 0.35); bs.position.set(X(0) + 0.2, gun(0) + 0.08, 0); ship.add(bs); }
+    // the masts, the yards and the courses set and torn, the shrouds
+    for (const [t, h, yw] of [[0.24, 1.2, 0.5], [0.5, 1.5, 0.64], [0.76, 0.95, 0.4]]) {
+      const x = X(t), y = gun(t) - 0.06;
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.034, h, 7), spar); m.position.set(x, y + h / 2, 0); ship.add(m);
+      for (const [fy, fw] of [[0.42, 1], [0.78, 0.72]]) {
+        const yy = y + h * fy, yard = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, yw * fw, 6), spar); yard.rotation.x = Math.PI / 2; yard.position.set(x + 0.01, yy, 0); ship.add(yard);
+        // a course: a sheet bellied a little to leeward, its foot torn to tongues, a hole or two
+        const sh = h * (fy === 0.42 ? 0.34 : 0.26), sg = new THREE.PlaneGeometry(yw * fw * 0.92, sh, 6, 4), sp = sg.attributes.position;
+        for (let i = 0; i < sp.count; i++) { const py = sp.getY(i), pz = sp.getX(i); sp.setZ(i, 0.05 * (1 - (2 * pz / (yw * fw)) ** 2) * (0.5 - py / sh)); if (py < -sh * 0.3) sp.setY(i, py + (r() - 0.2) * sh * 0.35); }
+        sg.computeVertexNormals(); const s = new THREE.Mesh(sg, rag); s.rotation.y = Math.PI / 2; s.position.set(x + 0.02, yy - sh / 2, 0); ship.add(s);
+      }
+      for (const sz of [-1, 1]) { const A = new THREE.Vector3(x, y + h * 0.85, 0), Bv = new THREE.Vector3(x - 0.04, gun(t) - 0.04, sz * half(t)), l = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, A.distanceTo(Bv), 3), rope);
+        l.position.copy(A).add(Bv).multiplyScalar(0.5); l.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), Bv.clone().sub(A).normalize()); ship.add(l); }
+    }
+    // the pennant off the main truck, long, streaming to leeward
+    { const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, -0.05, 0, -0.5, -0.03, 0.06], 3)); pg.computeVertexNormals();
+      const pen = new THREE.Mesh(pg, new THREE.MeshStandardMaterial({ color: '#5a6a62', side: THREE.DoubleSide })); pen.position.set(X(0.5), gun(0.5) - 0.06 + 1.5, 0); pen.rotation.y = 0.3; ship.add(pen); }
   },
 });
 // ── the Tidemark's two boats waiting at their jetties (the owner, 2026-11-26: "the overland entrance to the dungeon just

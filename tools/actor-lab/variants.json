@@ -9648,5 +9648,70 @@
    }
   ],
   "face": "corsair"
+ },
+ {
+  "id": "TB5",
+  "cls": "Boss",
+  "label": "The Grace's master \u00b7 the Tidemark's region boss (GDD v1.157): Aurelle's flagship's captain, drowned with her, a man's size (the drowned's sea-green bone, a sodden naval coat in tarnished lace, weed off its hem and his cocked hat, a cutlass, the ship's stern-lantern on his belt lit sea-green)",
+  "model": "Skeleton_Warrior",
+  "hold": {
+   "handslot.r": "cutlass"
+  },
+  "wear": {
+   "head": "gracehat",
+   "chest": "epaulettes",
+   "hips": [
+    "gracecoat",
+    "sternlantern"
+   ]
+  },
+  "hide": [
+   "Skeleton_Warrior_Helmet"
+  ],
+  "eyes": "0x8ee8cc",
+  "skull": true,
+  "swatches": [
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#b4d4b0",
+     "#34503c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#3a5062",
+     "#101820"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     0
+    ],
+    "to": [
+     "#22201e",
+     "#0a0908"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#2a3440",
+     "#0c1018"
+    ]
+   }
+  ],
+  "height": 1.1
  }
 ]
