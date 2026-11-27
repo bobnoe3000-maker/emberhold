@@ -1516,6 +1516,10 @@ function buildTavern(pieces) {
       const R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
       for (let k = 0; k < 4; k++) b.tinted([1.05, 1.0, 0.88], () => b.box('linen', [0.32, 0.012, 0.24], { at: [p.x + (R(k) - 0.5) * 0.8, FL + 0.008 + k * 0.004, p.z + (R(k + 5) - 0.5) * 0.6], rot: [0, R(k + 9) * 3, 0] }));
       b.box(cryptOx ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#6e1e20') }), [0.06, 0.012, 0.06], { at: [p.x + (R(0) - 0.5) * 0.8, FL + 0.016, p.z + (R(5) - 0.5) * 0.6] });
+    } else if (p.k === 'bniche' || p.k === 'bdoor' || p.k === 'bier' || p.k === 'menhir' || p.k === 'bshore' || p.k === 'bpost') {
+      valeBarrow(b, p, on, sz, tilt, FL);
+    } else if (p.k === 'kparapet' || p.k === 'kbutt' || p.k === 'kslit' || p.k === 'kmerlons' || p.k === 'hpost' || p.k === 'kpier') {
+      valeKeep(b, p, on, sz, FL);
     } else if (p.k === 'furn') {
       const r = f[p.type](p.x, FL, p.z, p.opts || {}), o = r.object || r.group;
       if (!o) continue;
@@ -1552,6 +1556,117 @@ function buildTavern(pieces) {
   return g;
 }
 const TAV_H = 3.0, TAV_FLOOR = 1.0;
+// ── the Vale's stone (docs/dungeon-looks-plan.md items 1 and 2; docs/art-critic-pass-vale.md): the Old Barrows' timber and
+// grave goods, their standing stones; Wickham Keep's parapets, buttresses, slits and piers. Built in buildTavern's one
+// batch (convert.js barrowDress, BARROW_3D, curtainRun, KEEP_3D). `on`/`sz`: buildTavern's wall frame (u along the wall,
+// v out of it into the room).
+const BARROW_OAK = [0.46, 0.34, 0.25], BARROW_OAK_LIT = [0.66, 0.5, 0.36], CLAY = [[1.3, 0.86, 0.6], [1.18, 0.98, 0.78], [0.9, 0.64, 0.46]];
+const HORN = [1.5, 1.38, 1.1];
+function valeBarrow(b, p, on, sz, tilt, FL) {
+  const R = (k) => ((Math.imul((p.seed || 7) + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+  cryptDark ||= new THREE.MeshBasicMaterial({ color: '#0d0a08' });
+  // a pot of the dead's, its own shape, lidded (the crypt's urns, a coarser clay)
+  const pot = (at, H, Wd, k) => { b.tinted(CLAY[k % 3], () => b.lathe('crypt_cap', [{ y: 0, r: Wd * 0.55 }, { y: 0.04, r: Wd * 0.72 }, { y: H * 0.45, r: Wd }, { y: H * 0.85, r: Wd * 0.6 }, { y: H, r: Wd * 0.68 }], { segments: 10, at })); b.tinted([1.0, 0.9, 0.78], () => b.lathe('crypt_cap', [{ y: 0, r: Wd * 0.7 }, { y: 0.05, r: Wd * 0.5 }, { y: 0.09, r: 0 }], { segments: 8, at: [at[0], at[1] + H, at[2]] })); };
+  // a round shield, limewood painted and faded, an iron boss and rim; `flat`: laid on its back, else leant on the wall
+  const shield = (at, Rr, rot, k) => {
+    const tint = [[0.9, 0.42, 0.3], [0.86, 0.74, 0.5], [0.5, 0.6, 0.72], [0.8, 0.62, 0.42]][k % 4];
+    b.tinted(tint, () => b.lathe('furniture_wood', [{ y: 0, r: 0 }, { y: 0.02, r: Rr }, { y: 0.05, r: Rr }, { y: 0.06, r: 0 }], { segments: 14, at, rot }));
+    b.tinted([0.42, 0.4, 0.4], () => { b.lathe('metal', [{ y: 0.03, r: Rr + 0.03 }, { y: 0.03, r: Rr - 0.03 }, { y: 0.07, r: Rr - 0.03 }, { y: 0.07, r: Rr + 0.03 }, { y: 0.03, r: Rr + 0.03 }], { segments: 14, at, rot }); b.lathe('metal', [{ y: 0.05, r: 0.09 }, { y: 0.11, r: 0.07 }, { y: 0.14, r: 0 }], { segments: 8, at, rot }); });
+  };
+  if (p.k === 'bniche') {
+    // a niche in the drystone: a dark recess, a slab ledge and a slab sill under it, an oak post either side and a heavy
+    // lintel over (the barrow's timber), the dead's grave goods on the ledge
+    const H = 1.15, Wn = 1.5, y0 = FL + 0.46;
+    b.box(cryptDark, sz(p, Wn, H, 0.04), { at: on(p, 0, y0 + H / 2, 0.02) });
+    b.tinted([1.12, 1.08, 1.0], () => { b.box('barrow_drystone', sz(p, Wn + 0.5, 0.14, 0.5), { at: on(p, 0, y0 - 0.07, 0.25) }); b.box('barrow_drystone', sz(p, Wn + 0.2, 0.32, 0.36), { at: on(p, 0, FL + 0.16, 0.18) }); });
+    b.tinted(BARROW_OAK, () => { for (const sg of [-1, 1]) b.box('furniture_wood', sz(p, 0.22, H + 0.5, 0.22), { at: on(p, sg * (Wn / 2 + 0.11), FL + (H + 0.5) / 2, 0.13) }); b.box('furniture_wood', sz(p, Wn + 0.85, 0.28, 0.34), { at: on(p, 0, y0 + H + 0.14, 0.17) }); });
+    b.tinted(BARROW_OAK_LIT, () => b.box('furniture_wood', sz(p, Wn + 0.85, 0.04, 0.36), { at: on(p, 0, y0 + H + 0.3, 0.18) }));
+    const v = p.seed % 4, ly = y0;
+    if (v === 0 || v === 3) { pot(on(p, -0.38, ly, 0.2), 0.42, 0.2, p.seed); pot(on(p, 0.05, ly, 0.24), 0.34, 0.17, p.seed + 1); }
+    if (v === 0 || v === 2) skull(b, p, v === 0 ? 0.45 : -0.42, ly + 0.14, 0.13, 0.2);
+    if (v === 1 || v === 3) shield(on(p, v === 1 ? -0.15 : 0.42, ly + 0.43, 0.16), 0.4, p.n === 'z' ? [Math.PI / 2 - 0.2, 0, 0] : [0, 0, -Math.PI / 2 + 0.2], p.seed);
+    if (v === 1) b.tinted([0.62, 0.48, 0.34], () => { for (const sg of [-1, 1]) { b.tube('furniture_wood', on(p, sg * 0.62, ly + 0.02, 0.12), on(p, sg * 0.1, ly + 1.08, 0.06), 0.025, 0.025, { segments: 5 }); b.tinted([0.6, 0.6, 0.64], () => b.box('metal', sz(p, 0.07, 0.2, 0.04), { at: on(p, sg * 0.06, ly + 1.15, 0.06), rot: tilt(p, sg * 0.45) })); } });
+    if (v === 2) {   // a drinking horn on its side, and a pot
+      b.tinted(HORN, () => { const pts = [[-0.1, 0.12, 0.08], [0.12, 0.08, 0.075], [0.3, 0.14, 0.055], [0.42, 0.28, 0.035], [0.45, 0.4, 0.015]]; for (let k = 0; k + 1 < pts.length; k++) b.tube('linen', on(p, pts[k][0], ly + pts[k][1], 0.22), on(p, pts[k + 1][0], ly + pts[k + 1][1], 0.22), pts[k][2], pts[k + 1][2], { segments: 7 }); });
+      b.tinted([0.62, 0.58, 0.5], () => b.lathe('metal', [{ y: 0, r: 0.085 }, { y: 0.03, r: 0.085 }, { y: 0.04, r: 0 }], { segments: 8, at: on(p, -0.1, ly + 0.12, 0.22), rot: p.n === 'z' ? [0, 0, Math.PI / 2] : [Math.PI / 2, 0, 0] }));
+      pot(on(p, 0.48, ly, 0.22), 0.36, 0.18, p.seed + 2);
+    }
+  } else if (p.k === 'bdoor') {
+    // a passage's mouth into the mound: an oak post at either side and a lintel across over a figure's head, a wedge of
+    // drystone packed on it (earth: the cut's own, the turf over)
+    const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { n: p.n, x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 }, Y = FL + 2.45;
+    b.tinted(BARROW_OAK, () => {
+      for (const sg of [-1, 1]) { b.box('furniture_wood', sz(q, 0.34, Y - FL, 0.34), { at: on(q, sg * (len / 2 - 0.05), FL + (Y - FL) / 2, 0.05) }); b.box('barrow_drystone', sz(q, 0.6, 0.3, 0.6), { at: on(q, sg * (len / 2 - 0.05), FL + 0.15, 0.05) }); }
+      b.box('furniture_wood', sz(q, len + 0.9, 0.4, 0.42), { at: on(q, 0, Y + 0.2, 0.05) });
+    });
+    b.tinted(BARROW_OAK_LIT, () => b.box('furniture_wood', sz(q, len + 0.9, 0.05, 0.44), { at: on(q, 0, Y + 0.42, 0.05) }));
+    b.tinted([1.05, 1.0, 0.94], () => b.box(p.earth ? 'barrow_cut' : 'barrow_drystone', sz(q, len + 0.4, 0.5, 0.5), { at: on(q, 0, Y + 0.67, -0.2) }));
+  } else if (p.k === 'bier') {
+    // the dead laid out: an oak bier on four legs, the body under its shroud, a round shield on the chest and the spear laid
+    // beside it; a robbed one's shroud torn back on the bones, its shield thrown down
+    const c = Math.cos(p.rot || 0), s = Math.sin(p.rot || 0), W = (lx, lz) => [p.x + lx * c + lz * s, p.z - lx * s + lz * c], yaw = [0, p.rot || 0, 0];
+    const at = (lx, y, lz) => { const [x, z] = W(lx, lz); return [x, y, z]; };
+    b.tinted(BARROW_OAK, () => { for (const [lx, lz] of [[-0.9, -0.32], [0.9, -0.32], [-0.9, 0.32], [0.9, 0.32]]) b.box('furniture_wood', [0.12, 0.5, 0.12], { at: at(lx, FL + 0.25, lz), rot: yaw }); b.box('furniture_wood', [2.1, 0.1, 0.82], { at: at(0, FL + 0.55, 0), rot: yaw }); });
+    b.tinted(BARROW_OAK_LIT, () => { for (const lz of [-0.4, 0.4]) b.box('furniture_wood', [2.16, 0.06, 0.06], { at: at(0, FL + 0.62, lz), rot: yaw }); });
+    if (!p.robbed) {
+      b.tinted([0.92, 0.88, 0.78], () => { b.box('linen', [1.5, 0.22, 0.5], { at: at(0.05, FL + 0.71, 0), rot: yaw }); b.box('linen', [0.34, 0.26, 0.34], { at: at(-0.85, FL + 0.73, 0), rot: yaw }); b.box('linen', [0.3, 0.16, 0.42], { at: at(0.86, FL + 0.84, 0), rot: yaw }); });
+      shield(at(-0.15, FL + 0.82, 0), 0.34, null, p.seed);
+      b.tinted([0.62, 0.48, 0.34], () => b.tube('furniture_wood', at(-1.15, FL + 0.66, 0.36), at(1.2, FL + 0.66, 0.36), 0.025, 0.025, { segments: 5 }));
+      b.tinted([0.58, 0.58, 0.62], () => b.box('metal', [0.26, 0.03, 0.08], { at: at(1.32, FL + 0.66, 0.36), rot: yaw }));
+    } else {
+      b.tinted([0.86, 0.8, 0.7], () => { b.box('linen', [0.8, 0.08, 0.55], { at: at(0.45, FL + 0.64, 0.05), rot: [0.1, (p.rot || 0) + 0.3, 0] }); });
+      b.tinted(BONE_TINT, () => { for (let k = 0; k < 5; k++) b.box('linen', [0.42, 0.05, 0.05], { at: at(-0.5 + k * 0.18, FL + 0.64, (R(k) - 0.5) * 0.4), rot: [0, (p.rot || 0) + (R(k + 3) - 0.5) * 2, 0] }); });
+      shield(at(0.4, FL + 0.03, 0.85), 0.34, [0.1, 0, 0.12], p.seed);
+    }
+  } else if (p.k === 'menhir') {
+    // a standing stone: a rough slab of the moor's grey rock, broader than deep, leaning a little, lichen-pale at the top;
+    // fallen: its stump, and the rest of it lying by
+    const yaw = R(1) * 3.14, lean = (R(2) - 0.5) * 0.12, Hm = p.fallen ? 0.75 + R(3) * 0.3 : 2.2 + R(3) * 0.6, Wd = 0.68 + R(4) * 0.14;   // (round 2: broader, a slab, not a spire)
+    const prof = p.fallen ? [{ y: 0, r: Wd * 1.05 }, { y: 0.2, r: Wd }, { y: Hm * 0.8, r: Wd * 0.92 }, { y: Hm, r: Wd * 0.55 }, { y: Hm + 0.05, r: 0 }]
+      : [{ y: 0, r: Wd * 1.05 }, { y: 0.25, r: Wd }, { y: Hm * 0.5, r: Wd * 0.94 }, { y: Hm * 0.82, r: Wd * 0.78 }, { y: Hm * 0.95, r: Wd * 0.45 }, { y: Hm, r: 0 }];
+    b.tinted([0.98, 0.97, 0.92], () => b.lathe('crypt_cap', prof, { segments: 5, at: [p.x, FL - 0.05, p.z], rot: [lean, yaw, -lean * 0.5], scale: [1, 1, 0.55] }));
+    b.tinted([0.9, 0.95, 0.78], () => b.lathe('moss_stone', [{ y: 0, r: Wd * 1.1 }, { y: 0.12, r: Wd * 1.08 }, { y: 0.2, r: 0 }], { segments: 5, at: [p.x, FL - 0.04, p.z], rot: [0, yaw, 0], scale: [1, 1, 0.65] }));   // (the turf round its foot)
+    if (p.fallen) b.tinted([0.94, 0.93, 0.88], () => b.box('crypt_cap', [1.7, 0.5, 0.75], { at: [p.x + Math.cos(yaw) * 1.25, FL + 0.22, p.z - Math.sin(yaw) * 1.25], rot: [0.08, yaw + 0.4, 0.05] }));
+  } else if (p.k === 'bshore') {
+    // the Redhand's shoring: a timber set, two posts and a cap, the planks behind it holding the cut
+    b.tinted(BARROW_OAK, () => { for (const sg of [-1, 1]) b.box('furniture_wood', sz(p, 0.2, 2.1, 0.2), { at: on(p, sg * 0.85, FL + 1.05, 0), rot: tilt(p, sg * 0.05) }); b.box('furniture_wood', sz(p, 2.3, 0.24, 0.26), { at: on(p, 0, FL + 2.12, 0) }); });
+    b.tinted([0.66, 0.52, 0.4], () => { for (const y of [0.35, 0.75, 1.15]) b.box('wood_planks', sz(p, 1.75, 0.3, 0.05), { at: on(p, 0, FL + y, -0.14), rot: tilt(p, (R(y * 10) - 0.5) * 0.06) }); });
+  } else if (p.k === 'bpost') {
+    // a post against the cut, wedged under a cap board, two planks behind it at the foot
+    b.tinted(BARROW_OAK, () => { b.box('furniture_wood', sz(p, 0.22, 2.0, 0.22), { at: on(p, 0, FL + 1.0, 0.13), rot: tilt(p, (R(1) - 0.5) * 0.08) }); b.box('furniture_wood', sz(p, 1.3, 0.2, 0.18), { at: on(p, 0, FL + 2.06, 0.11) }); });
+    b.tinted([0.62, 0.5, 0.38], () => { for (const y of [0.25, 0.58]) b.box('wood_planks', sz(p, 1.5, 0.28, 0.05), { at: on(p, (R(2) - 0.5) * 0.3, FL + y, 0.03) }); });
+  }
+}
+function valeKeep(b, p, on, sz, FL) {
+  if (p.k === 'kparapet' || p.k === 'kmerlons') {
+    // the curtain's crenellations along its top (the back walls: over the wall's own tile, behind the face), or the near
+    // runs' breast-high parapet with its merlons (over the tile in front, ahead of the line)
+    const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { n: p.n, x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 }, v = p.k === 'kparapet' ? -0.5 : 0.5, step = p.k === 'kparapet' ? 1.25 : 1.5;
+    b.tinted([1.16, 1.12, 1.06], () => b.box('keep_ashlar', sz(q, len, 0.1, 1.08), { at: on(q, 0, p.y + 0.05, v) }));
+    b.tinted([1.0, 0.98, 0.95], () => { for (let t = 0.45; t < len - 0.2; t += step) b.box('keep_ashlar', sz(q, 0.66, p.k === 'kparapet' ? 0.62 : 0.46, 0.84), { at: on(q, t - len / 2, p.y + (p.k === 'kparapet' ? 0.41 : 0.33), v) }); });
+  } else if (p.k === 'kbutt') {
+    // a buttress against the curtain, stepped back under a sloped weathering near the top
+    const H = p.top - FL;
+    b.tinted([0.92, 0.9, 0.86], () => { b.box('keep_ashlar', sz(p, 0.8, H * 0.62, 0.55), { at: on(p, 0, FL + H * 0.31, 0.27) }); b.box('keep_ashlar', sz(p, 0.7, H * 0.3, 0.32), { at: on(p, 0, FL + H * 0.62 + H * 0.15, 0.16) }); });
+    b.tinted([1.1, 1.06, 1.0], () => { b.box('keep_ashlar', sz(p, 0.86, 0.12, 0.5), { at: on(p, 0, FL + H * 0.62 + 0.02, 0.32), rot: p.n === 'z' ? [0.5, 0, 0] : [0, 0, -0.5] }); });
+  } else if (p.k === 'kslit') {
+    // an arrow slit: a tall dark gap in a dressed surround
+    b.tinted([1.12, 1.08, 1.02], () => b.box('keep_ashlar', sz(p, 0.5, 1.2, 0.06), { at: on(p, 0, p.y, 0.03) }));
+    b.box(cryptDark ||= new THREE.MeshBasicMaterial({ color: '#0d0a08' }), sz(p, 0.13, 0.95, 0.03), { at: on(p, 0, p.y, 0.065) });
+    b.box(cryptDark, sz(p, 0.36, 0.11, 0.03), { at: on(p, 0, p.y - 0.12, 0.065) });
+  } else if (p.k === 'hpost') {
+    // the great hall's aisle post: an oak post from a stone pad up to the roof's beam, braced
+    const TOPY = FL + TAV_H;
+    b.tinted([0.9, 0.88, 0.84], () => b.box('keep_ashlar', [0.62, 0.22, 0.62], { at: [p.x, FL + 0.11, p.z] }));
+    b.tinted(OAK, () => { b.box('furniture_wood', [0.36, TAV_H, 0.36], { at: [p.x, FL + TAV_H / 2, p.z] }); for (const [dx, dz] of [[1, 0], [-1, 0]]) b.box('furniture_wood', [0.14, 0.9, 0.14], { at: [p.x + dx * 0.32, TOPY - 0.5, p.z + dz * 0.32], rot: [0, 0, -dx * 0.7] }); b.box('furniture_wood', [1.5, 0.26, 0.3], { at: [p.x, TOPY - 0.1, p.z] }); });
+  } else if (p.k === 'kpier') {
+    // a yard's pier of the curtain's ashlar, capped; low: its stump, a block fallen by it
+    const H = p.low ? 0.9 : 2.3;
+    b.tinted([0.95, 0.93, 0.9], () => b.box('keep_ashlar', [0.82, H, 0.82], { at: [p.x, FL + H / 2, p.z] }));
+    b.tinted([1.12, 1.08, 1.02], () => b.box('keep_ashlar', [1.0, 0.16, 1.0], { at: [p.x, FL + H + 0.08, p.z] }));
+    if (p.low) b.tinted([0.9, 0.88, 0.84], () => b.box('keep_ashlar', [0.8, 0.55, 0.6], { at: [p.x + 0.9, FL + 0.27, p.z + 0.4], rot: [0.06, 0.5, 0.1] }));
+  }
+}
 const CR_SPRING = 1.0 + 2.25;   // (where the crypt's arches spring, over a figure's head: its walls stand four units, convert.js CR_BACK)   // (a back wall's height over the floor: convert.js TAV_BACK, level 8, over the floor's 2)
 // ── the Magma Vault's magma (convert.js magmaFlow; docs/art-critic-pass-magma-vault.md) ─────────────────────────────────
 // Its tiles as one flow: each a quad laid just over the floor (Luminati's floor is a solid block of two of our tiles a
@@ -2185,6 +2300,142 @@ registerTextureSet((K) => {
       const N = K.field(s.w, s.h, 4, 4, 1005, { oct: 2 }), R = P(['#6a4a18', '#86601e', '#a07826', '#ba922e', '#d2aa40', '#e2c058', '#eed272']);
       s.each((x, y, i) => { const t = 0.55 + (N[i] - 0.5) * 0.6 + (K.hash2(x, y, 1007) > 0.93 ? 0.25 : 0); s.set(x, y, at(R, Math.max(0, Math.min(1, t)))); s.hf[i] = 0.6 + (N[i] - 0.5) * 0.3; });
       return { normal: 1.0 };
+    } },
+  };
+});
+
+// ── the Vale's stone (docs/dungeon-looks-plan.md items 1 and 2; docs/art-critic-pass-vale.md) ────────────────────────
+// The Old Barrows a barrow: drystone, flat stones laid dry in courses under the mound's turf, its passages' floors packed
+// earth and worn slabs set in it, the mouth's cut earth in its strata. Wickham Keep a keep: its curtain walls a honey-grey
+// ashlar in lime mortar over a cobbled yard, its great hall limewashed plaster over worn flags strewn with rushes.
+/** drystone: flat stones laid dry, long and thin, in courses (two or three to each half unit), no mortar, the gaps deep
+ * shadow, a pinning chip in one now and then; each stone its own tone, lit along its top, lichen here and there. Every
+ * course line falls on a half-unit (8 px) row, so a lip's band of it (`turf`: the mound's turf over the top course, its
+ * grass hanging down) meets the wall's courses at whatever height a wall's top stands */
+function drystone(s, K, R, seed, turf = 0) {
+  const w = s.w, h = s.h, id = new Int32Array(w * h).fill(-1), st = [], SPLITS = [[3, 5], [5, 3], [4, 4], [3, 2, 3], [2, 3, 3], [3, 3, 2], [4, 4], [8]];
+  for (let band = 0; band * 8 < h; band++) {
+    const sp = SPLITS[Math.floor(K.hash2(band, 1, seed) * SPLITS.length)]; let y = band * 8;
+    for (const ch of sp) {
+      let x = Math.floor(K.hash2(band, y, seed + 1) * 12), n = 0;
+      while (x < w + 12) { const L = (ch >= 5 ? 7 : 9) + Math.floor(K.hash2(y, n, seed + 2) * (ch >= 5 ? 9 : 14)); st.push({ x, y, w: L, h: ch, t: K.hash2(st.length, 3, seed + 3), lich: K.hash2(st.length, 5, seed + 4) < 0.18 }); x += L; n++; }
+      y += ch;
+    }
+  }
+  st.forEach((b, k) => { for (let dy = 0; dy < b.h - 1; dy++) for (let dx = 1; dx < b.w; dx++) { if ((dx === 1 || dx === b.w - 1) && (dy === 0 || dy === b.h - 2) && b.h > 2) continue; id[(b.y + dy) * w + ((b.x + dx) % w)] = k; } });
+  const N = K.field(w, h, 6, 6, seed + 5, { oct: 3 }), at = (t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
+  const GAP = K.parseColor('#120e0b'), LICHEN = K.parseColor('#7c8462'), CHIP = R[2];
+  s.each((x, y, i) => {
+    const k = id[i];
+    if (k < 0) { const chip = K.hash2(x >> 1, y, seed + 6) > 0.9; s.set(x, y, chip ? CHIP : GAP); s.hf[i] = chip ? 0.3 : 0; return; }
+    const b = st[k], ly = y - b.y;
+    let t = 0.26 + b.t * 0.5 + (N[i] - 0.5) * 0.22;
+    if (ly === 0) t += 0.14; else if (ly >= b.h - 2) t -= 0.1;   // (lit along its top edge, shadowed under)
+    if (K.hash2(x, y, seed + 7) > 0.96) t -= 0.14;
+    let col = at(t);
+    if (b.lich && N[i] > 0.55) col = K.mixColor(col, LICHEN, 0.3);
+    s.set(x, y, col); s.hf[i] = 0.45 + 0.4 * Math.min(1, ly / 1.5) + (N[i] - 0.5) * 0.2;
+  });
+  if (turf) {
+    // the turf over the top course: a band of dark grass and earth, its grass and roots hanging down the stones in strands
+    const G = ['#1d2a14', '#2a3a1a', '#36481f', '#445826', '#55682e'].map((c) => K.parseColor(c)), EARTH = K.parseColor('#2a1f16');
+    for (let x = 0; x < w; x++) {
+      const top = turf + Math.floor(K.hash2(x >> 1, 9, seed + 8) * 2), hang = K.hash2(x >> 1, 11, seed + 9) < 0.3 ? 1 + Math.floor(K.hash2(x >> 1, 12, seed + 10) * 3) : 0;   // (round 4: fewer and shorter, in tufts two wide: long strands across a low wall's face read as iron bars)
+      for (let y = 0; y < Math.min(h, top + hang); y++) {
+        const i = y * w + x, inTurf = y < top;
+        if (!inTurf && K.hash2(x, y, seed + 11) < 0.25) continue;   // (the strands broken)
+        const g = inTurf ? (y === top - 1 && K.hash2(x, y, seed + 12) < 0.4 ? EARTH : G[Math.min(4, 1 + Math.floor(K.hash2(x, y, seed + 13) * 3) + (y === 0 ? 1 : 0))]) : G[Math.floor(K.hash2(x, y, seed + 14) * 3)];
+        s.set(x, y, g); s.hf[i] = inTurf ? 0.9 - y * 0.05 : 0.7;
+      }
+    }
+  }
+  return { normal: 2.4 };
+}
+/** cut earth: the mound's soil in its strata, a dark topsoil, a brown loam, the chalk under it in lumps, the spade's cuts
+ * down the face, a stone left in it here and there; `turf`: the grass over its top, the roots down through the topsoil */
+function cutEarth(s, K, seed, turf = 0) {
+  const w = s.w, h = s.h, N = K.field(w, h, 4, 3, seed, { oct: 3 }), M = K.field(w, h, 8, 8, seed + 1, { oct: 2 });
+  const LAYERS = [['#2c2118', '#36291d', '#403023'], ['#4a3624', '#56402b', '#624a32'], ['#6a5034', '#77593a', '#846444'], ['#8c7a62', '#a09078', '#b4a68e']].map((l) => l.map((c) => K.parseColor(c)));
+  const STONE = ['#5a554d', '#706a60', '#878074'].map((c) => K.parseColor(c)), G = ['#1d2a14', '#2a3a1a', '#36481f', '#445826'].map((c) => K.parseColor(c)), ROOT = K.parseColor('#1a130d');
+  s.each((x, y, i) => {
+    // the strata wander a little along the face; the cuts of the spade, short slanting streaks
+    const d = (turf ? y : y + 16) + (N[i] - 0.5) * 7, layer = d < 10 ? 0 : d < 26 ? 1 : d < 40 ? 2 : (d < 44 ? 1 : 3);
+    const L = LAYERS[layer], cut = ((x * 3 + y) % 11 === 0) && K.hash2(x >> 2, y >> 3, seed + 2) < 0.5;
+    let k = M[i] > 0.62 ? 2 : M[i] < 0.3 ? 0 : 1; if (cut) k = Math.max(0, k - 1);
+    let col = L[k], hf = 0.5 + (M[i] - 0.5) * 0.4;
+    if (K.hash2(x >> 1, y >> 1, seed + 3) > 0.975) { col = STONE[Math.floor(K.hash2(x, y, seed + 4) * 3)]; hf = 0.85; }
+    if (layer === 3 && M[i] > 0.7) { col = LAYERS[3][2]; hf = 0.8; }   // (the chalk in lumps)
+    s.set(x, y, col); s.hf[i] = hf;
+  });
+  if (turf) for (let x = 0; x < w; x++) {
+    const top = turf + Math.floor(K.hash2(x >> 1, 9, seed + 5) * 2), root = K.hash2(x, 3, seed + 6) < 0.14 ? 2 + Math.floor(K.hash2(x, 4, seed + 7) * 4) : 0;
+    for (let y = 0; y < Math.min(h, top + root); y++) { const i = y * w + x; s.set(x, y, y < top ? G[Math.min(3, Math.floor(K.hash2(x, y, seed + 8) * 3) + (y === 0 ? 1 : 0))] : ROOT); s.hf[i] = y < top ? 0.9 : 0.35; }
+  }
+  return { normal: 2.0 };
+}
+/** a barrow's floor (round 2: the inn's rubble at a tile's size read as cobbles): big flat stones a unit and more across,
+ * set in packed earth, a third of them worn away to the earth, the earth in wide joints between the rest */
+function barrowSlabs(s, K, R, E) {
+  const w = s.w, h = s.h, G = 3, cell = w / G, pts = [];
+  for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) pts.push([(i + 0.2 + K.hash2(i, j, 1171) * 0.6) * cell, (j + 0.2 + K.hash2(i, j, 1172) * 0.6) * cell, K.hash2(i, j, 1173), K.hash2(i, j, 1174) < 0.3]);
+  const N = K.field(w, h, 8, 8, 1175, { oct: 3 }), at = (A, t) => A[Math.max(0, Math.min(A.length - 1, Math.round(t * (A.length - 1))))];
+  s.each((x, y, i) => {
+    let d1 = 1e9, d2 = 1e9, k1 = 0;
+    for (let k = 0; k < pts.length; k++) for (let oy = -h; oy <= h; oy += h) for (let ox = -w; ox <= w; ox += w) {
+      const dx = (x + 0.5 - pts[k][0] - ox) * 0.85, dy = y + 0.5 - pts[k][1] - oy, d = Math.sqrt(dx * dx + dy * dy);
+      if (d < d1) { d2 = d1; d1 = d; k1 = k; } else if (d < d2) d2 = d;
+    }
+    const e = (d2 - d1) / 2, worn = pts[k1][3] || N[i] < 0.2;
+    if (e < 1.6 + N[i] * 1.2 || worn) { s.set(x, y, at(E, 0.35 + (N[i] - 0.5) * 0.6 + (K.hash2(x, y, 1176) > 0.95 ? 0.3 : 0))); s.hf[i] = 0.15 + N[i] * 0.1; return; }
+    let t = 0.3 + pts[k1][2] * 0.4 + (N[i] - 0.5) * 0.25; if (e < 2.6) t -= 0.08;
+    s.set(x, y, at(R, Math.max(0, Math.min(1, t)))); s.hf[i] = 0.45 + 0.5 * Math.min(1, (e - 1.5) / 3);
+  });
+  return { normal: 1.8 };
+}
+registerTextureSet((K) => {
+  const P = (a) => a.map((c) => K.parseColor(c)), at = (R, t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
+  const lum = (c) => (0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]) / 255;
+  const recolor = (src, R) => (s) => {
+    const p = (reachLib ||= new TextureLibrary({ seed: 7 })).pixels(src); if (!p) return {};
+    const { width: w, height: h } = p.color, L = new Float32Array(w * h); let lo = 1, hi = 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const l = lum(p.color.get(x, y)); L[y * w + x] = l; lo = Math.min(lo, l); hi = Math.max(hi, l); }
+    s.each((x, y, i) => { s.set(x, y, at(R, (L[i] - lo) / Math.max(1e-3, hi - lo))); s.hf[i] = p.height[i]; });
+    return { normal: 2.2 };
+  };
+  const DRY = P(['#3a352f', '#4f4840', '#635b51', '#776d61', '#8a8072', '#9c9284', '#ada394', '#bdb3a3']);   // (round 1: a step lighter, the walls read black)
+  return {
+    // the barrow: its drystone, the lip of it under the turf, the mouth's cut earth and its turfed lip
+    barrow_drystone: { px: [48, 48], normalScale: 0.9, gen: (s) => drystone(s, K, DRY, 1101) },
+    barrow_turf: { px: [48, 16], normalScale: 0.9, gen: (s) => drystone(s, K, DRY, 1101, 4) },
+    barrow_cut: { px: [48, 48], normalScale: 0.8, gen: (s) => cutEarth(s, K, 1131) },
+    barrow_cutturf: { px: [48, 16], normalScale: 0.8, gen: (s) => cutEarth(s, K, 1131, 4) },
+    // its floors: packed earth, a warm umber trodden smooth; worn slabs set in it, earth in their joints
+    barrow_earth: { px: [64, 64], normalScale: 0.5, gen: recolor('dirt', P(['#3e3226', '#4c3e30', '#5a4a3a', '#685645', '#766350', '#84705b', '#927d66'])) },
+    barrow_slab: { px: [64, 64], normalScale: 0.7, gen: (s) => barrowSlabs(s, K, P(['#5a554c', '#6a6359', '#787066', '#857d72', '#928a7e', '#9e968a']), P(['#3e3226', '#4c3e30', '#5a4a3a', '#685645', '#766350'])) },
+    // the keep: its curtain walls' ashlar, honey-grey in a pale lime mortar; the yard's cobbles, warm and a step lighter
+    // than the dungeons' (a yard under the sky); the great hall's limewash and its flags, rushes strewn on them
+    keep_ashlar: { px: [48, 48], normalScale: 0.8, gen: (s, ctx) => ashlar(s, ctx, K, P(['#544c42', '#665d51', '#786e60', '#8a7f6f', '#9b907e', '#aca08d', '#bbb09c', '#c8bea9']), ['#8e8676', '#7e7666'], ['#b09a74', '#8e9298']) },
+    keep_cobble: { px: [64, 64], normalScale: 0.75, gen: recolor('cobblestone', P(['#3e3831', '#544c43', '#655c51', '#756b5f', '#847a6c', '#938879', '#a29686'])) },
+    keep_mud: { px: [64, 64], normalScale: 0.55, gen: recolor('dirt_path', P(['#3a3024', '#4a3e2f', '#594b39', '#675843', '#75654e', '#827259'])) },
+    keep_plaster: { px: [48, 48], normalScale: 0.5, gen: (s) => {
+      const N = K.field(s.w, s.h, 3, 3, 1151, { oct: 3 }), F = K.field(s.w, s.h, 10, 10, 1153, { oct: 2 }), R = P(['#7e7466', '#91877a', '#a39a8c', '#b2a99b', '#bfb6a8', '#c9c1b3', '#d2cabc']), STAIN = K.parseColor('#6e604c');
+      s.each((x, y, i) => {
+        let t = 0.62 + (N[i] - 0.5) * 0.35 + (F[i] - 0.5) * 0.12;
+        if (K.hash2(x, y, 1155) > 0.985) t -= 0.25;   // (chips in the limewash)
+        let col = at(R, Math.max(0, Math.min(1, t)));
+        if (N[i] < 0.22) col = K.mixColor(col, STAIN, (0.22 - N[i]) * 2.2);   // (damp stains, soot)
+        s.set(x, y, col); s.hf[i] = 0.7 + (F[i] - 0.5) * 0.2 - (t < 0.4 ? 0.2 : 0);
+      });
+      return { normal: 1.0 };
+    } },
+    keep_flag: { px: [64, 64], normalScale: 0.8, gen: (s) => tavernFlags(s, K, P(['#2e2a26', '#5a554e', '#666058', '#716b62', '#7c766c', '#878076', '#928b80']), false) },
+    keep_rushes: { px: [64, 64], normalScale: 0.8, gen: (s) => {
+      const r = tavernFlags(s, K, P(['#2e2a26', '#5a554e', '#666058', '#716b62', '#7c766c', '#878076', '#928b80']), true), STRAW = P(['#6e5a32', '#86703e', '#9c844a', '#b09a5a']);
+      for (let k = 0; k < 140; k++) {   // (rushes strewn: short pale strokes every way)
+        const x0 = Math.floor(K.hash2(k, 1, 1161) * s.w), y0 = Math.floor(K.hash2(k, 2, 1161) * s.h), a = K.hash2(k, 3, 1161) * Math.PI, L = 3 + Math.floor(K.hash2(k, 4, 1161) * 5), c = STRAW[Math.floor(K.hash2(k, 5, 1161) * 4)];
+        for (let q = 0; q < L; q++) { const x = (x0 + Math.round(Math.cos(a) * q) + s.w) % s.w, y = (y0 + Math.round(Math.sin(a) * q) + s.h) % s.h; s.set(x, y, c); s.hf[y * s.w + x] = 0.85; }
+      }
+      return r;
     } },
   };
 });
