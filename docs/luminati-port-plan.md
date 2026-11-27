@@ -96,6 +96,12 @@ built Luminati's level from nothing every time. Four changes, all in our bridge 
 2. **The level left is set aside.** It goes back without a rebuild (`swapLevel` `keep` / `kept`, which needs that
    shared pool), together with our art stood in it. Two levels are kept, keyed by their converted content, so a level
    that changed is built again rather than reused stale. Town → overland → town re-attaches.
+   *(2026-11-27)* The swaps run one at a time (`tools/render3d/shelf.js`, test/shelf.test.mjs). Two loads that
+   overlapped (a restore while a level was still building, in `tools/capture/rig.mjs`'s run of shots) each filed the
+   level they left under whatever key was current when their own swap came back. Wickham Keep's key ended up holding
+   the High Ramparts' world, and the next trip to the Keep showed the Ramparts' houses under the Keep's HUD. Play holds
+   the sim while a level builds (`renderer.transiting`), so only a restore from outside the tick (the rig, the Stage)
+   could overlap two loads.
 3. **The level next door is built ahead.** About 1.5 s after you arrive in a town or on an overland, the other one is
    prepared: `createOutdoor` (pure; it converts to the same level the sim's trip would, tested on the Vale and the Fens)
    is handed to `prepareWorld`, and its paced build steps run 5 ms at a time between frames. The trip there takes it
