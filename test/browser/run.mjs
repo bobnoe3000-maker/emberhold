@@ -717,7 +717,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const frags = await p.evaluate(() => globalThis.__sim.state.fragments);
     await p.locator('#journalBtn').tap(); await p.locator('#journal .tabs button', { hasText: 'Chronicle' }).tap();
     const text = await p.locator('#journal .frag').first().innerText().catch(() => ''), missing = await p.locator('#journal .frag.missing').count();
-    check('chronicle: its chest gives Standing Order 14, and the Chronicle shows it (and the Vale\'s nine still missing, the Fens\' ten and the Reach\'s twelve), no page errors', frags.length === 1 && /Standing Order 14/.test(text) && /Third Legion/.test(text) && missing === 31 && errs.length === 0, `${text.split('\n')[0]} · missing ${missing}` + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    check('chronicle: its chest gives Standing Order 14, and the Chronicle shows it (and the Vale\'s nine still missing, the Fens\' ten, the Reach\'s twelve and the Tidemark\'s twelve), no page errors', frags.length === 1 && /Standing Order 14/.test(text) && /Third Legion/.test(text) && missing === 43 && errs.length === 0, `${text.split('\n')[0]} · missing ${missing}` + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }
 }
