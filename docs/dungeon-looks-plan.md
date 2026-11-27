@@ -69,15 +69,16 @@ sites share a kit and must look different (the Undercroft). New sim pieces follo
 | 9 | Reach | **The quota office a counting house:** ledger walls, chained clerks' desks, tally boards, the clerk's cool lamp. Built here first, then reused for the Greenwood's Tally-House and the Archive's wing. | `quota` (the look `counting`) | S |
 | 10 | Heights | **A frozen fortress** for the Praetory, ahead of the Heights' dungeons: frost cobbles, rime on the walls, icicles, the bound guard frozen at their posts. It uses the overland's snow and ice textures. It's built on a parked prototype floor until the Praetory is. | new `frostkeep` | S |
 | 11 | all | **Generated floors draw every land's kits:** a generated floor's theme picks a built kit of its land (the Mere Tower in Fens stone, the Undervaults descending through every land's). | `THEME_LOOK` | S |
-| — | Greenwood | **A forest dungeon**, open air under the canopy. It waits for the owner's reference. | `greenwood` | M |
+| 12 | Greenwood | **A forest dungeon**, open air under the canopy, built as the docks and ramparts are (no walls: trunks, root-banks and mossed boulders bound the rooms, the wood and its mist past the level's edges). From the owner's two references (2026-11-27, kept out of the repo): tall straight trunks and old twisted ones swathed in moss; shafts of pale green light down through the canopy; a moss-and-fern floor with stones in it and a cracked flagstone path (the Tithe Road, "ruled straight through the oaks, half swallowed", world doc §3.8); a ruined arcade of pointed arches in dark stone with bronze cresting gone green, the empire's; a broken gateway with steps up into the dark (the Root Granary's door); fallen blocks and broken pillars; a waterfall beyond. On a parked prototype floor of the Root Granary until the Greenwood is built. | new `greenwood` | M |
 
 ## 4. Order
 
-Three tracks, built side by side:
+Four tracks, built side by side:
 
 1. **The Vale's stone** (items 1, 2).
 2. **The water** (items 3, 4, 5, 7: one way of drawing water inside walls, four places).
 3. **Stone, mine and ice** (items 6, 8–11).
+4. **The forest** (item 12).
 
 Each track ends with:
 
