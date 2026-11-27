@@ -75,7 +75,9 @@ await migrateLegacy();                                            // the v3 sing
 const SLOT = params.has('slot') ? Math.max(1, Math.min(SLOTS, +params.get('slot') || 1)) : activeSlot();
 if (params.has('slot')) setActiveSlot(SLOT);
 const saved = PREVIEW ? null : await readSlot(SLOT);
-const SEED = saved ? saved.data.seed >>> 0 : SLOT === 1 ? WORLD_SEED : crypto.getRandomValues(new Uint32Array(1))[0];
+// (?dev&seed=N, localhost only, with a preview's ?scene=: a fresh world on that seed, so a generated floor's other draws can
+// be shot, the Mere Tower's among them: docs/art-critic-pass-stone.md)
+const SEED = saved ? saved.data.seed >>> 0 : DEV && PREVIEW && params.get('seed') ? +params.get('seed') >>> 0 : SLOT === 1 ? WORLD_SEED : crypto.getRandomValues(new Uint32Array(1))[0];
 const sim = createSim(SEED, THEME, { scene: SCENE, region: REVIEW ? (params.get('floor') || 'grass') : REGION, site: SITE });   // (the Stage's floor in region's place: outdoor.js)
 if (DEV) globalThis.__sim = sim;   // dev inspection hook
 // offline progress (ui/away.js; GDD §12): made before anything presentational listens, then the bus is sealed, so while

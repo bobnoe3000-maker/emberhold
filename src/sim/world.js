@@ -95,12 +95,14 @@ export const DRESS = {
 // middle is kept open for the fight; the pieces go in the thirds and at the walls, a focal piece on the room's axis.
 // A piece that runs along a wall comes in two (`<kind>` along x, `<kind>_y` along y: gsprite.js), picked by the wall it's
 // on. A big piece's footprint past its own tile is `block` (stands in the way, draws nothing).
-const ORIENT = new Set(['tomb', 'pew', 'longtable', 'tbench', 'rack', 'urnshelf', 'standard', 'banner', 'scaffold', 'stall', 'trough', 'portcullis', 'iron_door', 'desk', 'shelf', 'shoring', 'hives', 'bench', 'fallen_door', 'bars', 'cask_rack']);
+const ORIENT = new Set(['tomb', 'pew', 'longtable', 'tbench', 'rack', 'urnshelf', 'standard', 'banner', 'scaffold', 'stall', 'trough', 'portcullis', 'iron_door', 'desk', 'shelf', 'shoring', 'hives', 'bench', 'fallen_door', 'bars', 'cask_rack', 'shoring_broken', 'clerk_desk']);
 /** the pieces the dressing pass added (keepTheWaysOpen clears them like any decor when they shut a way) */
 export const DRESS_PIECES = new Set(['tomb', 'great_tomb', 'mourner', 'offering', 'hearth', 'noticeboard', 'counter', 'longtable', 'tbench', 'logpile', 'stall', 'hay', 'trough', 'hen_cart', 'well', 'cart', 'portcullis', 'iron_door', 'desk', 'shelf', 'pit', 'ladder', 'shoring', 'hives', 'bench',
   'fallen_door', 'bars', 'strongbox', 'map_table', 'ledgers', 'stockade', 'guardian', 'sarcophagus_open', 'cask_rack', 'torch', 'candelabra', 'cookfire', 'block', 'crane', 'fishcrates', 'market_stall', 'oven',
   'throne', 'reliquary',
   'magma', 'furnace', 'anvil', 'crucible',   // (the Magma Vault's: the owner, 2026-11-26, "flowing magma and a few furnaces, anvils")
+  'rail', 'cart_tipped', 'shoring_broken',   // (the Cold Seam's mine: docs/dungeon-looks-plan.md item 8)
+  'clerk_desk',   // (the quota office's clerks' desks, in rows: item 9)
   ...[...ORIENT].map((k) => k + '_y')]);
 // what lights a doorway, by the room's kit (a brazier each side, before, in every room: the screen was a field of
 // identical fires; now the light says the place): the dig's lanterns on poles, the crypt's candles, the keep's and the
@@ -116,6 +118,7 @@ export const DRESS_CAP = { tomb: 6, great_tomb: 1, mourner: 2, offering: 1, hear
   market_stall: 2, oven: 1,   // (the ramparts')
   throne: 1, reliquary: 1,   // (the palace's: v1.154)
   furnace: 2, anvil: 3, crucible: 2,   // (the Magma Vault's; its magma has no cap: a channel is many tiles of it)
+  cart_tipped: 1, clerk_desk: 8,   // (the Cold Seam's goblins' cart on its side; the quota office's desks: a row a wall. Rails no cap: a run is many tiles)
   saint: 2, lantern: 4, candles: 4, candelabra: 4, torch: 4, brazier: 4, ladder: 1, puddle: 4, scorch: 3, straw: 6, sacks: 3, crates: 2, barrels: 2, cracks: 6 };
 /** what stands out on an authored room's floor, by its place (not the kit's whole list: a gibbet in the stables and the
  *  gate-warden's chapel, a monolith in the legion's vault, said nothing) */
@@ -126,6 +129,12 @@ const DOOR_LIGHT = { dig: 'lantern', gallery: 'candles', muster: 'torch', bailey
   mound: 'lantern', locks: 'lantern', vats: 'lantern', abbey: 'candelabra', pithead: 'lantern', warren: 'torch',
   yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra', tavern: 'torch', tavern_cellar: 'candles', crypt: 'candles', ossuary: 'candles', docks: 'lantern', mole: 'lantern', ramparts: 'torch', seacave: 'lantern', hulk: 'lantern', palace: 'candelabra' };   // (the crypt's doorways a low pricket: a candelabrum crowded the threshold, round 3)   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
 const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave', yards: 'storehouse', quota: 'cellar', forge: 'muster', deepforge: 'binding', works: 'storehouse', vault: 'cave', strongroom: 'muster', tavern: 'storehouse', tavern_cellar: 'storehouse', crypt: 'crypt', ossuary: 'ossuary', docks: 'storehouse', mole: 'storehouse', ramparts: 'storehouse', seacave: 'cave', hulk: 'storehouse', palace: 'crypt' };
+// (the Reedholm Undercroft's own kits, docs/dungeon-looks-plan.md item 6: the Haddow Crypt's plan and set pieces, and its
+// fights, in the reed town's brick: the crypt's and the ossuary's dressing, kept as they are; convert.js draws them)
+DRESS.fenbrick = DRESS.crypt; DRESS.fenbones = DRESS.ossuary;
+PLAN_OB.fenbrick = PLAN_OB.crypt; PLAN_OB.fenbones = PLAN_OB.ossuary;
+DOOR_LIGHT.fenbrick = DOOR_LIGHT.crypt; DOOR_LIGHT.fenbones = DOOR_LIGHT.ossuary;
+PLAN_THEME.fenbrick = PLAN_THEME.crypt; PLAN_THEME.fenbones = PLAN_THEME.ossuary;
 const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', crates: 'crates', sacks: 'sacks', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', skulls: 'bones', bones: 'bones', barrels: 'barrels' };
 function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, count }) {
   // every piece through the room's caps (CAP): a recipe can't stand a second well or a fifth torch
@@ -326,13 +335,23 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       case 'pens': for (let u = -L * 0.7, i = 0; u <= L * 0.7 + 0.01; u += 7, i++) { putAt(u, -wall, alongK('stall')); putAt(u + 1, -wall + 2.5, i % 2 ? 'straw' : 'reeds'); } putAt(L * 0.5, Wd * 0.45, alongK('trough')); break;
       case 'windlasses': for (const s of [-1, 1]) putAt(s * L * 0.45, -wall, 'windlass'); break;   // (the gear either side, at the back wall)
       case 'vats': for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 10) putAt(u, -(Wd - 3), 'vat'); break;   // (the tubs down the back wall: tall, so never the near one, §4.2)
+      // ── the Cold Seam a worked mine (docs/dungeon-looks-plan.md item 8): the pithead's rails down the gallery's middle, a
+      // cart on them where the shift left it (flat, walked over: the fight crosses them); the warren's shoring robbed for
+      // its timber, a set every nine paces at the back wall, broken; and a cart the goblins tipped by their heap
+      case 'rails': putAt(L * 0.42, 0, 'cart'); for (let u = -L + 3; u <= L - 3 + 0.01; u += 1) putAt(u, 0, 'rail'); break;
+      case 'robbed_shoring': row(-wall, -L * 0.65, L * 0.65, 9, 'shoring_broken'); break;
+      case 'tipped_cart': putAt(-L * 0.5, -wall + 2, 'cart_tipped'); putAt(-L * 0.5 + 2, -wall + 1, 'spoil'); break;
+      // ── the quota office a counting house (item 9): the clerks' desks in a row along the back wall, a step out from the
+      // ledger shelves on it (convert.js countingRun), each chained to a ring in the floor; the strongbox in a back corner
+      case 'desk_rows': for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 6) putAt(u, -(Wd - 4), alongK('clerk_desk')); break;
+      case 'strongbox': putAt(L * 0.72, -(Wd - 2), 'strongbox'); break;
       default: if (PLAN_KIND[d]) at(d === 'candles' || d === 'lanterns' ? 2 : d === 'spoil' || d === 'bedrolls' ? 3 : 1, 6, PLAN_KIND[d]);
     }
   }
 }
 
 // Props you walk over (flat on the floor, or underfoot): a dropped cage, a binding circle.
-export const FLAT_PROPS = new Set(['cage', 'circle', 'shaft', 'straw', 'rug', 'scorch', 'cracks', 'coins', 'papers', 'puddle', 'rope', 'net']);   // (a wharf's rope coils and nets lie flat on its deck: walked over)
+export const FLAT_PROPS = new Set(['cage', 'circle', 'shaft', 'straw', 'rug', 'scorch', 'cracks', 'coins', 'papers', 'puddle', 'rope', 'net', 'rail']);   // (a wharf's rope coils and nets lie flat on its deck: walked over)   // (the Cold Seam's rails, walked over)
 export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   const S = siteOf(site), FAM = familyAt(site, depth), kit = dressAt(site, depth), KIT = kit ? DRESS[kit] : null;   // (its furniture below: `human`, `themes`, or its kit)
   const th = theme || themeAt(site, depth) || THEME_KEYS[(seed >>> 0) % THEME_KEYS.length];
@@ -518,8 +537,9 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     // (an authored kit with no such pieces, the tavern's, keeps its floors open: its middle is for the fight)
     if (r !== level.entrance && r !== level.descentRoom && !(r.dress && PLAN_OB[r.kit] && !PLAN_OB[r.kit].length)) {
       const n = 1 + (orr() < 0.5 ? 1 : 0), mid = cells.filter(([x, y, c]) => !c.corridor && Math.abs(x - r.cx) <= r.rw * 0.45 && Math.abs(y - r.cy) <= r.rh * 0.45 && hypot(x - r.cx, y - r.cy) > 4 && !nearDoor(x, y));
-      // (an authored room's own set piece out on the floor, the yard's well, a cart, stands for one: the middle stays open)
-      const OBK = r.dress ? PLAN_OB[r.kit] || ['pillar'] : KIT ? KIT.obstacles : OBSTACLES, pre = r.dress ? Math.min(n, cells.filter(([x, y, c]) => { const p = world.props.get(K(x, y)); return p && p !== 'block' && (DRESS_PIECES.has(p) || OBK.includes(p)) && !c.corridor && Math.abs(x - r.cx) <= r.rw * 0.45 && Math.abs(y - r.cy) <= r.rh * 0.45 && hypot(x - r.cx, y - r.cy) > 4; }).length) : 0;
+      // (an authored room's own set piece out on the floor, the yard's well, a cart, stands for one: the middle stays open;
+      // what lies flat, the Cold Seam's rails, stands for none)
+      const OBK = r.dress ? PLAN_OB[r.kit] || ['pillar'] : KIT ? KIT.obstacles : OBSTACLES, pre = r.dress ? Math.min(n, cells.filter(([x, y, c]) => { const p = world.props.get(K(x, y)); return p && p !== 'block' && !FLAT_PROPS.has(p) && (DRESS_PIECES.has(p) || OBK.includes(p)) && !c.corridor && Math.abs(x - r.cx) <= r.rw * 0.45 && Math.abs(y - r.cy) <= r.rh * 0.45 && hypot(x - r.cx, y - r.cy) > 4; }).length) : 0;
       for (let i = 0, got = pre; i < 30 && got < n && mid.length; i++) {
         const [x, y] = mid[(orr() * mid.length) | 0];
         let clear = true;
