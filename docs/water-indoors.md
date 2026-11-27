@@ -13,10 +13,10 @@ Tidemark's sea cave is next.
 | | Shin-deep water | A deep channel |
 |---|---|---|
 | In the sim | the floor's pools (`world.pools`), walked in | `channel` tiles (`DRESS_PIECES`), blocked as the magma is |
-| Authored by (a room's `dress` in `plans.js`) | `pools` (a few pools, as before) or `flood` (the room's whole floor) | `canal` (back wall, 4 wide), `canal_near` (near wall, 4 wide), `drain` (near wall, 2 wide), `pond` (a 6 × 4 pool in a back corner) |
+| Authored by (a room's `dress` in `plans.js`) | `pools` (a few pools, as before), `sickpools` (the same draws, each pool twice the size) or `flood` (the room's whole floor); `windows` (drawn only: cold window light high on the back wall, caught on the water) | `canal` (back wall, 4 wide), `canal_near` (near wall, 4 wide), `drain` (near wall, 2 wide), `pond` (a 6 × 4 pool in a back corner) |
 | Its set pieces | | `lock_gates` (two `lockgate` bands across the channel, a windlass on the bank by each), `sluices` (two `sluice` bands, the same) |
 | Where a way crosses it | | the channel stops; the floor between two runs is a bridge (`world.bridges`: plain floor to the sim) |
-| Drawn (convert.js `wetGround`, world.js) | a sheet a hand (`WET_SHEET`, 0.075) over the floor: `buildShallows` | the tile sunk to the bed, Luminati's own water over it at `WET_WL` (0.8, the floor's top at 1) |
+| Drawn (convert.js `wetGround`, world.js) | a sheet a hand (`WET_SHEET`, 0.075) over the floor: `buildShallows` | the tile sunk to the bed, Luminati's own water over it at `WET_WL` (0.62, the floor's top at 1) |
 
 **Everything in the sim is deterministic and draws nothing from a stream.** `waterway` (sim/world.js) lays a channel by
 the room's box and its doorways only. `flood` adds the room's floor to `world.pools` after the pools' own draws, so no
@@ -67,27 +67,35 @@ walling), `θ` the garth's drowned turf. A bridge is the wharf's deck, `_`.
 ## 3. How it's drawn
 
 - **The sheet** (`buildShallows`) is one mesh and one draw for each look on a floor. It has a quad for every wet tile of
-  ours. It's a `MeshStandardMaterial`, transparent, glossy (roughness about 0.1), with no depth write, at `renderOrder` 1:
-  - **Ripples**: the normal is perturbed by two drifting layers of value noise, so each lamp's light comes back as a
-    shaking streak. The specular is capped (`min 0.55`) and counts toward the sheet's alpha, which the sheet's own
-    transparency would otherwise cut.
-  - **Its own faint light** (emissive, so it reads in a dark room): Luminati's pixel-stepped ripple dashes, long
-    across the screen; a pale meniscus where it meets dry floor; a slow sheen.
-  - **Its edge** is soft only against dry floor. convert.js marks each corner that touches a dry tile (`edge`). Against a
-    wall, a channel or the room's own pieces the water runs right up.
+  ours. It's a `MeshStandardMaterial`, transparent, softly glossy (roughness about 0.3), with no depth write, at
+  `renderOrder` 1:
+  - **Its tint**: a clear blue-green (Vat Seven's a sickly yellow-green), part of it its own light (`self`), so the floor
+    is plainly under water even in a dark room.
+  - **The lamps' reflections**: under each lamp near the water (convert.js `wetLamps`, up to 24) a long soft warm streak.
+    It sits where the lamp's reflection falls: the lamp mirrored in the water's plane, the line from the eye to it, found
+    each fragment from the camera. It is drawn toward the eye and shaken along its length by the ripples.
+  - **Ripples**: the normal is perturbed by two drifting layers of value noise. The specular is capped (`min 0.4`).
+  - **The walls behind it**, away from the camera, are reflected as a faint cool pallor along their feet. convert.js
+    gives each cell how near that wall is.
+  - **Its waterline** is a soft bright line where it meets a wall or dry floor (bits of each cell's corners). Against dry
+    floor its edge fades out; against a wall, a channel or a piece the water runs right up.
   - **Scum** (Vat Seven's, and the garth's duckweed) drifts in matt patches.
   - **Figures and fights**: the figures' feet go 0.075 under the sheet. The rings, the warnings, the hazards and the
     Abbess's flood are at `renderOrder` 2 and write no depth, so they draw over it unchanged.
-- **The channels** are Luminati's water (`Water.js`) over the sunk tiles, at the level's `waterLevel`. `wetAir` gives it
-  its look's colours, still, with no glint or foam, and a low `reflect` (the backdrop it would reflect is black).
-- **The trim** goes in the tavern kit's batch builder (`buildTavern`, one draw a material):
-  - `wkerb`: the coping along a bank, its wet face at the waterline;
+- **The channels** are Luminati's water (`Water.js`) over the sunk tiles, at the level's `waterLevel` (0.62, 0.38 under
+  the floor). `wetAir` gives it its look's dark colours, still, with no glint or foam, and a low `reflect` (the backdrop
+  it would reflect is black). The far side, the wall or the bank to its north or west, is reflected in it: a pale strip
+  fading toward the camera (`wrefl`, `renderOrder` 11, over Luminati's water at 10).
+- **The trim** (`buildWetTrim`) is in two materials, the stone and the timber, the iron tinted on the stone. None of it
+  casts a shadow (that pass was half its draws):
+  - `wkerb`: a pale coping proud of the floor along a bank, its wet face down to the water, weed at the waterline;
   - `wrail`: a bridge's posts, rails and edge board along each side open to the water;
-  - `lockgate`: two iron-strapped leaves mitred across the channel, a plank walk and rail on their tops, the paddle
-    posts;
-  - `sluice`: two stone piers, a lintel, the board raised a little, a spoked winch wheel on top.
-- **A near wall** (south or east of the water, with no room on its camera side) is cut knee-high, so the water and its
-  gates are seen over it.
+  - `lockgate`: two big oak leaves a metre over the floor, mitred across the channel, with uprights and iron straps, a
+    walk and a rail on top, a winch wheel on each leaf, and a balance beam out over each bank (`ends`: the sides that
+    meet a bank, not a wall);
+  - `sluice`: two stone piers, a lintel, the board raised a little, a big spoked winch wheel on top.
+- **A near wall** (south or east of the water, with no room on its camera side) is cut flush with the floor, a quay's
+  edge, so the water and its gates are seen over it.
 
 ## 4. Using it for a new kit
 

@@ -24,7 +24,7 @@ sandstone. The Sunken Chapel's nave was dry.
 | The Vat Stair, the Cage Store | sick pools | | 〃 |
 | The Vat Row | sick pools | a drain along the near wall, a bridge at the Drain Office's door | 〃 |
 | The Drain Office | dry | | 〃 |
-| Vat Seven (the Vatwarden) | sick pools with scum | a canal along the near wall, two sluices | 〃 |
+| Vat Seven (the Vatwarden), the Cage Store | sick pools twice the size (`sickpools`), sickly yellow-green with scum | a canal along the near wall, two sluices | 〃 |
 | The Abbey's West Door, Cloister Walk, Choir, Night Stair, Dorter, Lay Crypt, Chapter-House | flooded, black-green | | the abbey's pale stone, its flood line at 1.95, weed under it |
 | The Garth | flooded over drowned turf, duckweed, the sky in it | a pond in the back corner | 〃; open to the sky: a cold light from high up and a drizzle falling into it alone |
 | Teague's Cell, the Scriptorium | dry (the plan: "kept dry", "up a step from the water") | | 〃 |
@@ -35,7 +35,7 @@ sandstone. The Sunken Chapel's nave was dry.
 
 Captures: the rig at dusk from the game's camera on a 390 × 844 phone frame, one shot per room of the three dungeons'
 touched floors (25 shots), before (`ed8a263`) and after each round. They're kept outside the repo, in the session
-scratchpad `looks/water/` (`before/`, `r1/` … `r9/`, `sheet-final.jpg`).
+scratchpad `looks/water/` (`before/`, `r1/` … `r15/`; round 4 is `r9/`, round 6 `r15/`; `sheet-r6.jpg`).
 
 | Round | What changed | What the critic said |
 |---|---|---|
@@ -44,14 +44,20 @@ scratchpad `looks/water/` (`before/`, `r1/` … `r9/`, `sheet-final.jpg`).
 | 3 | The waterline a lime crust and a dark mark, each two texels; the dashes thinner and of varied strength; the garth's drizzle and sky light | The Abbey reads drowned. The garth reads open to the sky. The Crossing's shaft of daylight came back off the water as two white blots. The Lock Gate's canal was a sliver behind the ruin's near wall. |
 | 4 | The direct specular capped (0.55); a near wall beside a channel cut flush, a quay's edge; the gates' leaves taller (0.62 over the floor) and lighter; Vat Seven's pools a dark rim, thicker water, more scum | The Lock Gate's canal and its gates read at play's size. The Crossing's light is a broad sheen. Vat Seven's pools read as scummed puddles, the weakest of the set (below). |
 
-### Scores (out of 10; before → after round 4)
+| 5 (the coordinator's review of the round-4 sheet: "at phone size the water doesn't read as water yet: dark stone with glitter"; the canals and gates barely show) | The ripple dashes gone. A clear blue-green tint, part its own light. A long soft warm streak under each lamp, where its reflection falls (the lamp mirrored in the water's plane from the camera). The walls behind the water reflected along their feet. A soft bright waterline at walls and dry floor. The channels' water 0.38 under the floor, darker; a pale coping proud of the floor; the far side reflected. Lock gates a metre high in oak with beams and winch wheels; bigger sluice wheels. The trim in two materials, casting no shadow. Window light in the Abbey's dorter, lay crypt and chapter-house. Vat Seven's and the Cage Store's pools twice the size, sickly yellow-green | Every flooded floor reads as water at a glance, the lamps standing in it. The far-side reflection didn't show: a comment had swallowed the line that added it. Then it bloomed into a white light tube. The waterline at small pools read as a selection outline. A high window's streak zigzagged. |
+| 6 | The reflection strip added and dimmed to a pale stone tone; the waterline softer and wider; the streaks shaken along their length | The canals read as dark water a step down, with a pale coping, the far wall pale in them, and gates with wheels at each end. The Basin, the Sluice, the Nave, the Choir, the Dorter and the Chapter-House read as flooded halls with the lamps in the water. Vat Seven's pools read at a glance. |
+
+### Scores (out of 10; before → after round 4 → after round 6)
 
 | Place | Identity | Building | Dressing | Battle | Light | Materials | Polish | **Overall** |
 |---|---|---|---|---|---|---|---|---|
-| The Canal Locks, floor 1 | 3 → 7 | 5 → 6.5 | 4 → 6.5 | 8 → 8 | 5 → 6 | 4 → 6.5 | 5 → 6 | **4.5 → 6.5** |
-| Vat Seven, floor 2 | 5 → 6 | 5 → 6 | 5 → 6 | 8 → 8 | 5.5 → 5.5 | 5 → 6 | 5 → 5.5 | **5 → 6** |
-| The Drowned Abbey | 3.5 → 7.5 | 5 → 6.5 | 4.5 → 6 | 8 → 8 | 5 → 6.5 | 4 → 7 | 5 → 6.5 | **4.5 → 7** |
-| The Sunken Chapel's nave | 4.5 → 7 | 5.5 → 5.5 | 5 → 6.5 | 8 → 8 | 5 → 6.5 | 5 → 6.5 | 5.5 → 6.5 | **5 → 6.5** |
+| The Canal Locks, floor 1 | 3 → 7 → 8 | 5 → 6.5 → 7 | 4 → 6.5 → 7 | 8 → 8 → 8 | 5 → 6 → 7 | 4 → 6.5 → 7 | 5 → 6 → 6.5 | **4.5 → 6.5 → 7.5** |
+| Vat Seven, floor 2 | 5 → 6 → 7.5 | 5 → 6 → 6.5 | 5 → 6 → 7 | 8 → 8 → 8 | 5.5 → 5.5 → 6 | 5 → 6 → 7 | 5 → 5.5 → 6.5 | **5 → 6 → 7** |
+| The Drowned Abbey | 3.5 → 7.5 → 8 | 5 → 6.5 → 7 | 4.5 → 6 → 6.5 | 8 → 8 → 8 | 5 → 6.5 → 7.5 | 4 → 7 → 7.5 | 5 → 6.5 → 7 | **4.5 → 7 → 7.5** |
+| The Sunken Chapel's nave | 4.5 → 7 → 8 | 5.5 → 5.5 → 5.5 | 5 → 6.5 → 7 | 8 → 8 → 8 | 5 → 6.5 → 7.5 | 5 → 6.5 → 7.5 | 5.5 → 6.5 → 7 | **5 → 6.5 → 7.5** |
+
+The coordinator's verdict on round 4 overrode the critic's: at play scale the round-4 sheet read as dark stone with
+glitter, so its "after round 4" scores were generous. Round 6 is scored against that reading.
 
 "Battle" holds:
 - The rings, the warnings, the hazards and the Abbess's flood are drawn over the water unchanged (`renderOrder` 2, no
@@ -77,26 +83,25 @@ scratchpad `looks/water/` (`before/`, `r1/` … `r9/`, `sheet-final.jpg`).
 - **Visibility** (`visibility.mjs`): locks-f1, locks-f2, abbey-f1, abbey-f2, chapel-f1, 40 subjects, 0 under half.
 - **Draws and triangles a frame** (`figperf.mjs`, a fight in each dungeon, the same box, before → after; software GL
   with five other tracks running, so the frame times aren't comparable). The sheet is one draw a
-  look; the trim is one draw a material, in the tavern batch; the channels are Luminati's one water mesh.
+  look; the trim is one draw a material (two); the channels are Luminati's one water mesh.
 
-| Fight | Before | After |
-|---|---|---|
-| The Canal Locks | 136 / 268 k (\*) | 158 / 269 k (+16 %: the trim's materials, the sheet, the water mesh; the triangles +0.5 %) |
-| The Drowned Abbey | 133 / 267 k | 130 / 270 k |
-| The Sunken Chapel | 112–116 / 223 k | 117 / 229 k |
+| Fight | Before | Round 4 | Round 6 |
+|---|---|---|---|
+| The Canal Locks | 136 / 268 k (\*) | 158 / 269 k (+16 %) | 149 / 267 k (+9.6 %: the trim in two materials, no shadow) |
+| The Drowned Abbey | 133 / 267 k | 130 / 270 k | 135 / 270 k (+1.5 %: the windows' lights) |
+| The Sunken Chapel | 112–116 / 223 k | 117 / 229 k | 116 / 229 k |
 
 (\*) On this box the before tree's Locks fight never drew in `figperf` (0 draws, three runs). Its figure is the Fens
 pass's own count for that floor ([art-critic-pass-fens-dungeons.md](./art-critic-pass-fens-dungeons.md), 136 / 268 k).
-The Locks are at the plan's ~15 % line. Their extra draws are the kerbs, rails, gates and sluices, one draw a material;
-merging them into fewer materials is the lever if a phone wants it.
+In round 4 the Locks were just over the plan's ~15 % line, from their trim's four materials and their shadows. Round 6
+merged the trim into two materials and took it out of the shadow pass.
 
-- Lights: none added, except the garth's one sky light. The specular is the room's own lamps'.
+- Lights added: the garth's one sky light, and two cold window lights in each of the Abbey's dorter, lay crypt and
+  chapter-house. The streaks are the room's own lamps', drawn by the sheet, not lit.
 - `npm run check` is green.
 
 ## Not done
 
-- **Vat Seven's pools** are the plan's few blobs, radius 2–3, and read as scummed puddles rather than standing pools.
-  A `sickpools` recipe (fewer, larger pools against the vats) would carry the "sick green with scum" further.
 - **The bridges' planks** run east–west whichever way the bridge crosses. Luminati never turns `dock_deck`, a directional
   texture.
 - **Wading ripples** round a figure's feet were not tried. The sheet's ripples are the room's, not the figures'.
