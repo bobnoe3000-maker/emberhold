@@ -605,6 +605,7 @@ function palaceSkyAt(h) {
   return _palSky;
 }
 function buildTavern(pieces) {
+  let bFlat = null;
   const f = game.world.factory, b0 = f.builder(), FL = 1.0, TOP = FL + TAV_H, furn = [], webTris = [], loose = [], own = [];   // (loose: kept whole, never merged: a sprite; own: this build's own materials and textures, gone with it)
   tavernGlass ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffb45e').multiplyScalar(2.2), fog: false });
   cryptDark ||= new THREE.MeshBasicMaterial({ color: '#0d0a08' });
@@ -1428,15 +1429,31 @@ function buildTavern(pieces) {
       // edges (round 3: a hard wedge)
       const PD = 40, W = p.W, D = p.D, GW = W + 2 * PD, GD = D + 2 * PD, c = document.createElement('canvas'); c.width = GW; c.height = GD;   // (round 4: the sheet runs far past the level, thick there: the level's edge showed as a wedge of bare plane)
       const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), img = g2.createImageData(GW, GD);
-      for (let j = 0; j < GD; j++) for (let i = 0; i < GW; i++) { const li = i - PD, lj = j - PD, inl = li >= 0 && lj >= 0 && li < W && lj < D, d = inl ? +p.rows[lj][li] : 9, a = Math.max(0, Math.min(1, (d - 0.6) / 6)) * 0.62, o = (j * GW + i) * 4; img.data[o] = img.data[o + 1] = img.data[o + 2] = Math.round(255 * a); img.data[o + 3] = 255; }
+      for (let j = 0; j < GD; j++) for (let i = 0; i < GW; i++) { const li = i - PD, lj = j - PD, inl = li >= 0 && lj >= 0 && li < W && lj < D, d = inl ? +p.rows[lj][li] : 9, a = Math.max(0, Math.min(1, (d - 0.6) / 6)) * (p.coast ? (inl ? 0.36 : 0) : 0.62), o = (j * GW + i) * 4; img.data[o] = img.data[o + 1] = img.data[o + 2] = Math.round(255 * a); img.data[o + 3] = 255; }
       g2.putImageData(img, 0, 0); const tex = new THREE.CanvasTexture(c); tex.magFilter = tex.minFilter = THREE.LinearFilter;
-      const mat = dockMist = new THREE.MeshBasicMaterial({ color: '#46566a', alphaMap: tex, transparent: true, depthWrite: false }); own.push(mat, tex);   // (the perf pass: a level's own, disposed with it)
+      const mat = dockMist = new THREE.MeshBasicMaterial({ color: p.coast ? COAST_MIST : '#46566a', alphaMap: tex, transparent: true, depthWrite: false }); own.push(mat, tex);   // (the perf pass: a level's own, disposed with it)
       const mist = new THREE.Mesh(new THREE.PlaneGeometry(GW, GD), mat); mist.rotation.x = -Math.PI / 2; mist.position.set(W / 2, DOCK_WL + 0.08, D / 2); mist.updateMatrixWorld(true);
       furn.push(mist);
       // and the harbour's far water under it, past the level's edges, at the surface's level and in its body's tone
-      const farMat = new THREE.MeshBasicMaterial({ color: '#141b22' }); own.push(farMat);
+      // (the coast's: the level's own water past its edges, as the Tidemark overland's sea sheet is (seaAir: its material's
+      // copy, every uniform the level's, its shore one texel of open deep water), a frame round the level so the water in it
+      // isn't laid twice; the perf pass: the coast's sea in tiles to a wide margin cost a third of its triangles)
+      const wm = p.coast ? game?.world?.water?.material : null;
+      if (wm) {
+        const fm = wm.clone(); for (const k of Object.keys(wm.uniforms)) fm.uniforms[k] = wm.uniforms[k];
+        seaDeep ||= Object.assign(new THREE.DataTexture(new Uint8Array([255, 255, 128, 128]), 1, 1), { needsUpdate: true });
+        fm.uniforms.uShore = { value: seaDeep }; fm.uniforms.uShoreRect = { value: new THREE.Vector4(0, 0, 0, 0) }; own.push(fm);
+        const pos = [], y = DOCK_WL, q4 = (x0, z0, x1, z1) => pos.push(x0, y, z0, x0, y, z1, x1, y, z1, x0, y, z0, x1, y, z1, x1, y, z0);
+        q4(-PD, -PD, W + PD, 0); q4(-PD, D, W + PD, D + PD); q4(-PD, 0, 0, D); q4(W, 0, W + PD, D);
+        const g2 = new THREE.BufferGeometry(); g2.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+        g2.setAttribute('normal', new THREE.Float32BufferAttribute(new Float32Array(pos.length).map((_, k) => (k % 3 === 1 ? 1 : 0)), 3));
+        g2.setAttribute('aTop', new THREE.Float32BufferAttribute(new Float32Array(pos.length / 3).fill(1), 1));
+        const sheet = new THREE.Mesh(g2, fm); sheet.name = 'ember:coastsea'; sheet.frustumCulled = false; sheet.renderOrder = game.world.water.object?.renderOrder ?? 0; sheet.receiveShadow = true; loose.push(sheet);
+      } else {
+      const farMat = new THREE.MeshBasicMaterial({ color: p.coast ? COAST_FAR : '#141b22' }); own.push(farMat);
       const far = new THREE.Mesh(new THREE.PlaneGeometry(GW, GD), farMat); far.rotation.x = -Math.PI / 2; far.position.set(W / 2, DOCK_WL - 0.03, D / 2); far.updateMatrixWorld(true);
       furn.push(far);
+      }
     } else if (p.k === 'lampglint') {
       // a lamp's light broken on the water past the deck's edge: six warm streaks across the line of sight, shorter and
       // fainter going out from the edge (p.out: which way the water lies)
@@ -1945,7 +1962,7 @@ function buildTavern(pieces) {
       const r = f[p.type](p.x, FL, p.z, p.opts || {}), o = r.object || r.group;
       if (!o) continue;
       o.rotation.y = p.rot || 0; o.scale.setScalar(p.s || 1); o.updateMatrixWorld(true); furn.push(o);
-    }
+    } else if (COAST_PIECES.has(p.k)) coastPiece(p, COAST_FLAT.has(p.k) ? (bFlat ||= f.builder()) : b, { FL, on, sz, loose });   // (the Tidemark's coast: below; its low pieces cast no shadow, bFlat)
     if (big) b.pop();
   }
   // merged a material at a time (the trim, the furniture): what three can merge, the attributes all of them carry
@@ -1966,15 +1983,141 @@ function buildTavern(pieces) {
     for (const q of geos) if (q !== merged) q.dispose();
     if (!merged) continue;
     const mesh = new THREE.Mesh(merged, m);
-    const lit = m === tavernGlass || m === tavernEmber || m === tavernNight || m === tavernNightHi || m === tavernStar || m === tavernGrime || m === cryptDark || m === cryptDamp || m === cryptPatch || m === cryptGold || m === cryptOx || m === cryptSky || m === cryptBrass || m === dockGlint || m === dockMist || m === rampFog || m === palaceSky || m === palaceLit || m === palacePatch || m === countGlass || WOOD_UNLIT.has(m);
+    const lit = m === tavernGlass || m === tavernEmber || m === tavernNight || m === tavernNightHi || m === tavernStar || m === tavernGrime || m === cryptDark || m === cryptDamp || m === cryptPatch || m === cryptGold || m === cryptOx || m === cryptSky || m === cryptBrass || m === dockGlint || m === dockMist || m === rampFog || m === palaceSky || m === palaceLit || m === palacePatch || m === countGlass || WOOD_UNLIT.has(m) || COAST_LIT.has(m);
     mesh.castShadow = !lit && m !== tavernWeb; mesh.receiveShadow = !lit;
     g.add(mesh);
   }
   for (const o of loose) g.add(o);
+  if (bFlat) { const fg = bFlat.build('ember:coastflat').group; fg.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = true; } }); g.add(fg); }   // (the perf pass: the coast's surf, weed, wrack and marram out of the shadow pass)
   if (webTris.length) { const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(webTris, 3)); g.add(new THREE.Mesh(wg, tavernWebFill)); }
   for (const o of [built, ...furn]) o.traverse((q) => { if (q.isMesh) q.geometry.dispose(); });
   g.dispose = () => { g.traverse((o) => { if (o.isMesh) o.geometry.dispose(); }); for (const r of own) r.dispose(); own.length = 0; };   // (the perf pass, v1.146: the harbour's mist and far water were made each build and never let go)
   return g;
+}
+// ── the Tidemark's coast (convert.js coastDress, coastProp; docs/strand-dungeon.md): the surf on the sea a hand off every
+// shore, marram on the dunes, the strand's wrack and driftwood, the sea cave's weed and barnacles at the tide line, kelp
+// and wreck timbers at its walls' feet, light down a blowhole, boats drawn up on the sand, a rock pool's skin of water,
+// the Lamp Fort's lamp. Built with the rest of a level's trim, one draw a material
+const COAST_PIECES = new Set(['surf', 'marram', 'wrack', 'driftwood', 'tideline', 'kelp', 'wreckwood', 'blowhole', 'beachboat', 'rockpool', 'beacon', 'netrack']);
+const COAST_MIST = '#4c5e70', COAST_FAR = '#151e34';   // (the coast's mist a cold grey-blue, its far sea the near sea's body)
+const COAST_LIT = new Set();
+const COAST_FLAT = new Set(['surf', 'marram', 'wrack', 'tideline', 'kelp', 'rockpool', 'blowhole', 'netrack']);
+let coastFoam = null, coastFoamFar = null, coastBeam = null, coastPatch = null, coastPool = null, coastGlass = null;
+const KELP_C = [0.36, 0.33, 0.2], WEED_C = [0.3, 0.36, 0.22], DRIFT_C = [1.05, 1.02, 0.96], MARRAM_C = [0.74, 0.86, 0.46], MARRAM_DRY = [0.98, 0.9, 0.58];
+function coastPiece(p, b, { FL, on, sz, loose }) {
+  const R = (k) => ((Math.imul((p.seed | 0) + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+  const unlit = (m) => { COAST_LIT.add(m); return m; };
+  if (p.k === 'surf') {
+    // a broken line of foam on the water a hand off the shore, and a fainter one further out where the swell breaks
+    coastFoam ||= unlit(new THREE.MeshBasicMaterial({ color: '#e6eef0', transparent: true, opacity: 0.78, depthWrite: false }));
+    coastFoamFar ||= unlit(new THREE.MeshBasicMaterial({ color: '#c8d8dc', transparent: true, opacity: 0.4, depthWrite: false }));
+    const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { n: p.n, x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 }, o = p.out, WL = p.y ?? DOCK_WL;   // (y: the overland's sea, its own level)
+    for (let t = 0, k = 0; t < len; k++) {
+      const w = 0.9 + R(k) * 1.2, gap = 0.05 + R(k + 40) * 0.3, u = t + w / 2 - len / 2;
+      b.box(coastFoam, sz(q, Math.min(w, len - t), 0.012, 0.2 + R(k + 7) * 0.16), { at: on(q, u, WL + 0.03, o * (0.16 + R(k + 3) * 0.12)) });
+      if (R(k + 11) < 0.35) b.box(coastFoamFar, sz(q, w * 0.8, 0.01, 0.13), { at: on(q, u + 0.2, WL + 0.025, o * (0.55 + R(k + 5) * 0.3)) });
+      t += w + gap;
+    }
+  } else if (p.k === 'netrack') {
+    // nets drying on the beach: two poles and a bar, the net hung in a sag between them, its cork floats along its foot
+    const c = Math.cos(p.rot || 0), s = Math.sin(p.rot || 0), at = (lx, y, lz = 0) => [p.x + lx * c + lz * s, FL + y, p.z - lx * s + lz * c];
+    b.tinted(DOCK_WOOD_DARK, () => { for (const sg of [-1, 1]) b.tube('furniture_wood', at(sg * 1.0, 0), at(sg * 1.0, 1.75), 0.06, 0.05, { segments: 6 }); b.tube('furniture_wood', at(-1.1, 1.7), at(1.1, 1.7), 0.04, 0.04, { segments: 5 }); });
+    b.tinted([0.66, 0.56, 0.4], () => {
+      const sag = (u) => 0.18 * (1 - u * u);
+      for (let k = 0; k <= 8; k++) { const lx = -0.95 + k * (1.9 / 8); b.tube('linen', at(lx, 1.68, 0.02), at(lx, 0.35 + sag(lx / 0.95) * 0.5, 0.06), 0.012, 0.012, { segments: 3 }); }
+      for (let r = 0; r <= 5; r++) { const y = 1.68 - r * 0.25; for (let k = 0; k < 8; k++) { const a = -0.95 + k * (1.9 / 8), e = a + 1.9 / 8; b.tube('linen', at(a, y - sag(a / 0.95) * r * 0.06, 0.03), at(e, y - sag(e / 0.95) * r * 0.06, 0.03), 0.012, 0.012, { segments: 3 }); } }
+    });
+    b.tinted([1.3, 0.98, 0.56], () => { for (let k = 0; k <= 4; k++) b.lathe('furniture_wood', [{ y: 0, r: 0.06 }, { y: 0.05, r: 0.075 }, { y: 0.11, r: 0 }], { segments: 6, at: at(-0.9 + k * 0.45, 0.32, 0.06) }); });
+  } else if (p.k === 'marram') {
+    // marram: a clump of stiff blades, straw-green going pale at the tips, leaning with the wind off the sea
+    // (round 2: in the leaves' dark green and two hundredths thick they were unseen at a phone's size: pale linen tinted
+    // straw and sea-green, thicker, taller, a clump spread wider)
+    const y = p.y ?? FL, lean = 0.22;
+    b.tinted(R(1) < 0.35 ? MARRAM_DRY : MARRAM_C, () => { for (let k = 0; k < 11; k++) {   // (the perf pass: 24 doubled the coast floors' triangles with the rest; eleven, broader)
+      const a = R(k) * 6.28, r = R(k + 20) * 0.42, x = p.x + Math.cos(a) * r, z = p.z + Math.sin(a) * r, hh = 0.7 + R(k + 5) * 0.6, lx = (R(k + 9) - 0.3) * lean * 2;
+      b.tube('linen', [x, y - 0.02, z], [x + lx, y + hh, z + lx * 0.6 + 0.06], 0.065, 0.01, { segments: 3 });
+    } });
+  } else if (p.k === 'wrack') {
+    // the tide line's wrack: dark wrack weed in a ragged band along it, a shell or a crab's back pale among it
+    const c = Math.cos(p.rot || 0), s = Math.sin(p.rot || 0), at = (lx, lz) => [p.x + lx * c + lz * s, FL + 0.012, p.z - lx * s + lz * c];
+    b.tinted(KELP_C, () => { for (let k = 0; k < 3; k++) { const lx = (R(k) - 0.5) * 0.9, lz = (R(k + 10) - 0.5) * 0.35; b.box('leaves', [0.32 + R(k + 3) * 0.3, 0.02, 0.06 + R(k + 6) * 0.05], { at: at(lx, lz), rot: [0, (p.rot || 0) + (R(k + 13) - 0.5) * 1.2, 0] }); } });
+    if (R(30) < 0.6) b.tinted([1.3, 1.24, 1.12], () => b.box('linen', [0.07, 0.03, 0.06], { at: at((R(31) - 0.5) * 0.6, (R(32) - 0.5) * 0.3) }));
+  } else if (p.k === 'driftwood') {
+    // a driftwood log, bleached silver-grey and smooth, a branch's stub, half sunk in the sand
+    const c = Math.cos(p.rot || 0), s = Math.sin(p.rot || 0), L2 = 0.7 + R(1) * 0.5, a = [p.x - c * L2, FL + 0.08, p.z + s * L2], e = [p.x + c * L2, FL + 0.1, p.z - s * L2];
+    b.tinted(DRIFT_C, () => {
+      b.tube('furniture_wood', a, e, 0.11 + R(2) * 0.04, 0.07, { segments: 7 });
+      b.tube('furniture_wood', [p.x + c * 0.3, FL + 0.12, p.z - s * 0.3], [p.x + c * 0.55 + s * 0.4, FL + 0.32, p.z - s * 0.55 + c * 0.4], 0.04, 0.02, { segments: 5 });
+    });
+  } else if (p.k === 'tideline') {
+    // along a sea cave's back wall: the weed's dark band where the tide covers it and over it the barnacles' crust, pale,
+    // ragged at its top; a fringe of weed hanging over the weed band
+    const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { n: p.n, x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 };
+    // (round 4: a hand's band of each was a hairline at a phone's size: the weed knee-high in a sea-green, the crust over it
+    // taller and paler, in pale linen tinted, not the shingle's dark pebbles)
+    b.tinted([0.36, 0.46, 0.3], () => b.box('linen', sz(q, len, 0.62, 0.06), { at: on(q, 0, FL + 0.31, 0.03) }));
+    b.tinted([1.6, 1.6, 1.52], () => { for (let t = 0, k = 0; t < len; k++) { const w = 0.35 + R(k) * 0.5, hh = 0.18 + R(k + 50) * 0.24; b.box('sea_shingle', sz(q, Math.min(w, len - t), hh, 0.05), { at: on(q, t + w / 2 - len / 2, FL + 0.62 + hh / 2, 0.035) }); t += w; } });
+    b.tinted([0.3, 0.4, 0.22], () => { for (let t = 0.3, k = 0; t < len; t += 0.6, k++) { const u = t - len / 2, hh = 0.14 + R(k + 90) * 0.26; b.tube('linen', on(q, u, FL + 0.64, 0.065), on(q, u + 0.04, FL + 0.64 - hh, 0.09), 0.03, 0.014, { segments: 3 }); } });
+  } else if (p.k === 'kelp') {
+    // kelp heaped at a wall's foot by the last tide: long olive-brown straps, a bladder or two
+    b.tinted(KELP_C, () => { for (let k = 0; k < 5; k++) { const a = (R(k) - 0.5) * 2.4 + (p.rot || 0), r0 = R(k + 3) * 0.2, l = 0.4 + R(k + 6) * 0.45, x0 = p.x + Math.cos(a + 1.6) * r0, z0 = p.z + Math.sin(a + 1.6) * r0;
+      b.tube('leaves', [x0, FL + 0.04 + k * 0.012, z0], [x0 + Math.cos(a) * l, FL + 0.03, z0 + Math.sin(a) * l], 0.05, 0.03, { segments: 3 }); } });
+    b.tinted([0.6, 0.5, 0.26], () => { for (let k = 0; k < 3; k++) b.lathe('linen', [{ y: 0, r: 0.05 }, { y: 0.05, r: 0.06 }, { y: 0.1, r: 0 }], { segments: 5, at: [p.x + (R(k + 20) - 0.5) * 0.5, FL + 0.05, p.z + (R(k + 24) - 0.5) * 0.4] }); });
+  } else if (p.k === 'wreckwood') {
+    // a wreck's timbers washed into the cave: two ribs leaning on the wall, a plank across their feet, dark with the wet
+    const v0 = 0.85, q = { n: p.n, x: p.x, z: p.z };
+    b.tinted([0.42, 0.36, 0.3], () => {
+      for (const u of [-0.45, 0.4]) b.tube('furniture_wood', on(q, u, FL + 0.05, v0), on(q, u + 0.15, FL + 1.55, 0.08), 0.09, 0.07, { segments: 6 });
+      b.box('furniture_wood', sz(q, 1.6, 0.08, 0.26), { at: on(q, 0, FL + 0.06, v0 + 0.1), rot: p.n === 'z' ? [0, 0.15, 0] : [0, Math.PI / 2 + 0.15, 0] });
+    });
+    b.tinted(WEED_C, () => b.box('leaves', sz(q, 1.3, 0.05, 0.12), { at: on(q, 0, FL + 0.11, v0 + 0.08) }));
+  } else if (p.k === 'blowhole') {
+    // light down a blowhole: a pale shaft from the cave's roof (above the frame) to its floor, soft, and the patch it lays
+    coastBeam ||= unlit(new THREE.MeshBasicMaterial({ color: new THREE.Color('#b8d4ec').multiplyScalar(0.07), transparent: true, opacity: 1, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+    coastPatch ||= unlit(new THREE.MeshBasicMaterial({ color: new THREE.Color('#c8dcf0').multiplyScalar(0.16), transparent: true, opacity: 1, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+    for (const r of [1.0, 0.55]) b.tube(coastBeam, [p.x - 0.8, FL + 6.5, p.z - 0.8], [p.x, FL + 0.02, p.z], r * 1.2, r, { segments: 10 });
+    b.lathe(coastPatch, [{ y: 0, r: 1.25 }, { y: 0.001, r: 0 }], { segments: 18, at: [p.x, FL + 0.015, p.z] });
+    b.lathe(coastPatch, [{ y: 0, r: 0.75 }, { y: 0.001, r: 0 }], { segments: 14, at: [p.x, FL + 0.02, p.z] });
+  } else if (p.k === 'beachboat') {
+    // a boat drawn up on the sand above the tide, canted on her bilge (or keel up, her bottom tarred), her oars in her
+    const c = Math.cos(p.rot || 0), s = Math.sin(p.rot || 0), roll = p.keel ? Math.PI : 0.32, cr = Math.cos(roll), sr = Math.sin(roll);
+    const at = (lx, y, lz) => { const yy = (y - 0.36) * cr - lz * sr, zz = (y - 0.36) * sr + lz * cr; return [p.x + lx * c + zz * s, FL + (p.keel ? 0.62 : 0.3) + yy, p.z - lx * s + zz * c]; }, rot = (rx = 0, rz = 0) => [rx + roll, p.rot || 0, rz];
+    b.tinted(p.keel ? [0.16, 0.14, 0.13] : [0.3, 0.25, 0.2], () => {
+      b.box('furniture_wood', [2.4, 0.08, 0.7], { at: at(0, 0.36, 0), rot: rot() });
+      for (const sg of [-1, 1]) b.box('furniture_wood', [2.6, 0.36, 0.07], { at: at(0, 0.55, sg * 0.42), rot: rot(sg * 0.35) });
+      b.box('furniture_wood', [0.07, 0.38, 0.86], { at: at(-1.28, 0.56, 0), rot: rot(0, 0.45) });
+      for (const sg of [-1, 1]) b.box('furniture_wood', [0.9, 0.38, 0.07], { at: at(1.5, 0.58, sg * 0.24), rot: [sg * 0.3 + roll, (p.rot || 0) - sg * 0.5, 0] });
+    });
+    b.tinted([0.8, 0.68, 0.5], () => { for (const sg of [-1, 1]) b.box('furniture_wood', [2.66, 0.06, 0.08], { at: at(0, 0.75, sg * 0.5), rot: rot() }); });   // (her gunwales, the paint worn)
+    if (!p.keel) b.tinted(DOCK_WOOD, () => { for (const sg of [-1, 1]) b.box('furniture_wood', [2.0, 0.04, 0.06], { at: at(-0.1, 0.5, sg * 0.18), rot: rot() }); });
+  } else if (p.k === 'rockpool') {
+    // a rock pool's skin of water in a ring of stones, the sky's grey in it
+    coastPool ||= unlit(new THREE.MeshBasicMaterial({ color: '#33505a', transparent: true, opacity: 0.86, depthWrite: false }));
+    const r = 0.45 + R(1) * 0.25;
+    b.lathe(coastPool, [{ y: 0, r }, { y: 0.001, r: 0 }], { segments: 12, at: [p.x, FL + 0.012, p.z] });
+    b.tinted([0.6, 0.62, 0.62], () => { for (let k = 0; k < 9; k++) { const a = (k / 9) * 6.28 + R(k) * 0.4, rr = r + 0.06; b.box('sea_rock_top', [0.16 + R(k + 3) * 0.12, 0.07 + R(k + 6) * 0.06, 0.14], { at: [p.x + Math.cos(a) * rr, FL + 0.04, p.z + Math.sin(a) * rr], rot: [0, a, 0] }); } });
+  } else if (p.k === 'beacon') {
+    // the Lamp Fort's lamp: a granite drum, the lamp's iron cage over it, its glass lit gold; a hand-rail round it
+    coastGlass ||= unlit(new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffc870').multiplyScalar(2.6), fog: false }));
+    b.tinted([0.9, 0.92, 0.95], () => { b.lathe('rampart_wall', [{ y: 0, r: 0.95 }, { y: 0.7, r: 0.85 }, { y: 0.78, r: 0.95 }, { y: 0.86, r: 0 }], { segments: 14, at: [p.x, FL, p.z] }); });
+    b.box(coastGlass, [0.86, 1.0, 0.86], { at: [p.x, FL + 1.38, p.z] });
+    b.tinted(TAV_IRON, () => {
+      for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) b.box('metal', [0.08, 1.2, 0.08], { at: [p.x + dx * 0.46, FL + 1.4, p.z + dz * 0.46] });
+      b.box('metal', [1.1, 0.1, 1.1], { at: [p.x, FL + 0.88, p.z] }); b.box('metal', [1.1, 0.1, 1.1], { at: [p.x, FL + 1.98, p.z] });
+      b.lathe('metal', [{ y: 0, r: 0.62 }, { y: 0.4, r: 0.12 }, { y: 0.6, r: 0.06 }, { y: 0.62, r: 0 }], { segments: 10, at: [p.x, FL + 2.03, p.z] });
+    });
+    dockHalo && (() => { const h = new THREE.Sprite(dockHalo); h.position.set(p.x, FL + 1.4, p.z); h.scale.setScalar(4.2); loose.push(h); })();
+  }
+}
+// the coast's sea (convert.js COAST_WATER): a cold slate-green, the sand showing through the shallows, foam where it
+// meets the shore, a little glint (a sea, not the harbour's black still water)
+const COAST_SEA = ['#2c4a52', '#24404a', '#1d3640', '#172c35'];
+function coastAir() {
+  const W = game?.world, u = W?.water?.uniforms; if (!u) return;
+  if (W.waterBase) Object.assign(W.waterBase, { glint: 0, brightness: 1.0 }); else W.waterBase = { glint: 0, brightness: 1.0 };   // (round 3: its glints read as a field of stars, warm ones off the lamps)
+  ['uC0', 'uC1', 'uC2', 'uC3'].forEach((k, i) => u[k]?.value.set(COAST_SEA[i]));
+  u.uCrest?.value.set('#6e8e96'); u.uFoam?.value.set('#d8e4e6');
+  if (u.uShallowOpacity) u.uShallowOpacity.value = 0.66; if (u.uOpacity) u.uOpacity.value = 0.94; if (u.uSaturation) u.uSaturation.value = 0.75; if (u.uFoamAmount) u.uFoamAmount.value = 1.4;
 }
 const TAV_H = 3.0, TAV_FLOOR = 1.0;
 // ── the Vale's stone (docs/dungeon-looks-plan.md items 1 and 2; docs/art-critic-pass-vale.md): the Old Barrows' timber and
@@ -2389,6 +2532,9 @@ const WET_LOOKS = {
   // the Sunken Chapel: the river come in, green-brown and clear
   chapel: { tint: '#3e6a52', alpha: 0.55, self: 0.14, rip: 0.3, rough: 0.3, scum: '#5a5a30', scumAmt: 0, sky: '#a8b8c0', line: '#d0dcc8', deep: ['#262418', '#201e14', '#1a1810', '#14130c'] },
 };
+// (the Tidemark's sea cave, docs/strand-dungeon.md: its tide pools the sea's cold slate-green over the shingle, a pale
+// line where the floor meets them; its deep the coast's sea, which coastAir sets after wetAir in skyFor)
+WET_LOOKS.sea = { tint: '#2c5e62', alpha: 0.58, self: 0.15, rip: 0.32, rough: 0.3, scum: '#4a5a34', scumAmt: 0, sky: '#9fb4c4', line: '#d2e2e2', deep: COAST_SEA };
 const wetMats = []; let wetT = 0;
 function buildShallows(sh) {
   const g = new THREE.Group(); g.name = 'ember:shallows';
@@ -2678,6 +2824,7 @@ function skyFor(lv, region) {
   if (ash) reachAir();
   if (env.harbour) harbourAir();
   if (env.wet) wetAir(env.wet);
+  if (env.coast) coastAir();   // (after the wet's: a sea cave's floor is both, and the sea round it is the coast's)
   seaAir(lv, region);
   if (env.pass) { L.setKeyframes(PASS_KEYFRAMES); skyShown = 'pass'; return; }   // (the pass's cold high light, its sun's colour and the air: docs/pass-dungeon.md)
   if (env.greenwood) { greenwoodAir(); if (skyShown !== 'greenwood') { L.setKeyframes(WOOD_KEYFRAMES); skyShown = 'greenwood'; } return; }   // (the greenwood: its own gloom, docs/greenwood-dungeon.md)
@@ -2741,7 +2888,7 @@ function seaAir(lv, region, masked = false) {
   const Wd = lv.width || tm.width, Dd = lv.depth || tm.depth, wl = lv.waterLevel ?? 0.4;   // (the level's own size: Luminati's tile map runs a few tiles past it, and outside its rows a band of the outer ground stood unflattened)
   // (wet: water, or the beach's sand, which on this coast always faces the sea: the sim's south-east corner is a spit of
   // one bay's beach, and Luminati carried it on south as a green field with trees in the bay)
-  const wetAt = (i, j) => { const t = tm.tileAt(Math.max(0, Math.min(Wd - 1, i)), Math.max(0, Math.min(Dd - 1, j))); return !!(t && (t.water || t.type?.water || t.type?.top === 'sand')); };
+  const wetAt = (i, j) => { const t = tm.tileAt(Math.max(0, Math.min(Wd - 1, i)), Math.max(0, Math.min(Dd - 1, j))); return !!(t && (t.water || t.type?.water || /^(sand|wet_sand|dune_sand|pool_bed)$/.test(t.type?.top || ''))); };   // (the shore's own sands too: convert.js shoreLand)
   const outside = (x, z) => x <= 0 || z <= 0 || x >= Wd || z >= Dd;   // (on the edge too: the outer ground's first row stood a hair over the water, a dark seam along the level's edge)
   const edgeOnly = (x, z) => wetAt(Math.floor(Math.max(0, Math.min(Wd - 0.5, x))), Math.floor(Math.max(0, Math.min(Dd - 0.5, z))));
   // (the sim's own sea past the crop where the mask has it, convert.js seaMask; past the mask, the edge's)
@@ -3540,6 +3687,78 @@ registerTextureSet((K) => {
       });
       return { normal: 1.6 };
     } },
+  };
+});
+// ── the Tidemark's coast (docs/dungeon-looks-plan.md item 7, docs/strand-dungeon.md): the sea cave's wet black rock and
+// its shingle, the strand's sand dry and wet, the dunes' sand under marram litter, a rock pool's bed. Painted as the
+// kits' stone is (convert.js 'Σ' 'Π' 'Λ' 'Φ' 'Δ' 'Ξ' 'Ω' 'Γ'): mid values, so the dusk fill doesn't take them to black,
+// the figures' outlines held on the floors (the shingle and the sands kept narrow in tone)
+/** shingle: rounded pebbles packed close (Voronoi on a jittered grid, wrapped), each its own grey, lit on its top, a
+ *  wet dark between, a pale one now and then; `wet` the share of them with the sea's gloss on them */
+function shingle(s, K, R, gap, wet) {
+  const w = s.w, h = s.h, G = Math.round(w / 4.6), cell = w / G, pts = [];
+  for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) pts.push([(i + 0.2 + K.hash2(i, j, 1101) * 0.6) * cell, (j + 0.2 + K.hash2(i, j, 1102) * 0.6) * cell, K.hash2(i, j, 1103)]);
+  const N = K.field(w, h, 5, 5, 1105, { oct: 2 }), at = (t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
+  s.each((x, y, i) => {
+    let d1 = 1e9, d2 = 1e9, k1 = 0, ny = 0;
+    for (let k = 0; k < pts.length; k++) for (let oy = -h; oy <= h; oy += h) for (let ox = -w; ox <= w; ox += w) {
+      const dx = (x + 0.5 - pts[k][0] - ox) * 0.85, dy = y + 0.5 - pts[k][1] - oy, d = Math.sqrt(dx * dx + dy * dy);
+      if (d < d1) { d2 = d1; d1 = d; k1 = k; ny = dy; } else if (d < d2) d2 = d;
+    }
+    const e = (d2 - d1) / 2;
+    if (e < 0.7) { s.set(x, y, gap); s.hf[i] = 0.05; return; }
+    const q = pts[k1][2];
+    let t = 0.28 + q * 0.42 + (N[i] - 0.5) * 0.12 + (ny < -1.5 ? 0.1 : ny > 1.5 ? -0.08 : 0);
+    if (q > 0.93) t += 0.22;                                                       // (a pale one: quartz, a shell)
+    if (e < 1.4) t -= 0.12;
+    if (q < wet && ny < -1.2 && e > 1.6) t += 0.3;                                 // (the sea's gloss on a wet one's crown)
+    s.set(x, y, at(Math.max(0, Math.min(1, t))));
+    s.hf[i] = 0.35 + 0.65 * Math.min(1, (e - 0.7) / 2.2);
+  });
+  return { normal: 2.0 };
+}
+registerTextureSet((K) => {
+  const P = (a) => a.map((c) => K.parseColor(c)), at = (R, t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
+  const lum = (c) => (0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]) / 255;
+  const recolor = (src, R, post = null) => (s, ctx) => {
+    const p = (reachLib ||= new TextureLibrary({ seed: 7 })).pixels(src); if (!p) return {};
+    const { width: w, height: h } = p.color, L = new Float32Array(w * h); let lo = 1, hi = 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const l = lum(p.color.get(x, y)); L[y * w + x] = l; lo = Math.min(lo, l); hi = Math.max(hi, l); }
+    s.each((x, y, i) => { const t = (L[i] - lo) / Math.max(1e-3, hi - lo); s.set(x, y, at(R, t)); s.hf[i] = p.height[i]; post?.(s, x, y, i, t, ctx); });
+    return { normal: 2.2 };
+  };
+  const BARN = P(['#a9aca4', '#c4c4b6']), WEEDC = P(['#2c3a26', '#3c4a2a']), GLOSS = P(['#8ea4ac', '#b4c6cc']), SHELL = P(['#d8cfbe', '#e8e0d0']);
+  const MARRAM = P(['#7a7a4c', '#8e8a58']), KELP = P(['#3a3424', '#4a4028']);
+  return {
+    // the sea cave's walls: black rock, wet, a cold sheen on its edges, barnacles in its hollows and a little weed
+    sea_rock: { px: [48, 48], normalScale: 0.9, gen: recolor('basalt_cliff', P(['#181e22', '#20272c', '#293136', '#323b41', '#3d464c', '#4a5359', '#586168', '#687177']), (s, x, y, i, t, ctx) => {
+      const q = K.hash2(x, y, ctx.seed + 31);
+      if (t > 0.9 && q > 0.8) s.set(x, y, GLOSS[q > 0.93 ? 1 : 0]);               // (wet: its edges catch the sea light; round 4, fewer: lit by a lamp they read as gold flecks)
+      else if (t < 0.3 && q > 0.82) s.set(x, y, BARN[q > 0.94 ? 1 : 0]);           // (barnacles in the hollows)
+      else if (t < 0.2 && q < 0.12) s.set(x, y, WEEDC[(x + y) & 1]);
+    }) },
+    sea_rock_top: { px: [48, 48], normalScale: 0.8, gen: recolor('crag', P(['#1a1f22', '#232a2e', '#2d3539', '#384146', '#444e52', '#525c60', '#626b6e']), (s, x, y, i, t, ctx) => {
+      const q = K.hash2(x, y, ctx.seed + 33);
+      if (t < 0.25 && q > 0.86) s.set(x, y, BARN[q > 0.96 ? 1 : 0]); else if (t > 0.8 && q > 0.7) s.set(x, y, GLOSS[0]);
+    }) },
+    // the cave's floor: shingle, blue-grey pebbles, wet; the strand's: wet sand dark and rippled, dry sand pale with a
+    // shell or two; the dunes' sand under the marram's litter
+    sea_shingle: { px: [64, 64], normalScale: 0.8, gen: (s) => shingle(s, K, P(['#464d50', '#4f5659', '#585f62', '#62696b', '#6c7374', '#777d7e', '#828888', '#8e9392']), K.parseColor('#30373a'), 0.3) },
+    wet_sand: { px: [64, 64], normalScale: 0.6, gen: recolor('sand', P(['#6e6454', '#776c5b', '#807462', '#897c69', '#928470', '#9b8c77', '#a4947e']), (s, x, y, i, t, ctx) => {
+      const q = K.hash2(x, y, ctx.seed + 35), rip = Math.sin((x * 0.55 + y * 0.18) + Math.sin(y * 0.21) * 1.6);
+      if (rip > 0.82) s.set(x, y, K.mixColor(s.get(x, y), '#c4b498', 0.35)); else if (rip < -0.86) s.set(x, y, K.mixColor(s.get(x, y), '#5a5040', 0.3));   // (the ebb's ripples)
+      if (q > 0.985) s.set(x, y, GLOSS[1]); else if (q < 0.006) s.set(x, y, SHELL[0]);
+    }) },
+    strand_sand: { px: [64, 64], normalScale: 0.55, gen: recolor('sand', P(['#8a7656', '#967f5e', '#a28a68', '#ad9572', '#b79f7b', '#c0a884', '#c9b18d']), (s, x, y, i, t, ctx) => {
+      const q = K.hash2(x, y, ctx.seed + 37);
+      if (q > 0.993) s.set(x, y, SHELL[1]); else if (q < 0.004) s.set(x, y, KELP[0]);
+    }) },
+    dune_sand: { px: [64, 64], normalScale: 0.6, gen: recolor('sand', P(['#6e6450', '#7a6f5a', '#867a63', '#90846c', '#9a8d74', '#a3967c', '#ac9f84']), (s, x, y, i, t, ctx) => {
+      const q = K.hash2(x >> 1, y, ctx.seed + 39);
+      if (q > 0.9) s.set(x, y, MARRAM[q > 0.96 ? 1 : 0]);                         // (the marram's litter, blown blades)
+    }) },
+    // a rock pool's bed: dark weed-grown rock and pebbles, a pale stone or a shell, seen through its water
+    pool_bed: { px: [48, 48], normalScale: 0.6, gen: (s) => shingle(s, K, P(['#1a2420', '#22302a', '#2a3a32', '#33443a', '#3c4e42', '#56604e', '#7a7c66']), K.parseColor('#121a16'), 0) },
   };
 });
 

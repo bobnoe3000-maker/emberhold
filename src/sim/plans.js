@@ -334,8 +334,8 @@ export const PLANS = {
   //    the vault Livia's cabin at the stern (no boss: a secret's end room is its vault, as the Ninth Vault's)
   sisters_cabin: { site: 'sisters_cabin', name: "The Sister's Cabin", kind: 'vault', base: 45, flat: true, floors: [
     { name: "Aurelle's Grace", spaces: [
-      { id: 'the_reef_ladder', name: 'The Reef Ladder', role: 'entrance', x: 4, y: 130, w: 30, h: 24, shape: 'rect', lv: 0, kit: 'hulk',
-        dress: ['dock_ropes', 'mole_lamps', 'stair_up'], note: 'Up the ladder from the reef at low water and in over her side, where the planks are gone.' },
+      { id: 'the_reef_ladder', name: 'The Reef Ladder', role: 'entrance', x: 4, y: 130, w: 30, h: 24, shape: 'rect', lv: 0, kit: 'strand',
+        dress: ['dock_ropes', 'mole_lamps', 'stair_up'], note: 'Out across the reef at low water, wet sand and weed and the rock pools, to the ladder up her side where the planks are gone.' },   // (dungeon-looks-plan item 7: the reef itself, the `strand` kit, before the hull)
       { id: 'the_waist', name: 'The Waist', role: 'room', x: 0, y: 66, w: 38, h: 54, shape: 'rect', lv: 0, kit: 'hulk', foes: 'drowned_fleet',
         dress: ['casks', 'anchors', 'mole_lamps'], note: 'The open deck amidships, her crew still at their stations, as they were the night she struck.' },
       { id: 'the_chapel_locker', name: 'The Chapel Locker', role: 'offshoot', x: 48, y: 80, w: 24, h: 22, shape: 'rect', lv: 0, kit: 'hulk', foes: 'drowned_fleet',
@@ -608,18 +608,20 @@ export const PLANS = {
   //    in it), floor 2 the hulks moored in its lagoon (the `hulk` kit: a ship's inside, its decks and ribs, the hold). A
   //    band of five, as the Mole: floor 1 at 36–38, floor 2 at 39–40 (`step` 3). Hesk in the flagship's great cabin; his
   //    commission in the wardroom.
+  //    (dungeon-looks-plan item 7, docs/strand-dungeon.md) floor 1 part beach, part sea cave: the boat landing and the
+  //    careening beach the open shore (the `strand` kit), the three rooms between them the cave in the isle's rock
   gull_isles: { site: 'gull_isles', name: 'The Gull Isles', kind: 'cave', base: 36, step: 3, floors: [
     { name: 'The Sea Cave', spaces: [
-      { id: 'the_boat_landing', name: 'The Boat Landing', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'seacave',
-        dress: ['boats', 'dock_lamps', 'dock_ropes'], note: 'Where the fleet\'s boats put in under the cliff, the sea slapping at the rock. The landing\'s steps are the way out.' },
+      { id: 'the_boat_landing', name: 'The Boat Landing', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'strand',
+        dress: ['boats', 'dock_lamps', 'dock_ropes'], note: 'The shingle beach under the cliff where the fleet\'s boats put in, drawn up above the tide. The way back out is the boat.' },
       { id: 'the_smugglers_stores', name: 'The Smugglers\' Stores', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'seacave', foes: 'fleet',
-        dress: ['casks', 'dock_cargo', 'stalagmites', 'dock_lamps'], note: 'What the fleet took off League ships, stacked in the cave\'s dry end, tallied in chalk on the rock.' },
+        dress: ['casks', 'dock_cargo', 'stalagmites', 'dock_lamps', 'pools'], note: 'What the fleet took off League ships, stacked in the cave\'s dry end, tallied in chalk on the rock.' },
       { id: 'the_strongroom', name: 'The Strongroom', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 1, kit: 'seacave', foes: 'fleet',
         dress: ['ledger', 'dock_lamps', 'chest'], note: 'A fissure walled up with a ship\'s door. The fleet\'s share-out is reckoned here.' },
       { id: 'the_long_gallery', name: 'The Long Gallery', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 1, kit: 'seacave', foes: 'fleet',
-        dress: ['stalagmites', 'drips', 'dock_lamps'], note: 'The cave\'s long arm under the isle, wet to the knee at high water. The hounds are kennelled at its end.' },
-      { id: 'the_careening_beach', name: 'The Careening Beach', role: 'descent', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 2, kit: 'seacave', foes: 'fleet',
-        dress: ['boats', 'scaffold', 'dock_lamps', 'stair_down'], note: 'A beach inside the isle where the boats are hauled over to be scraped, and the way out through the rock to the lagoon and the hulks.' },
+        dress: ['stalagmites', 'drips', 'dock_lamps', 'pools'], note: 'The cave\'s long arm under the isle, wet to the knee at high water. The hounds are kennelled at its end.' },
+      { id: 'the_careening_beach', name: 'The Careening Beach', role: 'descent', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 2, kit: 'strand', foes: 'fleet',
+        dress: ['boats', 'scaffold', 'dock_lamps', 'stair_down'], note: 'A cove open to the sky inside the isle, where the boats are hauled over to be scraped, and the way out through the rock to the lagoon and the hulks.' },
     ], halls: [
       { from: 'the_boat_landing', to: 'the_smugglers_stores', x: 32, y: 44, w: 10, h: 10 },
       { from: 'the_smugglers_stores', to: 'the_strongroom', x: 52, y: 20, w: 10, h: 10 },
@@ -690,23 +692,28 @@ export const PLANS = {
   // ── The Lamp Fort (38; the Tidemark's side vault, GDD v1.151): Old Gannet's coast light on its headland, a fort on the
   //    ramparts kit with the Gull Fleet at its door. One floor; Gannet at the gate; his spare wick in the lamp room's
   //    chest (sites.js `vault`: the keepsake, once), then it seals (`side`, core.js).
+  //    (dungeon-looks-plan item 7, docs/strand-dungeon.md: down off its headland and up from the sea. The fleet holds the
+  //    land gate, so Gannet takes the company down the cliff stair from the tower's foot to the water gate, the fort's
+  //    landing stage under its walls (the wharf's decks), and in through the sea cave the fort was built over; the
+  //    magazine cut into the cave's rock; then up onto the walk and the lamp room, the fort's walls behind them and the
+  //    sea in front, not a town's houses. The yard is gone into the cave)
   lamp_fort: { site: 'lamp_fort', name: 'The Lamp Fort', kind: 'ramparts', base: 38, flat: true, floors: [
     { name: 'The Lamp Fort', spaces: [
-      { id: 'the_fort_gate', name: 'The Fort Gate', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'ramparts',
-        dress: ['rampart_torches', 'rampart_cargo'], note: 'Inside the gate, where Gannet waits with his hand-lamp. The fleet has been at the door since the spring.' },
-      { id: 'the_yard', name: 'The Yard', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'ramparts', foes: 'fleet',
-        dress: ['rampart_well', 'rampart_torches', 'rampart_cargo', 'rampart_clutter'], note: 'The fort\'s yard and its well, the barracks along the back, nobody in them but Gannet for a long time.' },
-      { id: 'the_magazine', name: 'The Magazine', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'ramparts', foes: 'fleet',
-        dress: ['rampart_torches', 'chest'], note: 'Where the oil for the lamp is kept, sixty years of it, and what the fleet wanted.' },
-      { id: 'the_curtain_walk', name: 'The Curtain Walk', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'ramparts', foes: 'fleet',
-        dress: ['rampart_torches', 'rampart_cargo'], note: 'The wall walk round the seaward side, the drop to the rocks below it.' },
-      { id: 'the_lamp_room', name: 'The Lamp Room', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'ramparts', foes: 'fleet',
-        dress: ['rampart_torches', 'rampart_clutter', 'lamp_stand'], note: 'The top of the tower and the light, kept lit. Gannet\'s spare wick is in the chest by the lamp.' },
+      { id: 'the_fort_gate', name: 'The Water Gate', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'docks',
+        dress: ['dock_lamps', 'dock_ropes', 'moorings'], note: 'The fort\'s landing stage under the headland, at the foot of the cliff stair. The fleet holds the land gate, so Gannet brings you in the old way and waits on the stage with his hand-lamp.' },
+      { id: 'the_sea_cave', name: 'The Sea Cave', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'seacave', foes: 'fleet',
+        dress: ['dock_cargo', 'stalagmites', 'dock_lamps', 'pools'], note: 'The cave the fort was built over, the sea washing in at its mouth. The fleet came up this way in the spring and stacked its plunder in the dry end.' },
+      { id: 'the_magazine', name: 'The Magazine', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'seacave', foes: 'fleet',
+        dress: ['dock_lamps', 'chest'], note: 'Cut into the cave\'s rock to keep the oil for the lamp dry, sixty years of it, and what the fleet wanted.' },
+      { id: 'the_curtain_walk', name: 'The Curtain Walk', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'fortwall', foes: 'fleet',
+        dress: ['rampart_torches', 'rampart_cargo'], note: 'The wall walk round the seaward side, the surf on the rocks below it.' },
+      { id: 'the_lamp_room', name: 'The Lamp Room', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'fortwall', foes: 'fleet',
+        dress: ['rampart_torches', 'rampart_clutter', 'lamp_stand'], note: 'The top of the tower and the light, kept lit, the sea all round under it. Gannet\'s spare wick is in the chest by the lamp.' },
     ], halls: [
-      { from: 'the_fort_gate', to: 'the_yard', x: 32, y: 44, w: 10, h: 10 },
-      { from: 'the_yard', to: 'the_magazine', x: 52, y: 20, w: 10, h: 10 },
-      { from: 'the_yard', to: 'the_curtain_walk', x: 92, y: 44, w: 10, h: 10 },
-      { from: 'the_yard', to: 'the_lamp_room', x: 48, y: 70, w: 10, h: 10 },
+      { from: 'the_fort_gate', to: 'the_sea_cave', x: 32, y: 44, w: 10, h: 10 },
+      { from: 'the_sea_cave', to: 'the_magazine', x: 52, y: 20, w: 10, h: 10 },
+      { from: 'the_sea_cave', to: 'the_curtain_walk', x: 92, y: 44, w: 10, h: 10 },
+      { from: 'the_sea_cave', to: 'the_lamp_room', x: 48, y: 70, w: 10, h: 10 },
     ] },
   ] },
 
