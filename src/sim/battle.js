@@ -2100,7 +2100,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // front-to-back is only 4 px), so the push runs in screen space and maps back to the world.
   /** which side a unit is on: the party's (the hero's copy, a member) or the other (a foe, a rival) */
   const sideOf = (u) => (u.rival ? 1 : u.isHero || u.cls !== undefined ? 0 : 1);
-  function separate(units, w, SEP_X = SEP_XB, SEP_Y = SEP_YB, stiff = 1, foe = false) {   // stiff < 1: a gentle nudge per tick (walking), not a shove; foe: the fight's (opposing sides kept SEP_FOE further apart)
+  function separate(units, w, SEP_X = SEP_XB, SEP_Y = SEP_YB, stiff = 1, foe = false, rad = 0) {   // stiff < 1: a gentle nudge per tick (walking), not a shove; foe: the fight's (opposing sides kept SEP_FOE further apart); rad: a shove keeps that body on open ground (at ease)
+    const ok = (x0, y0, x, y) => shoveOk(w, x0, y0, x, y) && (!rad || (isWalkable(w, x - rad, y - rad) && isWalkable(w, x + rad, y + rad) && isWalkable(w, x - rad, y + rad) && isWalkable(w, x + rad, y - rad)));
     for (let i = 0; i < units.length; i++) for (let j = i + 1; j < units.length; j++) {
       const a = units[i], b = units[j], dx = b.x - a.x, dy = b.y - a.y;
       if (a.anchor || b.anchor) {                                  // the Kingstone's body: nobody stands in it, and it isn't moved
@@ -2117,8 +2118,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       // ease it: a screen px of height is a quarter tile of depth, so a small overlap on screen
       // shoved a unit ~1.2 tiles in one tick (a visible pop); overlaps now part over a few ticks
       const pl = hypot(px, py); if (pl > MAX_SHOVE) { px *= MAX_SHOVE / pl; py *= MAX_SHOVE / pl; }
-      if (!a.isHero && shoveOk(w, a.x, a.y, a.x - px, a.y - py)) { a.x -= px; a.y -= py; }
-      if (!b.isHero && shoveOk(w, b.x, b.y, b.x + px, b.y + py)) { b.x += px; b.y += py; }
+      if (!a.isHero && ok(a.x, a.y, a.x - px, a.y - py)) { a.x -= px; a.y -= py; }
+      if (!b.isHero && ok(b.x, b.y, b.x + px, b.y + py)) { b.x += px; b.y += py; }
     }
   }
   // a shove keeps to open ground, and in a fight never carries anyone out of the room (Brother Teague was shoved into the
@@ -2322,15 +2323,21 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // the hero's breadcrumbs: a companion whose station is round a corner follows these instead
   // of pressing into the wall (and being teleported once it fell far behind)
   const trail = [];
+  // a companion's body out of a fight (docs/pathing-audit.md): its middle and the four corners BODY_R round it on open
+  // ground, as the hero's are (core.js PLAYER_RADIUS). Its middle alone kept it off a wall's tile, but its body stood a
+  // third of a tile into the house or the wall beside it, drawn there (the owner, 2026-11-26: "characters often auto path
+  // and walk over or through walls"). One that already stands in one (set down by a travel, shoved) may step out by its middle.
+  const BODY_R = 0.3;
+  const bodyOn = (w, x, y) => isWalkable(w, x, y) && isWalkable(w, x - BODY_R, y - BODY_R) && isWalkable(w, x + BODY_R, y + BODY_R) && isWalkable(w, x - BODY_R, y + BODY_R) && isWalkable(w, x + BODY_R, y - BODY_R);
   const lineOpen = (w, ax, ay, bx, by) => { const n = Math.ceil(hypot(bx - ax, by - ay) / 0.3);
-    for (let i = 1; i <= n; i++) { const x = ax + ((bx - ax) * i) / n, y = ay + ((by - ay) * i) / n; if (!isWalkable(w, x - 0.25, y - 0.25) || !isWalkable(w, x + 0.25, y + 0.25) || !isWalkable(w, x - 0.25, y + 0.25) || !isWalkable(w, x + 0.25, y - 0.25)) return false; }
+    for (let i = 1; i <= n; i++) { const x = ax + ((bx - ax) * i) / n, y = ay + ((by - ay) * i) / n; if (!bodyOn(w, x, y)) return false; }
     return true; };
   function moveVel(u, vx, vy, dt, w) {                               // ease u's velocity toward (vx, vy), then move with wall sliding
     const dvx = vx - (u.vx || 0), dvy = vy - (u.vy || 0), dv = hypot(dvx, dvy), a = FOLLOW_ACC * dt;
     if (dv <= a) { u.vx = vx; u.vy = vy; } else { u.vx = (u.vx || 0) + (dvx / dv) * a; u.vy = (u.vy || 0) + (dvy / dv) * a; }
     const sp = hypot(u.vx, u.vy); if (sp < 0.05) { u.vx = u.vy = 0; u.moving = false; return; }
-    const nx = u.x + u.vx * dt, ny = u.y + u.vy * dt;
-    if (isWalkable(w, nx, ny)) { u.x = nx; u.y = ny; } else if (isWalkable(w, nx, u.y)) { u.x = nx; u.vy = 0; } else if (isWalkable(w, u.x, ny)) { u.y = ny; u.vx = 0; } else { u.vx = u.vy = 0; }
+    const nx = u.x + u.vx * dt, ny = u.y + u.vy * dt, stuck = !bodyOn(w, u.x, u.y), ok = (x, y) => bodyOn(w, x, y) || (stuck && isWalkable(w, x, y));
+    if (ok(nx, ny)) { u.x = nx; u.y = ny; } else if (ok(nx, u.y)) { u.x = nx; u.vy = 0; } else if (ok(u.x, ny)) { u.y = ny; u.vx = 0; } else { u.vx = u.vy = 0; }
     u.moving = sp > 0.6; if (u.moving) { u.fx = u.vx; u.fy = u.vy; }
   }
   const scr2w = (sx, sy) => [(sx / 8 + sy / 4) / 2, (sy / 4 - sx / 8) / 2];      // screen px → world tiles
@@ -2359,7 +2366,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       let sx = p.x + ox, sy = p.y + oy;
       // a station inside a wall (a corridor): pull it in toward the hero until it's open floor, so
       // they fall in behind rather than scraping along the wall
-      const open = (x, y) => isWalkable(w, x, y) && isWalkable(w, x - 0.3, y - 0.3) && isWalkable(w, x + 0.3, y + 0.3) && isWalkable(w, x - 0.3, y + 0.3) && isWalkable(w, x + 0.3, y - 0.3);
+      const open = (x, y) => bodyOn(w, x, y);
       if (!open(sx, sy)) for (const t of [0.8, 0.6, 0.4, 0.2]) { const qx = p.x + ox * t, qy = p.y + oy * t; if (open(qx, qy)) { sx = qx; sy = qy; break; } }
       if (heroStill < EASE_AFTER) {                                      // on the move: keep station
         m.sitting = false; m.ease = null;
@@ -2380,7 +2387,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (clock >= e.next) {                                             // a new spot, and maybe a gesture
         const [dx, dy] = scr2w((idleRng() - 0.5) * 30, (idleRng() - 0.5) * 16);   // a spot near the station, mostly sideways on screen
         const gx = sx + dx, gy = sy + dy;
-        if (isWalkable(w, gx, gy)) { e.gx = gx; e.gy = gy; }
+        if (bodyOn(w, gx, gy) && lineOpen(w, m.x, m.y, gx, gy)) { e.gx = gx; e.gy = gy; }   // (a spot the body fits, walked to straight)
         e.next = clock + 4 + idleRng() * 6;
         const k = idleRng();
         if (k < 0.3) m.fidgetN = (m.fidgetN || 0) + 1;
@@ -2391,7 +2398,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (d > 0.3) stepToward(m, e.gx, e.gy, STROLL, dt, w); else m.moving = false;
       if (heroStill > SIT_AFTER + i * 2.5 && !m.moving) { m.sitting = true; m.fx = p.x - m.x; m.fy = p.y - m.y; }   // settle down, facing the hero
     });
-    separate([{ ...H, x: p.x, y: p.y, isHero: true }, ...state.party.slice(1).filter((m) => !m.down)], w, 36, 24, heroStill < EASE_AFTER ? 0.3 : 1);   // roomier than in a melee
+    separate([{ ...H, x: p.x, y: p.y, isHero: true }, ...state.party.slice(1).filter((m) => !m.down)], w, 36, 24, heroStill < EASE_AFTER ? 0.3 : 1, false, BODY_R);   // roomier than in a melee (and never shoved into a wall: bodyOn)
   }
 
   // a boss's signature mechanic, each tick it stands

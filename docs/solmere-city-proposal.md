@@ -1,8 +1,8 @@
 # Solmere, the city where companies meet (a proposal)
 
-**Status:** Proposal (2026-11-27), for the owner. Design only: nothing here is built. The mockups are
-[solmere-mockups.html](https://claude.ai/) (published by the owner; the file was written outside the repo, see the end
-of this doc), drawn on the game's own HUD and two real frames of Tollhaven and Ashgate as they are today.
+**Status:** Proposal (2026-11-27), for the owner. Design only: nothing here is built. The mockups are one page,
+[*Solmere City Mockups*](https://claude.ai/artifact/U69LfVF5rCRtiTGfhGYEEa) (a private page for the owner; the source is outside the
+repo, §12), drawn on the game's own HUD, with two real frames of Tollhaven and Ashgate as they are today.
 
 **The owner, 2026-11-27:** *"Solmere the capital should be designed as a more traditional MMO city location. In this
 location companions are hidden and just the main char is visible. Add indicators for what types of companions are with
@@ -26,8 +26,8 @@ Places this doc adds are marked **(proposal)**. Every line a player would read i
    meet at today (`ui/crossroads.js`). It is the Lamphall's square in the dead capital, with **districts round it, each
    one job**: the Lamphall (the Guild, the board, hiring), the Muster Yard (raids), the Exchange, the Bowl's road, Wenna
    Pike's quay to the Mere Tower, the Old Treasury (storage), the Mint Forge (the smith), the Signal Office (letters),
-   the Grand Archive (lore), the coach stand to every land. Nothing is more than **about 12 seconds' walk** from the Dry
-   Basin in the middle; Wenna's quay, at 15, is the one long walk.
+   the Grand Archive (lore), the coach stand to every land. Nothing is more than **about 11 seconds' walk** from the Dry
+   Basin in the middle; Wenna's quay, at 14, is the one long walk.
 2. **Only heroes are shown in the city.** Your companions stay in your party, in state and in the save, and are drawn
    nowhere between the gates. They're back at your side, in formation, the moment you leave by any road, the coach, a
    Scroll, the Bowl or the punt. **The city has no fights.** Nothing about the save's party changes; the scene gains a
@@ -35,7 +35,7 @@ Places this doc adds are marked **(proposal)**. Every line a player would read i
 3. **Companion indicators:** a small chip under every hero's name holding **one class sigil per companion** (the game's
    own class icons, the shape carrying the meaning), a double rim for a found companion. The same chip over your own
    hero. Levels and names are in the inspect sheet, not over heads. In the HUD your companions' cards **collapse to two
-   44 px chips** beside your card. Four designs were compared (§4); this one reads at a glance in a crowd and costs no
+   chips** (70 px tall) beside your compact card. Four designs were compared (§4); this one reads at a glance in a crowd and costs no
    draws.
 4. **Other heroes** get a nameplate (name, level, the chip), an optional earned title, emotes, a **Here** channel in the
    chat dock, and a tap opens an inspect sheet: class, level, company, worn gear by rarity, with **Invite**, **Whisper**,
@@ -95,22 +95,22 @@ straight up the screen, over everything. Tall at the back, low at the front (lev
 | # | District | Its job | Canon or proposal | From the Dry Basin |
 |---|---|---|---|---|
 | 1 | **The Lamphall's square** and **the Dry Basin** (proposal) | Gathering. The empire's great fountain, dry since the aqueduct broke: people sit on its rim. The five services face it, as in every town | the square: canon · the Basin: proposal | — |
-| 2 | **The Lamphall** | The tavern of the square's five: the Guild's board (city-wide), hiring, rumours, Aldo Pennick and the Roll, Mabry Cole's hammer over the board | canon | 3 s |
+| 2 | **The Lamphall** | The tavern of the square's five: the Guild's board (city-wide), hiring, rumours, Aldo Pennick and the Roll, Mabry Cole's hammer over the board | canon | 6 s |
 | 3 | **The Great Beacon** | The landmark. Its door is the Lamphall's back stair (the Guild's finite tower, world doc §12, later) | canon | — |
 | 4 | **The Grey Sisters' Hospice** | The temple: raise the slain, respec | canon | 4 s |
-| 5 | **The Guild's chandlery** | The shop | canon (on the Via in the streets plan; moved to the square) | 3 s |
-| 6 | **The Palace Rooms** (proposal) | The inn: rest, the party and bench, expeditions. Lodgings in the Solmeres' town palace, *"a tenement with very good ceilings"* | the palace: canon · the inn in it: proposal | 4 s |
-| 7 | **The Mint Forge** (proposal) | The smith: upgrade, reforge, salvage. The empire's mint, where they struck the sun on the coin | proposal | 4 s |
-| 8 | **The Muster Yard** (proposal) | Party Up's raids in person: groups gather at numbered posts, the lobby a place as well as a screen. The old parade ground, named for the signal corps' one order, *muster at the lamp* | proposal | 7 s |
-| 9 | **The Exchange** | Today: the city's notices: the Bowl's slate, the Wall's standings, the raid groups posted. Its sign still says *Reopening*. Trading, if ever, is the owner's call (§10, question 3) | canon | 9 s |
-| 10 | **The Old Treasury** (proposal) | Storage: a strongbox shared by your hero slots, if wanted (§10, question 4). Where the treasury counted | the treasury: canon · storage: proposal | 6 s |
-| 11 | **The Signal Office** (proposal) | The mailbox: letters (Maudry's to the Guild, a friend's note when online). The Beacon's old signal room | proposal | 6 s |
-| 12 | **The Grand Archive** | Lore: the Chronicle's fragments read and re-read (lore.js); later, the Archive's lost wing (side quests) | canon | 9 s |
-| 13 | **Aqueduct Street** | Crafting's place, held for when there is crafting (there is none beyond the smith today). Where the aqueduct runs into a street, canon | canon street · crafting: proposal | 9 s |
-| 14 | **The coach stand** | The Guild's coach to every land you've reached (coach.js), inside the imperial arch | proposal | 11 s |
-| 15 | **The breach and the quay** | Wenna Pike's punt to the Mere Tower, at the quay's end over the mud | canon | 15 s |
+| 5 | **The Guild's chandlery** | The shop | canon (on the Via in the streets plan; moved to the square) | 4 s |
+| 6 | **The Palace Rooms** (proposal) | The inn: rest, the party and bench, expeditions. Lodgings in the Solmeres' town palace, *"a tenement with very good ceilings"* | the palace: canon · the inn in it: proposal | 2 s |
+| 7 | **The Mint Forge** (proposal) | The smith: upgrade, reforge, salvage. The empire's mint, where they struck the sun on the coin | proposal | 2 s |
+| 8 | **The Muster Yard** (proposal) | Party Up's raids in person: groups gather at numbered posts, the lobby a place as well as a screen. The old parade ground, named for the signal corps' one order, *muster at the lamp* | proposal | 6 s |
+| 9 | **The Exchange** | Today: the city's notices: the Bowl's slate, the Wall's standings, the raid groups posted. Its sign still says *Reopening*. Trading, if ever, is the owner's call (§10, question 3) | canon | 8 s |
+| 10 | **The Old Treasury** (proposal) | Storage: a strongbox shared by your hero slots, if wanted (§10, question 4). Where the treasury counted | the treasury: canon · storage: proposal | 5 s |
+| 11 | **The Signal Office** (proposal) | The mailbox: letters (Maudry's to the Guild, a friend's note when online). The Beacon's old signal room, at its foot | proposal | 11 s |
+| 12 | **The Grand Archive** | Lore: the Chronicle's fragments read and re-read (lore.js); later, the Archive's lost wing (side quests) | canon | 8 s |
+| 13 | **Aqueduct Street** | Crafting's place, held for when there is crafting (there is none beyond the smith today). Where the aqueduct runs into a street, canon | canon street · crafting: proposal | 8 s |
+| 14 | **The coach stand** | The Guild's coach to every land you've reached (coach.js), inside the imperial arch | proposal | 10 s |
+| 15 | **The breach and the quay** | Wenna Pike's punt to the Mere Tower, at the quay's end over the mud | canon | 14 s |
 | 16 | **The Quarry road** | The west gate, the Ashgate road and the way out to the Bowl (the Quarry Ring), its own scene as now | canon road · the gate's name: proposal | 11 s |
-| 17 | **The embassy quarters** | The Charter's, Highmarch's, the League's, the Clans' Close: each opens with its land's renown (world-map proposal §4) | canon | 10–12 s |
+| 17 | **The embassy quarters** | The Charter's, Highmarch's, the League's, the Clans' Close: each opens with its land's renown (world-map proposal §4) | canon | 7–11 s |
 | 18 | **The empty quarters** | Roofless shells and rubble behind closed lanes: the gangs' side quests later. Scenery now | canon | — |
 
 The gates: **west** (the Ashgate road, the Quarry Ring), **the imperial arch east** (the Brine Cross road), **north-west**
@@ -118,20 +118,26 @@ along the shore (up the frozen Sol to the Heights), **south** (the canal road to
 Saltmere's overland already says), **south-west** (the Tithe Road to the Greenwood: shut until the Greenwood is built).
 The breach in the north wall goes only to the quay.
 
+**The square is a town square.** The five services stand where every town has them, relative to the Basin
+(`outdoor.js` `buildTown`, level-design-rules §2: doors facing the middle, plaques at their heights, the same menu
+bar), with one swap: the Lamphall takes the temple's place at the head of the square, under the Beacon, and the
+Hospice takes the tavern's. So the city's first screen is the home screen a player already knows, and the districts
+are what's new, beyond it.
+
 ### 2.2 Size, against our towns
 
 | | Walls | Scene painted | Walled area | Square to farthest door |
 |---|---|---|---|---|
 | Thornwick (every town today) | 102 × 100 | 140 × 120 (+90 pad) | 10,200 tiles² | 46 tiles, the gate: ~6 s |
 | The Lamphall in the streets plan | — | 204 × 190 | — | — |
-| **Solmere (proposed)** | **176 × 160** | **220 × 210** | **28,160 tiles² (2.8×)** | **~95 tiles, the coach and the gates: ~11 s; the quay's end ~15 s** |
+| **Solmere (proposed)** | **176 × 160** | **220 × 210** | **28,160 tiles² (2.8×)** | **~85 tiles, the coach and the gates: 10–11 s; the quay's end 14 s** |
 
 Walk times are at the hero's 8.8 tiles a second (`core.js` `PLAYER_SPEED`), the straight line × 1.15 for the streets.
 Bigger than this and the city is a chore on a phone; smaller and it can't hold eighteen places and a crowd.
 
 ### 2.3 Getting about
 
-- **Walking is the default:** nothing that matters is more than about 12 seconds away.
+- **Walking is the default:** nothing that matters is more than about 11 seconds away (the quay 14).
 - **The signpost:** the Basin's signpost (a tap, or the compass's list, as in every scene: `travel.js` rows) lists the
   districts with their walk in seconds; a tap walks you there along the streets (the auto-walk the compass already
   does). Screen 5 in the mockups.
@@ -232,8 +238,8 @@ A chip with no sigil isn't drawn: a hero alone shows nothing.
 
 - **Over your hero:** the same chip, under no name (your name isn't over your head, as in every town).
 - **In the HUD:** the three party cards collapse. Your card stays as it is, in the middle; the two companions' cards
-  become **two chips, each 44 px tall**: portrait, sigil, `FTR 31` and the name, a rank diamond (◆ with its word on the
-  sheet). A tap opens that member's sheet, as a card does now. The space saved goes to the city's service bar and the
+  become **two chips, 70 px tall** in a strip that replaces the 112 px cards: portrait, sigil, `FTR 30` and the name,
+  the rank in words (◆ Lamp, ◆ found). A tap opens that member's sheet, as a card does now. The space saved goes to the city's service bar and the
   chat dock's swipe, which stay where they are. (Mockup: screens 1 and 4.)
 - **The alternative** (screen 4): the cards left as they are, a line *In the city · your company is with you* over them.
   It changes less, but the HUD then shows three figures' worth of cards for one figure on screen.
@@ -242,7 +248,7 @@ A chip with no sigil isn't drawn: a hero alone shows nothing.
 
 - Text ≥ 11 px (nameplates 11 px, the inspect sheet 12–17 px); the chip's sigils are 13 px, read as shapes.
 - Touch targets ≥ 44 px: the chip itself isn't a target; **the hero (figure and nameplate together, at least 44 × 56)
-  is.** The HUD chips are 44 px tall; the sheet's buttons 48.
+  is.** The HUD chips are 70 px tall; the sheet's buttons 48.
 - Contrast: cream on the chip's dark ground (#efe4cf on rgba(14,12,20,.86): 13:1).
 
 ---
@@ -422,9 +428,9 @@ with the room's seed), so everyone in it sees the same ones. Offline, it's stand
 
 | Step | What | Sim | UI | Renderer | Save | Tests | Size |
 |---|---|---|---|---|---|---|---|
-| 1 | **The city scene** | `outdoor.js` `buildCity` (or `city.js`): the walls, the gates as exits per land, the square and its five services on the town's rules, the districts as services, the breach and the quay; scene `city`; `coach.js` `solmere` stop and roads; the crossroads' exits lead in; `modes.js` `city` row (no fights) | the city's service bar (the five, as every town), the districts' menus (stubs where a system waits), the signpost | the kit's pieces for the Lamphall's set (tenements, shells, columns, the Beacon, the Basin): `town.json`, baked (`bake-env.cjs`) | **v59**, no migration | `city.test.mjs`: every door reachable, walk times ≤ 12 s (the quay ≤ 16), the town rules for the square (`town.test.mjs`'s), `visibility.mjs` on the city | **M** |
+| 1 | **The city scene** | `outdoor.js` `buildCity` (or `city.js`): the walls, the gates as exits per land, the square and its five services on the town's rules, the districts as services, the breach and the quay; scene `city`; `coach.js` `solmere` stop and roads; the crossroads' exits lead in; `modes.js` `city` row (no fights) | the city's service bar (the five, as every town), the districts' menus (stubs where a system waits), the signpost | the kit's pieces for the Lamphall's set (tenements, shells, columns, the Beacon, the Basin): `town.json`, baked (`bake-env.cjs`) | **v59**, no migration | `city.test.mjs`: every door reachable, walk times ≤ 12 s (the quay ≤ 15), the town rules for the square (`town.test.mjs`'s), `visibility.mjs` on the city | **M** |
 | 2 | **Companions hidden** | `world.solo`; `atEase` holds them on the hero | — | `benched` widened (figures, bars, shadows) | — | members still in state and the snapshot; back in formation at every way out; hire in the city; save round-trip | **S** |
-| 3 | **Indicators and the collapsed party** | — | `party.js` collapsed chips in the city; the chip over your hero | the overlay's chip (classicons.js paths) | — | browser: the chips 44 px, the sheet opens from one | **S** |
+| 3 | **Indicators and the collapsed party** | — | `party.js` collapsed chips in the city; the chip over your hero | the overlay's chip (classicons.js paths) | — | browser: the chips ≥ 44 px (70), the sheet opens from one | **S** |
 | 4 | **Stand-ins** | `standins.js`: the roster, routines, emotes, line picks; its own stream; `world.standins` runtime | `content/standins.json` + schema; their lines in the Here channel | drawn as `world.allies` are, with nameplates | — | determinism (same seed and clock, same crowd); **the end hash the same with stand-ins on and off**; never in a battle, never blocking a door; names against canon (`copylint`'s names rule when it exists) | **M** |
 | 5 | **Other heroes: nameplates, inspect, emotes** | — | the inspect sheet, Invite (Party Up seats a stand-in), Wave, the Here channel | LOD bands and the cap; emote clips | — | figperf at 8, 16, 24 stand-ins; the owner's phone Frame test; the browser suite: a tap on a stand-in opens its sheet | **M** |
 | 6 | **The online room** | the city's world in `CityRoom` | `net/city.js`, shards, whisper | other players drawn from deltas | — | a shard of 40 on phones, a drop and reconnect, the hand-over | **L** |
@@ -520,7 +526,7 @@ style), at a 390 × 844 phone:
 - **The city plan,** top-down in the wall map's hand (`tools/worldmap/streets.mjs`'s paper, ink and IM Fell), the
   districts numbered as §2.1, walk times from the Basin.
 - **Screen 1, arriving:** the square, the Beacon over it, the hero alone with its chip, the party collapsed.
-- **Screen 2, a crowded square:** eleven stand-ins with nameplates and chips, one waving, one line over a head and in
+- **Screen 2, a crowded square:** twelve stand-ins with nameplates and chips, one waving, one line over a head and in
   the Here channel.
 - **Screen 3, a tap:** the inspect sheet with Invite, Whisper (refused for a stand-in) and Wave.
 - **Screen 4, the indicator options:** A–D at real size on a day and a night ground, and the HUD's two ways.
@@ -528,5 +534,5 @@ style), at a 390 × 844 phone:
 - **The game today:** Tollhaven's square by day and Ashgate's at dusk, rendered in the engine for this doc
   (`tools/capture/rig.mjs`), for the look the drawings follow.
 
-The page is a published artifact (the owner publishes it); its source was written to the session's scratchpad, not the
-repo, at the owner's request.
+The page is published by the owner as an artifact; its source and the generator that draws it were written outside
+the repo (the session's scratchpad), at the owner's request, so nothing in `tools/` or `docs/img/` changed.

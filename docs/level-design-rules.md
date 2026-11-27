@@ -50,6 +50,18 @@ way: the hero is walked to each subject, and six points up a man's height (feet,
 tested with a ray to the camera (`hybrid.js` `sees`, `world.js` `occluded`). A card's clear corners don't count as
 cover. A subject passes at 50 % or more. The first survey of every map is in §5.
 
+### 1.2 Walled where it's drawn (new, 2026-11-26)
+
+What the party can't walk through **must** be drawn where the sim walls it, and what's drawn at a man's height **must**
+be walled (the owner: *"Ashgate.. characters often auto path and walk over or through walls"*; docs/pathing-audit.md).
+The converter draws from the sim's own walls where it can: a town's circuit is raised on exactly the cells the sim walls
+(`outdoor.js` `wallCells`: whole cells of two tiles, as Luminati draws ground), a home on exactly the tiles it walls
+(`homeWalls`), a mountain above a step only over cells walled whole, a rock no bigger than its wall. Where the drawing is
+the art's, the sim walls what's drawn: a bare tree at its trunk (`bareTree`), a stilt house to its footprint's edge, no
+wall for undergrowth nobody draws. Companions at ease keep their bodies (`battle.js` `BODY_R`) off a wall's tile, as
+the hero does. *test*: pathing.test.mjs; *tool*: `tools/capture/pathing.mjs` (each map's drawn scene against the sim's
+grid, with walks).
+
 ## 2. Towns
 
 Every region's town is the same hub (docs/town-layout-proposal.md, GDD §10): the home screen, framed the same way

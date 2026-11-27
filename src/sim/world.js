@@ -137,6 +137,9 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
   // a big piece and its footprint: the tiles behind it (toward the back, −x and −y, where its sprite stands over)
   const big = (u, v, kind, w = 2, h = 2) => { putAt(u, v, kind); for (let a = 0; a < w; a++) for (let b = 0; b < h; b++) if (a || b) putAt(along ? u - a : u - b, along ? v - b : v - a, 'block'); };
   const has = (d) => r.dress.includes(d);
+  // a pew is drawn as a bench three tiles long down x (convert.js DRESS_3D pew): walled so, its ends `block`, as drawn
+  // (on its one tile the party walked through its ends: docs/pathing-audit.md)
+  const pewAt = (u, v) => { if (!putAt(u, v, 'pew')) return; for (const d of [-1, 1]) { if (along) put0(u + d, v, 'block'); else put0(u, v + d, 'block'); } };
   const unit = (u, v, a0, a1, b0, b1, kind) => { if (!putAt(u, v, kind)) return false; for (let b = b0; b <= b1; b++) for (let a = a0; a <= a1; a++) if (a || b) putAt(u + a, v + b, 'block'); return true; };
   for (const d of r.dress) {
     switch (d) {
@@ -222,7 +225,7 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       // ── the Sunken Chapel: the drowned temple, the cult's cut, the binding crypt
       case 'hives': row(-wall, -L * 0.5, L * 0.2, 7, 'hives'); break;
       case 'doors': putAt(L * 0.55, -wall, alongK('fallen_door')); putAt(L * 0.55 + 3, -wall + 1, 'fallen_door'); break;
-      case 'pews': for (const s of [-1, 1]) for (const v of [0.28, 0.5]) for (let u = -L * 0.45; u <= L * 0.45 + 0.01; u += 5) putAt(u, s * Wd * v, 'pew'); break;
+      case 'pews': for (const s of [-1, 1]) for (const v of [0.28, 0.5]) for (let u = -L * 0.45; u <= L * 0.45 + 0.01; u += 5) pewAt(u, s * Wd * v); break;
       case 'font': putAt(L * 0.3, -Wd * 0.25, 'font'); break;
       // (the flags cracked in a ring where the tower came down, walked over: the fallen stone at the walls, out of the fight)
       case 'light_shaft': putAt(0, 0, 'shaft'); for (let i = 0; i < 5; i++) { const a = (i / 5) * 6.2832 + 0.4; putAt(cos(a) * 6, sin(a) * 6, 'cracks'); } for (const s of [-1, 1]) putAt(s * L * 0.7, Wd * 0.6, 'spoil'); break;
@@ -473,7 +476,7 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
       } else if (theme === 'chancel') {                          // an altar at the far end, candles, a saint fallen from his plinth, two short pews
         putAt(-L * 0.52, 0, 'altar');
         for (const side of [-1, 1]) putAt(-L * 0.45, side * Wd * 0.4, 'candles');
-        for (const side of [-1, 1]) putAt(L * 0.15, side * Wd * 0.4, 'pew');
+        for (const side of [-1, 1]) { const u = L * 0.15, v = side * Wd * 0.4; if (putAt(u, v, 'pew')) for (const d of [-1, 1]) { if (along) putAt(u + d, v, 'block'); else putAt(u, v + d, 'block'); } }   // (three tiles down x, as drawn: dressPlanned pewAt)
         putAt(L * 0.45, Wd * 0.5, 'saint');
       } else if (theme === 'cultcut') {                          // the Cult's dig: a binding circle in the cinders, chains, braziers
         putAt(0, 0, 'circle');
