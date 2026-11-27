@@ -111,6 +111,7 @@ export const DRESS_PIECES = new Set(['tomb', 'great_tomb', 'mourner', 'offering'
   'throne', 'reliquary',
   'magma', 'furnace', 'anvil', 'crucible',   // (the Magma Vault's: the owner, 2026-11-26, "flowing magma and a few furnaces, anvils")
   'pass_post', 'pass_cairn', 'pass_pine', 'pass_crystals', 'pass_ice', 'pass_icefall', 'pass_shrine', 'frozen_guard',   // (the Pilgrims' Stair's and the Praetory's: docs/pass-dungeon.md)
+  'channel', 'lockgate', 'sluice',   // (deep water indoors: docs/water-indoors.md; the Canal Locks', the Drowned Abbey's garth)
   'rail', 'cart_tipped', 'shoring_broken',   // (the Cold Seam's mine: docs/dungeon-looks-plan.md item 8)
   'clerk_desk',   // (the quota office's clerks' desks, in rows: item 9)
   'fallen_block',   // (the greenwood's: an ashlar block of the empire's, down in the moss; docs/greenwood-dungeon.md)
@@ -130,6 +131,9 @@ export const DRESS_CAP = { tomb: 6, great_tomb: 1, mourner: 2, offering: 1, hear
   throne: 1, reliquary: 1,   // (the palace's: v1.154)
   furnace: 2, anvil: 3, crucible: 2,   // (the Magma Vault's; its magma has no cap: a channel is many tiles of it)
   pass_post: 4, pass_cairn: 3, pass_pine: 3, pass_crystals: 3, pass_icefall: 1, pass_shrine: 1, frozen_guard: 12,   // (the pass's and the frostkeep's; a frozen pool's ice has no cap: many tiles of it)
+  // (deep water indoors, docs/water-indoors.md: a channel has no cap, it is many tiles; a lock gate and a sluice board are
+  // each a band of tiles across one, counted by the tile: two gates' worth, two boards')
+  lockgate: 16, sluice: 16,
   cart_tipped: 1, clerk_desk: 8,   // (the Cold Seam's goblins' cart on its side; the quota office's desks: a row a wall. Rails no cap: a run is many tiles)
   fallen_block: 4,   // (the greenwood's)
   saint: 2, lantern: 4, candles: 4, candelabra: 4, torch: 4, brazier: 4, ladder: 1, puddle: 4, scorch: 3, straw: 6, sacks: 3, crates: 2, barrels: 2, cracks: 6 };
@@ -154,7 +158,7 @@ PLAN_OB.fenbrick = PLAN_OB.crypt; PLAN_OB.fenbones = PLAN_OB.ossuary;
 DOOR_LIGHT.fenbrick = DOOR_LIGHT.crypt; DOOR_LIGHT.fenbones = DOOR_LIGHT.ossuary;
 PLAN_THEME.fenbrick = PLAN_THEME.crypt; PLAN_THEME.fenbones = PLAN_THEME.ossuary;
 const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', crates: 'crates', sacks: 'sacks', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', skulls: 'bones', bones: 'bones', barrels: 'barrels' };
-function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, count }) {
+function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, count, near = () => false, bridge = () => {} }) {
   // every piece through the room's caps (CAP): a recipe can't stand a second well or a fifth torch
   const room = (k) => !DRESS_CAP[k] || count(k) < DRESS_CAP[k];
   const place = (x, y, k) => room(k) && place0(x, y, k), putAt = (u, v, k) => room(k) && put0(u, v, k);
@@ -376,6 +380,13 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       case 'pass_cargo': putAt(L * 0.55, -Wd, 'sacks'); putAt(L * 0.55 + 2, -Wd, 'crates'); putAt(-L * 0.55, Wd, 'sacks'); break;
       // ── the Praetory (item 10): the Empress's bound guard frozen at their posts, a file along each long wall, the middle open
       case 'frozen_guards': row(-wall, -L * 0.6, L * 0.6, 6, 'frozen_guard'); if (r.role !== 'entrance') for (const s of [-1, 1]) putAt(s * (L - 1.5), Wd * 0.2, 'frozen_guard'); break;
+      // ── deep water indoors (docs/water-indoors.md; docs/dungeon-looks-plan.md items 3–5): a channel along a wall, its
+      // tiles blocked as the magma's are, its ways across plank bridges (world.bridges: plain floor here, a deck over the
+      // water to the renderer); a pond in a corner. Shin-deep water over a floor is `flood` (world.pools, below: walked in)
+      case 'canal': case 'canal_near': case 'drain': waterway(r, d, { place, near, bridge, has }); break;
+      case 'pond': { const [x0, y0] = (([x, y]) => [x & ~1, y & ~1])(along ? [Math.round(r.cx + L * 0.5), Math.round(r.cy - Wd * 0.62)] : [Math.round(r.cx - Wd * 0.62), Math.round(r.cy + L * 0.5)]);
+        for (let y = y0; y < y0 + 4; y++) for (let x = x0; x < x0 + 6; x++) if (!near(x, y)) place(x, y, 'channel'); } break;
+      case 'lock_gates': case 'sluices': break;   // (built with their channel: waterway)
       // ── the Cold Seam a worked mine (docs/dungeon-looks-plan.md item 8): the pithead's rails down the gallery's middle, a
       // cart on them where the shift left it (flat, walked over: the fight crosses them); the warren's shoring robbed for
       // its timber, a set every nine paces at the back wall, broken; and a cart the goblins tipped by their heap
@@ -390,6 +401,47 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
     }
   }
 }
+
+// A channel of deep water along one of a room's long walls (docs/water-indoors.md): `canal` along the back wall (north or
+// west, the one the camera faces), four tiles wide; `canal_near` the same along the near wall; `drain` a gutter two wide
+// along the near wall. Its tiles are `channel` (blocked, as the magma's), laid on even tiles in whole pairs, so the
+// renderer sinks whole tiles of its own (convert.js lays one over two of ours each way, from an even tile). Where a
+// doorway's way crosses it (a column within a doorway's reach) it stops, and the floor between two runs of it is a bridge
+// (world.bridges: plain floor to the sim, a plank deck over the water to the renderer). With `lock_gates` in the room's
+// dress two bands of it are a lock gate's (`lockgate`), with `sluices` two are sluice boards (`sluice`), a windlass on
+// the bank by each. Deterministic: no draws, only the room's box and its doorways.
+function waterway(r, d, { place, near, bridge, has }) {
+  const along = r.x1 - r.x0 >= r.y1 - r.y0, w = d === 'drain' ? 2 : 4, back = d === 'canal';
+  const lo = along ? r.y0 : r.x0, hi = along ? r.y1 : r.x1, s0 = along ? r.x0 : r.y0, s1 = along ? r.x1 : r.y1;
+  let t0 = back ? lo : hi - w + 1; if (t0 & 1) t0 += back ? 1 : -1;   // (from the wall in, its first row on an even tile)
+  const xy = (s, t) => (along ? [s, t] : [t, s]);
+  // each pair of columns (s even, s + 1) open, or kept dry for a doorway's way across
+  const pairs = [];
+  for (let s = s0 & ~1; s <= s1; s += 2) {
+    let open = true;
+    for (let k = s; k <= s + 1 && open; k++) for (let t = t0; t < t0 + w; t++) { if (k < s0 || k > s1 || near(...xy(k, t))) { open = false; break; } }
+    pairs.push([s, open]);
+  }
+  const n = pairs.length, firstOpen = pairs.findIndex((p) => p[1]), lastOpen = n - 1 - [...pairs].reverse().findIndex((p) => p[1]);
+  if (firstOpen < 0) return;
+  // its set pieces: lock gates at a quarter in from each end of the run, sluice boards a third in; each one pair of columns
+  const runLen = lastOpen - firstOpen + 1, piece = new Map();
+  const mark = (f, kind) => { let i = firstOpen + Math.round(runLen * f); while (i <= lastOpen && !pairs[i][1]) i++; if (i <= lastOpen && !piece.has(i)) piece.set(i, kind); };
+  if (has('lock_gates')) { mark(0.12, 'lockgate'); mark(0.88, 'lockgate'); }
+  if (has('sluices')) { mark(0.34, 'sluice'); mark(0.66, 'sluice'); }
+  const bank = back ? t0 + w + 1 : t0 - 2;   // (a windlass on the bank by each, a step off the channel's edge)
+  for (let i = 0; i < n; i++) {
+    const [s, open] = pairs[i];
+    if (open) {
+      const kind = piece.get(i) || 'channel';
+      for (let k = s; k <= s + 1; k++) for (let t = t0; t < t0 + w; t++) place(...xy(k, t), kind);
+      if (piece.has(i)) place(...xy(s, bank), 'windlass');
+    } else if (i > firstOpen && i < lastOpen) for (let k = s; k <= s + 1; k++) for (let t = t0; t < t0 + w; t++) bridge(...xy(k, t));   // (between two runs: a way across)
+  }
+}
+
+/** the dress that lays deep water in a room (docs/water-indoors.md) */
+const WATERWAYS = new Set(['canal', 'canal_near', 'drain', 'pond']);
 
 // Props you walk over (flat on the floor, or underfoot): a dropped cage, a binding circle.
 export const FLAT_PROPS = new Set(['cage', 'circle', 'shaft', 'straw', 'rug', 'scorch', 'cracks', 'coins', 'papers', 'puddle', 'rope', 'net', 'rail']);   // (a wharf's rope coils and nets lie flat on its deck: walked over)   // (the Cold Seam's rails, walked over)
@@ -408,6 +460,7 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     mods: new Map(),                      // "x,y" -> { cleared } | { opened }
     hp: new Map(),                        // "x,y" -> remaining hits
     discovered: new Set(),                // room ids seen (minimap fog)
+    bridges: new Set(),                   // "x,y" of the plank bridges over a channel: plain floor here (docs/water-indoors.md)
   };
   // Populate rooms (GDD §3: rooms are battle arenas, so the middle stays open):
   //   • braziers flank each real doorway (where a corridor enters), one step inside;
@@ -502,7 +555,10 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
       const theme = r === level.entrance ? null : PLAN_THEME[r.shape === 'cave' && r.kit === 'cellar' ? 'cave' : r.kit] || null;
       r.theme = theme;
       const count = (k) => { let n = 0; for (const [x, y] of cells) if (world.props.get(K(x, y)) === k) n++; return n; };   // (cells: this room's floor)
-      dressPlanned(r, { putAt, pickEdge, place, L, Wd, along, count });
+      // (a room with deep water: its edge's picks never on the channel, a chest or a shrine stood in the water; a room
+      // without keeps its picks exactly as they were)
+      const wet = r.dress.some((d) => WATERWAYS.has(d)), pick = wet ? (gap, ok = null) => pickEdge(gap, (x, y) => !/^(channel|lockgate|sluice)$/.test(world.props.get(K(x, y)) || '') && (!ok || ok(x, y))) : pickEdge;
+      dressPlanned(r, { putAt, pickEdge: pick, place, L, Wd, along, count, near: (x, y) => nearDoor(x, y, 6.5), bridge: (x, y) => world.bridges.add(K(x, y)) });
     } else if (r === level.descentRoom) {
       const k = Math.min(r.rw, r.rh) * 0.45; for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) putAt(a * k, b * k, 'pillar');
     } else if (r !== level.entrance) {
@@ -616,16 +672,27 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   if ((KIT && KIT.pools) || level.plan) {
     const wrng = mulberry32(streamSeed(seed, 325));
     for (const r of level.rooms) {
-      if (level.plan ? !(r.dress && r.dress.includes('pools')) : r === level.entrance || r === level.descentRoom) continue;   // (authored: where the plan floods)
+      if (level.plan ? !(r.dress && (r.dress.includes('pools') || r.dress.includes('sickpools'))) : r === level.entrance || r === level.descentRoom) continue;   // (authored: where the plan floods)
+      // (`sickpools`, Vat Seven's: the same draws, each pool twice the size, so they read at a glance: docs/water-indoors.md)
+      const big = level.plan && r.dress.includes('sickpools') ? 2 : 1;
       const n = level.plan ? 2 + ((wrng() * 2) | 0) : (wrng() * (KIT.pools + 1)) | 0;
       for (let i = 0; i < n; i++) {
-        const cx = r.cx + (wrng() - 0.5) * r.rw * 0.7, cy = r.cy + (wrng() - 0.5) * r.rh * 0.7, rad = 1.6 + wrng() * 1.8, ph = wrng() * 6.28;
+        const cx = r.cx + (wrng() - 0.5) * r.rw * 0.7, cy = r.cy + (wrng() - 0.5) * r.rh * 0.7, rad = (1.6 + wrng() * 1.8) * big, ph = wrng() * 6.28;
         for (let y = Math.floor(cy - rad - 1); y <= Math.ceil(cy + rad + 1); y++) for (let x = Math.floor(cx - rad - 1); x <= Math.ceil(cx + rad + 1); x++) {
           const c = level.cells.get(K(x, y)); if (!c || c.kind !== 'floor' || c.corridor || c.room !== r.id || (level.plan && world.props.has(K(x, y)))) continue;   // (never under a piece: the water had drowned the Crossing's shaft of daylight)
           const a = atan2(y - cy, x - cx), rr = rad * (1 + 0.25 * sin(a * 3 + ph));
           if (hypot(x - cx, y - cy) < rr) world.pools.add(K(x, y));
         }
       }
+    }
+  }
+  // `flood` (docs/water-indoors.md): an authored room's whole floor under shin-deep water, walked in as any pool is. No
+  // draws, so the pools above stand where they did; never a channel's tiles or a bridge, nor the rock at a wall's foot
+  if (level.plan) for (const r of level.rooms) {
+    if (!(r.dress && r.dress.includes('flood'))) continue;
+    for (const [k, c] of level.cells) {
+      if (c.kind !== 'floor' || c.room !== r.id || world.bridges.has(k) || /^(channel|lockgate|sluice)$/.test(world.props.get(k) || '')) continue;
+      const i = k.indexOf(','); if (!resourceAt(world, +k.slice(0, i), +k.slice(i + 1))) world.pools.add(k);
     }
   }
   // Every floor's way back up, one floor at a time: a stone stair built against the entrance
@@ -1060,7 +1127,7 @@ export function materialAt(world, x, y) {
 export function resourceAt(world, x, y) {
   if (world.kind !== 'dungeon') return null;
   const k = K(x, y);
-  if (world.mods.has(k) || world.props.has(k)) return null;
+  if (world.mods.has(k) || world.props.has(k) || world.bridges?.has(k)) return null;   // (no shards on a plank bridge: docs/water-indoors.md)
   const c = cellAt(world, x, y);
   if (!c || c.kind !== 'floor' || c.corridor) return null;
   const m = materialAt(world, x, y);
