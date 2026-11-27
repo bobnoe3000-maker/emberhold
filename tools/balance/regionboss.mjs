@@ -2,7 +2,7 @@
 // right party (fighter, rogue, cleric) walks into the old stones in the Fens in a window and fights it to its end, with as many AI
 // companies as the window draws (1–4 offline: picked windows give 2–5 parties). Prints, per run and in sum: won or lost,
 // how long (the targets: 5–7 minutes at any head count), how often each of the party went down, the hero's tier and pay.
-//   node tools/balance/regionboss.mjs [--boss kingstone|furnace_nine|first_pilgrim] [--parties 2,3,4,5] [--lv 18] [--seeds 3] [--pilot | --blind] [--src dir]
+//   node tools/balance/regionboss.mjs [--boss kingstone|furnace_nine|first_pilgrim|the_grace] [--parties 2,3,4,5] [--lv 18] [--seeds 3] [--pilot | --blind] [--src dir]
 // --boss furnace_nine: Furnace Nine at the Vault's mouth in the Reach instead (v1.126; its lamp broken first, its level 30);
 // --feeds 0.03: what it takes back for each of the fallen (0: none)
 // --pilot: the hero is moved out of a tell as a player would (a 0.5 s look, then away to the nearest open ground);
@@ -28,13 +28,14 @@ const want = ['fighter', 'rogue', 'cleric'];
 
 /** a window whose draw brings `n` AI companies @param {number} seed @param {number} n */
 function windowFor(seed, n) {
-  for (let d = 1; d < 29; d++) for (let h = 0; h < 24; h++) { const id = `2026-11-${String(d).padStart(2, '0')}T${String(h).padStart(2, '0')}${RING.offset ? ':30' + (RING.tag || '') : ''}`; if (windowDraw(seed, id).n === n) return id; }
+  for (let d = 1; d < 29; d++) for (let h = 0; h < 24; h++) { const id = `2026-11-${String(d).padStart(2, '0')}T${String(h).padStart(2, '0')}${RING.offset || RING.tag ? ':' + String(Math.round(RING.offset / 60)).padStart(2, '0') + (RING.tag || '') : ''}`; if (windowDraw(seed, id).n === n) return id; }
   return null;
 }
 function run(seed, parties) {
   const t = createSim(seed, undefined, { scene: 'town' }); for (const i of [0, 2]) { t.state.counters.gold = 1e9; t.commands.push({ type: 'hire', idx: i }); t.tick(); }
   const sim = createSim(seed, undefined, { scene: 'overland', region: RING.region });
   if (RING.lamp) sim.state.lampsBroken = [...(sim.state.lampsBroken || []), RING.lamp];   // (Furnace Nine burns only once it's been broken)
+  if (RING.after) sim.state.quests[RING.after] = { st: 3, step: 0, n: [] };   // (v1.157: the Grace comes in once Low Water is done)
   sim.state.created = true; sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, fighter24: 1, rogue24: 1, mage24: 1, cleric24: 1 };
   sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m })));
   sim.state.party.forEach((m, i) => { m.cls = want[i]; m.level = LV; m.xp = 0; m.attrs = null; attrs.autoAllocate(m); m.gear = items.starterKit(m); m.fallen = false; m.down = false; m.weakUntil = 0; m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp; for (const p of m.perks || []) void p; if (i) { m.perks = []; m.hidden = null; } });

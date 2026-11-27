@@ -397,6 +397,9 @@ export const BOSSES = {
   // Furnace Nine (v1.126, ring.js FURNACE): the Reach's region boss, the furnace-lamp relit and walking, slag in its belly; its
   // tells are the Kingstone's shapes, and it feeds on the fallen (battle.js ringTick)
   furnace_nine: { name: 'Furnace Nine', like: 'golem', hp: 115, atk: 1.6, def: 1.5, speed: 1.1, xp: 0, gold: 0, mech: 'ring', escort: [], range: 5.5, body: 2.4, event: true },
+  // (v1.157) the Grace's master (ring.js GRACE): the Tidemark's region boss, a man's size among the companies, his ship's
+  // broadside and her boarders the rest of it (ringTick)
+  the_grace: { name: 'The Grace', like: 'bosun', hp: 210, atk: 2.0, def: 1.3, speed: 1.0, xp: 0, gold: 0, mech: 'ring', escort: [], range: 3.6, body: 1.1, event: true },
   first_pilgrim: { name: 'The First Pilgrim', like: 'golem', hp: 280, atk: 3.9, def: 1.5, speed: 1.1, xp: 0, gold: 0, mech: 'ring', escort: [], range: 5.5, body: 2.4, event: true },   // (v1.147: the Heights' region boss, ring.js PILGRIM; v1.150 hp 115 → 215, atk 1.6 → 3.0: ×1.87, party.js liftOf(75), what the heroes gained at his level)
   // (v1.126, the build sheet: docs/reach-plan.md) the Reach's other four
   weighmaster: { name: 'The Weighmaster', like: 'brute', hp: 21, atk: 2.2, def: 1.7, speed: 2.8, xp: 13, gold: 32, mech: 'scales', escort: ['assay_guard', 'assay_xbow'], heirloom: 'short_weight' },
@@ -972,7 +975,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       ring: { cfg: RG, cx, cy, R: opts.camp ? opts.camp.arena : Math.min(g.x1 - g.x0 + 1, g.y1 - g.y0 + 1) / 2, t: 0, secs: Math.max(60, opts.secs || RG.window), boss: 0, base: 0,
         coming: opts.companies.slice(0, RG.maxParties - 1).map((c, i) => ({ at: RG.arrive[i], id: c.id, members: c.members, in: false })),
         companies: [], all: [...state.party], part: new Map(), parties: 1, over: null, rest: 0, tellN: 0,
-        stampT: 4, sweepT: 7, stonesT: 16, slamT: 2.5, gazeT: RG.gaze ? RG.gaze.first : 1e9, markT: 0, mark: null, stonesAt: [...RG.stones.at], cracked: false } };
+        stampT: 4, sweepT: 7, stonesT: 16, slamT: 2.5, gazeT: RG.gaze ? RG.gaze.first : 1e9, broadT: RG.broadside ? RG.broadside.first : 1e9, boardT: RG.boarders ? RG.boarders.first : 1e9, markT: 0, mark: null, stonesAt: [...RG.stones.at], cracked: false } };
     w.enemies = []; w.projectiles = []; w.allies = [];
     rng = mulberry32(streamSeed(seed ^ Math.imul((opts.salt || 0) + 1, 0x9e3779b1), 0x41b6));   // (the Ring's own draws: its window's salt)
     const R = battle.ring, k = foe(w, RG.kind, RG.level, cx, cy, premiumOf(RG.level), false, FAMILIES[RG.family], BOSSES[RG.id]);
@@ -1066,7 +1069,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   function ringTells(w, k, dt) {
     const R = battle.ring, T = state.t, live = R.all.filter(alive);
     if (!R.cracked && k.hp < k.maxHp * RC().cracked) { R.cracked = true; bus.emit('ring', { t: 'cracked' }); }
-    const push = (t) => { t.id = ++R.tellN; t.from = T; battle.tells.push(t); bus.emit('tell', { id: t.id, kind: t.kind, x: t.x, y: t.y, r: t.r, dir: t.dir ?? null, arc: t.arc ?? null, lane: t.lane ?? null, wind: t.at - T }); };
+    const push = (t) => { t.id = ++R.tellN; t.from = T; battle.tells.push(t); bus.emit('tell', { id: t.id, kind: t.kind, x: t.x, y: t.y, r: t.r, dir: t.dir ?? null, arc: t.arc ?? null, lane: t.lane ?? null, wind: t.at - T, ...(t.sea ? { sea: true } : {}) }); };   // (sea: the Grace's broadside, from the ship, v1.157)
     // (one wind-up at a time: it faces the tell it winds and stands still for it, kingTurn; the swing lands with it)
     const wind = (t, x, y) => { push(t); k.act = t.at - T; k.windDir = atan2(y - k.y, x - k.x); t.swing = t.kind === 'sweep' ? 'b' : t.kind === 'gaze' ? 'cast' : 'heavy'; if (t.kind !== 'slam') k.hold = t.at - T; };   // (it plants its feet for a stamp or a sweep; a slam it throws on the move)
     if (!live.length) return;
@@ -1100,6 +1103,35 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         if (i === 0) wind(t, a.x, a.y); else push(t);
       });
       bus.emit('ring', { t: 'gaze', n: far.length });
+    }
+    // (v1.157) the Grace's broadside (ring.js GRACE): lanes of shot across the beach from the ship lying off, each from the
+    // sea past the arena's edge toward one of the companies, told as the rest are (the ship fires: he doesn't stop for it)
+    const BS = RC().broadside;
+    if (BS && (R.broadT -= dt) <= 0) {
+      R.broadT = R.cracked ? BS.crackedEvery : BS.every;
+      const fl = hypot(BS.from[0], BS.from[1]) || 1, ox = R.cx + (BS.from[0] / fl) * (R.R + 4), oy = R.cy + (BS.from[1] / fl) * (R.R + 4);
+      const aim = live.slice(); for (let i = aim.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [aim[i], aim[j]] = [aim[j], aim[i]]; }
+      const shots = aim.slice(0, BS.n).map((m) => posOf(m));
+      for (const a of shots) push({ kind: 'gaze', sea: true, x: ox, y: oy, r: BS.len, dir: atan2(a.y - oy, a.x - ox), lane: BS.lane, at: T + BS.wind, hurt: BS.hurt });
+      bus.emit('ring', { t: 'broadside', n: shots.length });
+    }
+    // her boarders: a boat's worth of her crew up out of the surf at the arena's seaward edge, never more than `max` up
+    const BD = RC().boarders;
+    if (BD && (R.boardT -= dt) <= 0) {
+      R.boardT = R.cracked ? BD.crackedEvery : BD.every;
+      const up = (w.enemies || []).filter((o) => o.boarder && o.hp > 0 && !o.dead).length, n = Math.max(0, Math.min(BD.n, BD.max - up));
+      const from = (BS && BS.from) || [0, 1], fl = hypot(from[0], from[1]) || 1, fx = from[0] / fl, fy = from[1] / fl;   // (up from the sea's side)
+      let came = 0;
+      for (let i = 0; i < n; i++) {
+        // (up out of the surf: in from the sea along `from` to the first dry ground, the waterline, a step to either side)
+        const side = (rng() - 0.5) * 8;
+        for (let d = R.R; d >= 2; d -= 1) {
+          const x = R.cx + fx * d - fy * side, y = R.cy + fy * d + fx * side;
+          if (!isWalkable(w, x, y)) continue;
+          const b = foe(w, BD.kind, RC().level, x, y, premiumOf(RC().level), false, FAMILIES[RC().family]); b.boarder = true; b.xp = 0; b.gold = 0; came++; break;   // (the window pays by tier: ring.js payOf)
+        }
+      }
+      if (came) bus.emit('ring', { t: 'boarders', n: came });
     }
     const share = k.hp / k.maxHp, due = R.stonesAt.length && share <= R.stonesAt[0];
     if ((R.stonesT -= dt) <= 0 || due) {

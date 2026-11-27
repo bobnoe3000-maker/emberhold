@@ -450,6 +450,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const ringBoss = () => (ringNow ? ringForId(ringNow.id) : RING);
   function ringHeld(c) {
     const G = ringBoss(); if (!ringLive() || c.id !== G.camp || curScene !== 'overland' || curRegion !== G.region || paidFor(state, ringNow.id) || ringOn) return false;
+    if (G.after && quests.status(G.after) !== QS.DONE) return false;   // (v1.157: the Grace comes in once Low Water is done)
     return !G.lamp || (state.lampsBroken || []).includes(G.lamp);   // (Furnace Nine burns again only once it's been broken: the Stoker's lamp)
   }
   /** walked into its reach: the fight, if the company may (else said once a window) @param {any} c @param {number} i */

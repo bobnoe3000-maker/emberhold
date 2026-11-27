@@ -289,6 +289,35 @@ export const QUESTS = {
       { id: 'letters', objectives: [{ type: 'meet', npc: 'lucan', site: 'highmarch', count: 1 }] }],
     rewards: { share: 0.6, lv: 45, gold: 1000 },
   },
+  // (v1.156, docs/tidemark-plan.md step 7) Tollhaven's side work. Mistress Fane, the harbour mage, keeps the ward on the
+  // harbour chain: the drowned bosuns' whistles off the Mole foul it, and the Gull Fleet's signal powder would call the
+  // drowned. Josse Wether, the Quay Chapel's sexton, keeps the book of names Sister Maren reads out: Maren's own chain,
+  // The Names, his to give and take in (v1.155: no companion gives a quest), the last paying The Name Bell
+  fane_the_chain_ward: {
+    kind: 'errand', giver: 'fane', region: 'tidemark', level: [33, 60], after: ['ch4_low_water'],
+    steps: [{ id: 'mole', objectives: [{ type: 'elites', site: 'drowned_mole', count: 3 }] }],
+    rewards: { share: 0.35, lv: 34, gold: 500 },
+  },
+  fane_signal_powder: {
+    kind: 'errand', giver: 'fane', region: 'tidemark', level: [37, 60], after: ['fane_the_chain_ward'],
+    steps: [{ id: 'isles', objectives: [{ type: 'loot', site: 'gull_isles', count: 2 }] }],
+    rewards: { share: 0.3, lv: 37, gold: 560 },
+  },
+  maren_the_harbour_roll: {
+    kind: 'errand', giver: 'josse_wether', region: 'tidemark', level: [33, 60], after: ['ch4_low_water'],
+    steps: [{ id: 'office', objectives: [{ type: 'loot', site: 'drowned_mole', count: 2 }] }],   // (a chest quest names no floor: the harbour office's on the second are likeliest)
+    rewards: { share: 0.35, lv: 35, gold: 520 },
+  },
+  maren_the_prize_crews: {
+    kind: 'errand', giver: 'josse_wether', region: 'tidemark', level: [37, 60], after: ['maren_the_harbour_roll'],
+    steps: [{ id: 'hulks', objectives: [{ type: 'waves', site: 'gull_isles', count: 6, floor: 2 }] }],
+    rewards: { share: 0.4, lv: 40, gold: 600 },
+  },
+  maren_said_aloud: {
+    kind: 'errand', giver: 'josse_wether', region: 'tidemark', level: [42, 60], after: ['maren_the_prize_crews'],
+    steps: [{ id: 'palace', objectives: [{ type: 'waves', site: 'highmarch', count: 5, floor: 2 }] }],
+    rewards: { share: 0.45, lv: 45, gold: 700, item: 'the_name_bell' },
+  },
   // Tamsin's chain, Showing Off (world doc v1.54 §5): the Assay's stamps off the Yards' guard-captains, the imperial
   // patterns in the Forgehall's pattern store, the Cult's spare moulds cracked on the Magma Vault's floor
   tamsin_the_stamp: {

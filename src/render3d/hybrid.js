@@ -23,6 +23,8 @@
 // behind Emberlit's black; the sim holds still meanwhile (renderer.transiting), as it does for a bake.
 // Presentation only: reads the sim, writes nothing to it.
 import { convertWorld, GROUND_Y, SIM_FLOOR, ARENA_HOUR } from './convert.js';
+import { RINGS, paidFor } from '../sim/ring.js';
+import { QS } from '../sim/quests.js';
 import { lookOf } from './looks.js';
 import { HW, HH, ZH, project } from '../render/iso.js';
 import { DAY_S } from '../sim/heroes.js';
@@ -43,10 +45,6 @@ import { PITCH_R } from '../sim/battle.js';
 // (dusk is Luminati's golden hour and sunset: Emberlit's dusk is a warm low sun, the game's old fixed look; held across
 // Luminati's purple dusk it sat darker than its own night)
 const PART_HOURS = [5, 7.5, 17, 19.6, 29];
-// ?dlook=b|c|bc: a spike of the dungeons' look, for the owner to compare (docs/dungeon-look-spike.md): b the floors and walls
-// in painted high-res textures (world.js, tools/render3d/hires.js), c rubble at the walls' feet and a cooler, darker fill
-// (convert.js). Off by default; nothing ships on it until chosen.
-const DLOOK = (() => { try { const v = new URLSearchParams(location.search).get('dlook') || ''; return /^(b|c|bc)$/.test(v) ? v : ''; } catch { return ''; } })();
 /** the hour on Luminati's 24-hour clock for t seconds of play @param {number} t */
 export function hourOf(t) {
   const s = ((t % DAY_S) + DAY_S) % DAY_S, p = Math.floor(s / PART_S), u = (s - p * PART_S) / PART_S;
@@ -112,11 +110,30 @@ function tellsOf(sim, origin) {
         p: Math.max(0, Math.min(1, (at - t.from) / Math.max(0.05, t.at - t.from))), hit: end !== undefined ? Math.max(0, 1 - (T - end) / 0.7) : 0, age: T - t.from };
     }
     return { kind: t.kind, x: (t.x - origin.x) / 2, z: (t.y - origin.y) / 2, r: t.r / 2, dx: t.dir == null ? 1 : Math.cos(t.dir), dz: t.dir == null ? 0 : Math.sin(t.dir),
-      p: Math.max(0, Math.min(1, (T - t.from) / Math.max(0.05, t.at - t.from))), hit: t.done ? Math.max(0, 1 - (T - t.at) / 0.6) : 0, w: t.lane ? t.lane / 2 : 0 };   // (w: a lane's width, the First Pilgrim's gaze, v1.147)
+      p: Math.max(0, Math.min(1, (T - t.from) / Math.max(0.05, t.at - t.from))), hit: t.done ? Math.max(0, 1 - (T - t.at) / 0.6) : 0, w: t.lane ? t.lane / 2 : 0,   // (w: a lane's width, the First Pilgrim's gaze, v1.147)
+      // (v1.157) the Grace's broadside, a gaze from the sea: its own look in world.js (sea), keyed for its shot, and how long
+      // since it landed (land: the cannonade and the shot skipping up the lane)
+      ...(t.sea ? { sea: 1, key: `bs:${t.at}:${t.dir}`, land: t.done ? T - t.at : null } : {}) };
   });
+}
+/** the region boss whose window is open here (or whose fight is on), for its set piece (the Grace's ship off the beach):
+ *  the renderer's window clock (ui/ring.js, the device's clock), the window not yet paid for @param {any} renderer @param {any} sim */
+function ringOn(renderer, sim) {
+  const w = sim.world; if (!w || w.kind !== 'overland') return null;
+  const live = sim.battle && sim.battle.ring && sim.battle.ring.cfg; if (live && live.region === w.region) return live.id;
+  const clock = renderer && renderer.ringClock; if (!clock) return null;
+  for (const G of Object.values(RINGS)) {
+    if (G.region !== w.region) continue;
+    if (/** @type {any} */ (G).after && sim.quests && sim.quests.status(/** @type {any} */ (G).after) !== QS.DONE) continue;   // (the Grace comes in once Low Water is done, as the sim has it: core.js ringHeld)
+    const c = clock((q) => q === G);
+    if (c && c.open && !paidFor(sim.state, c.id)) return G.id;
+  }
+  return null;
 }
 /** when a song's tell ended (the sim's clock), by its tell: presentation's own, never on the sim's object */
 const songEnd = new WeakMap();
+/** the Grace's boarders already seen (each bursts out of the surf once) and the bursts for this frame: presentation's own */
+const boarded = new WeakSet(), surfs = /** @type {{ kind: string, x: number, z: number }[]} */ ([]);
 // (v1.154) the engineers' pots of pitch in flight (battle.js bolt 'pitch'): each one's own id for Luminati's look (world.js
 // placeSpells 'pitch_fly': an arcing pot, its flame and smoke), matched to the bolt Emberlit stood for it (`bits`), which
 // isn't drawn: a pot is its own look
@@ -227,6 +244,8 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   const AHEAD_S = 1.5;
   let aheadFor = null, builtAt = 0;
   let api = null, built = null, building = null, last = 0, origin = { x: 0, y: 0 }, lastC = null, ours = [], kept = [], oursState = '', oursCheck = 0, houses = [], ambient = null;
+  // (the boatmen stood in the Tidemark's waiting boats: convert.js BOATS, decor, never the sim's; the world they were made for)
+  let decor = /** @type {{ name: string, x: number, z: number, air: number, row: number }[]} */ ([]), decorFor = null;
   const state = { level: null, sprites: 0, loads: 0, failed: '', timing: { convert: 0, sprites: 0, load: 0 } };
   sim.bus.on('gateOpened', (e) => { gateDropAt.set(e.id, last || performance.now()); });
   // (v1.154, Highmarch) the walls' and the palace's moments in the fights' light (skillfx.js, the boss pass's pattern: a
@@ -261,10 +280,11 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       if (building !== w) {                                   // a new world: convert it and build it behind black
         building = w;
         const t0 = performance.now();
-        const r = convertWorld(w, { region: w.region || region, stairs: new URLSearchParams(location.search).get('stairs') || '', walls: new URLSearchParams(location.search).get('walls') || '', dlook: DLOOK });   // (?stairs=plain: the stairs before their arches, docs/dungeon-stairs-proposal.md)
+        const r = convertWorld(w, { region: w.region || region, stairs: new URLSearchParams(location.search).get('stairs') || '', walls: new URLSearchParams(location.search).get('walls') || '' });   // (?stairs=plain: the stairs before their arches, docs/dungeon-stairs-proposal.md)
         const t1 = performance.now(); state.timing = { convert: Math.round(t1 - t0), load: 0, sprites: 0 };
         origin = r.origin; state.level = `${r.level.width}×${r.level.depth}`; state.sprites = r.sprites.length; state.loads++;
         ours = r.sprites.filter((q) => q.prop); kept = r.sprites.filter((q) => !q.prop); oursState = propState(w, ours); ambient = r.ambient || null;
+        decor = r.figures || []; decorFor = w;
         houses = r.level.objects.filter((o) => o.type === 'house' && o.name).map((o) => ({ o, sv: (w.services || []).find((v) => v.name === o.name) })).filter((q) => q.sv);
         const sprites = r.sprites.map((q) => (q.prop ? propSprite(w, q) : q)).filter(Boolean), t2 = performance.now();
         state.timing.sprites = Math.round(t2 - t1);
@@ -281,7 +301,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         const to = w.kind === 'town' ? 'overland' : w.kind === 'overland' ? 'town' : '';
         if (to && w.region && api.prepare) {
           try {
-            const r = convertWorld(createOutdoor(w.seed, to, w.region), { region: w.region, stairs: new URLSearchParams(location.search).get('stairs') || '', walls: new URLSearchParams(location.search).get('walls') || '', dlook: DLOOK });
+            const r = convertWorld(createOutdoor(w.seed, to, w.region), { region: w.region, stairs: new URLSearchParams(location.search).get('stairs') || '', walls: new URLSearchParams(location.search).get('walls') || '' });
             api.prepare(r.level, w.region);
           } catch (err) { console.warn('[luminati] the level next door:', err); }
         }
@@ -325,6 +345,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         const fade = d.look ? Math.max(d.look.fade || 0, d.look.dissolve || 0, d.look.ghost ? 0.55 : 0) : 0;
         const X = (x - origin.x) / 2, Z = (y - origin.y) / 2;
         const lk = d.u ? lookOf(d.u) : null;                   // (GDD v1.65: a member's own face and build)
+        if (d.u && d.u.boarder && !boarded.has(d.u)) { boarded.add(d.u); surfs.push({ kind: 'surf', x: X, z: Z }); }   // (v1.157: the Grace's boarders up out of the surf)
         actors.push({ name: d.atl.name, cw: d.atl.meta.cw * (d.big || 1), col: d.a.frame, row: d.a.dir, x: X, z: Z, fade, flash: (d.look && d.look.flash) || 0, warn: (d.look && d.look.warn) || 0, key: keyOf(d.u || d.who), look: lk && lk.a, lk: lk ? lk.k : '', ...(d.u && d.foe && CAGE_KINDS.has(d.u.kind) && !d.u.elite ? { empty: true } : {}), ...(d.mv ? { air: (d.air || 0) / 2, mv: d.mv } : {}) });   // (cw: as drawn, a boss 1.3×; key: the same figure each frame, its model's)
         // a named person met in a dungeon (Wren in the Toadking's Mound…): a gold ring at their feet, fight or no fight
         if (d.guide) rings.push({ x: X, z: Z, col: GUIDE_RGB, a: 0.9 });
@@ -334,6 +355,8 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
           if (d.uid && d.uid === sim.focusId) mark = { x: X, z: Z };   // the foe a tap set the party on (battle.js focus)
         }
       }
+      // the boatmen, idling in their boats (an NPC's idle: eight frames from the atlas's first column, at its 7 a second)
+      if (decorFor === built && decor.length) { const fr = Math.floor(now / 143) % 8; decor.forEach((f, i) => actors.push({ name: f.name, col: fr, row: f.row, x: f.x, z: f.z, air: f.air, fade: 0, flash: 0, warn: 0, key: `decor:${i}:${f.name}` })); }
       // the ground a fight churns (battle.js hazards: the Toadking's mud, the Vatwarden's sluice), welling up and sinking away
       const hazards = [];
       for (const hz of (c.battle && c.battle.hazards) || []) {
@@ -361,9 +384,10 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         // the Kingstone's tells (battle.js ringTells: battle.tells), each its share wound (p) and, landed, its flash fading
         // (hit), at the size it hits (a sim tile is half a unit: no ×√2, what's drawn is what's hit)
         tells: tellsOf(sim, origin),
+        ringOn: ringOn(renderer, sim),   // (a region boss whose window is open in this land: its set piece stands, world.js)
         // (the Reach's bosses, renderer.js puffs: a burst of Luminati's particles each, once: Oruth's hammer's sparks, a
         // wight re-armed, a spoiled piece's smoke, a vent's slag)
-        puffs: c.puffs && c.puffs.length ? c.puffs.map((q) => ({ kind: q.kind, x: (q.x - origin.x) / 2, z: (q.y - origin.y) / 2 })) : null,
+        puffs: (c.puffs && c.puffs.length) || surfs.length ? (c.puffs || []).map((q) => ({ kind: q.kind, x: (q.x - origin.x) / 2, z: (q.y - origin.y) / 2 })).concat(surfs.splice(0)) : null,
         blast: c.blast ? { x: (c.blast.x - origin.x) / 2, z: (c.blast.y - origin.y) / 2, k: c.blast.k } : null,   // (a fire landing's light: renderer.js blasts)
         bright: sim.world.kind === 'dungeon' || arena ? 1 : brightAt(reachBright(sim.world.region || 'vale', sim.state.scene, brightFor(sim.world.region || 'vale', sim.state.scene, dial)), c.t ?? sim.state.t),   // (bright.js: the shipped look × the player's dial)
         draw: globalThis.__lumDraw !== false,                   // (dev, tools/capture/rig.mjs: frames stepped and not drawn while a shot settles)
@@ -385,7 +409,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   const mod = await import(ver && ver.v ? `${at.href}?v=${ver.v}` : vendor);
   api = mod.createWorld({ container: box, uiRoot: ui, assets: new URL('../../assets/', import.meta.url).href });
   api.settings({ dof: readGraphics().dof, res: readGraphics().res, quality: readGraphics().quality, figures: new URLSearchParams(location.search).get('figures') === 'sprites' ? 'sprites' : 'models',
-    dlook: DLOOK, landmarks: ['doors', 'all', 'sprites'].includes(new URLSearchParams(location.search).get('landmarks')) ? new URLSearchParams(location.search).get('landmarks') : 'chosen' });   // (?landmarks=doors|all|sprites: which of our kit's pieces stand in 3D, docs/vale-landmarks-proposal.md §8)   // (?figures=sprites: the atlases, as before the models: docs/dungeon-kit-proposal.md §9)
+    landmarks: ['doors', 'all', 'sprites'].includes(new URLSearchParams(location.search).get('landmarks')) ? new URLSearchParams(location.search).get('landmarks') : 'chosen' });   // (?landmarks=doors|all|sprites: which of our kit's pieces stand in 3D, docs/vale-landmarks-proposal.md §8)   // (?figures=sprites: the atlases, as before the models: docs/dungeon-kit-proposal.md §9)
   let dial = readGraphics().bright;                              // (the menu's Brightness tray: a percentage a part, ui/brightness.js)
   return {
     box, state,

@@ -73,7 +73,10 @@ const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', ro
   // legionaries (the knight in oxblood and bronze, a crested helm, a tower shield carried in front: new silhouette 1), its
   // siege engineers (the barbarian in a leather apron, a lit pot of pitch), the Seventh's Champion (gilt harness, a crest
   // worn side to side, the Laurel round his helm) and Lucan Varro (light plate under a black long coat, a gilt circlet)
-  legionary: 'enemy_legionary', engineer: 'enemy_engineer', champion: 'boss_champion', lucan: 'boss_lucan' };   // (v1.53) the Cold Seam's: a slag hauler, the hod on his back; Gritch, a goblin in a dead foreman's lamp-hat   // (v1.105) the Kingstone: the golem drawn twice its size (BIG), four times a man
+  legionary: 'enemy_legionary', engineer: 'enemy_engineer', champion: 'boss_champion', lucan: 'boss_lucan',
+  // (v1.157, the Tidemark's region boss: tools/actor-lab variant TB5) the Grace's master, her drowned captain, a man's size
+  // as the Tidemark's bosses are baked (73 px), not the Kingstone's giant's
+  the_grace: 'boss_grace' };   // (v1.53) the Cold Seam's: a slag hauler, the hod on his back; Gritch, a goblin in a dead foreman's lamp-hat   // (v1.105) the Kingstone: the golem drawn twice its size (BIG), four times a man
 // the Mere Tower's wardens (sim tower.js): baked tall as the bosses are (tools/actor-lab variants W1–W10), named on the boss bar
 for (const id of Object.keys(WARDENS)) ENEMY_ACTOR[id] = 'boss_' + id.slice('warden_'.length);
 const BIG = /** @type {Record<string, number>} */ ({ kingstone: 2, furnace_nine: 1.54, first_pilgrim: 1.5 });   // (v1.147 the First Pilgrim: baked 2.7 men, drawn four)   // (Furnace Nine: baked tall as a boss, 2.6 men, drawn to the Kingstone's four)   // a kind drawn larger than its actor's model (hybrid.js: the figure's scale)
@@ -1480,6 +1483,8 @@ export function createRenderer(canvas, sim, input) {
     render, resize,
     /** (main.js) the Kingstone's hour, from ui/ring.js: the minimap lights the old stones while it stands */
     set ringClock(f) { ringClock = f; },
+    /** (hybrid.js) the same clock, for Luminati's set pieces that stand only in a window (the Grace off the beach) */
+    get ringClock() { return ringClock; },
     /** (for checks and tools/capture/feel.mjs) the camera's jolt now (native px) and the foes glowing as they wind up */
     get feel() { return { jx: lastCam ? lastCam.rx : 0, jy: lastCam ? lastCam.ry : 0, shaking: !!shake, glow: windGlow.size }; },
     /** the hit-stop asked for since the last call, ms (main.js holds the world) */

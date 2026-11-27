@@ -1,0 +1,41 @@
+{
+  "id": "maren_the_harbour_roll",
+  "kind": "errand",
+  "title": "The Harbour Roll",
+  "giver": "josse_wether",
+  "region": "tidemark",
+  "level": [
+    33,
+    60
+  ],
+  "after": [
+    "ch4_low_water"
+  ],
+  "summary": "Sister Maren says the drowned's names at the Quay Chapel, but many of the Mole's drowned she can only name by what they did aboard. Josse Wether, the sexton, wants the old harbour office's roll of who drowned, for his book.",
+  "steps": [
+    {
+      "id": "office",
+      "journal": "Open two chests anywhere in the Drowned Mole, on any floor. The harbour office, on the second floor's moles, is where the roll most likely lies.",
+      "objectives": [
+        {
+          "type": "loot",
+          "site": "drowned_mole",
+          "count": 2,
+          "label": "Chests opened in the Drowned Mole"
+        }
+      ]
+    }
+  ],
+  "ready": "The old harbour's roll of the drowned. Take it to Josse Wether at the Quay Chapel in Tollhaven.",
+  "done": "Josse copied the harbour roll into his book, four hundred names and some, spelled right. Maren read them all that night.",
+  "rewards": {
+    "share": 0.35,
+    "lv": 35,
+    "gold": 520
+  },
+  "dialogue": {
+    "file": "josse",
+    "offer": "josse_roll_offer",
+    "turnin": "josse_roll_turnin"
+  }
+}

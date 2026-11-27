@@ -154,5 +154,5 @@ test('the Drowned Abbey: two authored floors of five spaces (v1.102), 16–18; e
   assert.equal(SITES.drowned_abbey.floors, 2); assert.ok(SITES.drowned_abbey.plan); assert.deepEqual(SITES.drowned_abbey.rooms, [5, 5]);
   assert.deepEqual(Object.fromEntries(SITE_IDS.filter((id) => !SITES[id].parked).map((id) => [id, levelBand(id)])), {
     barrows: '1–3', wickham_keep: '4–6', sunken_chapel: '7–9', proving_pens: '4', ninth_milestone: '9',
-    toadking_mound: '10–12', canal_locks: '13–15', drowned_abbey: '16–18', mere_tower: '12', reedholm_undercroft: '18', cold_seam: '19–22', assay_yards: '23–26', cinderworks: '27–30', drowned_mole: '31–35', gull_isles: '36–40', highmarch: '41–45', lamp_fort: '38', ninth_vault: '30', shuttered_inn: '23', haddow_crypt: '6' });
+    toadking_mound: '10–12', canal_locks: '13–15', drowned_abbey: '16–18', mere_tower: '12', reedholm_undercroft: '18', cold_seam: '19–22', assay_yards: '23–26', cinderworks: '27–30', drowned_mole: '31–35', gull_isles: '36–40', highmarch: '41–45', lamp_fort: '38', sisters_cabin: '45', ninth_vault: '30', shuttered_inn: '23', haddow_crypt: '6' });
 });

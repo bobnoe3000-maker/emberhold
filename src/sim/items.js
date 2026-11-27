@@ -211,6 +211,8 @@ export const HEIRLOOMS = {
   the_laurel: { base: 'amulet', name: 'The Laurel', flav: 'Gilt, for the day in the capital. He polished it every night.', aff: ['def', 'hp', 'atk'] },   // (the Seventh's Champion, v1.154)
   the_chapel_box: { base: 'charm', name: 'The Box from the Chapel', flav: 'Inside the lid, in her hand: never open it.', aff: ['mp', 'crit', 'mpr'] },   // (Lucan, v1.154)
   the_letter_of_marque: { base: 'charm', name: 'The Letter of Marque', flav: 'Signed Lucanus. Paid in advance.', aff: ['crit', 'atk', 'hp'] },   // (Admiral Hesk, v1.151)
+  the_graces_manifest: { base: 'amulet', name: "The Grace's Manifest", flav: 'Twenty children and a box. She crossed out the box.', aff: ['hp', 'def', 'hpr'] },   // (the Sister's Cabin, v1.156)
+  the_name_bell: { base: 'charm', name: 'The Name Bell', flav: "Rung once for every name. The rope's been replaced four times.", aff: ['mp', 'hpr', 'crit'] },   // (The Names, Josse Wether's, v1.156)
   // (v1.151, the owner: "Yes to the keepsake") a side vault's keepsake, left in its end room's chest by whoever sent you
   // there (sites.js `side`, `vault`): the Lamp Fort's from Old Gannet, the Haddow Crypt's from Sister Ilse, the Shuttered Inn's from Hob
   gannets_spare_wick: { base: 'charm', name: "Gannet's Spare Wick", flav: 'Trimmed, and never lit. He kept it for the night the lamp went out.', aff: ['hpr', 'mp', 'def'] },
@@ -225,6 +227,7 @@ export const HEIRLOOMS = {
   the_last_office: { base: 'amulet', name: 'The Last Office', flav: 'Said every night, by the dead, for the living.', aff: ['def', 'hp', 'hpr'] },
   // the Kingstone's (GDD §19 v1.105, world doc v1.50 §3.2): a Gold-tier chance in the Ring, once a hero
   kingstones_ember: { base: 'charm', name: "The Kingstone's Ember", flav: 'Still warm. It was warm when the Empire found it.', aff: ['hp', 'def', 'atk'] },
+  until_recalled: { base: 'amulet', name: 'Until Recalled', flav: 'Nobody did.', aff: ['def', 'hp', 'mpr'] },   // (the Grace, the Tidemark's region boss: world doc §10.2, v1.157)
   first_light: { base: 'ring', name: 'First Light', flav: 'It was beautiful. That was the trouble.', aff: ['crit', 'atk', 'mp'] },   // (the First Pilgrim, the Heights' region boss: world doc §10.2, v1.147)
   // the Fens set's vault, the Reedholm Undercroft (world doc v1.30 §7)
   the_fair_copy: { base: 'charm', name: 'The Fair Copy', flav: 'Every name, in a better hand than it was ever written in.', aff: ['mp', 'mpr', 'def'] },

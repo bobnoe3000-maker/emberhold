@@ -389,7 +389,8 @@ export const voxStandard = (rng, T = false) => standardVox(LEGION, rng, T);
 export const voxBanner = (rng, T = false) => standardVox(RED, rng, T);
 // A Company bell tent: round dirty canvas on a centre pole, as tall as a man, its door flap open toward the camera.
 // (An A-frame's voxel slope stair-stepped into stripes, a ladder; a cone shades as one surface, like the stalagmites.)
-// (the Reach's camps: canvas gone grey with ash, the hem and pole soot-black: `tent_reach`, render3d/convert.js)
+// (the Reach's camps: canvas gone grey with ash, the hem and pole soot-black: `tent_reach`, render3d/convert.js; the
+// Tidemark's, Highmarch's outriders' at their kennels, in the march's oxblood: `tent_tidemark`)
 export function voxTent(canvas = ELIT.sand, trim = ELIT.wood) {
   const S = 20, H = 34, { vox, put } = vgrid(S, S, H), c = (S - 1) / 2;
   for (let z = 0; z < 30; z++) {
@@ -858,7 +859,7 @@ export function buildProps(seed) {
     rack: [voxRack()],
     standard: [0, 1].map((v) => voxStandard(mulberry32((seed * 61 + v * 73 + 37) >>> 0))),
     banner: [0, 1].map((v) => voxBanner(mulberry32((seed * 67 + v * 79 + 41) >>> 0))),
-    tent: [voxTent()], tent_reach: [voxTent(ELIT.ash, ELIT.soot)],
+    tent: [voxTent()], tent_reach: [voxTent(ELIT.ash, ELIT.soot)], tent_tidemark: [voxTent(ELIT.oxblood, ELIT.wood)],
     carcass: [voxCarcass()], burrow: [voxBurrow()],   // (v1.63: the Spit's dead cow, the ditch burrow)
     bunk: [voxBunk()],
     scaffold: [voxScaffold()],

@@ -1221,5 +1221,40 @@
   "shape": "oblong",
   "frame": "strong",
   "expression": "neutral"
+ },
+ "fane": {
+  "skin": "olive",
+  "hair": "ponytail",
+  "hairColor": "auburn",
+  "tieColor": "#3e7a62",
+  "brows": "straight",
+  "eyes": "round",
+  "iris": "hazel",
+  "mouth": "smirk",
+  "nose": "long",
+  "marks": [
+   "freckles"
+  ],
+  "shape": "thin",
+  "frame": "soft",
+  "expression": "neutral"
+ },
+ "josse_wether": {
+  "skin": "fair",
+  "hair": "crop",
+  "hairColor": "grey",
+  "brows": "heavy",
+  "browColor": "grey",
+  "eyes": "tired",
+  "iris": "brown",
+  "mouth": "line",
+  "nose": "broad",
+  "beard": "mustache",
+  "beardColor": "grey",
+  "marks": [
+   "wrinkles"
+  ],
+  "shape": "round",
+  "expression": "neutral"
  }
 }

@@ -1,0 +1,10 @@
+{
+  "id": "frag_tide_the_ship",
+  "region": "tidemark",
+  "set": "tidemark",
+  "order": 5,
+  "title": "The Ship",
+  "text": "They have named the new flagship for me, Aurelle's Grace. I asked for a smaller ship and a plainer name, and was told an Empress does not ask. So I have stopped asking. The stern cabin is yours whenever she is on your coast.",
+  "note": "In a chest in the sea cave, among the Gull Fleet's charts. They had kept it for the seal.",
+  "where": "The Gull Isles, the sea cave"
+}

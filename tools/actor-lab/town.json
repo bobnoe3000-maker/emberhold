@@ -1517,6 +1517,83 @@
         0.88
       ],
       "nofoot": true
+    },
+    {
+      "id": "reach_furnace",
+      "model": "magmafurnace",
+      "build": "magmafurnace",
+      "style": "reach",
+      "seed": 61,
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.96,
+        0.92
+      ],
+      "nofoot": true
+    },
+    {
+      "id": "reach_furnacex",
+      "model": "magmafurnace",
+      "build": "magmafurnace",
+      "style": "reach",
+      "seed": 61,
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.96,
+        0.92
+      ],
+      "nofoot": true,
+      "faceX": true
+    },
+    {
+      "id": "reach_crucible",
+      "model": "magmacrucible",
+      "build": "magmacrucible",
+      "style": "reach",
+      "seed": 61,
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.96,
+        0.92
+      ],
+      "nofoot": true
+    },
+    {
+      "id": "reach_anvil",
+      "model": "magmaanvil",
+      "build": "magmaanvil",
+      "style": "reach",
+      "seed": 61,
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.96,
+        0.92
+      ],
+      "nofoot": true
+    },
+    {
+      "id": "reach_anvilx",
+      "model": "magmaanvil",
+      "build": "magmaanvil",
+      "style": "reach",
+      "seed": 61,
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.96,
+        0.92
+      ],
+      "nofoot": true,
+      "faceX": true
     }
   ],
   "heights": [
@@ -2299,6 +2376,83 @@
         0.97,
         0.94
       ]
+    },
+    {
+      "id": "tidemark_wreck",
+      "model": "gracewreck",
+      "build": "gracewreck",
+      "style": "tidemark",
+      "seed": 47,
+      "gain": 0.66,
+      "desat": 0.14,
+      "tint": [
+        0.96,
+        0.98,
+        1.0
+      ],
+      "nofoot": true
+    },
+    {
+      "id": "tidemark_ferry",
+      "model": "ferryboat",
+      "build": "ferryboat",
+      "style": "tidemark",
+      "seed": 51,
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.98,
+        0.96
+      ],
+      "nofoot": true
+    },
+    {
+      "id": "tidemark_fleetboat",
+      "model": "fleetboat",
+      "build": "fleetboat",
+      "style": "tidemark",
+      "seed": 53,
+      "gain": 0.66,
+      "desat": 0.1,
+      "tint": [
+        1.0,
+        0.98,
+        0.96
+      ],
+      "nofoot": true
+    },
+    {
+      "id": "tidemark_graceship",
+      "model": "graceship",
+      "build": "graceship",
+      "style": "tidemark",
+      "seed": 57,
+      "gain": 0.66,
+      "desat": 0.14,
+      "tint": [
+        0.94,
+        0.98,
+        1.0
+      ],
+      "nofoot": true,
+      "scale": 0.8
+    },
+    {
+      "id": "tidemark_wreckage",
+      "model": "wreckage",
+      "build": "wreckage",
+      "style": "tidemark",
+      "seed": 59,
+      "gain": 0.66,
+      "desat": 0.12,
+      "tint": [
+        0.96,
+        0.98,
+        1.0
+      ],
+      "nofoot": true,
+      "scale": 1.3
     }
   ]
 }

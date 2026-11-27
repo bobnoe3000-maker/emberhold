@@ -118,6 +118,7 @@ export const FX_STYLES = {
   boss_champion:     { col: [255, 215, 130], attack: 'stab', attack2: 'arc', heavy: 'stab', spark: [255, 232, 170], heavySpark: [230, 190, 110], wide: 1.25, quake: true },
   boss_lucan:        { col: [200, 180, 255], attack: 'cast', attack2: 'cast', heavy: 'cast', heavyCol: HOLY, spark: [220, 205, 255], heavySpark: [255, 225, 160] },
   boss_first_pilgrim: { col: [255, 160, 90], attack: 'arc', attack2: 'stab', heavy: 'arc', heavyCol: FIRE, spark: [255, 190, 120], heavySpark: [255, 120, 50], wide: 1.5, quake: true },   // (v1.147: the crook's swing, the Ember's sparks)
+  boss_grace:        { col: [170, 235, 210], attack: 'arc', attack2: 'stab', heavy: 'arc', spark: [210, 245, 230], heavySpark: [150, 230, 200], wide: 1.3 },   // (v1.157: the drowned master's cutlass, sea-green like his lantern)
   boss_spiderqueen:  { col: [180, 230, 120], attack: 'stab', attack2: 'stab', heavy: 'arc', spark: [210, 240, 160], wide: 1.35 },
   boss_skarn:        { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 200, 130], wide: 1.25 },
   boss_garrow:       { col: REDHAND, attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [255, 210, 170], wide: 1.15 },

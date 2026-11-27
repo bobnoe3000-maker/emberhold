@@ -1,0 +1,43 @@
+{
+  "id": "maren_said_aloud",
+  "kind": "errand",
+  "title": "Said Aloud",
+  "giver": "josse_wether",
+  "region": "tidemark",
+  "level": [
+    42,
+    60
+  ],
+  "after": [
+    "maren_the_prize_crews"
+  ],
+  "summary": "The drowned were sung up off the Mole and given their orders in Lucan's palace at Highmarch. Maren wants their names read out there, so their names are the last thing that palace hears of them. Josse Wether has a fair copy.",
+  "steps": [
+    {
+      "id": "palace",
+      "journal": "Win five waves on Highmarch's second floor, the Seventh's Palace, while Josse's fair copy of the names is read out there.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "highmarch",
+          "count": 5,
+          "floor": 2,
+          "label": "Waves won in the Seventh's Palace"
+        }
+      ]
+    }
+  ],
+  "ready": "Every name was read out in the Seventh's Palace. Take the fair copy back to Josse Wether at the Quay Chapel.",
+  "done": "The names were said in Highmarch's palace, in a plainer voice than Lucan's. Josse gave you the bell he rang them with.",
+  "rewards": {
+    "share": 0.45,
+    "lv": 45,
+    "gold": 700,
+    "item": "the_name_bell"
+  },
+  "dialogue": {
+    "file": "josse",
+    "offer": "josse_aloud_offer",
+    "turnin": "josse_aloud_turnin"
+  }
+}

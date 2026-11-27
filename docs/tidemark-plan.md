@@ -333,8 +333,8 @@ Each step ends playable and checked: `npm run check`, the browser suite, and the
    `lucan`, `found.after`); *The Seventh Voice* and Act IV's end (`story.json` `end.tidemark`); the heirlooms; the door at
    the gate. The contract at 42 and 45 held once the foes' premium compounds 1.10 a level past 40 (`premium.js`). Pace: a
    median 11.6 min. Tests: `test/tidemark-highmarch.test.mjs`.
-7. **The Sister's Cabin**, the Chronicle set, the side work, the spawn points.
-8. **The Grace** as the region boss.
+7. **The Sister's Cabin**, the Chronicle set, the side work, the spawn points. Build sheet below (step 7).
+8. **The Grace** as the region boss. **Built (GDD v1.157):** `ring.js` `GRACE` at the top of the hour (ids `:00g`), from 40 once *Low Water* is done; her ground the wreckers' beach (`tide_wreckers`), not the Mole's end (the wreck is on her reef below the Lamp Fort, the Sister's Cabin: the tide lifts her off it at the hour); the broadside and boarders in `battle.js` `ringTick`; *Until Recalled*; `test/grace.test.mjs`.
 9. **Art pass:** the kits and the town in 3D, the models, critic passes, captures.
 
 Steps 3 to 6 each come with their chapters, so the story can be played as far as it's built.
@@ -514,6 +514,75 @@ after *Brine Cross*, levels 41–75. Three steps: the Champion; Lucan; a word wi
 
 **Balance:** the smoke contract at 42 and 45. `roomlv.mjs` at 42 and 45 (`--site highmarch`); `boss.mjs highmarch 43
 --floor 1` and `boss.mjs highmarch 45 --floor 2`; `pace.mjs highmarch`.
+
+## The build sheet: the Sister's Cabin, the Chronicle, the side work and the spawn points (step 7)
+
+Every id here is fixed: the sim, the content and the art use these.
+
+**The Tidemark's Chronicle set** (`lore.js`, set `tidemark`, `SET_REVEALS.tidemark = 'sisters_cabin'`). Twelve of the
+Lady Aurelle's letters to her sister Livia, from girlhood to the year before the Fall, four from each band dungeon. The
+last of them is *"Take the Grace. Take the children. Take the box from my chapel, and never open it."* Their words are
+canon (world doc §7) and content (`content/lore/<id>.json`).
+
+| # | id | where | how |
+|---|---|---|---|
+| 1 | `frag_tide_first_letter` | the Drowned Mole, floor 1 | a chest |
+| 2 | `frag_tide_the_harbour` | the Drowned Mole, floor 1 | a shrine |
+| 3 | `frag_tide_the_wedding` | the Drowned Mole, floor 2 | a chest |
+| 4 | `frag_tide_the_toll` | the Drowned Mole, floor 2 | the Harbourmaster |
+| 5 | `frag_tide_the_ship` | the Gull Isles, floor 1 | a chest |
+| 6 | `frag_tide_the_lamps` | the Gull Isles, floor 1 | a shrine |
+| 7 | `frag_tide_the_children` | the Gull Isles, floor 2 | a chest |
+| 8 | `frag_tide_the_commission` | the Gull Isles, floor 2 | Hesk |
+| 9 | `frag_tide_the_chapel` | Highmarch, floor 1 | a chest |
+| 10 | `frag_tide_the_voices` | Highmarch, floor 1 | the Champion |
+| 11 | `frag_tide_the_box` | Highmarch, floor 2 | a shrine |
+| 12 | `frag_tide_take_the_grace` | Highmarch, floor 2 | Lucan (when he sits down) |
+
+A floor without that kind of holder keeps the letter in its hall (`lore.js`, as every set).
+
+**The Sister's Cabin** (`sites.js` `sisters_cabin`; `plans.js`): the secret at 45. Hidden until the set is whole, then
+its door is on the east beach below the Lamp Fort, where the reef shows at low water (`outdoor.js`, an exit at about
+231, 203 with an arrival inland of it). One floor of five on the `hulk` kit, with the palace's reliquary in the chapel
+locker. The Grace's crew below decks, the drowned (`drowned_fleet`: sailors, the drowned, cantors, a bosun), at 45.
+No boss: like the Ninth Vault, its end room is the vault.
+- `the_reef_ladder` (entrance): the ladder up her side from the reef at low water.
+- `the_waist` (room): the open deck amidships, her crew still at their stations.
+- `the_childrens_deck` (room): the deck under it, rows of small hammocks, the crew walking it.
+- `the_chapel_locker` (offshoot): Aurelle's chapel aboard, the reliquary where the box was kept, empty; a chest and a shrine.
+- `livias_cabin` (end): the stern cabin, Livia's. The vault: the heirloom **The Grace's Manifest** (`the_graces_manifest`,
+  an amulet), once, then it seals for `SECRET_REST` as every secret does.
+
+**Side work.** Tollhaven gains two townsfolk, as Ashgate has Hob and Old Brannagh:
+- **Mistress Fane** (`fane`), the harbour mage, who keeps the chain's ward (in the square, `hub`). Her errands:
+  - `fane_the_chain_ward` (from 33, after *Low Water*): three of the bosuns off the Drowned Mole (elites): the ward is
+    salt-written, and the drowned's whistles foul it.
+  - `fane_signal_powder` (from 37, after the first): two of the Gull Fleet's chests on the Gull Isles: the fleet's
+    signal powder, before it signals the drowned.
+- **Josse Wether** (`josse_wether`), the Quay Chapel's sexton (at the temple). **Maren's own chain, *The Names***, given
+  and taken in by him (GDD v1.155: no companion gives a quest): Maren says the drowned's names at the Quay Chapel, and
+  the names have to be found first.
+  - `maren_the_harbour_roll` (from 33, after *Low Water*): two chests on the Drowned Mole's second floor, the harbour
+    office's roll of who drowned in the harbour.
+  - `maren_the_prize_crews` (from 37): six waves on the Gull Isles' second floor, among the hulks, where the League's
+    taken crews were kept.
+  - `maren_said_aloud` (from 42): five waves on Highmarch's second floor, in the palace, where the fleet was sung up.
+    Pays the heirloom **The Name Bell** (`the_name_bell`, a charm).
+- **The board**: the Paid Toll's board posts the Tidemark's jobs at its three band dungeons (`board.js`, ids ending
+  `_tidemark`), as the Fens' and the Reach's boards do. (Before, it posted the Vale's.)
+
+**The spawn points** (`camps.js`; one at each band, the Mole's band two):
+| id | name | where (tiles) | level | family | band |
+|---|---|---|---|---|---|
+| `tide_wreckers` | The wreckers' beach | 161.5, 246.5, south-west of Gullwick | 31 | `wharf` | corsair, sailor, corsair |
+| `tide_marsh` | The salt marsh | 132.5, 38.5, by the salt pans | 35 | `mole` | drowned, sailor, drowned |
+| `tide_kennels` | The outriders' kennels | 78.5, 122.5, in the fields off the Highmarch road | 39 | `siege` | warhound, crossbow, warhound |
+| `tide_siege` | The siege lines | 65.5, 72.5, under Highmarch's south wall | 43 | `siege` | engineer, legionary, engineer |
+
+Each is off every road by more than its reach, clear of the others and of Brine Cross's stand.
+
+**Leads** (`storystatus.js` `tidemarkLeads`, words in `content/story.json`): the Chronicle (`tidechronicle`, found of
+twelve), the Cabin once found (`cabin`), Josse's errand on offer (`names`), and the board (`tideboard`).
 
 ## Decisions for the owner
 

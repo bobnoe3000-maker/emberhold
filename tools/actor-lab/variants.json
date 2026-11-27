@@ -9198,5 +9198,520 @@
   ],
   "face": "lucan",
   "height": 1.02
+ },
+ {
+  "id": "N32",
+  "cls": "NPC",
+  "label": "Mistress Fane \u00b7 Tollhaven's harbour mage, who keeps the salt-written ward on the harbour chain (a mage's hat and robe in sea-grey, sea-green at the cuffs and sash, her hem and cuffs white with salt; a paste-brush and a pot of wet salt)",
+  "model": "Mage",
+  "show": [
+   "Mage_Hat"
+  ],
+  "hold": {
+   "handslot.r": "saltbrush",
+   "handslot.l": "saltpot"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#7a8a8c",
+     "#1a2226"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#7a8a8c",
+     "#1a2226"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2e5a4e",
+     "#0c1a16"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#4a5a5c",
+     "#121a1c"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#3e7a62",
+     "#10241c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#5a9a8a",
+     "#1a3a34"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#3e7a62",
+     "#10241c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#3e2e24",
+     "#100a08"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     0
+    ],
+    "to": [
+     "#c8ccc8",
+     "#4a4e4c"
+    ]
+   },
+   {
+    "tile": [
+     4,
+     0
+    ],
+    "to": [
+     "#d4d6cc",
+     "#6a6e68"
+    ]
+   }
+  ],
+  "face": "fane",
+  "height": 0.95
+ },
+ {
+  "id": "N33",
+  "cls": "NPC",
+  "label": "Josse Wether \u00b7 the Quay Chapel's sexton (older, a little bent, cropped grey hair and a grey moustache, a plain black coat over a grey shirt, the chapel's book of names clutched to his chest, its hand-bell)",
+  "model": "Rogue",
+  "show": [],
+  "hold": {
+   "handslot.r": "handbell"
+  },
+  "wear": {
+   "chest": "namebookheld",
+   "hips": "sextoncoat"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2a282a",
+     "#0a090a"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#8a8884",
+     "#2a2826"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2a282a",
+     "#0a090a"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2a2420",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#3a3634",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#3a3028",
+     "#120e0a"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#3a3028",
+     "#120e0a"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#2a282a",
+     "#0a090a"
+    ]
+   }
+  ],
+  "face": "josse_wether",
+  "height": 0.9,
+  "frame": {
+   "bend": {
+    "spine": [
+     0.16,
+     0,
+     0
+    ],
+    "head": [
+     0.05,
+     0,
+     0
+    ]
+   }
+  }
+ },
+ {
+  "id": "N34",
+  "cls": "NPC",
+  "label": "Gullwick's ferryman \u00b7 decor: stood in his boat at the end of the ferry jetty (convert.js BOATS), not a townsperson (an old fisherman: a knitted cap, an oilskin smock over a blue jersey, a white beard, his quant-pole upright)",
+  "model": "Rogue",
+  "show": [],
+  "hold": {
+   "handslot.r": "ferrypole"
+  },
+  "wear": {
+   "head": "watchcap"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#a07a34",
+     "#2e2210"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#34425a",
+     "#0e1420"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#a07a34",
+     "#2e2210"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2a2420",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#3a3a3e",
+     "#121214"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3a2c",
+     "#18120c"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#a07a34",
+     "#2e2210"
+    ]
+   }
+  ],
+  "face": {
+   "skin": "rose",
+   "hair": "short",
+   "hairColor": "white",
+   "brows": "heavy",
+   "browColor": "white",
+   "eyes": "narrow",
+   "iris": "grey",
+   "mouth": "line",
+   "nose": "broad",
+   "beard": "full",
+   "beardColor": "white",
+   "marks": [
+    "wrinkles"
+   ],
+   "shape": "round",
+   "expression": "neutral"
+  },
+  "height": 0.94
+ },
+ {
+  "id": "N35",
+  "cls": "NPC",
+  "label": "A Gull Fleet boatman \u00b7 decor: stood in the fleet's boat at the Gull Isles' landing (convert.js BOATS) (the corsairs' sea-grey and gull-yellow, the headscarf and sash, his oar tossed upright)",
+  "model": "Rogue",
+  "show": [],
+  "hold": {
+   "handslot.r": "fleetoar"
+  },
+  "wear": {
+   "head": "headscarf",
+   "hips": "sash"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#b8bcbc",
+     "#3e4244"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#2a2c30",
+     "#0c0c0e"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2a2c30",
+     "#0c0c0e"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2a2220",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#2a2c30",
+     "#0c0c0e"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#5a4632",
+     "#1e160e"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#5a4632",
+     "#1e160e"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#2a2c30",
+     "#0c0c0e"
+    ]
+   }
+  ],
+  "face": "corsair"
+ },
+ {
+  "id": "TB5",
+  "cls": "Boss",
+  "label": "The Grace's master \u00b7 the Tidemark's region boss (GDD v1.157): Aurelle's flagship's captain, drowned with her, a man's size (the drowned's sea-green bone, a sodden naval coat in tarnished lace, weed off its hem and his cocked hat, a cutlass, the ship's stern-lantern on his belt lit sea-green)",
+  "model": "Skeleton_Warrior",
+  "hold": {
+   "handslot.r": "cutlass"
+  },
+  "wear": {
+   "head": "gracehat",
+   "chest": "epaulettes",
+   "hips": [
+    "gracecoat",
+    "sternlantern"
+   ]
+  },
+  "hide": [
+   "Skeleton_Warrior_Helmet"
+  ],
+  "eyes": "0x8ee8cc",
+  "skull": true,
+  "swatches": [
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#b4d4b0",
+     "#34503c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#3a5062",
+     "#101820"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     0
+    ],
+    "to": [
+     "#22201e",
+     "#0a0908"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#2a3440",
+     "#0c1018"
+    ]
+   }
+  ],
+  "height": 1.1
  }
 ]

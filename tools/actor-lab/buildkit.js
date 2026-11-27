@@ -2191,6 +2191,357 @@ Object.assign(TYPES, {
   // a slag heap, for the ring round Furnace Nine's yard (convert.js FURNACE_YARD), a crack in it glowing
   slagheap(S, g, r) { slagHeap(g, r, 0, 0, 0.32, 0.3 + r() * 0.1, '#302a27', true); slagHeap(g, r, 0.22, 0.12, 0.16, 0.14); },
 });
+
+// ── the Magma Vault's furnaces and crucibles (the owner, 2026-11-26: "flowing magma and a few furnaces, anvils";
+// docs/art-critic-pass-magma-vault.md). Stood by convert.js MAGMA_3D over the sim's footprint (3 tiles wide, 2 deep,
+// against the back wall), the mouth on +z (faceX: on +x). A furnace: a squat smelting furnace of black firebrick bound in
+// iron, its mouth an arch glowing white-orange from inside (unlit: the light is the world's, MAGMA_3D), a slag-crusted
+// sill, a sheet-iron hood over it narrowing into a square flue that climbs the wall; a pair of bellows at its side. A
+// crucible: a fireclay pot in an iron stand, the melt in it glowing, its long pouring shank across it.
+const FURN_GLOW = () => new THREE.MeshBasicMaterial({ color: '#ff9a3c' }), FURN_HOT = () => new THREE.MeshBasicMaterial({ color: '#ffd27a' });
+Object.assign(TYPES, {
+  magmafurnace(S, g, r) {
+    const brick = mat(tex('ashlar', '#4a3c34', 87)), iron = mat(null, '#2a2624'), rust = mat(null, '#5a3424'), sheet = mat(null, '#6a4632'), soot = mat(null, '#141110'), glow = FURN_GLOW(), hot = FURN_HOT();
+    const W = 0.3, D = 0.2, H = 0.42;   // (round 3: at 0.34, a figure's height, they read as ovens in the big caves)
+    box(W, H, D, brick, 0, 0, -0.01, g);                                                        // the body
+    for (const y of [0.07, 0.2, H - 0.03]) box(W + 0.012, 0.018, D + 0.012, iron, 0, y, -0.01, g);   // its iron bands
+    for (const sx of [-1, 1]) box(0.03, H + 0.02, 0.03, iron, sx * (W / 2 + 0.005), 0, D / 2 - 0.02, g);   // corner irons
+    // the mouth: a dark arch with the fire white-orange deep in it, a sill crusted with slag
+    box(0.13, 0.13, 0.02, soot, 0, 0.05, D / 2 - 0.005, g);
+    const arch = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.02, 12, 1, false, -Math.PI / 2, Math.PI), soot); arch.rotation.x = Math.PI / 2; arch.position.set(0, 0.18, D / 2 - 0.005); g.add(arch);
+    box(0.1, 0.1, 0.01, glow, 0, 0.055, D / 2 + 0.002, g);
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.01, 12, 1, false, -Math.PI / 2, Math.PI), glow); top.rotation.x = Math.PI / 2; top.position.set(0, 0.155, D / 2 + 0.002); g.add(top);
+    box(0.06, 0.05, 0.012, hot, 0, 0.06, D / 2 + 0.004, g);                                    // (the heart of it)
+    box(0.17, 0.03, 0.05, brick, 0, 0.02, D / 2 + 0.02, g);                                    // the sill
+    for (let k = 0; k < 4; k++) box(0.03 + r() * 0.03, 0.012, 0.02, rust, -0.06 + k * 0.04, 0.05, D / 2 + 0.04, g);   // slag on it
+    // the hood and the flue: sheet iron narrowing up from the furnace's top into a square chimney against the wall
+    const hood = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.16, 0.14, 4, 1), sheet);   // (round 1: black iron was lost on the black wall: rusted sheet now) hood.rotation.y = Math.PI / 4; hood.scale.set(1.2, 1, 0.8); hood.position.set(0, H + 0.07, -0.03); g.add(hood);
+    box(0.09, 0.5, 0.08, brick, 0, H + 0.1, -0.06, g); box(0.11, 0.03, 0.1, iron, 0, H + 0.6, -0.06, g);
+    for (const y of [H + 0.25, H + 0.45]) box(0.095, 0.015, 0.085, iron, 0, y, -0.06, g);
+    // the bellows at its side, their nozzle into the furnace's flank
+    const bx = W / 2 + 0.06;
+    box(0.06, 0.012, 0.13, mat(null, '#5a3a24'), bx, 0.1, 0.0, g); box(0.06, 0.012, 0.13, mat(null, '#5a3a24'), bx, 0.16, 0.0, g);
+    box(0.05, 0.05, 0.11, mat(null, '#3a2a1e'), bx, 0.11, 0.0, g);
+    box(0.06, 0.016, 0.016, iron, W / 2 + 0.02, 0.13, -0.06, g);
+    box(0.012, 0.11, 0.012, mat(null, '#4a3a2c'), bx, 0, 0.06, g);
+  },
+  magmacrucible(S, g, r) {
+    // (round 1: a small pot on a post with a pale disc of melt read as a lit table lamp: a big fireclay crucible now, in a
+    // squat iron cradle, tipped toward its lip, the melt orange, a ladle's shank across it)
+    const iron = mat(null, '#3a3230'), clay = mat(null, '#8a6448'), glow = FURN_GLOW();
+    for (const sx of [-1, 1]) { box(0.016, 0.09, 0.016, iron, sx * 0.07, 0, -0.03, g); box(0.016, 0.09, 0.016, iron, sx * 0.07, 0, 0.03, g); box(0.016, 0.016, 0.08, iron, sx * 0.07, 0.085, 0, g); }   // the cradle's ends
+    const pot = new THREE.Group(); pot.position.set(0, 0.1, 0); pot.rotation.z = -0.32; g.add(pot);
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.042, 0.1, 12), clay); body.position.y = 0.02; pot.add(body);
+    // (round 2: the melt a bright full disc still read as a lampshade: smaller, red-orange, a skin of slag over half of it)
+    const melt = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.01, 12), new THREE.MeshBasicMaterial({ color: '#e0601e' })); melt.position.y = 0.068; pot.add(melt);
+    const skin = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.046, 0.012, 12, 1, false, 0, Math.PI * 0.9), mat(null, '#3a2a24')); skin.position.y = 0.07; pot.add(skin);
+    const lip = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.035, 4), clay); lip.rotation.z = -Math.PI / 2; lip.position.set(0.068, 0.06, 0); pot.add(lip);
+    for (const sx of [-1, 1]) { const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.02, 6), iron); tr.rotation.x = Math.PI / 2; tr.position.set(0, 0.03, sx * 0.065); pot.add(tr); }   // its trunnions
+    box(0.26, 0.012, 0.012, iron, -0.04, 0.2, 0.06, g).rotation.y = -0.5;                      // the ladle's shank
+    const ladle = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.018, 0.02, 8), iron); ladle.position.set(0.07, 0.195, 0.12); g.add(ladle);
+    const spill = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 0.006, 10), mat(null, '#c85a20')); spill.position.set(0.1, 0.003, 0.0); spill.scale.set(1.3, 1, 0.8); g.add(spill);   // a spill gone dull red
+  },
+  // an anvil on its stump (ours, not Luminati's smith's, which stood unlit and unseen at the floor's thirds): a dark iron
+  // anvil with its horn, a bar of iron hot on its face (unlit: what reads it in the dark), tongs and a hammer by it
+  magmaanvil(S, g, r) {
+    const iron = mat(null, '#3e3a38'), face = mat(null, '#5a5654'), stump = mat(tex('planks', '#4a3626', 63)), hot = FURN_GLOW();
+    const st = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.065, 0.09, 10), stump); st.position.y = 0.045; g.add(st);
+    box(0.05, 0.03, 0.04, iron, 0, 0.09, 0, g);                                               // the waist
+    box(0.12, 0.035, 0.05, face, 0, 0.12, 0, g);                                               // the face
+    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.07, 6), iron); horn.rotation.z = Math.PI / 2; horn.position.set(0.09, 0.14, 0); g.add(horn);
+    box(0.02, 0.02, 0.04, iron, -0.068, 0.12, 0, g);                                           // the heel
+    box(0.09, 0.012, 0.016, hot, -0.005, 0.161, 0.004, g).rotation.y = 0.35;                   // the hot bar
+    box(0.14, 0.008, 0.008, iron, 0.02, 0.162, 0.03, g).rotation.y = 0.5;                      // the tongs on it
+    box(0.008, 0.07, 0.008, mat(null, '#5a4430'), -0.09, 0, 0.06, g); box(0.035, 0.022, 0.022, iron, -0.09, 0.07, 0.06, g);   // a hammer stood by
+  },
+});
+// ── the Tidemark's secret (docs/tidemark-plan.md's build sheet, step 7; world doc v1.74 §3.7) ──
+// The wreck of Aurelle's Grace, on her reef off the east beach below the Lamp Fort, where she went the night of the Fall.
+// Stood by convert.js offshore of the Sister's Cabin's way in (outdoor.js TIDEMARK.reef), in the sea, so nobody walks
+// it: presentation only, no footprint (town.json `nofoot`). She lies broadside to the beach along the shore (the level
+// ends 25 tiles out to sea: convert.js MAX_TILES), her stern and Livia's cabin to the north (−z), her bow to the south;
+// heeled over to seaward (+x) and down by the head, so her deck and the quarter gallery's windows face the game's camera
+// (+x, +z), and her low side is awash. Masts down: the foremast and mainmast broken off at splintered stumps, the main
+// lying over her low side into the sea with its yard and the rag of its sail, the mizzen snapped and leaning; a hole
+// stove in her side amidships, the ribs showing. The reef's black rocks from the beach out to her landward side, the
+// ladder up it. Model y 0 is the sea floor (convert.js: the sea's tiles stand at 0, its water at 0.4 of Luminati's
+// units, 0.08 of ours): what's under WL is under the water.
+const WL = 0.08;
+Object.assign(TYPES, {
+  gracewreck(S, g, r) {
+    const L = 2.6, B = 0.36, D = 0.56;                                    // length, half the beam, the depth gunwale to keel
+    // (round 1: dark tar and slate-grey deck went to one navy shape at dusk; salt-silvered oak now, the hull a weathered
+    // brown, the tide line black-green under it)
+    const tar = mat(tex('planks', '#6a5848', 91)), weed = mat(tex('planks', '#33402e', 92)), deckM = mat(tex('planks', '#ae9270', 93));   // (round 2: a grey deck read as a slate roof under the sky: honey oak, bleached)
+    for (const m of [tar, weed, deckM]) m.side = THREE.DoubleSide;
+    const rib = mat(null, '#3a2e24'), spar = mat(null, '#7a6c5a'), gilt = mat(null, '#c09a50'), dark = mat(null, '#121014'), rope = mat(null, '#8a7650'), glassD = mat(null, '#1c2c2c');
+    const sail = new THREE.MeshStandardMaterial({ color: '#c4bca8', roughness: 0.95, side: THREE.DoubleSide });
+    // the ship's frame (her own: x stern-ward, z to starboard), turned along the shore (stern north), heeled to seaward,
+    // down by the head, settled on the reef
+    const yaw = new THREE.Group(); yaw.rotation.y = Math.PI / 2 - 0.12; g.add(yaw);
+    const ship = new THREE.Group(); ship.rotation.set(0.44, 0, 0.06); ship.position.set(0, -0.02, 0); yaw.add(ship);
+    g.updateMatrixWorld(true); const M = ship.matrixWorld.clone();
+    // her lines: t 0 at the bow, 1 at the stern; half-beam full aft of the middle, a flat transom; the sheer rising at
+    // both ends; the section a U (steep sides, a round bilge, a flat floor)
+    const half = (t) => B * Math.sqrt(Math.max(0, 1 - ((t - 0.58) / 0.6) ** 2)) * (t < 0.06 ? t / 0.06 : 1);
+    const gun = (t) => D + 0.1 * (1 - t / 0.3) ** 2 * (t < 0.3 ? 1 : 0) + 0.16 * Math.max(0, (t - 0.72) / 0.28) ** 1.5;
+    const X = (t) => -L / 2 + L * t;
+    const N = 24, K = 14, P = [];
+    for (let i = 0; i <= N; i++) { const t = i / N, x = X(t), b = half(t), y0 = gun(t);
+      const row = []; for (let k = 0; k <= K; k++) { const s = -1 + (2 * k) / K; row.push([x, y0 - D * (1 - Math.abs(s) ** 2.6), b * s]); } P.push(row); }
+    // the hole stove in her side amidships (her starboard, +z, the side to seaward and the camera: between bilge and wale)
+    const stove = (i, k) => i >= 11 && i < 14 && k >= 10 && k < 13;
+    // the triangles, laid in the frame and split at the tide line: weed and wet below it, weathered plank above
+    const v = new THREE.Vector3(), above = [], below = [], uvA = [], uvB = [];
+    const tri = (a, b, c, ua, ub, uc) => {
+      const w = [a, b, c].map((p) => v.set(...p).applyMatrix4(M).y);
+      const low = (w[0] + w[1] + w[2]) / 3 < WL + 0.08;
+      (low ? below : above).push(...a, ...b, ...c); (low ? uvB : uvA).push(...ua, ...ub, ...uc);
+    };
+    for (let i = 0; i < N; i++) for (let k = 0; k < K; k++) {
+      if (stove(i, k)) continue;
+      const a = P[i][k], b = P[i + 1][k], c = P[i + 1][k + 1], d = P[i][k + 1];
+      const U = (kk) => kk * 0.5 * B / TEX_UNITS, V = (ii) => (ii / N) * L / TEX_UNITS;
+      tri(a, b, c, [U(k), V(i)], [U(k), V(i + 1)], [U(k + 1), V(i + 1)]); tri(a, c, d, [U(k), V(i)], [U(k + 1), V(i + 1)], [U(k + 1), V(i)]);
+    }
+    { const row = P[N], cx = row[0][0], cy = (row[0][1] + row[K >> 1][1]) / 2;         // the transom: her flat stern, closed
+      for (let k = 0; k < K; k++) tri(row[k], [cx, cy, 0], row[k + 1], [0, 0], [0.5, 0.5], [1, 0]); }
+    for (const [pos, uvs, m] of [[above, uvA, tar], [below, uvB, weed]]) {
+      if (!pos.length) continue;
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); geo.computeVertexNormals();
+      ship.add(new THREE.Mesh(geo, m));
+    }
+    // the ribs in the hole, and the dark of the hold behind it
+    for (let i = 11; i <= 14; i++) { const t = i / N, b = half(t); const rb = box(0.04, D * 0.62, 0.045, rib, X(t), gun(t) - D * 0.8, b * 0.86, ship); rb.rotation.x = -0.22; }
+    box(0.3, D * 0.5, 0.04, dark, X(0.52), gun(0.52) - D * 0.74, half(0.52) * 0.55, ship);
+    // the wale (a dark strake under the rail) and the rail, both sides
+    for (const sz of [-1, 1]) for (let i = 1; i < N; i++) {
+      const t0 = i / N, t1 = (i + 1) / N, x0 = X(t0), x1 = X(t1), z0 = sz * half(t0), z1 = sz * half(t1), y0 = gun(t0), y1 = gun(t1);
+      if (sz > 0 && i >= 11 && i < 14) continue;                        // (the rail went with the side)
+      const len = Math.hypot(x1 - x0, z1 - z0, y1 - y0), m = new THREE.Mesh(new THREE.BoxGeometry(len, 0.04, 0.035), rib);
+      m.position.set((x0 + x1) / 2, (y0 + y1) / 2 + 0.03, (z0 + z1) / 2); m.rotation.set(0, -Math.atan2(z1 - z0, x1 - x0), Math.atan2(y1 - y0, Math.hypot(x1 - x0, z1 - z0))); ship.add(m);
+      const w = m.clone(); w.position.y -= 0.14; w.position.z += sz * 0.01; ship.add(w);
+    }
+    // her deck, a little under the rail: whole fore and aft, broken through at the waist where the mainmast came down
+    const deckY = (t) => gun(t) - 0.06;
+    for (let i = 0; i < N; i++) {
+      const t0 = i / N, t1 = (i + 1) / N; if (t0 >= 0.42 && t1 <= 0.55) continue;
+      const x0 = X(t0), x1 = X(t1), b0 = half(t0) * 0.94, b1 = half(t1) * 0.94, y0 = deckY(t0), y1 = deckY(t1);
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute([x0, y0, -b0, x1, y1, -b1, x1, y1, b1, x0, y0, -b0, x1, y1, b1, x0, y0, b0], 3));
+      geo.setAttribute('uv', new THREE.Float32BufferAttribute([0, x0 / TEX_UNITS, 0, x1 / TEX_UNITS, (2 * b1) / TEX_UNITS, x1 / TEX_UNITS, 0, x0 / TEX_UNITS, (2 * b1) / TEX_UNITS, x1 / TEX_UNITS, (2 * b0) / TEX_UNITS, x0 / TEX_UNITS], 2));
+      geo.computeVertexNormals(); ship.add(new THREE.Mesh(geo, deckM));
+    }
+    { const t = 0.485; box(0.32, 0.02, half(t) * 1.6, dark, X(t), deckY(t) - 0.12, 0, ship);              // the dark below the broken deck
+      for (const [dx, dz, ry] of [[-0.12, -0.14, 0.3], [0.1, 0.06, -0.5], [-0.02, 0.2, 0.9]]) { const p = box(0.2, 0.015, 0.045, deckM, X(t) + dx, deckY(t) - 0.03, dz, ship); p.rotation.set(0.3, ry, 0.2); } }   // (planks hanging into it)
+    // the sterncastle, Livia's cabin under it: a raised house over the last fifth, its rail; the quarter gallery's windows
+    // down her starboard side (to the camera) and the stern gallery across the transom, dark, faded gilt round them
+    { const t0 = 0.79, x0 = X(t0), len = L * 0.21, y = deckY(0.9), b = half(0.9) * 0.9, H = 0.26;
+      // (round 2: a dark lid on it read as a house's roof: its top is a deck, the same oak as hers, a rail round it)
+      box(len, H, b * 2, tar, x0 + len / 2, y, 0, ship); box(len - 0.02, 0.02, b * 2 - 0.02, deckM, x0 + len / 2, y + H, 0, ship);
+      for (const sz of [-1, 1]) box(len, 0.03, 0.03, rib, x0 + len / 2, y + H + 0.08, sz * (b + 0.015), ship);
+      for (const sz of [-1, 1]) for (let k = 0; k < 5; k++) box(0.025, 0.08, 0.03, rib, x0 + 0.03 + k * 0.12, y + H + 0.03, sz * (b + 0.015), ship);   // its rail's stanchions
+      for (let k = 0; k < 3; k++) { const wz = -b * 0.6 + k * b * 0.6; box(0.012, 0.1, 0.09, dark, L / 2 + 0.006, y + 0.08, wz, ship); box(0.014, 0.13, 0.12, gilt, L / 2 + 0.002, y + 0.065, wz, ship); }
+      // (round 2: lost in the hull's shade: larger, in a gilt-framed band, the glass the sea's dark green)
+      box(len * 0.92, 0.17, 0.016, gilt, x0 + len / 2, y + 0.04, b + 0.004, ship);
+      for (let k = 0; k < 3; k++) box(0.11, 0.12, 0.014, glassD, x0 + 0.1 + k * 0.17, y + 0.065, b + 0.012, ship);
+      box(len * 0.9, 0.03, 0.02, gilt, x0 + len / 2, y + H - 0.05, b + 0.01, ship); }                        // (a gilt moulding along her quarter)
+    // the forecastle, low, and the stub of the bowsprit
+    { const len = L * 0.13, y = deckY(0.07); box(len, 0.12, half(0.1) * 1.7, tar, X(0) + len / 2 + 0.07, y, 0, ship);
+      const bs = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.034, 0.4, 6), spar); bs.rotation.z = Math.PI / 2 + 0.35; bs.position.set(X(0) - 0.12, gun(0) + 0.03, 0); ship.add(bs); }
+    // the masts: fore and main broken off at stumps (a splintered top), the mizzen snapped and leaning outboard
+    const stump = (t, h) => { const x = X(t), y = deckY(t);
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.048, h, 7), spar); m.position.set(x, y + h / 2, 0); ship.add(m);
+      for (let k = 0; k < 5; k++) { const s = new THREE.Mesh(solidCone(0.016, 0.08 + r() * 0.06, 4), spar); s.position.set(x + Math.cos(k * 1.3) * 0.024, y + h + 0.03, Math.sin(k * 1.3) * 0.024); s.rotation.set((r() - 0.5) * 0.6, 0, (r() - 0.5) * 0.6); ship.add(s); } };
+    stump(0.22, 0.24); stump(0.5, 0.42);
+    { const x = X(0.74), y = deckY(0.74); stump(0.74, 0.18);
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.036, 0.7, 7), spar); m.position.set(x + 0.05, y + 0.18 + 0.28, 0.22); m.rotation.set(0.95, 0, -0.14); ship.add(m);
+      for (const [a, b2] of [[[x + 0.05, y + 0.56, 0.48], [x + 0.26, deckY(0.85) + 0.02, -0.22]], [[x + 0.05, y + 0.56, 0.48], [x - 0.28, deckY(0.62) + 0.02, -0.26]]]) {   // a stay or two still on it
+        const A = new THREE.Vector3(...a), Bv = new THREE.Vector3(...b2), len = A.distanceTo(Bv), l = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, len, 3), rope);
+        l.position.copy(A).add(Bv).multiplyScalar(0.5); l.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), Bv.clone().sub(A).normalize()); ship.add(l); } }
+    // the fallen mainmast, in the sea's frame: from its stump over her low side into the water to seaward, the yard across
+    // it, the rag of its sail hung from the yard into the sea and afloat
+    { const top = new THREE.Vector3(X(0.5), deckY(0.5) + 0.42, 0).applyMatrix4(M);
+      const end = new THREE.Vector3(top.x + 1.0, -0.02, top.z + 0.28), len = top.distanceTo(end), dir = end.clone().sub(top).normalize();
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, len, 7), spar); m.position.copy(top).add(end).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); g.add(m);
+      const at = top.clone().lerp(end, 0.6), yard = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1.0, 6), spar);
+      yard.position.copy(at); yard.rotation.set(Math.PI / 2 - 0.12, 0, 0.25); g.add(yard);
+      const sg = new THREE.PlaneGeometry(1.0, 0.7, 6, 3), sp = sg.attributes.position;
+      for (let i = 0; i < sp.count; i++) { const y = sp.getY(i), x = sp.getX(i); sp.setZ(i, 0.06 * Math.sin(x * 7 + y * 4)); if (y < -0.2) sp.setY(i, y + (r() - 0.3) * 0.12); }
+      sg.computeVertexNormals(); const sm = new THREE.Mesh(sg, sail); sm.position.set(at.x + 0.22, Math.max(WL + 0.05, at.y - 0.16), at.z + 0.05); sm.rotation.set(-1.25, Math.PI / 2 + 0.25, 0.05);   // (round 2: lying nearer the water, to seaward, so the camera sees its face) g.add(sm);
+      for (let k = 0; k < 3; k++) { const f = box(0.18 + r() * 0.1, 0.008, 0.13, sail, at.x + 0.25 + r() * 0.15, WL - 0.002, at.z - 0.3 + k * 0.28, g); f.rotation.y = r() * 2; } }   // (its rags afloat)
+    // the reef: black rocks from the beach out to her landward side, weed on their tops, a few awash, the bigger ones
+    // nearer her; and the ladder down her landward side to them
+    const reefRock = (x, z, rad, ht) => {
+      const geo = faceted(new THREE.DodecahedronGeometry(rad, 0), r, rad * 0.3, (ny, y, q) => (ny > 0.55 ? tint(C3(q < 0.5 ? '#4a5636' : '#6a6656'), 0.85 + q * 0.25) : tint(C3('#34302c'), 0.8 + q * 0.3)));
+      const m = new THREE.Mesh(geo, vmat()); m.scale.y = ht / rad; m.position.set(x, ht * 0.35, z); m.rotation.y = r() * 6; g.add(m); };
+    for (let k = 0; k < 12; k++) { const t = k / 11, x = -0.95 + t * 0.55 + (r() - 0.5) * 0.06, z = (r() - 0.5) * 0.5; reefRock(x, z, 0.06 + r() * 0.05 + t * 0.03, 0.09 + r() * 0.06 + t * 0.08); }
+    for (const [x, z, rad, ht] of [[-0.5, 0.75, 0.1, 0.2], [-0.46, -0.85, 0.11, 0.22], [-0.62, 1.15, 0.08, 0.14], [0.62, 1.25, 0.07, 0.12], [0.55, -1.3, 0.08, 0.13]]) reefRock(x, z, rad, ht);
+    { const a = new THREE.Vector3(X(0.42), gun(0.42) + 0.02, -half(0.42)).applyMatrix4(M), b = new THREE.Vector3(a.x - 0.18, 0.14, a.z);
+      const len = a.distanceTo(b), dir = b.clone().sub(a).normalize(), side = new THREE.Vector3(0, 0, 1);
+      for (const s of [-1, 1]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, len, 3), rope); l.position.copy(a).add(b).multiplyScalar(0.5).addScaledVector(side, s * 0.05); l.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); g.add(l); }
+      for (let k = 1; k < 7; k++) { const p = a.clone().lerp(b, k / 7); box(0.016, 0.014, 0.11, S.m.wood, p.x, p.y - 0.007, p.z, g); } }
+  },
+});
+// ── the Grace herself, the Tidemark's region boss's set piece (GDD v1.157; docs/art-critic-pass-tidemark.md): Aurelle's
+// flagship as she comes in at the top of the hour, standing off the wreckers' beach in Gullwick's bay. Stood by
+// convert.js (GRACE_SHIP) and shown by world.js only while her window is open (hybrid.js: the window's clock). The wreck's
+// lines whole: her hull upright, black with the sea, weed hanging from her wale; three masts standing, the courses set
+// and gone to rags, grey-green; her sterncastle's gallery lit the drowned's pale sea-green and her stern-lantern on its
+// bracket over the transom lit the same; a long pennant. Hove to, her side to the beach (+z: the camera's), her bow east.
+Object.assign(TYPES, {
+  graceship(S, g, r) {
+    const L = 2.2, B = 0.3, D = 0.5;
+    const hullM = mat(tex('planks', '#3a3430', 95)), weedM = mat(null, '#2a3a2a'), deckM = mat(tex('planks', '#6a6050', 96)), rib = mat(null, '#2a221c');
+    const spar = mat(null, '#4a4034'), gilt = mat(null, '#8a7a4a'), ghost = new THREE.MeshBasicMaterial({ color: '#8ee8cc' }), rope = mat(null, '#5a4e3a');
+    const rag = new THREE.MeshStandardMaterial({ color: '#8a9488', roughness: 1, side: THREE.DoubleSide, transparent: true, opacity: 0.92 });
+    hullM.side = THREE.DoubleSide;
+    const half = (t) => B * Math.sqrt(Math.max(0, 1 - ((t - 0.58) / 0.6) ** 2)) * (t < 0.06 ? t / 0.06 : 1);
+    const gun = (t) => D + 0.1 * (1 - t / 0.3) ** 2 * (t < 0.3 ? 1 : 0) + 0.16 * Math.max(0, (t - 0.72) / 0.28) ** 1.5;
+    const X = (t) => L / 2 - L * t;                                 // (her bow east, +x: t 0 at the bow)
+    const ship = new THREE.Group(); ship.rotation.z = 0.03; ship.position.y = -0.12; g.add(ship);   // (sitting down in the water, a little by the head)
+    const N = 22, K = 12, pos = [], uv = [];
+    const pt = (i, k) => { const t = i / N, b = half(t), s = -1 + (2 * k) / K; return [X(t), gun(t) - D * (1 - Math.abs(s) ** 2.6), b * s]; };
+    for (let i = 0; i < N; i++) for (let k = 0; k < K; k++) { const a = pt(i, k), b = pt(i + 1, k), c = pt(i + 1, k + 1), d = pt(i, k + 1); pos.push(...a, ...b, ...c, ...a, ...c, ...d);
+      const U = (q) => q * 0.5 * B / TEX_UNITS, V = (q) => (q / N) * L / TEX_UNITS; uv.push(U(k), V(i), U(k), V(i + 1), U(k + 1), V(i + 1), U(k), V(i), U(k + 1), V(i + 1), U(k + 1), V(i)); }
+    for (let k = 0; k < K; k++) { const a = pt(N, k), c = pt(N, k + 1), m = [X(1), (pt(N, 0)[1] + pt(N, K >> 1)[1]) / 2, 0]; pos.push(...a, ...m, ...c); uv.push(0, 0, 0.5, 0.5, 1, 0); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geo.computeVertexNormals();
+    ship.add(new THREE.Mesh(geo, hullM));
+    // the deck, the wale and the weed off it
+    for (let i = 0; i < N; i++) { const t0 = i / N, t1 = (i + 1) / N, len = Math.abs(X(t1) - X(t0)), b = (half(t0) + half(t1)) / 2;
+      box(len + 0.004, 0.012, b * 1.86, deckM, (X(t0) + X(t1)) / 2, (gun(t0) + gun(t1)) / 2 - 0.06, 0, ship);
+      for (const sz of [-1, 1]) { box(len + 0.004, 0.035, 0.03, rib, (X(t0) + X(t1)) / 2, (gun(t0) + gun(t1)) / 2 - 0.15, sz * b, ship); if (i % 2 === 0 && r() < 0.8) box(0.02, 0.08 + r() * 0.12, 0.01, weedM, (X(t0) + X(t1)) / 2, (gun(t0) + gun(t1)) / 2 - 0.3 - r() * 0.05, sz * (b + 0.012), ship); } }
+    // the sterncastle and the forecastle, the gallery lit sea-green
+    { const len = L * 0.2, x0 = X(1) + len / 2, y = gun(0.9) - 0.06, b = half(0.9) * 0.92;
+      box(len, 0.24, b * 2, hullM, x0, y, 0, ship); box(len + 0.04, 0.03, b * 2 + 0.04, rib, x0, y + 0.24, 0, ship);
+      box(len * 0.92, 0.16, 0.014, gilt, x0, y + 0.04, b + 0.004, ship);
+      for (let k = 0; k < 3; k++) box(0.1, 0.11, 0.014, ghost, X(1) + 0.08 + k * 0.15, y + 0.065, b + 0.012, ship);
+      for (let k = 0; k < 3; k++) box(0.014, 0.1, 0.08, ghost, X(1) - 0.006, y + 0.07, -b * 0.6 + k * b * 0.6, ship);
+      // the stern-lantern: a great lantern on a bracket over the transom, lit
+      box(0.12, 0.02, 0.02, rib, X(1) - 0.06, y + 0.32, 0, ship);
+      const lan = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 0.1, 8), ghost); lan.position.set(X(1) - 0.12, y + 0.29, 0); ship.add(lan);
+      box(0.08, 0.02, 0.08, gilt, X(1) - 0.12, y + 0.34, 0, ship); }
+    { const len = L * 0.12; box(len, 0.12, half(0.1) * 1.7, hullM, X(0) - len / 2 - 0.08, gun(0.08) - 0.06, 0, ship);
+      const bs = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.03, 0.55, 6), spar); bs.rotation.z = -(Math.PI / 2 - 0.35); bs.position.set(X(0) + 0.2, gun(0) + 0.08, 0); ship.add(bs); }
+    // the masts, the yards and the courses set and torn, the shrouds
+    for (const [t, h, yw] of [[0.24, 1.2, 0.5], [0.5, 1.5, 0.64], [0.76, 0.95, 0.4]]) {
+      const x = X(t), y = gun(t) - 0.06;
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.034, h, 7), spar); m.position.set(x, y + h / 2, 0); ship.add(m);
+      for (const [fy, fw] of [[0.42, 1], [0.78, 0.72]]) {
+        const yy = y + h * fy, yard = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, yw * fw, 6), spar); yard.rotation.x = Math.PI / 2; yard.position.set(x + 0.01, yy, 0); ship.add(yard);
+        // a course: a sheet bellied a little to leeward, its foot torn to tongues, a hole or two
+        const sh = h * (fy === 0.42 ? 0.34 : 0.26), sg = new THREE.PlaneGeometry(yw * fw * 0.92, sh, 6, 4), sp = sg.attributes.position;
+        for (let i = 0; i < sp.count; i++) { const py = sp.getY(i), pz = sp.getX(i); sp.setZ(i, 0.05 * (1 - (2 * pz / (yw * fw)) ** 2) * (0.5 - py / sh)); if (py < -sh * 0.3) sp.setY(i, py + (r() - 0.2) * sh * 0.35); }
+        sg.computeVertexNormals(); const s = new THREE.Mesh(sg, rag); s.rotation.y = Math.PI / 2; s.position.set(x + 0.02, yy - sh / 2, 0); ship.add(s);
+      }
+      for (const sz of [-1, 1]) { const A = new THREE.Vector3(x, y + h * 0.85, 0), Bv = new THREE.Vector3(x - 0.04, gun(t) - 0.04, sz * half(t)), l = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, A.distanceTo(Bv), 3), rope);
+        l.position.copy(A).add(Bv).multiplyScalar(0.5); l.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), Bv.clone().sub(A).normalize()); ship.add(l); }
+    }
+    // the pennant off the main truck, long, streaming to leeward
+    { const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, -0.05, 0, -0.5, -0.03, 0.06], 3)); pg.computeVertexNormals();
+      const pen = new THREE.Mesh(pg, new THREE.MeshStandardMaterial({ color: '#5a6a62', side: THREE.DoubleSide })); pen.position.set(X(0.5), gun(0.5) - 0.06 + 1.5, 0); pen.rotation.y = 0.3; ship.add(pen); }
+  },
+});
+// ── the wreckers' beach (camps.js tide_wreckers; docs/art-critic-pass-tidemark.md): the wreck they're stripping, in the
+// shallows just off the camp's sand, where nobody walks (presentation only, no footprint). A merchantman's broken
+// quarter on its side at the waterline, her ribs standing bare where the planking's already been taken, a few planks
+// left on them; a broken spar across the shallows with its rope, the mast's stump; the planks they've had off her
+// floated in a raft at her side, a cask. All in the water (the sand is the fight's). Low: nothing over a man.
+Object.assign(TYPES, {
+  wreckage(S, g, r) {
+    const hullM = mat(tex('planks', '#5a4a3a', 97)), rib = mat(null, '#3e3024'), spar = mat(null, '#6a5a44'), rope = mat(null, '#8a7650'), weed = mat(null, '#2e4a34');
+    hullM.side = THREE.DoubleSide;
+    // (round 1: a quarter of hull laid flat read as a broken jetty, its ribs as pilings) her skeleton in the shallows, as a
+    // stripped wreck reads from anywhere: the keel along the waterline, her ribs rising from it either side in pairs like
+    // a ribcage, the forward ones broken short; her stem post standing at the bow; the planking still on her after third,
+    // where they've not got to it yet
+    const L = 1.0, Rr = 0.2, kx = (t) => -L / 2 + L * t, ribs = 9;
+    box(L + 0.06, 0.04, 0.05, rib, 0, WL - 0.01, 0, g);                                            // the keel
+    for (let k = 0; k < ribs; k++) {
+      const t = (k + 0.5) / ribs, x = kx(t), w = Rr * Math.sin(Math.PI * (0.15 + 0.85 * t)) + 0.03, broken = t < 0.35 ? 0.45 + r() * 0.3 : 1;
+      for (const sz of [-1, 1]) {
+        // a frame: a floor timber out from the keel, then the futtock rising and leaning out (round 2: tori lay flat)
+        const h = (0.26 + 0.06 * Math.sin(Math.PI * t)) * (sz < 0 ? broken : Math.min(1, broken + 0.2)), lean = 0.32;
+        box(0.035, 0.03, w, rib, x, WL - 0.005, sz * w / 2, g);
+        const fut = box(0.035, h, 0.035, rib, x, 0, 0, g); fut.position.set(x, WL + Math.cos(lean) * h / 2, sz * (w + Math.sin(lean) * h / 2)); fut.rotation.x = sz * lean;
+      }
+    }
+    // the stem post at her bow, rising and raking forward; the sternpost, shorter
+    const stem = box(0.045, 0.42, 0.045, rib, 0, 0, 0, g); stem.position.set(kx(0) - 0.06, WL + 0.19, 0); stem.rotation.z = 0.35;
+    box(0.04, 0.24, 0.04, rib, kx(1) + 0.03, WL, 0, g);
+    // her planking still on the after third, both sides, a strake or two hanging loose
+    for (const sz of [-1, 1]) for (let q = 0; q < 4; q++) {
+      const y = WL + 0.03 + q * 0.05, w = Rr * (0.85 - q * 0.1) * 0.95 + 0.04;
+      const pl = box(L * 0.34, 0.045, 0.014, hullM, kx(0.8), y, sz * (w + 0.02), g); pl.rotation.x = sz * 0.25;
+    }
+    const loose = box(0.3, 0.04, 0.014, hullM, kx(0.58), WL + 0.06, -0.2, g); loose.rotation.set(0.3, 0.2, -0.5);
+    for (let k = 0; k < 6; k++) box(0.02, 0.05 + r() * 0.05, 0.012, weed, kx(0.3 + r() * 0.6), WL + 0.02, (r() - 0.5) * 0.4, g);
+    // the broken spar across the shallows, the stump of her mast, rope off it
+    const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.024, 0.8, 6), spar); sp.rotation.set(Math.PI / 2 - 0.08, 0.9, 0); sp.position.set(-0.05, 0.08, -0.28); g.add(sp);
+    const st = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.26, 6), spar); st.rotation.z = 0.5; st.position.set(0.28, 0.12, 0.12); g.add(st);
+    const rp = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.008, 4, 10), rope); rp.rotation.x = Math.PI / 2; rp.position.set(-0.3, 0.09, -0.2); g.add(rp);
+    // the planks they've had off her, floated in a raft at her side to be hauled up, and a cask (in the water: the beach
+    // is the fight's)
+    for (let k = 0; k < 4; k++) { const p = box(0.36, 0.016, 0.05, mat(tex('planks', '#7a6a54', 98)), -0.1 + (r() - 0.5) * 0.02, 0.085, 0.36 + k * 0.055, g); p.rotation.y = 0.15 + (r() - 0.5) * 0.1; }
+    const cask = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.1, 8), mat(null, '#5a4430')); cask.rotation.z = Math.PI / 2; cask.position.set(0.18, 0.1, 0.42); g.add(cask);
+    for (let k = 0; k < 3; k++) { const pl = box(0.3, 0.012, 0.045, hullM, -0.2 + r() * 0.3, 0.075, -0.45 + r() * 0.15, g); pl.rotation.y = r() * 3; }   // (loose planks adrift)
+  },
+});
+// ── the Tidemark's two boats waiting at their jetties (the owner, 2026-11-26: "the overland entrance to the dungeon just
+// stops at a dead end.. should there be a waiting ferry or something else obvious?"). Stood by convert.js (BOATS) off the
+// end of Gullwick's ferry jetty (the Drowned Mole's way in) and the Gull Isles' landing jetty, in the sea: presentation
+// only, no footprint. Each is a boat moored alongside the jetty's end, its painter made fast to a post on the jetty's
+// edge, a lantern on a pole over the post (lit by night: the way in reads at dusk), the oars shipped. Her boatman is a
+// cast figure stood in her stern by hybrid.js (npc_ferryman, npc_fleet_boatman), not part of this piece. The boat runs
+// along local x (bow +x), the jetty on her +z side; model y 0 is the sea floor and WL the water (as the Grace's).
+// `look`: Gullwick's ferry, tarred black-brown with a cream strake and red-brown thwarts; the Gull Fleet's boat sea-grey
+// with the fleet's yellow along her sheer and a yellow pennant on a staff at her stern.
+function skiff(g, r, look) {
+  const L = 0.56, B = 0.17, D = 0.12, F = WL + 0.035;              // length, half-beam, depth, her floor
+  const hullM = mat(tex('planks', look.hull, 71)), strakeM = mat(null, look.strake), thwartM = mat(null, look.thwart), oak = mat(null, '#5a4430');
+  hullM.side = THREE.DoubleSide;
+  const half = (t) => B * Math.pow(Math.sin(Math.PI * Math.min(1, 0.08 + t * 0.92)), 0.55), top = (t) => F + D + 0.035 * (t > 0.7 ? ((t - 0.7) / 0.3) ** 2 : 0) + 0.01 * (t < 0.2 ? ((0.2 - t) / 0.2) ** 2 : 0);
+  const N = 14, K = 8, P = [];
+  for (let i = 0; i <= N; i++) { const t = i / N, x = -L / 2 + L * t, b = half(t), y = top(t); const row = []; for (let k = 0; k <= K; k++) { const s = -1 + (2 * k) / K; row.push([x, y - (D + 0.03) * (1 - Math.abs(s) ** 2.2), b * s]); } P.push(row); }
+  const pos = [], uv = [];
+  for (let i = 0; i < N; i++) for (let k = 0; k < K; k++) { const a = P[i][k], b = P[i + 1][k], c = P[i + 1][k + 1], d = P[i][k + 1]; pos.push(...a, ...b, ...c, ...a, ...c, ...d); const U = (q) => q * 0.06 / TEX_UNITS, V = (q) => q * L / N / TEX_UNITS; uv.push(U(k), V(i), U(k), V(i + 1), U(k + 1), V(i + 1), U(k), V(i), U(k + 1), V(i + 1), U(k + 1), V(i)); }
+  { const row = P[0], cx = row[0][0], cy = (row[0][1] + row[K >> 1][1]) / 2; for (let k = 0; k < K; k++) { pos.push(...row[k], cx, cy, 0, ...row[k + 1]); uv.push(0, 0, 0.5, 0.5, 1, 0); } }   // (her transom, aft)
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geo.computeVertexNormals();
+  g.add(new THREE.Mesh(geo, hullM));
+  // her sheer strake in her colour, the gunwale over it, both sides
+  for (const sz of [-1, 1]) for (let i = 0; i < N; i++) {
+    const t0 = i / N, t1 = (i + 1) / N, x0 = -L / 2 + L * t0, x1 = -L / 2 + L * t1, z0 = sz * half(t0), z1 = sz * half(t1), y0 = top(t0), y1 = top(t1), len = Math.hypot(x1 - x0, z1 - z0, y1 - y0);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(len, 0.026, 0.012), strakeM); m.position.set((x0 + x1) / 2, (y0 + y1) / 2 - 0.022, (z0 + z1) / 2 + sz * 0.004); m.rotation.set(0, -Math.atan2(z1 - z0, x1 - x0), Math.atan2(y1 - y0, Math.hypot(x1 - x0, z1 - z0))); g.add(m);
+    const w = new THREE.Mesh(new THREE.BoxGeometry(len, 0.014, 0.02), oak); w.position.set((x0 + x1) / 2, (y0 + y1) / 2 + 0.004, (z0 + z1) / 2); w.rotation.copy(m.rotation); g.add(w);
+  }
+  box(L * 0.8, 0.008, B * 1.3, mat(tex('planks', '#7a6a54', 72)), -0.01, F - 0.004, 0, g);              // her floorboards
+  for (const x of [-0.12, 0.08]) box(0.045, 0.014, half((x + L / 2) / L) * 1.9, thwartM, x, F + 0.07, 0, g);   // the thwarts
+  // the oars shipped along her thwarts, blades forward
+  for (const sz of [-1, 1]) { box(0.44, 0.012, 0.012, oak, 0.02, F + 0.09, sz * 0.05, g); box(0.1, 0.006, 0.035, look.blade ? mat(null, look.blade) : oak, 0.22, F + 0.09, sz * 0.05, g); }
+  const coil = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.009, 4, 10), mat(null, '#8a7650')); coil.rotation.x = Math.PI / 2; coil.position.set(0.18, F + 0.01, -0.03); g.add(coil);
+  // the post on the jetty's edge beside her bow (+z), its foot on the sea floor, a ring of rope round its head; the
+  // painter from her stem to it; over it a lantern on a pole with an arm, hung out over her
+  const px = 0.14, pz = B + 0.07, post = mat(null, '#4a3a2c'), iron = mat(null, '#2e2c2a');
+  box(0.05, 0.36, 0.05, post, px, 0, pz, g);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.012, 4, 10), mat(null, '#8a7650')); ring.rotation.x = Math.PI / 2; ring.position.set(px, 0.33, pz); g.add(ring);
+  { const A = new THREE.Vector3(L / 2 - 0.01, top(1) - 0.01, 0), Bv = new THREE.Vector3(px, 0.32, pz - 0.02), l = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, A.distanceTo(Bv), 3), mat(null, '#8a7650'));
+    l.position.copy(A).add(Bv).multiplyScalar(0.5); l.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), Bv.clone().sub(A).normalize()); g.add(l); }
+  const lx = -0.16, lz = B + 0.08;
+  box(0.035, 0.74, 0.035, post, lx, 0, lz, g); box(0.16, 0.025, 0.025, post, lx, 0.72, lz - 0.06, g).rotation.y = Math.PI / 2;
+  box(0.006, 0.05, 0.006, iron, lx, 0.67, lz - 0.13, g);
+  const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.07, 0.055), mat(null, '#e0a050')); lamp.userData.glow = true; lamp.position.set(lx, 0.63, lz - 0.13); g.add(lamp);
+  box(0.075, 0.015, 0.075, iron, lx, 0.665, lz - 0.13, g); box(0.07, 0.012, 0.07, iron, lx, 0.59, lz - 0.13, g);
+  if (look.pennant) {                                              // the Gull Fleet's: a staff at her stern, the yellow pennant off it
+    box(0.014, 0.42, 0.014, oak, -L / 2 + 0.02, top(0), 0, g);
+    const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, -0.09, 0, -0.2, -0.05, 0.02], 3)); pg.computeVertexNormals();
+    const pm = new THREE.MeshStandardMaterial({ color: look.pennant, side: THREE.DoubleSide }), pen = new THREE.Mesh(pg, pm); pen.position.set(-L / 2 + 0.02, top(0) + 0.41, 0); pen.rotation.y = 0.5; g.add(pen);
+  }
+}
+Object.assign(TYPES, {
+  // Gullwick's ferry, at the end of the ferry jetty, her bow south toward the Drowned Mole, the jetty to her west
+  ferryboat(S, g, r) { const q = new THREE.Group(); q.rotation.y = -Math.PI / 2; g.add(q); skiff(q, r, { hull: '#3e3228', strake: '#d8cca8', thwart: '#7a3a2a' }); },
+  // a Gull Fleet boat at the Gull Isles' landing, the jetty to her south
+  fleetboat(S, g, r) { skiff(g, r, { hull: '#5a6066', strake: '#d0a830', thwart: '#3a3e44', blade: '#d0a830', pennant: '#d8b030' }); },
+});
 export const BUILD_TYPES = Object.keys(TYPES);
 
 export function makeBuilding(type, style, seed = 1, faceX = false) {

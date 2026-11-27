@@ -51,7 +51,6 @@ import { setFaceStyle, forgetFace } from './faces.js';
 // (GDD v1.79: every face is the painted head, faces.js paintedFace; ?faces=mesh the 3D parts, as before, for a comparison)
 if (typeof location !== 'undefined' && new URLSearchParams(location.search).get('faces') === 'mesh') setFaceStyle('mesh');
 import './ground.js';
-import { applyHires } from './hires.js';
 
 let ASSETS = '';                                              // (the game's assets/: createWorld's `assets`)
 const FOV = 1;                                                // (degrees: near enough orthographic, see above)
@@ -272,6 +271,14 @@ function figureFor(key, name, T) {
 // mouth and eyes), found once, skinned each frame.
 const STACK_EVERY = 0.14, STACK_SPARK = 5;                    // (a puff a seventh of a second; a spark every fifth)
 registerPresets({
+  // (v1.157) the Grace's boarders up out of the surf (hybrid.js: a boarder first seen): a burst of white water about
+  // their knees, falling back, and a few drops thrown higher
+  emberSurf: { mode: 'burst', motion: 'emit', texture: 'smoke', blending: 'normal', variants: 1, lit: 1, pulse: 0, tumble: 0, aspect: 1, streak: 0, fade: [0.02, 0.5], twinkle: 0, blink: 0, nightVisibility: 0,
+    count: 20, life: [0.7, 1.3], size: [0.45, 0.8], sizeEnd: 1.4, spawnSize: [0.9, 0.1, 0.9], burstSpeed: [0.8, 2.0], burstUp: [1.6, 3.2], gravity: -5, drag: 1.2, windInfluence: 0.2, spin: [0.2, 0.8],
+    color: '#f4fbff', colorEnd: '#7fa6b8', alpha: 0.95 },   // (round 1, 0.25–0.45 near-white: unseen against the sand)
+  emberSurfDrops: { mode: 'burst', motion: 'emit', texture: 'streak', blending: 'normal', variants: 1, lit: 1, pulse: 0, tumble: 0, aspect: 3, streak: 0.03, fade: [0, 0.3], twinkle: 0, blink: 0, nightVisibility: 0,
+    count: 16, life: [0.5, 0.9], size: [0.06, 0.09], sizeEnd: 0.3, spawnSize: [0.4, 0.1, 0.4], burstSpeed: [0.8, 2.0], burstUp: [2.5, 4.0], gravity: -9, drag: 0.6,
+    colors: ['#ffffff', '#d8ecf0', '#b0ccd4'], alpha: 0.9 },
   // the stack's smoke: grey, lit by the world, its colour white-balanced as it's let go (greyPuff); rising, swelling and
   // leaning off downwind (a burst, as Luminati's deathPoof: its pool and program)
   emberStackSmoke: { mode: 'burst', motion: 'emit', texture: 'smoke', blending: 'normal', variants: 1, lit: 1, pulse: 0, tumble: 0, aspect: 1, streak: 0, fade: [0.05, 0.6], twinkle: 0, blink: 0, nightVisibility: 0,
@@ -345,7 +352,7 @@ function puffStack(f, dt) {
 }
 /** the bosses' moments in Luminati's particles (renderer.js puffs, hybrid.js), each a burst where it happens */
 const _puff = new THREE.Vector3();
-const PUFFS = { strike: [['emberForgeSparks', 12, 0.55]], arm: [['emberArmSparks', 22, 0.3]], spoil: [['emberSpoilSmoke', 14, 0.6], ['emberSpoilEmbers', 8, 0.55]], vent: [['emberVentSlag', 12, 0.1], ['emberVentSmoke', 4, 0.2]] };
+const PUFFS = { surf: [['emberSurf', 20, 0.15], ['emberSurfDrops', 16, 0.2]], strike: [['emberForgeSparks', 12, 0.55]], arm: [['emberArmSparks', 22, 0.3]], spoil: [['emberSpoilSmoke', 14, 0.6], ['emberSpoilEmbers', 8, 0.55]], vent: [['emberVentSlag', 12, 0.1], ['emberVentSmoke', 4, 0.2]] };
 function placePuffs(list) {
   const P = game?.particles; if (!P || !list) return;
   for (const q of list) { const B = PUFFS[q.kind]; if (!B) continue; for (const [preset, n, lift] of B) { _puff.set(q.x, game.tileMap.getHeight(q.x, q.z) + lift, q.z); P.burst(preset, _puff, n); } }
@@ -444,6 +451,8 @@ function ownTextures(root) {
 //   'all': every kit piece, cards and all;
 //   'sprites': the baked sprites, as before.
 let envSprites = [], LANDMARKS = 'chosen';
+/** our kit's pieces that stand only while a region boss's window is open (convert.js `ring`: the Grace off the beach) */
+const ringPieces = [];
 const KIT_UNIT = 5, KIT_LIFT = 1.3, KIT = new Map();
 let KIT_MADE = new Map();   // (a level's: set aside with it, load())
 for (const e of ENV_LIST) if (e.build) KIT.set(e.id, e);
@@ -1487,6 +1496,21 @@ function buildTavern(pieces) {
       b.lathe('palace_gilt', [{ y: 0, r: 0.08 }, { y: 0.03, r: 0.05 }, { y: 0.18, r: 0.025 }, { y: 0.2, r: 0.05 }], { segments: 8, at: at(0.5, y, -0.2) });
       b.tinted([1.2, 1.15, 1.0], () => b.lathe('linen', [{ y: 0, r: 0.035 }, { y: 0.2, r: 0.032 }], { segments: 7, capTop: true, at: at(0.5, y + 0.2, -0.2) }));
       b.box(tavernGlass, [0.05, 0.09, 0.05], { at: at(0.5, y + 0.46, -0.2) });
+    } else if (p.k === 'hammock') {
+      // (docs/art-critic-pass-tidemark-step7.md) a hammock on a hulk's lower deck, in place of the barracks' bunk the sim
+      // stands there: the Grace's children's deck in the Sister's Cabin, the Gull Isles' gun deck. Two stanchions, the sling
+      // of sailcloth sagging low between them on its lanyards, a blanket left rolled in it; along its wall, small
+      const R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000, HL = 0.62, sw = (R(1) - 0.5) * 0.12;
+      const at = (u, y, v = 0) => (p.n === 'x' ? [p.x + v, y, p.z + u] : [p.x + u, y, p.z + v]), rot = (a) => (p.n === 'x' ? [a, 0, 0] : [0, 0, a]);
+      b.tinted(OAK, () => { for (const sg of [-1, 1]) { b.box('furniture_wood', [0.09, 1.25, 0.09], { at: at(sg * (HL + 0.12), FL + 0.625) }); b.box('furniture_wood', [0.16, 0.05, 0.16], { at: at(sg * (HL + 0.12), FL + 1.27) }); } });
+      const N = 6, yAt = (u) => FL + 0.42 + 0.22 * (u / HL) ** 2;
+      for (let k = 0; k < N; k++) {
+        const u0 = -HL + (2 * HL * k) / N, u1 = -HL + (2 * HL * (k + 1)) / N, a = Math.atan2(yAt(u1) - yAt(u0), u1 - u0);
+        b.tinted([0.98, 0.94, 0.84], () => b.box('linen', [Math.hypot(u1 - u0, yAt(u1) - yAt(u0)) + 0.01, 0.035, 0.42], { at: at((u0 + u1) / 2, (yAt(u0) + yAt(u1)) / 2, sw), rot: rot(a) }));
+      }
+      for (const sg of [-1, 1]) { const y0 = yAt(sg * HL), y1 = FL + 1.18, u0 = sg * HL, u1 = sg * (HL + 0.1), a = Math.atan2(y1 - y0, u1 - u0);
+        b.tinted([0.62, 0.5, 0.34], () => b.box('linen', [Math.hypot(u1 - u0, y1 - y0), 0.02, 0.02], { at: at((u0 + u1) / 2, (y0 + y1) / 2, sw), rot: rot(a) })); }
+      b.tinted([0.55, 0.42, 0.36], () => b.lathe('linen', [{ y: 0, r: 0.08 }, { y: 0.28, r: 0.08 }], { segments: 7, capTop: true, at: at(-HL * 0.35 + R(2) * 0.3, FL + 0.47, sw), rot: p.n === 'x' ? [0, 0, 0] : [Math.PI / 2, 0, 0] }));
     } else if (p.k === 'ppapers') {
       // papers fallen to the floor by the table, one with its seal
       const R = (k) => ((Math.imul(p.seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
@@ -1529,11 +1553,70 @@ function buildTavern(pieces) {
 }
 const TAV_H = 3.0, TAV_FLOOR = 1.0;
 const CR_SPRING = 1.0 + 2.25;   // (where the crypt's arches spring, over a figure's head: its walls stand four units, convert.js CR_BACK)   // (a back wall's height over the floor: convert.js TAV_BACK, level 8, over the floor's 2)
+// ── the Magma Vault's magma (convert.js magmaFlow; docs/art-critic-pass-magma-vault.md) ─────────────────────────────────
+// Its tiles as one flow: each a quad laid just over the floor (Luminati's floor is a solid block of two of our tiles a
+// side: a channel one of ours wide can't be cut into it), cut into a 4 × 4 grid, every vertex carrying how far
+// it is from an open edge (a side with no magma beyond it), so the crust gathers at the banks and a run of tiles is one
+// channel, not a row of squares. The surface is the floor's own world space through value noise, two layers drifting
+// different ways slowly over time (magmaT, the frame's), banded into crust, red, orange and yellow-white; unlit (it is
+// the light), the hottest over 1 so the bloom takes it; the frame's fog over it as over the floor. A lip of black rock
+// along each open edge. One draw for the surface and one for the lip, however many tiles.
+const magmaMats = []; let magmaT = 0;
+const MAGMA_NOISE = `
+float mh(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float mn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mh(i), mh(i + vec2(1.0, 0.0)), f.x), mix(mh(i + vec2(0.0, 1.0)), mh(i + vec2(1.0, 1.0)), f.x), f.y); }`;
+function buildMagma(cells) {
+  const g = new THREE.Group(); g.name = 'ember:magma';
+  const N = 4, pos = [], crust = [], idx = [], lip = [];
+  for (const [x, z, m] of cells) {
+    const y = game.tileMap.getHeight(x, z) + 0.025, b = pos.length / 3;   // (on the floor: its block is solid, a sunk surface was hidden under it)
+    // (x, z: the tile's middle in Luminati's units; a tile of ours is half a unit)
+    for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) {
+      const u = i / N, v = j / N;
+      // distance (in tiles) to the nearest open side: n (−z) 1, e (+x) 2, s (+z) 4, w (−x) 8
+      let d = 1;
+      if (!(m & 1)) d = Math.min(d, v); if (!(m & 4)) d = Math.min(d, 1 - v); if (!(m & 8)) d = Math.min(d, u); if (!(m & 2)) d = Math.min(d, 1 - u);
+      pos.push(x - 0.25 + u * 0.5, y, z - 0.25 + v * 0.5); crust.push(d);
+    }
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const a = b + j * (N + 1) + i; idx.push(a, a + N + 1, a + 1, a + 1, a + N + 1, a + N + 2); }
+    // the lip: a low black kerb on each open side, standing over the floor
+    const k = (cx, cz, w, d) => lip.push([cx, game.tileMap.getHeight(x, z), cz, w, d]);
+    if (!(m & 1)) k(x, z - 0.26, 0.56, 0.06); if (!(m & 4)) k(x, z + 0.26, 0.56, 0.06); if (!(m & 8)) k(x - 0.26, z, 0.06, 0.56); if (!(m & 2)) k(x + 0.26, z, 0.06, 0.56);
+  }
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('crust', new THREE.Float32BufferAttribute(crust, 1)); geo.setIndex(idx);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: true });
+  const u = { value: magmaT }; mat.userData.u = u;
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.uMagmaT = u;
+    sh.vertexShader = 'attribute float crust;\nvarying float vCrust;\nvarying vec2 vMW;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vCrust = crust; vMW = (modelMatrix * vec4(position, 1.0)).xz;');
+    sh.fragmentShader = 'uniform float uMagmaT;\nvarying float vCrust;\nvarying vec2 vMW;\n' + MAGMA_NOISE + '\n' + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+  { vec2 p = vMW * 3.2;
+    // (round 1: one flat bright band, a neon tube: cooler now, darker plates of crust drifting on it, the bright only in
+    // the cracks between them)
+    float a = mn(p + vec2(uMagmaT * 0.16, uMagmaT * 0.05)), b = mn(p * 2.4 - vec2(uMagmaT * 0.09, -uMagmaT * 0.17));
+    float heat = 0.6 * a + 0.4 * b;
+    heat *= smoothstep(0.0, 0.5, vCrust);                        // (cooler toward the banks)
+    float cr = smoothstep(0.5, 0.36, heat) * 0.92 + smoothstep(0.14, 0.0, vCrust) * 0.9;   // (crust: the cold plates, and the banks)
+    vec3 hot = mix(vec3(0.42, 0.07, 0.02), vec3(0.95, 0.3, 0.06), smoothstep(0.42, 0.62, heat));
+    hot = mix(hot, vec3(1.45, 0.78, 0.26), smoothstep(0.7, 0.86, heat));
+    diffuseColor.rgb = mix(hot, vec3(0.11, 0.05, 0.035), clamp(cr, 0.0, 1.0)); }`);
+  };
+  mat.customProgramCacheKey = () => 'ember-magma-2';
+  const surf = new THREE.Mesh(geo, mat); surf.name = 'ember:magma:surface'; g.add(surf); magmaMats.push(mat);
+  if (lip.length) {
+    const lg = []; for (const [cx, y, cz, w, d] of lip) { const q = new THREE.BoxGeometry(w, 0.09, d); q.translate(cx, y + 0.045, cz); lg.push(q); }
+    const merged = mergeGeometries(lg); for (const q of lg) q.dispose();
+    const lm = new THREE.Mesh(merged, new THREE.MeshStandardMaterial({ color: 0x1a1412, roughness: 0.95 })); lm.castShadow = false; lm.receiveShadow = true; lm.name = 'ember:magma:lip'; g.add(lm);
+  }
+  g.userData.dispose = () => { const i = magmaMats.indexOf(mat); if (i >= 0) magmaMats.splice(i, 1); geo.dispose(); mat.dispose(); };
+  return g;
+}
 /** our art of a level gone for good: its cards (and their sheets' textures, which Sprite3D's dispose leaves: a texture a
  * card leaked every load, 199 → 288 over four trips), its arches and its kit models */
 function dropEnv(list, made) {
   for (const s of list) {
-    game.engine.scene.remove(s); s.dispose?.(); s.userData?.sheet?.dispose?.();
+    game.engine.scene.remove(s); s.dispose?.(); s.userData?.sheet?.dispose?.(); s.userData?.dispose?.();   // (dispose: the magma's, its program's clock let go)
     // a prop's sheet (standOurs) shared by every piece of its kind on the floor: let go with the last of them
     const os = s.userData?.ourSheet; if (os) os.refs--;
   }
@@ -1545,7 +1628,7 @@ function sweepSheets() {
   for (const [c, sh] of ourSheets) if (sh.refs <= 0) { sh.texture.dispose(); ourSheets.delete(c); }
 }
 async function placeEnv(list, region) {
-  dropEnv(envSprites, KIT_MADE);
+  dropEnv(envSprites, KIT_MADE); ringPieces.length = 0;
   envSprites = []; KIT_MADE = new Map();
   if (!list?.length) { sweepSheets(); return; }
   const sets = ['env', `town-${region || 'vale'}`];
@@ -1556,11 +1639,15 @@ async function placeEnv(list, region) {
     if (p.canvas) { standOurs(p); continue; }
     if (p.arch) { const g = buildArch(p.arch); game.engine.scene.add(g); envSprites.push(g); continue; }
     if (p.tavern) { const g = buildTavern(p.tavern.pieces); game.engine.scene.add(g); envSprites.push(g); continue; }
+    if (p.seaMask) { seaMask = p.seaMask; if (seaLv) seaAir(seaLv, seaRegion, true); continue; }
+    if (p.magma) { const g = buildMagma(p.magma.cells); game.engine.scene.add(g); envSprites.push(g); continue; }
     const kit = KIT.get(p.id);
     if (kit && (LANDMARKS === 'all' || (LANDMARKS === 'chosen' && !p.card) || (LANDMARKS === 'doors' && DOORS.has(p.id)))) {
       // (on the ground round it, not the tile under its middle: the chapel stands in water the converter laid under it)
-      const H = (dx, dz) => game.tileMap.getHeight(p.x + dx, p.z + dz), y = Math.max(H(0, 0), H(0, 3), H(0, -3), H(3, 0), H(-3, 0));
+      // (here: on the ground under its middle alone: a boat moored off a jetty, its deck within three units, sat on the sea floor)
+      const H = (dx, dz) => game.tileMap.getHeight(p.x + dx, p.z + dz), y = p.y ?? (p.here ? H(0, 0) : Math.max(H(0, 0), H(0, 3), H(0, -3), H(3, 0), H(-3, 0)));   // (y: set outright, a piece past the level's edge: the Grace on the sea)
       const g = kitPiece(kit, p.x, y, p.z);
+      if (p.ring) { g.userData.ring = p.ring; g.visible = false; ringPieces.push(g); }   // (a region boss's set piece: shown in its window, frame's ringOn)
       game.engine.scene.add(g); envSprites.push(g); continue;
     }
     const f = at(p.id); if (!f) continue;
@@ -1636,6 +1723,7 @@ function skyFor(lv, region) {
   if (env.climate === 'arid' && !env.interior) { const want = ash ? 'ash' : 'arid'; if (skyShown !== want) { L.setKeyframes(ash ? ASH_KEYFRAMES : ARID_KEYFRAMES); skyShown = want; } }
   if (ash) reachAir();
   if (env.harbour) harbourAir();
+  seaAir(lv, region);
   if (env.interior || env.climate || env.season) return;                 // (underground: the ambient's ours; a climate's sky its own)
   const want = region === 'vale' ? 'dusky' : 'default';
   L.setKeyframes(want === 'dusky' ? DUSKY : DEFAULT_KEYFRAMES); skyShown = want;   // (each outdoor level: a climate before may have set its own)
@@ -1666,6 +1754,100 @@ const MURK = ['#6e5440', '#4c3e33', '#30302e', '#1c1e21'], MURK_CREST = '#8c7c6a
 // a harbour at night (the docks, docs/docks-dungeon.md): its water slate and near black, the fog's colour on it, little
 // glint; the mist's motes cold
 const HARBOUR = ['#1c262f', '#18212a', '#151d25', '#121920'];   // (round 3: slate, not cobalt; round 4: every band within a step of the body, the ripple dashes in the lightest read as static)
+// (v1.157, step 9: docs/art-critic-pass-tidemark.md) the Tidemark's sea past the level's edges. Luminati's outer
+// scenery continues the edge's height and rolls into wooded hills ("a cove, never an open sea"): off the east beach, at
+// Gullwick's bay and Tollhaven's harbour a forest stood across the water. Here, on the Tidemark's overland: every outer
+// ground vertex whose nearest edge tile is water is laid under the water line, its trees there hidden, and a strip of the
+// level's own water (its material: the shore texture clamps at the edge, so it reads as one sea) runs out from every wet
+// edge tile to the outer ground's reach. Land edges keep their hills and woods. Undone with the level (seaSheet).
+let seaSheet = null, seaStat = null, seaMat = null, seaDeep = null, seaMask = null, seaLv = null, seaRegion = null;   // (seaStat: what it did, for the captures' --stats)
+const SEA_REACH = 170;   // (Scenery.js outerGroundSteps' extent)
+/** a mesh's heights as built, kept on first touch and put back on every later one (seaAir decides afresh each pass) */
+function seaKeep(o, pa, ac) {
+  if (!o.userData.seaY) { o.userData.seaY = Float32Array.from({ length: pa.count }, (_, i) => pa.getY(i)); if (ac) o.userData.seaC = Float32Array.from({ length: ac.count }, (_, i) => ac.getY(i)); return; }
+  const Y = o.userData.seaY, C = o.userData.seaC; for (let i = 0; i < pa.count; i++) pa.setY(i, Y[i]); if (ac && C) for (let i = 0; i < ac.count; i++) ac.setY(i, C[i]);
+  pa.needsUpdate = true; if (ac) ac.needsUpdate = true;
+}
+function seaAir(lv, region, masked = false) {
+  if (!masked) seaMask = null;   // (a level's mask comes with its sprites, after: placeEnv calls again with it)
+  seaLv = lv; seaRegion = region;
+  if (seaSheet) { seaSheet.parent?.remove(seaSheet); seaSheet.geometry.dispose(); seaSheet = null; }
+  if (seaMat && seaMat.userData.of !== game?.world?.water?.material) { seaMat.dispose(); seaMat = null; }   // (a level's water is its own: the copy follows it)
+  const env = lv.environment || {}, W = game?.world, tm = game?.tileMap;
+  if (region !== 'tidemark' || env.interior || !W || !tm || !W.water?.material) return;
+  const Wd = lv.width || tm.width, Dd = lv.depth || tm.depth, wl = lv.waterLevel ?? 0.4;   // (the level's own size: Luminati's tile map runs a few tiles past it, and outside its rows a band of the outer ground stood unflattened)
+  // (wet: water, or the beach's sand, which on this coast always faces the sea: the sim's south-east corner is a spit of
+  // one bay's beach, and Luminati carried it on south as a green field with trees in the bay)
+  const wetAt = (i, j) => { const t = tm.tileAt(Math.max(0, Math.min(Wd - 1, i)), Math.max(0, Math.min(Dd - 1, j))); return !!(t && (t.water || t.type?.water || t.type?.top === 'sand')); };
+  const outside = (x, z) => x <= 0 || z <= 0 || x >= Wd || z >= Dd;   // (on the edge too: the outer ground's first row stood a hair over the water, a dark seam along the level's edge)
+  const edgeOnly = (x, z) => wetAt(Math.floor(Math.max(0, Math.min(Wd - 0.5, x))), Math.floor(Math.max(0, Math.min(Dd - 0.5, z))));
+  // (the sim's own sea past the crop where the mask has it, convert.js seaMask; past the mask, the edge's)
+  const M = seaMask, maskAt = (x, z) => { if (!M) return null; const i = Math.floor(x) - M.x0, j = Math.floor(z) - M.z0; return i < 0 || j < 0 || i >= M.w || j >= M.d ? null : M.rows[j][i] === '1'; };
+  const edgeWet = (x, z) => { const m = maskAt(x, z); return m === null ? edgeOnly(x, z) : m; };
+  seaStat = { flat: 0, hid: 0, kept: 0 };
+  // the outer ground under the sea
+  const og = W.outerGround;
+  if (og && (!og.userData.sea || masked)) {
+    og.userData.sea = true;
+    const v = new THREE.Vector3(), inv = new THREE.Matrix4();
+    og.updateMatrixWorld(true);
+    og.traverse((o) => {
+      if (!o.isMesh) return;
+      const pa = o.geometry.attributes.position; inv.copy(o.matrixWorld).invert(); let n = 0;
+      seaKeep(o, pa, null);   // (its own heights back first: a second pass, with the mask, decides afresh)
+      for (let i = 0; i < pa.count; i++) {
+        v.fromBufferAttribute(pa, i).applyMatrix4(o.matrixWorld);
+        if (!outside(v.x, v.z) || !edgeWet(v.x, v.z)) continue;
+        v.y = Math.min(v.y, wl - 0.9); v.applyMatrix4(inv); pa.setXYZ(i, v.x, v.y, v.z); n++; seaStat.flat++;
+      }
+      if (n) { pa.needsUpdate = true; o.geometry.computeVertexNormals(); o.geometry.computeBoundingSphere(); }
+    });
+  }
+  // the outer trees over it, tree by tree: the pieces are merged across land and sea (a trunk was left standing in the
+  // bay), so every vertex whose tree (its aCenter, the billboard's pivot, else itself) stands past a wet edge is dropped
+  // far under the ground, its pivot with it
+  const under = (o) => { for (let q = o; q; q = q.parent) if (/trees:outer/.test(q.name || '')) return true; return false; };
+  W.root.updateMatrixWorld(true);
+  const cw = new THREE.Vector3();
+  W.root.traverse((o) => {
+    if (!o.isMesh || !under(o)) return;
+    const pa = o.geometry.attributes.position, ac = o.geometry.attributes.aCenter, src = ac || pa; let n = 0;
+    seaKeep(o, pa, ac);
+    for (let i = 0; i < pa.count; i++) {
+      cw.fromBufferAttribute(src, i).applyMatrix4(o.matrixWorld);
+      if (!outside(cw.x, cw.z) || !edgeWet(cw.x, cw.z)) continue;
+      pa.setY(i, -200); if (ac) ac.setY(i, -200); n++;
+    }
+    if (n) { pa.needsUpdate = true; if (ac) ac.needsUpdate = true; o.geometry.computeBoundingSphere(); seaStat.hid += n; } else seaStat.kept++;
+  });
+  // the sheet: a quad out from each wet edge tile, and a square at each wet corner
+  const pos = [], push = (x0, z0, x1, z1) => pos.push(x0, wl, z0, x0, wl, z1, x1, wl, z1, x0, wl, z0, x1, wl, z1, x1, wl, z0), R = SEA_REACH;
+  if (M) {
+    // the mask's sea cells past the level (runs of a row merged), and from its outer border's wet cells strips on out
+    for (let j = 0; j < M.d; j++) { let a = -1; for (let i = 0; i <= M.w; i++) { const z = M.z0 + j, x = M.x0 + i, on = i < M.w && M.rows[j][i] === '1' && outside(x + 0.5, z + 0.5);
+      if (on && a < 0) a = i; if (!on && a >= 0) { push(M.x0 + a, z, M.x0 + i, z + 1); a = -1; } } }
+    const X0 = M.x0, Z0 = M.z0, X1 = M.x0 + M.w, Z1 = M.z0 + M.d;
+    for (let i = 0; i < M.w; i++) { if (M.rows[0][i] === '1') push(X0 + i, Z0 - R, X0 + i + 1, Z0); if (M.rows[M.d - 1][i] === '1') push(X0 + i, Z1, X0 + i + 1, Z1 + R); }
+    for (let j = 0; j < M.d; j++) { if (M.rows[j][0] === '1') push(X0 - R, Z0 + j, X0, Z0 + j + 1); if (M.rows[j][M.w - 1] === '1') push(X1, Z0 + j, X1 + R, Z0 + j + 1); }
+    if (M.rows[0][0] === '1') push(X0 - R, Z0 - R, X0, Z0); if (M.rows[0][M.w - 1] === '1') push(X1, Z0 - R, X1 + R, Z0); if (M.rows[M.d - 1][0] === '1') push(X0 - R, Z1, X0, Z1 + R); if (M.rows[M.d - 1][M.w - 1] === '1') push(X1, Z1, X1 + R, Z1 + R);
+  } else {
+  for (let i = 0; i < Wd; i++) { if (wetAt(i, 0)) push(i, -R, i + 1, 0); if (wetAt(i, Dd - 1)) push(i, Dd, i + 1, Dd + R); }
+  for (let j = 0; j < Dd; j++) { if (wetAt(0, j)) push(-R, j, 0, j + 1); if (wetAt(Wd - 1, j)) push(Wd, j, Wd + R, j + 1); }
+  if (wetAt(0, 0)) push(-R, -R, 0, 0); if (wetAt(Wd - 1, 0)) push(Wd, -R, Wd + R, 0); if (wetAt(0, Dd - 1)) push(-R, Dd, 0, Dd + R); if (wetAt(Wd - 1, Dd - 1)) push(Wd, Dd, Wd + R, Dd + R);
+  }
+  if (!pos.length) return;
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(new Float32Array(pos.length).map((_, k) => (k % 3 === 1 ? 1 : 0)), 3));
+  g.setAttribute('aTop', new THREE.Float32BufferAttribute(new Float32Array(pos.length / 3).fill(1), 1));
+  // (its own copy of the water's material, every uniform the level's own, live, but its shore one texel of open deep water:
+  // clamped at the edge, the level's shore texture made the sea past a beach all shallows and foam, a white field)
+  const src = W.water.material, mat = seaMat ||= Object.assign(src.clone(), { userData: { of: src } });
+  for (const k of Object.keys(src.uniforms)) mat.uniforms[k] = src.uniforms[k];
+  seaDeep ||= Object.assign(new THREE.DataTexture(new Uint8Array([255, 255, 128, 128]), 1, 1), { needsUpdate: true });
+  mat.uniforms.uShore = { value: seaDeep }; mat.uniforms.uShoreRect = { value: new THREE.Vector4(0, 0, 0, 0) };
+  seaSheet = new THREE.Mesh(g, mat); seaSheet.name = 'ember:sea'; seaSheet.receiveShadow = true; seaSheet.frustumCulled = false;
+  W.root.add(seaSheet);
+}
 function harbourAir() {
   const W = game?.world, u = W?.water?.uniforms; if (!u) return;
   if (W.waterBase) Object.assign(W.waterBase, { glint: 0, brightness: 0.95 }); else W.waterBase = { glint: 0, brightness: 0.95 };   // (the weather keeps the water's own glint and brightness and sets them every frame: its base ours; round 2, the specks back)
@@ -1928,6 +2110,9 @@ registerTextureSet((K) => {
     // the Fens' (world doc §3.2): the Toadking's mud, black and olive, a wet glint; the locks' slick blue-grey flags;
     // Vat Seven's flags stained sick green, slime in the joints; the abbey's pale cloister stone gone green-grey
     fen_mud: { px: [64, 64], normalScale: 0.5, gen: recolor('dirt', P(['#2c271e', '#3a3428', '#4a4232', '#5a503c', '#6a5e46', '#7a6c52', '#8a7a5e']), (s, x, y, i, t, ctx) => { if (K.hash2(x, y, ctx.seed + 5) > 0.985) s.set(x, y, WET[1]); }) },
+    // (step 9) the Drowned Mole's sea walls: irregular granite flags a unit or so across (the inn's layout), warm wet grey,
+    // dark joints with the sea's green in them (convert.js 'µ': the locks' blue tile grid read as a bathroom floor)
+    mole_flag: { px: [64, 64], normalScale: 0.8, gen: (s) => tavernFlags(s, K, P(['#23272a', '#4b4a46', '#57554f', '#625f58', '#6d6961', '#78736a', '#837d73']), true) },
     wet_flag: { px: [64, 64], normalScale: 0.6, gen: recolor('stone_tiles', P(['#2c3438', '#3a454a', '#4a565c', '#5a676e', '#6a7880', '#7c8a92', '#909ea4']), (s, x, y, i, t, ctx) => { if (t > 0.7 && K.hash2(x, y, ctx.seed + 5) > 0.93) s.set(x, y, WET[0]); }) },
     sick_flag: { px: [64, 64], normalScale: 0.6, gen: recolor('stone_tiles', P(['#2c3224', '#3a422e', '#4a5438', '#5a6544', '#6a7650', '#7a865c', '#8a9668']), (s, x, y, i, t, ctx) => { if (t < 0.14 && K.hash2(x >> 1, y >> 1, ctx.seed + 7) < 0.8) s.set(x, y, SLIME[(x + y) & 1]); }) },
     abbey_flag: { px: [64, 64], normalScale: 0.6, gen: recolor('stone_tiles', P(['#2e3430', '#3e4540', '#4f5650', '#606860', '#717970', '#838a80', '#969c90'])) },
@@ -2360,6 +2545,8 @@ const WARN = [255, 86, 30], WARN_HOT = [255, 238, 220], WARN_INK = [24, 6, 4];
 // (v1.154) the Canticle's: a pale gold, a near-white at its moments, a warm dark under its front so it holds on a lit floor
 const SONG = [255, 222, 150], SONG_HOT = [255, 246, 222], SONG_INK = [44, 32, 12];
 // (v1.147) the First Pilgrim's gaze: the Ember's orange, hotter than the warnings' red; his sigil a deep red
+/** the Grace's broadside's lane: the sea's cold grey-blue, its fill a paler foam (not the Pilgrim's orange sight) */
+const SHOT_LANE = [120, 150, 176], SHOT_EDGE = [214, 232, 240];
 const GAZE = [255, 150, 50], SIGIL = [235, 36, 28], SIGIL_HOT = [255, 92, 60], GAZE_EYE = 4.3, GAZE_FWD = 0.45;   // (the eye's height over his feet and how far before them, units: round G2, measured on his model in the gaze's frames, drawn ×1.5)
 // a beam: a cylinder from his eye to the lane's far end, additive, unlit, pooled
 let BEAM_GEO = null, gazeFlare = 0; const beamPool = [];
@@ -2450,7 +2637,6 @@ function cardAlpha(mat, uv) {
   return d.px[(y * d.w + x) * 4 + 3];
 }
 let CARRY_UP = 6, CARRY_GAIN = 1.6;   // (the carry light over the models: its height and strength; settings({ carryUp, carryGain }) for look-dev)
-let DLOOK = '';   // (a spike: ?dlook=, settings({ dlook }))
 let blastLight = null, carryLight = null, carryLevel = -1, focusSpin = 0, frameAmbient = null, inside = false;
 
 // ── two skills in Luminati's own looks (renderer.js spells; docs/combat-fx.md "Frost Nova and Turn Undead on Luminati") ─
@@ -2494,6 +2680,60 @@ function freeSpell(rec) {
   for (const h of rec.crystals) SK.crystals.free(h);
   for (const h of rec.quads) SK.quads.free(h);
   if (rec.gf >= 0) SK.frost.free(rec.gf);
+}
+// (v1.157) the Grace's broadside (docs/art-critic-pass-tidemark.md): for each lane landed this second, at its sea end
+// (the ship's side) the guns' flash and their smoke rolling up and drifting, and along it the iron: three balls each
+// skipping up the lane from the water, a splash where one strikes the sea and a kick of sand where it strikes the beach,
+// each bounce lower, rolling to a stop at the lane's end. Its own records by the tell's key; the shot are small iron
+// meshes of one pool, the flash, smoke, splashes and kicks the spells' quads.
+const broadsides = [], bsLive = new Map(), shotPool = []; let shotMat = null;
+function shotMesh(i) {
+  if (!shotPool[i]) { shotMat ||= new THREE.MeshStandardMaterial({ color: 0x3a3a42, roughness: 0.45, metalness: 0.5 }); const m = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), shotMat); m.castShadow = true; game.engine.scene.add(m); shotPool[i] = m; }
+  return shotPool[i];
+}
+function broadside(list, dt) {
+  const K = list.length || bsLive.size ? spellKit() : null; if (!K) { for (const m of shotPool) if (m.visible) m.visible = false; return; }
+  const seen = new Set(), ns = { n: 0 };
+  for (const t of list) {
+    seen.add(t.key);
+    let rec = bsLive.get(t.key);
+    if (!rec) { rec = { flash: K.quads.alloc(), smoke: [0, 1, 2].map(() => K.quads.alloc()), kicks: [0, 1, 2, 3, 4, 5].map(() => K.quads.alloc()), seed: Math.abs(Math.round(t.x * 37 + t.z * 91 + t.dx * 53)) % 97, t, L: null }; bsLive.set(t.key, rec); }
+    rec.t = t; rec.L = t.land;
+    shotFrame(rec, t, t.land, ns);
+  }
+  // (the sim lets a landed tell go after 0.6 s: the cannonade and the shot play on here, on the frame's clock, to their end)
+  for (const [key, rec] of bsLive) {
+    if (seen.has(key)) continue;
+    if (rec.L != null && rec.L < 3.2) { rec.L += dt; shotFrame(rec, rec.t, rec.L, ns); continue; }
+    for (const h of [rec.flash, ...rec.smoke, ...rec.kicks]) K.quads.free(h); bsLive.delete(key);
+  }
+  for (let i = ns.n; i < shotPool.length; i++) if (shotPool[i].visible) shotPool[i].visible = false;
+}
+/** one lane's moment: before it lands (L null) the guns' smoke and the match; landed, L s since */
+function shotFrame(rec, t, L, ns) {
+  const y0 = game.tileMap.getHeight(t.x, t.z), len = t.r;
+  if (L == null) {
+    q(rec.flash, { frame: 'dragonEmbers', index: Math.floor(performance.now() / 120) % 2, x: t.x, y: y0 + 0.9, z: t.z, mode: 'billboard', scale: 0.6, r: 1.8, g: 0.8, b: 0.3, a: 0.5 + 0.5 * t.p, halo: 1 });
+    rec.smoke.forEach((h, i) => q(h, { frame: 'dust', index: i % 3, x: t.x - t.dz * (i - 1) * 0.8, y: y0 + 0.8 + 0.2 * i, z: t.z + t.dx * (i - 1) * 0.8, mode: 'billboard', scale: 1.2, r: 0.7, g: 0.7, b: 0.74, a: 0.3 * t.p }));
+    rec.kicks.forEach((h) => q(h, { frame: 'dust', index: 0, x: 0, y: -500, z: 0, mode: 'billboard', a: 0 }));
+    return;
+  }
+  // landed: the flash (a third of a second white-orange), the smoke rolling out and up for two seconds and more
+  q(rec.flash, { frame: 'dragonBlast', index: Math.min(5, Math.floor(L * 20)), x: t.x, y: y0 + 0.9, z: t.z, mode: 'billboard', scale: 2.4, r: 2.4, g: 1.5, b: 0.6, a: L < 0.35 ? 1 : 0, halo: 1 });
+  rec.smoke.forEach((h, i) => { const k = Math.min(1, L / 2.6); q(h, { frame: 'dust', index: Math.min(2, Math.floor(k * 3)), x: t.x - t.dz * (i - 1) * 0.9 + t.dx * k * 0.6, y: y0 + 0.9 + 1.4 * k + 0.2 * i, z: t.z + t.dx * (i - 1) * 0.9 + t.dz * k * 0.6, mode: 'billboard', scale: 1.6 + 2.6 * k, r: 0.8, g: 0.8, b: 0.82, a: 0.8 * (1 - k) }); });
+  // the iron: three balls, each a little behind the last, skipping up the lane: a hop every unit and a half, lower each time
+  for (let b = 0; b < 3; b++) {
+    const tb = L - b * 0.08 - (rec.seed % 5) * 0.01, m = shotMesh(ns.n++);
+    if (tb <= 0) { m.visible = false; continue; }
+    const end = len - b * 0.6, sp = 26, d = Math.min(end, tb * sp * Math.exp(-tb * 0.55)), hop = 1.6, ph = (d % hop) / hop, n = Math.floor(d / hop);
+    const off = (b - 1) * t.w * 0.45, x = t.x + t.dx * d - t.dz * off, z = t.z + t.dz * d + t.dx * off;
+    const hgt = 0.55 * Math.exp(-n * 0.55) * Math.sin(Math.PI * ph) * (d < end - 0.05 ? 1 : 0);
+    m.visible = tb < 3.0; m.position.set(x, game.tileMap.getHeight(x, z) + 0.17 + hgt * 1.4, z);
+    // where it strikes (each hop's landing): a splash on the sea, a kick of sand on the beach, a breath long
+    const kh = rec.kicks[b * 2 + (n % 2)], kx = t.x + t.dx * n * hop - t.dz * off, kz = t.z + t.dz * n * hop + t.dx * off, wet = game.tileMap.getHeight(kx, kz) < 0.5;
+    q(kh, { frame: 'dust', index: Math.min(2, Math.floor(ph * 3)), x: kx, y: game.tileMap.getHeight(kx, kz) + 0.25 + 0.3 * ph, z: kz, mode: 'billboard', scale: 0.9 + 0.9 * ph,
+      r: wet ? 1.0 : 0.95, g: wet ? 1.05 : 0.84, b: wet ? 1.1 : 0.62, a: tb < 2.6 && n > 0 && d < end - 0.05 ? 0.9 * (1 - ph) : 0 });
+  }
 }
 // (v1.154) burning pitch (battle.js hazards 'pitch', hybrid.js): over the tar pool and its rim (frame()), flames licking up
 // across it, embers glowing on it, a smoke wisp off it; as it lands, a splash of fire. Kept a patch at a time by its key,
@@ -2969,7 +3209,6 @@ const api = {
         await placeEnv(sprites, region);
       }
       curEnvKey = envKey;
-      if (inside && /b/.test(DLOOK)) { const r = applyHires(game.tileMap, game.engine?.renderer); globalThis.__dlook = r; }   // (a spike: ?dlook=b|bc, hires.js)
     })();
     try { await building; } finally { loading = false; }
     return id === levelId;
@@ -2977,7 +3216,6 @@ const api = {
   /** the menu's Graphics: the depth of field */
   settings(o = {}) {
     if (o.dof) dof = o.dof;
-    if (typeof o.dlook === 'string') DLOOK = o.dlook;
     // the resolution (the menu's: settings.js). Luminati draws at the screen's density up to PIXEL_RATIO within a budget of
     // 2.1 million pixels (its resolution controller: 2.53× on a 390 × 844 phone), and steps its render scale down when the
     // GPU's timer says a frame is slow, which iOS never tells it (no timer queries: the owner's phone drew every frame at
@@ -3100,7 +3338,7 @@ const api = {
     // sweep's fan, each filling from nothing to its edge as it winds (p 0..1), white as it lands (hit: 1 → 0 after it)
     // (the Reach's: the Weighmaster's 'scales' a pan coming down over its circle, a brass ring inside the red; the Stoker's
     // 'vent' the floor glowing slag-orange, its heart hotter as it comes, not the Kingstone's red)
-    let np = 0, nbm = 0, sigil = null; gazeFlare = 0;
+    let np = 0, nbm = 0, sigil = null; gazeFlare = 0; broadsides.length = 0;
     for (const t of f.tells || []) {
       // (v1.154) Lucan's Canticle: a song going out from him, not a blow coming (nothing lands where it passes). Its front a
       // pale gold band out to where it is (p: the song's share sung), a warm dark line under it so it holds on the lit
@@ -3135,6 +3373,17 @@ const api = {
       // (v1.147) the First Pilgrim's gaze: a lane from his feet, filling outward as it winds, its edges dark; his sight
       // along it, a thin line from the eye in the wind's last part; landed, the beam, white-hot in its orange, gone in
       // half a second; a red sigil turning at his feet while he looks (docs/art-critic-pass-pilgrim.md)
+      // (v1.157) the Grace's broadside (a gaze from the sea, hybrid.js `sea`): not the Pilgrim's sight. A lane of the sea's
+      // cold grey-blue up from the water, filling toward the beach as the guns are laid, a dark edge under it; landed, the
+      // shot's white-hot strip fading, and broadside() the cannonade at the ship's end and the iron skipping up the lane
+      if (t.kind === 'gaze' && t.sea) {
+        const tx = t.x + t.dx * t.r, tz = t.z + t.dz * t.r;
+        placeLane(groundMesh('lane', nk.lane++), t.x, t.z, tx, tz, 1, t.w * 1.3, WARN_INK, 0.38 * out);
+        placeLane(groundMesh('lane', nk.lane++), t.x, t.z, tx, tz, 1, t.w, hot ? WARN_HOT : SHOT_LANE, (0.12 + 0.12 * t.p) * out);
+        placeLane(groundMesh('lane', nk.lane++), t.x, t.z, tx, tz, e, t.w * 0.45, hot ? WARN_HOT : SHOT_EDGE, (0.3 + 0.4 * t.p) * out);
+        broadsides.push(t);
+        continue;
+      }
       if (t.kind === 'gaze') {
         const tx = t.x + t.dx * t.r, tz = t.z + t.dz * t.r;
         placeLane(groundMesh('lane', nk.lane++), t.x, t.z, tx, tz, 1, t.w * 1.3, WARN_INK, 0.42 * out);
@@ -3172,6 +3421,7 @@ const api = {
         placeGround(groundMesh('wrim', nk.wrim++), t.x, t.z, t.r, col, (0.75 + 0.25 * t.p) * out);
       }
     }
+    broadside(broadsides, f.dt || 0);
     for (let i = np; i < panPool.length; i++) if (panPool[i].visible) panPool[i].visible = false;
     for (let i = nbm; i < beamPool.length; i++) if (beamPool[i].visible) beamPool[i].visible = false;
     if (sigil) {
@@ -3220,6 +3470,8 @@ const api = {
       else blastLight.off();
     }
     placeSpells(f.spells || [], f.dt || 0, f.ambient?.lamps, !!(f.rings && f.rings.length), f.hazards);
+    for (const g of ringPieces) g.visible = g.userData.ring === (f.ringOn || null);
+    if (magmaMats.length) { magmaT += Math.min(0.1, f.dt || 0); for (const m of magmaMats) if (m.userData.u) m.userData.u.value = magmaT; }
     // underground, the lights' flicker held to CALM_FLICKER (the owner, 2026-11-11: "Player and npc characters flicker in
     // the dungeon not overland. Probably due to torch lighting effect"): Luminati's wall torch swings its light ±38 %
     // (flicker 0.45) 2.6 times a second, and a figure by a wall, close to it, took the whole swing while the floor beyond
@@ -3291,7 +3543,7 @@ const api = {
   ground(x, z) { return game?.tileMap ? game.tileMap.getHeight(x, z) : null; },
   get stats() {
     const shown = (k) => groundPools[k].filter((m) => m.visible).length;
-    return { bits: [...pools.entries()].filter(([sh]) => sh.name === 'ember-bit').reduce((n, [, p]) => n + p.filter((s) => s.visible).length, 0), water: WATER.mesh && WATER.mesh.visible ? WATER.mesh.count : 0, fig: figGlow, lit: Math.round(figLit * 100) / 100, beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), warns: shown('wrim'), lanes: shown('lane'), pans: panPool.filter((m) => m.visible).length, spells: spellLive.size, dome: SK && SK.domeOf ? 1 : 0, blades: SK ? SK.blades.count - (SK.warmN > 0 ? 2 : 0) : 0, crystals: SK ? SK.crystals.count - (SK.warmN > 0 ? 1 : 0) : 0, frost: SK ? SK.frost.count - (SK.warmN > 0 ? 1 : 0) : 0, spellLight: spellLight && SK ? 1 : 0, focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0) + [...figs.values()].filter((q) => q.root.visible).length, models: [...figs.values()].filter((q) => q.root.visible).length, modelNames: [...new Set([...figs.values()].filter((q) => q.root.visible).map((q) => q.name))], figErr, figFailed: [...templates.values()].filter((t) => t === false).length, pr: game?.engine?.pixelRatio ?? null, dpr: devicePixelRatio || 1, modelMeshes: [...templates.values()].filter(Boolean).map((t) => t.meshes.after).reduce((a, b) => a + b, 0), modelMeshesBefore: [...templates.values()].filter(Boolean).map((t) => t.meshes.before).reduce((a, b) => a + b, 0), figures: FIGURES, atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
+    return { bits: [...pools.entries()].filter(([sh]) => sh.name === 'ember-bit').reduce((n, [, p]) => n + p.filter((s) => s.visible).length, 0), water: WATER.mesh && WATER.mesh.visible ? WATER.mesh.count : 0, fig: figGlow, lit: Math.round(figLit * 100) / 100, beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), warns: shown('wrim'), lanes: shown('lane'), pans: panPool.filter((m) => m.visible).length, spells: spellLive.size, dome: SK && SK.domeOf ? 1 : 0, blades: SK ? SK.blades.count - (SK.warmN > 0 ? 2 : 0) : 0, crystals: SK ? SK.crystals.count - (SK.warmN > 0 ? 1 : 0) : 0, frost: SK ? SK.frost.count - (SK.warmN > 0 ? 1 : 0) : 0, spellLight: spellLight && SK ? 1 : 0, focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0) + [...figs.values()].filter((q) => q.root.visible).length, models: [...figs.values()].filter((q) => q.root.visible).length, modelNames: [...new Set([...figs.values()].filter((q) => q.root.visible).map((q) => q.name))], figErr, figFailed: [...templates.values()].filter((t) => t === false).length, pr: game?.engine?.pixelRatio ?? null, dpr: devicePixelRatio || 1, modelMeshes: [...templates.values()].filter(Boolean).map((t) => t.meshes.after).reduce((a, b) => a + b, 0), modelMeshesBefore: [...templates.values()].filter(Boolean).map((t) => t.meshes.before).reduce((a, b) => a + b, 0), figures: FIGURES, atlases: atlases.size, env: envSprites.length, sky: skyShown, sea: seaStat, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
       programs: game?.engine?.renderer?.info?.programs?.length ?? null };
   },
 };

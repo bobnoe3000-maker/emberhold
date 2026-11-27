@@ -32,7 +32,7 @@ export const PAR = {
   // one floor, no boss, and the secrets: pace.mjs walked to their end as the stars do (v1.146: the end room's chest, or the
   // vault), 3 seeds: medians 3.9, 5.0 (the inn, once its cellar hall had its chest), 6.6, 3.9, 7.5 min
   haddow_crypt: [4, 6], shuttered_inn: [5, 8], lamp_fort: [5, 7],   // (v1.151: the Lamp Fort, 4.1)
-  ninth_milestone: [7, 10], reedholm_undercroft: [4, 6], ninth_vault: [8, 12],
+  ninth_milestone: [7, 10], reedholm_undercroft: [4, 6], ninth_vault: [8, 12], sisters_cabin: [8, 12],
 };
 
 /** the stars a finished run earns @param {string} site @param {number} secs @param {number} downs @returns {number} */

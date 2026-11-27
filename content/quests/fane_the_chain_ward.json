@@ -1,0 +1,41 @@
+{
+  "id": "fane_the_chain_ward",
+  "kind": "errand",
+  "title": "The Chain Ward",
+  "giver": "fane",
+  "region": "tidemark",
+  "level": [
+    33,
+    60
+  ],
+  "after": [
+    "ch4_low_water"
+  ],
+  "summary": "Mistress Fane keeps the ward on Tollhaven's harbour chain, written in salt on every link. The drowned bosuns' whistles on the Drowned Mole are fouling it. She wants three, to learn the call and write the ward to ignore it.",
+  "steps": [
+    {
+      "id": "mole",
+      "journal": "Take the ferry from Gullwick to the Drowned Mole and defeat three bosuns, the drowned's elites. They lead every fifth wave, whistling.",
+      "objectives": [
+        {
+          "type": "elites",
+          "site": "drowned_mole",
+          "count": 3,
+          "label": "Bosuns in the Drowned Mole"
+        }
+      ]
+    }
+  ],
+  "ready": "Three bosuns' whistles. Take them to Mistress Fane by the well in Tollhaven's square.",
+  "done": "Fane found the call that fouls the ward: all hands. She wrote every link of the chain to hear it and do nothing.",
+  "rewards": {
+    "share": 0.35,
+    "lv": 34,
+    "gold": 500
+  },
+  "dialogue": {
+    "file": "fane",
+    "offer": "fane_ward_offer",
+    "turnin": "fane_ward_turnin"
+  }
+}

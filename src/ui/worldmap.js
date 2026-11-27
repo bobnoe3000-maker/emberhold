@@ -367,11 +367,12 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap, ring
   // the region bosses on the map: the Kingstone's stones once the Fens are open; Furnace Nine's mouth once the Reach is and
   // it's been broken (v1.126: before that it's the Stoker's lamp, the story's to find)
   // (v1.147: a land of the game's, LANDS: the Heights aren't one yet, and landOpen reads an unknown land as the Vale)
-  const ringsShown = () => Object.values(RINGS).filter((G) => LANDS[G.region] && EMBERFALL[G.region] && sim.landOpen(G.region) && (!G.lamp || (S().lampsBroken || []).includes(G.lamp)));
+  const ringsShown = () => Object.values(RINGS).filter((G) => LANDS[G.region] && EMBERFALL[G.region] && sim.landOpen(G.region) && (!G.lamp || (S().lampsBroken || []).includes(G.lamp)) && (!G.after || sim.quests.status(G.after) === 3));   // (v1.157: the Grace once Low Water is done)
   const RING_WORDS = {
     kingstone: { place: 'the old stones', verb: 'stands', title: 'The old stones', sub: 'The Greywater Fens · the Kingstone stands the first 15 minutes of every hour', ground: 'the ring', where: 'In the Greywater Fens, north-east of Saltmere.' },
     furnace_nine: { place: 'the Vault’s mouth', verb: 'burns', title: 'The Vault’s mouth', sub: 'The Cinder Reach · Furnace Nine burns the first 15 minutes after every half hour', ground: 'its ground', where: 'In the Cinder Reach, up the track north of the Cinderworks.' },
     first_pilgrim: { place: 'the Lip', verb: 'stands', title: 'The Lip', sub: 'The Pale Heights · the First Pilgrim stands the first 15 minutes after every half hour', ground: 'his ground', where: 'In the Pale Heights, at the head of the Pilgrims’ Stair.' },   // (v1.147)
+    the_grace: { place: 'the wreckers’ beach', verb: 'stands in', title: 'The wreckers’ beach', sub: 'The Tidemark · the Grace stands in the first 15 minutes of every hour', ground: 'the beach', where: 'In the Tidemark, south-west of Gullwick.' },   // (v1.157)
   };
   // a boss's pin: lit while it stands (a window open, not yet stood in), warm when it's about to
   function ringPin(/** @type {number} */ x, /** @type {number} */ y, /** @type {typeof RING} */ G = RING) {

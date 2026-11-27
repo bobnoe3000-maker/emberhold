@@ -18,7 +18,7 @@
 // §5; the overlands lose a few tiles of their edges).
 // Pure: reads the world, writes nothing to it (presentation only, AGENTS.md rule 2).
 import { ENV_FOOT } from '../sim/envfoot.js';
-import { G, REACH } from '../sim/outdoor.js';
+import { G, REACH, TIDEMARK } from '../sim/outdoor.js';
 import { FLOOR_Z } from '../sim/level.js';
 import { PROP_LIGHT } from '../render/gsprite.js';
 import { KIT_TINT } from '../render/palette.js';
@@ -71,6 +71,9 @@ export const LEGEND = {
   S: { top: 'forge_flag', side: 'forge_stone', walkable: true }, j: { top: 'forge_flag', side: 'forge_stone', walkable: false },
   l: { top: 'magma_floor', side: 'basalt_cliff', walkable: true }, t: { top: 'fen_mud', side: 'dirt_side', walkable: true },
   u: { top: 'roof_thatch', side: 'wood_planks_dark', walkable: false }, w: { top: 'wet_flag', side: 'stone_wall', walkable: true },
+  // (step 9, docs/art-critic-pass-tidemark.md) the Drowned Mole's moles: big dressed granite flags, wet, warm grey (the
+  // locks' blue-grey tiles read as a bathroom's grid out on a sea wall)
+  'µ': { top: 'mole_flag', side: 'stone_wall', walkable: true },
   z: { top: 'sick_flag', side: 'stone_wall', walkable: true }, p: { top: 'abbey_flag', side: 'stone_wall', walkable: true },
   // (round 2: the dungeons' cobbles a mid warm grey, the charcoal ones read black underground; the slag hills' tops lighter
   // than their sides: all basalt, they stood as black stepped blobs)
@@ -199,8 +202,8 @@ const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, d: 2, G: 1, g: 0 };
 /**
  * The world the sim is in, as a Luminati level, and the pieces of our own art to stand in it.
  * @param {any} w the sim's world (sim.world)
- * @param {{ region?: string, stairs?: string, walls?: string, dlook?: string }} [o]
- * @returns {{ level: any, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps: number }, sprites: { id?: string, prop?: string, tx?: number, ty?: number, flat?: boolean, x: number, z: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
+ * @param {{ region?: string, stairs?: string, walls?: string}} [o]
+ * @returns {{ level: any, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps: number }, sprites: { id?: string, prop?: string, tx?: number, ty?: number, flat?: boolean, here?: boolean, x: number, z: number }[], figures?: { name: string, x: number, z: number, air: number, row: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
  */
 export function convertWorld(w, o = {}) {
   return w.arena ? arena(w, o) : w.kind === 'dungeon' ? dungeon(w, o) : outdoor(w, o.region || w.region || 'vale');
@@ -244,10 +247,33 @@ const SITE_DOORS = [[/_longhouse_\d/, 'yards', 'reach_assayhouse'], [/_keep_\d/,
 /** Furnace Nine's yard (the region boss's ground, camps.js reach_mouth: the furnace yard west of the Vault's ruin, its
  *  arena cleared of scatter): char and cracked earth to its reach, slag heaps just past its arena, vents inside them */
 const FURNACE_YARD = { heaps: 20, vents: 10 };
+/** the Grace's place in her window (sim tiles): in Gullwick's bay east-south-east of the wreckers' camp (161.5, 246.5),
+ *  her near side where her broadside's lanes begin (about 189, 255: past the arena's edge), lying east and west; partly past
+ *  the level's crop, on world.js's sea (round 1, at 186, 252 and full size, she sat against the shore and read beached) */
+const GRACE_SHIP = [192, 259];
+/** the wreckers' wreck: in the shallows off their camp's south shore (the sand ends at y 254 there), all of it in the water */
+const WRECKAGE = [173, 257];
+/** the boats moored at Tollhaven's jetties (sim tiles, the town's: each her middle 2.4 tiles east of a jetty's edge) */
+const MOORED = [[150, 28], [170, 21], [190, 33]];
+/** the Tidemark's two waiting boats (town.json tidemark_ferry, tidemark_fleetboat; buildkit.js skiff): her middle, in sim
+ *  tiles, alongside the jetty's end (outdoor.js: the ferry jetty from [198, 234] to TIDEMARK.ferry, the landing jetty from
+ *  [164, 18] to TIDEMARK.isles), her post on its edge; her lantern and the boatman's place in her stern, from her middle;
+ *  the boatman's facing (an atlas row: toward the jetty and the camera). BOAT_FLOOR: her floorboards over the sea floor,
+ *  Luminati's units (buildkit.js skiff F, 0.115 of a kit unit, × KIT_UNIT) */
+const BOATS = [
+  { site: 'drowned_mole', id: 'tidemark_ferry', at: [207.4, 254.5], lamp: [-1.2, -1.6], stern: [0, -1.6], man: 'npc_ferryman', row: 1 },
+  { site: 'gull_isles', id: 'tidemark_fleetboat', at: [177, 8.8], lamp: [-1.6, 1.2], stern: [-1.6, 0], man: 'npc_fleet_boatman', row: 1 },
+];
+const BOAT_FLOOR = 0.575;
+/** the Grace's middle east of the Sister's Cabin's door (sim tiles: outdoor.js TIDEMARK.reef), her bow on the shallows */
+const GRACE_OFF = 13;
 function outdoor(w, region) {
   // the map, its approach roads (a town's exits lie past its edge) and a margin; never past the grid the sim built
   let bx0 = 0, by0 = 0, bx1 = w.W, by1 = w.H;
   for (const e of w.exits || []) { bx0 = Math.min(bx0, e.x0); by0 = Math.min(by0, e.y0); bx1 = Math.max(bx1, e.x1); by1 = Math.max(by1, e.y1); }
+  // (step 9, docs/art-critic-pass-tidemark.md) Tollhaven's harbour: its jetties run out past the town's edge into the
+  // grid's margin (outdoor.js buildTown), and the crop cut them off: the quay ended in open water. Its deck roads kept in
+  if (region === 'tidemark' && w.kind !== 'overland') for (const r of w.roads || []) if (r.surface === 'deck') for (const [x, y] of r.pts) { bx0 = Math.min(bx0, x - 4); by0 = Math.min(by0, y - 4); bx1 = Math.max(bx1, x + 4); by1 = Math.max(by1, y + 4); }
   bx0 = Math.max(-w.PAD, bx0 - 8); by0 = Math.max(-w.PAD, by0 - 8); bx1 = Math.min(w.W + w.PAD, bx1 + 8); by1 = Math.min(w.H + w.PAD, by1 + 8);
   const C = crop(bx0, by0, bx1, by1, w.W / 2, w.H / 2), { x0, y0, W, D } = C;
   const X = (x) => r2((x - x0) / 2), Z = (y) => r2((y - y0) / 2);
@@ -257,7 +283,9 @@ function outdoor(w, region) {
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
     const n = new Map();                                       // (by our ground's index: the Fens' bank and the Heights' snow share a tile)
     for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const t = GROUND[tm(x0 + 2 * i + dx, y0 + 2 * j + dy)] ? tm(x0 + 2 * i + dx, y0 + 2 * j + dy) : 0; n.set(t, (n.get(t) || 0) + 1); }
-    const t = [...n.keys()].sort((a, b) => n.get(b) - n.get(a) || (RANK[GROUND[b][0]] ?? 0) - (RANK[GROUND[a][0]] ?? 0))[0];
+    // (step 9: on the Tidemark a jetty's deck takes its cell: two of our tiles wide or less, Tollhaven's three jetties lost
+    // the vote to the water round them and the harbour had none; docs/art-critic-pass-tidemark.md)
+    const t = region === 'tidemark' && n.has(G.DECK) ? G.DECK : [...n.keys()].sort((a, b) => n.get(b) - n.get(a) || (RANK[GROUND[b][0]] ?? 0) - (RANK[GROUND[a][0]] ?? 0))[0];
     let c = GROUND[t][0], hh = GROUND[t][1];
     if (c === 'g') c = B.turf(hash('g', i, j) % 100, i, j);   // (the open ground: the region's turf, scrub or snow)
     else if ((c === '~' || c === 'o') && B.water) { c = B.water; hh = '1'; }   // (the Heights' water frozen over: ice, at the bank's height)
@@ -405,6 +433,42 @@ function outdoor(w, region) {
       }
     }
   }
+  // (v1.156) the Sister's Cabin's way in on the Tidemark's east beach: the wreck of Aurelle's Grace on her reef offshore
+  // (our kit's, town.json tidemark_wreck: broadside along the shore, the reef's rocks out to her from the beach, the
+  // ladder down her side), in the sea east of the exit, which no one walks; it stands whether her door is shut or open,
+  // as the Ninth Vault's does. GRACE_OFF: her middle that many sim tiles east of the reef (the sea's edge is 5 out,
+  // outdoor.js pools; the level ends at 258, MAX_TILES, so she lies along the shore, not out to sea)
+  if (region === 'tidemark' && w.kind === 'overland' && TIDEMARK?.reef) sprites.push({ id: 'tidemark_wreck', x: X(TIDEMARK.reef[0] + GRACE_OFF), z: Z(TIDEMARK.reef[1]) });
+  // (step 9) the sea past the level's crop, from the sim's own grid (it runs PAD tiles past the map): a mask a cell of
+  // Luminati's (two of ours), '1' where the sim has sea or beach, for world.js seaAir to lay the sea there and take the
+  // outer ground and its trees down (Luminati's outer scenery only continues the edge: south of a grass edge tile it laid
+  // fields where the sim has the bay; docs/art-critic-pass-tidemark.md)
+  if (region === 'tidemark') {
+    const mx0 = Math.floor((-w.PAD - x0) / 2), mz0 = Math.floor((-w.PAD - y0) / 2), mw = Math.floor((w.W + 2 * w.PAD) / 2), md = Math.floor((w.H + 2 * w.PAD) / 2), rows = [];
+    for (let j = 0; j < md; j++) { let r = ''; for (let i = 0; i < mw; i++) { const g = tm(x0 + 2 * (mx0 + i), y0 + 2 * (mz0 + j)); r += g === G.POOL || g === G.WATER || g === G.SAND ? '1' : '0'; } rows.push(r); }
+    sprites.push({ seaMask: { x0: mx0, z0: mz0, w: mw, d: md, rows } });
+  }
+  // (v1.157) the Grace herself, the region boss's ship, hove to in Gullwick's bay off the wreckers' beach, where her
+  // broadside comes from (ring.js GRACE.broadside.from, past the arena's edge); stood always, shown only while her window
+  // is open (world.js: `ring`, the frame's ringOn from hybrid.js)
+  // (step 9) Tollhaven's harbour: the League's boats moored alongside its three jetties (outdoor.js buildTown's jetties,
+  // x 146, 166, 186 north from the quay), in the water between them, painters to the jetties' posts: the harbour read as
+  // a lake with planks out into it (docs/art-critic-pass-tidemark.md)
+  if (region === 'tidemark' && w.kind !== 'overland') for (const [bx, by] of MOORED) sprites.push({ id: 'tidemark_ferry', x: X(bx), z: Z(by), here: true });
+  // (step 9) the wreck the wreckers are stripping, in the shallows off their beach (camps.js tide_wreckers), where nobody
+  // walks: their camp otherwise reads as any beach fire (docs/art-critic-pass-tidemark.md)
+  if (region === 'tidemark' && w.kind === 'overland') sprites.push({ id: 'tidemark_wreckage', x: X(WRECKAGE[0]), z: Z(WRECKAGE[1]), here: true });
+  if (region === 'tidemark' && w.kind === 'overland') sprites.push({ id: 'tidemark_graceship', x: X(GRACE_SHIP[0]), z: Z(GRACE_SHIP[1]), y: 0, ring: 'the_grace' });   // (y: the sea floor's, her middle past the level's edge)
+  // (the owner, 2026-11-26: the jetties to the Drowned Mole and the Gull Isles "just stop at a dead end") a boat waiting at
+  // each, moored off the jetty's end by its exit (outdoor.js TIDEMARK.ferry, .isles), her lantern lit by night, her
+  // boatman stood in her stern as a figure (hybrid.js: `figures`, idle, never the sim's)
+  const figures = [];
+  if (region === 'tidemark' && w.kind === 'overland') for (const bt of BOATS) {
+    if (!(w.exits || []).some((e) => e.site === bt.site)) continue;
+    sprites.push({ id: bt.id, x: X(bt.at[0]), z: Z(bt.at[1]), here: true });
+    add({ type: 'light', x: X(bt.at[0] + bt.lamp[0]), z: Z(bt.at[1] + bt.lamp[1]), dy: 3.1, color: '#ffc070', intensity: 2.6, distance: 5.5, flicker: 0.12, nightOnly: true });
+    figures.push({ name: bt.man, x: X(bt.at[0] + bt.stern[0]), z: Z(bt.at[1] + bt.stern[1]), air: BOAT_FLOOR, row: bt.row });
+  }
   // the lit things on the ground (the town's braziers: a fire each, sharing Luminati's lamps)
   for (const [k, kind] of w.props || []) {
     const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);
@@ -416,6 +480,7 @@ function outdoor(w, region) {
     else if (OVERLAND_3D.has(kind)) add(DRESS_3D[kind](x, z, hash(kind, tx, ty)));
     else if (reach && kind === 'burrow') sprites.push({ id: 'reach_slagheap', x, z });   // (the cinder hounds' den: a heap of slag, not the Vale's turf)
     else if (reach && kind === 'tent') sprites.push({ prop: kind, kind: 'tent_reach', tx, ty, x, z });   // (the renegades' and the haulers' canvas grey with ash, not the Vale's: gsprite.js)
+    else if (region === 'tidemark' && kind === 'tent') sprites.push({ prop: kind, kind: 'tent_tidemark', tx, ty, x, z });   // (Highmarch's outriders' at their kennels, in the march's oxblood: gsprite.js)
     else if (OVERLAND_OURS.has(kind)) sprites.push({ prop: kind, tx, ty, x, z });
   }
   // the land goes on past the edge: Luminati's forest border on the blocked ring and its outer scenery beyond, round every
@@ -454,7 +519,7 @@ function outdoor(w, region) {
   const town = W * D <= 96 * 96;
   const level = frame({ name: w.name || 'Emberfall', W, D, tiles, heights, objects, spawn: { x: W / 2, z: D / 2, facing: 'down' },
     environment: { timeOfDay: 17.9, border: 'forest', outerScenery: true, godRays: town, interior: false, ...B.env } });
-  return { level, sprites, origin: { x: x0, y: y0 }, stats: { ...count, sprites: sprites.length, size: W * 1000 + D } };
+  return { level, sprites, figures, origin: { x: x0, y: y0 }, stats: { ...count, sprites: sprites.length, size: W * 1000 + D } };
 }
 
 // ── a floor's ways up and down (sim/world.js placeStairsUp, placeStairsDown), in Luminati's stair tiles ─────────────────
@@ -590,7 +655,7 @@ KIT_LOOK.docks = { floor: ['_', '_'], wall: 'o', cave: 'o', hour: 21.2, mix: 0, 
 // (v1.150) the Drowned Mole's second floor (docs/tidemark-plan.md): the empire's stone moles at low water, the same harbour
 // round them as the wharf's; wet flagstone, the stone's own face down to the water (no deck fascia, piles or rail), the
 // bollards and the mist kept; a later dusk than the wharf's, the lamps just lit
-KIT_LOOK.mole = { floor: ['w', 'w'], wall: 'o', cave: 'o', hour: 19.4, mix: 0, inside: true, water: true, stone: true, fill: DOCK_FILL, backdrop: '#465870' };
+KIT_LOOK.mole = { floor: ['µ', 'µ'], wall: 'o', cave: 'o', hour: 19.4, mix: 0, inside: true, water: true, stone: true, fill: DOCK_FILL, backdrop: '#465870' };
 // (v1.151) the Gull Isles (docs/tidemark-plan.md step 4): the sea cave, dark earth and rock under the isle with its wet
 // shingle, a cool fill off the water; the hulks, a ship's inside, deck planks under whole timber walls (the inn's, its frame
 // the ribs), the lanterns warm. A first look: the art pass (step 9) takes them further
@@ -617,9 +682,11 @@ const AMB_TINT = { pithead: [1.08, 0.97, 0.86], warren: [1.04, 0.96, 0.88], embe
   seacave: [0.94, 1.0, 1.12], hulk: [1.22, 1.04, 0.86] };
 const DEFAULT_LOOK = { floor: ['k', 'm'], wall: 'x', hour: 19.4 };
 /** an overland prop of ours (gsprite.js), a spawn point's dressing (sim/camps.js) */
-const OVERLAND_OURS = new Set(['tent', 'carcass', 'burrow', 'rack', 'banner', 'standard', 'bedroll', 'reeds', 'boat', 'bound', 'urns', 'candles', 'saint']);   // (v1.68: every land's spawn points' dressing)
+const OVERLAND_OURS = new Set(['tent', 'carcass', 'burrow', 'rack', 'banner', 'standard', 'bedroll', 'reeds', 'boat', 'bound', 'urns', 'candles', 'saint', 'chains']);   // (v1.68: every land's spawn points' dressing)
 /** a spawn point's dressing Luminati builds itself, as underground (DRESS_3D) */
-const OVERLAND_3D = new Set(['crates', 'sacks', 'bones', 'barrels', 'boulder', 'spoil', 'pillar', 'brokenpillar']);
+// (step 7 of the Tidemark: the cart and the chains, every land's spawn points' since v1.68, weren't in either set and stood
+// nowhere outdoors: the Reach's haulers, the Vault's mouth, the Praetory's watch and the Tidemark's four lacked them)
+const OVERLAND_3D = new Set(['crates', 'sacks', 'bones', 'barrels', 'boulder', 'spoil', 'pillar', 'brokenpillar', 'cart']);
 /** the furniture Luminati builds itself (h: a hash of the tile, for its size and turn) */
 const DRESS_3D = {
   brazier: (x, z, h) => ({ type: 'fire', x, z, opts: { kind: 'brazier', size: 0.36, smoke: false, light: true, seed: h % 997 } }),   // (Emberlit's are small warm points: at 0.7 they bloomed into blobs, at 0.45 still big)
@@ -647,6 +714,52 @@ const DRESS_3D_MORE = {
   hen_cart: (x, z) => [{ type: 'critters', x: x + 0.6, z: z + 0.9, kind: 'chicken', count: 3, radius: 1.4 }],
   map_table: (x, z) => [{ type: 'chair', x: x - 0.2, z: z + 0.8, rotation: Math.PI, opts: { style: 'stool', seed: 3 } }],
 };
+// ── the Magma Vault's pieces (sim/world.js DRESS_PIECES magma, furnace, anvil, crucible; docs/art-critic-pass-magma-vault.md)
+// A furnace is ours (town.json reach_furnace: a smelting furnace of black brick and iron built into the back wall, its hood
+// and flue into the rock, its mouth glowing), stood over its footprint (the sim's: the furnace tile at its front middle, a
+// row of `block` either side and the row behind), its mouth's fire and embers Luminati's with the furnace's light, a
+// little smoke up into its hood; a crucible ours (reach_crucible: a fireclay crucible on an iron stand, the melt in it
+// lit); an anvil ours too (reach_anvil, on its stump, a bar hot on its face: Luminati's smith's stood unlit and unseen),
+// turned one of two ways.
+const MAGMA_3D = {
+  furnace: (tx, ty, h, { X, Z, add, sprites, props }) => {
+    // which way it faces: its footprint's back row behind it, toward the back wall (−y: a north wall; −x: a west one)
+    const blk = (x, y) => props.get(`${x},${y}`) === 'block', faceX = !blk(tx, ty - 1) && blk(tx - 1, ty);
+    const cx = faceX ? X(tx) : X(tx + 0.5), cz = faceX ? Z(ty + 0.5) : Z(ty);                       // (the footprint's middle)
+    const mx = faceX ? X(tx + 1) : X(tx + 0.5), mz = faceX ? Z(ty + 0.5) : Z(ty + 1);               // (its mouth, on its face)
+    sprites.push({ id: faceX ? 'reach_furnacex' : 'reach_furnace', x: cx, z: cz, here: true });
+    add({ type: 'fire', x: mx, z: mz, opts: { kind: 'embers', size: 0.55, smoke: false, light: false, seed: h % 997 } });
+    add({ type: 'light', x: mx, z: r2(mz + (faceX ? 0 : 0.4)), dy: 0.9, color: '#ff7a2a', intensity: 6, distance: 6.5, flicker: 0.18, nightOnly: false });
+    add({ type: 'emitter', x: cx, z: cz, preset: 'embers', dy: 1.4, size: [0.5, 0.3, 0.3], count: 6, params: { life: [0.8, 1.8], velocity: [0, 1.2, 0] } });
+  },
+  crucible: (tx, ty, h, { X, Z, sprites }) => { sprites.push({ id: 'reach_crucible', x: X(tx + 0.5), z: Z(ty + 0.5), here: true }); },
+  anvil: (tx, ty, h, { X, Z, sprites }) => { sprites.push({ id: h % 2 ? 'reach_anvilx' : 'reach_anvil', x: X(tx + 0.5), z: Z(ty + 0.5), here: true }); },
+};
+/** MAGMA_LIGHT: a light every this many of the flow's tiles (of ours), along a run: the rooms have their braziers and
+ *  torches already, and Luminati keeps the dozen nearest the camera (docs/art-critic-pass-magma-vault.md, the budget) */
+const MAGMA_LIGHT = 12;
+/** the magma, as one flow: its tiles to world.js (placeEnv `magma`: one mesh, the molten surface moving, a crust at its
+ *  open edges and a lip of black rock), a hot light along each run, embers off it here and there */
+function magmaFlow(list, X, Z, add, sprites) {
+  const on = new Set(list.map(([x, y]) => `${x},${y}`)), has = (x, y) => on.has(`${x},${y}`);
+  const cells = list.map(([x, y]) => [X(x + 0.5), Z(y + 0.5), (has(x, y - 1) ? 1 : 0) | (has(x + 1, y) ? 2 : 0) | (has(x, y + 1) ? 4 : 0) | (has(x - 1, y) ? 8 : 0)]);
+  sprites.push({ magma: { cells } });
+  // the lights: walk the tiles in order of x then y, a light every MAGMA_LIGHT; a pool's middle gets one
+  const seen = new Set(); let n = 0;
+  for (const [x, y] of [...list].sort((a, b) => a[1] - b[1] || a[0] - b[0])) {
+    if (seen.has(`${x},${y}`)) continue;
+    // its group (4-connected), lit at its middle and every MAGMA_LIGHT along it
+    const grp = [], q = [[x, y]]; seen.add(`${x},${y}`);
+    while (q.length) { const [a, b] = q.pop(); grp.push([a, b]); for (const [da, db] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const k = `${a + da},${b + db}`; if (on.has(k) && !seen.has(k)) { seen.add(k); q.push([a + da, b + db]); } } }
+    grp.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const step = Math.max(1, Math.round(grp.length / Math.max(1, Math.round(grp.length / MAGMA_LIGHT))));
+    for (let i = Math.floor(step / 2); i < grp.length; i += step) {
+      const [a, b] = grp[i];
+      add({ type: 'light', x: X(a + 0.5), z: Z(b + 0.5), dy: 0.5, color: '#ff6a22', intensity: 3.6, distance: 5.5, flicker: 0.08, nightOnly: false });
+      if (n++ % 2 === 0) add({ type: 'emitter', x: X(a + 0.5), z: Z(b + 0.5), preset: 'embers', dy: 0.15, size: [0.8, 0.1, 0.4], count: 5, params: { life: [1.0, 2.2], velocity: [0, 0.8, 0] } });
+    }
+  }
+}
 /** the light a doorway's lamp throws, intensity and reach (the dressing pass: they stand in for the braziers that lit every
  *  doorway, and the rooms read 12 % darker by them at first) */
 const DOOR_POOL = { candelabra: [7, 7], lantern: [6, 6.5], candles: [6.5, 6.5] };
@@ -729,6 +842,9 @@ const CR_BACK = 10, CR_TOP_Y = CR_BACK * 0.5;
 /** what hangs in a bay that isn't a lantern's (world.js buildTavern): a shield, a plate shelf, antlers, a peg rail with a
  * cloak and a hat, the slate of chalked tallies, herbs drying */
 const TAV_STORY = ['shield', 'shelf', 'antlers', 'pegs', 'slate', 'herbs'];
+/** a ship's (the hulk kit's: the Gull Isles' second floor, the Sister's Cabin): no antlers or drying herbs on her side,
+ *  which read as a hunting lodge's (docs/art-critic-pass-tidemark-step7.md); oilskins on pegs, a tally slate, plates */
+const SHIP_STORY = ['pegs', 'shelf', 'slate', 'shield', 'pegs', 'slate'];
 const TAV_FLOOR_Y = FLOOR * 0.5, TAV_TOP_Y = TAV_BACK * 0.5;
 /** what a back wall carries, by its stone: the inn's timber frame, its cellar's niches, the crypt's blind arcade and its
  * ossuary's bones */
@@ -764,7 +880,7 @@ function wallOf(open, W, D, x, z) {
   return !w || (n && n.d <= w.d) ? (n ? { side: 'n', z: n.z, x, d: n.d } : null) : { side: 'w', x: w.x, z, d: w.d };
 }
 /** the frame along the back walls and what hangs on them, into `trim` (world.js buildTavern) */
-function tavernDress(faces, arches, open, add, trim, roomAt = () => null) {
+function tavernDress(faces, arches, open, add, trim, roomAt = () => null, story = TAV_STORY) {
   const clearOf = (x, z) => arches.every((a) => Math.abs(x - a.x) > a.span / 2 + 1.2 || Math.abs(z - a.z) > 2.5);
   // runs along each line of faces: a north wall's (faces 's', along x) and a west wall's (faces 'e', along z)
   const lines = new Map();
@@ -797,7 +913,7 @@ function tavernDress(faces, arches, open, add, trim, roomAt = () => null) {
       // other bay (its light), and in the rest one thing each, never the same twice running; a long wall's middle bay a
       // shuttered window, the inn's name, a cool line of night through its crack
       const bays = []; for (let t = a + 2; t <= b - 2; t += 4) bays.push(t);
-      const win = b - a >= 14 ? bays[(bays.length / 2) | 0] : null, o = hash('tv', key) % TAV_STORY.length;
+      const win = b - a >= 14 ? bays[(bays.length / 2) | 0] : null, o = hash('tv', key) % story.length;
       bays.forEach((t, q) => {
         const [x, z] = P(t); if (!clearOf(x, z)) return;
         if (t === win) {
@@ -807,7 +923,7 @@ function tavernDress(faces, arches, open, add, trim, roomAt = () => null) {
           const light = add({ type: 'light', x: r2(x + (s ? 0 : 0.7)), z: r2(z + (s ? 0.7 : 0)), dy: 1.6, color: '#ffb468', intensity: 2.9, distance: 6, flicker: 0.1, nightOnly: false });
           trim.push({ k: 'lantern', x, z, n, y: TAV_FLOOR_Y + 2.6, light });
         } else {
-          const kind = TAV_STORY[(o + q) % TAV_STORY.length];
+          const kind = story[(o + q) % story.length];
           trim.push(kind === 'shield' ? { k: 'shield', x, z, n, y: TAV_FLOOR_Y + 2.05, look: hash('ts', key, t) % 5 } : { k: kind, x, z, n, y: TAV_FLOOR_Y + 1.95, seed: hash('ty', key, t) % 997 });   // (between the rail and the beam, built half again as big: round 6, "dark specks")
         }
         if ((q === 0 || q === bays.length - 1) && hash('tw2', key, t) % 3 === 0) trim.push({ k: 'web2', x, z, n, y: TAV_TOP_Y - 0.36, side: q === 0 ? 1 : -1, size: 0.6 + (hash('tz', key, t) % 5) * 0.1 });   // (a web in a corner bay now and then)
@@ -985,6 +1101,8 @@ const PALACE_3D = {
   brazier: (x, z, h, k, ctx) => (ctx.wall && ctx.wall.d < 2.6 ? TAVERN_3D.brazier(x, z, h, k, ctx) : ctx.add({ ...sillPool(x, z, ctx.open), dy: 1.6, intensity: 3.2, distance: 6.5, color: '#ffc27a' })),
 };
 PALACE_3D.banner_y = PALACE_3D.banner; PALACE_3D.standard_y = PALACE_3D.standard; PALACE_3D.desk_y = PALACE_3D.desk;
+/** the palace's pieces a hulk's cabins borrow (the Sister's Cabin, the Gull Isles' second floor) */
+const HULK_LENT = new Set(['desk', 'desk_y', 'papers']);
 /** the palace's runners (convert's own, not the sim's: flat, walked over): down a long room's axis, and from the throne's
  * steps to the near wall; split round anything the sim stood on its line (a column) @returns {any[]} trim pieces */
 function palaceRunners(w, L, X, Z) {
@@ -1283,7 +1401,7 @@ const DOCK_3D = {
   brazier: (x, z, h, k, ctx) => DOCK_3D.lantern(x, z, h, k, ctx),   // (the way in's: lamps, as every light on a wharf)
 };
 
-/** @param {any} w @param {{ region?: string, stairs?: string, walls?: string, dlook?: string }} [o] */
+/** @param {any} w @param {{ region?: string, stairs?: string, walls?: string}} [o] */
 function dungeon(w, o = {}) {
   const cells = w.level.cells;
   let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
@@ -1379,19 +1497,33 @@ function dungeon(w, o = {}) {
   const trim = inside ? [] : null;
   // (the room a floor tile of Luminati's is in: a palace's bays dress by what their room was for, palaceRun)
   const roomAt = (i, j) => { if (!L.plan) return null; for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const c = cells.get(`${x0 + 2 * i + dx},${y0 + 2 * j + dy}`); if (c && c.room >= 0) return L.rooms[c.room]; } return null; };
-  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim, roomAt); if (look.palace) trim.push(...palaceRunners(w, L, X, Z)); if (look.water) docksDress(W, D, open, add, trim, stairLights.arches || [], !!look.stone); if (rampart) rampartsDress(W, D, open, rampart, add, trim, stairLights.arches || []); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
+  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim, roomAt, look === KIT_LOOK.hulk ? SHIP_STORY : TAV_STORY); if (look.palace) trim.push(...palaceRunners(w, L, X, Z)); if (look.water) docksDress(W, D, open, add, trim, stairLights.arches || [], !!look.stone); if (rampart) rampartsDress(W, D, open, rampart, add, trim, stairLights.arches || []); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
   if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h) { add({ ...c.ob(X, Z), onWall: true }); if (c.sprite) sprites.push(c.sprite); }   // (onWall: on a wall's top, not the room's own)   // (what stands on the walls' tops, where the stairs didn't take the wall)
   for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity * (look.fill ? 0.45 : 1), distance: l.glow.distance * (look.fill ? 0.7 : 1), flicker: 0.08, nightOnly: false }
     : { type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });
+  const magma = /** @type {[number, number][]} */ ([]);   // (the Magma Vault's magma tiles, of ours: built as one flow below)
   for (const [k, kind] of w.props || []) {
     const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);
     if (x < 0.5 || z < 0.5 || x > W - 0.5 || z > D - 0.5 || /^stair/.test(kind)) continue;   // (the stairs are the floor's own: stairs())
     const h = hash('p', tx, ty);
     if (kind === 'exit') { add({ type: 'lamppost', x, z, rotation: 0, opts: { style: 'arm' } }); continue; }
     if (kind === 'block') continue;                                 // (a big piece's footprint: world.js big)
+    // (the Magma Vault, the owner 2026-11-26: "flowing magma and a few furnaces, anvils"; sim/world.js magma_channel,
+    // magma_pool, furnaces, anvils) its pieces in every kit they stand in (the vault's caves, the works' hall)
+    if (kind === 'magma') { magma.push([tx, ty]); continue; }
+    if (MAGMA_3D[kind]) { MAGMA_3D[kind](tx, ty, h, { X, Z, add, sprites, props: w.props }); continue; }
     if (inside && look.ramparts && RAMP_3D[kind]) { RAMP_3D[kind](x, z, h, kind, { add, trim, open }); continue; }
-    if (inside && look.water && DOCK_3D[kind]) { DOCK_3D[kind](x, z, h, kind, { add, trim, open, edge: edgeOf(open, x, z) }); continue; }
-    if (inside && look.palace && PALACE_3D[kind]) { const c = w.level.cells.get(k); PALACE_3D[kind](x, z, h, kind, { add, drop, wall: wallOf(open, W, D, x, z), trim, open, X, room: c && c.room >= 0 ? w.level.rooms[c.room] : null }); continue; }
+    // (the hulk's way in, a gangway or the Grace's reef ladder, takes the wharf's rope coils and nets: with no drawer of
+    // their own there they stood as dark hooded shapes, read as foes: docs/art-critic-pass-tidemark-step7.md)
+    if (inside && (look.water || (look === KIT_LOOK.hulk && (kind === 'rope' || kind === 'net'))) && DOCK_3D[kind]) { DOCK_3D[kind](x, z, h, kind, { add, trim, open, edge: edgeOf(open, x, z) }); continue; }
+    // (the reliquary is the palace's piece, but the Sister's Cabin keeps one in the Grace's chapel locker, on the hulk kit;
+    // and a hulk's cabins (Livia's there, the Gull Isles' wardroom and great cabin) take the palace's writing tables and
+    // papers, not the clerk's voxel desk, whose own light burned out to a blob in the lit hulk:
+    // docs/art-critic-pass-tidemark-step7.md. The rest stay the palace's)
+    if (inside && (look.palace || kind === 'reliquary' || (look === KIT_LOOK.hulk && HULK_LENT.has(kind))) && PALACE_3D[kind]) { const c = w.level.cells.get(k); PALACE_3D[kind](x, z, h, kind, { add, drop, wall: wallOf(open, W, D, x, z), trim, open, X, room: c && c.room >= 0 ? w.level.rooms[c.room] : null }); continue; }
+    // (a hulk's lower deck, the Sister's Cabin's children's deck and the Gull Isles' gun deck: the sim's bunks hung as
+    // hammocks, along the wall they stand by; world.js buildTavern 'hammock')
+    if (inside && look === KIT_LOOK.hulk && kind === 'bunk') { const wl = wallOf(open, W, D, x, z); trim.push({ k: 'hammock', x, z, n: wl && wl.side !== 'n' ? 'x' : 'z', seed: h % 997 }); continue; }
     if (inside && TAVERN_3D[kind]) { const c = w.level.cells.get(k); TAVERN_3D[kind](x, z, h, kind, { add, drop, wall: wallOf(open, W, D, x, z), trim, open, room: c && c.room >= 0 ? w.level.rooms[c.room] : null }); continue; }
     if (DRESS_3D[kind]) add(DRESS_3D[kind](x, z, h, kind));
     else sprites.push({ prop: kind, tx, ty, x, z, ...(FLAT.has(kind) ? { flat: true } : {}) });
@@ -1405,42 +1537,16 @@ function dungeon(w, o = {}) {
     const lit = PROP_LIGHT[kind], pool = DOOR_POOL[kind] || [3.2, 4.5];
     if (lit && kind !== 'brazier' && kind !== 'cookfire') add({ type: 'light', x, z, dy: kind === 'candelabra' ? 1.7 : 0.9, color: hex(lit), intensity: pool[0], distance: pool[1], flicker: 0.15, nightOnly: false });
   }
-  if (/c/.test(o.dlook || '')) edgeRubble(W, D, heights, open, add);   // (a spike: ?dlook=c|bc, docs/dungeon-look-spike.md)
+  if (magma.length) magmaFlow(magma, X, Z, add, sprites);
   const level = frame({ name: w.siteName || 'The Old Barrows', W, D, tiles, heights, objects, spawn: { x: X(sp.x), z: Z(sp.y), facing: 'up' },
     // (black beyond the walls, as Emberlit's: a backdrop colour, which the fog takes too, so the far rooms fade to it)
     environment: { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: true, backdrop: look.backdrop || '#040306', ...(look.water ? { harbour: true } : {}) },
     water: look.water ? { flow: [0.03, 0.05], reflect: 0.45, neutral: 0.7 } : null, waterLevel: look.water ? DOCK_WL : 0.4 });   // (a harbour's water nearly still, the fog's colour in it: world.js harbourAir)
   if (look.vents) vents(W, D, heights, open, add, look.vents);   // (the vault's and the deep forges' ember beds)
   const amb = ambientOf(kit || (AMB_TINT[w.theme] ? w.theme : kit));
-  return { level, sprites, ambient: /c/.test(o.dlook || '') ? coolAmbient(amb) : amb, origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D } };
+  return { level, sprites, ambient: amb, origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D } };
 }
 
-// ── a SPIKE, option C (the owner, 2026-11-15: "show me before and after for our dungeon with b, c and b+c"): rubble
-// heaped at the foot of the walls, and a cooler, darker fill so the braziers' orange reads against blue-grey stone (the
-// reference's look). Behind ?dlook=c|bc; nothing ships on it until the owner chooses (docs/dungeon-look-spike.md).
-// A floor tile against a wall takes a stone or a heap now and then, pushed to the wall's side; a corridor (wall on both
-// sides) and a doorway stay clear, and the stairs' tiles are no floor ('2') so they're never touched.
-const EDGE_MAX = 420;
-function edgeRubble(W, D, heights, open, add) {
-  let n = 0;
-  for (let j = 1; j < D - 1 && n < EDGE_MAX; j++) for (let i = 1; i < W - 1 && n < EDGE_MAX; i++) {
-    if (heights[j][i] !== '2') continue;
-    const wl = (di, dj) => !open(i + di, j + dj) && heights[j + dj][i + di] !== '0';
-    const e = wl(1, 0), w_ = wl(-1, 0), s = wl(0, 1), nn = wl(0, -1);
-    if ((e && w_) || (s && nn)) continue;                          // a corridor or a doorway: kept clear
-    const dirs = [];
-    if (e) dirs.push([1, 0]); if (w_) dirs.push([-1, 0]); if (s) dirs.push([0, 1]); if (nn) dirs.push([0, -1]);
-    if (!dirs.length) continue;
-    const h = hash('er', i, j);   // (its shifts unsigned, >>>: a >> made a negative size, and Luminati's map drew a negative circle and threw)
-    if (h % 100 >= 38) continue;
-    const [dx, dz] = dirs[h % dirs.length], along = ((h >>> 8) % 60 - 30) / 100;
-    const x = r2(i + 0.5 + dx * 0.33 + (dz ? along : 0)), z = r2(j + 0.5 + dz * 0.33 + (dx ? along : 0));
-    const size = r2(0.34 + ((h >>> 4) % 40) / 100);
-    if ((h >>> 12) % 3 === 0) add({ type: 'rock', x, z, opts: { size: r2(size * 0.85), seed: (h >>> 3) % 97 } });
-    else add({ type: 'debris', x, z, rotation: ((h >>> 6) % 11) * 0.5, opts: { kind: 'rubble', size, charred: false, seed: (h >>> 2) % 997 } });
-    n++;
-  }
-}
 /** ember beds along a hot floor's walls (KIT_LOOK `vents`): on a floor tile against a wall, never a corridor's or a
  *  doorway's, spread by a hash; a glow and a wisp, no light of their own (Luminati shares twelve, the braziers need them) */
 function vents(W, D, heights, open, add, max) {
@@ -1452,11 +1558,6 @@ function vents(W, D, heights, open, add, max) {
     add({ type: 'fire', x: r2(i + 0.5), z: r2(j + 0.5), opts: { kind: 'embers', size: r2(0.35 + (hash('vz', i, j) % 4) * 0.06), smoke: hash('vs', i, j) % 3 === 0, light: false, seed: hash('vf', i, j) % 997 } });
     n++;
   }
-}
-/** the cooler, darker fill: blue-grey, three-quarters as bright, the braziers' pools a touch stronger against it */
-function coolAmbient(a) {
-  const k = [0.72, 0.82, 1.04], f = (c) => c.map((v, i) => r2(v * k[i] * 0.86));
-  return { ...a, sky: f(a.sky), ground: f(a.ground), lamps: r2(a.lamps * 0.85) };
 }
 
 // ── the Bowl: the Quarry Ring (the owner chose B of three, docs/bowl-arena-proposal.md §12; world doc v1.46 §3.9) ──────

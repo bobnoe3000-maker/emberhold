@@ -90,7 +90,8 @@ function reachLeads(state, status) {
 }
 
 // the Tidemark (world doc v1.69 §3.7; the first band, GDD v1.150): the Harbourmaster on the Drowned Mole, then Maren in
-// his office; (v1.151) Hesk, and Gannet's light. (No trials here: the owner, no class trial at 36; no board yet.)
+// his office; (v1.151) Hesk, and Gannet's light. (No trials here: the owner, no class trial at 36.) (v1.156) The Names, the
+// Chronicle and the Cabin, the board.
 function tidemarkLeads(state, status) {
   const out = [], bosses = state.bosses || {}, company = [...state.party, ...(state.bench || [])];
   if (!bosses.harbourmaster) out.push({ id: 'harbourmaster' });
@@ -102,6 +103,14 @@ function tidemarkLeads(state, status) {
   // (v1.154) once Brine Cross is held: Highmarch, the Champion on its walls, then Lucan in his palace
   if ((state.flags || {}).brine_held && !bosses.champion) out.push({ id: 'champion' });
   else if ((state.flags || {}).brine_held && !bosses.lucan) out.push({ id: 'lucan' });
+  // (v1.156) Josse Wether's errand of Maren's on offer, the Tidemark's Chronicle (Aurelle's letters) and the Sister's
+  // Cabin it finds, and the Paid Toll's board
+  if (['maren_the_harbour_roll', 'maren_the_prize_crews', 'maren_said_aloud'].some((q) => status(q) === QS.AVAILABLE)) out.push({ id: 'names' });
+  const has = (x, k) => (x instanceof Set ? x.has(k) : Array.isArray(x) ? x.includes(k) : !!(x && x[k]));
+  const tide = SETS.tidemark || [], found = tide.filter((f) => has(state.fragments, f)).length;
+  if (!has(state.revealed, 'sisters_cabin') && found < tide.length) out.push({ id: 'tidechronicle', n: found, of: tide.length });
+  if (has(state.revealed, 'sisters_cabin') && !has(state.sitesEntered, 'sisters_cabin')) out.push({ id: 'cabin' });
+  out.push({ id: 'tideboard' });
   return out;
 }
 

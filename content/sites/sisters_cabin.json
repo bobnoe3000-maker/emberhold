@@ -1,0 +1,10 @@
+{
+  "id": "sisters_cabin",
+  "region": "tidemark",
+  "name": "The Sister's Cabin",
+  "levels": "45",
+  "floors": 1,
+  "hidden": true,
+  "summary": "The wreck of Aurelle's Grace on her reef below the Lamp Fort. At low water a ladder goes up her side; her crew are still at their stations, and Livia's cabin is at the stern. Once its vault is opened it seals for a while.",
+  "shut": "A wreck on the reef below the Lamp Fort, black ribs at low water. Tollhaven's boats give her a wide berth."
+}

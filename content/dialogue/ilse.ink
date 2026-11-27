@@ -3,7 +3,8 @@
 // Chronicle; trusts nothing she hasn't read twice. Entry: ilse_hub. Bound in by src/story/adapter.js
 // from the sim (sim/npcs.js varsFor); Ink only reads them (flags: met_ilse; her errand,
 // vale_first_page: q_ = −1 locked · 0 available · 1 active · 2 ready · 3 done; the Vale's fragments,
-// sim/lore.js: frag_<id> 0 / 1 and frag_vale_count). She reads the set in order (world doc §7).
+// sim/lore.js: frag_<id> 0 / 1 and frag_vale_count). She reads the set in order (world doc §7). (v1.74) And the
+// Tidemark's twelve, the Lady Aurelle's letters to Livia (frag_tide_*, frag_tidemark_count), in ilse_read_tide.
 
 VAR hero_name = ""
 VAR hero_class = ""
@@ -58,6 +59,19 @@ VAR frag_reach_apron_plate = 0
 VAR frag_reach_night_rota = 0
 VAR frag_reach_vanes_ledger = 0
 VAR frag_reach_renewal = 0
+VAR frag_tidemark_count = 0
+VAR frag_tide_first_letter = 0
+VAR frag_tide_the_harbour = 0
+VAR frag_tide_the_wedding = 0
+VAR frag_tide_the_toll = 0
+VAR frag_tide_the_ship = 0
+VAR frag_tide_the_lamps = 0
+VAR frag_tide_the_children = 0
+VAR frag_tide_the_commission = 0
+VAR frag_tide_the_chapel = 0
+VAR frag_tide_the_voices = 0
+VAR frag_tide_the_box = 0
+VAR frag_tide_take_the_grace = 0
 VAR count_lamps = 0
 VAR count_souls = 0
 
@@ -125,6 +139,7 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 + { frag_vale_count > 0 } [Read me the Chronicle.] -> ilse_read
 + { frag_fens_count > 0 } [Read me what we found in the Fens.] -> ilse_read_fens
 + { frag_reach_count > 0 } [Read me what we found in the Reach.] -> ilse_read_reach
++ { frag_tidemark_count > 0 } [Read me the letters from the Tidemark.] -> ilse_read_tide
 + { count_souls > 0 } [You keep a count?] -> ilse_count
 + [What are you writing?] -> ilse_writing
 + [What should I look for?] -> ilse_look
@@ -340,6 +355,65 @@ Ilse takes it in both hands, tilts it to the light, and reads it twice without m
     "The quota office kept a strongroom: the Ninth Vault, up the old track on the dead mountain. The books will be there. Read them for me. I'm not sure I can."
 - else:
     "There are gaps. The Seam, the Yards, the Forgehall, the Cinderworks. The Reach kept its papers dry. It would."
+}
+-> ilse_topics
+
+// ── the Tidemark set (world doc v1.74 §7): the Lady Aurelle's letters to her sister Livia, her side only. She reads
+// them in order, as letters, and won't say what the last one means: that's the Glass Keep's, Act VI ──
+== ilse_read_tide ==
+{ frag_tide_first_letter == 1:
+    "A girl's letter to her sister. Her father let her hold the Canticle: only a scroll, she says, and it weighs more than one. She's to go to the Beacon in the spring and learn it. Her sister gets her room, and the window that sticks."
+    "There's no name at the foot. An A. I'm not going to guess which A. Guessing is how the old histories got written."
+}
+{ frag_tide_the_harbour == 1:
+    "Her first order, sung from the lamp-stand at the end of the outer mole. Make fast. Every ship in the harbour made fast at once, and nobody aboard looked up."
+    "So she was a Voice, and young. I've been writing Voices in my notes as if they were offices. They were people. I'll correct the notes."
+}
+{ frag_tide_the_wedding == 1:
+    "Livia's to marry in Highmarch, a man whose tower looks at the sea. Her sister isn't let to come. Wear Mother's pearls; be kind to his steward, Varro, who counts the spoons."
+    She writes the steward's name in the margin and underlines it. "That's a Highmarch name still."
+}
+{ frag_tide_the_toll == 1:
+    "How the fleet was crewed. The coast paid its tithe at the harbour mouth, a crew in every ten ships, written into the Harbourmaster's book. She sang to them after. Don't ask me again in a letter."
+    "In a letter. So Livia asked her to her face, later, and whatever she was told, nobody wrote it down."
+}
+{ frag_tide_the_ship == 1:
+    "The new flagship, named for her: Aurelle's Grace. She asked for a smaller ship and a plainer name, and was told an Empress doesn't ask."
+    Ilse puts the pen down, and picks it up again. "Then it's that A. The Empress Aurelle, writing to her sister about cabins."
+}
+{ frag_tide_the_lamps == 1:
+    "She asked the Admiralty for a living crew for the Grace. The bound were cheaper, and kept their stations as long as the stern-lantern was lit, and the lantern as long as the Throne was. As long as. She asked again."
+}
+{ frag_tide_the_children == 1:
+    "Hammocks on the Grace, twenty, small. Livia had two children. The others' names were on a roll that spring, and weren't by the summer."
+    "She doesn't say which roll. She doesn't need to."
+}
+{ frag_tide_the_commission == 1:
+    "The Grace's master's commission, in her own hand: to carry the Lady Livia and whoever she brings wherever she says, and answer no other order. Not the Admiralty's, not a Voice's, and not hers, after."
+    "After what, she doesn't say. I've noticed she stops saying things at about this point in every letter."
+}
+{ frag_tide_the_chapel == 1:
+    "A chapel at the Beacon's foot, with one stand in it. She went down at night and said the last verse to herself, without the voice. Everyone who learns the Canticle learns the last verse, she says. Nobody sings it."
+    "And then: do not worry. I've copied that line out three times. It doesn't get more convincing."
+}
+{ frag_tide_the_voices == 1:
+    "Six Voices at the Beacon's table, singing the empire's orders and agreeing about everything. The other five had stopped hearing the bound. She still did. The harbour again, every night."
+}
+{ frag_tide_the_box == 1:
+    "The box. Cedar bound in pale iron, made for her chapel, with the scroll in it. Inside the lid: never open it. Whoever reads that will have opened it already, she says. She could think of nothing better."
+    "Neither can I. I've tried. It's a very short list, the things that work on people."
+}
+{ frag_tide_take_the_grace == 1:
+    "The last of them. When the Beacon goes dark, don't wait for word, there won't be any. Take the Grace. Take the children. Take the box from my chapel, and never open it."
+}
+{
+- frag_tidemark_count == 12:
+    Ilse lays the twelve letters under the rest of the Chronicle, and they don't line up with anything above them. They aren't orders or tallies. They're one side of a conversation between sisters.
+    "When the Beacon goes dark, she says, as if she'd been told the day. I'm not going to say what I think that means until I've read something that says it for me."
+    "The Grace went onto the reef below the Lamp Fort the night the Throne went dark, children and all. The box came ashore. Nothing else did. The wreck's still on her reef, and Tollhaven's boats give her a wide berth and call her the Sister's Cabin."
+    "At low water there's a way up her side. Bring me her manifest, if it's there. I'd like those twenty written down somewhere that isn't a roll."
+- else:
+    "There are gaps. The Mole, the Isles, Highmarch. Her sister kept every letter, by the look of it, and the sea had the rest."
 }
 -> ilse_topics
 

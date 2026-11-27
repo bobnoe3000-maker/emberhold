@@ -241,6 +241,7 @@ You tell Hester about Highmarch: the Champion on his bastion, Lucan sitting down
 == quaile_tollhaven ==
 "The quay, three jetties, two moles and the chain between their towers. Everything that comes in under the chain pays. Everything that goes out pays again. It's a simple town."
 "The Chain Locker if you want a bed. The Bonded Stores for rope and the rest. The Quay Forge if it's broken. The Paid Toll for everything else. The name is a promise."
+"Mistress Fane, by the well, writes the ward on the chain. Hers is the one bill on this quay I pay without reading."
 -> quaile_topics
 
 == quaile_bye ==
