@@ -36,9 +36,9 @@ test('the renderer sinks the channels under Luminati\'s water, banks and decks t
   assert.ok(t.includes('γ') && level.legend['γ'].water, 'sunk channel tiles, water'); assert.ok(t.includes('ε'), 'the banks'); assert.ok(t.includes('_'), 'the bridges');
   assert.ok(stats.deep > 0 && stats.deepPartial === 0, `whole tiles only: ${stats.deep} deep, ${stats.deepPartial} partial`);
   assert.ok(level.waterLevel < 1 && level.waterLevel > 0, 'under the floor'); assert.equal(level.environment.wet, 'canal');
-  const trim = sprites.filter((q) => q.tavern).flatMap((q) => q.tavern.pieces);
-  for (const k of ['wkerb', 'wrail', 'lockgate', 'sluice']) assert.ok(trim.some((p) => p.k === k), k);
-  assert.ok(sprites.some((q) => q.shallows && q.shallows.look === 'canal' && q.shallows.cells.length > 300), 'the basin\'s and the sluice\'s flood');
+  const trim = sprites.filter((q) => q.wet).flatMap((q) => q.wet.pieces);
+  for (const k of ['wkerb', 'wrail', 'wrefl', 'lockgate', 'sluice']) assert.ok(trim.some((p) => p.k === k), k);
+  assert.ok(sprites.some((q) => q.shallows && q.shallows.look === 'canal' && q.shallows.cells.length > 400 && q.shallows.lamps.length > 0), 'the basin\'s and the sluice\'s flood');
   // the Sunken Chapel's nave: shin-deep, no channels, its sandstone kept
   const ch = convertWorld(createWorld(SEED, undefined, 0, 'sunken_chapel'), { region: 'vale' });
   assert.ok(ch.sprites.some((q) => q.shallows && q.shallows.look === 'chapel'), 'the nave under water');
@@ -46,6 +46,6 @@ test('the renderer sinks the channels under Luminati\'s water, banks and decks t
   // the Abbey: its own stone, the garth's turf and its sky
   const ab = convertWorld(createWorld(SEED, undefined, 0, 'drowned_abbey'), { region: 'fens' });
   assert.ok(ab.level.tiles.join('').includes('β') && ab.level.tiles.join('').includes('θ'));
-  assert.ok(ab.sprites.some((q) => q.shallows && q.shallows.cells.some((v, i) => i % 3 === 2 && v & 1)), 'the garth open to the sky');
+  assert.ok(ab.sprites.some((q) => q.shallows && q.shallows.cells.some((v, i) => i % 4 === 2 && v & 1)), 'the garth open to the sky');
   assert.ok(ab.level.objects.some((o) => o.type === 'emitter' && o.preset === 'rain'), 'rain into the garth');
 });

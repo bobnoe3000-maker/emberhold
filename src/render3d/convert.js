@@ -645,7 +645,7 @@ Object.assign(KIT_LOOK.vats, { wall: 'α', cave: 'α', wet: 'sick', bank: 'ζ' }
 Object.assign(KIT_LOOK.abbey, { wall: 'β', cave: 'β', wet: 'abbey', bank: 'η', garth: 'θ' });
 Object.assign(KIT_LOOK.nave, { wet: 'chapel' });
 /** a channel's water under the floor (Luminati's units: the floor's top at 1, its bed at 0) */
-const WET_WL = 0.8;
+const WET_WL = 0.62;   // (round 5: deeper, plainly under the floor; 0.72, then 0.8 in round 2)
 // a building's inside (the Shuttered Inn, docs/tavern-dungeon.md): its flagstones, its stone walls, an evening's hour; its
 // walls stand whole (tavernWalls, below), not ruined
 KIT_LOOK.tavern = { floor: ['#', '='], wall: '@', cave: '@', hour: 19.2, mix: 14, inside: true };
@@ -1522,7 +1522,7 @@ function dungeon(w, o = {}) {
   // (the room a floor tile of Luminati's is in: a palace's bays dress by what their room was for, palaceRun)
   const roomAt = (i, j) => { if (!L.plan) return null; for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const c = cells.get(`${x0 + 2 * i + dx},${y0 + 2 * j + dy}`); if (c && c.room >= 0) return L.rooms[c.room]; } return null; };
   if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim, roomAt, look === KIT_LOOK.hulk ? SHIP_STORY : TAV_STORY); if (look.palace) trim.push(...palaceRunners(w, L, X, Z)); if (look.water) docksDress(W, D, open, add, trim, stairLights.arches || [], !!look.stone); if (rampart) rampartsDress(W, D, open, rampart, add, trim, stairLights.arches || []); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
-  if (wet) { if (wet.trim.length) sprites.push({ tavern: { pieces: wet.trim } }); for (const sh of wet.sheets) sprites.push({ shallows: sh }); for (const l of wet.lights) add(l); }
+  if (wet) { if (wet.trim.length) sprites.push({ wet: { pieces: wet.trim } }); for (const sh of wet.sheets) sprites.push({ shallows: sh }); for (const l of wet.lights) add(l); }
   if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h) { add({ ...c.ob(X, Z), onWall: true }); if (c.sprite) sprites.push(c.sprite); }   // (onWall: on a wall's top, not the room's own)   // (what stands on the walls' tops, where the stairs didn't take the wall)
   for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity * (look.fill ? 0.45 : 1), distance: l.glow.distance * (look.fill ? 0.7 : 1), flicker: 0.08, nightOnly: false }
     : { type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });
@@ -1564,6 +1564,7 @@ function dungeon(w, o = {}) {
     if (lit && kind !== 'brazier' && kind !== 'cookfire') add({ type: 'light', x, z, dy: kind === 'candelabra' ? 1.7 : 0.9, color: hex(lit), intensity: pool[0], distance: pool[1], flicker: 0.15, nightOnly: false });
   }
   if (magma.length) magmaFlow(magma, X, Z, add, sprites);
+  if (wet && wet.sheets.length) { const lamps = wetLamps(objects, wet.sheets); for (const sh of wet.sheets) sh.lamps = lamps; }
   const level = frame({ name: w.siteName || 'The Old Barrows', W, D, tiles, heights, objects, spawn: { x: X(sp.x), z: Z(sp.y), facing: 'up' },
     // (black beyond the walls, as Emberlit's: a backdrop colour, which the fog takes too, so the far rooms fade to it)
     environment: { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: true, backdrop: look.backdrop || '#040306', ...(look.water ? { harbour: true } : {}), ...(wet ? { wet: wetLook.wet } : {}) },
@@ -1571,7 +1572,7 @@ function dungeon(w, o = {}) {
     water: look.water ? { flow: [0.03, 0.05], reflect: 0.45, neutral: 0.7 } : wet && wet.deep ? { flow: [0.01, 0.02], reflect: 0.12, neutral: 0.5 } : null, waterLevel: look.water ? DOCK_WL : wet && wet.deep ? WET_WL : 0.4 });   // (a harbour's water nearly still, the fog's colour in it: world.js harbourAir)
   if (look.vents) vents(W, D, heights, open, add, look.vents);   // (the vault's and the deep forges' ember beds)
   const amb = ambientOf(kit || (AMB_TINT[w.theme] ? w.theme : kit));
-  return { level, sprites, ambient: amb, origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D, ...(wet ? { deep: wet.deep, deepPartial: wet.partial, shallow: wet.sheets.reduce((n, q) => n + q.cells.length / 3, 0) } : {}) } };
+  return { level, sprites, ambient: amb, origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D, ...(wet ? { deep: wet.deep, deepPartial: wet.partial, shallow: wet.sheets.reduce((n, q) => n + q.cells.length / 4, 0) } : {}) } };
 }
 
 // ── water indoors (docs/water-indoors.md; docs/dungeon-looks-plan.md items 3–5) ──────────────────────────────────────────
@@ -1623,7 +1624,10 @@ function wetGround(w, { x0, y0, W, D, X, Z, tiles, heights, looks, roomLook }) {
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
     if (!dAt(i, j)) continue;
     for (const [di, dj, s] of D4) {
-      const ii = i + di, jj = j + dj; if (!floorAt(ii, jj)) continue;
+      const ii = i + di, jj = j + dj;
+      // (the far side, north or west, whatever stands there: the wall or the bank reflected in the water under it)
+      if ((s === 'n' || s === 'w') && !dAt(ii, jj)) { if (s === 'n') push(`wrefl|z|${j}|-1`, i); else push(`wrefl|x|${i}|-1`, j); }
+      if (!floorAt(ii, jj)) continue;
       const kind = isBridge[jj * W + ii] ? 'wrail' : 'wkerb';
       // keyed by the edge line and which way the bank lies (out: from the water toward it)
       if (s === 'n') push(`${kind}|z|${j}|-1`, i); else if (s === 's') push(`${kind}|z|${j + 1}|1`, i); else if (s === 'w') push(`${kind}|x|${i}|-1`, j); else push(`${kind}|x|${i + 1}|1`, j);
@@ -1643,13 +1647,16 @@ function wetGround(w, { x0, y0, W, D, X, Z, tiles, heights, looks, roomLook }) {
     while (q.length) { const [a, b] = q.pop(); grp.push([a, b]); for (const [da, db] of D4) { const aa = a + da, bb = b + db; if (aa >= 0 && bb >= 0 && aa < W && bb < D && !seen[bb * W + aa] && piece[bb * W + aa] === kd) { seen[bb * W + aa] = 1; q.push([aa, bb]); } } }
     const xs = grp.map((g) => g[0]), zs = grp.map((g) => g[1]), ix0 = Math.min(...xs), ix1 = Math.max(...xs) + 1, iz0 = Math.min(...zs), iz1 = Math.max(...zs) + 1;
     const across = ix1 - ix0 >= iz1 - iz0 ? 'x' : 'z';   // (the band spans the channel: its long side)
-    trim.push({ k: kd, x: r2((ix0 + ix1) / 2), z: r2((iz0 + iz1) / 2), across, span: across === 'x' ? ix1 - ix0 : iz1 - iz0, seed: hash('wg', i, j) % 997 });
+    // (which ends of it meet a bank, not a wall: a lock gate's balance beam lies out over a bank)
+    const ends = across === 'x' ? [floorAt(ix0 - 1, iz0), floorAt(ix1, iz0)] : [floorAt(ix0, iz0 - 1), floorAt(ix0, iz1)];
+    trim.push({ k: kd, x: r2((ix0 + ix1) / 2), z: r2((iz0 + iz1) / 2), across, span: across === 'x' ? ix1 - ix0 : iz1 - iz0, ends, seed: hash('wg', i, j) % 997 });
   }
   // the shin-deep water: the sim's pools, by the room's water, a sim tile a cell (a garth's open to the sky)
   // (each cell's corners that touch dry floor, NW NE SE SW as bits 1–4 over the sky's bit 0: there its edge goes soft;
   // against a wall or a channel the water runs right up to it)
   const sheets = new Map(), pools = w.pools || new Set();
   const dry = (x, y) => { const k = `${x},${y}`, c = cells.get(k); return !!c && c.kind === 'floor' && !pools.has(k) && !WET_PROPS.has(props.get(k) || ''); };
+  const isFloorCell = (x, y) => { const c = cells.get(`${x},${y}`); return !!c && c.kind === 'floor'; };
   const CORNERS = [[[-1, 0], [0, -1], [-1, -1]], [[1, 0], [0, -1], [1, -1]], [[1, 0], [0, 1], [1, 1]], [[-1, 0], [0, 1], [-1, 1]]];
   for (const k of pools) {
     const c = cells.get(k); if (!c || c.kind !== 'floor') continue;
@@ -1658,15 +1665,43 @@ function wetGround(w, { x0, y0, W, D, X, Z, tiles, heights, looks, roomLook }) {
     if (!floorAt(i, j) || isBridge[j * W + i]) continue;   // (never over a stair, the well or a bridge)
     const room = c.room >= 0 ? L.rooms[c.room] : null, sky = room && room.dress && room.dress.includes('garth') ? 1 : 0;
     const s = sheets.get(lk.wet) || sheets.set(lk.wet, { look: lk.wet, cells: [] }).get(lk.wet);
-    let f = sky; CORNERS.forEach((cs, q) => { if (cs.some(([dx, dy]) => dry(tx + dx, ty + dy))) f |= 2 << q; });
-    s.cells.push(X(tx + 0.5), Z(ty + 0.5), f);
+    // (bits 1–4 its corners on dry floor, 5–8 those against a wall: a bright line at both; round 5)
+    let f = sky; CORNERS.forEach((cs, q) => { if (cs.some(([dx, dy]) => dry(tx + dx, ty + dy))) f |= 2 << q; if (cs.some(([dx, dy]) => !isFloorCell(tx + dx, ty + dy))) f |= 32 << q; });
+    // (how near the wall behind it, away from the camera: the wall's reflection lies on the water in front of it)
+    let refl = 0; for (const [dx, dy] of [[-1, 0], [0, -1]]) for (let d = 1; d <= 6; d++) if (!isFloorCell(tx + dx * d, ty + dy * d)) { refl = Math.max(refl, 1 - (d - 1) / 6); break; }
+    s.cells.push(X(tx + 0.5), Z(ty + 0.5), f, r2(refl));
   }
   // (a garth open to the sky: its light, and a drizzle falling into it alone, the one room with no roof over it)
   if (L.plan) for (const r of L.rooms) if (r.dress && r.dress.includes('garth')) {
     lights.push({ type: 'light', x: X(r.cx + 0.5), z: Z(r.cy + 0.5), dy: GARTH_SKY.dy, color: GARTH_SKY.color, intensity: GARTH_SKY.intensity, distance: GARTH_SKY.distance, flicker: 0, nightOnly: false });
     lights.push({ type: 'emitter', x: X(r.cx + 0.5), z: Z(r.cy + 0.5), preset: 'rain', dy: 3.5, size: [r2(r.rw), 7, r2(r.rh)], count: 260, params: { followCamera: false, bounds: [r2(r.rw), 7, r2(r.rh)], alpha: 0.32, velocity: [0, -9, 0] } });
   }
+  // (a drowned hall's windows, on its back wall, the garth's side: a cold light high up, dust in it, caught on the water;
+  // round 5, the dorter and the chapter-house read as dark empty halls)
+  if (L.plan) for (const r of L.rooms) if (r.dress && r.dress.includes('windows')) {
+    const along = r.x1 - r.x0 >= r.y1 - r.y0;
+    for (const sg of [-1, 1]) {
+      const x = along ? X(r.cx + sg * r.rw * 0.4 + 0.5) : X(r.x0 + 2.5), z = along ? Z(r.y0 + 2.5) : Z(r.cy + sg * r.rh * 0.4 + 0.5);
+      lights.push({ type: 'light', x, z, dy: WINDOW_LIGHT.dy, color: WINDOW_LIGHT.color, intensity: WINDOW_LIGHT.intensity, distance: WINDOW_LIGHT.distance, flicker: 0, nightOnly: false });
+      lights.push({ type: 'emitter', x, z: r2(z + 0.8), preset: 'dust', dy: 1.8, size: [1.3, 3.4, 1.3], count: 16, params: { color: '#d4e2ff' } });
+    }
+  }
   return { trim, sheets: [...sheets.values()], lights, deep, partial };
+}
+/** a drowned hall's window light (`windows`), cold, from high on its back wall */
+const WINDOW_LIGHT = { color: '#a8bfe8', intensity: 6, distance: 9.5, dy: 3.4 };
+/** the lamps a sheet of water shows: every light near it, its height over the floor, colour and strength (world.js
+ *  buildShallows lays a soft warm streak under each, toward the camera, where its reflection falls) */
+function wetLamps(objects, sheets) {
+  const near = new Set(); for (const sh of sheets) for (let k = 0; k < sh.cells.length; k += 4) near.add(`${Math.floor(sh.cells[k])},${Math.floor(sh.cells[k + 1])}`);
+  const close = (x, z) => { for (let dz = -5; dz <= 5; dz++) for (let dx = -5; dx <= 5; dx++) if (near.has(`${Math.floor(x) + dx},${Math.floor(z) + dz}`)) return true; return false; };
+  const out = [];
+  for (const o of objects) {
+    if (o.onWall) continue;
+    const L = o.type === 'light' ? [o.dy ?? 1, o.color, o.intensity] : o.type === 'wallTorch' ? [o.dy ?? 1.4, '#ffa850', 4] : o.type === 'fire' && o.opts?.light ? [0.9, '#ff9a48', 5] : null;
+    if (L && close(o.x, o.z)) out.push({ x: o.x, z: o.z, h: L[0], color: L[1], i: Math.min(8, L[2]) });
+  }
+  return out.sort((a, b) => b.i - a.i).slice(0, 24);
 }
 
 /** ember beds along a hot floor's walls (KIT_LOOK `vents`): on a floor tile against a wall, never a corridor's or a

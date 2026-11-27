@@ -599,10 +599,12 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   if ((KIT && KIT.pools) || level.plan) {
     const wrng = mulberry32(streamSeed(seed, 325));
     for (const r of level.rooms) {
-      if (level.plan ? !(r.dress && r.dress.includes('pools')) : r === level.entrance || r === level.descentRoom) continue;   // (authored: where the plan floods)
+      if (level.plan ? !(r.dress && (r.dress.includes('pools') || r.dress.includes('sickpools'))) : r === level.entrance || r === level.descentRoom) continue;   // (authored: where the plan floods)
+      // (`sickpools`, Vat Seven's: the same draws, each pool twice the size, so they read at a glance: docs/water-indoors.md)
+      const big = level.plan && r.dress.includes('sickpools') ? 2 : 1;
       const n = level.plan ? 2 + ((wrng() * 2) | 0) : (wrng() * (KIT.pools + 1)) | 0;
       for (let i = 0; i < n; i++) {
-        const cx = r.cx + (wrng() - 0.5) * r.rw * 0.7, cy = r.cy + (wrng() - 0.5) * r.rh * 0.7, rad = 1.6 + wrng() * 1.8, ph = wrng() * 6.28;
+        const cx = r.cx + (wrng() - 0.5) * r.rw * 0.7, cy = r.cy + (wrng() - 0.5) * r.rh * 0.7, rad = (1.6 + wrng() * 1.8) * big, ph = wrng() * 6.28;
         for (let y = Math.floor(cy - rad - 1); y <= Math.ceil(cy + rad + 1); y++) for (let x = Math.floor(cx - rad - 1); x <= Math.ceil(cx + rad + 1); x++) {
           const c = level.cells.get(K(x, y)); if (!c || c.kind !== 'floor' || c.corridor || c.room !== r.id || (level.plan && world.props.has(K(x, y)))) continue;   // (never under a piece: the water had drowned the Crossing's shaft of daylight)
           const a = atan2(y - cy, x - cx), rr = rad * (1 + 0.25 * sin(a * 3 + ph));
