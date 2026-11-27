@@ -43,6 +43,7 @@ import { setFogStart } from '../src/game/AtmosphereFog.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { makeBuilding } from './buildkit.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { rockGeom } from '../src/engine/world/props/SmallProps.js';   // (the pass's faceted rock: buildPass)
 import ENV_LIST from './env.json';
 import TOWN_SETS from './town.json';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
@@ -567,6 +568,7 @@ function barPatch() {
   return PATCH_TEX;
 }
 const DOCK_WL = 0.84;   // (the harbour's surface: convert.js DOCK_WL)
+const WET_WL = 0.62;    // (a channel's water indoors: convert.js WET_WL, docs/water-indoors.md)
 const DOCK_WOOD = [0.62, 0.55, 0.48], DOCK_WOOD_DARK = [0.38, 0.35, 0.32], DOCK_ROPE = [0.62, 0.47, 0.29], DOCK_HULL = [0.34, 0.28, 0.23];   // (round 1: the rope tan hemp, not grey rings; the hull dark)   // (a wharf's timbers, grey with salt and wet: docs/docks-dungeon.md)
 const BONE_TINT = [1.06, 0.99, 0.83];   // (the dead's bones: old ivory, gone yellow-grey; round 6, a quarter down, they were the whitest thing on screen)   // (the dead's bones: old ivory, gone yellow-grey)
 let cryptDark = null, cryptDamp = null, cryptPatch = null, cryptGold = null, cryptOx = null, cryptSky = null, cryptBrass = null, dockGlint = null, dockMist = null, rampFog = null, dockPost = null, dockHalo = null, dockCrane = null;
@@ -2292,6 +2294,421 @@ function buildMagma(cells) {
   g.userData.dispose = () => { const i = magmaMats.indexOf(mat); if (i >= 0) magmaMats.splice(i, 1); geo.dispose(); mat.dispose(); };
   return g;
 }
+// ── the pass (docs/pass-dungeon.md; convert.js passGround, passDress, PASS_3D): the Pilgrims' Stair's ledges over the
+// cloud and the Praetory's frost. One batch a level, as the inn's trim (one draw a material), plus the cloud's sheets.
+//   rock: a big angular block of the dark rock (Luminati's faceted boulder, its icosahedron), snow on its upward faces;
+//   cliff: a ledge's face down into the cloud under its edge, chunks of rock jutting from it, the cloud hanging over its
+//     foot; cloud: the cloud below (a floor of it far down, billowed, and a veil over the drop, clear at the ledges'
+//     edges and thick out from them); peak: a mountain's top standing up out of it, far off;
+//   bridge: the plank-and-rope bridge's posts and ropes (its deck is the level's own tiles, convert.js 'æ'); river: the
+//     frozen river at the crevasse's foot; pool: a frozen pool's ice and its rim lit pale blue; icefall: a fall frozen
+//     down the rock;
+//   post, cairn, shrine: the pilgrims' prayer posts, cairns and the wayside shrine;
+//   iceshell, icicles: the Praetory's guard frozen at his post, the icicles along its walls' tops.
+const PASS_CLOUD = '#a9bad6', PASS_FL = 1.0;
+let passGlow = null, passIce = null, passFall = null, passVeil = null, passShell = null, passCloudTex = null, passCloudMat = null, passHalo = null, passRimHalo = null, passCrystal = null, passGlaze = null;
+const passR = (seed) => (k) => ((Math.imul(seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+function buildPass(pieces) {
+  const f = game.world.factory, b = f.builder(), bs = f.builder(), bc = f.builder(), own = [], extra = [], FL = PASS_FL;   // (bc: the cloud's banks, round 5)   // (bs: what casts no shadow, the cliffs' faces below the ledges, the far peaks: the perf pass, round 3)
+  // (round 5, ice-1: "a bright cyan rim and a deep blue body, the crystals a vivid blue with a halo")
+  passGlow ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#9ff6ff').multiplyScalar(2.0), transparent: true, opacity: 0.95, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+  passIce ||= f.textures.material('pass_ice', { emissiveIntensity: 1.7 });
+  passFall ||= f.textures.material('pass_ice', { emissiveIntensity: 2.0 });
+  passShell ||= new THREE.MeshStandardMaterial({ color: new THREE.Color('#bfe6ff'), emissive: new THREE.Color('#3ea8ff'), emissiveIntensity: 0.95, transparent: true, opacity: 0.6, roughness: 0.15, depthWrite: false });
+  passCrystal ||= new THREE.MeshStandardMaterial({ color: new THREE.Color('#8fd4ff'), emissive: new THREE.Color('#1f8cff'), emissiveIntensity: 1.35, roughness: 0.25, flatShading: true });
+  passGlaze ||= new THREE.MeshStandardMaterial({ color: new THREE.Color('#9fd2ff'), emissive: new THREE.Color('#2c7ad0'), emissiveIntensity: 0.45, transparent: true, opacity: 0.5, roughness: 0.1, depthWrite: false });
+  const grad = (radial) => { const c = document.createElement('canvas'); c.width = c.height = 64; const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), gr = radial ? g2.createRadialGradient(32, 32, 0, 32, 32, 32) : g2.createLinearGradient(0, 0, 0, 64);
+    gr.addColorStop(0, '#fff'); gr.addColorStop(radial ? 0.35 : 0.2, '#999'); gr.addColorStop(1, '#000'); g2.fillStyle = gr; g2.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); t.magFilter = t.minFilter = THREE.LinearFilter; return t; };
+  passHalo ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#3fb4ff'), alphaMap: grad(true), transparent: true, opacity: 0.75, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+  passRimHalo ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#47d2ff'), alphaMap: grad(false), transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, side: THREE.DoubleSide });
+  const halo = (x, z, r, y = FL + 0.03) => b.quad(passHalo, [[x - r, y, z - r], [x + r, y, z - r], [x + r, y, z + r], [x - r, y, z + r]], [[0, 1], [1, 1], [1, 0], [0, 0]]);
+  passVeil ||= (() => { const c = document.createElement('canvas'); c.width = 4; c.height = 64; const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), gr = g2.createLinearGradient(0, 0, 0, 64); gr.addColorStop(0, '#000'); gr.addColorStop(0.12, '#333'); gr.addColorStop(0.45, '#bbb'); gr.addColorStop(1, '#fff'); g2.fillStyle = gr; g2.fillRect(0, 0, 4, 64); const t = new THREE.CanvasTexture(c); t.magFilter = t.minFilter = THREE.LinearFilter; return new THREE.MeshBasicMaterial({ color: PASS_CLOUD, alphaMap: t, transparent: true, depthWrite: false, side: THREE.DoubleSide }); })();
+  const on = (p, u, y, v) => (p.n === 'z' ? [p.x + u, y, p.z + v] : [p.x + v, y, p.z + u]);
+  const sz = (p, w, h, d) => (p.n === 'z' ? [w, h, d] : [d, h, w]);
+  const rock = (x, y, z, s, seed, { brown = false, detail = 0, yaw = 0, flat = 0.3, sink = 0.2, tint = [1, 1, 1], bb = b } = {}) =>
+    rockGeom(bb, x, y, z, s, f.rng('pass', x, z, seed), { top: 'pass_cap', side: brown ? 'pass_brown' : 'pass_rock', detail, yaw, sink, flatTop: flat, rough: 0.38, tint });
+  for (const p of pieces) {
+    const R = passR(p.seed || 1);
+    if (p.k === 'rock') rock(p.x, p.y, p.z, p.s, p.seed, { brown: p.brown, detail: p.detail || 0, yaw: p.yaw || 0, flat: p.flat ?? 0.3 });
+    else if (p.k === 'cliff') {
+      // a ledge's face down into the cloud: the rock's face, chunks jutting from it, a snow lip along its top, the cloud's
+      // veil hanging over its foot a little out from it
+      const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { n: p.n, x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 }, LOW = -11;
+      bs.box(p.brown ? 'pass_brown' : 'pass_rock', sz(q, len, -LOW, 1.2), { at: on(q, 0, LOW / 2, -p.out * 0.6) });
+      for (let t = 0.4, k = 0; t < len; t += 1.1 + R(k) * 1.2, k++) {
+        const s = 0.7 + R(k + 3) * 1.1, y = -0.8 - R(k + 5) * 6.5;
+        rock(...on(q, t - len / 2, y, p.out * (0.15 + R(k + 7) * 0.25)).map((v, i) => (i === 1 ? y : v)), [s, s * (0.9 + R(k + 9) * 0.8), s * 0.8], (p.seed || 0) + k, { brown: p.brown, yaw: R(k + 11) * 6, flat: 0.15, sink: 0.5, bb: bs });
+      }
+      b.tinted([1.06, 1.06, 1.08], () => b.box('pass_cap', sz(q, len + 0.1, 0.1, 0.22), { at: on(q, 0, FL + 0.03, p.out * 0.06) }));   // (the snow's lip along the edge: the references' inked line, lit)
+      const o = on(q, 0, 0, p.out * 2.0), y0 = -7.5, y1 = 0.35, h2 = len / 2 + 1.5;
+      bs.quad(passVeil, q.n === 'z' ? [[o[0] - h2, y1, o[2]], [o[0] + h2, y1, o[2]], [o[0] + h2, y0, o[2]], [o[0] - h2, y0, o[2]]] : [[o[0], y1, o[2] - h2], [o[0], y1, o[2] + h2], [o[0], y0, o[2] + h2], [o[0], y0, o[2] - h2]], [[0, 1], [1, 1], [1, 0], [0, 0]]);
+    } else if (p.k === 'cloud') {
+      // the cloud below: a floor of it far down, billowed (a soft noise, tiled), and over the drop a veil by each tile's
+      // distance from a ledge (convert.js passDress rows), clear at the edges, thick six out, past the level all cloud
+      passCloudTex ||= (() => {
+        const c = document.createElement('canvas'); c.width = c.height = 128; const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), img = g2.createImageData(128, 128);
+        const n = (x, y, s) => { let v = 0, a = 1, t = 0; for (let o = 0; o < 4; o++) { const fx = x / (32 >> o), fy = y / (32 >> o), x0 = Math.floor(fx), y0 = Math.floor(fy), u = fx - x0, w = fy - y0, sm = (k) => k * k * (3 - 2 * k), m = (128 / (32 >> o)) | 0;
+          const h = (i, j) => ((Math.imul(((i % m) + m) % m + s * 131, 0x27d4eb2d) ^ Math.imul(((j % m) + m) % m + 7, 0x165667b1)) >>> 0) % 1000 / 1000;
+          const a0 = h(x0, y0), b0 = h(x0 + 1, y0), c0 = h(x0, y0 + 1), d0 = h(x0 + 1, y0 + 1); v += a * (a0 + (b0 - a0) * sm(u) + (c0 - a0) * sm(w) + (a0 - b0 - c0 + d0) * sm(u) * sm(w)); t += a; a *= 0.5; } return v / t; };
+        for (let y = 0; y < 128; y++) for (let x = 0; x < 128; x++) { const v = n(x, y, 3), k = Math.round(150 + 105 * Math.max(0, Math.min(1, (v - 0.3) * 2.4))), o = (y * 128 + x) * 4; img.data[o] = k - 14; img.data[o + 1] = k - 6; img.data[o + 2] = Math.min(255, k + 6); img.data[o + 3] = 255; }
+        g2.putImageData(img, 0, 0); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; return t;
+      })();
+      const PD = 60, W = p.W, D = p.D, GW = W + 2 * PD, GD = D + 2 * PD;
+      const floorMat = new THREE.MeshBasicMaterial({ map: passCloudTex.clone(), color: '#7d93be' });   // (round 5: a deep blue-grey under the banks, so they stand off it; round 1: near white, a blank)
+      floorMat.map.repeat.set(GW / 24, GD / 24); floorMat.map.needsUpdate = true; own.push(floorMat, floorMat.map);   // (round 5: this line had been swallowed by a comment, the billows stretched to one over the whole sheet)
+      const deep = new THREE.Mesh(new THREE.PlaneGeometry(GW, GD), floorMat); deep.rotation.x = -Math.PI / 2; deep.position.set(W / 2, -6.5, D / 2); deep.updateMatrixWorld(true); extra.push(deep);
+      const c = document.createElement('canvas'); c.width = GW; c.height = GD;
+      const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), img = g2.createImageData(GW, GD);
+      for (let j = 0; j < GD; j++) for (let i = 0; i < GW; i++) { const li = i - PD, lj = j - PD, inl = li >= 0 && lj >= 0 && li < W && lj < D, d = inl ? +p.rows[lj][li] : 9, a = Math.max(0, Math.min(1, (d - 1.5) / 6)) * 0.22, o = (j * GW + i) * 4; img.data[o] = img.data[o + 1] = img.data[o + 2] = Math.round(255 * a); img.data[o + 3] = 255; }
+      g2.putImageData(img, 0, 0); const tex = new THREE.CanvasTexture(c); tex.magFilter = tex.minFilter = THREE.LinearFilter;
+      const veilMat = new THREE.MeshBasicMaterial({ color: '#d4dce6', alphaMap: tex, transparent: true, depthWrite: false }); own.push(veilMat, tex);
+      for (const [y, k] of [[-0.9, 1]]) {   // (round 5: one thin veil; the second hid the banks)
+ const m = k === 1 ? veilMat : Object.assign(veilMat.clone(), { opacity: k }); if (m !== veilMat) own.push(m); const veil = new THREE.Mesh(new THREE.PlaneGeometry(GW, GD), m); veil.rotation.x = -Math.PI / 2; veil.position.set(W / 2, y, D / 2); veil.renderOrder = 2; veil.updateMatrixWorld(true); extra.push(veil); }
+    } else if (p.k === 'cloudbank') {
+      // (round 5, the coordinator: "banks of cloud with shadowed undersides") a bank of cloud below the ledges: two or three
+      // soft lumps, lit by the sun from above and the blue fill from below, so their undersides fall into shadow
+      passCloudMat ||= new THREE.MeshLambertMaterial({ color: new THREE.Color('#93a8cf'), emissive: new THREE.Color('#1c2b4e'), emissiveIntensity: 0.35 });   // (rounds 6–7: near white, the banks read as more snow, a field of boulders below the ledges: a blue-grey body, the sun's tops pale)
+      const n = 1 + Math.floor(R(1) * 2), S = p.s || 1;   // (round 7: wide and flat, a bank, not a boulder)
+      for (let k = 0; k < n; k++) rockGeom(bc, p.x + (R(k + 2) - 0.5) * 3 * S, p.y + R(k + 5) * 0.4, p.z + (R(k + 8) - 0.5) * 2.4 * S, [(2.6 + R(k + 11) * 1.6) * S, (0.5 + R(k + 14) * 0.35) * S, (2.2 + R(k + 17) * 1.4) * S], f.rng('pass:cloud', p.x, p.z, (p.seed || 0) + k), { top: passCloudMat, side: passCloudMat, detail: 1, rough: 0.12, flatTop: 0, sink: 0.35 });
+    } else if (p.k === 'snowfall') {
+      // (round 6) the snow falling: Luminati's snow preset is the weather's and never showed in a dungeon level, so our own,
+      // one draw: flakes over the level and round it, each falling on the shared clock (uTime) and wrapping, drifting a
+      // little sideways, soft round dots in a cold white
+      let a = 911; const rnd = () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };   // (round 8: a stream, not passR: its draws one after another fell on a line)
+      const N = 1400, pos = new Float32Array(N * 3);
+      for (let k = 0; k < N; k++) { pos[3 * k] = -8 + rnd() * (p.W + 16); pos[3 * k + 1] = rnd() * 13; pos[3 * k + 2] = -8 + rnd() * (p.D + 16); }
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const dot = (() => { const c = document.createElement('canvas'); c.width = c.height = 16; const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), gr = g2.createRadialGradient(8, 8, 0, 8, 8, 8); gr.addColorStop(0, '#fff'); gr.addColorStop(0.5, 'rgba(255,255,255,0.8)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g2.fillStyle = gr; g2.fillRect(0, 0, 16, 16); return new THREE.CanvasTexture(c); })();
+      const mat = new THREE.PointsMaterial({ color: '#f4f8ff', size: 2.6 * Math.min(3, globalThis.devicePixelRatio || 1), map: dot, transparent: true, opacity: 0.9, depthWrite: false, sizeAttenuation: false, fog: false }); own.push(mat, dot);   // (round 7: in pixels; attenuated, a flake was under one at the game's camera distance)
+      mat.onBeforeCompile = (sh) => { sh.uniforms.uTime = globalUniforms.uTime;
+        sh.vertexShader = 'uniform float uTime;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  transformed.y = mod(position.y - uTime * 0.85, 13.0) - 2.5;\n  transformed.x += sin(uTime * 0.6 + position.z * 1.7) * 0.35;\n  transformed.z += cos(uTime * 0.5 + position.x * 1.3) * 0.2;'); };
+      mat.customProgramCacheKey = () => 'ember-passsnow-1';
+      const pts = new THREE.Points(geo, mat); pts.frustumCulled = false; pts.renderOrder = 4; extra.push(pts);
+    } else if (p.k === 'drift') {
+      // (round 7) snow drifted over the Praetory's floor: a low soft lump, wider than it's long, its edge its own
+      const S = p.s || 1;
+      rockGeom(bs, p.x, FL - 0.06, p.z, [1.05 * S, 0.16 + R(1) * 0.12, 0.8 * S], f.rng('pass:drift', p.x, p.z, p.seed), { top: 'pass_snow', side: 'pass_snow', detail: 0, rough: 0.1, flatTop: 0.35, sink: 0.4, yaw: R(2) * 6, tint: [0.9, 0.94, 1.02] });   // (round 8: the cap's rock showing through read as camouflage over the floor)
+    } else if (p.k === 'peak') {
+      // a mountain's top far off, standing up out of the cloud: a big faceted mass and a shoulder, snow on its faces
+      const S = p.s || 1;
+      rock(p.x, -16, p.z, [5 * S, 8.5 * S + R(1) * 3, 4.5 * S], p.seed, { detail: 1, yaw: R(2) * 6, flat: 0.04, sink: 0.1, tint: [0.8, 0.86, 1.0], bb: bs });
+      rock(p.x + (R(3) - 0.5) * 8 * S, -14, p.z + (R(4) - 0.5) * 6 * S, [3.5 * S, 5.5 * S, 3 * S], p.seed + 7, { yaw: R(5) * 6, flat: 0.04, sink: 0.1, tint: [0.9, 0.92, 0.98], bb: bs });
+    } else if (p.k === 'bridge') {
+      // the plank-and-rope bridge: a timber post at each corner and along each side, a hand rope and a lower one sagging
+      // between them, ties down to the deck's edge log, the end posts heavier with rope wound round them
+      const ax = p.along === 'x', L = ax ? p.x1 - p.x0 : p.z1 - p.z0, Wd = ax ? p.z1 - p.z0 : p.x1 - p.x0;
+      const at = (u, y, v) => (ax ? [p.x0 + u, y, p.z0 + v] : [p.x0 + v, y, p.z0 + u]);
+      const posts = [0.1]; for (let u = 2.4; u < L - 1.2; u += 2.4) posts.push(u); posts.push(L - 0.1);
+      for (const v of [0.12, Wd - 0.12]) {
+        b.tinted([0.42, 0.36, 0.3], () => b.tube('furniture_wood', at(-0.3, FL + 0.05, v), at(L + 0.3, FL + 0.05, v), 0.13, 0.13, { segments: 6 }));   // (the edge log)
+        posts.forEach((u, k) => {
+          const end = k === 0 || k === posts.length - 1, r = end ? 0.13 : 0.08, top = FL + (end ? 1.45 : 1.15);
+          b.tinted([0.46, 0.4, 0.33], () => b.tube('furniture_wood', at(u, FL - (end ? 0.5 : 0.25), v), at(u, top, v), r, r * 0.85, { segments: 6 }));
+          b.tinted([1.05, 1.06, 1.1], () => b.lathe('pass_cap', [{ y: 0, r: r * 1.05 }, { y: 0.07, r: r * 0.9 }, { y: 0.1, r: 0 }], { segments: 6, at: at(u, top, v) }));   // (snow on its head)
+          if (end) b.tinted([0.6, 0.48, 0.32], () => { for (let t = 0; t < 4; t++) b.lathe('linen', [{ y: 0, r: r + 0.03 }, { y: 0.05, r: r + 0.035 }, { y: 0.06, r: 0 }], { segments: 8, at: at(u, FL + 0.7 + t * 0.07, v) }); });
+        });
+        for (const [y0, sag] of [[1.05, 0.2], [0.55, 0.12]]) for (let k = 0; k + 1 < posts.length; k++) {
+          const ua = posts[k], ub = posts[k + 1], N = 4;
+          for (let s = 0; s < N; s++) { const t0 = s / N, t1 = (s + 1) / N, ya = FL + y0 - sag * 4 * t0 * (1 - t0), yb = FL + y0 - sag * 4 * t1 * (1 - t1);
+            b.tinted([0.62, 0.5, 0.34], () => b.tube('linen', at(ua + (ub - ua) * t0, ya, v), at(ua + (ub - ua) * t1, yb, v), 0.03, 0.03, { segments: 4 })); }
+          for (let t = 0.25; t < 1; t += 0.25) { const u = ua + (ub - ua) * t, yh = FL + 1.05 - 0.2 * 4 * t * (1 - t);
+            b.tinted([0.58, 0.47, 0.32], () => b.tube('linen', at(u, yh, v), at(u, FL + 0.12, v), 0.015, 0.015, { segments: 3 })); }
+        }
+      }
+    } else if (p.k === 'river') {
+      // the frozen river at the crevasse's foot, lit icy blue from inside, snow banked along both sides
+      const w = p.x1 - p.x0, d = p.z1 - p.z0, cx = (p.x0 + p.x1) / 2, cz = (p.z0 + p.z1) / 2;
+      bs.box(passFall, [w, 0.3, d], { at: [cx, p.y, cz] });
+      bs.tinted([1.02, 1.03, 1.06], () => { for (const s of [-1, 1]) bs.box('pass_cap', p.along === 'z' ? [0.5, 0.45, d] : [w, 0.45, 0.5], { at: p.along === 'z' ? [cx + s * (w / 2 - 0.2), p.y + 0.12, cz] : [cx, p.y + 0.12, cz + s * (d / 2 - 0.2)] }); });
+    } else if (p.k === 'pool') {
+      // a frozen pool: its ice laid just over the snow, its open edges lit pale blue and banked with a lip of snow
+      const has = new Set(p.cells.map(([x, z]) => `${x},${z}`)), H = 0.25;
+      for (const [x, z] of p.cells) {
+        b.box(passIce, [0.5, 0.03, 0.5], { at: [x, FL + 0.015, z] });
+        for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          if (has.has(`${x + dx * 0.5},${z + dz * 0.5}`)) continue;
+          b.box(passGlow, dx ? [0.1, 0.035, 0.5] : [0.5, 0.035, 0.1], { at: [x + dx * H, FL + 0.035, z + dz * H] });
+          { const a = H + 0.03, o = H + 0.55, y = FL + 0.1;   // (the rim's light out over the snow bank: a strip fading from the rim)
+            const P0 = dx ? [x + dx * a, y, z - 0.25] : [x - 0.25, y, z + dz * a], P1 = dx ? [x + dx * a, y, z + 0.25] : [x + 0.25, y, z + dz * a], P2 = dx ? [x + dx * o, y, z + 0.25] : [x + 0.25, y, z + dz * o], P3 = dx ? [x + dx * o, y, z - 0.25] : [x - 0.25, y, z + dz * o];
+            b.quad(passRimHalo, [P0, P1, P2, P3], [[0, 1], [1, 1], [1, 0], [0, 0]]); }
+          b.tinted([1.05, 1.06, 1.1], () => b.box('pass_cap', dx ? [0.14, 0.09, 0.56] : [0.56, 0.09, 0.14], { at: [x + dx * (H + 0.09), FL + 0.04, z + dz * (H + 0.09)] }));
+        }
+      }
+    } else if (p.k === 'crystals') {
+      // (round 5) a cluster of blue ice crystal: six to eight faceted prisms leaning out from a root, vivid blue and lit from
+      // inside, a halo on the snow round it (Luminati's own ice glowed at 0.15 and read as grey-blue slabs)
+      const n = 6 + Math.floor(R(1) * 3), S = p.s || 1;
+      for (let k = 0; k < n; k++) {
+        const a = (k / n) * 6.28 + R(k + 2) * 0.8, lean = k === 0 ? 0 : 0.25 + R(k + 4) * 0.45, h = (k === 0 ? 1.6 : 0.6 + R(k + 6) * 0.9) * S, r = (0.12 + R(k + 8) * 0.1) * S, d = k === 0 ? 0 : 0.18 * S;
+        const up = new THREE.Vector3(0, 1, 0), dir = new THREE.Vector3(Math.cos(a) * lean, 1, Math.sin(a) * lean).normalize();
+        b.push([p.x + Math.cos(a) * d, FL - 0.05, p.z + Math.sin(a) * d], new THREE.Quaternion().setFromUnitVectors(up, dir));
+        b.lathe(passCrystal, [{ y: 0, r }, { y: h * 0.72, r: r * 0.9 }, { y: h, r: 0.01 }], { segments: 5, phase: R(k + 10) * 3, smooth: false });
+        b.pop();
+      }
+      halo(p.x, p.z, 1.6 * S);
+    } else if (p.k === 'icefall') {
+      // a fall frozen down the back rock: a sheet of ice from the rock's top to the floor, columns of it standing out of
+      // the sheet, tapering up, a mound of ice at its foot; lit from inside
+      const q = { n: p.n, x: p.x, z: p.z }, top = p.top || 4.5, h = top - FL;
+      b.box(passFall, sz(q, 3.6, h, 0.4), { at: on(q, 0, FL + h / 2, -0.15) });
+      for (let k = 0; k < 13; k++) { const u = -1.8 + k * 0.3 + (R(k) - 0.5) * 0.1, r = 0.13 + R(k + 3) * 0.16, hh = h * (0.5 + R(k + 5) * 0.5);
+        b.lathe(passFall, [{ y: 0, r: r * 1.4 }, { y: hh * 0.3, r }, { y: hh * 0.85, r: r * 0.7 }, { y: hh, r: 0.02 }], { segments: 6, at: on(q, u, FL, 0.08 + R(k + 7) * 0.2) }); }
+      b.lathe(passFall, [{ y: 0, r: 2.0 }, { y: 0.3, r: 1.5 }, { y: 0.5, r: 0.4 }, { y: 0.55, r: 0 }], { segments: 10, at: on(q, 0, FL, 0.4) });
+      { const c = on(q, 0, FL + 0.04, 1.2); halo(c[0], c[2], 3.2); }
+    } else if (p.k === 'post') {
+      // a pilgrims' prayer post: a weathered pole, a crossbar, strips of faded cloth hung from it, a small bell, snow on its
+      // head; stones heaped at its foot; at a doorway a lantern hung from the bar's end
+      const lean = (R(1) - 0.5) * 0.08, tx = p.x + lean, H = 2.9;
+      b.tinted([0.5, 0.43, 0.36], () => { b.tube('furniture_wood', [p.x, FL - 0.1, p.z], [tx, FL + H, p.z], 0.075, 0.06, { segments: 6 }); b.box('furniture_wood', [1.0, 0.09, 0.09], { at: [tx, FL + H - 0.25, p.z] }); });
+      b.tinted([1.05, 1.06, 1.1], () => { b.box('pass_cap', [1.02, 0.05, 0.1], { at: [tx, FL + H - 0.18, p.z] }); b.lathe('pass_cap', [{ y: 0, r: 0.07 }, { y: 0.08, r: 0 }], { segments: 6, at: [tx, FL + H, p.z] }); });
+      const CL = [[0.72, 0.2, 0.16], [0.82, 0.6, 0.22], [0.26, 0.38, 0.66], [0.86, 0.84, 0.78], [0.3, 0.5, 0.36]];
+      for (let k = 0; k < 4; k++) { const u = -0.38 + k * 0.25, L = 0.7 + R(k + 2) * 0.55, sw = (R(k + 4) - 0.5) * 0.3;
+        b.tinted(CL[(k + (p.seed || 0)) % CL.length], () => b.box('linen', [0.18, L, 0.02], { at: [tx + u + sw * 0.5, FL + H - 0.3 - L / 2, p.z + 0.06], rot: [0, 0, sw] })); }
+      b.tinted([0.62, 0.48, 0.26], () => b.lathe('metal', [{ y: 0, r: 0.09 }, { y: 0.02, r: 0.08 }, { y: 0.14, r: 0.05 }, { y: 0.16, r: 0 }], { segments: 8, at: [tx + 0.44, FL + H - 0.48, p.z] }));
+      for (let k = 0; k < 3; k++) rock(p.x + (R(k + 9) - 0.5) * 0.5, FL - 0.05, p.z + (R(k + 12) - 0.5) * 0.5, [0.22 + R(k) * 0.1, 0.16, 0.2], (p.seed || 0) + k, { flat: 0.4 });
+      if (p.lamp) { b.tinted(TAV_IRON, () => b.box('metal', [0.04, 0.3, 0.04], { at: [tx - 0.46, FL + H - 0.42, p.z] })); b.tinted(TAV_IRON, () => b.box('metal', [0.2, 0.26, 0.2], { at: [tx - 0.46, FL + H - 0.7, p.z] })); b.box(tavernGlass ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffb45e').multiplyScalar(2.2), fog: false }), [0.14, 0.18, 0.14], { at: [tx - 0.46, FL + H - 0.7, p.z] }); }
+    } else if (p.k === 'cairn') {
+      // a cairn: flat stones stacked smaller as it goes up, the top ones under snow
+      const n = 5 + Math.floor(R(1) * 3), S = p.s || 1; let y = FL - 0.05;
+      for (let k = 0; k < n; k++) { const s = (0.62 - k * 0.07) * S, hh = (0.2 + R(k + 3) * 0.08) * S;
+        rockGeom(b, p.x + (R(k + 5) - 0.5) * 0.12, y, p.z + (R(k + 7) - 0.5) * 0.12, [s, hh, s * (0.8 + R(k + 9) * 0.3)], f.rng('pass:cairn', p.x, p.z, (p.seed || 0) + k * 13), { top: k === n - 1 ? 'pass_cap' : 'pass_rock', side: 'pass_rock', detail: 0, yaw: R(k + 11) * 6, flatTop: 0.45, sink: 0.05, rough: 0.3, tint: [1.15, 1.15, 1.2] }); y += hh * 1.6; }   // (round 2: snow on every stone read as a snowman)
+    } else if (p.k === 'shrine') {
+      // the wayside shrine: a stone on a step under a little gabled roof of slate, snow on the roof; the offerings frozen to
+      // the step, a lamp kept lit in its niche
+      b.pushMatrix(new THREE.Matrix4().makeTranslation(p.x, FL, p.z).multiply(new THREE.Matrix4().makeScale(1.35, 1.35, 1.35)).multiply(new THREE.Matrix4().makeTranslation(-p.x, -FL, -p.z)));   // (round 2: a set piece, a third bigger)
+      b.tinted([0.92, 0.94, 0.98], () => { b.box('stone_brick', [2.2, 0.3, 1.3], { at: [p.x, FL + 0.15, p.z] }); b.box('stone_brick', [1.1, 1.5, 0.7], { at: [p.x, FL + 0.3 + 0.75, p.z - 0.15] }); for (const s of [-1, 1]) b.box('stone_brick', [0.18, 1.7, 0.18], { at: [p.x + s * 0.72, FL + 0.3 + 0.85, p.z + 0.1] }); });
+      b.box(cryptDark ||= new THREE.MeshBasicMaterial({ color: '#0d0a08' }), [0.42, 0.5, 0.04], { at: [p.x, FL + 1.15, p.z + 0.21] });
+      b.box(tavernGlass ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffb45e').multiplyScalar(2.2), fog: false }), [0.1, 0.14, 0.05], { at: [p.x, FL + 1.0, p.z + 0.22] });
+      for (const s of [-1, 1]) { b.tinted([0.66, 0.7, 0.8], () => b.box('roof_slate', [0.95, 0.07, 1.25], { at: [p.x + s * 0.42, FL + 2.18, p.z], rot: [0, 0, s * -0.55] })); b.tinted([1.08, 1.08, 1.12], () => b.box('pass_cap', [0.85, 0.05, 1.15], { at: [p.x + s * 0.4, FL + 2.25, p.z], rot: [0, 0, s * -0.55] })); }
+      b.tinted([0.7, 0.62, 0.52], () => { for (let k = 0; k < 4; k++) b.lathe('linen', [{ y: 0, r: 0.05 }, { y: 0.06, r: 0.09 }, { y: 0.08, r: 0.09 }, { y: 0.081, r: 0 }], { segments: 8, at: [p.x - 0.75 + k * 0.5, FL + 0.3, p.z + 0.42] }); });
+      b.tinted([1.05, 1.06, 1.1], () => { for (let k = 0; k < 3; k++) b.lathe('pass_cap', [{ y: 0, r: 0.07 }, { y: 0.04, r: 0 }], { segments: 6, at: [p.x - 0.5 + k * 0.5, FL + 0.38, p.z + 0.42] }); });
+      b.pop();
+    } else if (p.k === 'iceshell') {
+      // a guard frozen at his post: the ice grown up round him in a block, faceted, clear enough to see him in it; rime at
+      // its foot (its own mesh: drawn through)
+      const g = f.builder(); rockGeom(g, p.x, FL - 0.05, p.z, [0.62, 1.5, 0.56], f.rng('pass:shell', p.x, p.z, p.seed), { top: passShell, side: passShell, detail: 0, rough: 0.25, flatTop: 0.12, sink: 0.08 });
+      const sh = g.build('ember:iceshell', { castShadow: false }).group; sh.traverse((o) => { if (o.isMesh) { o.renderOrder = 3; o.castShadow = false; } }); sh.updateMatrixWorld(true); extra.push(sh);
+      b.tinted([1.05, 1.06, 1.1], () => b.lathe('pass_cap', [{ y: 0, r: 0.72 }, { y: 0.05, r: 0.6 }, { y: 0.07, r: 0 }], { segments: 10, at: [p.x, FL, p.z] }));
+      halo(p.x, p.z, 1.1, FL + 0.09);   // (round 5: the ice glowing faintly blue round him)
+    } else if (p.k === 'icicles') {
+      // icicles along a wall's top: a ragged run of them, long and short, pale ice
+      const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { n: p.n, x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 };
+      // (round 5: "big icicles that read at phone size": half a figure long the longest, thick, fewer)
+      for (let t = 0.12, k = 0; t < len - 0.08; t += 0.22 + R(k) * 0.24, k++) { const L = 0.3 + R(k + 3) ** 1.5 * 1.15, r = 0.06 + R(k + 5) * 0.07;
+        b.lathe(passFall, [{ y: 0, r: 0.004 }, { y: L * 0.7, r: r * 0.65 }, { y: L, r }], { segments: 5, at: on(q, t - len / 2, p.y - L, p.out * (0.06 + r)) }); }
+      b.box(passGlaze, sz(q, len, 1.35, 0.08), { at: on(q, 0, FL + 0.67, p.out * 0.04) });   // (round 5: "a blue ice glaze on the walls' lower courses")
+      b.tinted([1.05, 1.06, 1.1], () => b.box('pass_cap', sz(q, len, 0.12, 0.4), { at: on(q, 0, p.y + 0.06, -p.out * 0.1) }));
+    }
+  }
+  const built = b.build('ember:pass').group; built.updateMatrixWorld(true);
+  built.traverse((o) => { if (o.isMesh && [passGlow, passVeil, passIce, passFall, passHalo, passRimHalo, passGlaze].includes(o.material)) o.castShadow = false; });
+  const flat = bs.build('ember:pass:below', { castShadow: false }).group; flat.updateMatrixWorld(true);
+  const banks = bc.build('ember:pass:cloud', { castShadow: false, receiveShadow: false }).group; banks.updateMatrixWorld(true);
+  const g = new THREE.Group(); g.name = 'ember:pass'; g.add(built, flat, banks); for (const o of extra) g.add(o);
+  g.dispose = () => { g.traverse((o) => { if (o.isMesh) o.geometry.dispose(); }); for (const r of own) r.dispose(); own.length = 0; };
+  return g;
+}
+// ── water indoors (convert.js wetGround; docs/water-indoors.md) ───────────────────────────────────────────────────────
+// Shin-deep water over a floor: one sheet over every wet tile of ours (a quad each, half a unit), a hand over the floor
+// (WET_SHEET), so a figure's feet go a little under it and the floor shows through, plainly under water: a clear tint,
+// part its own light so it reads in a dark room. Glossy but soft (round 5: a mirror's pin-point glints read as glitter):
+// the lamps' light off it broad, and under each lamp near it (convert.js wetLamps) a long soft warm streak where its
+// reflection falls, toward the camera (the lamp mirrored in the water's plane, found from the camera each fragment),
+// shivering with the ripples; the walls behind it (away from the camera) a cool pale reflection along their feet; a
+// bright waterline where it meets a wall or dry floor. A look's scum (Vat Seven's, the garth's duckweed) drifts on it
+// in patches, matt. Transparent and drawn before the rings and the warnings (their renderOrder 2), which never write its
+// depth: they stay on top. One draw a look.
+const WET_SHEET = 0.075, WET_LAMPS = 24;
+/** each kit's water (convert.js KIT_LOOK `wet`): the sheet's colour, how much of the floor it hides and how much of its
+ *  own light it carries, its ripples and gloss, its scum, a garth's sky in it, its waterline; and its channels' deep water
+ *  (Luminati's: its four bands, dark to darker) */
+const WET_LOOKS = {
+  // the Canal Locks: canal water, a clear green-blue, the flags plain under it
+  canal: { tint: '#2f7a72', alpha: 0.55, self: 0.16, rip: 0.3, rough: 0.32, scum: '#5a6a3a', scumAmt: 0, sky: '#9fb6c8', line: '#bfe0da', deep: ['#2a5450', '#234845', '#1d3d3a', '#173330'] },
+  // Vat Seven: sickly yellow-green, thick, a pale scum in drifts on it, a dark ring at its edge
+  sick: { tint: '#8a9a1c', alpha: 0.9, self: 0.22, rip: 0.22, rough: 0.4, scum: '#c8d050', scumAmt: 1.3, sky: '#c4d060', line: '#3a4210', rimDark: 1, deep: ['#4a5a16', '#3e4c12', '#33400f', '#28330c'] },
+  // the Drowned Abbey: black-green, still, the pale stone in it; duckweed on the garth's, the sky in it
+  abbey: { tint: '#235a58', alpha: 0.6, self: 0.14, rip: 0.24, rough: 0.28, scum: '#4e6a26', scumAmt: 0, skyScum: 0.55, sky: '#9fb2cc', line: '#c4d8d4', deep: ['#22403e', '#1c3735', '#172e2d', '#122625'] },
+  // the Sunken Chapel: the river come in, green-brown and clear
+  chapel: { tint: '#3e6a52', alpha: 0.55, self: 0.14, rip: 0.3, rough: 0.3, scum: '#5a5a30', scumAmt: 0, sky: '#a8b8c0', line: '#d0dcc8', deep: ['#262418', '#201e14', '#1a1810', '#14130c'] },
+};
+// (the Tidemark's sea cave, docs/strand-dungeon.md: its tide pools the sea's cold slate-green over the shingle, a pale
+// line where the floor meets them; its deep the coast's sea, which coastAir sets after wetAir in skyFor)
+WET_LOOKS.sea = { tint: '#2c5e62', alpha: 0.58, self: 0.15, rip: 0.32, rough: 0.3, scum: '#4a5a34', scumAmt: 0, sky: '#9fb4c4', line: '#d2e2e2', deep: COAST_SEA };
+const wetMats = []; let wetT = 0;
+function buildShallows(sh) {
+  const g = new THREE.Group(); g.name = 'ember:shallows';
+  const look = WET_LOOKS[sh.look] || WET_LOOKS.canal, c = sh.cells, n = c.length / 4;
+  const pos = new Float32Array(n * 12), edge = new Float32Array(n * 4), wall = new Float32Array(n * 4), sky = new Float32Array(n * 4), refl = new Float32Array(n * 4), idx = new Uint32Array(n * 6);
+  // (each cell: x, z, flags (bit 0 open to the sky; bits 1–4 its corners NW NE SE SW on dry floor, 5–8 against a wall),
+  // and how near the wall behind it is)
+  const CORN = [[-0.25, -0.25], [0.25, -0.25], [0.25, 0.25], [-0.25, 0.25]];
+  for (let k = 0; k < n; k++) {
+    const x = c[k * 4], z = c[k * 4 + 1], f = c[k * 4 + 2], y = game.tileMap.getHeight(x, z) + WET_SHEET;
+    for (let q = 0; q < 4; q++) { pos.set([x + CORN[q][0], y, z + CORN[q][1]], k * 12 + q * 3); edge[k * 4 + q] = (f >> (q + 1)) & 1 ? 0 : 1; wall[k * 4 + q] = (f >> (q + 5)) & 1; sky[k * 4 + q] = f & 1; refl[k * 4 + q] = c[k * 4 + 3]; }
+    idx.set([k * 4, k * 4 + 3, k * 4 + 1, k * 4 + 1, k * 4 + 3, k * 4 + 2], k * 6);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(n * 12).map((_, i) => (i % 3 === 1 ? 1 : 0)), 3));
+  geo.setAttribute('aEdge', new THREE.BufferAttribute(edge, 1)); geo.setAttribute('aWall', new THREE.BufferAttribute(wall, 1)); geo.setAttribute('aSky', new THREE.BufferAttribute(sky, 1)); geo.setAttribute('aRefl', new THREE.BufferAttribute(refl, 1));
+  geo.setIndex(new THREE.BufferAttribute(idx, 1)); geo.computeBoundingSphere();
+  const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(look.tint), roughness: look.rough, metalness: 0, transparent: true, opacity: look.alpha, depthWrite: false, fog: true });
+  // the lamps: position and height over the floor, colour times strength (unused slots black)
+  const L = sh.lamps || [], lp = [], lc = [];
+  for (let k = 0; k < WET_LAMPS; k++) { const q = L[k]; lp.push(new THREE.Vector4(q ? q.x : 0, q ? q.z : 0, q ? q.h : 1, 0)); lc.push(q ? new THREE.Color(q.color).multiplyScalar(Math.min(1.4, 0.25 + q.i * 0.14)) : new THREE.Color(0)); }
+  const u = { uWT: { value: wetT }, uRip: { value: look.rip }, uScum: { value: new THREE.Color(look.scum) }, uScumAmt: { value: look.scumAmt }, uSkyScum: { value: look.skyScum || 0 },
+    uSky: { value: new THREE.Color(look.sky) }, uLine: { value: new THREE.Color(look.line) }, uSelf: { value: look.self }, uRimDark: { value: look.rimDark || 0 }, uTint: { value: new THREE.Color(look.tint) },
+    uLampP: { value: lp }, uLampC: { value: lc }, uWY: { value: 1 + WET_SHEET } };
+  mat.userData.u = u.uWT;
+  mat.onBeforeCompile = (s) => {
+    Object.assign(s.uniforms, u);
+    s.vertexShader = 'attribute float aEdge;\nattribute float aWall;\nattribute float aSky;\nattribute float aRefl;\nvarying float vEdge;\nvarying float vWall;\nvarying float vSkyW;\nvarying float vRefl;\nvarying vec2 vWP;\n'
+      + s.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vEdge = aEdge; vWall = aWall; vSkyW = aSky; vRefl = aRefl; vWP = (modelMatrix * vec4(position, 1.0)).xz;');
+    s.fragmentShader = `uniform float uWT, uRip, uScumAmt, uSkyScum, uSelf, uRimDark, uWY;
+uniform vec3 uScum, uSky, uLine, uTint;
+uniform vec4 uLampP[${WET_LAMPS}];
+uniform vec3 uLampC[${WET_LAMPS}];
+varying float vEdge, vWall, vSkyW, vRefl;
+varying vec2 vWP;
+` + MAGMA_NOISE + `
+float wRip(vec2 p) { return mn(p * 1.9 + vec2(uWT * 0.16, uWT * 0.1)) * 0.6 + mn(p * 4.1 - vec2(uWT * 0.13, -uWT * 0.21)) * 0.4; }
+float wScum() { float a = mn(vWP * 1.15 + vec2(uWT * 0.012, uWT * 0.008)) * 0.7 + mn(vWP * 3.7 - vec2(uWT * 0.01, 0.0)) * 0.3; return smoothstep(0.5, 0.66, a) * clamp(uScumAmt + vSkyW * uSkyScum, 0.0, 1.0); }
+// each lamp's reflection: the lamp mirrored in the water's plane, where the line from the eye to it crosses the water; a
+// long soft streak there, drawn toward the eye, shaken sideways by the ripples
+vec3 wLamps() {
+  vec3 acc = vec3(0.0); vec2 eye = cameraPosition.xz; float ch = cameraPosition.y - uWY;
+  for (int k = 0; k < ${WET_LAMPS}; k++) {
+    vec4 P = uLampP[k]; vec3 C = uLampC[k]; if (C.r + C.g + C.b < 0.001) continue;
+    float t = ch / (ch + max(0.05, P.z));
+    vec2 R = eye + (P.xy - eye) * t, d = vWP - R, toEye = normalize(eye - R), side = vec2(-toEye.y, toEye.x);
+    float a = dot(d, toEye), b = dot(d, side) + (mn(vec2(a * 2.4 + float(k) * 7.3, uWT * 0.7)) - 0.5) * 0.24;   // (shaken along its length: round 6, a world-space shake drew a high lamp's as a zigzag)
+    acc += C * exp(-b * b / 0.05) * exp(-a * a / (a > 0.0 ? 1.1 : 0.25));
+  }
+  return acc;
+}
+` + s.fragmentShader
+      .replace('#include <color_fragment>', `#include <color_fragment>
+  float wsc = wScum();
+  diffuseColor.rgb = mix(diffuseColor.rgb, uSky * 0.55, vSkyW * 0.35);   // (a garth's: the sky in it)
+  diffuseColor.rgb = mix(diffuseColor.rgb, uScum, wsc);
+  // its waterline: bright where it meets a wall or dry floor (a dark ring for a thick water, Vat Seven's)
+  float men = max(clamp(1.0 - abs(vEdge - 0.45) * 3.0, 0.0, 1.0) * step(vEdge, 0.97), smoothstep(0.6, 1.0, vWall));   // (round 6: soft and wide; a hairline read as a selection outline)
+  diffuseColor.rgb *= 1.0 - 0.5 * men * uRimDark;
+  diffuseColor.a = max(diffuseColor.a * mix(0.2, 1.0, smoothstep(0.0, 1.0, vEdge)), max(wsc * 0.92 * vEdge, 0.4 * men));`)
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.85, wsc);')
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+  { float e = 0.06, h0 = wRip(vWP), hx = wRip(vWP + vec2(e, 0.0)), hz = wRip(vWP + vec2(0.0, e)), k = uRip * (1.0 - wsc);
+    vec3 nw = normalize(vec3(-(hx - h0) / e * k, 1.0, -(hz - h0) / e * k));
+    normal = normalize((viewMatrix * vec4(nw, 0.0)).xyz); }`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+  // (its own light: the tint, the lamps' streaks, the wall behind it, the waterline)
+  { vec3 lamps = wLamps() * (1.0 - wsc), wallR = uSky * 0.16 * vRefl * vRefl * (0.75 + 0.5 * mn(vWP * vec2(4.0, 0.8) + uWT * 0.2));
+    totalEmissiveRadiance += uTint * uSelf * (1.0 - wsc) + lamps + wallR * (1.0 - wsc) + uLine * 0.22 * men * (1.0 - uRimDark);
+    diffuseColor.a = max(diffuseColor.a, clamp(dot(lamps, vec3(0.3, 0.59, 0.11)) * 0.9, 0.0, 0.85)); }`)
+      .replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\n  reflectedLight.directSpecular = min(reflectedLight.directSpecular, vec3(0.4));');
+  };
+  mat.customProgramCacheKey = () => 'ember-shallows-2';
+  const m = new THREE.Mesh(geo, mat); m.name = 'ember:shallows:' + sh.look; m.renderOrder = 1; m.castShadow = false; m.receiveShadow = true; g.add(m); wetMats.push(mat);
+  g.userData.dispose = () => { const i = wetMats.indexOf(mat); if (i >= 0) wetMats.splice(i, 1); geo.dispose(); mat.dispose(); };
+  return g;
+}
+// A channel's trim (convert.js wetGround), in two materials (round 5, the perf: four made the Locks 16 % over), the stone
+// (the coping, the sluices' piers, the iron tinted dark on it) and the timber (the bridges, the gates), none of it casting
+// (its shadow pass was half its draws); and the far side's reflection, one unlit sheet with its alpha in its vertices.
+//   wkerb: the coping along a bank, pale, proud of the floor, its face down to the water;
+//   wrail: a bridge's open side, posts, rails and its edge board;
+//   wrefl: under the far side (the wall or the bank north or west of the water), its pale reflection fading out;
+//   lockgate: two big oak leaves mitred across the channel, standing a metre over the floor, strapped, a walk and a rail
+//     on top, a balance beam out over each bank, a winch wheel on each leaf;
+//   sluice: two stone piers, a lintel, the board raised a little, its winch wheel big on the lintel.
+const WET_STONE = [1.85, 1.88, 1.92], WET_IRON = [0.32, 0.31, 0.3], WET_OAK = [0.78, 0.58, 0.4], WET_OAK_DARK = [0.5, 0.37, 0.27];
+function buildWetTrim(pieces) {
+  const f = game.world.factory, b = f.builder(), FL = 1.0, ST = 'fen_cap', WD = 'furniture_wood', refl = [];
+  const wheel = (c, R, ax) => {   // a spoked winch wheel standing upright, its face toward +z (ax) or +x
+    const P = (a, r) => (ax ? [c[0] + Math.cos(a) * r, c[1] + Math.sin(a) * r, c[2]] : [c[0], c[1] + Math.sin(a) * r, c[2] + Math.cos(a) * r]);
+    b.tinted(WET_IRON, () => {
+      for (let k = 0; k < 14; k++) b.tube(ST, P((k / 14) * Math.PI * 2, R), P(((k + 1) / 14) * Math.PI * 2, R), 0.05, 0.05, { segments: 4 });
+      for (let k = 0; k < 3; k++) { const a = (k / 3) * Math.PI; b.tube(ST, P(a, R), P(a + Math.PI, R), 0.035, 0.035, { segments: 4 }); }
+      for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; b.tube(ST, P(a, R), P(a, R + 0.12), 0.03, 0.02, { segments: 3 }); }   // (its handles)
+    });
+  };
+  for (const p of pieces) {
+    if (p.k === 'wkerb') {
+      const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), cx = (p.x0 + p.x1) / 2, cz = (p.z0 + p.z1) / 2, alongX = p.n === 'z';
+      const at = (o, y) => (alongX ? [cx, y, cz + p.out * o] : [cx + p.out * o, y, cz]), sz = (l, h, d) => (alongX ? [l, h, d] : [d, h, l]);
+      b.tinted(WET_STONE, () => b.box(ST, sz(len, 0.18, 0.38), { at: at(0.19, FL + 0.07) }));
+      b.tinted([0.62, 0.7, 0.64], () => b.box(ST, sz(len, FL - WET_WL + 0.02, 0.05), { at: at(0.02, (FL + WET_WL) / 2) }));   // (its face down to the water, wet)
+      b.tinted([0.36, 0.5, 0.36], () => b.box(ST, sz(len, 0.08, 0.06), { at: at(0.03, WET_WL + 0.04) }));   // (the weed at the waterline)
+    } else if (p.k === 'wrefl') {
+      refl.push(p);
+    } else if (p.k === 'wrail') {
+      const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), alongX = p.n === 'z', o = p.out * 0.08;
+      const P = (t) => (alongX ? [Math.min(p.x0, p.x1) + t, p.z0 + o] : [p.x0 + o, Math.min(p.z0, p.z1) + t]);
+      b.tinted(WET_OAK, () => {
+        for (const t of [0.08, len / 2, len - 0.08]) { const [x, z] = P(t); b.box(WD, [0.13, 0.85, 0.13], { at: [x, FL + 0.42, z] }); b.box(WD, [0.15, FL - WET_WL + 0.35, 0.15], { at: [x, WET_WL - 0.3 + (FL - WET_WL + 0.35) / 2, z] }); }
+        const [mx, mz] = P(len / 2); b.box(WD, alongX ? [len, 0.08, 0.1] : [0.1, 0.08, len], { at: [mx, FL + 0.82, mz] });
+        b.box(WD, alongX ? [len, 0.06, 0.08] : [0.08, 0.06, len], { at: [mx, FL + 0.46, mz] });
+      });
+      b.tinted(WET_OAK_DARK, () => { const [mx, mz] = P(len / 2); b.box(WD, alongX ? [len, FL - WET_WL + 0.05, 0.07] : [0.07, FL - WET_WL + 0.05, len], { at: [mx, (FL + WET_WL) / 2 - 0.02, mz] }); });   // (the deck's edge board, down to the water)
+    } else if (p.k === 'lockgate') {
+      const ax = p.across === 'x', half = p.span / 2, top = FL + 1.0, bot = 0.05, hgt = top - bot;
+      const at = (u, y, v) => (ax ? [p.x + u, y, p.z + v] : [p.x + v, y, p.z + u]);
+      for (const sg of [-1, 1]) {
+        const ang = sg * 0.18, lx = sg * half / 2, lz = -0.16 + Math.abs(lx) * 0.18, rot = ax ? [0, ang, 0] : [0, -ang + Math.PI / 2, 0];
+        b.tinted(WET_OAK, () => b.box(WD, [half + 0.06, hgt, 0.3], { at: at(lx, bot + hgt / 2, lz), rot }));
+        b.tinted(WET_OAK_DARK, () => { for (let k = 0; k < 3; k++) b.box(WD, [0.12, hgt, 0.34], { at: at(lx + (k - 1) * half * 0.33, bot + hgt / 2, lz), rot }); });   // (its uprights)
+        b.tinted(WET_IRON, () => { for (const y of [FL - 0.05, FL + 0.45, FL + 0.85]) b.box(ST, [half + 0.08, 0.07, 0.34], { at: at(lx, y, lz), rot }); });
+        b.tinted(WET_OAK, () => { b.box(WD, [half + 0.12, 0.07, 0.5], { at: at(lx, top + 0.04, lz), rot }); b.box(WD, [half, 0.07, 0.07], { at: at(lx, top + 0.62, lz - 0.2), rot }); for (const t of [0.1, 0.9]) b.box(WD, [0.07, 0.6, 0.07], { at: at(sg * half * t, top + 0.32, lz - 0.2), rot }); });
+        // its balance beam: out over the bank beyond its end, along the channel, at a hand's height
+        if (p.ends && p.ends[sg < 0 ? 0 : 1]) b.tinted(WET_OAK_DARK, () => { const e = at(sg * (half + 0.15), FL + 0.9, 0); b.box(WD, ax ? [0.34, 0.3, 2.6] : [2.6, 0.3, 0.34], { at: ax ? [e[0], e[1], e[2] + 1.1] : [e[0] + 1.1, e[1], e[2]] }); });
+        wheel(at(lx, top + 0.95, lz - 0.05), 0.36, ax);
+        b.tinted(WET_IRON, () => b.box(ST, [0.1, 0.6, 0.1], { at: at(lx, top + 0.42, lz - 0.05) }));   // (its stand)
+      }
+    } else if (p.k === 'sluice') {
+      const ax = p.across === 'x', half = p.span / 2, at = (u, y) => (ax ? [p.x + u, y, p.z] : [p.x, y, p.z + u]), sz = (w, h, d) => (ax ? [w, h, d] : [d, h, w]), LT = FL + 1.15;
+      b.tinted(WET_STONE, () => { for (const sg of [-1, 1]) b.box(ST, sz(0.36, LT, 0.5), { at: at(sg * (half - 0.18), LT / 2) }); b.box(ST, sz(p.span, 0.24, 0.5), { at: at(0, LT + 0.12) }); });
+      b.tinted(WET_OAK, () => b.box(WD, sz(p.span - 0.7, 0.95, 0.14), { at: at(0, WET_WL + 0.38) }));
+      wheel(at(0, LT + 0.82), 0.58, ax);
+      b.tinted(WET_IRON, () => { const c = at(0, 0); b.box(ST, [0.12, 0.6, 0.12], { at: [c[0], LT + 0.5, c[2]] }); b.box(ST, sz(0.06, LT - WET_WL, 0.06), { at: at(0.14, (LT + WET_WL) / 2) }); });
+    }
+  }
+  const built = b.build('ember:wet').group; built.updateMatrixWorld(true);
+  const by = new Map();
+  built.traverse((o) => { if (!o.isMesh || Array.isArray(o.material)) return; const geo = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone(); geo.applyMatrix4(o.matrixWorld); (by.get(o.material) || by.set(o.material, []).get(o.material)).push(geo); });
+  const g = new THREE.Group(); g.name = 'ember:wet';
+  for (const [m, geos] of by) {
+    const keep = Object.keys(geos[0].attributes).filter((k) => geos.every((q) => q.attributes[k] && q.attributes[k].itemSize === geos[0].attributes[k].itemSize));
+    for (const q of geos) for (const k of Object.keys(q.attributes)) if (!keep.includes(k)) q.deleteAttribute(k);
+    for (const q of geos) for (const k of Object.keys(q.morphAttributes)) delete q.morphAttributes[k];
+    const merged = geos.length > 1 ? mergeGeometries(geos) : geos[0]; for (const q of geos) if (q !== merged) q.dispose(); if (!merged) continue;
+    const mesh = new THREE.Mesh(merged, m); mesh.castShadow = false; mesh.receiveShadow = true; g.add(mesh);
+  }
+  built.traverse((q) => { if (q.isMesh) q.geometry.dispose(); });
+  // the far side's reflection: a strip on the water under it, the stone's pale colour fading out toward the camera
+  let rmat = null;
+  if (refl.length) {
+    const pos = [], col = [], idx = [];
+    for (const p of refl) {
+      const along = p.n === 'z', a0 = along ? p.x0 : p.z0, a1 = along ? p.x1 : p.z1, c = along ? p.z0 : p.x0, w = 1.1, y = WET_WL + 0.06, base = pos.length / 3;
+      const P = (a, o) => (along ? [a, y, c + o] : [c + o, y, a]);
+      for (const [a, o, al] of [[a0, 0, 0.6], [a1, 0, 0.6], [a1, w, 0], [a0, w, 0]]) { pos.push(...P(a, o)); col.push(0.2, 0.26, 0.28, al); }   // (round 6: at 0.7 of the stone's pale it bloomed into a light tube)
+      idx.push(base, base + 2, base + 1, base, base + 3, base + 2);
+    }
+    const rgeo = new THREE.BufferGeometry(); rgeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); rgeo.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); rgeo.setIndex(idx);
+    rmat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: true });
+    const rm = new THREE.Mesh(rgeo, rmat); rm.renderOrder = 11; rm.name = 'ember:wet:reflection'; g.add(rm);   // (over Luminati's water, its RENDER_ORDER.WATER 10)
+  }
+  g.userData.dispose = () => { g.traverse((o) => { if (o.isMesh) o.geometry.dispose(); }); rmat?.dispose(); };
+  return g;
+}
+/** a wet kit's deep water (its channels: Luminati's water over the sunk tiles): its look's bands, still, no glint or foam */
+function wetAir(kind) {
+  const W = game?.world, u = W?.water?.uniforms, look = WET_LOOKS[kind]; if (!u || !look) return;
+  if (W.waterBase) Object.assign(W.waterBase, { glint: 0, brightness: 1.25 }); else W.waterBase = { glint: 0, brightness: 1.25 };
+  ['uC0', 'uC1', 'uC2', 'uC3'].forEach((k, i) => u[k]?.value.set(look.deep[i]));
+  u.uCrest?.value.set(look.deep[0]); u.uFoam?.value.set(look.deep[1]);
+  if (u.uFoamAmount) u.uFoamAmount.value = 0; if (u.uShallowOpacity) u.uShallowOpacity.value = 0.97; if (u.uOpacity) u.uOpacity.value = 0.97; if (u.uSaturation) u.uSaturation.value = 0.8;
+}
 /** our art of a level gone for good: its cards (and their sheets' textures, which Sprite3D's dispose leaves: a texture a
  * card leaked every load, 199 → 288 over four trips), its arches and its kit models */
 function dropEnv(list, made) {
@@ -2321,6 +2738,9 @@ async function placeEnv(list, region) {
     if (p.tavern) { const g = buildTavern(p.tavern.pieces); game.engine.scene.add(g); envSprites.push(g); continue; }
     if (p.seaMask) { seaMask = p.seaMask; if (seaLv) seaAir(seaLv, seaRegion, true); continue; }
     if (p.magma) { const g = buildMagma(p.magma.cells); game.engine.scene.add(g); envSprites.push(g); continue; }
+    if (p.pass) { const g = buildPass(p.pass.pieces); game.engine.scene.add(g); envSprites.push(g); continue; }   // (the pass's ledges and the Praetory's frost: docs/pass-dungeon.md)
+    if (p.shallows) { const g = buildShallows(p.shallows); game.engine.scene.add(g); envSprites.push(g); continue; }
+    if (p.wet) { const g = buildWetTrim(p.wet.pieces); game.engine.scene.add(g); envSprites.push(g); continue; }
     const kit = KIT.get(p.id);
     if (kit && (LANDMARKS === 'all' || (LANDMARKS === 'chosen' && !p.card) || (LANDMARKS === 'doors' && DOORS.has(p.id)))) {
       // (on the ground round it, not the tile under its middle: the chapel stands in water the converter laid under it)
@@ -2397,14 +2817,16 @@ let skyShown = 'default';
 function skyFor(lv, region) {
   const L = game?.lighting; if (!L) return;
   const env = lv.environment || {}, G = game.postfx?.settings?.grade, ash = region === 'reach' && !env.interior;
-  if (G) { if (!gradeOwn) gradeOwn = { ...G }; Object.assign(G, gradeOwn, region === 'vale' ? VALE_GRADE : ash ? REACH_GRADE : {}); gradeKeep = { sharpen: G.sharpen, grain: G.grain, chromaticAberration: G.chromaticAberration }; applyGrade(); }
+  if (G) { if (!gradeOwn) gradeOwn = { ...G }; Object.assign(G, gradeOwn, env.pass ? PASS_GRADE : region === 'vale' ? VALE_GRADE : ash ? REACH_GRADE : {}); gradeKeep = { sharpen: G.sharpen, grain: G.grain, chromaticAberration: G.chromaticAberration }; applyGrade(); }
   graded = region === 'vale' && !env.interior; gradedReach = ash;
   // (the Reach: the arid climate's sky graded to ash; any other arid level, the Bowl, its own again)
   if (env.climate === 'arid' && !env.interior) { const want = ash ? 'ash' : 'arid'; if (skyShown !== want) { L.setKeyframes(ash ? ASH_KEYFRAMES : ARID_KEYFRAMES); skyShown = want; } }
   if (ash) reachAir();
   if (env.harbour) harbourAir();
-  if (env.coast) coastAir();
+  if (env.wet) wetAir(env.wet);
+  if (env.coast) coastAir();   // (after the wet's: a sea cave's floor is both, and the sea round it is the coast's)
   seaAir(lv, region);
+  if (env.pass) { L.setKeyframes(PASS_KEYFRAMES); skyShown = 'pass'; return; }   // (the pass's cold high light, its sun's colour and the air: docs/pass-dungeon.md)
   if (env.greenwood) { greenwoodAir(); if (skyShown !== 'greenwood') { L.setKeyframes(WOOD_KEYFRAMES); skyShown = 'greenwood'; } return; }   // (the greenwood: its own gloom, docs/greenwood-dungeon.md)
   if (env.interior || env.climate || env.season) return;                 // (underground: the ambient's ours; a climate's sky its own)
   const want = region === 'vale' ? 'dusky' : 'default';
@@ -2430,6 +2852,12 @@ const ASH_KEYFRAMES = ARID_KEYFRAMES.map((f) => {
     fog: f.fog * 1.1, clouds: Math.min(0.5, (f.clouds ?? 0.15) + 0.15) };
 });
 const REACH_GRADE = { saturation: 0.86, contrast: 1.05, vignette: 0.8 };
+// the pass (docs/pass-dungeon.md; the First Pilgrim's Heights, docs/art-critic-pass-pilgrim.md): a cold high light, the
+// sun white and a little weaker than the lowlands', the shade blue, the air thick with the cloud's own colour (its
+// backdrop) so what's far off goes into it. The hour is held (convert.js KIT_LOOK.pass `held`), so one frame matters
+const PASS_KEYFRAMES = DEFAULT_KEYFRAMES.map((f) => ({ ...f, top: '#7d95c2', horizon: '#a9bad6', bottom: '#90a4c8', sun: mixHex(f.sun, '#f6f9ff', 0.8), sunI: f.sunI * 0.66,
+  hemiSky: mixHex(f.hemiSky, '#94b4ee', 0.7), hemiGround: mixHex(f.hemiGround, '#4a5f92', 0.8), fog: f.fog * 0.8, clouds: 0 }));   // (round 5: the shade bluer, the sun whiter)
+const PASS_GRADE = { saturation: 1.14, contrast: 1.06, vignette: 0.8 };   // (round 5: the references' saturated blues; darker toward the frame's edges)   // (round 1: at 1.6 the cloud swallowed the ledges' faces)
 // the Ashwater murky (slate over rust silt, not a mountain stream's blue); the land past the map's edge in cracked dark
 // earth (the arid climate lays it in orange dry dirt); the climate's gold dust motes as ash
 const MURK = ['#6e5440', '#4c3e33', '#30302e', '#1c1e21'], MURK_CREST = '#8c7c6a', MURK_FOAM = '#a89a88';
@@ -2615,6 +3043,30 @@ function ashlar(s, ctx, K, STONE, mortar, tints) {
     s.hf[i] = 0.35 + 0.65 * Math.min(1, d / 2.5) + (N[i] - 0.5) * 0.15;
   });
   return { normal: 2.2 };
+}
+// a wall's waterline (docs/water-indoors.md): the side textures are world-aligned (Luminati's TileMap: v = y / units), so
+// a texture six units high (px 96 at 16 a unit) puts its line at one world height on every wall; the floor's top
+// is at 1, a ruined back wall's at 4.5 at most, a channel's bed at 0. Over the line the stone as it is, a faint stain
+// just above it; the line itself a dark tide mark; under it the stone wet and green, weed hanging from the line in strands
+// and thicker toward the bed. `line`: the line's height; `wet`, `mark`: colours; `weed`: its ramp, dark to light
+const FEN_WL = { line: 1.7, wet: '#2c4630', mark: '#141c16', crust: '#c4c8b4', weed: ['#1e3119', '#28401f', '#345126', '#41602d'] };
+const ABBEY_WL = { line: 1.95, wet: '#2e4232', mark: '#161d18', crust: '#d2d0bc', weed: ['#1a2a18', '#24381e', '#304a25', '#3c5a2c'] };
+function waterlined(s, K, ctx, o) {
+  const H = s.h, U = H / 16, weed = o.weed.map((c) => K.parseColor(c)), seed = ctx.seed + 1201;
+  s.each((x, y, i) => {
+    const wy = U * (1 - (y + 0.5) / H), d = o.line - wy, c = s.get(x, y);   // (d: how far under the line)
+    if (d < -0.36) return;
+    // (round 2: at play's size the line read as a shadow: a pale crust of lime just over it, two texels, the mark under
+    // that, two, the stone under the line a clear wet green)
+    if (d < -0.13) { s.set(x, y, K.mixColor(c, o.wet, 0.3 * (1 + d / 0.36))); return; }
+    if (d < 0) { s.set(x, y, K.mixColor(c, o.crust, 0.55)); return; }
+    if (d < 0.12 + 0.06 * K.hash2(x >> 2, 0, seed)) { s.set(x, y, K.parseColor(o.mark)); s.hf[i] *= 0.6; return; }
+    let col = K.mixColor(c, o.wet, Math.min(0.85, 0.62 + d * 0.3));
+    // the weed: a strand from the line down, its length by its column, thicker below the floor's top
+    const len = 0.12 + 0.55 * K.hash2(x, 1, seed) + (wy < 1 ? 1 : 0), wob = Math.sin(wy * 9 + x) > 0.6 ? 1 : 0;
+    if (d < len && K.hash2((x + wob) >> 1, 2, seed) < 0.42 + Math.min(0.4, d * 0.5)) { col = weed[Math.min(3, Math.floor(K.hash2(x, y >> 2, seed + 3) * 4))]; s.hf[i] = 0.75; }
+    s.set(x, y, col);
+  });
 }
 /** a wharf's deck: planks along x, six texels wide (three-eighths of a unit), their ends staggered, a dark seam between, a
  * nail at each end, the grain along them; the tone kept narrow (round 1: "noisy"), a grey-green weathering here and there */
@@ -2970,6 +3422,13 @@ registerTextureSet((K) => {
       s.each((x, y, i) => { const w = ((x + (y >> 1)) & 1) ? 0.62 : 0.42, t = w + (K.hash2(x >> 2, y >> 2, 1003) - 0.5) * 0.18; s.set(x, y, at(R, Math.max(0, Math.min(1, t)))); s.hf[i] = 0.5 + (w - 0.5); });
       return { normal: 0.9 };
     } },
+    // water indoors (docs/water-indoors.md): the Canal Locks' own stone, a pale blue-grey ashlar gone green at the
+    // waterline, weed hanging below it; the Drowned Abbey's pale stone above its flood line, darker and weeded under it
+    // (two units high so a back wall shows its line once); the coping along a channel's banks; the garth's drowned turf
+    fen_wall: { px: [48, 96], normalScale: 0.8, gen: (s, ctx) => { ashlar(s, ctx, K, P(['#4c555c', '#5a646c', '#68727b', '#76808a', '#848e97', '#929ba3', '#a0a8af', '#adb4ba']), ['#3c444a', '#343b40'], ['#7f8b78', '#8a909c']); waterlined(s, K, ctx, FEN_WL); return { normal: 2.2 }; } },
+    abbey_wall: { px: [48, 96], normalScale: 0.75, gen: (s, ctx) => { ashlar(s, ctx, K, P(['#6c6962', '#7c7870', '#8c877e', '#9b968c', '#aaa59a', '#b8b3a8', '#c5c0b5', '#d1ccc1']), ['#66625b', '#5a5650'], ['#a9a690', '#9aa0a4']); waterlined(s, K, ctx, ABBEY_WL); return { normal: 2.2 }; } },
+    fen_cap: { px: [32, 32], normalScale: 0.35, gen: (s) => { const N = K.field(s.w, s.h, 4, 4, 1011, { oct: 2 }), R = P(['#5e666c', '#6c757b', '#7a838a', '#889198', '#959ea4']); s.each((x, y, i) => { s.set(x, y, at(R, Math.max(0, Math.min(1, 0.5 + (N[i] - 0.5) * 0.7 - (K.hash2(x, y, 1013) > 0.95 ? 0.3 : 0))))); s.hf[i] = 0.6 + (N[i] - 0.5) * 0.2; }); return { normal: 1 }; } },
+    drowned_turf: { px: [64, 64], normalScale: 0.4, gen: recolor('grass_dark', P(['#1c2214', '#262e19', '#30391e', '#3a4524', '#44502a', '#4e5c30', '#586737'])) },
     palace_gilt: { px: [32, 32], normalScale: 0.4, gen: (s) => {
       const N = K.field(s.w, s.h, 4, 4, 1005, { oct: 2 }), R = P(['#6a4a18', '#86601e', '#a07826', '#ba922e', '#d2aa40', '#e2c058', '#eed272']);
       s.each((x, y, i) => { const t = 0.55 + (N[i] - 0.5) * 0.6 + (K.hash2(x, y, 1007) > 0.93 ? 0.25 : 0); s.set(x, y, at(R, Math.max(0, Math.min(1, t)))); s.hf[i] = 0.6 + (N[i] - 0.5) * 0.3; });
@@ -3300,6 +3759,124 @@ registerTextureSet((K) => {
     }) },
     // a rock pool's bed: dark weed-grown rock and pebbles, a pale stone or a shell, seen through its water
     pool_bed: { px: [48, 48], normalScale: 0.6, gen: (s) => shingle(s, K, P(['#1a2420', '#22302a', '#2a3a32', '#33443a', '#3c4e42', '#56604e', '#7a7c66']), K.parseColor('#121a16'), 0) },
+  };
+});
+
+// ── the pass (docs/pass-dungeon.md; docs/dungeon-looks-plan.md items 13 and 10, the owner's three references: painted,
+// inked battle maps of a snowfield, ledges and a bridge, a canyon) ─────────────────────────────────────────────────────
+// Its own textures, in the hand of the crypt's and the dock's: the snowfield wind-scoured and flecked with grit, a scoured
+// patch of it a step darker where the rock shows; the dark blue-grey rock in big angular facets, each lit across its face
+// from the upper left and inked round its edge (the references' line); snow lying on the rock's tops; the canyon's brown
+// rock in the same facets, banded; the bridge's planks, weathered dark with snow in the seams, and the truss under them;
+// the frozen pool's ice, blue with white cracks, glowing; the Praetory's walls, dressed stone under rime.
+/** angular facets (a Voronoi of a jittered grid, wrapped): each facet one plane lit across it (`lit`, upper left), its own
+ *  tone in the ramp, an inked edge two texels wide; `strata`: dark bands across (the canyon's); `snow`: snow on the tops
+ *  of the facets that face up */
+function facets(s, K, R, { cells = 3, seed = 0, ink = '#141922', strata = 0, snow = null, rim = null } = {}) {
+  const w = s.w, h = s.h, cw = w / cells, ch = h / cells, pts = [];
+  for (let j = 0; j < cells; j++) for (let i = 0; i < cells; i++) pts.push({ x: (i + 0.15 + K.hash2(i, j, seed + 1) * 0.7) * cw, y: (j + 0.15 + K.hash2(i, j, seed + 2) * 0.7) * ch, t: K.hash2(i, j, seed + 3), a: K.hash2(i, j, seed + 4) * 6.28, up: K.hash2(i, j, seed + 5) < 0.3 });
+  const at = (t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))], INK = K.parseColor(ink), N = K.field(w, h, 6, 6, seed + 7, { oct: 2 });
+  const SNOW = snow ? snow.map((c) => K.parseColor(c)) : null;
+  s.each((x, y, i) => {
+    let d1 = 1e9, d2 = 1e9, k1 = 0, dx1 = 0, dy1 = 0;
+    for (let k = 0; k < pts.length; k++) for (let oy = -h; oy <= h; oy += h) for (let ox = -w; ox <= w; ox += w) {
+      const dx = x + 0.5 - pts[k].x - ox, dy = y + 0.5 - pts[k].y - oy, d = Math.abs(dx) + Math.abs(dy) * 1.15;   // (a diamond metric: straight, angular edges)
+      if (d < d1) { d2 = d1; d1 = d; k1 = k; dx1 = dx; dy1 = dy; } else if (d < d2) d2 = d;
+    }
+    const e = (d2 - d1) / 2, p = pts[k1];
+    if (e < 1.0) { s.set(x, y, INK); s.hf[i] = 0.02; return; }   // (the inked edge)
+    // the facet's plane: lit along its own slope, the upper left brighter; a facet that faces up carries snow on its top
+    let t = 0.28 + p.t * 0.36 + ((-dx1 * Math.cos(p.a) - dy1 * Math.sin(p.a)) / cw) * 0.18 + (N[i] - 0.5) * 0.12;
+    if (e < 2.2) t += dy1 < 0 ? 0.12 : -0.1;                          // (a lit top lip, a shadowed underside)
+    if (rim && e < 2.4 && dy1 < 0 && dx1 < 0) { s.set(x, y, K.mixColor(at(Math.max(0, Math.min(1, t))), rim, 0.6)); s.hf[i] = 0.5; return; }   // (round 5: a cyan-lit edge along the upper left)
+    if (strata && ((y + Math.floor(N[i] * 4)) % strata) < 2) t -= 0.14;
+    if (SNOW && p.up && dy1 < -cw * 0.08 && e > 1.6) { s.set(x, y, SNOW[Math.min(SNOW.length - 1, Math.floor((N[i] + K.hash2(x, y, seed + 9) * 0.4) * SNOW.length * 0.8))]); s.hf[i] = 0.8; return; }
+    s.set(x, y, at(Math.max(0, Math.min(1, t))));
+    s.hf[i] = 0.35 + 0.65 * Math.min(1, e / 3.5) + (N[i] - 0.5) * 0.1;
+  });
+  return { normal: 2.4 };
+}
+/** the snowfield: pale snow in broad soft drifts, the wind's scour along it in long streaks a step darker and bluer, grit
+ *  flecked over it (one texel, now and then a pair), a lit crust here and there. `R` the snow, `G` the grit's two tones,
+ *  `scour` how much of it the wind has bared */
+function snowfield(s, K, R, G, { seed = 0, scour = 0.22 } = {}) {
+  const w = s.w, h = s.h, N = K.field(w, h, 4, 4, seed + 1, { oct: 3 }), S = K.field(w, h, 6, 4, seed + 2, { oct: 3 }), at = (t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
+  const GR = G.map((c) => K.parseColor(c));
+  s.each((x, y, i) => {
+    let t = 0.62 + (N[i] - 0.5) * 0.34;
+    const sc = S[i] < scour ? 1 : S[i] < scour + 0.06 ? 0.5 : 0;       // (the wind's scour: a long streak, its edge soft)
+    t -= sc * 0.22;
+    const q = K.hash2(x, y, seed + 3);
+    if (q > 0.978 - sc * 0.03) { s.set(x, y, GR[q > 0.996 ? 0 : 1]); s.hf[i] = 0.3; return; }   // (grit, thicker where it's bared)
+    if (K.hash2(x >> 1, y, seed + 4) > 0.993) { s.set(x, y, GR[1]); s.set(Math.min(w - 1, x + 1), y, GR[1]); s.hf[i] = 0.3; return; }
+    if (q < 0.01) t += 0.12;                                             // (a lit crust)
+    s.set(x, y, at(Math.max(0, Math.min(1, t)))); s.hf[i] = 0.55 + (N[i] - 0.5) * 0.3 - sc * 0.12;
+  });
+  return { normal: 0.9 };
+}
+registerTextureSet((K) => {
+  const P = (a) => a.map((c) => K.parseColor(c)), at = (R, t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
+  const SNOW = ['#6a84bf', '#86a0d2', '#a1b8e2', '#b9cced', '#cddcf4', '#dfe8f9', '#eef3fc'];   // (round 5: pale blues, deeper blue shadows, the lit tops near white; the references are saturated)   // (round 2: bluer, the references' cold white; round 1: a step down, it blew out)   // (round 1: a step down, it blew out)
+  const ROCK = P(['#121a30', '#19233e', '#212d4e', '#2a3860', '#354573', '#425487', '#52659b']);   // (round 5: slate-navy)
+  const BROWN = P(['#2a1a15', '#3a251c', '#4e3224', '#63412d', '#7a5238', '#916545', '#a87a55']);
+  const CAP = ['#b6cbec', '#cbdbf4', '#dfe9fa', '#f0f5fd'];
+  return {
+    // the ledges' snow (round 1: a mid pale blue-grey, not white: on white the party's gold rings went)
+    pass_snow: { px: [64, 64], normalScale: 0.5, gen: (s) => snowfield(s, K, P(SNOW), ['#2a2826', '#4a4641'], { seed: 2101, scour: 0.24 }) },
+    pass_scour: { px: [64, 64], normalScale: 0.6, gen: (s) => snowfield(s, K, P(['#5f77ad', '#7590c4', '#8ba5d4', '#a0b8e0', '#b4c8e9', '#c4d4ef', '#d2def4']), ['#26241f', '#423e38'], { seed: 2111, scour: 0.42 }) },
+    // the rock: dark blue-grey in big facets, inked; its tops under snow (the cap), the gully's brown banded
+    pass_rock: { px: [48, 48], normalScale: 0.9, gen: (s) => facets(s, K, ROCK, { cells: 2, seed: 2121, ink: '#0a0e1a', snow: CAP, rim: '#6cc2e8' }) },   // (round 5: cyan-lit edges)
+    pass_brown: { px: [48, 48], normalScale: 0.9, gen: (s) => facets(s, K, BROWN, { cells: 2, seed: 2131, ink: '#1a0f0b', strata: 9, snow: CAP }) },
+    pass_cap: { px: [32, 32], normalScale: 0.5, gen: (s) => {
+      const N = K.field(s.w, s.h, 3, 3, 2141, { oct: 3 }), R = P(CAP), INK = K.parseColor('#1a1f28');
+      s.each((x, y, i) => { const n = N[i]; if (n < 0.2) { s.set(x, y, n < 0.17 ? at(ROCK, 0.35 + K.hash2(x, y, 2143) * 0.3) : INK); s.hf[i] = 0.2; return; }   // (the rock showing through, inked round)
+        s.set(x, y, at(R, Math.max(0, Math.min(1, 0.3 + (n - 0.5) * 0.9 + (K.hash2(x, y, 2145) > 0.97 ? 0.3 : 0))))); s.hf[i] = 0.6 + (n - 0.5) * 0.4; });
+      return { normal: 1.0 };
+    } },
+    // the bridge: weathered dark planks, snow lying in the seams and drifted at the ends; under it, the truss
+    pass_plank: { px: [64, 64], normalScale: 0.85, gen: (s) => {
+      const r = dockPlanks(s, K, P(['#15120f', '#3a342e', '#443d36', '#4e463e', '#584f46', '#62584e', '#6c6156'])), N = K.field(s.w, s.h, 3, 3, 2151, { oct: 2 }), SN = P(['#b9c3d0', '#cdd5e0']);
+      s.each((x, y, i) => { if ((y % 8 <= 1 && K.hash2(x >> 1, y, 2153) > 0.45) || N[i] > 0.72) s.set(x, y, SN[K.hash2(x, y, 2155) > 0.5 ? 1 : 0]); });
+      return r;
+    } },
+    pass_truss: { px: [32, 32], normalScale: 0.7, gen: (s) => {
+      const GAP = K.parseColor('#1c222c'), BEAM = P(['#2c241d', '#3a3027', '#463a2f']), SN = K.parseColor('#c2ccd8');
+      s.each((x, y, i) => {
+        const top = y < 6, xb = Math.abs(((x + y) % 32) - 16) < 2 || Math.abs(((x - y + 64) % 32) - 16) < 2;   // (the stringer along the top, X braces below it)
+        if (y === 0) { s.set(x, y, SN); s.hf[i] = 0.9; return; }
+        if (top || xb) { s.set(x, y, BEAM[y === 1 || (xb && K.hash2(x, y, 2161) > 0.6) ? 2 : top && y > 4 ? 0 : 1]); s.hf[i] = 0.7; return; }
+        s.set(x, y, GAP); s.hf[i] = 0.02;
+      });
+      return { normal: 1.4 };
+    } },
+    // the frozen pool's ice: deep blue under a clear skin, white cracks across it, glowing faintly (its emissive mask)
+    pass_ice: { px: [32, 32], normalScale: 0.3, emissive: true, gen: (s) => {
+      const N = K.field(s.w, s.h, 3, 3, 2171, { oct: 3 }), R = P(['#123f94', '#1a52ad', '#2166c4', '#2b7bd6', '#3a91e2', '#52a8ec']), CR = K.parseColor('#c8f0ff'), em = s.emissive();
+      const pts = []; for (let k = 0; k < 7; k++) pts.push([K.hash2(k, 1, 2173) * s.w, K.hash2(k, 2, 2173) * s.h]);
+      s.each((x, y, i) => {
+        let d1 = 1e9, d2 = 1e9; for (const [px, py] of pts) for (let oy = -s.h; oy <= s.h; oy += s.h) for (let ox = -s.w; ox <= s.w; ox += s.w) { const d = Math.hypot(x - px - ox, y - py - oy); if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d; }
+        const crack = d2 - d1 < 0.9 && K.hash2(x, y, 2175) > 0.2;
+        const c = crack ? CR : at(R, Math.max(0, Math.min(1, 0.45 + (N[i] - 0.5) * 0.8)));
+        s.set(x, y, c); em.set(x, y, crack ? '#b4ecff' : K.mixColor(c, '#000000', 0.3)); s.hf[i] = crack ? 0.4 : 0.8;
+      });
+      return { normal: 0.6 };
+    } },
+    // the Praetory's floor: grey flags, rime in their joints and over them in patches (Luminati's frost cobble read navy)
+    frost_flag: { px: [64, 64], normalScale: 0.7, gen: (s) => {
+      const r = tavernFlags(s, K, P(['#2e343c', '#5c636c', '#677079', '#727b84', '#7d868f', '#88919a', '#949ca4']), false), N = K.field(s.w, s.h, 4, 4, 2191, { oct: 3 }), RIME = P(['#b8c4d0', '#ccd6e0']);
+      s.each((x, y, i) => { if (s.hf[i] <= 0.16) s.set(x, y, RIME[K.hash2(x, y, 2193) > 0.5 ? 1 : 0]); else if (N[i] > 0.66) s.set(x, y, K.mixColor(s.get(x, y), RIME[1], Math.min(0.7, (N[i] - 0.66) * 5))); });
+      return r;
+    } },
+    // the Praetory's walls: grey-blue ashlar gone white with rime along every block's top and in patches over its face
+    frost_wall: { px: [48, 48], normalScale: 0.8, gen: (s, ctx) => {
+      const r = ashlar(s, ctx, K, P(['#3c4450', '#4a535f', '#58616e', '#66707c', '#747e8a', '#838c97', '#929aa4', '#a0a8b1']), ['#2c323b', '#262b33'], ['#7c8a9a', '#8a8a92']);
+      const N = K.field(s.w, s.h, 5, 5, 2181, { oct: 3 }), RIME = P(['#c8d4e0', '#dbe4ee', '#e8eef5']);
+      s.each((x, y, i) => {
+        const top = s.hf[i] > 0.05 && y % 12 <= 2 && K.hash2(x, y >> 2, 2183) > 0.2;
+        if (top || N[i] > 0.64) s.set(x, y, K.mixColor(s.get(x, y), RIME[N[i] > 0.75 ? 2 : N[i] > 0.68 ? 1 : 0], top ? 0.75 : Math.min(0.85, (N[i] - 0.64) * 6)));
+      });
+      return r;
+    } },
   };
 });
 
@@ -4586,6 +5163,7 @@ const api = {
     placeSpells(f.spells || [], f.dt || 0, f.ambient?.lamps, !!(f.rings && f.rings.length), f.hazards);
     for (const g of ringPieces) g.visible = g.userData.ring === (f.ringOn || null);
     if (magmaMats.length) { magmaT += Math.min(0.1, f.dt || 0); for (const m of magmaMats) if (m.userData.u) m.userData.u.value = magmaT; }
+    if (wetMats.length) { wetT += Math.min(0.1, f.dt || 0); for (const m of wetMats) if (m.userData.u) m.userData.u.value = wetT; }
     // underground, the lights' flicker held to CALM_FLICKER (the owner, 2026-11-11: "Player and npc characters flicker in
     // the dungeon not overland. Probably due to torch lighting effect"): Luminati's wall torch swings its light ±38 %
     // (flicker 0.45) 2.6 times a second, and a figure by a wall, close to it, took the whole swing while the floor beyond

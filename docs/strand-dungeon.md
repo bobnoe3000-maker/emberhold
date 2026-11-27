@@ -75,8 +75,9 @@ The converter is `src/render3d/convert.js`; the builder `tools/render3d/world.js
 
 ## 4. Water inside walls
 
-The tide pools here are drawn the simple way, as the brief asked while the water track's `docs/water-indoors.md` is on its
-branch: a legend tile (`'Ω'`) that is Luminati water with `waterDepth` 0.05 over a rock-pool bed, at the floor's own height,
-walkable, so a figure stands on the floor with the water at its ankles, the shore bake's foam round its edge. The strand's
-`puddle` pieces (the `weed` and `drips` recipes) are a flat `rockpool` trim. When the two tracks meet, the `'Ω'` tile is
-the one to swap for the water track's sheet.
+The sea cave's tide pools are the water track's (`docs/water-indoors.md`): the sim's `pools` in its fighting caves (the
+Gull Isles' stores and long gallery, the Lamp Fort's sea cave), drawn as its sheet a hand over the floor, the kit's
+`wet: 'sea'` (world.js `WET_LOOKS.sea`: the sea's cold slate-green, a pale line at its edge; `coastAir` sets the sea round
+the floor after the sheet's `wetAir`). The strand's rock pools by its outcrops are still `'Ω'` (Luminati water 0.05 deep
+over a rock-pool bed, walked through at the floor's height), and its `puddle` pieces (the `weed` and `drips` recipes) a
+flat `rockpool` trim.

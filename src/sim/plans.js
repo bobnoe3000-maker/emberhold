@@ -23,7 +23,7 @@
 
 /** @typedef {'entrance' | 'room' | 'offshoot' | 'descent' | 'end'} Role */
 /** @typedef {{ id: string, name: string, role: Role, x: number, y: number, w: number, h: number, shape: 'rect' | 'cave' | 'round', lv: number, kit: string, boss?: string, foes?: string, dress: string[], note: string }} Space */
-/** @typedef {{ from: string, to: string, x: number, y: number, w: number, h: number, rough?: boolean }} Hall */
+/** @typedef {{ from: string, to: string, x: number, y: number, w: number, h: number, rough?: boolean, bridge?: 'river' | 'cloud' }} Hall */   // (bridge: the pass kit's plank-and-rope bridge over a crevasse, the frozen river or the cloud under it, drawn by convert.js; to the sim a hall as any other)
 /** @typedef {{ name: string, spaces: Space[], halls: Hall[] }} Floor */
 /** @typedef {{ site: string, name: string, kind: string, base: number, step?: number, flat?: boolean, floors: Floor[] }} Plan */
 
@@ -115,9 +115,9 @@ export const PLANS = {
       { id: 'dry_porch', name: 'The Dry Porch', role: 'entrance', x: 0, y: 42, w: 28, h: 22, shape: 'rect', lv: 0, kit: 'nave',
         dress: ['hives', 'benches', 'doors'], note: 'The porch the river never reached: Hester Lowe\'s hives along the wall, the chapel doors off their hinges. The way out.' },
       { id: 'the_nave', name: 'The Nave', role: 'room', x: 38, y: 38, w: 66, h: 28, shape: 'rect', lv: 0, kit: 'nave', foes: 'chapel',
-        dress: ['pews', 'colonnade', 'pools', 'saints'], note: 'A large corridor: two rows of pillars, the pews in two blocks either side of the aisle, standing water over the flags, fallen saints.' },
+        dress: ['pews', 'colonnade', 'flood', 'saints'], note: 'A large corridor: two rows of pillars, the pews in two blocks either side of the aisle, standing water over the flags, fallen saints.' },
       { id: 'the_crossing', name: 'The Crossing', role: 'room', x: 114, y: 36, w: 34, h: 34, shape: 'rect', lv: 0, kit: 'nave', foes: 'chapel',
-        dress: ['rubble', 'pools', 'font', 'light_shaft'], note: 'Under the fallen tower: rubble, the font, daylight down the shaft where the roof was. The south transept is fallen in.' },
+        dress: ['rubble', 'flood', 'font', 'light_shaft'], note: 'Under the fallen tower: rubble, the font, daylight down the shaft where the roof was. The south transept is fallen in.' },
       { id: 'lady_chapel', name: 'The Lady Chapel', role: 'offshoot', x: 119, y: 2, w: 24, h: 24, shape: 'rect', lv: 1, kit: 'nave', foes: 'chapel',
         dress: ['altar_small', 'candles', 'saints', 'chest', 'shrine'], note: 'The north transept\'s chapel, dry: a small altar, candles, and the chest with the Chaplain\'s Prayer.' },
       { id: 'the_chancel', name: 'The Chancel', role: 'descent', x: 158, y: 30, w: 46, h: 46, shape: 'rect', lv: 1, kit: 'cultcut', foes: 'chapel', boss: 'robed_stranger',
@@ -412,15 +412,15 @@ export const PLANS = {
   canal_locks: { site: 'canal_locks', name: 'The Canal Locks', kind: 'locks', base: 13, floors: [
     { name: 'The Lock Chamber and the Sluice', spaces: [
       { id: 'the_lock_gate', name: 'The Lock Gate', role: 'entrance', x: 0, y: 36, w: 30, h: 24, shape: 'rect', lv: 0, kit: 'locks',
-        dress: ['windlasses', 'chains', 'lanterns'], note: 'The upper gate, its beams black with the canal: the winding gear, the chains. The Kindler waits here. The gate\'s stair is the way out.' },
+        dress: ['canal_near', 'lock_gates', 'chains', 'lanterns'], note: 'The upper gate, its beams black with the canal: the winding gear, the chains. The Kindler waits here. The gate\'s stair is the way out.' },
       { id: 'the_lock_chamber', name: 'The Lock Chamber', role: 'room', x: 40, y: 34, w: 72, h: 26, shape: 'rect', lv: 0, kit: 'locks', foes: 'ashbound',
-        dress: ['colonnade', 'chains', 'pools'], note: 'A large corridor: the drained lock itself, its walls weeded to the old waterline, the lock-men who drowned in it standing up again.' },
+        dress: ['canal', 'lock_gates', 'colonnade', 'chains', 'pools'], note: 'A large corridor: the drained lock itself, its walls weeded to the old waterline, the lock-men who drowned in it standing up again.' },
       { id: 'the_tally_house', name: 'The Tally House', role: 'offshoot', x: 60, y: 4, w: 24, h: 20, shape: 'rect', lv: 1, kit: 'locks', foes: 'lockcult',
         dress: ['desks', 'rolls', 'chest', 'shrine'], note: 'Where the lock-keeper counted the boats through: his tallies on the shelves, a chest, a shrine with the canal\'s order.' },
       { id: 'the_basin', name: 'The Basin', role: 'room', x: 122, y: 30, w: 38, h: 36, shape: 'rect', lv: 0, kit: 'locks', foes: 'lockcult',
-        dress: ['pools', 'barrels', 'chains'], note: 'The turning basin below the lock, half drained: barrels the Cult rolled down, the water in pools.' },
+        dress: ['canal', 'sluices', 'flood', 'barrels', 'chains'], note: 'The turning basin below the lock, half drained: barrels the Cult rolled down, the water in pools.' },
       { id: 'the_sluice', name: 'The Sluice', role: 'descent', x: 112, y: 76, w: 56, h: 44, shape: 'rect', lv: 1, kit: 'locks', foes: 'lockcult',
-        dress: ['windlasses', 'pools', 'braziers', 'stair_down'], note: 'The sluice-house over the outfall: its paddle gear, the Sluice Book on its stand, and the stair down to the vats.' },
+        dress: ['canal', 'sluices', 'flood', 'braziers', 'stair_down'], note: 'The sluice-house over the outfall: its paddle gear, the Sluice Book on its stand, and the stair down to the vats.' },
     ], halls: [
       { from: 'the_lock_gate', to: 'the_lock_chamber', x: 30, y: 42, w: 10, h: 10 },
       { from: 'the_lock_chamber', to: 'the_tally_house', x: 66, y: 24, w: 10, h: 10 },
@@ -429,15 +429,15 @@ export const PLANS = {
     ] },
     { name: 'Vat Seven', spaces: [
       { id: 'the_vat_stair', name: 'The Vat Stair', role: 'entrance', x: 0, y: 0, w: 30, h: 28, shape: 'rect', lv: 1, kit: 'vats',
-        dress: ['barrels', 'lanterns', 'stair_up'], note: 'The stair\'s foot, the air already sour: barrels stacked by the wall.' },
+        dress: ['barrels', 'lanterns', 'stair_up', 'pools'], note: 'The stair\'s foot, the air already sour: barrels stacked by the wall.' },
       { id: 'the_vat_row', name: 'The Vat Row', role: 'room', x: 0, y: 38, w: 76, h: 22, shape: 'rect', lv: 1, kit: 'vats', foes: 'harvest',
-        dress: ['vats', 'chains', 'candles'], note: 'A large corridor of the Cult\'s tubs, six down the wall, the seventh beyond: what they render there.' },
+        dress: ['drain', 'vats', 'chains', 'candles', 'pools'], note: 'A large corridor of the Cult\'s tubs, six down the wall, the seventh beyond: what they render there.' },
       { id: 'the_drain_office', name: 'The Drain Office', role: 'offshoot', x: 18, y: 70, w: 24, h: 20, shape: 'rect', lv: 2, kit: 'vats', foes: 'harvest',
         dress: ['desks', 'ledgers', 'chest', 'shrine'], note: 'The drain-master\'s office the Cult kept its books in: the vat ledger in a chest, the drain order at the shrine.' },
       { id: 'the_cage_store', name: 'The Cage Store', role: 'room', x: 86, y: 30, w: 34, h: 32, shape: 'rect', lv: 2, kit: 'vats', foes: 'harvest',
-        dress: ['gibbets', 'chains', 'barrels'], note: 'The harvesters\' store of empty lantern-cages, hung from the beams, waiting to be filled.' },
+        dress: ['gibbets', 'chains', 'barrels', 'sickpools'], note: 'The harvesters\' store of empty lantern-cages, hung from the beams, waiting to be filled.' },
       { id: 'vat_seven', name: 'Vat Seven', role: 'end', x: 80, y: 72, w: 60, h: 46, shape: 'rect', lv: 2, kit: 'vats', foes: 'harvest', boss: 'vatwarden',
-        dress: ['vats', 'pools', 'braziers', 'chest'], note: 'The seventh vat, the great one, poison standing round it: the Vatwarden keeps it.' },
+        dress: ['canal_near', 'sluices', 'vats', 'sickpools', 'braziers', 'chest'], note: 'The seventh vat, the great one, poison standing round it: the Vatwarden keeps it.' },
     ], halls: [
       { from: 'the_vat_stair', to: 'the_vat_row', x: 10, y: 28, w: 10, h: 10 },
       { from: 'the_vat_row', to: 'the_drain_office', x: 24, y: 60, w: 10, h: 10 },
@@ -452,15 +452,15 @@ export const PLANS = {
   drowned_abbey: { site: 'drowned_abbey', name: 'The Drowned Abbey', kind: 'abbey', base: 16, floors: [
     { name: 'The Cloister and the Choir', spaces: [
       { id: 'the_west_door', name: 'The West Door', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'rect', lv: 0, kit: 'abbey',
-        dress: ['doors', 'candles', 'saints'], note: 'The abbey\'s west door, the flood\'s line on it at head height. Its steps up are the way out.' },
+        dress: ['doors', 'candles', 'saints', 'flood'], note: 'The abbey\'s west door, the flood\'s line on it at head height. Its steps up are the way out.' },
       { id: 'the_cloister_walk', name: 'The Cloister Walk', role: 'room', x: 40, y: 2, w: 72, h: 20, shape: 'rect', lv: 0, kit: 'abbey', foes: 'drowned',
-        dress: ['colonnade', 'pools', 'saints'], note: 'A large corridor: the cloister\'s north walk, its arcade open on the drowned garth, water over the flags.' },
+        dress: ['colonnade', 'flood', 'saints'], note: 'A large corridor: the cloister\'s north walk, its arcade open on the drowned garth, water over the flags.' },
       { id: 'teagues_cell', name: 'Brother Teague\'s Cell', role: 'offshoot', x: 44, y: 32, w: 24, h: 22, shape: 'rect', lv: 1, kit: 'abbey', foes: 'drowned', boss: 'teague',
         dress: ['candles', 'chest', 'shrine'], note: 'A monk\'s cell off the walk, kept dry: Teague\'s lantern-cage and his bed. He waits at its door.' },
       { id: 'the_garth', name: 'The Garth', role: 'room', x: 122, y: 0, w: 36, h: 36, shape: 'rect', lv: 0, kit: 'abbey', foes: 'drowned',
-        dress: ['pools', 'font', 'saints'], note: 'The cloister\'s square garden, a pond now: the lavabo standing in it, the saints fallen in.' },
+        dress: ['pond', 'flood', 'font', 'saints', 'garth'], note: 'The cloister\'s square garden, a pond now: the lavabo standing in it, the saints fallen in.' },
       { id: 'the_choir', name: 'The Choir', role: 'descent', x: 108, y: 48, w: 56, h: 48, shape: 'rect', lv: 1, kit: 'abbey', foes: 'drowned', boss: 'drowned_choir',
-        dress: ['pews', 'pools', 'candles', 'chest', 'stair_down'], note: 'The monks\' stalls in two rows, the water to their seats. The Drowned Choir sings over the night stair, down which the rolls came up.' },
+        dress: ['pews', 'flood', 'candles', 'chest', 'stair_down'], note: 'The monks\' stalls in two rows, the water to their seats. The Drowned Choir sings over the night stair, down which the rolls came up.' },
     ], halls: [
       { from: 'the_west_door', to: 'the_cloister_walk', x: 30, y: 8, w: 10, h: 10 },
       { from: 'the_cloister_walk', to: 'teagues_cell', x: 50, y: 22, w: 10, h: 10 },
@@ -469,15 +469,15 @@ export const PLANS = {
     ] },
     { name: 'The Dorter and the Chapter-House', spaces: [
       { id: 'the_night_stair', name: 'The Night Stair', role: 'entrance', x: 0, y: 40, w: 28, h: 26, shape: 'rect', lv: 1, kit: 'abbey',
-        dress: ['candles', 'stair_up'], note: 'The monks\' stair down from the choir to their beds, worn hollow.' },
+        dress: ['candles', 'stair_up', 'flood'], note: 'The monks\' stair down from the choir to their beds, worn hollow.' },
       { id: 'the_dorter', name: 'The Dorter', role: 'room', x: 38, y: 42, w: 64, h: 22, shape: 'rect', lv: 1, kit: 'abbey', foes: 'drowned',
-        dress: ['bunks', 'pools', 'candles'], note: 'A large corridor: the monks\' dormitory, their cots in two rows, the flood come in over them.' },
+        dress: ['bunks', 'flood', 'candles', 'windows'], note: 'A large corridor: the monks\' dormitory, their cots in two rows, the flood come in over them.' },
       { id: 'the_scriptorium', name: 'The Scriptorium', role: 'offshoot', x: 56, y: 10, w: 24, h: 22, shape: 'rect', lv: 2, kit: 'abbey', foes: 'drowned',
         dress: ['desks', 'rolls', 'chest', 'shrine'], note: 'The copying room, up a step from the water: desks, the day book, a chest.' },
       { id: 'the_lay_crypt', name: 'The Lay Crypt', role: 'room', x: 112, y: 36, w: 34, h: 34, shape: 'rect', lv: 2, kit: 'abbey', foes: 'drowned',
-        dress: ['sarcophagi', 'candles', 'pools'], note: 'The lay brothers\' crypt, its tombs awash.' },
+        dress: ['sarcophagi', 'candles', 'flood', 'windows'], note: 'The lay brothers\' crypt, its tombs awash.' },
       { id: 'the_chapter_house', name: 'The Chapter-House', role: 'end', x: 104, y: 80, w: 50, h: 50, shape: 'round', lv: 2, kit: 'abbey', foes: 'drowned', boss: 'abbess_below',
-        dress: ['ring_of_pillars', 'pools', 'braziers'], note: 'Round, its vault on a ring of pillars, the water black: the Abbess Below in the abbess\'s seat, her bells.' },
+        dress: ['ring_of_pillars', 'flood', 'braziers', 'windows'], note: 'Round, its vault on a ring of pillars, the water black: the Abbess Below in the abbess\'s seat, her bells.' },
     ], halls: [
       { from: 'the_night_stair', to: 'the_dorter', x: 28, y: 48, w: 10, h: 10 },
       { from: 'the_dorter', to: 'the_scriptorium', x: 62, y: 32, w: 10, h: 10 },
@@ -615,11 +615,11 @@ export const PLANS = {
       { id: 'the_boat_landing', name: 'The Boat Landing', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'strand',
         dress: ['boats', 'dock_lamps', 'dock_ropes'], note: 'The shingle beach under the cliff where the fleet\'s boats put in, drawn up above the tide. The way back out is the boat.' },
       { id: 'the_smugglers_stores', name: 'The Smugglers\' Stores', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'seacave', foes: 'fleet',
-        dress: ['casks', 'dock_cargo', 'stalagmites', 'dock_lamps'], note: 'What the fleet took off League ships, stacked in the cave\'s dry end, tallied in chalk on the rock.' },
+        dress: ['casks', 'dock_cargo', 'stalagmites', 'dock_lamps', 'pools'], note: 'What the fleet took off League ships, stacked in the cave\'s dry end, tallied in chalk on the rock.' },
       { id: 'the_strongroom', name: 'The Strongroom', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 1, kit: 'seacave', foes: 'fleet',
         dress: ['ledger', 'dock_lamps', 'chest'], note: 'A fissure walled up with a ship\'s door. The fleet\'s share-out is reckoned here.' },
       { id: 'the_long_gallery', name: 'The Long Gallery', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 1, kit: 'seacave', foes: 'fleet',
-        dress: ['stalagmites', 'drips', 'dock_lamps'], note: 'The cave\'s long arm under the isle, wet to the knee at high water. The hounds are kennelled at its end.' },
+        dress: ['stalagmites', 'drips', 'dock_lamps', 'pools'], note: 'The cave\'s long arm under the isle, wet to the knee at high water. The hounds are kennelled at its end.' },
       { id: 'the_careening_beach', name: 'The Careening Beach', role: 'descent', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 2, kit: 'strand', foes: 'fleet',
         dress: ['boats', 'scaffold', 'dock_lamps', 'stair_down'], note: 'A cove open to the sky inside the isle, where the boats are hauled over to be scraped, and the way out through the rock to the lagoon and the hulks.' },
     ], halls: [
@@ -702,7 +702,7 @@ export const PLANS = {
       { id: 'the_fort_gate', name: 'The Water Gate', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'docks',
         dress: ['dock_lamps', 'dock_ropes', 'moorings'], note: 'The fort\'s landing stage under the headland, at the foot of the cliff stair. The fleet holds the land gate, so Gannet brings you in the old way and waits on the stage with his hand-lamp.' },
       { id: 'the_sea_cave', name: 'The Sea Cave', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'seacave', foes: 'fleet',
-        dress: ['dock_cargo', 'stalagmites', 'dock_lamps'], note: 'The cave the fort was built over, the sea washing in at its mouth. The fleet came up this way in the spring and stacked its plunder in the dry end.' },
+        dress: ['dock_cargo', 'stalagmites', 'dock_lamps', 'pools'], note: 'The cave the fort was built over, the sea washing in at its mouth. The fleet came up this way in the spring and stacked its plunder in the dry end.' },
       { id: 'the_magazine', name: 'The Magazine', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'seacave', foes: 'fleet',
         dress: ['dock_lamps', 'chest'], note: 'Cut into the cave\'s rock to keep the oil for the lamp dry, sixty years of it, and what the fleet wanted.' },
       { id: 'the_curtain_walk', name: 'The Curtain Walk', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'fortwall', foes: 'fleet',
@@ -764,6 +764,56 @@ export const PLANS = {
       { from: 'the_market_terrace', to: 'the_watch_walk', x: 52, y: 20, w: 10, h: 10 },
       { from: 'the_market_terrace', to: 'the_bakers_row', x: 92, y: 44, w: 10, h: 10 },
       { from: 'the_market_terrace', to: 'the_bastion', x: 48, y: 70, w: 10, h: 10 },
+    ] },
+  ] },
+
+  // ── The Pilgrims' Stair (a prototype: the pass kit, docs/pass-dungeon.md; docs/dungeon-looks-plan.md item 13, from the
+  //    owner's three references): the road up from the Frozen Hospice to the Lip in the open air, snowfields on ledges
+  //    over the cloud, dark rock in big blocks behind them, the drop in front. Two of its halls are plank-and-rope bridges
+  //    over crevasses (`bridge`), one over the frozen river into the red gully, one out over the cloud to the last ledge.
+  //    Every piece by the rock or the drop, the middle of each ledge open for the fight. The Redhand hold the Stair behind
+  //    Lucan.
+  pilgrims_stair: { site: 'pilgrims_stair', name: "The Pilgrims' Stair", kind: 'pass', base: 62, flat: true, floors: [
+    { name: 'The Stair', spaces: [
+      { id: 'the_stair_foot', name: 'The Stair Foot', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'pass',
+        dress: ['prayer_posts', 'cairns', 'pass_cargo'], note: 'Where the Stair leaves the Hospice\'s road: the first cairn, the first posts, the packs the pilgrims left to come back for.' },
+      { id: 'the_first_turn', name: 'The First Turn', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'pass', foes: 'redhand',
+        dress: ['frozen_pool', 'ice_crystals', 'pines', 'prayer_posts', 'cairns'], note: 'A broad ledge of wind-scoured snow under the rock, a pool frozen in its back corner, the crystals grown up out of the ice.' },
+      { id: 'the_wayside_shrine', name: 'The Wayside Shrine', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'pass', foes: 'redhand',
+        dress: ['wayside_shrine', 'prayer_posts', 'ice_crystals'], note: 'A pilgrims\' shrine in a hollow of the rock: a stone with a roof over it, the offerings frozen to its step.' },
+      { id: 'the_red_gully', name: 'The Red Gully', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'gully', foes: 'redhand',
+        dress: ['frozen_fall', 'ice_crystals', 'pines', 'chest'], note: 'Across the bridge over the frozen river: a cut of brown rock under snow, a fall frozen down its back wall.' },
+      { id: 'the_cloud_ledge', name: 'The Cloud Ledge', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'pass', foes: 'redhand',
+        dress: ['cairns', 'prayer_posts', 'ice_crystals', 'pines', 'frozen_pool', 'pass_cargo', 'chest'], note: 'The last ledge before the Stair turns up out of sight, the whole drop under it in the cloud.' },
+    ], halls: [
+      { from: 'the_stair_foot', to: 'the_first_turn', x: 32, y: 44, w: 10, h: 10 },
+      { from: 'the_first_turn', to: 'the_wayside_shrine', x: 52, y: 20, w: 10, h: 10 },
+      { from: 'the_first_turn', to: 'the_red_gully', x: 92, y: 44, w: 10, h: 10, bridge: 'river' },
+      { from: 'the_first_turn', to: 'the_cloud_ledge', x: 48, y: 70, w: 10, h: 10, bridge: 'cloud' },
+    ] },
+  ] },
+
+  // ── The Praetory (a prototype: the frostkeep look, docs/pass-dungeon.md §5; docs/dungeon-looks-plan.md item 10): the
+  //    Empress's guard house east of the Lip, frozen through. The barracks kit's fortress rooms in frost cobbles, rime on
+  //    the walls, icicles at their tops, snow drifted in at the doors, the bound guard frozen at their posts along the
+  //    walls, the middles open for the fight.
+  praetory: { site: 'praetory', name: 'The Praetory', kind: 'keep', base: 70, flat: true, floors: [
+    { name: 'The Guard House', spaces: [
+      { id: 'the_watch_gate', name: 'The Watch Gate', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'frostkeep',
+        dress: ['frozen_guards', 'banners'], note: 'The gate passage, the snow blown in over the step, the watch still at the door.' },
+      { id: 'the_guard_hall', name: 'The Guard Hall', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'frostkeep', foes: 'siege',
+        dress: ['frozen_guards', 'racks', 'banners'], note: 'The guard in two files along the walls, each at his post, the frost grown over them where they stood.' },
+      { id: 'the_armoury', name: 'The Armoury', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'frostkeep', foes: 'siege',
+        dress: ['racks', 'frozen_guards'], note: 'The racks rimed white, the spears frozen into them.' },
+      { id: 'the_mess', name: 'The Mess', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'frostkeep', foes: 'siege',
+        dress: ['frozen_guards', 'braziers', 'chest'], note: 'The guard\'s mess, the bowls frozen to the boards; somebody has lit the braziers again.' },
+      { id: 'the_praetors_door', name: 'The Praetor\'s Door', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'frostkeep', foes: 'siege',
+        dress: ['frozen_guards', 'banners', 'braziers', 'chest'], note: 'The guard drawn up before the inner door in two ranks, and nobody to open it.' },
+    ], halls: [
+      { from: 'the_watch_gate', to: 'the_guard_hall', x: 32, y: 44, w: 10, h: 10 },
+      { from: 'the_guard_hall', to: 'the_armoury', x: 52, y: 20, w: 10, h: 10 },
+      { from: 'the_guard_hall', to: 'the_mess', x: 92, y: 44, w: 10, h: 10 },
+      { from: 'the_guard_hall', to: 'the_praetors_door', x: 48, y: 70, w: 10, h: 10 },
     ] },
   ] },
 
