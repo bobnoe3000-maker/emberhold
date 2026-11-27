@@ -93,7 +93,7 @@ export const PLANS = {
       { id: 'undercroft_stair', name: 'The Undercroft Stair', role: 'entrance', x: 0, y: 0, w: 28, h: 26, shape: 'rect', lv: 1, kit: 'barracks',
         dress: ['casks', 'lanterns', 'stair_up'], note: 'The vaulted foot of the keep\'s stair: casks, a lantern on a hook.' },
       { id: 'barracks', name: 'The Barracks', role: 'room', x: 38, y: 0, w: 68, h: 22, shape: 'rect', lv: 1, kit: 'barracks', foes: 'redhand',
-        dress: ['bunks', 'racks', 'banners', 'braziers'], note: 'A large corridor: bunks in a double row down both long walls, the armoury\'s racks at the far end. The Redhand\'s sergeants sleep here.' },
+        dress: ['hearth', 'trestles', 'armoury', 'banners', 'braziers'], note: 'The keep\'s great hall, a large corridor (docs/dungeon-looks-plan.md item 2): plaster and timber, the hearth on the back wall, trestle tables and their benches down the sides, the armoury\'s racks at the far end. The Redhand\'s sergeants eat and sleep here.' },
       { id: 'strongroom', name: 'The Paymaster\'s Strongroom', role: 'offshoot', x: 44, y: 32, w: 24, h: 22, shape: 'rect', lv: 2, kit: 'barracks', foes: 'redhand',
         dress: ['iron_door', 'chests', 'ledger', 'shrine'], note: 'Behind an iron door: the paymaster\'s two chests (Brannoc\'s errand) and the Last Dispatch.' },
       { id: 'old_cellars', name: 'The Old Cellars', role: 'room', x: 116, y: 0, w: 36, h: 34, shape: 'rect', lv: 2, kit: 'cellar', foes: 'cellar',
