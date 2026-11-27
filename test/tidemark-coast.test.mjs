@@ -34,7 +34,7 @@ test('the shore on the overland: each piece on open sand, its tiles held, clear 
 test('a coast floor converts with the sea round it, its strand and its sea cave in their own ground', () => {
   const r = convertWorld(createWorld(20260807, null, 0, 'gull_isles'), { region: 'tidemark' });
   const n = {}; for (const row of r.level.tiles) for (const c of row) n[c] = (n[c] || 0) + 1;
-  assert.ok(n['Γ'] > 300 && n['Δ'] > 100 && n['Π'] > 100 && n['Φ'] > 0 && n['Σ'] > 0, JSON.stringify(n));
+  assert.ok((n['Γ'] || 0) + (n['Θ'] || 0) > 300 && n['Δ'] > 100 && n['Π'] > 100 && n['Φ'] > 0 && n['Σ'] > 0, JSON.stringify(n));
   assert.equal(r.level.waterLevel, 0.84); assert.equal(r.level.environment.coast, true);
   const pieces = r.sprites.filter((s) => s.tavern).flatMap((s) => s.tavern.pieces).map((p) => p.k);
   for (const k of ['surf', 'marram', 'wrack', 'tideline', 'blowhole', 'beachboat']) assert.ok(pieces.includes(k), k);

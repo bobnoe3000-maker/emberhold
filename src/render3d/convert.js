@@ -148,6 +148,7 @@ Object.assign(LEGEND, {
   'Φ': { top: 'dune_sand', side: 'dune_sand', walkable: false }, 'Ψ': { top: 'dune_sand', side: 'dune_sand', walkable: true },
   'Ω': { top: 'pool_bed', side: 'sea_rock', water: true, walkable: true, waterDepth: 0.05, flow: 0 },
   'Γ': { top: 'wet_sand', side: 'wet_sand', water: true, walkable: false, flow: [0.02, 0.05] },
+  'Θ': { top: '', side: 'wet_sand', water: true, walkable: false, flow: [0.02, 0.05] },   // (the deep sea: no bed drawn, coastGround)
 });
 // a town's walls by its region (the owner, 2026-11-02: "bring back the wooden walls to thornwick? Save stone walls for
 // another town"): the Vale's are Thornwick's timber palisade on an earth bank, with its watchtowers and gatehouse (world
@@ -1826,6 +1827,10 @@ function coastGround(W, D, tiles, heights, open, looks, roomOf, propTiles) {
       if (back && hash('tp', i >> 1, j >> 1) % 6 === 0 && hash('tq', i, j) % 4) tiles[j][i] = 'Ω';
     }
   }
+  // (the perf pass: the deep sea, three tiles or more off any floor, water over no bed of its own, 'Θ': Luminati lays a
+  // tile's top as 4 × 4 quads for its baked shade, and under a sea nobody sees through the coast's floors spent most of
+  // their triangles on it; the water's depth, so its colour, is the same)
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) { const t = tiles[j][i]; if ((t === 'Γ' || t === 'o') && heights[j][i] === '0' && dist[j * W + i] >= 3) tiles[j][i] = 'Θ'; }
 }
 /** the room a piece of the sim's stands in (its tile's cell) */
 const roomAtProp = (w, k) => { const c = w.level.cells.get(k); return c && c.room >= 0 ? w.level.rooms[c.room] : null; };
@@ -1838,7 +1843,7 @@ function coastDress(W, D, tiles, heights, open, looks, roomOf, add, trim, arches
   const clearOf = (x, z, r = 0) => arches.every((a) => Math.abs(x - a.x) > a.span / 2 + 1.2 + r || Math.abs(z - a.z) > 2.5 + r);
   // the mist and the far sea (the harbour's, world.js 'harbourmist'): none at the shore, thick from six tiles out
   { const dist = new Uint8Array(N).fill(9), q = [];
-    for (let k = 0; k < N; k++) { const i = k % W, j = (k / W) | 0; if (!(heights[j][i] === '0' && (tiles[j][i] === 'Γ' || tiles[j][i] === 'o'))) { dist[k] = 0; q.push(k); } }
+    for (let k = 0; k < N; k++) { const i = k % W, j = (k / W) | 0; if (!(heights[j][i] === '0' && (tiles[j][i] === 'Γ' || tiles[j][i] === 'o' || tiles[j][i] === 'Θ'))) { dist[k] = 0; q.push(k); } }
     for (let h = 0; h < q.length; h++) { const k = q[h], i = k % W, j = (k / W) | 0, d = dist[k] + 1; if (d > 8) continue;
       for (const [di, dj] of N8.slice(0, 4)) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= D) continue; const kk = jj * W + ii; if (dist[kk] > d) { dist[kk] = d; q.push(kk); } } }
     const rows = []; for (let j = 0; j < D; j++) { let r = ''; for (let i = 0; i < W; i++) r += dist[j * W + i]; rows.push(r); }
@@ -1847,7 +1852,7 @@ function coastDress(W, D, tiles, heights, open, looks, roomOf, add, trim, arches
   docksDress(W, D, open, add, trim, arches, false, (i, j) => kindAt(i, j) === 'deck');
   // the surf: along every edge of land (sand, dune, rock, a deck's not: its piles) with the sea past it, a broken line of
   // foam on the water a hand out, its runs as the wharf's edges (n, w, s, e)
-  const wet = (i, j) => i >= 0 && j >= 0 && i < W && j < D && tiles[j][i] === 'Γ';   // (the shallows too: the surf at the sand, not at the deep's edge)
+  const wet = (i, j) => i >= 0 && j >= 0 && i < W && j < D && (tiles[j][i] === 'Γ' || tiles[j][i] === 'Θ');   // (the shallows too: the surf at the sand, not at the deep's edge)
   const shore = (i, j) => !wet(i, j) && kindAt(i, j) !== 'deck' && /[ΔΛΠΩΦΞ[\]ΣG]/.test(tiles[j][i]) && i >= 0 && j >= 0 && i < W && j < D;
   const lines = new Map(), push = (key, t) => (lines.get(key) || lines.set(key, []).get(key)).push(t);
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
