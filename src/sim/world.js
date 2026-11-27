@@ -87,6 +87,9 @@ export const DRESS = {
   vault:    { rooms: ['cave', 'binding', 'cave'], decor: ['chains', 'brazier', 'bones'], obstacles: ['stalagmite', 'boulder', 'spoil'] },
   // (obstacles stand: never a decor piece, crates or a rack, which the room rule would count in every kit's rooms)
   strongroom: { rooms: ['muster', 'storehouse', 'muster'], decor: ['urns', 'candles', 'crates'], obstacles: ['pillar', 'pillar', 'brokenpillar'] },
+  // (2026-11-27, docs/greenwood-dungeon.md: the Root Granary's way in) a wood under its canopy, open air: no walls, the
+  // trunks and root-banks round each glade are the renderer's (convert.js); mossed boulders and the empire's fallen stone
+  greenwood: { rooms: ['storehouse', 'storehouse', 'storehouse'], decor: ['boulder', 'brokenpillar', 'lantern'], obstacles: ['boulder'] },
 };
 // An authored room (plans.js), dressed for what it was (the dressing pass: docs/vale-dungeon-dressing.md). Its plan's
 // `dress` names the pieces; each name is a small recipe here, placed by the room's own axes: u along its length, v
@@ -95,13 +98,16 @@ export const DRESS = {
 // middle is kept open for the fight; the pieces go in the thirds and at the walls, a focal piece on the room's axis.
 // A piece that runs along a wall comes in two (`<kind>` along x, `<kind>_y` along y: gsprite.js), picked by the wall it's
 // on. A big piece's footprint past its own tile is `block` (stands in the way, draws nothing).
-const ORIENT = new Set(['tomb', 'pew', 'longtable', 'tbench', 'rack', 'urnshelf', 'standard', 'banner', 'scaffold', 'stall', 'trough', 'portcullis', 'iron_door', 'desk', 'shelf', 'shoring', 'hives', 'bench', 'fallen_door', 'bars', 'cask_rack']);
+const ORIENT = new Set(['tomb', 'pew', 'longtable', 'tbench', 'rack', 'urnshelf', 'standard', 'banner', 'scaffold', 'stall', 'trough', 'portcullis', 'iron_door', 'desk', 'shelf', 'shoring', 'hives', 'bench', 'fallen_door', 'bars', 'cask_rack', 'shoring_broken', 'clerk_desk']);
 /** the pieces the dressing pass added (keepTheWaysOpen clears them like any decor when they shut a way) */
 export const DRESS_PIECES = new Set(['tomb', 'great_tomb', 'mourner', 'offering', 'hearth', 'noticeboard', 'counter', 'longtable', 'tbench', 'logpile', 'stall', 'hay', 'trough', 'hen_cart', 'well', 'cart', 'portcullis', 'iron_door', 'desk', 'shelf', 'pit', 'ladder', 'shoring', 'hives', 'bench',
   'fallen_door', 'bars', 'strongbox', 'map_table', 'ledgers', 'stockade', 'guardian', 'sarcophagus_open', 'cask_rack', 'torch', 'candelabra', 'cookfire', 'block', 'crane', 'fishcrates', 'market_stall', 'oven',
   'throne', 'reliquary',
   'magma', 'furnace', 'anvil', 'crucible',   // (the Magma Vault's: the owner, 2026-11-26, "flowing magma and a few furnaces, anvils")
   'channel', 'lockgate', 'sluice',   // (deep water indoors: docs/water-indoors.md; the Canal Locks', the Drowned Abbey's garth)
+  'rail', 'cart_tipped', 'shoring_broken',   // (the Cold Seam's mine: docs/dungeon-looks-plan.md item 8)
+  'clerk_desk',   // (the quota office's clerks' desks, in rows: item 9)
+  'fallen_block',   // (the greenwood's: an ashlar block of the empire's, down in the moss; docs/greenwood-dungeon.md)
   ...[...ORIENT].map((k) => k + '_y')]);
 // what lights a doorway, by the room's kit (a brazier each side, before, in every room: the screen was a field of
 // identical fires; now the light says the place): the dig's lanterns on poles, the crypt's candles, the keep's and the
@@ -120,16 +126,24 @@ export const DRESS_CAP = { tomb: 6, great_tomb: 1, mourner: 2, offering: 1, hear
   // (deep water indoors, docs/water-indoors.md: a channel has no cap, it is many tiles; a lock gate and a sluice board are
   // each a band of tiles across one, counted by the tile: two gates' worth, two boards')
   lockgate: 16, sluice: 16,
+  cart_tipped: 1, clerk_desk: 8,   // (the Cold Seam's goblins' cart on its side; the quota office's desks: a row a wall. Rails no cap: a run is many tiles)
+  fallen_block: 4,   // (the greenwood's)
   saint: 2, lantern: 4, candles: 4, candelabra: 4, torch: 4, brazier: 4, ladder: 1, puddle: 4, scorch: 3, straw: 6, sacks: 3, crates: 2, barrels: 2, cracks: 6 };
 /** what stands out on an authored room's floor, by its place (not the kit's whole list: a gibbet in the stables and the
  *  gate-warden's chapel, a monolith in the legion's vault, said nothing) */
 const PLAN_OB = { dig: ['spoil', 'brokenpillar'], gallery: ['pillar', 'brokenpillar'], muster: ['pillar'], bailey: ['pillar'], barracks: ['pillar'], cellar: ['stalagmite', 'boulder'], nave: ['pillar', 'brokenpillar'], cultcut: ['brokenpillar', 'spoil'], binding: ['pillar'],
   mound: ['reeds'], locks: ['pillar'], vats: ['pillar'], abbey: ['pillar', 'brokenpillar'], pithead: ['boulder', 'spoil'], warren: ['stalagmite', 'boulder'],
-  yards: ['pillar', 'spoil'], quota: ['pillar'], forge: ['pillar', 'brokenpillar'], deepforge: ['pillar'], works: ['pillar', 'spoil'], vault: ['stalagmite', 'boulder'], strongroom: ['pillar'], tavern: [], tavern_cellar: [], crypt: [], ossuary: [], docks: [], mole: [], ramparts: [], seacave: ['stalagmite', 'boulder'], hulk: [], palace: ['pillar'] };   // (the tavern: nothing stood out in its floors, which are for the fight)   // (v1.126)   // (v1.124: the Cold Seam)   // (v1.102: the Fens authored)
+  yards: ['pillar', 'spoil'], quota: ['pillar'], forge: ['pillar', 'brokenpillar'], deepforge: ['pillar'], works: ['pillar', 'spoil'], vault: ['stalagmite', 'boulder'], strongroom: ['pillar'], tavern: [], tavern_cellar: [], crypt: [], ossuary: [], docks: [], mole: [], ramparts: [], seacave: ['stalagmite', 'boulder'], hulk: [], palace: ['pillar'], greenwood: [] };   // (the tavern: nothing stood out in its floors, which are for the fight)   // (v1.126)   // (v1.124: the Cold Seam)   // (v1.102: the Fens authored)
 const DOOR_LIGHT = { dig: 'lantern', gallery: 'candles', muster: 'torch', bailey: 'torch', barracks: 'torch', cellar: 'lantern', nave: 'candelabra', cultcut: 'candles', binding: 'candles',
   mound: 'lantern', locks: 'lantern', vats: 'lantern', abbey: 'candelabra', pithead: 'lantern', warren: 'torch',
-  yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra', tavern: 'torch', tavern_cellar: 'candles', crypt: 'candles', ossuary: 'candles', docks: 'lantern', mole: 'lantern', ramparts: 'torch', seacave: 'lantern', hulk: 'lantern', palace: 'candelabra' };   // (the crypt's doorways a low pricket: a candelabrum crowded the threshold, round 3)   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
-const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave', yards: 'storehouse', quota: 'cellar', forge: 'muster', deepforge: 'binding', works: 'storehouse', vault: 'cave', strongroom: 'muster', tavern: 'storehouse', tavern_cellar: 'storehouse', crypt: 'crypt', ossuary: 'ossuary', docks: 'storehouse', mole: 'storehouse', ramparts: 'storehouse', seacave: 'cave', hulk: 'storehouse', palace: 'crypt' };
+  yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra', tavern: 'torch', tavern_cellar: 'candles', crypt: 'candles', ossuary: 'candles', docks: 'lantern', mole: 'lantern', ramparts: 'torch', seacave: 'lantern', hulk: 'lantern', palace: 'candelabra', greenwood: 'lantern' };   // (the crypt's doorways a low pricket: a candelabrum crowded the threshold, round 3)   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
+const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave', yards: 'storehouse', quota: 'cellar', forge: 'muster', deepforge: 'binding', works: 'storehouse', vault: 'cave', strongroom: 'muster', tavern: 'storehouse', tavern_cellar: 'storehouse', crypt: 'crypt', ossuary: 'ossuary', docks: 'storehouse', mole: 'storehouse', ramparts: 'storehouse', seacave: 'cave', hulk: 'storehouse', palace: 'crypt', greenwood: 'storehouse' };
+// (the Reedholm Undercroft's own kits, docs/dungeon-looks-plan.md item 6: the Haddow Crypt's plan and set pieces, and its
+// fights, in the reed town's brick: the crypt's and the ossuary's dressing, kept as they are; convert.js draws them)
+DRESS.fenbrick = DRESS.crypt; DRESS.fenbones = DRESS.ossuary;
+PLAN_OB.fenbrick = PLAN_OB.crypt; PLAN_OB.fenbones = PLAN_OB.ossuary;
+DOOR_LIGHT.fenbrick = DOOR_LIGHT.crypt; DOOR_LIGHT.fenbones = DOOR_LIGHT.ossuary;
+PLAN_THEME.fenbrick = PLAN_THEME.crypt; PLAN_THEME.fenbones = PLAN_THEME.ossuary;
 const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', crates: 'crates', sacks: 'sacks', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', skulls: 'bones', bones: 'bones', barrels: 'barrels' };
 function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, count, near = () => false, bridge = () => {} }) {
   // every piece through the room's caps (CAP): a recipe can't stand a second well or a fifth torch
@@ -141,6 +155,9 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
   // a big piece and its footprint: the tiles behind it (toward the back, −x and −y, where its sprite stands over)
   const big = (u, v, kind, w = 2, h = 2) => { putAt(u, v, kind); for (let a = 0; a < w; a++) for (let b = 0; b < h; b++) if (a || b) putAt(along ? u - a : u - b, along ? v - b : v - a, 'block'); };
   const has = (d) => r.dress.includes(d);
+  // a pew is drawn as a bench three tiles long down x (convert.js DRESS_3D pew): walled so, its ends `block`, as drawn
+  // (on its one tile the party walked through its ends: docs/pathing-audit.md)
+  const pewAt = (u, v) => { if (!putAt(u, v, 'pew')) return; for (const d of [-1, 1]) { if (along) put0(u + d, v, 'block'); else put0(u, v + d, 'block'); } };
   const unit = (u, v, a0, a1, b0, b1, kind) => { if (!putAt(u, v, kind)) return false; for (let b = b0; b <= b1; b++) for (let a = a0; a <= a1; a++) if (a || b) putAt(u + a, v + b, 'block'); return true; };
   for (const d of r.dress) {
     switch (d) {
@@ -212,6 +229,14 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
         }
       } break;
       case 'casks': row(-wall, -L * 0.6, L * 0.6, 8, 'cask_rack'); putAt(L * 0.7, wall, 'barrels'); putAt(-L * 0.7, wall, 'barrels'); break;
+      // (Wickham Keep's great hall, docs/dungeon-looks-plan.md item 2: the trestles down its sides, a bench on the room's side
+      // of each, two along the back wall either side of the hearth and one along the near wall; the armoury's racks along
+      // the back wall's west end, where the camera sees them; the middle open for the fight)
+      case 'trestles': for (const [u, v, s] of [[-L * 0.4, -Wd + 3.5, 1], [L * 0.72, -Wd + 3.5, 1], [L * 0.1, Wd - 3.5, -1]]) {
+        if (!unit(u, v, -2, 2, -1, 1, alongK('longtable'))) continue;
+        unit(u, v + s * 2, -2, 2, 0, 0, alongK('tbench'));
+      } break;
+      case 'armoury': row(-wall, -L * 0.88, -L * 0.6, 4, 'rack'); break;
       case 'bunks': for (const s of [-1, 1]) for (let u = -L * 0.75, i = 0; u <= L * 0.75 + 0.01; u += 6, i++) { putAt(u, s * wall, 'bunk'); if (s < 0 && i % 3 === 1) putAt(u + 3, s * (wall - 2), 'straw'); } break;
       case 'iron_door': break;                                             // (at the doorway: dressRoom, which knows the openings)
       case 'chests': at(2, 6, 'chest'); break;   // (the paymaster's two: Brannoc's errand)
@@ -226,7 +251,7 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       // ── the Sunken Chapel: the drowned temple, the cult's cut, the binding crypt
       case 'hives': row(-wall, -L * 0.5, L * 0.2, 7, 'hives'); break;
       case 'doors': putAt(L * 0.55, -wall, alongK('fallen_door')); putAt(L * 0.55 + 3, -wall + 1, 'fallen_door'); break;
-      case 'pews': for (const s of [-1, 1]) for (const v of [0.28, 0.5]) for (let u = -L * 0.45; u <= L * 0.45 + 0.01; u += 5) putAt(u, s * Wd * v, 'pew'); break;
+      case 'pews': for (const s of [-1, 1]) for (const v of [0.28, 0.5]) for (let u = -L * 0.45; u <= L * 0.45 + 0.01; u += 5) pewAt(u, s * Wd * v); break;
       case 'font': putAt(L * 0.3, -Wd * 0.25, 'font'); break;
       // (the flags cracked in a ring where the tower came down, walked over: the fallen stone at the walls, out of the fight)
       case 'light_shaft': putAt(0, 0, 'shaft'); for (let i = 0; i < 5; i++) { const a = (i / 5) * 6.2832 + 0.4; putAt(cos(a) * 6, sin(a) * 6, 'cracks'); } for (const s of [-1, 1]) putAt(s * L * 0.7, Wd * 0.6, 'spoil'); break;
@@ -312,6 +337,14 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       case 'oven': unit(-L * 0.6, -Wd + 1, -1, 1, -1, 0, 'oven'); break;   // (the bakers' oven, built out from a house's front)
       case 'rampart_well': unit(-L * 0.45, -Wd + 2, -1, 0, -1, 0, 'well'); break;   // (round 2: into the frame, by the back wall)
       case 'rampart_clutter': putAt(-L * 0.15, -Wd, 'barrels'); putAt(L * 0.45, -Wd, 'crates'); putAt(L * 0.45 + 1.5, -Wd, 'sacks'); break;   // (round 1: more against the house fronts)
+      // ── the greenwood (2026-11-27, docs/greenwood-dungeon.md; plans.js root_granary): glades under the oaks, open air. No
+      // walls: the trunks, root-banks and the empire's ruins round the glades are the renderer's (`tithe_road`, `arcade`,
+      // `falls`, `granary_door`: convert.js, no sim piece). Here only what stands in a glade: a waymark lamp at a back corner
+      // and one by the near edge, the empire's fallen blocks and a broken pillar in the corners' thirds, mossed boulders at
+      // the edges; the middle left for the fight
+      case 'wood_lamps': putAt(-(L - 1), -Wd, 'lantern'); putAt(L * 0.55, Wd, 'lantern'); break;
+      case 'ruin_blocks': for (const [u, v, k] of /** @type {[number, number, string][]} */ ([[-0.72, -0.78, 'fallen_block'], [0.66, -0.74, 'brokenpillar'], [-0.6, 0.8, 'fallen_block'], [0.8, 0.62, 'fallen_block']])) putAt(u * L, v * Wd, k); break;
+      case 'mossy_boulders': at(2, 7, 'boulder'); break;
       // ── the Greywater Fens (v1.102, authored): the Toadking's mound, the Canal Locks and Vat Seven, the Drowned Abbey
       case 'boats': for (let u = -L * 0.55, i = 0; u <= L * 0.55 + 0.01 && i < 3; u += 13, i++) putAt(u, -(wall - 1), 'boat'); break;   // (hauled up keel-over at the back wall, three at most)
       case 'reeds': at(4, 5, 'reeds'); break;
@@ -326,6 +359,16 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       case 'pond': { const [x0, y0] = (([x, y]) => [x & ~1, y & ~1])(along ? [Math.round(r.cx + L * 0.5), Math.round(r.cy - Wd * 0.62)] : [Math.round(r.cx - Wd * 0.62), Math.round(r.cy + L * 0.5)]);
         for (let y = y0; y < y0 + 4; y++) for (let x = x0; x < x0 + 6; x++) if (!near(x, y)) place(x, y, 'channel'); } break;
       case 'lock_gates': case 'sluices': break;   // (built with their channel: waterway)
+      // ── the Cold Seam a worked mine (docs/dungeon-looks-plan.md item 8): the pithead's rails down the gallery's middle, a
+      // cart on them where the shift left it (flat, walked over: the fight crosses them); the warren's shoring robbed for
+      // its timber, a set every nine paces at the back wall, broken; and a cart the goblins tipped by their heap
+      case 'rails': putAt(L * 0.42, 0, 'cart'); for (let u = -L + 3; u <= L - 3 + 0.01; u += 1) putAt(u, 0, 'rail'); break;
+      case 'robbed_shoring': row(-wall, -L * 0.65, L * 0.65, 9, 'shoring_broken'); break;
+      case 'tipped_cart': putAt(-L * 0.5, -wall + 2, 'cart_tipped'); putAt(-L * 0.5 + 2, -wall + 1, 'spoil'); break;
+      // ── the quota office a counting house (item 9): the clerks' desks in a row along the back wall, a step out from the
+      // ledger shelves on it (convert.js countingRun), each chained to a ring in the floor; the strongbox in a back corner
+      case 'desk_rows': for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 6) putAt(u, -(Wd - 4), alongK('clerk_desk')); break;
+      case 'strongbox': putAt(L * 0.72, -(Wd - 2), 'strongbox'); break;
       default: if (PLAN_KIND[d]) at(d === 'candles' || d === 'lanterns' ? 2 : d === 'spoil' || d === 'bedrolls' ? 3 : 1, 6, PLAN_KIND[d]);
     }
   }
@@ -373,7 +416,7 @@ function waterway(r, d, { place, near, bridge, has }) {
 const WATERWAYS = new Set(['canal', 'canal_near', 'drain', 'pond']);
 
 // Props you walk over (flat on the floor, or underfoot): a dropped cage, a binding circle.
-export const FLAT_PROPS = new Set(['cage', 'circle', 'shaft', 'straw', 'rug', 'scorch', 'cracks', 'coins', 'papers', 'puddle', 'rope', 'net']);   // (a wharf's rope coils and nets lie flat on its deck: walked over)
+export const FLAT_PROPS = new Set(['cage', 'circle', 'shaft', 'straw', 'rug', 'scorch', 'cracks', 'coins', 'papers', 'puddle', 'rope', 'net', 'rail']);   // (a wharf's rope coils and nets lie flat on its deck: walked over)   // (the Cold Seam's rails, walked over)
 export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   const S = siteOf(site), FAM = familyAt(site, depth), kit = dressAt(site, depth), KIT = kit ? DRESS[kit] : null;   // (its furniture below: `human`, `themes`, or its kit)
   const th = theme || themeAt(site, depth) || THEME_KEYS[(seed >>> 0) % THEME_KEYS.length];
@@ -529,7 +572,7 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
       } else if (theme === 'chancel') {                          // an altar at the far end, candles, a saint fallen from his plinth, two short pews
         putAt(-L * 0.52, 0, 'altar');
         for (const side of [-1, 1]) putAt(-L * 0.45, side * Wd * 0.4, 'candles');
-        for (const side of [-1, 1]) putAt(L * 0.15, side * Wd * 0.4, 'pew');
+        for (const side of [-1, 1]) { const u = L * 0.15, v = side * Wd * 0.4; if (putAt(u, v, 'pew')) for (const d of [-1, 1]) { if (along) putAt(u + d, v, 'block'); else putAt(u, v + d, 'block'); } }   // (three tiles down x, as drawn: dressPlanned pewAt)
         putAt(L * 0.45, Wd * 0.5, 'saint');
       } else if (theme === 'cultcut') {                          // the Cult's dig: a binding circle in the cinders, chains, braziers
         putAt(0, 0, 'circle');
@@ -563,8 +606,9 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     // (an authored kit with no such pieces, the tavern's, keeps its floors open: its middle is for the fight)
     if (r !== level.entrance && r !== level.descentRoom && !(r.dress && PLAN_OB[r.kit] && !PLAN_OB[r.kit].length)) {
       const n = 1 + (orr() < 0.5 ? 1 : 0), mid = cells.filter(([x, y, c]) => !c.corridor && Math.abs(x - r.cx) <= r.rw * 0.45 && Math.abs(y - r.cy) <= r.rh * 0.45 && hypot(x - r.cx, y - r.cy) > 4 && !nearDoor(x, y));
-      // (an authored room's own set piece out on the floor, the yard's well, a cart, stands for one: the middle stays open)
-      const OBK = r.dress ? PLAN_OB[r.kit] || ['pillar'] : KIT ? KIT.obstacles : OBSTACLES, pre = r.dress ? Math.min(n, cells.filter(([x, y, c]) => { const p = world.props.get(K(x, y)); return p && p !== 'block' && (DRESS_PIECES.has(p) || OBK.includes(p)) && !c.corridor && Math.abs(x - r.cx) <= r.rw * 0.45 && Math.abs(y - r.cy) <= r.rh * 0.45 && hypot(x - r.cx, y - r.cy) > 4; }).length) : 0;
+      // (an authored room's own set piece out on the floor, the yard's well, a cart, stands for one: the middle stays open;
+      // what lies flat, the Cold Seam's rails, stands for none)
+      const OBK = r.dress ? PLAN_OB[r.kit] || ['pillar'] : KIT ? KIT.obstacles : OBSTACLES, pre = r.dress ? Math.min(n, cells.filter(([x, y, c]) => { const p = world.props.get(K(x, y)); return p && p !== 'block' && !FLAT_PROPS.has(p) && (DRESS_PIECES.has(p) || OBK.includes(p)) && !c.corridor && Math.abs(x - r.cx) <= r.rw * 0.45 && Math.abs(y - r.cy) <= r.rh * 0.45 && hypot(x - r.cx, y - r.cy) > 4; }).length) : 0;
       for (let i = 0, got = pre; i < 30 && got < n && mid.length; i++) {
         const [x, y] = mid[(orr() * mid.length) | 0];
         let clear = true;

@@ -17,8 +17,8 @@
 // Luminati holds a level to 128 units a side (LevelFormat MAX_SIZE): a bigger map is cropped round its middle (the plan's
 // §5; the overlands lose a few tiles of their edges).
 // Pure: reads the world, writes nothing to it (presentation only, AGENTS.md rule 2).
-import { ENV_FOOT } from '../sim/envfoot.js';
-import { G, REACH, TIDEMARK } from '../sim/outdoor.js';
+import { ENV_FOOT, DRAWN_FOOT } from '../sim/envfoot.js';
+import { G, REACH, TIDEMARK, wallCells, bareTree, homeWalls, isHome, reachKitOf } from '../sim/outdoor.js';
 import { FLOOR_Z } from '../sim/level.js';
 import { PROP_LIGHT } from '../render/gsprite.js';
 import { KIT_TINT } from '../render/palette.js';
@@ -122,6 +122,24 @@ export const LEGEND = {
   'η': { top: 'abbey_flag', side: 'abbey_wall', walkable: true }, 'θ': { top: 'drowned_turf', side: 'abbey_wall', walkable: true },
   '|': { top: 'palace_top', side: 'palace_wall', walkable: false },
   '?': { top: 'palace_sill_top', side: 'palace_sill', walkable: false },
+  // the Reedholm Undercroft (docs/dungeon-looks-plan.md item 6; docs/art-critic-pass-stone.md): the reed town's brick, narrow
+  // and dark red, lime-washed in patches, vaulted on the crypt kit's plan; brick paviors underfoot in a herringbone, mud in
+  // the joints; the near sills cut in the peat the undercroft was dug from; the bone room's bones packed into peat
+  'ж': { top: 'fen_paver', side: 'fen_brick', walkable: true },
+  'б': { top: 'fen_top', side: 'fen_brick', walkable: false }, 'п': { top: 'fen_top', side: 'fen_bones', walkable: false },
+  'т': { top: 'fen_peat_top', side: 'fen_peat', walkable: false },
+  // the counting house (item 9: the quota office, the look `counting`): dressed pale stone, swept pale flags, a scuffed one
+  // among them, the near sills a step darker
+  'с': { top: 'count_top', side: 'count_wall', walkable: false }, 'ч': { top: 'count_top', side: 'count_sill', walkable: false },
+  'к': { top: 'count_flag', side: 'count_wall', walkable: true }, 'л': { top: 'count_flag_worn', side: 'count_wall', walkable: true },
+  // the greenwood (docs/greenwood-dungeon.md; the Root Granary's way in, from the owner's two references): the glades' moss
+  // and fern with stones in it, leaf litter in drifts, the Tithe Road's cracked flags half swallowed; off the glades the wood's
+  // own ground a step up, its banks earth and roots (painted by world.js, ours). Runic letters: clear of every other kit's
+  ['\u16A0']: { top: 'wood_moss', side: 'wood_bank', walkable: true }, ['\u16A2']: { top: 'wood_litter', side: 'wood_bank', walkable: true },
+  ['\u16A6']: { top: 'tithe_flag', side: 'wood_bank', walkable: true }, ['\u16A8']: { top: 'wood_ground', side: 'wood_bank', walkable: false },
+  // its stair up: the empire's grey steps, flagged and in ashlar (round 10: the shared stair tiles read as a pallet)
+  ['\u16AA']: { top: 'tithe_flag', side: 'wood_ashlar', riser: 'wood_ashlar', stairs: 'N', walkable: true }, ['\u16AB']: { top: 'tithe_flag', side: 'wood_ashlar', riser: 'wood_ashlar', stairs: 'W', walkable: true },
+  ['\u16AC']: { top: 'tithe_flag', side: 'wood_ashlar', riser: 'wood_ashlar', stairs: 'S', walkable: true }, ['\u16AD']: { top: 'tithe_flag', side: 'wood_ashlar', riser: 'wood_ashlar', stairs: 'E', walkable: true },
   // a dungeon's stairs (Luminati's stair tiles, its own characters for them): each climbs one level toward its side
   '^': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'N', walkable: true }, v: { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'S', walkable: true },
   '>': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'E', walkable: true }, '<': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'W', walkable: true },
@@ -205,6 +223,9 @@ const GROUND = [['g', '2'], ['.', '2'], ['c', '2'], ['~', '0'], ['s', '1'], ['F'
 // MARSH_FRONT: the Sunken Chapel's water reaches this far in front of its middle (sim tiles; its porch stands dry past it).
 // KEEP_FACE: Wickham Keep's door face before its middle (sim tiles: buildkit keep's front wall, 0.475 kit units, and the torch's plate).
 const MARSH_FRONT = 5, KEEP_FACE = 4.8;
+// a bridge's deck, Luminati's units across: the sim's walkable deck (outdoor.js 'deck') is the tiles whose middles lie within
+// 3.2 of its line, up to 3 out; at 2.8 (2.8 tiles each side) its rails stood across the outer rows (docs/pathing-audit.md)
+const BRIDGE_W = 3.4;
 const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, d: 2, G: 1, g: 0 };
 
 /**
@@ -249,12 +270,10 @@ const STACK_H = 9.3, VENTS = 24;
 const SMOKE = { color: '#5a5450', colorEnd: '#8e8884', size: [0.7, 1.0], sizeEnd: 5.5, life: [5, 8.5], alpha: 0.55, velocity: [0, 1.1, 0] };
 const near = (s, at, r) => at && Math.abs(s.x - at[0]) < r && Math.abs(s.y - at[1]) < r;
 const stackAt = (region, w, s) => region === 'reach' && w.kind === 'overland' && (/_stack_/.test(s.id) || (/_tower_\d/.test(s.id) && (near(s, REACH.works, 16) || near(s, REACH.vault, 16))));
-const worksAt = (w, s) => w.kind === 'overland' && near(s, REACH.works, 3);
-/** the Reach's site doors on the overland (part 2): [the sim's piece, the REACH place it stands at, our kit's piece] @type {[RegExp, string, string][]} */
-const SITE_DOORS = [[/_longhouse_\d/, 'yards', 'reach_assayhouse'], [/_keep_\d/, 'forge', 'reach_forgedoor'], [/^chapelruin_0$/, 'ninth', 'reach_ninthdoor'], [/^ruin$/, 'vault', 'reach_vaultmouth']];
+// (the Reach's site doors on the overland, part 2, and the Cinderworks' furnace hall: the sim's REACH_KIT, outdoor.js reachKitOf)
 /** Furnace Nine's yard (the region boss's ground, camps.js reach_mouth: the furnace yard west of the Vault's ruin, its
  *  arena cleared of scatter): char and cracked earth to its reach, slag heaps just past its arena, vents inside them */
-const FURNACE_YARD = { heaps: 20, vents: 10 };
+const FURNACE_YARD = { vents: 10 };
 /** the Grace's place in her window (sim tiles): in Gullwick's bay east-south-east of the wreckers' camp (161.5, 246.5),
  *  her near side where her broadside's lanes begin (about 189, 255: past the arena's edge), lying east and west; partly past
  *  the level's crop, on world.js's sea (round 1, at 186, 252 and full size, she sat against the shore and read beached) */
@@ -304,7 +323,7 @@ function outdoor(w, region) {
   const objects = [], sprites = [], count = {};
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; objects.push({ id: `${ob.type}_${count[ob.type]}`, ...ob }); };
   const inside = (x, z, m = 0.5) => x > m && z > m && x < W - m && z < D - m;
-  const foot = (s) => { const f = ENV_FOOT[s.id]; if (!f) return null; return { cx: X(s.x + (f[0] + f[2]) / 2), cz: Z(s.y + (f[1] + f[3]) / 2), w: (f[2] - f[0]) / 2, d: (f[3] - f[1]) / 2, f }; };
+  const foot = (s) => { const f = ENV_FOOT[s.id] || DRAWN_FOOT[s.id]; if (!f) return null; return { cx: X(s.x + (f[0] + f[2]) / 2), cz: Z(s.y + (f[1] + f[3]) / 2), w: (f[2] - f[0]) / 2, d: (f[3] - f[1]) / 2, f }; };
   const services = new Map((w.services || []).map((v) => [v.id, v]));
   // raised ground under a footprint (the town's walls; a mountain, highest at its middle)
   const raise = (s, level, ch, dome = false) => {
@@ -313,20 +332,41 @@ function outdoor(w, region) {
     for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
       if (i < 0 || j < 0 || i >= W || j >= D) continue;
       let h = level;
-      if (dome) { const u = ((i + 0.5 - (i0 + i1) / 2) / ((i1 - i0) / 2)) ** 2 + ((j + 0.5 - (j0 + j1) / 2) / ((j1 - j0) / 2)) ** 2; if (u > 1) continue; h = Math.round(3 + (level - 3) * (1 - u)); }
+      if (dome) {
+        const u = ((i + 0.5 - (i0 + i1) / 2) / ((i1 - i0) / 2)) ** 2 + ((j + 0.5 - (j0 + j1) / 2) / ((j1 - j0) / 2)) ** 2; if (u > 1) continue; h = Math.round(3 + (level - 3) * (1 - u));
+        // (above a step only where the sim walls the whole cell: outdoor.js MOUNT_SHRINK; a step's rise is walked up)
+        const tx = x0 + 2 * i, ty = y0 + 2 * j; if (h > 3 && !(blockedAt(tx, ty) && blockedAt(tx + 1, ty) && blockedAt(tx, ty + 1) && blockedAt(tx + 1, ty + 1))) h = 3;
+      }
       const cur = parseInt(heights[j][i], 36);
       if (cur < h) { tiles[j][i] = ch; heights[j][i] = h.toString(36); }
     }
   };
+  // a stone wall piece the sim walls on whole cells (outdoor.js wallCells, `cells`): raised on just those cells, every tile of
+  // which the sim blocks (a gate's way through left at the ground): what you see is where its wall is (docs/pathing-audit.md:
+  // raised over its whole footprint, four tiles thick and its gatehouse ten wide over the sim's one and three, the party
+  // walked along on top of Ashgate's walls)
+  const blockedAt = (x, y) => { const gx = x + w.PAD, gy = y + w.PAD; return gx >= 0 && gy >= 0 && gx < w.GW && gy < w.GH && w.blocked[gy * w.GW + gx] === 1; };
+  const raiseCells = (s, level, ch) => {
+    const [a, b, c, d] = wallCells(s.id, s.x, s.y);
+    for (let ty = b; ty <= d; ty += 2) for (let tx = a; tx <= c; tx += 2) {
+      if (!(blockedAt(tx, ty) && blockedAt(tx + 1, ty) && blockedAt(tx, ty + 1) && blockedAt(tx + 1, ty + 1))) continue;
+      const i = (tx - x0) / 2, j = (ty - y0) / 2;
+      if (i < 0 || j < 0 || i >= W || j >= D) continue;
+      if (parseInt(heights[j][i], 36) < level) { tiles[j][i] = ch; heights[j][i] = level.toString(36); }
+    }
+  };
+  /** the tiles the sim walls inside a piece's footprint */
+  const walledNear = (s, f) => { let n = 0; for (let y = Math.floor(s.y + f[1]); y <= Math.floor(s.y + f[3]); y++) for (let x = Math.floor(s.x + f[0]); x <= Math.floor(s.x + f[2]); x++) if (blockedAt(x, y)) n++; return n; };
   const gates = [], timber = PALISADE.has(region), stoneWall = B.wall || 'k';
   // a tower out on the Reach's roads, away from any wall, is a dead beacon (outdoor.js beacons): our kit's drum tower
   // (town.json reach_tower_1) stood on the ground, not a block of slag brick raised under it (round 1: a black slab)
   const walls = region === 'reach' && w.kind === 'overland' ? w.structs.filter((q) => /_curtainy?_\d|_gatehousey?_\d/.test(q.id)) : [];
   const beacon = (s) => walls.length > 0 && /_tower_\d/.test(s.id) && !stackAt(region, w, s) && !walls.some((q) => Math.abs(q.x - s.x) < 14 && Math.abs(q.y - s.y) < 14);
   for (const s of w.structs) {
-    if (/_curtainy?_\d/.test(s.id)) raise(s, timber ? 3 : 6, timber ? 'E' : stoneWall);
-    else if (/_tower_\d/.test(s.id)) { if (!stackAt(region, w, s) && !beacon(s)) raise(s, timber ? 3 : 8, timber ? 'E' : stoneWall); }   // (a Cinderworks stack, a beacon: ours, below)
-    else if (/_gatehousey?_\d/.test(s.id)) { raise(s, timber ? 3 : 8, timber ? 'E' : stoneWall); gates.push(s); }
+    const up = s.cells ? raiseCells : raise;
+    if (/_curtainy?_\d/.test(s.id)) up(s, timber ? 3 : 6, timber ? 'E' : stoneWall);
+    else if (/_tower_\d/.test(s.id)) { if (!stackAt(region, w, s) && !beacon(s)) up(s, timber ? 3 : 8, timber ? 'E' : stoneWall); }   // (a Cinderworks stack, a beacon: ours, below)
+    else if (/_gatehousey?_\d/.test(s.id)) { up(s, timber ? 3 : 8, timber ? 'E' : stoneWall); gates.push(s); }
     else if (/^mountain_/.test(s.id)) raise(s, /massif/.test(s.id) ? 16 : 11, B.mountain, true);
   }
   // the roads through a gate stay open (the sim walks them)
@@ -375,23 +415,31 @@ function outdoor(w, region) {
     // (part 2: the other sites' doors, on the sim's own footprints: the Yards' counting house with the Assay's gate, the
     // Forgehall's bronze doors in their hill, the Ninth Vault's strongroom door in the volcano's flank, the Magma Vault's
     // mouth; each door on its +y face, where the sim's other doors are)
-    const door = reach && w.kind === 'overland' ? SITE_DOORS.find(([re, at]) => re.test(id) && near(s, REACH[at], 6)) : null;
-    if (door) { sprites.push({ id: door[2], x: X(s.x), z: Z(s.y) }); continue; }
-    if (reach && worksAt(w, s) && /_smith_/.test(id)) { works(s, p); continue; }
+    const kit = reachKitOf(w, s);
+    if (kit === 'reach_works') { works(s, p); continue; }
+    if (kit) { sprites.push({ id: kit, x: X(s.x), z: Z(s.y) }); continue; }
     if (reach && /^(wheat|pumpkins)_/.test(id)) continue;      // (Ashgate's fields are the sim's generic town's: nothing grows green in the Reach)
-    const house = HOUSES.find(([re]) => re.test(id));
-    if (house && /^(vale|fens|reach|heights|tidemark)_/.test(id) && !/_stilt|_punt|_cistern|_eeltrap/.test(id)) {
+    const house = isHome(w, s) && HOUSES.find(([re]) => re.test(id));
+    if (house) {
       const svc = services.get(id), hh = hash(id, s.x, s.y), { roofs, uppers, stone, ...lk } = look;
       const mine = { ...lk, ...(roofs ? { roof: roofs[hh % roofs.length] } : {}), ...(uppers && (house[1].stories || 1) > 1 ? { upperWall: uppers[(hh >>> 4) % uppers.length] } : {}) };
-      add({ type: 'house', x: p.cx, z: p.cz, rotation: 0, ...(svc ? { name: svc.name } : {}), light: !!svc || hash(id, s.x) % 3 === 0,
-        opts: { width: r2(clamp(p.w * 0.82, 3, 8)), depth: r2(clamp(p.d * 0.72, 2.5, 6)), chimney: true, shutters: true, doorHood: false, woodpile: false,
-          gableFront: false, sign: false, upperWall: '', ...house[1], ...(/_temple_|_smith_/.test(id) ? { ...mine, wall: stone || 'stone_brick' } : mine), seed: hh % 997 } });
+      // (on exactly the tiles the sim walls for it, its plinth to their edge: outdoor.js homeWalls, the house's size as it
+      // was drawn, 82 % by 72 % of the footprint within Luminati's least and most, laid on whole tiles. Walled 12 % in from
+      // its footprint's sides, the sim stopped the party up to a tile inside its walls: docs/pathing-audit.md)
+      const k = homeWalls(id, s.x, s.y), PLINTH = 0.1;
+      add({ type: 'house', x: X((k[0] + k[2]) / 2), z: Z((k[1] + k[3]) / 2), rotation: 0, ...(svc ? { name: svc.name } : {}), light: !!svc || hash(id, s.x) % 3 === 0,
+        opts: { width: r2((k[2] - k[0]) / 2 - 2 * PLINTH), depth: r2((k[3] - k[1]) / 2 - 2 * PLINTH), chimney: true, shutters: true, doorHood: false, woodpile: false,
+          gableFront: false, sign: false, upperWall: '', ...house[1], ...(/_temple_|_smith_/.test(id) ? { ...mine, wall: stone || 'stone_brick' } : mine), seed: hh % 997,
+          // (a service's chimney on its east end, toward the camera: laid on whole tiles the houses moved a little, Luminati
+          // drew their chimneys afresh, and Saltmere's chandlery's stood in front of the Stilt House's door, 33 % in view)
+          ...(svc ? { chimneySide: 1 } : {}) } });
       continue;
     }
     const m = /^([a-z]+)_\d/.exec(id), kind = m && m[1];
     if (kind && (TREES[kind] || kind === 'grove')) {
       if (raised(p.cx, p.cz)) continue;
-      const h = hash(id, s.x, s.y), tk0 = kind === 'grove' ? ['oak', 'oak', 'pine', 'autumn', 'deadwood'][h % 5] : TREES[kind], tk = B.trees[tk0] || tk0;
+      // (a grove in a land whose trees are bare is bare: the sim walls only a bare tree's trunk, outdoor.js bareTree)
+      const h = hash(id, s.x, s.y), tk0 = kind === 'grove' ? (bareTree(region, id) ? 'oak' : ['oak', 'oak', 'pine', 'autumn', 'deadwood'][h % 5]) : TREES[kind], tk = B.trees[tk0] || tk0;
       add({ type: 'tree', x: p.cx, z: p.cz, collider: false, opts: { kind: tk, height: r2(clamp(Math.max(p.w, p.d) * 0.62, 2.6, 6.2)), seed: h % 997 } });
     } else if (/^rock_/.test(id)) {
       // (a rock on snow is basalt showing through it: the land's own snow stone, white on white, hid the rocks that stand
@@ -399,20 +447,30 @@ function outdoor(w, region) {
       // is black slag, red only where the ground is red rock: round 1's one in five red read as orange boulders everywhere)
       const onSnow = B.stone === 'snow' && tm(Math.floor(s.x), Math.floor(s.y)) === G.SNOW;
       const stone = onSnow ? 'basalt' : reach && tiles[Math.floor(p.cz)]?.[Math.floor(p.cx)] === 'M' ? 'redrock' : B.stone;
-      const size = onSnow ? clamp(Math.max(p.w, p.d) * 0.3, 0.4, 0.8) : clamp(Math.max(p.w, p.d) * 0.55, 0.6, 1.6);   // (and small: stones through the snow, not boulders: round 3)
+      // (and no bigger than the ground the sim walls for it: Luminati's boulder reaches 0.8 of its size out, a leaning one
+      // beside it from a size of 1; drawn to its footprint, it stood a tile or two past the wall, docs/pathing-audit.md)
+      const walled = Math.sqrt(walledNear(s, p.f) / Math.PI) / 2;   // (its wall's radius, Luminati's units)
+      const fit = walled >= 1 ? walled : Math.max(0.3, Math.min(0.99, walled / 0.8));   // (from a size of 1 the leaning one reaches about its size out)
+      const size = Math.min(onSnow ? clamp(Math.max(p.w, p.d) * 0.3, 0.4, 0.8) : clamp(Math.max(p.w, p.d) * 0.55, 0.6, 1.6), fit);   // (and small: stones through the snow, not boulders: round 3)
       add({ type: 'rock', x: p.cx, z: p.cz, opts: { size: r2(size), ...(stone ? { stone } : {}), seed: hash(id, s.x) % 97 } });
     }
     else if (/^(fence|drywall)_/.test(id)) {
-      const f = p.f, horiz = f[2] - f[0] > f[3] - f[1];
-      add(horiz ? { type: 'fence', x0: X(s.x + f[0]), z0: p.cz, x1: X(s.x + f[2]), z1: p.cz, opts: {} } : { type: 'fence', x0: p.cx, z0: Z(s.y + f[1]), x1: p.cx, z1: Z(s.y + f[3]), opts: {} });
+      // (down the middle of the row the sim walls, end to end of it: outdoor.js putRun. On the footprint's own middle line
+      // it stood off the walled row's middle by up to half a tile, in the next row the party walks)
+      const f = p.f, horiz = f[2] - f[0] > f[3] - f[1], a = Math.floor((horiz ? s.x + f[0] : s.y + f[1]) + 0.5), b = Math.ceil((horiz ? s.x + f[2] : s.y + f[3]) - 0.5);
+      const mid = Math.floor(horiz ? s.y + (f[1] + f[3]) / 2 : s.x + (f[0] + f[2]) / 2) + 0.5;
+      add(horiz ? { type: 'fence', x0: X(a), z0: Z(mid), x1: X(b), z1: Z(mid), opts: {} } : { type: 'fence', x0: X(mid), z0: Z(a), x1: X(mid), z1: Z(b), opts: {} });
     }
     else if (/_(well|lanewell)_\d/.test(id)) add({ type: 'well', x: p.cx, z: p.cz, rotation: 0, opts: { roof: reach ? 'roof_rust' : 'roof_thatch' } });
     else if (/^windmill_/.test(id)) add({ type: 'windmill', x: p.cx, z: p.cz, rotation: 0, opts: { height: 7, roof: 'roof_thatch', seed: 7 } });
     else if (/^lamppost_/.test(id)) add({ type: 'lamppost', x: p.cx, z: p.cz, rotation: 0, opts: { style: 'arm' } });
     else if (/_foodstand_/.test(id)) add({ type: 'marketStall', x: p.cx, z: p.cz, rotation: 0, opts: { cloth: 'cloth_stripe', width: 3, crates: 'right', seed: 2 } });
     else if (/^barrel/.test(id)) add({ type: 'barrel', x: p.cx, z: p.cz, rotation: (hash(id, s.x, s.y) % 7) / 7, opts: { height: 1, lying: false } });
-    else if (/^crate_|^boxes/.test(id)) add({ type: 'crateStack', x: p.cx, z: p.cz, rotation: 0.2, opts: { count: /^boxes/.test(id) ? 3 : 2, size: 0.8, seed: hash(id, s.x) % 31 } });
-    else if (/^sack/.test(id)) add({ type: 'sacks', x: p.cx, z: p.cz, rotation: 0, opts: { count: 3, seed: 5 } });
+    // (a crate's and a sack's pile on the ground the sim walls for it, no barrel beside it: two crates of 0.8 and a barrel, or
+    // three sacks, stood two to four tiles wide over a wall of one or two, docs/pathing-audit.md)
+    else if (/^crate_|^boxes/.test(id)) { const n = /^boxes/.test(id) ? 3 : 1, side = Math.sqrt(Math.max(1, walledNear(s, p.f))) / 2;
+      add({ type: 'crateStack', x: p.cx, z: p.cz, rotation: 0.2, opts: { count: n, size: r2(clamp((side * 0.85) / n, 0.35, 0.8)), barrel: false, seed: hash(id, s.x) % 31 } }); }
+    else if (/^sack/.test(id)) add({ type: 'sacks', x: p.cx, z: p.cz, rotation: 0, opts: { count: 1, seed: 5 } });
     else if (/^table_/.test(id)) add({ type: 'table', x: p.cx, z: p.cz, rotation: 0, opts: { shape: 'rect', width: 1.6, depth: 0.9, cloth: false, items: true, candle: false, seed: 6 } });
     else if (/^bench_/.test(id)) add({ type: 'bench', x: p.cx, z: p.cz, rotation: 0, opts: { length: 1.6, back: true } });
     else if (/^hay_/.test(id)) add({ type: 'haystack', x: p.cx, z: p.cz, opts: { size: 0.8, seed: hash(id, s.x) % 31 } });
@@ -421,8 +479,8 @@ function outdoor(w, region) {
     // line (outdoor.js 'deck': the walkable 6.4 tiles of the footprint's short side), the river left open under it
     else if (/^bridge/.test(id)) {
       const f = p.f, alongX = f[2] - f[0] > f[3] - f[1];
-      add(alongX ? { type: 'bridge', x0: X(s.x + f[0]), z0: Z(s.y), x1: X(s.x + f[2]), z1: Z(s.y), deckY: GROUND_Y, opts: { width: 2.8, arch: 0.22 } }
-        : { type: 'bridge', x0: X(s.x), z0: Z(s.y + f[1]), x1: X(s.x), z1: Z(s.y + f[3]), deckY: GROUND_Y, opts: { width: 2.8, arch: 0.22 } });
+      add(alongX ? { type: 'bridge', x0: X(s.x + f[0]), z0: Z(s.y), x1: X(s.x + f[2]), z1: Z(s.y), deckY: GROUND_Y, opts: { width: BRIDGE_W, arch: 0.22 } }
+        : { type: 'bridge', x0: X(s.x), z0: Z(s.y + f[1]), x1: X(s.x), z1: Z(s.y + f[3]), deckY: GROUND_Y, opts: { width: BRIDGE_W, arch: 0.22 } });
     }
     else if (/^hens_/.test(id)) add({ type: 'critters', x: p.cx, z: p.cz, kind: 'chicken', count: 4, radius: 1.6 });   // (Luminati's own hens, pecking about)
     else if (/^(cow|sheep)_/.test(id)) continue;               // (the farm's beasts are figures, alive: hybrid.js beasts, from Emberlit's animator)
@@ -507,18 +565,13 @@ function outdoor(w, region) {
     }
   }
   if (reach && w.kind === 'overland') {
-    const camp = CAMP_BY.reach_mouth, c = camp ? [camp.x, camp.y] : [REACH.vault[0] - 20, REACH.vault[1] - 18], r = camp ? camp.reach : 21, rim = camp ? camp.arena + 1 : r + 5;
+    const camp = CAMP_BY.reach_mouth, c = camp ? [camp.x, camp.y] : [REACH.vault[0] - 20, REACH.vault[1] - 18], r = camp ? camp.reach : 21;
     // the yard's floor: char and cracked earth inside the ring (only open ground: the stack's plinth, a heap, a road stay)
     for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
       const d = Math.hypot(x0 + 2 * i + 1 - c[0], y0 + 2 * j + 1 - c[1]);
       if (d < r && heights[j][i] === '2' && /[AHKLQMy]/.test(tiles[j][i])) tiles[j][i] = vnoise(i, j, 'fy', 3) < 0.55 ? 'H' : 'Q';
     }
-    // the heaps on its rim, past the cleared arena (a gap to the south, the way in), vents round its reach
-    for (let k = 0; k < FURNACE_YARD.heaps; k++) {
-      const a = (k / FURNACE_YARD.heaps) * Math.PI * 2 + 0.2, gx = c[0] + Math.cos(a) * rim, gy = c[1] + Math.sin(a) * rim;
-      if (Math.sin(a) > 0.94 || Math.hypot(gx - REACH.vault[0], gy - REACH.vault[1]) < 10) continue;   // (the way in from the south, the vault's mouth)
-      const x = X(gx), z = Z(gy); if (inside(x, z) && !raised(x, z)) sprites.push({ id: 'reach_slagheap', x, z });
-    }
+    // (the heaps on its rim are the sim's, walled: outdoor.js furnaceHeaps, stood as its other pieces are) vents round its reach
     for (let k = 0; k < FURNACE_YARD.vents; k++) {
       const a = ((k + 0.5) / FURNACE_YARD.vents) * Math.PI * 2 + 0.2, x = X(c[0] + Math.cos(a) * (r - 1)), z = Z(c[1] + Math.sin(a) * (r - 1));
       if (inside(x, z) && !raised(x, z)) add({ type: 'fire', x, z, opts: { kind: 'embers', size: 0.55, smoke: k % 2 === 0, light: false, seed: 300 + k } });
@@ -608,7 +661,7 @@ Object.assign(KIT_LOOK, {
   // (round 3: the pithead first in cinder earth under basalt walls, and underground's dim violet fill took both to black,
   // a mean luminance of 15 against the warren's 23: its floor now packed earth and rock, its walls the Deepdelvers' cut
   // stone, its dug rooms raw earth. The works and the vault keep their dark stone: their hazard and their fires light them)
-  pithead: { floor: ['d', 'U'], wall: 'W', cave: 'D', hour: 19.4 }, warren: { floor: ['d', 'Q'], wall: 'D', cave: 'D', hour: 19.1 },
+  pithead: { floor: ['d', 'U'], wall: 'W', cave: 'D', hour: 19.4 }, warren: { floor: ['d', 'Q'], wall: 'D', cave: 'D', hour: 19.1, mix: 9 },   // (the warren's char patches fewer: at a fifth they read as a checker of black holes, item 8)
   // (part 2: the vault's floor broken rock with fire in its cracks, ember vents along its walls: `vents`)
   ember: { floor: ['U', 'H'], wall: 'Z', cave: 'O', hour: 18.7 }, lava: { floor: ['U', 'l'], wall: 'O', cave: 'O', hour: 18.3, vents: 14 },
 });
@@ -689,8 +742,45 @@ KIT_LOOK.hulk = { floor: ['_', '#'], wall: '@', cave: '@', hour: 19.6, mix: 0, i
 // fighting room's middle (`pools`, as the crypt's), the candelabra gilt
 const PALACE_FILL = { sky: [1.1, 1.02, 0.92], ground: [0.62, 0.52, 0.42], lamps: 2.1 };
 KIT_LOOK.palace = { floor: ['(', ')'], yard: '/', wall: '|', cave: '|', hour: 19.6, mix: 0, checker: true, pools: true, inside: true, palace: true, fill: PALACE_FILL };
+// (item 6, docs/art-critic-pass-stone.md) the Reedholm Undercroft: the crypt kit's plan, set pieces and arcade in the reed
+// town's own brick (`fenbrick`, its bone room `fenbones`), reed matting down the rooms (`mats`), eel traps and nets hung in
+// the bays; a damp cold fill, the candles warm against it
+const FEN_FILL = { sky: [0.9, 1.0, 1.04], ground: [0.5, 0.42, 0.34], lamps: 2.3 };
+KIT_LOOK.fenbrick = { floor: ['ж', 'ж'], wall: 'б', cave: 'б', hour: 19.2, mix: 0, ledgers: true, inside: true, mats: true, fill: FEN_FILL };
+KIT_LOOK.fenbones = { floor: ['ж', 'ж'], wall: 'п', cave: 'п', hour: 19.2, mix: 0, ledgers: true, inside: true, fill: FEN_FILL };
+// (item 9) a counting house, the look `counting`: the Assay's quota office first (its sim kit stays `quota`), then the
+// Greenwood's Tally-House and the Solmere Archive's wing, which point their kits at it. Dressed pale stone under a
+// cornice, the back walls lined with ledger shelves and tally boards between pilasters (countingRun), swept pale flags,
+// the clerks' desks in rows, each chained to a ring in the floor, the clerk's cool lamp (COUNT_3D)
+const COUNT_FILL = { sky: [0.72, 0.75, 0.82], ground: [0.44, 0.4, 0.36], lamps: 2.3 };   // (round 1: at the crypt's fill the office read a lit ward, flat and grey: the lamps' pools lead now)
+KIT_LOOK.counting = { floor: ['к', 'л'], wall: 'с', cave: 'с', hour: 20.6, mix: 12, inside: true, counting: true, fill: COUNT_FILL };
+KIT_LOOK.quota = KIT_LOOK.counting;
+// (2026-11-27, docs/greenwood-dungeon.md; docs/dungeon-looks-plan.md item 12) the greenwood: glades under the great oaks, open
+// air, no walls (`forest`: woodGround, woodDress). Its own green gloom whatever the hour (world.js greenwoodAir), a cool green
+// fill, the sun a little through the canopy for the trunks' shadows, warm only at a lamp
+const WOOD_FILL = { sky: [0.8, 0.86, 0.64], ground: [0.44, 0.38, 0.26], lamps: 1.9, sun: 0.3 };   // (round 10: olive and warm earth, not teal)   // (round 3: a fifth up, the wood's edges went to black)
+KIT_LOOK.greenwood = { floor: ['\u16A0', '\u16A2'], road: '\u16A6', wall: '\u16A8', cave: '\u16A8', hour: 17.4, mix: 0, forest: true, fill: WOOD_FILL, arch: 'wood_ashlar', margin: 36, ground: 12.5, backdrop: '#3a4230' };   // (round 10: an olive gloom, not teal)   // (round 3: a margin of 18 units, the wood before the camera to the frame's foot, not the edge's fog)   // (round 2: the gloom a mid moss green, so the far trunks stand dark against it as in the references)
 const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KIT_LOOK.cellar, nave: KIT_LOOK.nave, cinder: KIT_LOOK.cultcut, chasm: { floor: ['U', 'm'], wall: 'x', hour: 22.8 },
   warren: KIT_LOOK.warren, ember: KIT_LOOK.ember, lava: KIT_LOOK.lava, mire: KIT_LOOK.mound, sluice: KIT_LOOK.locks, poison: KIT_LOOK.vats, water: KIT_LOOK.abbey };
+// (item 11, docs/art-critic-pass-stone.md) a generated floor (no plan, no kit: the Mere Tower, the endless floors to come)
+// drew the Vale's kits whatever land it was in (THEME_LOOK). Its look now follows its land: the theme's own kit there where
+// the land has one (the Fens' mire the Toadking's mud), else one of the land's built looks, picked by the floor's seed and
+// stepping on with its depth, so the Mere Tower stands in the locks' and the abbey's stone and an endless descent walks
+// through a land's looks floor by floor. Only the stone, the light's hour and its fill come over (`plainLook`): a kit's
+// set pieces (an inside kit's walls, a wharf's water) belong to its authored rooms. The Vale's floors keep THEME_LOOK.
+/** @type {Record<string, Record<string, string[]>>} a land's looks by theme (`any`: every other theme) */
+const LAND_LOOKS = {
+  fens: { mire: ['mound'], sluice: ['locks'], poison: ['vats'], water: ['abbey'], any: ['locks', 'abbey'] },   // (round 1: Vat Seven's sick green only where the theme is poison: a tower in it read as a cesspit)
+  reach: { cave: ['pithead', 'warren'], warren: ['warren'], ember: ['works'], lava: ['lava', 'deepforge'], desert: ['yards', 'works'], chasm: ['deepforge'], any: ['yards', 'forge', 'works', 'pithead'] },
+  tidemark: { any: ['seacave'] },
+};
+const plainLook = (k) => { const L = KIT_LOOK[k]; return L && (L.plainOf ||= { floor: L.floor, wall: L.wall, cave: L.cave, hour: L.hour, mix: L.mix, vents: L.vents, kit: k }); };
+/** a generated floor's look by its land, theme, seed and depth: null for the Vale's (THEME_LOOK) @returns {any} */
+function landLook(w) {
+  const T = LAND_LOOKS[SITES[w.site]?.region]; if (!T) return null;
+  const list = (T[w.theme] || T.any).filter((k) => KIT_LOOK[k]); if (!list.length) return null;
+  return plainLook(list[((hash('land', w.seed >>> 0) >>> 11) + (w.depth || 0)) % list.length]);   // (the hash's high bits: FNV's low ones follow the seed's last digit)
+}
 /** the fill's tint underground for the Reach's kits and themes (palette.js KIT_TINT holds the Vale's and the Fens'):
  *  the lamps' warmth in the mine, the furnaces' in the works and the vault, the clerks' cool lamp in the cellars */
 const AMB_TINT = { pithead: [1.08, 0.97, 0.86], warren: [1.04, 0.96, 0.88], ember: [1.16, 0.9, 0.78], lava: [1.22, 0.86, 0.72],
@@ -699,7 +789,59 @@ const AMB_TINT = { pithead: [1.08, 0.97, 0.86], warren: [1.04, 0.96, 0.88], embe
   // (the inn: firelight's warmth in the fill, a lit room's not a cellar's)
   tavern: [1.3, 1.06, 0.84], tavern_cellar: [1.3, 1.06, 0.84],
   seacave: [0.94, 1.0, 1.12], hulk: [1.22, 1.04, 0.86] };
+// (item 8, docs/art-critic-pass-stone.md round 3: the Cold Seam's fill a step up, so its timber, rails and carts read on
+// the rock: at the old tint a shoring set stood black against black)
+Object.assign(AMB_TINT, { pithead: [1.17, 1.05, 0.93], warren: [1.13, 1.04, 0.95] });
 const DEFAULT_LOOK = { floor: ['k', 'm'], wall: 'x', hour: 19.4 };
+// ── the Vale's stone (docs/dungeon-looks-plan.md items 1 and 2; docs/art-critic-pass-vale.md) ─────────────────────────────
+// The Old Barrows a barrow, not a castle: drystone under the mound's turf, its grass hanging over their tops, timber posts
+// and lintels framing the niches and the passages' mouths, packed earth and worn slabs underfoot, the dead laid out on biers
+// with their shields and spears, their grave goods in the niches, the muster hall's columns standing stones; the mouth cut
+// earth shored with timber (barrowDress, BARROW_3D). Wickham Keep a keep: its bailey a cobbled yard under curtain walls of
+// honey-grey ashlar with a crenellated parapet along their tops, lit as a yard at the day's end, a low sun over the walls
+// (curtainRun); its barracks a great hall of limewashed plaster in an oak frame, the hearth, the trestles, the armoury's
+// racks (the inn's frame and furniture, room by room: `whole`); its cellars still the cave the Redhand broke into. Each
+// look keeps its kit's sim id, so the rooms, the foes, the bosses and the balance contract stand.
+//   `barrow`: dressed by barrowDress; `whole`: the walls stand whole round the rooms in it (tavernWalls, room by room, on
+//   any floor); `tint` / `fill`: the floor's light, taken from its way in's room (a barrow's earth-warm fill, a yard's sky);
+//   `lift`: its ragged back walls a step taller (a barrow's passage walls, the mound over them).
+// The legend's letters (the Old English and Norse ones, unlikely to be wanted by another kit): Þ the barrow's drystone
+// under turf, Ð the mouth's cut earth under turf, þ its worn slabs, ð its packed earth; Æ the keep's curtain walls, æ the
+// yard's cobbles, œ its trodden mud; Ø the great hall's plaster, ø its flags, Œ its flags strewn with rushes; Ƿ the Ninth
+// Milestone's ashlar, ruined as the barrows' walls are (Æ stands whole).
+Object.assign(LEGEND, {
+  'Þ': { top: 'grass_dark', side: 'barrow_drystone', lip: 'barrow_turf', walkable: false }, 'Ð': { top: 'grass_dark', side: 'barrow_cut', lip: 'barrow_cutturf', walkable: false, overhang: false },   // (the cut's turf in its lip alone: a cave's ragged faces took a brim on every one, the perf pass)
+  // (their near walls, broken low, without the turf's hanging brim: on every tile of them it cost a sixth more triangles a
+  // frame for an edge the camera sees end-on; the perf pass)
+  'Ȝ': { top: 'grass_dark', side: 'barrow_drystone', lip: 'barrow_turf', walkable: false, overhang: false }, 'ȝ': { top: 'grass_dark', side: 'barrow_cut', lip: 'barrow_cutturf', walkable: false, overhang: false },
+  'þ': { top: 'barrow_slab', side: 'barrow_drystone', walkable: true }, 'ð': { top: 'barrow_earth', side: 'barrow_cut', walkable: true },
+  'Æ': { top: 'rampart_top', side: 'keep_ashlar', walkable: false }, 'æ': { top: 'keep_cobble', side: 'keep_ashlar', walkable: true }, 'œ': { top: 'keep_mud', side: 'keep_ashlar', walkable: true },
+  'Ø': { top: 'tavern_cap', side: 'keep_plaster', walkable: false }, 'ø': { top: 'keep_flag', side: 'keep_ashlar', walkable: true }, 'Œ': { top: 'keep_rushes', side: 'keep_ashlar', walkable: true },
+  'Ƿ': { top: 'rampart_top', side: 'keep_ashlar', walkable: false }, 'Ǿ': { top: 'tavern_cap', side: 'keep_ashlar', walkable: false },
+});
+// (round 1: the old violet fill through an earth-warm tint took the earth and drystone to black, the muster hall a mean of
+// ~14: a fill of its own, earth-warm, the lamps a step up; the gallery's cold blue had read as any crypt)
+const BARROW_FILL = { sky: [0.74, 0.65, 0.56], ground: [0.38, 0.32, 0.27], lamps: 1.3 };   // (round 3: a tenth up, the muster hall still the darkest room)
+const MILESTONE_FILL = { sky: [0.64, 0.64, 0.7], ground: [0.32, 0.31, 0.32], lamps: 1.3 };   // (the strongroom cool and dry; under the chasm's violet it read black, round 3)
+const KEEP_FILL = { sky: [1.0, 0.9, 0.78], ground: [0.52, 0.45, 0.38], lamps: 1.8, sun: 0.55 };
+Object.assign(KIT_LOOK, {
+  dig: { floor: ['ð', 'þ'], wall: 'Þ', cave: 'Ð', hour: 19.3, mix: 10, barrow: true, lift: 1, fill: BARROW_FILL, arch: 'barrow_drystone' },
+  gallery: { floor: ['þ', 'ð'], wall: 'Þ', cave: 'Ð', hour: 20.4, mix: 26, barrow: true, lift: 1, fill: BARROW_FILL, arch: 'barrow_drystone' },
+  muster: { floor: ['þ', 'ð'], wall: 'Þ', cave: 'Ð', hour: 21.0, mix: 14, barrow: true, lift: 1, fill: BARROW_FILL, arch: 'barrow_drystone' },
+  bailey: { floor: ['æ', 'œ'], wall: 'Æ', cave: 'Æ', hour: 18.2, mix: 16, whole: true, fill: KEEP_FILL, backdrop: '#262c38', arch: 'keep_ashlar' },
+  barracks: { floor: ['ø', 'Œ'], wall: 'Ø', cave: 'Ø', hour: 19.4, mix: 22, whole: true, arch: 'keep_ashlar' },
+  // the Ninth Milestone (secret, its kit `muster` in the sim): the legion's strongroom, cut square and dry, in the empire's
+  // dressed stone (the keep's) over its flags, not the Barrows' turf and timber: SITE_KIT
+  milestone: { floor: ['ø', 'ø'], wall: 'Ƿ', cave: 'x', hour: 21.0, mix: 0, arch: 'keep_ashlar', fill: MILESTONE_FILL },
+});
+/** a site's own look for a kit it shares (renderer only: the sim's kit stands) */
+const SITE_KIT = { ninth_milestone: { muster: 'milestone' } };
+/** the sites in the Vale's stone, whose halls take their rooms' looks (dungeon) */
+const VALE_STONE = new Set(['barrows', 'wickham_keep', 'proving_pens', 'ninth_milestone']);
+/** the barrow's back walls a step taller than the ruin's (a passage wall, the mound over it) */
+const LIFT_OF = { 'Þ': 1, 'Ð': 1 };
+/** a barrow's near walls, in their own letters (no turf brim: LEGEND) */
+const NEAR_OF = { 'Þ': 'Ȝ', 'Ð': 'ȝ' };
 /** an overland prop of ours (gsprite.js), a spawn point's dressing (sim/camps.js) */
 const OVERLAND_OURS = new Set(['tent', 'carcass', 'burrow', 'rack', 'banner', 'standard', 'bedroll', 'reeds', 'boat', 'bound', 'urns', 'candles', 'saint', 'chains']);   // (v1.68: every land's spawn points' dressing)
 /** a spawn point's dressing Luminati builds itself, as underground (DRESS_3D) */
@@ -754,6 +896,80 @@ const MAGMA_3D = {
   crucible: (tx, ty, h, { X, Z, sprites }) => { sprites.push({ id: 'reach_crucible', x: X(tx + 0.5), z: Z(ty + 0.5), here: true }); },
   anvil: (tx, ty, h, { X, Z, sprites }) => { sprites.push({ id: h % 2 ? 'reach_anvilx' : 'reach_anvil', x: X(tx + 0.5), z: Z(ty + 0.5), here: true }); },
 };
+// ── the Cold Seam a worked mine (item 8; sim/world.js rails, robbed_shoring, tipped_cart; docs/art-critic-pass-stone.md).
+// The pithead's and the warren's pieces in 3D, built by world.js buildTavern into one batch (`mine`, as an inside kit's
+// trim): a shoring set where the sim stands one, two squared props and a cap beam against the rock, lagging boards behind
+// (against a near wall only the props' stumps, knee high, so a fight is never behind them); the warren's the same, robbed:
+// a prop gone, the cap down, the boards stripped; the rails laid in runs, iron on sleepers; the ore carts on them, an
+// iron-banded tub on four small wheels with ore heaped in it, or tipped on its side by the goblins' heap; a lamp hung on
+// an iron hook from a post at the wall, its warm light; a ladder against the rock; a spoil heap bigger than a rubble
+// scatter; where the roof came in, a fallen prop across the rock. Every choice a hash of the tile.
+const MINE_KITS = new Set(['pithead', 'warren']);
+const MINE_LAMP = '#ffbc6e';
+/** the nearest wall from a point, any side, within four tiles (Luminati's units): its side, its face's line, how far */
+function wall4(open, x, z) {
+  const i = Math.floor(x), j = Math.floor(z); let best = null;
+  for (const [side, di, dj] of /** @type {[string, number, number][]} */ ([['n', 0, -1], ['w', -1, 0], ['s', 0, 1], ['e', 1, 0]])) for (let k = 1; k <= 4; k++) {
+    if (open(i + di * k, j + dj * k)) continue;
+    const d = side === 'n' ? z - (j - k + 1) : side === 's' ? (j + k) - z : side === 'w' ? x - (i - k + 1) : (i + k) - x;
+    if (!best || d < best.d) best = { side, d, line: side === 'n' ? j - k + 1 : side === 's' ? j + k : side === 'w' ? i - k + 1 : i + k };
+    break;
+  }
+  return best;
+}
+/** a piece set against a wall: its face's frame (n: the axis it runs along, out: +1 into the room toward +z/+x, −1 back) */
+const onWall = (wl, x, z) => (wl.side === 'n' || wl.side === 's' ? { x, z: wl.line, n: 'z', out: wl.side === 'n' ? 1 : -1, near: wl.side === 's' } : { x: wl.line, z, n: 'x', out: wl.side === 'w' ? 1 : -1, near: wl.side === 'e' });
+const MINE_3D = {
+  shoring: (x, z, h, k, { mine, open, add }) => {
+    const wl = wall4(open, x, z); if (!wl || wl.d >= 2.6) return;
+    const f = onWall(wl, x, z), broken = k.startsWith('shoring_broken'), lamp = !broken && !f.near && h % 2 === 0;   // (round 2: a lamp on the cap of every other set, its light: unlit, the sets stood black on the rock)
+    mine.push({ k: 'shoringset', ...f, broken: broken ? 1 : 0, lamp: lamp ? 1 : 0, seed: h % 997 });
+    if (lamp) add({ type: 'light', x: f.n === 'z' ? x : r2(f.x + f.out * 0.9), z: f.n === 'z' ? r2(f.z + f.out * 0.9) : z, dy: 2.1, color: MINE_LAMP, intensity: 3.6, distance: 5.5, flicker: 0.12, nightOnly: false });
+  },
+  cart: (x, z, h, k, { mine, rails, tx, ty }) => {
+    const rx = rails.has(`${tx - 1},${ty}`) || rails.has(`${tx + 1},${ty}`), rz = rails.has(`${tx},${ty - 1}`) || rails.has(`${tx},${ty + 1}`);
+    mine.push({ k: 'orecart', x, z, rot: rx ? 0 : rz ? Math.PI / 2 : (h % 4) * 0.4, rail: rx || rz ? 1 : 0, tipped: k === 'cart_tipped' ? 1 : 0, seed: h % 997 });
+  },
+  lantern: (x, z, h, k, { mine, open, add }) => {
+    const wl = wall4(open, x, z), f = wl ? onWall(wl, x, z) : { x, z, n: 'z', out: 1, near: false };
+    mine.push({ k: 'hooklamp', ...f, at: wl ? (f.n === 'z' ? x : z) : 0, free: wl ? 0 : 1, seed: h % 997 });
+    const lx = f.n === 'z' ? x : r2(f.x + f.out * 0.75), lz = f.n === 'z' ? r2(f.z + f.out * 0.75) : z;
+    add({ type: 'light', x: wl ? lx : x, z: wl ? lz : z, dy: 1.7, color: MINE_LAMP, intensity: 5.2, distance: 7.5, flicker: 0.12, nightOnly: false });
+  },
+  ladder: (x, z, h, k, { mine, open }) => { const wl = wall4(open, x, z); if (wl) mine.push({ k: 'mladder', ...onWall(wl, x, z), seed: h % 997 }); },
+  // (the perf pass, docs/art-critic-pass-stone.md: a heap's rock and a fall's rock in the mine's own batch, not a Luminati
+  // object each: at one each the burrow hall drew a third more)
+  spoil: (x, z, h, k, { add, mine }) => {
+    add({ type: 'debris', x, z, rotation: (h % 11) * 0.5, opts: { kind: 'rubble', size: 0.85, charred: false, seed: h % 997 } });
+    mine.push({ k: 'minerock', x: r2(x + 0.25), z: r2(z - 0.2), r: 0.4 + (h % 3) * 0.08, seed: h % 997 });
+  },
+  brokenpillar: (x, z, h, k, { mine }) => {
+    mine.push({ k: 'minerock', x, z, r: 0.65 + (h % 3) * 0.08, seed: h % 997 });
+    mine.push({ k: 'fallenprop', x: r2(x + 0.4), z: r2(z + 0.3), rot: (h % 7) * 0.45, seed: h % 997 });
+  },
+};
+MINE_3D.shoring_y = MINE_3D.shoring_broken = MINE_3D.shoring_broken_y = MINE_3D.shoring; MINE_3D.cart_tipped = MINE_3D.cart;
+// ── a counting house's furniture (item 9, the look `counting`), into the inside kit's batch: the clerks' desks in their
+// rows, a stool at each, the day's book open on it, a chain from its leg to a ring let into the floor; the Weighmaster's
+// own desk bigger and unchained; the clerk's cool lamp on its iron stand; the strongbox, iron-bound, its lock
+const COUNT_3D = {
+  clerk_desk: (x, z, h, k, { trim, add, wall }) => {
+    const rot = k.endsWith('_y') ? Math.PI / 2 : 0, own = k.startsWith('desk');
+    trim.push({ k: 'furn', type: 'table', x, z, rot, s: TAV_S, opts: { shape: 'rect', width: own ? 1.4 : 1.05, depth: own ? 0.8 : 0.6, cloth: false, items: false, candle: false, seed: h % 997 } });
+    const back = wall && wall.d < 6 ? -1 : 1;   // (the clerk sits with his back to the wall, facing the room)
+    trim.push({ k: 'furn', type: 'chair', x: r2(x + (rot ? back * 0.8 : 0)), z: r2(z + (rot ? 0 : back * 0.8)), rot: rot ? (back < 0 ? Math.PI / 2 : -Math.PI / 2) : back < 0 ? Math.PI : 0, s: TAV_S, opts: { style: 'stool', seed: h % 997 } });
+    trim.push({ k: 'cbook', x, z, rot, y: TAV_FLOOR_Y + 0.82 * TAV_S, own: own ? 1 : 0, seed: h % 997 });
+    if (!own) trim.push({ k: 'chainring', x, z, rot, out: -back, seed: h % 997 });
+    if (own) add({ type: 'light', x, z, dy: 0.82 * TAV_S + 0.5, color: COUNT_LIGHT, intensity: 0.9, distance: 2.4, flicker: 0.04, nightOnly: false });
+  },
+  lantern: (x, z, h, k, { trim, add }) => { trim.push({ k: 'clampstand', x, z, seed: h % 997 }); add({ type: 'light', x, z, dy: 1.9, color: COUNT_LIGHT, intensity: 4.6, distance: 6.5, flicker: 0.04, nightOnly: false }); },
+  strongbox: (x, z, h, k, { trim, wall }) => trim.push({ k: 'strongbox', x, z, rot: wall && wall.side === 'w' ? Math.PI / 2 : 0, seed: h % 997 }),
+};
+COUNT_3D.clerk_desk_y = COUNT_3D.desk = COUNT_3D.desk_y = COUNT_3D.clerk_desk;
+// (round 4: the office's pillars dressed square piers of its own pale stone, a fallen one a stump: as the dungeons' basalt
+// they stood as black posts in a pale room)
+COUNT_3D.pillar = (x, z, h, k, { trim }) => trim.push({ k: 'cpillar', x, z, broken: 0, seed: h % 997 });
+COUNT_3D.brokenpillar = (x, z, h, k, { trim }) => trim.push({ k: 'cpillar', x, z, broken: 1, seed: h % 997 });
 /** MAGMA_LIGHT: a light every this many of the flow's tiles (of ours), along a run: the rooms have their braziers and
  *  torches already, and Luminati keeps the dozen nearest the camera (docs/art-critic-pass-magma-vault.md, the budget) */
 const MAGMA_LIGHT = 12;
@@ -795,9 +1011,9 @@ const INSIDE_FILL = { sky: [1.05, 0.88, 0.72], ground: [0.56, 0.45, 0.36] };   /
 export function ambientOf(kit) {
   // (a building's inside is lit, not a cellar: a lamp-and-hearth warmth in the fill, the floor readable from wall to wall,
   // the lamps a little stronger in their pools: docs/tavern-dungeon.md)
-  if (KIT_LOOK[kit]?.inside) { const F = KIT_LOOK[kit].fill || INSIDE_FILL; return { sky: F.sky, ground: F.ground, i: 1, sun: 0, lamps: F.lamps || 1.9 }; }   // (a crypt's own, cold: CRYPT_FILL)
+  if (KIT_LOOK[kit]?.inside || KIT_LOOK[kit]?.fill) { const F = KIT_LOOK[kit].fill || INSIDE_FILL; return { sky: F.sky, ground: F.ground, i: 1, sun: F.sun || 0, lamps: F.lamps || 1.9 }; }   // (a crypt's own, cold: CRYPT_FILL; a yard under the sky, the keep's bailey, its own fill and a low sun: KEEP_FILL)
   // (the tint squared: at its own strength every floor read one navy; the dig wants its warmth, the gallery its cold)
-  const t = (KIT_TINT[kit] || AMB_TINT[kit] || [1, 1, 1]).map((v) => v * v), c = (k) => AMB_BASE.map((v, i) => r2(v * t[i] * k));
+  const t = (KIT_LOOK[kit]?.tint || KIT_TINT[kit] || AMB_TINT[kit] || [1, 1, 1]).map((v) => v * v), c = (k) => AMB_BASE.map((v, i) => r2(v * t[i] * k));
   // (the owner on the phone, 2026-11-02: "The dungeons are too dark". At Emberlit's own brightness a room's floor away
   // from the braziers was lost on a phone; the fill is nearly doubled and the lamps reach further: lamps is Luminati's
   // point lights ×, a brazier a pool of orange at 1)
@@ -813,7 +1029,7 @@ export function ambientOf(kit) {
 // the tile, so a floor looks the same every visit. Nothing here touches the sim. ?walls=plain: the level boxes, as before.
 const WALL = 6;
 /** @returns {{ i: number, j: number, h: string, sprite?: any, ob: (X: (n: number) => number, Z: (n: number) => number) => any }[]} what stands on the tops */
-function ruinWalls(W, D, tiles, heights, open) {
+function ruinWalls(W, D, tiles, heights, open, lift = null) {   // (lift(i, j): a step or two more for a kit's back walls, KIT_LOOK `lift`)
   const out = [], raise = [];
   const near = (i, j) => open(i - 1, j) || open(i, j - 1) || (!open(i + 1, j) && !open(i, j + 1) && open(i - 1, j - 1));   // (the floor on its far side: it stands between the camera and the room)
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
@@ -821,7 +1037,7 @@ function ruinWalls(W, D, tiles, heights, open) {
     const back = open(i + 1, j) || open(i, j + 1) || open(i + 1, j + 1);
     if (near(i, j) && !(open(i + 1, j) || open(i, j + 1))) {     // a near wall: broken down low, its top ragged
       const h = hash('rn', i >> 1, j >> 1) % 4;
-      heights[j][i] = String(3 + (h === 3 ? 2 : h === 0 ? 0 : 1));
+      heights[j][i] = String(3 + (h === 3 ? 2 : h === 0 ? 0 : 1)); if (NEAR_OF[tiles[j][i]]) tiles[j][i] = NEAR_OF[tiles[j][i]];
       if (hash('rd', i, j) % 9 === 0) out.push({ i, j, h: heights[j][i], ob: (X, Z) => ({ type: 'debris', x: r2(i + 0.5), z: r2(j + 0.5), rotation: (hash('rr', i, j) % 11) * 0.5, opts: { kind: 'rubble', size: 0.38, charred: false, seed: hash('rs', i, j) % 997 } }) });
       continue;
     }
@@ -835,7 +1051,7 @@ function ruinWalls(W, D, tiles, heights, open) {
     // a pier: every so often along a back wall, a block taller, candles on it and a small flame (no light of its own:
     // Luminati shares twelve among all the lights in view, and the room's own lamps need them)
     const pier = !both && hash('rp', i, j) % 13 === 0;
-    const h = pier ? WALL + 3 : WALL - 1 + k;
+    const h = (pier ? WALL + 3 : WALL - 1 + k) + (lift ? lift(i, j) : 0);
     heights[j][i] = h.toString(36);
     const hs = heights[j][i], d = hash('rt', i, j) % 13, x = r2(i + 0.5), z = r2(j + 0.5);
     if (pier) out.push({ i, j, h: hs, sprite: { prop: 'candles', kind: 'candles', tx: 9000 + i, ty: 9000 + j, x, z }, ob: () => ({ type: 'fire', x, z, opts: { kind: 'brazier', size: 0.34, smoke: false, light: false, seed: hash('rf', i, j) % 997 } }) });
@@ -864,24 +1080,37 @@ const TAV_STORY = ['shield', 'shelf', 'antlers', 'pegs', 'slate', 'herbs'];
 /** a ship's (the hulk kit's: the Gull Isles' second floor, the Sister's Cabin): no antlers or drying herbs on her side,
  *  which read as a hunting lodge's (docs/art-critic-pass-tidemark-step7.md); oilskins on pegs, a tally slate, plates */
 const SHIP_STORY = ['pegs', 'shelf', 'slate', 'shield', 'pegs', 'slate'];
+/** the keep's great hall's (Wickham Keep's barracks): the garrison's shields, some with blades crossed behind, a peg rail,
+ *  the duty slate, a stag's antlers over the high table's end */
+const HALL_STORY = ['shield', 'pegs', 'shield', 'slate', 'shield', 'antlers'];
 const TAV_FLOOR_Y = FLOOR * 0.5, TAV_TOP_Y = TAV_BACK * 0.5;
 /** what a back wall carries, by its stone: the inn's timber frame, its cellar's niches, the crypt's blind arcade and its
  * ossuary's bones */
 const WALL_STYLE = { '+': 'cellar', '*': 'crypt', ':': 'ossuary', '|': 'palace' };
+Object.assign(WALL_STYLE, { 'Æ': 'curtain', 'Ø': 'hall' });
+// (the great hall's near walls, cut to their sill, in its ashlar footing: their outer faces in limewash read as a pale
+// band under the room, round 3)
+const HALL_SILL = { 'Ø': 'Ǿ' };   // (Wickham Keep's: its curtain walls, its great hall: curtainRun, tavernDress)
+/** the walls that stand whole on a floor of ruins, round their own rooms (KIT_LOOK `whole`) */
+const WHOLE_WALLS = new Set(['Æ', 'Ø']);
+// (the Undercroft's brick arcade and its bone room, the crypt's and the ossuary's in fen brick; the counting house's
+// ledger walls: items 6, 9)
+Object.assign(WALL_STYLE, { 'б': 'fencrypt', 'п': 'fenossuary', 'с': 'counting' });
 /** the styles whose back walls stand the crypt's four units, under an arcade (the palace's grander, its own pieces) */
-const ARCADED = new Set(['crypt', 'ossuary', 'palace']);
+const ARCADED = new Set(['crypt', 'ossuary', 'palace', 'fencrypt', 'fenossuary', 'counting']);
 /** a stone's near sill, a step darker (the crypt's limestone, the palace's) */
-const SILL_OF = { ':': ';', '*': ';', '|': '?' };
+const SILL_OF = { ':': ';', '*': ';', '|': '?', 'б': 'т', 'п': 'т', 'с': 'ч' };
 /** the walls' heights for a building's inside; the back faces, for its frame @returns {{ i: number, j: number, n: 's' | 'e' }[]} */
-function tavernWalls(W, D, heights, open, looks, tiles) {
+function tavernWalls(W, D, heights, open, looks, tiles, only = null) {
   const faces = [];
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
     if (heights[j][i] !== String(WALL)) continue;
+    if (only && !only.has(tiles[j][i])) continue;   // (on a floor of ruins, only the rooms whose walls stand whole: WHOLE_WALLS)
     const s = open(i, j + 1), e = open(i + 1, j), near = open(i - 1, j) || open(i, j - 1) || (!s && !e && open(i - 1, j - 1));
-    if (near && !(s || e)) { heights[j][i] = String(TAV_NEAR); if (SILL_OF[tiles[j][i]]) tiles[j][i] = SILL_OF[tiles[j][i]]; continue; }   // a near wall: a sill (the ossuary's in ashlar: its bones on the outside read as a cliff of skulls, round 4)
+    if (near && !(s || e)) { heights[j][i] = String(TAV_NEAR); if (SILL_OF[tiles[j][i]] || HALL_SILL[tiles[j][i]]) tiles[j][i] = SILL_OF[tiles[j][i]] || HALL_SILL[tiles[j][i]]; continue; }   // a near wall: a sill (the ossuary's in ashlar: its bones on the outside read as a cliff of skulls, round 4)
     if (!(s || e || open(i + 1, j + 1))) continue;
     const style = WALL_STYLE[tiles[j][i]] || 'tavern', rough = style === 'cellar';   // (the crypt's arcade, the ossuary's bones: by their stone too)
-    heights[j][i] = near ? String(TAV_NEAR) : (ARCADED.has(style) ? CR_BACK.toString(36) : String(TAV_BACK));              // (a wall with the floor on its camera side too stays low: it would stand in front of a fight)
+    heights[j][i] = near ? String(TAV_NEAR) : (ARCADED.has(style) || style === 'curtain' ? CR_BACK.toString(36) : String(TAV_BACK));              // (a wall with the floor on its camera side too stays low: it would stand in front of a fight)   // (the keep's curtain as tall as the crypt's arcade)
     if (near) { if (ARCADED.has(style)) tiles[j][i] = SILL_OF[tiles[j][i]] || ';'; continue; }
     // (rough: the wall's own stone is the cellar's rubble, so it takes no frame; the frame follows the texture, and a
     // timber run ends at a post where the rubble starts: round 6, "a visible seam")
@@ -912,7 +1141,15 @@ function tavernDress(faces, arches, open, add, trim, roomAt = () => null, story 
     for (const [a, b] of runs) {
       if (b - a < 2) continue;
       if (style === 'palace') { palaceRun(a, b, { key, s, n, P, add, trim, clearOf, roomAt }); continue; }
-      if (ARCADED.has(style)) { (style === 'crypt' ? cryptRun : ossuaryRun)(a, b, { key, s, n, P, add, trim, clearOf }); continue; }
+      if (style === 'curtain') { curtainRun(a, b, { key, s, n, P, trim, clearOf }); continue; }   // (the keep's bailey: its parapet, slits and torches)
+      if (ARCADED.has(style)) {
+        // (the Undercroft's runs the crypt's, in fen brick: each piece marked `fen`, world.js builds it in the reed town's
+        // brick and lime; its bays' story its own, the eel-men's traps and nets hung among the shelves)
+        const n0 = trim.length, fen = style.startsWith('fen');
+        (style === 'counting' ? countingRun : style === 'crypt' || style === 'fencrypt' ? cryptRun : ossuaryRun)(a, b, { key, s, n, P, add, trim, clearOf, story: fen ? FEN_STORY : CRYPT_STORY });
+        if (fen) for (let i = n0; i < trim.length; i++) trim[i].fen = 1;
+        continue;
+      }
       if (cellar) {
         // a cellar's wall: no frame; a niche with its candles every four tiles (every other one a light), a ham or a
         // string of onions on a hook between
@@ -932,7 +1169,8 @@ function tavernDress(faces, arches, open, add, trim, roomAt = () => null, story 
       // other bay (its light), and in the rest one thing each, never the same twice running; a long wall's middle bay a
       // shuttered window, the inn's name, a cool line of night through its crack
       const bays = []; for (let t = a + 2; t <= b - 2; t += 4) bays.push(t);
-      const win = b - a >= 14 ? bays[(bays.length / 2) | 0] : null, o = hash('tv', key) % story.length;
+      const st = style === 'hall' ? HALL_STORY : story;   // (the keep's great hall: shields and arms, not the inn's plates and herbs)
+      const win = b - a >= 14 ? bays[(bays.length / 2) | 0] : null, o = hash('tv', key) % st.length;
       bays.forEach((t, q) => {
         const [x, z] = P(t); if (!clearOf(x, z)) return;
         if (t === win) {
@@ -942,7 +1180,7 @@ function tavernDress(faces, arches, open, add, trim, roomAt = () => null, story 
           const light = add({ type: 'light', x: r2(x + (s ? 0 : 0.7)), z: r2(z + (s ? 0.7 : 0)), dy: 1.6, color: '#ffb468', intensity: 2.9, distance: 6, flicker: 0.1, nightOnly: false });
           trim.push({ k: 'lantern', x, z, n, y: TAV_FLOOR_Y + 2.6, light });
         } else {
-          const kind = story[(o + q) % story.length];
+          const kind = st[(o + q) % st.length];
           trim.push(kind === 'shield' ? { k: 'shield', x, z, n, y: TAV_FLOOR_Y + 2.05, look: hash('ts', key, t) % 5 } : { k: kind, x, z, n, y: TAV_FLOOR_Y + 1.95, seed: hash('ty', key, t) % 997 });   // (between the rail and the beam, built half again as big: round 6, "dark specks")
         }
         if ((q === 0 || q === bays.length - 1) && hash('tw2', key, t) % 3 === 0) trim.push({ k: 'web2', x, z, n, y: TAV_TOP_Y - 0.36, side: q === 0 ? 1 : -1, size: 0.6 + (hash('tz', key, t) % 5) * 0.1 });   // (a web in a corner bay now and then)
@@ -954,7 +1192,7 @@ function tavernDress(faces, arches, open, add, trim, roomAt = () => null, story 
     if (f.n !== 's') continue;
     const i = f.i, j = f.j + 1;                                    // the floor tile south of this face
     if (open(i - 1, j) || open(i - 1, j - 1) || hash('tw', i, j) % 2) continue;   // (a west wall beside it: an inside corner)
-    if (clearOf(i, j) && !ARCADED.has(f.style)) trim.push({ k: 'web', x: i, z: j, y: TAV_TOP_Y - 0.25 });   // (and none in a palace: it's kept)   // (the crypt's corner webs read as white X's: round 3)
+    if (clearOf(i, j) && !ARCADED.has(f.style) && f.style !== 'curtain') trim.push({ k: 'web', x: i, z: j, y: TAV_TOP_Y - 0.25 });   // (and none in a palace: it's kept)   // (the crypt's corner webs read as white X's: round 3)
   }
 }
 // ── a crypt's back walls (the Haddow Crypt, docs/crypt-dungeon.md): a blind arcade of pale stone. A pier at each end of a
@@ -964,7 +1202,9 @@ function tavernDress(faces, arches, open, add, trim, roomAt = () => null, story 
 // light-well: a barred grate high up, a cold shaft of the day down through it. A candle sconce on every other pier, its
 // light. Every choice a hash of the tile: the same crypt every visit.
 const CRYPT_STORY = ['loculi', 'plaque', 'loculi', 'saint'];
-function cryptRun(a, b, { key, s, n, P, add, trim, clearOf }) {
+/** the Undercroft's bays: the priory's shelves of the dead, and between them what the eel-men left hung up down here */
+const FEN_STORY = ['loculi', 'eeltraps', 'plaque', 'loculi', 'nets'];
+function cryptRun(a, b, { key, s, n, P, add, trim, clearOf, story = CRYPT_STORY }) {
   const [x0, z0] = P(a), [x1, z1] = P(b);
   trim.push({ k: 'cornice', x0, z0, x1, z1, n, y: CR_TOP_Y - 0.15 });
   trim.push({ k: 'plinth', x0, z0, x1, z1, n });
@@ -982,7 +1222,7 @@ function cryptRun(a, b, { key, s, n, P, add, trim, clearOf }) {
   });
   // the bays between the piers, each its own story; a long wall's middle bay the light-well
   const bays = []; for (let q = 0; q < piers.length - 1; q++) if (piers[q + 1] - piers[q] >= 3) bays.push([(piers[q] + piers[q + 1]) / 2, piers[q + 1] - piers[q]]);
-  const well = s && b - a >= 14 ? bays[(bays.length / 2) | 0]?.[0] : null, o = hash('kv', key) % CRYPT_STORY.length;   // (a light-well: a long north wall's, one a room: round 2, "spills outside the room")
+  const well = s && b - a >= 14 ? bays[(bays.length / 2) | 0]?.[0] : null, o = hash('kv', key) % story.length;   // (a light-well: a long north wall's, one a room: round 2, "spills outside the room")
   bays.forEach(([t, w], q) => {
     const [x, z] = P(t); if (!clearOf(x, z)) return;
     trim.push({ k: 'arcade', x, z, n, w: w - 0.5, y: TAV_FLOOR_Y, top: CR_TOP_Y });
@@ -992,7 +1232,7 @@ function cryptRun(a, b, { key, s, n, P, add, trim, clearOf }) {
       add({ type: 'emitter', x: r2(x + (s ? 0 : 0.9)), z: r2(z + (s ? 0.9 : 0)), preset: 'dust', size: [1.4, 2.6, 1.4], dy: 1.6, count: 14 });
       return;
     }
-    const kind = CRYPT_STORY[(o + q) % CRYPT_STORY.length];
+    const kind = story[(o + q) % story.length];
     trim.push({ k: kind, x, z, n, y: TAV_FLOOR_Y, seed: hash('ky', key, t) % 997 });
     // at the bay's foot, a strip of the crypt's leavings: candle stubs, a few bones, a slab fallen from a shelf (round 3:
     // "the rooms feel underdressed"); low, at the wall, where nothing walks
@@ -1018,6 +1258,45 @@ function ossuaryRun(a, b, { key, s, n, P, add, trim, clearOf }) {
       trim.push({ k: 'skullniche', x, z, n, y: TAV_FLOOR_Y, seed: hash('on', key, t) % 997, light });
     } else trim.push({ k: 'boneshelf', x, z, n, y: TAV_FLOOR_Y, seed: hash('os', key, t) % 997 });
   }
+}
+// ── a counting house's back walls (item 9, the look `counting`; docs/art-critic-pass-stone.md): pale dressed stone, a
+// dark oak wainscot along the foot, a plain cornice along the top, a pilaster every four tiles; in each bay the house's
+// business: the ledgers on their shelves floor to cornice, a tally board of the week's chalk, now and then the rule of the
+// house, QUOTA, on its board, which is not text, only its strokes (a long wall's middle bay). On every other pilaster
+// the clerk's cool lamp, its light every other one. Every choice a hash of the tile: the same office every visit.
+const COUNT_STORY = ['ledgers', 'tally', 'ledgers', 'ledgers', 'tally'];
+const COUNT_LIGHT = '#dfe6f0';   // (round 1: a bluer white went violet through the grade)
+function countingRun(a, b, { key, s, n, P, add, trim, clearOf }) {
+  const [x0, z0] = P(a), [x1, z1] = P(b);
+  trim.push({ k: 'ccornice', x0, z0, x1, z1, n, y: CR_TOP_Y - 0.15 });
+  trim.push({ k: 'wainscot', x0, z0, x1, z1, n });
+  // (round 2: the quota office's rooms are dug cellars, their walls in short runs: a run too short for a bay takes one
+  // thing at its middle, a press of ledgers or a tally board, so no wall of the office stands bare)
+  if (b - a < 6) {
+    const [x, z] = P((a + b) / 2), seed = hash('cy', key, a) % 997; if (!clearOf(x, z)) return;
+    if (b - a >= 2.5) trim.push({ k: 'furn', type: 'shelf', x: r2(x + (s ? 0 : 0.34)), z: r2(z + (s ? 0.34 : 0)), rot: s ? 0 : Math.PI / 2, s: 1.4, opts: { kind: 'books', width: Math.min(2.0, (b - a) / 1.4 - 0.3), height: 2.4, seed } });
+    else trim.push({ k: 'tally', x, z, n, y: TAV_FLOOR_Y + 1.7, seed });
+    return;
+  }
+  const piers = [a, b]; for (let t = a + 4; t <= b - 3; t += 4) piers.push(t);
+  piers.sort((p, q) => p - q);
+  piers.forEach((t, q) => {
+    const [x, z] = P(t); if (!clearOf(x, z)) return;
+    const end = t === a ? 1 : t === b ? -1 : 0;
+    trim.push({ k: 'cpilaster', x, z, n, end, top: CR_TOP_Y });
+    if (!end && q % 2 === 1) {
+      const light = q % 4 === 1 ? add({ type: 'light', x: r2(x + (s ? 0 : 0.6)), z: r2(z + (s ? 0.6 : 0)), dy: 2.2, color: COUNT_LIGHT, intensity: 3.4, distance: 5, flicker: 0.04, nightOnly: false }) : null;
+      trim.push({ k: 'clamp', x, z, n, y: TAV_FLOOR_Y + 2.2, light });
+    }
+  });
+  const bays = []; for (let q = 0; q < piers.length - 1; q++) if (piers[q + 1] - piers[q] >= 3) bays.push([(piers[q] + piers[q + 1]) / 2, piers[q + 1] - piers[q]]);
+  const rule = s && b - a >= 14 ? bays[(bays.length / 2) | 0]?.[0] : null, o = hash('cv', key) % COUNT_STORY.length;
+  bays.forEach(([t, w], q) => {
+    const [x, z] = P(t); if (!clearOf(x, z)) return;
+    const kind = t === rule ? 'quotaboard' : COUNT_STORY[(o + q) % COUNT_STORY.length], seed = hash('cy', key, t) % 997;
+    if (kind === 'ledgers') trim.push({ k: 'furn', type: 'shelf', x: r2(x + (s ? 0 : 0.34)), z: r2(z + (s ? 0.34 : 0)), rot: s ? 0 : Math.PI / 2, s: 1.4, opts: { kind: 'books', width: Math.min(2.4, w - 0.9), height: 2.4, seed } });
+    else trim.push({ k: kind, x, z, n, y: TAV_FLOOR_Y + 1.7, seed });
+  });
 }
 // ── the Seventh's Palace's back walls (v1.154, docs/art-critic-pass-palace.md): the crypt's arcade made grand. Marble
 // piers with gilt capitals every four tiles, a cornice over and a dark marble dado along the foot, a round arch over each
@@ -1146,6 +1425,29 @@ function palaceRunners(w, L, X, Z) {
   }
   return out;
 }
+/** the Undercroft's reed matting (convert's own, flat, walked over: world.js 'reedmat'): two lengths down a room either side
+ * of its ledger stones, where the copyists walked between the desks and the clergy knelt, split round what stands on their
+ * line @returns {any[]} trim pieces */
+function fenMats(w, L, X, Z) {
+  const out = [];
+  for (const r of L.rooms) {
+    if (!KIT_LOOK[r.kit]?.mats || r.role === 'entrance') continue;
+    const along = r.rw >= r.rh, half = along ? r.rw : r.rh, wd = along ? r.rh : r.rw, block = [];
+    for (const [k, v] of w.props) { const c = L.cells.get(k); if (!c || c.room !== r.id || FLAT.has(v)) continue; block.push(k.split(',').map(Number)); }
+    for (const sg of [-1, 1]) {
+      const line = (along ? r.cy : r.cx) + sg * wd * 0.42, from = (along ? r.cx : r.cy) - half + 6, to = (along ? r.cx : r.cy) + half - 6;
+      const cuts = block.filter(([bx, by]) => Math.abs((along ? by : bx) - line) <= 2.5).map(([bx, by]) => (along ? bx : by)).sort((p, q) => p - q);
+      let a = from;
+      for (const c of [...cuts, Infinity]) {
+        const b = Math.min(to, c - 2);
+        if (b - a >= 4) out.push(along ? { k: 'reedmat', x0: X(a), z0: Z(line + 0.5), x1: X(b + 1), z1: Z(line + 0.5), w: 1.3, seed: hash('rm', r.id, sg, a) % 997 }
+          : { k: 'reedmat', x0: X(line + 0.5), z0: Z(a), x1: X(line + 0.5), z1: Z(b + 1), w: 1.3, seed: hash('rm', r.id, sg, a) % 997 });
+        a = c + 3; if (a > to) break;
+      }
+    }
+  }
+  return out;
+}
 /** the inn's furniture, set against the wall the sim stood it by (ctx.wall: wallOf). Luminati's interiors are built to
  * its own folk; our figures stand half again as tall (the 3× models), and at Luminati's size a long table read smaller
  * than a figure's ring (art critic, round 1). So the tables, benches, the bar and its shelf are built at the inn's scale
@@ -1200,7 +1502,7 @@ const TAVERN_3D = {
   // an iron fire basket on its stand (the reference's), big enough to read and lighting a pool round it
   // a fire basket by a back wall, where it's seen whole; by a sill (the way in's pair at its door), its light alone (a
   // basket by the sill showed only its flame over it: rounds 2, 3)
-  brazier: (x, z, h, k, { add, wall, open, room }) => add(room?.kit === 'crypt' && !(wall && wall.d < 2.6) ? { ...sillPool(x, z, open), intensity: 2, distance: 3 } : wall && wall.d < 2.6
+  brazier: (x, z, h, k, { add, wall, open, room }) => add((room?.kit === 'crypt' || room?.kit === 'fenbrick') && !(wall && wall.d < 2.6) ? { ...sillPool(x, z, open), intensity: 2, distance: 3 } : wall && wall.d < 2.6
     ? { type: 'fire', x, z, opts: { kind: 'brazier', size: 1.15, smoke: false, light: true, intensity: 4.2, distance: 6, seed: h % 997 } }   // (under the hearth: round 6, a hierarchy of light)
     : sillPool(x, z, open)),
   // a doorway's candles (the cellar's): in a niche on the back wall beside it, else their light alone (on a sill they
@@ -1237,6 +1539,8 @@ TAVERN_3D.longtable_y = TAVERN_3D.longtable; TAVERN_3D.tbench_y = TAVERN_3D.tben
 // tombs with their likenesses, the founder's under its canopy, his mourners, the candelabra and their light, the urns,
 // the bones, the offering table and the chantry's altar against the back wall, its pews (Luminati's bench with a back)
 const CRYPT_LIGHT = '#ffb766';
+/** the crypt kit's rooms, the Haddows' and the Undercroft's; the bone rooms among them */
+const CRYPT_KITS = new Set(['crypt', 'ossuary', 'fenbrick', 'fenbones']), BONE_KITS = new Set(['ossuary', 'fenbones']);
 Object.assign(TAVERN_3D, {
   tomb: (x, z, h, k, { trim }) => trim.push({ k: 'tomb', x, z, rot: k === 'tomb_y' ? Math.PI / 2 : 0, seed: h % 997 }),
   great_tomb: (x, z, h, k, { trim, add, wall }) => {
@@ -1261,7 +1565,7 @@ Object.assign(TAVERN_3D, {
   altar: (x, z, h, k, { trim, add, wall }) => {
     if (wall?.side !== 'n') return;
     // (round 8: the chantry's own wall, not the halls' shelves: the bays beside the altar tablets, a dull gilt cross over it)
-    for (let i = trim.length - 1; i >= 0; i--) { const t = trim[i]; if (t.n === 'z' && Math.abs(t.z - wall.z) < 0.01 && Math.abs(t.x - x) < 5 && ['loculi', 'saint', 'plaque', 'footbones', 'footcandles', 'fallenslab', 'web2'].includes(t.k)) { if (t.k !== 'footbones' && t.k !== 'footcandles' && t.k !== 'fallenslab' && t.k !== 'web2' && Math.abs(t.x - x) > 1) trim.push({ ...t, k: 'plaque', moved: 1 }); trim.splice(i, 1); } }
+    for (let i = trim.length - 1; i >= 0; i--) { const t = trim[i]; if (t.n === 'z' && Math.abs(t.z - wall.z) < 0.01 && Math.abs(t.x - x) < 5 && ['loculi', 'saint', 'plaque', 'footbones', 'footcandles', 'fallenslab', 'web2', 'eeltraps', 'nets'].includes(t.k)) { if (t.k !== 'footbones' && t.k !== 'footcandles' && t.k !== 'fallenslab' && t.k !== 'web2' && Math.abs(t.x - x) > 1) trim.push({ ...t, k: 'plaque', moved: 1 }); trim.splice(i, 1); } }
     trim.push({ k: 'rood', x, z: wall.z, n: 'z', y: TAV_FLOOR_Y + 2.75 });
     trim.push({ k: 'altar', x, z: wall.z, n: 'z' });
     add({ type: 'light', x, z: r2(wall.z + 1.4), dy: 1.9, color: '#ffc27a', intensity: 4.5, distance: 5, flicker: 0.12, nightOnly: false });
@@ -1272,7 +1576,7 @@ TAVERN_3D.tomb_y = TAVERN_3D.tomb; TAVERN_3D.pew_y = TAVERN_3D.pew;
 // a crypt's candles: a low iron pricket on the floor (the chantry's either side of its altar), not the cellar's niche
 { const cellarCandles = TAVERN_3D.candles;
   TAVERN_3D.candles = (x, z, h, k, /** @type {any} */ ctx) => {
-    if (ctx.room?.kit !== 'crypt' && ctx.room?.kit !== 'ossuary') return cellarCandles(x, z, h, k, ctx);
+    if (!CRYPT_KITS.has(ctx.room?.kit)) return cellarCandles(x, z, h, k, ctx);
     ctx.trim.push({ k: 'candlestand', x, z });
     ctx.add({ type: 'light', x, z, dy: 1.3, color: CRYPT_LIGHT, intensity: 0.7, distance: 2, flicker: 0.16, nightOnly: false });   // (round 10: under the room's middle, which the fight's in)
   }; }
@@ -1420,6 +1724,282 @@ const DOCK_3D = {
   brazier: (x, z, h, k, ctx) => DOCK_3D.lantern(x, z, h, k, ctx),   // (the way in's: lamps, as every light on a wharf)
 };
 
+// ── the Old Barrows' walls (docs/dungeon-looks-plan.md item 1; docs/art-critic-pass-vale.md): along the back walls (the
+// faces the camera sees) of a barrow's rooms, a timber doorframe over each passage's mouth, two posts and a lintel (the
+// way on reads as a door into the mound, not a gap in a castle wall); along the mouth's cut earth, the Redhand's shoring,
+// a post and a cap board every few tiles. The niches, the biers, the standing stones are the sim's pieces (BARROW_3D).
+const BARROW_WALLS = new Set(['Þ', 'Ð']);
+function barrowDress(W, D, tiles, heights, open, trim, arches, roomAt) {
+  const clearOf = (x, z) => arches.every((a) => Math.abs(x - a.x) > a.span / 2 + 1.2 || Math.abs(z - a.z) > 2.5);
+  const lines = new Map(), push = (key, t) => (lines.get(key) || lines.set(key, []).get(key)).push(t);
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    if (!BARROW_WALLS.has(tiles[j][i]) || heights[j][i] === '2' || heights[j][i] === '0') continue;
+    const near = open(i - 1, j) || open(i, j - 1);
+    if (near) continue;                                                // (a near wall, or one between two rooms: nothing on it)
+    if (open(i, j + 1)) push(`${tiles[j][i]}|s|${j + 1}`, i);
+    if (open(i + 1, j)) push(`${tiles[j][i]}|e|${i + 1}`, j);
+  }
+  for (const [key, ts] of lines) {
+    ts.sort((a, b) => a - b);
+    const [ch, side, c0] = key.split('|'), c = +c0, s = side === 's', n = s ? 'z' : 'x', P = (t) => (s ? [t, c] : [c, t]);
+    const runs = []; for (const t of ts) { const r = runs[runs.length - 1]; if (r && t === r[1]) r[1] = t + 1; else runs.push([t, t + 1]); }
+    // a passage's mouth: a gap between two runs of the line, the floor going on through the wall's row (a hall)
+    for (let q = 0; q + 1 < runs.length; q++) {
+      const g0 = runs[q][1], g1 = runs[q + 1][0], wallRow = s ? c - 1 : c - 1;
+      if (g1 - g0 < 3 || g1 - g0 > 8) continue;
+      let thru = true; for (let t = g0; t < g1 && thru; t++) thru = s ? open(t, wallRow) : open(wallRow, t);
+      const [x0, z0] = P(g0), [x1, z1] = P(g1), mx = (x0 + x1) / 2, mz = (z0 + z1) / 2;
+      if (thru && clearOf(mx, mz)) trim.push({ k: 'bdoor', x0, z0, x1, z1, n, earth: ch === 'Ð' ? 1 : 0 });
+    }
+    if (ch !== 'Ð') continue;
+    // the cut earth shored: a post and its cap board every three tiles along the face (none where the plan's own shoring
+    // stands, the Cutting's: its timbers are the sim's)
+    for (const [a, b] of runs) for (let t = a + 1; t < b; t += 3) {
+      const [x, z] = P(t + 0.5), rm = roomAt(s ? t : c, s ? c : t);
+      if (!clearOf(x, z) || rm?.dress?.includes('timbers')) continue;
+      trim.push({ k: 'bpost', x, z, n, seed: hash('bp', key, t) % 997 });
+    }
+  }
+}
+/** the barrow's pieces (the sim's: plans.js barrows' dressing), built by world.js buildTavern in one batch: the niches as
+ * timber-framed recesses with the dead's grave goods in them, the dead laid out on biers with their shields and spears,
+ * the columns standing stones, the dig's shoring as timber sets */
+const BARROW_3D = {
+  urnshelf: (x, z, h, k, { trim, wall }) => { if (!wall || wall.d > 2.2) return false; trim.push(wall.side === 'n' ? { k: 'bniche', x, z: wall.z, n: 'z', seed: h % 997 } : { k: 'bniche', x: wall.x, z, n: 'x', seed: h % 997 }); },
+  sarcophagus: (x, z, h, k, { trim, wall, room }) => { const along = room ? room.rw >= room.rh : true; trim.push({ k: 'bier', x, z, rot: along ? 0 : Math.PI / 2, seed: h % 997 }); },
+  sarcophagus_open: (x, z, h, k, { trim }) => trim.push({ k: 'bier', x, z, rot: 0, robbed: 1, seed: h % 997 }),
+  pillar: (x, z, h, k, { trim }) => trim.push({ k: 'menhir', x, z, seed: h % 997 }),
+  brokenpillar: (x, z, h, k, { trim }) => trim.push({ k: 'menhir', x, z, fallen: 1, seed: h % 997 }),
+  shoring: (x, z, h, k, { trim }) => trim.push({ k: 'bshore', x, z, n: k === 'shoring_y' ? 'x' : 'z', seed: h % 997 }),
+};
+BARROW_3D.urnshelf_y = BARROW_3D.urnshelf; BARROW_3D.shoring_y = BARROW_3D.shoring;
+// ── Wickham Keep's bailey (docs/dungeon-looks-plan.md item 2): its curtain walls stand whole, a storey and more over the
+// yard, a crenellated parapet along their tops; a buttress every six tiles, an arrow slit between; their near runs cut to
+// a breast-high parapet with its merlons, so a fight is never behind one (the ramparts kit's, in the keep's stone)
+function curtainRun(a, b, { key, s, n, P, trim, clearOf }) {
+  const [x0, z0] = P(a), [x1, z1] = P(b);
+  trim.push({ k: 'kparapet', x0, z0, x1, z1, n, y: CR_TOP_Y });
+  trim.push({ k: 'grime', x0, z0, x1, z1, n });
+  for (let t = a + 3; t <= b - 2; t += 6) { const [x, z] = P(t); if (clearOf(x, z)) trim.push({ k: 'kbutt', x, z, n, top: CR_TOP_Y }); }
+  for (let t = a + 6; t <= b - 3; t += 6) { const [x, z] = P(t); if (clearOf(x, z) && hash('ks', key, t) % 3) trim.push({ k: 'kslit', x, z, n, y: TAV_FLOOR_Y + 2.5 }); }
+}
+/** the near curtain's merlons: each run of the cut-down wall's line, the floor north (or west) of it */
+function curtainSills(W, D, tiles, heights, open, trim) {
+  const lines = new Map(), push = (key, t) => (lines.get(key) || lines.set(key, []).get(key)).push(t);
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    if (tiles[j][i] !== 'Æ' || heights[j][i] !== String(TAV_NEAR)) continue;
+    if (open(i, j - 1)) push(`s|${j}`, i); else if (open(i - 1, j)) push(`e|${i}`, j);
+  }
+  for (const [key, ts] of lines) {
+    ts.sort((a, b) => a - b);
+    const [side, c0] = key.split('|'), c = +c0, along = side === 's';
+    const runs = []; for (const t of ts) { const r = runs[runs.length - 1]; if (r && t === r[1]) r[1] = t + 1; else runs.push([t, t + 1]); }
+    for (const [a, b] of runs) if (b - a >= 2) trim.push({ k: 'kmerlons', x0: along ? a : c, z0: along ? c : a, x1: along ? b : c, z1: along ? c : b, n: along ? 'z' : 'x', y: TAV_NEAR * 0.5 });
+  }
+}
+/** the keep's own pieces: a yard's column a square pier of its ashlar, a hall's an oak post to the roof */
+const KEEP_3D = {
+  pillar: (x, z, h, k, { trim, look }) => trim.push(look.whole && look.wall === 'Ø' ? { k: 'hpost', x, z } : { k: 'kpier', x, z, seed: h % 997 }),
+  brokenpillar: (x, z, h, k, { trim }) => trim.push({ k: 'kpier', x, z, low: 1, seed: h % 997 }),
+};
+
+// ── the greenwood (the Root Granary's way in, docs/greenwood-dungeon.md; docs/dungeon-looks-plan.md item 12, from the owner's
+// two references: tall straight trunks and old twisted ones swathed in moss, shafts of pale green light down through the
+// canopy, mist, a moss-and-fern floor with stones in it, the empire's ruins). Built as the docks and the ramparts are: no
+// walls. Round each glade the wood's own ground a step up (its bank earth and roots), and on it the trunks, root-banks,
+// mossed boulders and ferns; past them more trunks into the mist, and Luminati's outer ground past the level's edge. The
+// camera looks north-west at 30°: whatever stands south-east of a glade (between the camera and the fight) is kept low by
+// what it would hide (`reach`, below), so the tall trunks stand only at the glades' backs and in the wood beyond them.
+// Every choice a hash of the tile: the same wood every visit. Nothing here touches the sim.
+const WOOD_TAN = Math.tan((30 * Math.PI) / 180);
+/** the greenwood's ground: its glades' floors (moss, the leaf litter in drifts, the Tithe Road's flags), and everything off
+ *  them the wood's ground a step up; the road runs on through the wood, ruled straight, to the level's edges */
+function woodGround(W, D, tiles, heights, L, x0, y0, look) {
+  const floor = new Uint8Array(W * D);
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) floor[j * W + i] = heights[j][i] === '2' ? 1 : 0;
+  // how far each tile is from a glade (units; a chamfer pass each way, diagonals 1.4)
+  const dist = new Float32Array(W * D).fill(99);
+  for (let k = 0; k < W * D; k++) if (floor[k]) dist[k] = 0;
+  const relax = (i, j, di, dj, c) => { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= D) return; const k = j * W + i, kk = jj * W + ii; if (dist[kk] + c < dist[k]) dist[k] = dist[kk] + c; };
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) { relax(i, j, -1, 0, 1); relax(i, j, 0, -1, 1); relax(i, j, -1, -1, 1.4); relax(i, j, 1, -1, 1.4); }
+  for (let j = D - 1; j >= 0; j--) for (let i = W - 1; i >= 0; i--) { relax(i, j, 1, 0, 1); relax(i, j, 0, 1, 1); relax(i, j, 1, 1, 1.4); relax(i, j, -1, 1, 1.4); }
+  // the Tithe Road: the band the road's glades share (their middles' mean), eight of ours wide, west to east
+  const roadRooms = L.plan ? L.rooms.filter((r) => r.dress && r.dress.includes('tithe_road')) : [];
+  const road = roadRooms.length ? (() => { const cy = roadRooms.reduce((n, r) => n + r.cy + 0.5, 0) / roadRooms.length; return { z0: r2((cy - 4 - y0) / 2), z1: r2((cy + 4 - y0) / 2) }; })() : null;
+  const onRoad = (j) => !!road && j + 0.5 > road.z0 && j + 0.5 < road.z1;
+  // a soft noise for the litter's drifts and the road's swallowed flags (a scatter by the tile read as checkerboard noise
+  // in the inn and the crypt: drifts a few units across)
+  const vn = (i, j, s, seed) => { const fi = i / s, fj = j / s, a = Math.floor(fi), b = Math.floor(fj), u = fi - a, v = fj - b, h = (p, q) => (hash(seed, p, q) % 1000) / 1000;
+    const sm = (t) => t * t * (3 - 2 * t), su = sm(u), sv = sm(v); return (h(a, b) * (1 - su) + h(a + 1, b) * su) * (1 - sv) + (h(a, b + 1) * (1 - su) + h(a + 1, b + 1) * su) * sv; };
+  const [MOSS, LITTER] = look.floor, FLAG = look.road || MOSS;
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    const k = j * W + i, n = vn(i, j, 4.5, 'wl');
+    if (floor[k]) {
+      tiles[j][i] = n > 0.64 ? LITTER : MOSS;
+      // (the road: its flags in a line, a third swallowed by the moss and more toward its edges)
+      if (onRoad(j)) { const edge = Math.min(j + 0.5 - road.z0, road.z1 - (j + 0.5)), gone = vn(i, j, 2.2, 'wr') + (edge < 1 ? 0.18 : 0); if (gone < 0.62) tiles[j][i] = FLAG; }
+      continue;
+    }
+    if (heights[j][i] !== '6') continue;                           // (a pit's sunk tile, say: left as it is)
+    if (dist[k] > (look.ground || 99)) { tiles[j][i] = ' '; heights[j][i] = '0'; continue; }   // (past the wood's reach, nothing: the mist and the gloom; the perf pass, the terrain was two-thirds of the frame's triangles)
+    tiles[j][i] = dist[k] <= 1.2 ? MOSS : look.wall; heights[j][i] = '3';   // (round 10: the bank's lip in the glades' green moss: the glade's edge solid and green, not dark)
+    // (the road on through the wood: sunk in its bank, more of it gone the further from the glades)
+    if (onRoad(j)) { const gone = vn(i, j, 2.2, 'wr') + Math.min(0.3, dist[k] * 0.03); if (gone < 0.58) { tiles[j][i] = FLAG; heights[j][i] = '2'; } else if (gone < 0.75) { tiles[j][i] = MOSS; heights[j][i] = '2'; } }
+  }
+  return { floor, dist, road, onRoad, ground: look.ground || 99 };
+}
+/** the greenwood's dressing: the trunks, root-banks, boulders and ferns round the glades, the wood past them, the mist, the
+ *  shafts of light; the arcade, the granary's door and the falls where a glade's plan names them */
+function woodDress(W, D, wood, L, x0, y0, add, trim, arches) {
+  const { floor, dist } = wood, F0 = 1.0, BANK = 1.5;
+  const isFloor = (x, z) => { const i = Math.floor(x), j = Math.floor(z); return i >= 0 && j >= 0 && i < W && j < D && floor[j * W + i] === 1; };
+  const dAt = (x, z) => { const i = Math.floor(x), j = Math.floor(z); return i >= 0 && j >= 0 && i < W && j < D ? dist[j * W + i] : 99; };
+  const R = (...v) => (hash('wd', ...v) % 10000) / 10000;
+  // how far a thing at (x, z) is from the nearest floor it would stand in front of, along the camera's line (north-west), in a
+  // band hw either side: what it hides is reach × tan 30° high at most there (a figure's feet kept in view)
+  // (round 10: `core`, the half-width of the trunk itself; the wider band, its limbs and crown, only from three units back,
+  // where what's high up lands: the wide band at its foot had counted the glade beside a trunk as behind it)
+  const reach = (x, z, hw, core = hw) => { for (let t = 0; t <= 26; t += 0.5) { const w = t < 3 ? Math.min(core, hw) : hw; for (let s = -w; s <= w + 1e-6; s += 0.5) if (isFloor(x - (t - s) * Math.SQRT1_2, z - (t + s) * Math.SQRT1_2)) return t; } return 99; };
+  const tallest = (x, z, hw, core = hw) => reach(x, z, hw, core) * WOOD_TAN - 0.25;
+  // where nothing of the wood stands: the stairs' arches, and each glade's set piece (below, added as they're placed); the
+  // road through the wood
+  const keep = arches.map((a) => ({ x0: a.x - a.span / 2 - 2, x1: a.x + a.span / 2 + 2, z0: a.z - 4, z1: a.z + 1.5 }));
+  const kept = (x, z, m = 0) => keep.some((q) => x > q.x0 - m && x < q.x1 + m && z > q.z0 - m && z < q.z1 + m) || (!isFloor(x, z) && (wood.onRoad(Math.floor(z - m)) || wood.onRoad(Math.floor(z + m))));
+  const U = (r) => ({ X0: r2((r.x0 - x0) / 2), X1: r2((r.x1 + 1 - x0) / 2), Z0: r2((r.y0 - y0) / 2), Z1: r2((r.y1 + 1 - y0) / 2), cx: r2((r.cx + 0.5 - x0) / 2), cz: r2((r.cy + 0.5 - y0) / 2) });
+  const rooms = (L.plan ? L.rooms : []).filter((r) => r.dress);
+  // ── the set pieces first, so the wood stands round them
+  for (const r of rooms) {
+    const u = U(r), has = (d) => r.dress.includes(d);
+    if (has('arcade')) {
+      // the empire's arcade along the glade's back (north) edge, a little up the bank: pointed arches in dark stone, bronze
+      // cresting gone green along its top; a bay fallen
+      const z = r2(u.Z0 - 1.3), a = u.X0 + 1.2, b = u.X1 - 1.2, n = Math.max(3, Math.round((b - a) / 2.6));
+      trim.push({ k: 'warcade', x0: r2(a), x1: r2(b), z, y: BANK, bays: n, seed: hash('wa', r.id) % 997 });
+      keep.push({ x0: a - 1.4, x1: b + 1.4, z0: z - 2.4, z1: u.Z0 + 0.2 });
+    }
+    if (has('granary_door')) {
+      // the Root Granary's door: on the glade's west side, its steps up out of the glade into the dark under the roots
+      const x = u.X0, z = r2(u.cz + 1);
+      trim.push({ k: 'wgate', x, z, y: F0, seed: hash('wg', r.id) % 997 });
+      add({ type: 'light', x: r2(x - 4.6), z, dy: 2.4, color: '#ffb064', intensity: 2.6, distance: 5, flicker: 0.18, nightOnly: false });   // (the tithe-lamp, still in its niche inside the door)
+      trim.push({ k: 'wshaft', x: r2(x - 1.2), z: r2(z - 0.4), y: F0 + 1.2, w: 1.5, tilt: 0.22, seed: hash('wgs', r.id) % 997 });
+      add({ type: 'light', x: r2(x + 1.2), z: r2(z + 0.6), dy: 3.2, color: '#d6ecc0', intensity: 3.2, distance: 8, flicker: 0, nightOnly: false });   // (round 3: the shaft's light on its stone: it was a dark box)   // (round 2: the door was lost in the dark; a shaft down onto its steps, as forest-2's)
+      keep.push({ x0: x - 10.5, x1: x + 0.2, z0: z - 6.4, z1: z + 6.4 });   // (round 10: the gateway half again as big)
+    }
+    if (has('falls')) {
+      // the falls past the glade's back corner, straight up the screen from it (round 2: off its north edge they stood
+      // under the minimap): a face of dark rock under moss turned to the camera, the water down a cleft in it, its pool
+      const x = r2(u.X0 - 1.5), z = r2(u.Z0 - 2.5);
+      trim.push({ k: 'wfalls', x, z, y: BANK, w: 11, seed: hash('wf', r.id) % 997 });
+      add({ type: 'emitter', x: r2(x + 1.2), z: r2(z + 1.2), preset: 'mist', size: [2.4, 1.6, 2.4], dy: 0.6, count: 18 });
+      keep.push({ x0: x - 7, x1: x + 5, z0: z - 7, z1: z + 3.5 });
+    }
+  }
+  // ── the trunks: a jittered grid over the wood, each by how far it is from a glade and how tall it may stand there.
+  //   Round a glade (the ring, 1.4–4 units out): the great trunks, tall and straight or old and twisted, their roots
+  //   reaching down the bank toward the glade; where one may not stand tall (a glade's near side) a broken snag, a mossed
+  //   boulder or a root-mound. Past the ring the wood: slimmer trunks to the mist, fewer. Past 13 units nothing: the fog.
+  const S = 2.7, placed = [];
+  // (round 10: the great trunks first, along every glade's back edges (north and west, the camera looks over the glade at
+  // them) every four units or so, a step up the bank, their roots over the lip: the glade's edge solid, as the references'
+  // are; then the jittered grid fills the wood round them)
+  for (const r of rooms) {
+    const u = U(r);
+    for (const [side, a0, a1] of /** @type {[string, number, number][]} */ ([['n', u.X0 + 0.8, u.X1 - 0.8], ['w', u.Z0 + 0.8, u.Z1 - 0.8]])) {
+      for (let t = a0 + R('et', r.id, side) * 2; t < a1; t += 3.6 + R('es', r.id, side, t) * 1.8) {
+        const oak = R('eo', r.id, side, t) < 0.4, h0 = R('eh', r.id, side, t), rad = oak ? 1.8 + h0 * 0.6 : 0.9 + h0 * 0.5, off = rad * 0.8 + 0.7;
+        const x = r2(side === 'n' ? t : u.X0 - off), z = r2(side === 'n' ? u.Z0 - off : t);
+        if (isFloor(x, z) || kept(x, z, rad) || placed.some((q) => Math.hypot(q[0] - x, q[1] - z) < q[2] + rad + 0.4)) continue;
+        const want = oak ? 7 + h0 * 3 : 12 + h0 * 6, may = tallest(x, z, rad + (oak ? 2.4 : 0.6), rad + 0.3);
+        const to = side === 'n' ? [0, 1, r2(off)] : [1, 0, r2(off)];
+        if (may < (oak ? 5.5 : 8)) {
+          // (where a glade lies behind it on the camera's line the great trunk can't stand tall: an old bole broken off at
+          // what the ground allows, its girth kept, or a great fallen trunk along the edge)
+          if (may >= 1.6) { placed.push([x, z, rad]); trim.push({ k: 'wsnag', x, z, y: BANK, h: r2(Math.min(may, 2.2 + h0 * 2.6)), r: r2(Math.min(rad, 1.6)), to, seed: hash('wes', r.id, side, t) % 997 }); }
+          else if (may >= 0.9) { placed.push([x, z, 1.2]); trim.push({ k: 'wlog', x, z, y: BANK, len: r2(3.5 + h0 * 2.5), r: r2(Math.min(0.75, may * 0.55)), rot: side === 'n' ? 0 : r2(Math.PI / 2), seed: hash('wel', r.id, side, t) % 997 }); }
+          continue;
+        }
+        placed.push([x, z, rad]);
+        trim.push({ k: 'wtrunk', kind: oak ? 'oak' : 'straight', x, z, y: BANK, h: r2(Math.min(want, may)), r: r2(rad), lean: r2((R('el', r.id, side, t) - 0.5) * (oak ? 0.4 : 0.06)), to, far: 1, seed: hash('we', r.id, side, t) % 997 });
+      }
+    }
+  }
+  for (let gz = 0; gz < D / S; gz++) for (let gx = 0; gx < W / S; gx++) {
+    const x = r2((gx + 0.15 + R('x', gx, gz) * 0.7) * S), z = r2((gz + 0.15 + R('z', gx, gz) * 0.7) * S), d = dAt(x, z);
+    if (d < 1.4 || d > 11.5 || kept(x, z, 1.2)) continue;
+    const ring = d < 5.2, h0 = R('h', gx, gz);
+    let kind = R('k', gx, gz) < (ring ? 0.42 : 0.3) ? 'oak' : 'straight';
+    if (!ring && R('s', gx, gz) < 0.35 + (d - 4) * 0.03) continue;   // (the wood thins into the mist)
+    if (kind === 'oak' && tallest(x, z, 2.2 + 2.4, 2.5) < 5.5) kind = 'straight';   // (an oak's limbs over a glade's ground: a straight trunk there, if it may stand)
+    const rad = kind === 'oak' ? (ring ? 1.7 + h0 * 0.7 : 0.8 + h0 * 0.4) : (ring ? 0.8 + h0 * 0.45 : 0.36 + h0 * 0.2);   // (round 10: the edge trunks two to three times the girth: the references are about mass)
+    if (d < rad * 0.8 + 0.5 || placed.some((q) => Math.hypot(q[0] - x, q[1] - z) < q[2] + rad + 0.5)) continue;   // (its foot on the bank, roots spilling over the lip)
+    const want = kind === 'oak' ? 7 + h0 * 3 : 12 + h0 * 6, may = tallest(x, z, rad + (kind === 'oak' ? 2.4 : 0.6), rad + 0.3);   // (an oak's limbs reach out over three units: round 1, one hung over the Arcade's fight)
+    // the way down the bank to the nearest glade, for its roots
+    let to = null; if (ring) { let best = 9; for (let a = 0; a < 16; a++) { const ang = (a / 16) * Math.PI * 2; for (let t = 0.5; t < best; t += 0.5) if (isFloor(x + Math.cos(ang) * t, z + Math.sin(ang) * t)) { best = t; to = [r2(Math.cos(ang)), r2(Math.sin(ang)), t]; break; } } }
+    const stands = may >= (kind === 'oak' ? 5.5 : 8);   // (round 10: a trunk where it may stand eight units, its top into the gloom: at four-fifths of its want, too few stood at the glades' edges)
+    if (stands) placed.push([x, z, rad]);
+    if (stands) trim.push({ k: 'wtrunk', kind, x, z, y: BANK, h: r2(Math.min(want, may)), r: r2(rad), lean: r2((R('l', gx, gz) - 0.5) * (kind === 'oak' ? 0.5 : 0.08)), to, far: r2(d), seed: hash('wt', gx, gz) % 997 });
+    else if (may >= 1.3 && ring && R('g', gx, gz) < 0.35) trim.push({ k: 'wsnag', x, z, y: BANK, h: r2(Math.min(may, 1.2 + h0 * 2.4)), r: r2(Math.max(rad, 0.5)), to, seed: hash('ws', gx, gz) % 997 });
+    else if (ring && R('b', gx, gz) < 0.7) trim.push({ k: 'wboulder', x, z, y: BANK, s: r2(Math.min(1.5 + h0 * 0.9, may * 1.4)), seed: hash('wb', gx, gz) % 997 });   // (round 7: ours, swathed in moss; Luminati's mossy grey rocks read blue-grey with yellow spots)
+    else if (ring) trim.push({ k: 'wroots', x, z, y: BANK, to, seed: hash('wr', gx, gz) % 997 });
+    // (round 2: the wood before the camera was a flat dark field: a fallen trunk along it, low and mossed, or a boulder)
+    else if (may >= 1.1) { if (R('lg', gx, gz) < 0.45) trim.push({ k: 'wlog', x, z, y: BANK, len: r2(3 + h0 * 3), r: r2(0.4 + h0 * 0.25), rot: r2(R('lr', gx, gz) * Math.PI), seed: hash('wlg', gx, gz) % 997 }); else trim.push({ k: 'wboulder', x, z, y: BANK, s: r2(Math.min(1.8 + h0 * 1.2, may * 1.4)), seed: hash('wb', gx, gz) % 997 }); }
+  }
+  // ── ferns along the glades' edges, on the bank and a step onto the floor (never further in: the fight's ground stays
+  //    clear), thicker at the falls; and the odd fern on the bank's top further out
+  const fallsAt = rooms.filter((r) => r.dress.includes('falls')).map(U);
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    const x = i + 0.5, z = j + 0.5, d = dist[j * W + i], wet = fallsAt.some((u) => x > u.X0 - 3 && x < u.X1 + 3 && z > u.Z0 - 4 && z < u.Z1);
+    const edge = d === 0 && (!isFloor(x - 1, z) || !isFloor(x + 1, z) || !isFloor(x, z - 1) || !isFloor(x, z + 1));
+    if (!(edge || (d > 0 && d < 3.2)) || kept(x, z) || wood.onRoad(j)) continue;
+    if (R('f', i, j) > (wet ? 0.55 : edge ? 0.22 : 0.3)) continue;
+    const px = x + (R('fx', i, j) - 0.5) * 0.7, pz = z + (R('fz', i, j) - 0.5) * 0.7;
+    const s = edge ? 0.7 + R('fs', i, j) * 0.3 : 0.85 + R('fs', i, j) * 0.5;
+    if (s * 0.9 > tallest(px, pz, 0.5) + 0.25) continue;   // (a tall fern on a near bank hid a figure's feet)
+    trim.push({ k: 'wfern', x: r2(px), z: r2(pz), y: d === 0 ? F0 : BANK, s: r2(s), seed: hash('wfn', i, j) % 997 });
+  }
+  // ── the mist: one sheet a little over the ground, clear over the glades and thickening out into the wood
+  // (round 3: thin before the glades, where nothing's behind it but the camera: there it lay as a flat pale field over the
+  // wood's foot of the frame)
+  { const rows = []; for (let j = 0; j < D; j++) { let row = ''; for (let i = 0; i < W; i++) { const c = Math.min(9, Math.floor(dist[j * W + i] / 1.2)); row += c > 2 && reach(i + 0.5, j + 0.5, 0) < 30 ? Math.min(c, 3) : c; } rows.push(row); }
+    // (round 5: and closing in near opaque over the last four units of the wood's ground, where it stops: its edge stood as
+    // a stepped cliff into the gloom)
+    const fade = [], G = wood.ground; for (let j = 0; j < D; j++) { let row = ''; for (let i = 0; i < W; i++) row += Math.max(0, Math.min(9, Math.round(((dist[j * W + i] - (G - 4.5)) / 4) * 9))); fade.push(row); }
+    trim.push({ k: 'woodmist', W, D, rows, fade, y: BANK + 0.9 }); }
+  // ── the shafts of light down through the canopy: one or two a glade, onto its back third or its edge, never its middle
+  //    (the fight reads on the floor's own light), motes in each
+  // (round 10, the owner's coordinator: "too big, too many and the same in every room… searchlights": one a glade, thinner
+  // and softer, each its own width, slant and place along the back, landing in a pool)
+  for (const r of rooms) {
+    if (r.dress.includes('granary_door')) continue;   // (the door's own falls on its steps)
+    const u = U(r), wd = u.X1 - u.X0, dp = u.Z1 - u.Z0, fx = 0.18 + R('sx', r.id) * 0.6, fz = 0.14 + R('sz', r.id) * 0.14;
+    const x = r2(u.X0 + wd * fx), z = r2(u.Z0 + dp * fz);
+    trim.push({ k: 'wshaft', x, z, y: F0, w: r2(0.8 + R('sw', r.id) * 0.9), tilt: r2(0.14 + R('st', r.id) * 0.22), side: R('sd', r.id) < 0.3 ? -1 : 1, seed: hash('wsh', r.id) % 997 });
+    add({ type: 'emitter', x, z, preset: 'dust', size: [1.2, 4, 1.2], dy: 2.2, count: 8 });
+  }
+  // ── the glades' edges made solid (round 10): moss-heaped root-banks along the bank's lip and boulders among them, low
+  //    where the camera looks across them at a fight, heaped up at the back
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    const d = dist[j * W + i]; if (d < 0.9 || d > 1.6 || wood.onRoad(j)) continue;
+    const x = i + 0.5 + (R('bx', i, j) - 0.5) * 0.4, z = j + 0.5 + (R('bz', i, j) - 0.5) * 0.4;
+    if (kept(x, z, 0.5) || R('bk', i, j) > 0.55 || placed.some((q) => Math.hypot(q[0] - x, q[1] - z) < q[2] * 0.7 + 0.5)) continue;
+    const may = Math.max(0.28, tallest(x, z, 1.0));   // (on a near edge a low lip of moss, knee-high at most: the camera looks across it at the fight)
+    placed.push([x, z, 0.8]);
+    if (R('bb', i, j) < 0.28 && may > 0.6) trim.push({ k: 'wboulder', x: r2(x), z: r2(z), y: BANK, s: r2(Math.min(1.3 + R('bs', i, j) * 0.9, may * 1.5)), seed: hash('wbe', i, j) % 997 });
+    else trim.push({ k: 'wbank', x: r2(x), z: r2(z), y: BANK, h: r2(Math.min(0.5 + R('bh', i, j) * 0.6, may)), rot: r2(R('br', i, j) * Math.PI), seed: hash('wbn', i, j) % 997 });
+  }
+}
+/** the greenwood's pieces (sim/world.js greenwood dressing): the waymarks' lamps on their posts, the empire's fallen blocks and
+ *  broken pillars, mossed boulders */
+const WOOD_LAMP = '#ffb468';
+const WOOD_3D = {
+  lantern: (x, z, h, k, { add, trim }) => { const light = add({ type: 'light', x, z: r2(z + 0.4), dy: 1.7, color: WOOD_LAMP, intensity: 4.2, distance: 6.2, flicker: 0.14, nightOnly: false }); trim.push({ k: 'waylamp', x, z, y: 1.0, seed: h % 997, light }); },
+  brazier: (x, z, h, k, ctx) => WOOD_3D.lantern(x, z, h, k, ctx),
+  fallen_block: (x, z, h, k, { trim }) => trim.push({ k: 'wblock', x, z, y: 1.0, rot: r2((h % 13) * 0.24), seed: h % 997 }),
+  brokenpillar: (x, z, h, k, { trim }) => trim.push({ k: 'wpillar', x, z, y: 1.0, seed: h % 997 }),
+  boulder: (x, z, h, k, { trim }) => trim.push({ k: 'wboulder', x, z, y: 1.0, s: r2(1.5 + (h % 5) * 0.15), seed: h % 997 }),
+};
+
 /** @param {any} w @param {{ region?: string, stairs?: string, walls?: string}} [o] */
 function dungeon(w, o = {}) {
   const cells = w.level.cells;
@@ -1430,20 +2010,24 @@ function dungeon(w, o = {}) {
   // Mound and the Scrag Warren run past 256 of ours); round where the hero comes in when they're further apart
   const up = (w.structs || []).find((s) => s.id.startsWith('stairsup')) || sp, wl = w.stairwell, dn = wl ? { x: (wl.x0 + wl.x1) / 2, y: (wl.y0 + wl.y1) / 2 } : w.stairsAt || sp;
   const both = Math.abs(up.x - dn.x) < MAX_TILES - 24 && Math.abs(up.y - dn.y) < MAX_TILES - 24;
-  const { x0, y0, W, D } = crop(bx0 - 2, by0 - 2, bx1 + 2, by1 + 2, both ? (up.x + dn.x) / 2 : sp.x, both ? (up.y + dn.y) / 2 : sp.y);
+  // (the greenwood's glades with the wood round them: a margin of trunks and mist, `margin` of ours)
+  const M0 = (() => { const k = w.level.plan && w.level.rooms?.length ? w.level.rooms[0].kit : null; return (k && KIT_LOOK[k]?.margin) || 2; })();
+  const { x0, y0, W, D } = crop(bx0 - M0, by0 - M0, bx1 + M0, by1 + M0, both ? (up.x + dn.x) / 2 : sp.x, both ? (up.y + dn.y) / 2 : sp.y);
   const X = (x) => r2((x - x0) / 2), Z = (y) => r2((y - y0) / 2);
   // (a plan with no kit of its own, the Ninth Vault: its rooms' one kit, in the Reach; the Vale's Ninth Milestone keeps
   // the chasm's halls it was approved in)
   const L0 = w.level, one = L0.plan && L0.rooms?.length ? [...new Set(L0.rooms.map((r) => r.kit).filter(Boolean))] : [];
   // (a building's inside: its kits all inside ones, the first its floor's; wherever it stands)
-  const kit = w.kit || (one.length === 1 && SITES[w.site]?.region === 'reach' ? one[0] : one.length && one.every((k) => KIT_LOOK[k]?.inside) ? one[0] : null);
-  const look = KIT_LOOK[kit] || THEME_LOOK[w.theme] || DEFAULT_LOOK;
+  const kit = w.kit || (one.length === 1 && SITES[w.site]?.region === 'reach' ? one[0] : one.length && (one.every((k) => KIT_LOOK[k]?.inside) || one.every((k) => KIT_LOOK[k]?.forest)) ? one[0] : one.length === 1 && SITE_KIT[w.site]?.[one[0]] ? SITE_KIT[w.site][one[0]] : null);   // (the Ninth Milestone: its one kit's own look, SITE_KIT)
+  const gen = KIT_LOOK[kit] ? null : landLook(w);   // (a generated floor outside the Vale: its land's looks, item 11)
+  const look = KIT_LOOK[kit] || gen || THEME_LOOK[w.theme] || DEFAULT_LOOK;
   const tiles = grid(W, D, look.wall), heights = grid(W, D, '6'), pools = w.pools || new Set();
   // an authored floor (plans.js) is dressed room by room: each room in its own kit's stone (the Keep's barracks in dressed
   // stone, its cellars' cave in rock), a dug room (a 'cave') walled in rock whatever its kit; the halls in the floor's
+  const roomAt0 = (i, j) => { if (!w.level.plan) return null; for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const c = cells.get(`${x0 + 2 * i + dx},${y0 + 2 * j + dy}`); if (c && c.room >= 0) return w.level.rooms[c.room]; } return null; };
   const L = w.level, roomLook = (c) => {
     const r = L.plan && c && c.room >= 0 ? L.rooms[c.room] : null; if (!r) return look;
-    const k = KIT_LOOK[r.kit] || look; return r.shape === 'cave' ? (k.caveLook ||= { ...k, wall: k.cave || 'x' }) : k;
+    const k = KIT_LOOK[SITE_KIT[w.site]?.[r.kit] || r.kit] || look; return r.shape === 'cave' ? (k.caveLook ||= { ...k, wall: k.cave || 'x' }) : k;   // (a site's own look for a shared kit: SITE_KIT)
   };
   const looks = new Array(W * D).fill(null);
   // a tile is floor when any of its four of ours is (a corridor one of ours wide stays open); standing water where two are
@@ -1460,6 +2044,17 @@ function dungeon(w, o = {}) {
     const garth = lk && lk.garth && L.plan && rm >= 0 && L.rooms[rm]?.dress?.includes('garth');
     if (floor) { looks[j * W + i] = lk; tiles[j][i] = wet >= 2 && !lk.wet ? 'P' : garth ? lk.garth : yard ? lk.yard : lk.checker ? lk.floor[(i + j) & 1] : hash('d', i, j) % 100 < (lk.mix ?? 18) ? lk.floor[1] : lk.floor[0]; heights[j][i] = '2'; }
   }
+  // (the Vale's stone, docs/dungeon-looks-plan.md items 1, 2: a hall takes the look of the room it leads from, the nearer
+  // one: a passage between two of the barrow's rooms is the barrow's, the cellars' rough way down the cave's, not the
+  // floor's one look; the Ninth Milestone's halls its stone, not the chasm's)
+  if (L.plan && VALE_STONE.has(w.site)) {
+    const src = new Int32Array(W * D).fill(-1), q = [];
+    for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) { const k = j * W + i; if (!looks[k]) continue; const r = roomAt0(i, j); if (r) { src[k] = k; q.push(k); } }
+    for (let h = 0; h < q.length; h++) { const k = q[h], i = k % W, j = (k / W) | 0;
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= D) continue; const kk = jj * W + ii; if (looks[kk] && src[kk] < 0) { src[kk] = src[k]; q.push(kk); } } }
+    for (let k = 0; k < W * D; k++) { const lk = src[k] >= 0 ? looks[src[k]] : null; if (!lk || lk === looks[k] || roomAt0(k % W, (k / W) | 0)) continue;
+      const i = k % W, j = (k / W) | 0; looks[k] = lk; if (tiles[j][i] !== 'P') tiles[j][i] = hash('d', i, j) % 100 < (lk.mix ?? 18) ? lk.floor[1] : lk.floor[0]; }
+  }
   // a crypt's ledger stones in a row down each fighting room's long axis (round 3: scattered, they were lost), flat, so
   // the floor stays open
   // (round 5: each a slab of its own, one unit by two, laid along the axis every three: as floor tiles they read as
@@ -1474,8 +2069,8 @@ function dungeon(w, o = {}) {
     // its sides, its niches' candles enough: stacked there they burned like a bonfire)
     roomPools.push({ x: r2((r.cx - x0) / 2), z: r2((r.cy - y0) / 2), mid: true });
     roomPools.push({ x: r2((r.cx - x0) / 2), z: r2((r.cy + r.rh * 0.3 - y0) / 2), front: true });   // (a wider dimmer one toward the near sill: round 11, the rooms' fronts went cold)
-    if (r.kit === 'ossuary') rings.push({ k: 'bonering', x: r2((r.cx - x0) / 2), z: r2((r.cy - y0) / 2), r: 1.5, seed: hash('or', r.id) % 997 });
-    if (r.role !== 'end' && r.kit !== 'ossuary') for (const sg of [-1, 1]) roomPools.push({ x: r2((r.cx + (along ? sg * r.rw * 0.62 : 0) - x0) / 2), z: r2((r.cy + (along ? -r.rh * 0.25 : sg * r.rh * 0.62) - y0) / 2) });
+    if (BONE_KITS.has(r.kit)) rings.push({ k: 'bonering', x: r2((r.cx - x0) / 2), z: r2((r.cy - y0) / 2), r: 1.5, seed: hash('or', r.id) % 997 });
+    if (r.role !== 'end' && !BONE_KITS.has(r.kit)) for (const sg of [-1, 1]) roomPools.push({ x: r2((r.cx + (along ? sg * r.rw * 0.62 : 0) - x0) / 2), z: r2((r.cy + (along ? -r.rh * 0.25 : sg * r.rh * 0.62) - y0) / 2) });
   }
   const ledgers = [];
   if (L.plan) for (const r of L.rooms) {
@@ -1490,9 +2085,10 @@ function dungeon(w, o = {}) {
   // void (black), not a sea of lit wall-tops. (A wharf's: the harbour, still water to the fog, every tile off its decks)
   const open = (i, j) => i >= 0 && j >= 0 && i < W && j < D && heights[j][i] === '2';
   if (look.water) for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) if (heights[j][i] !== '2') { tiles[j][i] = look.wall; heights[j][i] = '0'; }
+  const wood = look.forest ? woodGround(W, D, tiles, heights, L, x0, y0, look) : null;   // (the greenwood: the wood's ground round the glades, the road)
   const rampart = look.ramparts ? rampartGround(W, D, tiles, heights, open) : null;   // (the ramparts: the houses' street behind, the parapet in front, the drop)
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
-    if (heights[j][i] === '2' || look.water || look.ramparts) continue;
+    if (heights[j][i] === '2' || look.water || look.ramparts || look.forest) continue;
     let near = false;
     for (let dj = -1; dj <= 1 && !near; dj++) for (let di = -1; di <= 1 && !near; di++) near = open(i + di, j + dj);
     if (!near) { tiles[j][i] = ' '; heights[j][i] = '0'; continue; }
@@ -1506,27 +2102,45 @@ function dungeon(w, o = {}) {
     if (i >= 0 && j >= 0 && i < W && j < D && heights[j][i] === '2') { heights[j][i] = '0'; tiles[j][i] = 'U'; }
   }
   const inside = !!look.inside, faces = inside ? tavernWalls(W, D, heights, open, looks, tiles) : null;   // (a building's walls stand whole: below)
-  const crown = o.walls === 'plain' || inside ? null : ruinWalls(W, D, tiles, heights, open);   // (the walls' ragged tops, below; ?walls=plain: level boxes, as before)
+  // (the Vale's stone: the keep's walls stand whole round their own rooms on a floor of ruins, the barrow's back walls a
+  // step taller than the ruin's)
+  const wholeFaces = !inside && looks.some((l) => l?.whole) ? tavernWalls(W, D, heights, open, looks, tiles, WHOLE_WALLS) : null, barrowy = looks.some((l) => l?.barrow);
+  const crown = o.walls === 'plain' || inside || look.forest ? null : ruinWalls(W, D, tiles, heights, open, barrowy ? (i, j) => LIFT_OF[tiles[j][i]] || 0 : null);   // (the walls' ragged tops, below; ?walls=plain: level boxes, as before)
   const stairLights = stairs(w, x0, y0, W, D, tiles, heights, o.stairs !== 'plain');
+  if (look.forest) { const ST = { '^': '\u16AA', '<': '\u16AB', v: '\u16AC', '>': '\u16AD' }; for (const row of tiles) for (let i = 0; i < row.length; i++) if (ST[row[i]]) row[i] = ST[row[i]]; }   // (the greenwood's way up in the empire's grey steps)
   // water indoors (docs/water-indoors.md): the channels sunk now, once the walls round them are cut as the floor's
   const wetLook = [look, ...(L.plan ? L.rooms.map((r) => KIT_LOOK[r.kit]) : [])].find((k) => k && k.wet) || null;
   const wet = wetLook ? wetGround(w, { x0, y0, W, D, X, Z, tiles, heights, looks, roomLook }) : null;
   const objects = [], count = {}, sprites = [];
   // (an arch over each way, built by world.js in the floor's own stone: GDD v1.57, docs/dungeon-stairs-proposal.md;
   // ?stairs=plain the stairs as they were)
-  const archStone = (LEGEND[look.wall]?.side && !/cliff|dirt/.test(LEGEND[look.wall].side)) ? LEGEND[look.wall].side : 'stone_brick';
+  const archStone = look.arch || ((LEGEND[look.wall]?.side && !/cliff|dirt/.test(LEGEND[look.wall].side)) ? LEGEND[look.wall].side : 'stone_brick');
   for (const a of stairLights.arches || []) sprites.push({ arch: { ...a, stone: archStone } });
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; const o = { id: `${ob.type}_${count[ob.type]}`, ...ob }; objects.push(o); return o; };
   const drop = (o) => { const i = objects.indexOf(o); if (i >= 0) objects.splice(i, 1); };   // (a lantern's light gone with it: a corner's stores take its bay)
-  const trim = inside ? [] : null;
+  const trim = inside || wholeFaces || barrowy || look.forest ? [] : null;
   // (the room a floor tile of Luminati's is in: a palace's bays dress by what their room was for, palaceRun)
   const roomAt = (i, j) => { if (!L.plan) return null; for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const c = cells.get(`${x0 + 2 * i + dx},${y0 + 2 * j + dy}`); if (c && c.room >= 0) return L.rooms[c.room]; } return null; };
-  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim, roomAt, look === KIT_LOOK.hulk ? SHIP_STORY : TAV_STORY); if (look.palace) trim.push(...palaceRunners(w, L, X, Z)); if (look.water) docksDress(W, D, open, add, trim, stairLights.arches || [], !!look.stone); if (rampart) rampartsDress(W, D, open, rampart, add, trim, stairLights.arches || []); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
+  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim, roomAt, look === KIT_LOOK.hulk ? SHIP_STORY : TAV_STORY); if (look.palace) trim.push(...palaceRunners(w, L, X, Z)); if (L.plan) trim.push(...fenMats(w, L, X, Z)); if (look.water) docksDress(W, D, open, add, trim, stairLights.arches || [], !!look.stone); if (rampart) rampartsDress(W, D, open, rampart, add, trim, stairLights.arches || []); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
+  if (wood) { woodDress(W, D, wood, L, x0, y0, add, trim, stairLights.arches || []); sprites.push({ tavern: { pieces: trim } }); }
+  if (!inside && trim) {   // (the Vale's stone: the keep's whole walls dressed, the barrow's doorframes and shoring)
+    if (wholeFaces) { tavernDress(wholeFaces, stairLights.arches || [], open, add, trim, roomAt); curtainSills(W, D, tiles, heights, open, trim); }
+    if (barrowy) barrowDress(W, D, tiles, heights, open, trim, stairLights.arches || [], roomAt);
+    // (round 3: a barrow's fighting rooms lit at their middles, a broad low warmth: the candles and the doorways' lanterns
+    // left the muster hall's floor, a hall of standing stones, black between them)
+    // (and the keep's great hall, its middle lit by its lanterns and its hearth: round 4, the floor a violet slate)
+    if (L.plan) for (const r of L.rooms) if (r !== L.entrance && (KIT_LOOK[r.kit]?.barrow || KIT_LOOK[r.kit]?.wall === 'Ø') && r.shape !== 'cave') { const hall = KIT_LOOK[r.kit]?.wall === 'Ø'; add({ type: 'light', x: r2((r.cx - x0) / 2), z: r2((r.cy - y0) / 2), dy: 3.2, color: '#ffc488', intensity: hall ? 6.5 : 3.4, distance: hall ? 10 : Math.min(12, Math.max(6, Math.min(r.rw, r.rh) * 0.45)), flicker: 0, nightOnly: false }); }   // (round 5: the hall's under the dungeon's violet fill, a stronger pool)
+    sprites.push({ tavern: { pieces: trim } });
+  }
   if (wet) { if (wet.trim.length) sprites.push({ wet: { pieces: wet.trim } }); for (const sh of wet.sheets) sprites.push({ shallows: sh }); for (const l of wet.lights) add(l); }
   if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h) { add({ ...c.ob(X, Z), onWall: true }); if (c.sprite) sprites.push(c.sprite); }   // (onWall: on a wall's top, not the room's own)   // (what stands on the walls' tops, where the stairs didn't take the wall)
-  for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity * (look.fill ? 0.45 : 1), distance: l.glow.distance * (look.fill ? 0.7 : 1), flicker: 0.08, nightOnly: false }
+  for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity * (look.fill && look.inside ? 0.45 : 1), distance: l.glow.distance * (look.fill && look.inside ? 0.7 : 1), flicker: 0.08, nightOnly: false }
     : { type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });
   const magma = /** @type {[number, number][]} */ ([]);   // (the Magma Vault's magma tiles, of ours: built as one flow below)
+  // (the Cold Seam's: its pieces' batch, its rails' tiles, of ours, and the kit a tile's in: its room's, else the floor's)
+  const mine = [], rails = new Set(), kitAt = (k) => { const c = cells.get(k); return (c && c.room >= 0 && L.rooms[c.room]?.kit) || kit || w.kit; };
+  for (const [k, kind] of w.props || []) if (kind === 'rail') rails.add(k);
+  for (const [k, kind] of w.props || []) if (kind === 'cart') { const [a, b] = k.split(',').map(Number); if ((rails.has(`${a - 1},${b}`) && rails.has(`${a + 1},${b}`)) || (rails.has(`${a},${b - 1}`) && rails.has(`${a},${b + 1}`))) rails.add(k); }   // (the rails run on under a cart stood on them)
   for (const [k, kind] of w.props || []) {
     const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);
     if (x < 0.5 || z < 0.5 || x > W - 0.5 || z > D - 0.5 || /^stair/.test(kind)) continue;   // (the stairs are the floor's own: stairs())
@@ -1538,7 +2152,13 @@ function dungeon(w, o = {}) {
     if (kind === 'magma') { magma.push([tx, ty]); continue; }
     if (WET_PROPS.has(kind)) continue;                              // (deep water: the floor's own, wetGround)
     if (MAGMA_3D[kind]) { MAGMA_3D[kind](tx, ty, h, { X, Z, add, sprites, props: w.props }); continue; }
+    // (the Cold Seam's mine, item 8: its rails gathered into runs below; the rest of its pieces built in the mine's batch)
+    if (kind === 'rail') continue;
+    if (MINE_3D[kind] && MINE_KITS.has(kitAt(k))) { MINE_3D[kind](x, z, h, kind, { add, mine, open, rails, tx, ty }); continue; }
+    // (a counting house's furniture, item 9: the clerks' desks, their lamps, the strongbox)
+    if (inside && look.counting && COUNT_3D[kind]) { COUNT_3D[kind](x, z, h, kind, { add, trim, wall: wallOf(open, W, D, x, z) }); continue; }
     if (inside && look.ramparts && RAMP_3D[kind]) { RAMP_3D[kind](x, z, h, kind, { add, trim, open }); continue; }
+    if (wood && WOOD_3D[kind]) { WOOD_3D[kind](x, z, h, kind, { add, trim, wood }); continue; }   // (the greenwood's: docs/greenwood-dungeon.md)
     // (the hulk's way in, a gangway or the Grace's reef ladder, takes the wharf's rope coils and nets: with no drawer of
     // their own there they stood as dark hooded shapes, read as foes: docs/art-critic-pass-tidemark-step7.md)
     if (inside && (look.water || (look === KIT_LOOK.hulk && (kind === 'rope' || kind === 'net'))) && DOCK_3D[kind]) { DOCK_3D[kind](x, z, h, kind, { add, trim, open, edge: edgeOf(open, x, z) }); continue; }
@@ -1550,6 +2170,13 @@ function dungeon(w, o = {}) {
     // (a hulk's lower deck, the Sister's Cabin's children's deck and the Gull Isles' gun deck: the sim's bunks hung as
     // hammocks, along the wall they stand by; world.js buildTavern 'hammock')
     if (inside && look === KIT_LOOK.hulk && kind === 'bunk') { const wl = wallOf(open, W, D, x, z); trim.push({ k: 'hammock', x, z, n: wl && wl.side !== 'n' ? 'x' : 'z', seed: h % 997 }); continue; }
+    // (the Vale's stone: a barrow's niches, biers and standing stones, the keep's piers and posts, the great hall's
+    // hearth, trestles and fire baskets as the inn's: BARROW_3D, KEEP_3D, TAVERN_3D)
+    const pl = trim && !inside ? roomLook(w.level.cells.get(k)) : null;
+    if (pl?.barrow && BARROW_3D[kind]) { const c = w.level.cells.get(k); if (BARROW_3D[kind](x, z, h, kind, { trim, wall: wallOf(open, W, D, x, z), room: c && c.room >= 0 ? w.level.rooms[c.room] : null }) !== false) continue; }
+    if (pl?.whole && KEEP_3D[kind]) { KEEP_3D[kind](x, z, h, kind, { trim, look: pl }); continue; }
+    if (pl?.whole && pl.wall === 'Ø' && kind === 'brazier') { add({ type: 'fire', x, z, opts: { kind: 'brazier', size: 1.0, smoke: false, light: true, intensity: 4, distance: 6, seed: h % 997 } }); continue; }   // (the hall's fire baskets out on its floor, seen whole: the inn's by a wall)
+    if (pl?.whole && pl.wall === 'Ø' && TAVERN_3D[kind]) { const c = w.level.cells.get(k); TAVERN_3D[kind](x, z, h, kind, { add, drop, wall: wallOf(open, W, D, x, z), trim, open, room: c && c.room >= 0 ? w.level.rooms[c.room] : null }); continue; }
     if (inside && TAVERN_3D[kind]) { const c = w.level.cells.get(k); TAVERN_3D[kind](x, z, h, kind, { add, drop, wall: wallOf(open, W, D, x, z), trim, open, room: c && c.room >= 0 ? w.level.rooms[c.room] : null }); continue; }
     if (DRESS_3D[kind]) add(DRESS_3D[kind](x, z, h, kind));
     else sprites.push({ prop: kind, tx, ty, x, z, ...(FLAT.has(kind) ? { flat: true } : {}) });
@@ -1565,13 +2192,16 @@ function dungeon(w, o = {}) {
   }
   if (magma.length) magmaFlow(magma, X, Z, add, sprites);
   if (wet && wet.sheets.length) { const lamps = wetLamps(objects, wet.sheets); for (const sh of wet.sheets) sh.lamps = lamps; }
+  if (rails.size) mine.push(...railRuns(rails, X, Z));
+  if (mine.length) sprites.push({ tavern: { pieces: mine } });
   const level = frame({ name: w.siteName || 'The Old Barrows', W, D, tiles, heights, objects, spawn: { x: X(sp.x), z: Z(sp.y), facing: 'up' },
     // (black beyond the walls, as Emberlit's: a backdrop colour, which the fog takes too, so the far rooms fade to it)
-    environment: { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: true, backdrop: look.backdrop || '#040306', ...(look.water ? { harbour: true } : {}), ...(wet ? { wet: wetLook.wet } : {}) },
+    environment: look.forest ? { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: false, dust: true, greenwood: true, backdrop: look.backdrop }   // (open air, the air ours: world.js greenwoodAir; past the edges the mist and the gloom, not Luminati's outer woods: round 1, its bright autumn clumps stood at the frame's foot)
+      : { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: true, backdrop: look.backdrop || '#040306', ...(look.water ? { harbour: true } : {}), ...(wet ? { wet: wetLook.wet } : {}) },
     // (a channel's water still, its own colours: world.js wetAir)
     water: look.water ? { flow: [0.03, 0.05], reflect: 0.45, neutral: 0.7 } : wet && wet.deep ? { flow: [0.01, 0.02], reflect: 0.12, neutral: 0.5 } : null, waterLevel: look.water ? DOCK_WL : wet && wet.deep ? WET_WL : 0.4 });   // (a harbour's water nearly still, the fog's colour in it: world.js harbourAir)
   if (look.vents) vents(W, D, heights, open, add, look.vents);   // (the vault's and the deep forges' ember beds)
-  const amb = ambientOf(kit || (AMB_TINT[w.theme] ? w.theme : kit));
+  const amb = ambientOf(kit || gen?.kit || (AMB_TINT[w.theme] ? w.theme : kit));
   return { level, sprites, ambient: amb, origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D, ...(wet ? { deep: wet.deep, deepPartial: wet.partial, shallow: wet.sheets.reduce((n, q) => n + q.cells.length / 4, 0) } : {}) } };
 }
 
@@ -1704,6 +2334,17 @@ function wetLamps(objects, sheets) {
   return out.sort((a, b) => b.i - a.i).slice(0, 24);
 }
 
+/** the Cold Seam's rails (sim/world.js 'rail', a tile of ours each) as runs along x or y, for world.js 'rails' @returns {any[]} */
+function railRuns(rails, X, Z) {
+  const out = [], seen = new Set(), at = (k) => k.split(',').map(Number);
+  for (const k of [...rails].sort((a, b) => { const [ax, ay] = at(a), [bx, by] = at(b); return ay - by || ax - bx; })) {
+    if (seen.has(k)) continue;
+    const [x, y] = at(k), horiz = rails.has(`${x + 1},${y}`) || !rails.has(`${x},${y + 1}`);
+    let n = 0; while (rails.has(horiz ? `${x + n},${y}` : `${x},${y + n}`)) { seen.add(horiz ? `${x + n},${y}` : `${x},${y + n}`); n++; }
+    out.push(horiz ? { k: 'rails', x0: X(x), z0: Z(y + 0.5), x1: X(x + n), z1: Z(y + 0.5) } : { k: 'rails', x0: X(x + 0.5), z0: Z(y), x1: X(x + 0.5), z1: Z(y + n) });
+  }
+  return out;
+}
 /** ember beds along a hot floor's walls (KIT_LOOK `vents`): on a floor tile against a wall, never a corridor's or a
  *  doorway's, spread by a hash; a glow and a wisp, no light of their own (Luminati shares twelve, the braziers need them) */
 function vents(W, D, heights, open, add, max) {
