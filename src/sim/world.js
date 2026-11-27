@@ -87,6 +87,9 @@ export const DRESS = {
   vault:    { rooms: ['cave', 'binding', 'cave'], decor: ['chains', 'brazier', 'bones'], obstacles: ['stalagmite', 'boulder', 'spoil'] },
   // (obstacles stand: never a decor piece, crates or a rack, which the room rule would count in every kit's rooms)
   strongroom: { rooms: ['muster', 'storehouse', 'muster'], decor: ['urns', 'candles', 'crates'], obstacles: ['pillar', 'pillar', 'brokenpillar'] },
+  // (2026-11-27, docs/greenwood-dungeon.md: the Root Granary's way in) a wood under its canopy, open air: no walls, the
+  // trunks and root-banks round each glade are the renderer's (convert.js); mossed boulders and the empire's fallen stone
+  greenwood: { rooms: ['storehouse', 'storehouse', 'storehouse'], decor: ['boulder', 'brokenpillar', 'lantern'], obstacles: ['boulder'] },
 };
 // An authored room (plans.js), dressed for what it was (the dressing pass: docs/vale-dungeon-dressing.md). Its plan's
 // `dress` names the pieces; each name is a small recipe here, placed by the room's own axes: u along its length, v
@@ -103,6 +106,7 @@ export const DRESS_PIECES = new Set(['tomb', 'great_tomb', 'mourner', 'offering'
   'magma', 'furnace', 'anvil', 'crucible',   // (the Magma Vault's: the owner, 2026-11-26, "flowing magma and a few furnaces, anvils")
   'rail', 'cart_tipped', 'shoring_broken',   // (the Cold Seam's mine: docs/dungeon-looks-plan.md item 8)
   'clerk_desk',   // (the quota office's clerks' desks, in rows: item 9)
+  'fallen_block',   // (the greenwood's: an ashlar block of the empire's, down in the moss; docs/greenwood-dungeon.md)
   ...[...ORIENT].map((k) => k + '_y')]);
 // what lights a doorway, by the room's kit (a brazier each side, before, in every room: the screen was a field of
 // identical fires; now the light says the place): the dig's lanterns on poles, the crypt's candles, the keep's and the
@@ -119,16 +123,17 @@ export const DRESS_CAP = { tomb: 6, great_tomb: 1, mourner: 2, offering: 1, hear
   throne: 1, reliquary: 1,   // (the palace's: v1.154)
   furnace: 2, anvil: 3, crucible: 2,   // (the Magma Vault's; its magma has no cap: a channel is many tiles of it)
   cart_tipped: 1, clerk_desk: 8,   // (the Cold Seam's goblins' cart on its side; the quota office's desks: a row a wall. Rails no cap: a run is many tiles)
+  fallen_block: 4,   // (the greenwood's)
   saint: 2, lantern: 4, candles: 4, candelabra: 4, torch: 4, brazier: 4, ladder: 1, puddle: 4, scorch: 3, straw: 6, sacks: 3, crates: 2, barrels: 2, cracks: 6 };
 /** what stands out on an authored room's floor, by its place (not the kit's whole list: a gibbet in the stables and the
  *  gate-warden's chapel, a monolith in the legion's vault, said nothing) */
 const PLAN_OB = { dig: ['spoil', 'brokenpillar'], gallery: ['pillar', 'brokenpillar'], muster: ['pillar'], bailey: ['pillar'], barracks: ['pillar'], cellar: ['stalagmite', 'boulder'], nave: ['pillar', 'brokenpillar'], cultcut: ['brokenpillar', 'spoil'], binding: ['pillar'],
   mound: ['reeds'], locks: ['pillar'], vats: ['pillar'], abbey: ['pillar', 'brokenpillar'], pithead: ['boulder', 'spoil'], warren: ['stalagmite', 'boulder'],
-  yards: ['pillar', 'spoil'], quota: ['pillar'], forge: ['pillar', 'brokenpillar'], deepforge: ['pillar'], works: ['pillar', 'spoil'], vault: ['stalagmite', 'boulder'], strongroom: ['pillar'], tavern: [], tavern_cellar: [], crypt: [], ossuary: [], docks: [], mole: [], ramparts: [], seacave: ['stalagmite', 'boulder'], hulk: [], palace: ['pillar'] };   // (the tavern: nothing stood out in its floors, which are for the fight)   // (v1.126)   // (v1.124: the Cold Seam)   // (v1.102: the Fens authored)
+  yards: ['pillar', 'spoil'], quota: ['pillar'], forge: ['pillar', 'brokenpillar'], deepforge: ['pillar'], works: ['pillar', 'spoil'], vault: ['stalagmite', 'boulder'], strongroom: ['pillar'], tavern: [], tavern_cellar: [], crypt: [], ossuary: [], docks: [], mole: [], ramparts: [], seacave: ['stalagmite', 'boulder'], hulk: [], palace: ['pillar'], greenwood: [] };   // (the tavern: nothing stood out in its floors, which are for the fight)   // (v1.126)   // (v1.124: the Cold Seam)   // (v1.102: the Fens authored)
 const DOOR_LIGHT = { dig: 'lantern', gallery: 'candles', muster: 'torch', bailey: 'torch', barracks: 'torch', cellar: 'lantern', nave: 'candelabra', cultcut: 'candles', binding: 'candles',
   mound: 'lantern', locks: 'lantern', vats: 'lantern', abbey: 'candelabra', pithead: 'lantern', warren: 'torch',
-  yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra', tavern: 'torch', tavern_cellar: 'candles', crypt: 'candles', ossuary: 'candles', docks: 'lantern', mole: 'lantern', ramparts: 'torch', seacave: 'lantern', hulk: 'lantern', palace: 'candelabra' };   // (the crypt's doorways a low pricket: a candelabrum crowded the threshold, round 3)   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
-const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave', yards: 'storehouse', quota: 'cellar', forge: 'muster', deepforge: 'binding', works: 'storehouse', vault: 'cave', strongroom: 'muster', tavern: 'storehouse', tavern_cellar: 'storehouse', crypt: 'crypt', ossuary: 'ossuary', docks: 'storehouse', mole: 'storehouse', ramparts: 'storehouse', seacave: 'cave', hulk: 'storehouse', palace: 'crypt' };
+  yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra', tavern: 'torch', tavern_cellar: 'candles', crypt: 'candles', ossuary: 'candles', docks: 'lantern', mole: 'lantern', ramparts: 'torch', seacave: 'lantern', hulk: 'lantern', palace: 'candelabra', greenwood: 'lantern' };   // (the crypt's doorways a low pricket: a candelabrum crowded the threshold, round 3)   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
+const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave', yards: 'storehouse', quota: 'cellar', forge: 'muster', deepforge: 'binding', works: 'storehouse', vault: 'cave', strongroom: 'muster', tavern: 'storehouse', tavern_cellar: 'storehouse', crypt: 'crypt', ossuary: 'ossuary', docks: 'storehouse', mole: 'storehouse', ramparts: 'storehouse', seacave: 'cave', hulk: 'storehouse', palace: 'crypt', greenwood: 'storehouse' };
 // (the Reedholm Undercroft's own kits, docs/dungeon-looks-plan.md item 6: the Haddow Crypt's plan and set pieces, and its
 // fights, in the reed town's brick: the crypt's and the ossuary's dressing, kept as they are; convert.js draws them)
 DRESS.fenbrick = DRESS.crypt; DRESS.fenbones = DRESS.ossuary;
@@ -328,6 +333,14 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       case 'oven': unit(-L * 0.6, -Wd + 1, -1, 1, -1, 0, 'oven'); break;   // (the bakers' oven, built out from a house's front)
       case 'rampart_well': unit(-L * 0.45, -Wd + 2, -1, 0, -1, 0, 'well'); break;   // (round 2: into the frame, by the back wall)
       case 'rampart_clutter': putAt(-L * 0.15, -Wd, 'barrels'); putAt(L * 0.45, -Wd, 'crates'); putAt(L * 0.45 + 1.5, -Wd, 'sacks'); break;   // (round 1: more against the house fronts)
+      // ── the greenwood (2026-11-27, docs/greenwood-dungeon.md; plans.js root_granary): glades under the oaks, open air. No
+      // walls: the trunks, root-banks and the empire's ruins round the glades are the renderer's (`tithe_road`, `arcade`,
+      // `falls`, `granary_door`: convert.js, no sim piece). Here only what stands in a glade: a waymark lamp at a back corner
+      // and one by the near edge, the empire's fallen blocks and a broken pillar in the corners' thirds, mossed boulders at
+      // the edges; the middle left for the fight
+      case 'wood_lamps': putAt(-(L - 1), -Wd, 'lantern'); putAt(L * 0.55, Wd, 'lantern'); break;
+      case 'ruin_blocks': for (const [u, v, k] of /** @type {[number, number, string][]} */ ([[-0.72, -0.78, 'fallen_block'], [0.66, -0.74, 'brokenpillar'], [-0.6, 0.8, 'fallen_block'], [0.8, 0.62, 'fallen_block']])) putAt(u * L, v * Wd, k); break;
+      case 'mossy_boulders': at(2, 7, 'boulder'); break;
       // ── the Greywater Fens (v1.102, authored): the Toadking's mound, the Canal Locks and Vat Seven, the Drowned Abbey
       case 'boats': for (let u = -L * 0.55, i = 0; u <= L * 0.55 + 0.01 && i < 3; u += 13, i++) putAt(u, -(wall - 1), 'boat'); break;   // (hauled up keel-over at the back wall, three at most)
       case 'reeds': at(4, 5, 'reeds'); break;
