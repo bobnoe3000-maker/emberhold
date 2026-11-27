@@ -89,7 +89,7 @@ if (fr.length) await writeFile(join(OUT, `broadside-${TAG}.png`), png(await p.ev
 // her first boarders: on until they're told, then three moments
 const came = await p.evaluate(() => { globalThis.__lumDraw = false; for (let i = 0; i < 900 && !globalThis.__boarders; i++) globalThis.__frame(33); globalThis.__lumDraw = true; return globalThis.__boarders; });
 const bf = [], bl = [];
-if (came) for (const [ms, lab] of [[16, '+0 s'], [250, '+0.25 s'], [500, '+0.75 s']]) { await p.evaluate(step, ms); bf.push(await p.evaluate(SHOT, [16])); bl.push(lab); }
+if (came) for (const [ms, lab] of [[16, '+0 s'], [120, '+0.12 s'], [180, '+0.3 s'], [450, '+0.75 s']]) { await p.evaluate(step, ms); bf.push(await p.evaluate(SHOT, [16])); bl.push(lab); }
 if (bf.length) await writeFile(join(OUT, `boarders-${TAG}.png`), png(await p.evaluate(strip, [bf, bl])));
 await b.close(); if (srv) srv.close();
 console.log(JSON.stringify({ ...info, broadsides: told, boarders: came, errs: errs.slice(0, 5) }));

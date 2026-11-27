@@ -71,6 +71,9 @@ export const LEGEND = {
   S: { top: 'forge_flag', side: 'forge_stone', walkable: true }, j: { top: 'forge_flag', side: 'forge_stone', walkable: false },
   l: { top: 'magma_floor', side: 'basalt_cliff', walkable: true }, t: { top: 'fen_mud', side: 'dirt_side', walkable: true },
   u: { top: 'roof_thatch', side: 'wood_planks_dark', walkable: false }, w: { top: 'wet_flag', side: 'stone_wall', walkable: true },
+  // (step 9, docs/art-critic-pass-tidemark.md) the Drowned Mole's moles: big dressed granite flags, wet, warm grey (the
+  // locks' blue-grey tiles read as a bathroom's grid out on a sea wall)
+  'µ': { top: 'mole_flag', side: 'stone_wall', walkable: true },
   z: { top: 'sick_flag', side: 'stone_wall', walkable: true }, p: { top: 'abbey_flag', side: 'stone_wall', walkable: true },
   // (round 2: the dungeons' cobbles a mid warm grey, the charcoal ones read black underground; the slag hills' tops lighter
   // than their sides: all basalt, they stood as black stepped blobs)
@@ -245,9 +248,13 @@ const SITE_DOORS = [[/_longhouse_\d/, 'yards', 'reach_assayhouse'], [/_keep_\d/,
  *  arena cleared of scatter): char and cracked earth to its reach, slag heaps just past its arena, vents inside them */
 const FURNACE_YARD = { heaps: 20, vents: 10 };
 /** the Grace's place in her window (sim tiles): in Gullwick's bay east-south-east of the wreckers' camp (161.5, 246.5),
- *  past the arena's edge where her broadside's lanes begin (about 189, 255), lying east and west so she fits the level
- *  (its edge at y 258) and the bay (the beach at y 240 above her) */
-const GRACE_SHIP = [186, 252];
+ *  her near side where her broadside's lanes begin (about 189, 255: past the arena's edge), lying east and west; partly past
+ *  the level's crop, on world.js's sea (round 1, at 186, 252 and full size, she sat against the shore and read beached) */
+const GRACE_SHIP = [192, 259];
+/** the wreckers' wreck: in the shallows off their camp's south shore (the sand ends at y 254 there), all of it in the water */
+const WRECKAGE = [173, 257];
+/** the boats moored at Tollhaven's jetties (sim tiles, the town's: each her middle 2.4 tiles east of a jetty's edge) */
+const MOORED = [[150, 28], [170, 21], [190, 33]];
 /** the Tidemark's two waiting boats (town.json tidemark_ferry, tidemark_fleetboat; buildkit.js skiff): her middle, in sim
  *  tiles, alongside the jetty's end (outdoor.js: the ferry jetty from [198, 234] to TIDEMARK.ferry, the landing jetty from
  *  [164, 18] to TIDEMARK.isles), her post on its edge; her lantern and the boatman's place in her stern, from her middle;
@@ -264,6 +271,9 @@ function outdoor(w, region) {
   // the map, its approach roads (a town's exits lie past its edge) and a margin; never past the grid the sim built
   let bx0 = 0, by0 = 0, bx1 = w.W, by1 = w.H;
   for (const e of w.exits || []) { bx0 = Math.min(bx0, e.x0); by0 = Math.min(by0, e.y0); bx1 = Math.max(bx1, e.x1); by1 = Math.max(by1, e.y1); }
+  // (step 9, docs/art-critic-pass-tidemark.md) Tollhaven's harbour: its jetties run out past the town's edge into the
+  // grid's margin (outdoor.js buildTown), and the crop cut them off: the quay ended in open water. Its deck roads kept in
+  if (region === 'tidemark' && w.kind !== 'overland') for (const r of w.roads || []) if (r.surface === 'deck') for (const [x, y] of r.pts) { bx0 = Math.min(bx0, x - 4); by0 = Math.min(by0, y - 4); bx1 = Math.max(bx1, x + 4); by1 = Math.max(by1, y + 4); }
   bx0 = Math.max(-w.PAD, bx0 - 8); by0 = Math.max(-w.PAD, by0 - 8); bx1 = Math.min(w.W + w.PAD, bx1 + 8); by1 = Math.min(w.H + w.PAD, by1 + 8);
   const C = crop(bx0, by0, bx1, by1, w.W / 2, w.H / 2), { x0, y0, W, D } = C;
   const X = (x) => r2((x - x0) / 2), Z = (y) => r2((y - y0) / 2);
@@ -273,7 +283,9 @@ function outdoor(w, region) {
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
     const n = new Map();                                       // (by our ground's index: the Fens' bank and the Heights' snow share a tile)
     for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const t = GROUND[tm(x0 + 2 * i + dx, y0 + 2 * j + dy)] ? tm(x0 + 2 * i + dx, y0 + 2 * j + dy) : 0; n.set(t, (n.get(t) || 0) + 1); }
-    const t = [...n.keys()].sort((a, b) => n.get(b) - n.get(a) || (RANK[GROUND[b][0]] ?? 0) - (RANK[GROUND[a][0]] ?? 0))[0];
+    // (step 9: on the Tidemark a jetty's deck takes its cell: two of our tiles wide or less, Tollhaven's three jetties lost
+    // the vote to the water round them and the harbour had none; docs/art-critic-pass-tidemark.md)
+    const t = region === 'tidemark' && n.has(G.DECK) ? G.DECK : [...n.keys()].sort((a, b) => n.get(b) - n.get(a) || (RANK[GROUND[b][0]] ?? 0) - (RANK[GROUND[a][0]] ?? 0))[0];
     let c = GROUND[t][0], hh = GROUND[t][1];
     if (c === 'g') c = B.turf(hash('g', i, j) % 100, i, j);   // (the open ground: the region's turf, scrub or snow)
     else if ((c === '~' || c === 'o') && B.water) { c = B.water; hh = '1'; }   // (the Heights' water frozen over: ice, at the bank's height)
@@ -427,10 +439,26 @@ function outdoor(w, region) {
   // as the Ninth Vault's does. GRACE_OFF: her middle that many sim tiles east of the reef (the sea's edge is 5 out,
   // outdoor.js pools; the level ends at 258, MAX_TILES, so she lies along the shore, not out to sea)
   if (region === 'tidemark' && w.kind === 'overland' && TIDEMARK?.reef) sprites.push({ id: 'tidemark_wreck', x: X(TIDEMARK.reef[0] + GRACE_OFF), z: Z(TIDEMARK.reef[1]) });
+  // (step 9) the sea past the level's crop, from the sim's own grid (it runs PAD tiles past the map): a mask a cell of
+  // Luminati's (two of ours), '1' where the sim has sea or beach, for world.js seaAir to lay the sea there and take the
+  // outer ground and its trees down (Luminati's outer scenery only continues the edge: south of a grass edge tile it laid
+  // fields where the sim has the bay; docs/art-critic-pass-tidemark.md)
+  if (region === 'tidemark') {
+    const mx0 = Math.floor((-w.PAD - x0) / 2), mz0 = Math.floor((-w.PAD - y0) / 2), mw = Math.floor((w.W + 2 * w.PAD) / 2), md = Math.floor((w.H + 2 * w.PAD) / 2), rows = [];
+    for (let j = 0; j < md; j++) { let r = ''; for (let i = 0; i < mw; i++) { const g = tm(x0 + 2 * (mx0 + i), y0 + 2 * (mz0 + j)); r += g === G.POOL || g === G.WATER || g === G.SAND ? '1' : '0'; } rows.push(r); }
+    sprites.push({ seaMask: { x0: mx0, z0: mz0, w: mw, d: md, rows } });
+  }
   // (v1.157) the Grace herself, the region boss's ship, hove to in Gullwick's bay off the wreckers' beach, where her
   // broadside comes from (ring.js GRACE.broadside.from, past the arena's edge); stood always, shown only while her window
   // is open (world.js: `ring`, the frame's ringOn from hybrid.js)
-  if (region === 'tidemark' && w.kind === 'overland') sprites.push({ id: 'tidemark_graceship', x: X(GRACE_SHIP[0]), z: Z(GRACE_SHIP[1]), here: true, ring: 'the_grace' });
+  // (step 9) Tollhaven's harbour: the League's boats moored alongside its three jetties (outdoor.js buildTown's jetties,
+  // x 146, 166, 186 north from the quay), in the water between them, painters to the jetties' posts: the harbour read as
+  // a lake with planks out into it (docs/art-critic-pass-tidemark.md)
+  if (region === 'tidemark' && w.kind !== 'overland') for (const [bx, by] of MOORED) sprites.push({ id: 'tidemark_ferry', x: X(bx), z: Z(by), here: true });
+  // (step 9) the wreck the wreckers are stripping, in the shallows off their beach (camps.js tide_wreckers), where nobody
+  // walks: their camp otherwise reads as any beach fire (docs/art-critic-pass-tidemark.md)
+  if (region === 'tidemark' && w.kind === 'overland') sprites.push({ id: 'tidemark_wreckage', x: X(WRECKAGE[0]), z: Z(WRECKAGE[1]), here: true });
+  if (region === 'tidemark' && w.kind === 'overland') sprites.push({ id: 'tidemark_graceship', x: X(GRACE_SHIP[0]), z: Z(GRACE_SHIP[1]), y: 0, ring: 'the_grace' });   // (y: the sea floor's, her middle past the level's edge)
   // (the owner, 2026-11-26: the jetties to the Drowned Mole and the Gull Isles "just stop at a dead end") a boat waiting at
   // each, moored off the jetty's end by its exit (outdoor.js TIDEMARK.ferry, .isles), her lantern lit by night, her
   // boatman stood in her stern as a figure (hybrid.js: `figures`, idle, never the sim's)
@@ -627,7 +655,7 @@ KIT_LOOK.docks = { floor: ['_', '_'], wall: 'o', cave: 'o', hour: 21.2, mix: 0, 
 // (v1.150) the Drowned Mole's second floor (docs/tidemark-plan.md): the empire's stone moles at low water, the same harbour
 // round them as the wharf's; wet flagstone, the stone's own face down to the water (no deck fascia, piles or rail), the
 // bollards and the mist kept; a later dusk than the wharf's, the lamps just lit
-KIT_LOOK.mole = { floor: ['w', 'w'], wall: 'o', cave: 'o', hour: 19.4, mix: 0, inside: true, water: true, stone: true, fill: DOCK_FILL, backdrop: '#465870' };
+KIT_LOOK.mole = { floor: ['µ', 'µ'], wall: 'o', cave: 'o', hour: 19.4, mix: 0, inside: true, water: true, stone: true, fill: DOCK_FILL, backdrop: '#465870' };
 // (v1.151) the Gull Isles (docs/tidemark-plan.md step 4): the sea cave, dark earth and rock under the isle with its wet
 // shingle, a cool fill off the water; the hulks, a ship's inside, deck planks under whole timber walls (the inn's, its frame
 // the ribs), the lanterns warm. A first look: the art pass (step 9) takes them further

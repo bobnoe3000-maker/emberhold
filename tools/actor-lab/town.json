@@ -2435,7 +2435,24 @@
         0.98,
         1.0
       ],
-      "nofoot": true
+      "nofoot": true,
+      "scale": 0.8
+    },
+    {
+      "id": "tidemark_wreckage",
+      "model": "wreckage",
+      "build": "wreckage",
+      "style": "tidemark",
+      "seed": 59,
+      "gain": 0.66,
+      "desat": 0.12,
+      "tint": [
+        0.96,
+        0.98,
+        1.0
+      ],
+      "nofoot": true,
+      "scale": 1.3
     }
   ]
 }

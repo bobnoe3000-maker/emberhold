@@ -2441,6 +2441,51 @@ Object.assign(TYPES, {
       const pen = new THREE.Mesh(pg, new THREE.MeshStandardMaterial({ color: '#5a6a62', side: THREE.DoubleSide })); pen.position.set(X(0.5), gun(0.5) - 0.06 + 1.5, 0); pen.rotation.y = 0.3; ship.add(pen); }
   },
 });
+// ── the wreckers' beach (camps.js tide_wreckers; docs/art-critic-pass-tidemark.md): the wreck they're stripping, in the
+// shallows just off the camp's sand, where nobody walks (presentation only, no footprint). A merchantman's broken
+// quarter on its side at the waterline, her ribs standing bare where the planking's already been taken, a few planks
+// left on them; a broken spar across the shallows with its rope, the mast's stump; the planks they've had off her
+// floated in a raft at her side, a cask. All in the water (the sand is the fight's). Low: nothing over a man.
+Object.assign(TYPES, {
+  wreckage(S, g, r) {
+    const hullM = mat(tex('planks', '#5a4a3a', 97)), rib = mat(null, '#3e3024'), spar = mat(null, '#6a5a44'), rope = mat(null, '#8a7650'), weed = mat(null, '#2e4a34');
+    hullM.side = THREE.DoubleSide;
+    // (round 1: a quarter of hull laid flat read as a broken jetty, its ribs as pilings) her skeleton in the shallows, as a
+    // stripped wreck reads from anywhere: the keel along the waterline, her ribs rising from it either side in pairs like
+    // a ribcage, the forward ones broken short; her stem post standing at the bow; the planking still on her after third,
+    // where they've not got to it yet
+    const L = 1.0, Rr = 0.2, kx = (t) => -L / 2 + L * t, ribs = 9;
+    box(L + 0.06, 0.04, 0.05, rib, 0, WL - 0.01, 0, g);                                            // the keel
+    for (let k = 0; k < ribs; k++) {
+      const t = (k + 0.5) / ribs, x = kx(t), w = Rr * Math.sin(Math.PI * (0.15 + 0.85 * t)) + 0.03, broken = t < 0.35 ? 0.45 + r() * 0.3 : 1;
+      for (const sz of [-1, 1]) {
+        // a frame: a floor timber out from the keel, then the futtock rising and leaning out (round 2: tori lay flat)
+        const h = (0.26 + 0.06 * Math.sin(Math.PI * t)) * (sz < 0 ? broken : Math.min(1, broken + 0.2)), lean = 0.32;
+        box(0.035, 0.03, w, rib, x, WL - 0.005, sz * w / 2, g);
+        const fut = box(0.035, h, 0.035, rib, x, 0, 0, g); fut.position.set(x, WL + Math.cos(lean) * h / 2, sz * (w + Math.sin(lean) * h / 2)); fut.rotation.x = sz * lean;
+      }
+    }
+    // the stem post at her bow, rising and raking forward; the sternpost, shorter
+    const stem = box(0.045, 0.42, 0.045, rib, 0, 0, 0, g); stem.position.set(kx(0) - 0.06, WL + 0.19, 0); stem.rotation.z = 0.35;
+    box(0.04, 0.24, 0.04, rib, kx(1) + 0.03, WL, 0, g);
+    // her planking still on the after third, both sides, a strake or two hanging loose
+    for (const sz of [-1, 1]) for (let q = 0; q < 4; q++) {
+      const y = WL + 0.03 + q * 0.05, w = Rr * (0.85 - q * 0.1) * 0.95 + 0.04;
+      const pl = box(L * 0.34, 0.045, 0.014, hullM, kx(0.8), y, sz * (w + 0.02), g); pl.rotation.x = sz * 0.25;
+    }
+    const loose = box(0.3, 0.04, 0.014, hullM, kx(0.58), WL + 0.06, -0.2, g); loose.rotation.set(0.3, 0.2, -0.5);
+    for (let k = 0; k < 6; k++) box(0.02, 0.05 + r() * 0.05, 0.012, weed, kx(0.3 + r() * 0.6), WL + 0.02, (r() - 0.5) * 0.4, g);
+    // the broken spar across the shallows, the stump of her mast, rope off it
+    const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.024, 0.8, 6), spar); sp.rotation.set(Math.PI / 2 - 0.08, 0.9, 0); sp.position.set(-0.05, 0.08, -0.28); g.add(sp);
+    const st = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.26, 6), spar); st.rotation.z = 0.5; st.position.set(0.28, 0.12, 0.12); g.add(st);
+    const rp = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.008, 4, 10), rope); rp.rotation.x = Math.PI / 2; rp.position.set(-0.3, 0.09, -0.2); g.add(rp);
+    // the planks they've had off her, floated in a raft at her side to be hauled up, and a cask (in the water: the beach
+    // is the fight's)
+    for (let k = 0; k < 4; k++) { const p = box(0.36, 0.016, 0.05, mat(tex('planks', '#7a6a54', 98)), -0.1 + (r() - 0.5) * 0.02, 0.085, 0.36 + k * 0.055, g); p.rotation.y = 0.15 + (r() - 0.5) * 0.1; }
+    const cask = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.1, 8), mat(null, '#5a4430')); cask.rotation.z = Math.PI / 2; cask.position.set(0.18, 0.1, 0.42); g.add(cask);
+    for (let k = 0; k < 3; k++) { const pl = box(0.3, 0.012, 0.045, hullM, -0.2 + r() * 0.3, 0.075, -0.45 + r() * 0.15, g); pl.rotation.y = r() * 3; }   // (loose planks adrift)
+  },
+});
 // ── the Tidemark's two boats waiting at their jetties (the owner, 2026-11-26: "the overland entrance to the dungeon just
 // stops at a dead end.. should there be a waiting ferry or something else obvious?"). Stood by convert.js (BOATS) off the
 // end of Gullwick's ferry jetty (the Drowned Mole's way in) and the Gull Isles' landing jetty, in the sea: presentation

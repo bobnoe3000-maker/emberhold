@@ -275,10 +275,10 @@ registerPresets({
   // (v1.157) the Grace's boarders up out of the surf (hybrid.js: a boarder first seen): a burst of white water about
   // their knees, falling back, and a few drops thrown higher
   emberSurf: { mode: 'burst', motion: 'emit', texture: 'smoke', blending: 'normal', variants: 1, lit: 1, pulse: 0, tumble: 0, aspect: 1, streak: 0, fade: [0.02, 0.5], twinkle: 0, blink: 0, nightVisibility: 0,
-    count: 14, life: [0.5, 1.0], size: [0.25, 0.45], sizeEnd: 1.1, spawnSize: [0.6, 0.1, 0.6], burstSpeed: [0.6, 1.6], burstUp: [1.2, 2.6], gravity: -5, drag: 1.2, windInfluence: 0.2, spin: [0.2, 0.8],
-    color: '#e8f2f4', colorEnd: '#a8c0c8', alpha: 0.85 },
+    count: 20, life: [0.7, 1.3], size: [0.45, 0.8], sizeEnd: 1.4, spawnSize: [0.9, 0.1, 0.9], burstSpeed: [0.8, 2.0], burstUp: [1.6, 3.2], gravity: -5, drag: 1.2, windInfluence: 0.2, spin: [0.2, 0.8],
+    color: '#f4fbff', colorEnd: '#7fa6b8', alpha: 0.95 },   // (round 1, 0.25–0.45 near-white: unseen against the sand)
   emberSurfDrops: { mode: 'burst', motion: 'emit', texture: 'streak', blending: 'normal', variants: 1, lit: 1, pulse: 0, tumble: 0, aspect: 3, streak: 0.03, fade: [0, 0.3], twinkle: 0, blink: 0, nightVisibility: 0,
-    count: 10, life: [0.4, 0.8], size: [0.04, 0.06], sizeEnd: 0.2, spawnSize: [0.4, 0.1, 0.4], burstSpeed: [0.8, 2.0], burstUp: [2.5, 4.0], gravity: -9, drag: 0.6,
+    count: 16, life: [0.5, 0.9], size: [0.06, 0.09], sizeEnd: 0.3, spawnSize: [0.4, 0.1, 0.4], burstSpeed: [0.8, 2.0], burstUp: [2.5, 4.0], gravity: -9, drag: 0.6,
     colors: ['#ffffff', '#d8ecf0', '#b0ccd4'], alpha: 0.9 },
   // the stack's smoke: grey, lit by the world, its colour white-balanced as it's let go (greyPuff); rising, swelling and
   // leaning off downwind (a burst, as Luminati's deathPoof: its pool and program)
@@ -353,7 +353,7 @@ function puffStack(f, dt) {
 }
 /** the bosses' moments in Luminati's particles (renderer.js puffs, hybrid.js), each a burst where it happens */
 const _puff = new THREE.Vector3();
-const PUFFS = { surf: [['emberSurf', 14, 0.15], ['emberSurfDrops', 10, 0.2]], strike: [['emberForgeSparks', 12, 0.55]], arm: [['emberArmSparks', 22, 0.3]], spoil: [['emberSpoilSmoke', 14, 0.6], ['emberSpoilEmbers', 8, 0.55]], vent: [['emberVentSlag', 12, 0.1], ['emberVentSmoke', 4, 0.2]] };
+const PUFFS = { surf: [['emberSurf', 20, 0.15], ['emberSurfDrops', 16, 0.2]], strike: [['emberForgeSparks', 12, 0.55]], arm: [['emberArmSparks', 22, 0.3]], spoil: [['emberSpoilSmoke', 14, 0.6], ['emberSpoilEmbers', 8, 0.55]], vent: [['emberVentSlag', 12, 0.1], ['emberVentSmoke', 4, 0.2]] };
 function placePuffs(list) {
   const P = game?.particles; if (!P || !list) return;
   for (const q of list) { const B = PUFFS[q.kind]; if (!B) continue; for (const [preset, n, lift] of B) { _puff.set(q.x, game.tileMap.getHeight(q.x, q.z) + lift, q.z); P.burst(preset, _puff, n); } }
@@ -1640,12 +1640,13 @@ async function placeEnv(list, region) {
     if (p.canvas) { standOurs(p); continue; }
     if (p.arch) { const g = buildArch(p.arch); game.engine.scene.add(g); envSprites.push(g); continue; }
     if (p.tavern) { const g = buildTavern(p.tavern.pieces); game.engine.scene.add(g); envSprites.push(g); continue; }
+    if (p.seaMask) { seaMask = p.seaMask; if (seaLv) seaAir(seaLv, seaRegion, true); continue; }
     if (p.magma) { const g = buildMagma(p.magma.cells); game.engine.scene.add(g); envSprites.push(g); continue; }
     const kit = KIT.get(p.id);
     if (kit && (LANDMARKS === 'all' || (LANDMARKS === 'chosen' && !p.card) || (LANDMARKS === 'doors' && DOORS.has(p.id)))) {
       // (on the ground round it, not the tile under its middle: the chapel stands in water the converter laid under it)
       // (here: on the ground under its middle alone: a boat moored off a jetty, its deck within three units, sat on the sea floor)
-      const H = (dx, dz) => game.tileMap.getHeight(p.x + dx, p.z + dz), y = p.here ? H(0, 0) : Math.max(H(0, 0), H(0, 3), H(0, -3), H(3, 0), H(-3, 0));
+      const H = (dx, dz) => game.tileMap.getHeight(p.x + dx, p.z + dz), y = p.y ?? (p.here ? H(0, 0) : Math.max(H(0, 0), H(0, 3), H(0, -3), H(3, 0), H(-3, 0)));   // (y: set outright, a piece past the level's edge: the Grace on the sea)
       const g = kitPiece(kit, p.x, y, p.z);
       if (p.ring) { g.userData.ring = p.ring; g.visible = false; ringPieces.push(g); }   // (a region boss's set piece: shown in its window, frame's ringOn)
       game.engine.scene.add(g); envSprites.push(g); continue;
@@ -1760,9 +1761,17 @@ const HARBOUR = ['#1c262f', '#18212a', '#151d25', '#121920'];   // (round 3: sla
 // ground vertex whose nearest edge tile is water is laid under the water line, its trees there hidden, and a strip of the
 // level's own water (its material: the shore texture clamps at the edge, so it reads as one sea) runs out from every wet
 // edge tile to the outer ground's reach. Land edges keep their hills and woods. Undone with the level (seaSheet).
-let seaSheet = null, seaStat = null, seaMat = null, seaDeep = null;   // (seaStat: what it did, for the captures' --stats)
+let seaSheet = null, seaStat = null, seaMat = null, seaDeep = null, seaMask = null, seaLv = null, seaRegion = null;   // (seaStat: what it did, for the captures' --stats)
 const SEA_REACH = 170;   // (Scenery.js outerGroundSteps' extent)
-function seaAir(lv, region) {
+/** a mesh's heights as built, kept on first touch and put back on every later one (seaAir decides afresh each pass) */
+function seaKeep(o, pa, ac) {
+  if (!o.userData.seaY) { o.userData.seaY = Float32Array.from({ length: pa.count }, (_, i) => pa.getY(i)); if (ac) o.userData.seaC = Float32Array.from({ length: ac.count }, (_, i) => ac.getY(i)); return; }
+  const Y = o.userData.seaY, C = o.userData.seaC; for (let i = 0; i < pa.count; i++) pa.setY(i, Y[i]); if (ac && C) for (let i = 0; i < ac.count; i++) ac.setY(i, C[i]);
+  pa.needsUpdate = true; if (ac) ac.needsUpdate = true;
+}
+function seaAir(lv, region, masked = false) {
+  if (!masked) seaMask = null;   // (a level's mask comes with its sprites, after: placeEnv calls again with it)
+  seaLv = lv; seaRegion = region;
   if (seaSheet) { seaSheet.parent?.remove(seaSheet); seaSheet.geometry.dispose(); seaSheet = null; }
   if (seaMat && seaMat.userData.of !== game?.world?.water?.material) { seaMat.dispose(); seaMat = null; }   // (a level's water is its own: the copy follows it)
   const env = lv.environment || {}, W = game?.world, tm = game?.tileMap;
@@ -1771,18 +1780,22 @@ function seaAir(lv, region) {
   // (wet: water, or the beach's sand, which on this coast always faces the sea: the sim's south-east corner is a spit of
   // one bay's beach, and Luminati carried it on south as a green field with trees in the bay)
   const wetAt = (i, j) => { const t = tm.tileAt(Math.max(0, Math.min(Wd - 1, i)), Math.max(0, Math.min(Dd - 1, j))); return !!(t && (t.water || t.type?.water || t.type?.top === 'sand')); };
-  const outside = (x, z) => x < 0 || z < 0 || x > Wd || z > Dd;
-  const edgeWet = (x, z) => wetAt(Math.floor(Math.max(0, Math.min(Wd - 0.5, x))), Math.floor(Math.max(0, Math.min(Dd - 0.5, z))));
+  const outside = (x, z) => x <= 0 || z <= 0 || x >= Wd || z >= Dd;   // (on the edge too: the outer ground's first row stood a hair over the water, a dark seam along the level's edge)
+  const edgeOnly = (x, z) => wetAt(Math.floor(Math.max(0, Math.min(Wd - 0.5, x))), Math.floor(Math.max(0, Math.min(Dd - 0.5, z))));
+  // (the sim's own sea past the crop where the mask has it, convert.js seaMask; past the mask, the edge's)
+  const M = seaMask, maskAt = (x, z) => { if (!M) return null; const i = Math.floor(x) - M.x0, j = Math.floor(z) - M.z0; return i < 0 || j < 0 || i >= M.w || j >= M.d ? null : M.rows[j][i] === '1'; };
+  const edgeWet = (x, z) => { const m = maskAt(x, z); return m === null ? edgeOnly(x, z) : m; };
   seaStat = { flat: 0, hid: 0, kept: 0 };
   // the outer ground under the sea
   const og = W.outerGround;
-  if (og && !og.userData.sea) {
+  if (og && (!og.userData.sea || masked)) {
     og.userData.sea = true;
     const v = new THREE.Vector3(), inv = new THREE.Matrix4();
     og.updateMatrixWorld(true);
     og.traverse((o) => {
       if (!o.isMesh) return;
       const pa = o.geometry.attributes.position; inv.copy(o.matrixWorld).invert(); let n = 0;
+      seaKeep(o, pa, null);   // (its own heights back first: a second pass, with the mask, decides afresh)
       for (let i = 0; i < pa.count; i++) {
         v.fromBufferAttribute(pa, i).applyMatrix4(o.matrixWorld);
         if (!outside(v.x, v.z) || !edgeWet(v.x, v.z)) continue;
@@ -1791,23 +1804,38 @@ function seaAir(lv, region) {
       if (n) { pa.needsUpdate = true; o.geometry.computeVertexNormals(); o.geometry.computeBoundingSphere(); }
     });
   }
-  // the outer trees over it
-  // (a piece is any mesh under a group named trees:outer…, at any depth: its trunks and its canopies are meshes of their own)
+  // the outer trees over it, tree by tree: the pieces are merged across land and sea (a trunk was left standing in the
+  // bay), so every vertex whose tree (its aCenter, the billboard's pivot, else itself) stands past a wet edge is dropped
+  // far under the ground, its pivot with it
   const under = (o) => { for (let q = o; q; q = q.parent) if (/trees:outer/.test(q.name || '')) return true; return false; };
   W.root.updateMatrixWorld(true);
+  const cw = new THREE.Vector3();
   W.root.traverse((o) => {
     if (!o.isMesh || !under(o)) return;
-    if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
-    const bb = o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld), c = bb.getCenter(new THREE.Vector3());
-    // (hidden when it stands past a wet edge: its middle, or most of it, out over the sea)
-    const wetCorners = [[bb.min.x, bb.min.z], [bb.max.x, bb.min.z], [bb.min.x, bb.max.z], [bb.max.x, bb.max.z], [c.x, c.z]].filter(([x, z]) => outside(x, z) && edgeWet(x, z)).length;
-    if (wetCorners >= 3) { o.visible = false; seaStat.hid++; } else seaStat.kept++;
+    const pa = o.geometry.attributes.position, ac = o.geometry.attributes.aCenter, src = ac || pa; let n = 0;
+    seaKeep(o, pa, ac);
+    for (let i = 0; i < pa.count; i++) {
+      cw.fromBufferAttribute(src, i).applyMatrix4(o.matrixWorld);
+      if (!outside(cw.x, cw.z) || !edgeWet(cw.x, cw.z)) continue;
+      pa.setY(i, -200); if (ac) ac.setY(i, -200); n++;
+    }
+    if (n) { pa.needsUpdate = true; if (ac) ac.needsUpdate = true; o.geometry.computeBoundingSphere(); seaStat.hid += n; } else seaStat.kept++;
   });
   // the sheet: a quad out from each wet edge tile, and a square at each wet corner
   const pos = [], push = (x0, z0, x1, z1) => pos.push(x0, wl, z0, x0, wl, z1, x1, wl, z1, x0, wl, z0, x1, wl, z1, x1, wl, z0), R = SEA_REACH;
+  if (M) {
+    // the mask's sea cells past the level (runs of a row merged), and from its outer border's wet cells strips on out
+    for (let j = 0; j < M.d; j++) { let a = -1; for (let i = 0; i <= M.w; i++) { const z = M.z0 + j, x = M.x0 + i, on = i < M.w && M.rows[j][i] === '1' && outside(x + 0.5, z + 0.5);
+      if (on && a < 0) a = i; if (!on && a >= 0) { push(M.x0 + a, z, M.x0 + i, z + 1); a = -1; } } }
+    const X0 = M.x0, Z0 = M.z0, X1 = M.x0 + M.w, Z1 = M.z0 + M.d;
+    for (let i = 0; i < M.w; i++) { if (M.rows[0][i] === '1') push(X0 + i, Z0 - R, X0 + i + 1, Z0); if (M.rows[M.d - 1][i] === '1') push(X0 + i, Z1, X0 + i + 1, Z1 + R); }
+    for (let j = 0; j < M.d; j++) { if (M.rows[j][0] === '1') push(X0 - R, Z0 + j, X0, Z0 + j + 1); if (M.rows[j][M.w - 1] === '1') push(X1, Z0 + j, X1 + R, Z0 + j + 1); }
+    if (M.rows[0][0] === '1') push(X0 - R, Z0 - R, X0, Z0); if (M.rows[0][M.w - 1] === '1') push(X1, Z0 - R, X1 + R, Z0); if (M.rows[M.d - 1][0] === '1') push(X0 - R, Z1, X0, Z1 + R); if (M.rows[M.d - 1][M.w - 1] === '1') push(X1, Z1, X1 + R, Z1 + R);
+  } else {
   for (let i = 0; i < Wd; i++) { if (wetAt(i, 0)) push(i, -R, i + 1, 0); if (wetAt(i, Dd - 1)) push(i, Dd, i + 1, Dd + R); }
   for (let j = 0; j < Dd; j++) { if (wetAt(0, j)) push(-R, j, 0, j + 1); if (wetAt(Wd - 1, j)) push(Wd, j, Wd + R, j + 1); }
   if (wetAt(0, 0)) push(-R, -R, 0, 0); if (wetAt(Wd - 1, 0)) push(Wd, -R, Wd + R, 0); if (wetAt(0, Dd - 1)) push(-R, Dd, 0, Dd + R); if (wetAt(Wd - 1, Dd - 1)) push(Wd, Dd, Wd + R, Dd + R);
+  }
   if (!pos.length) return;
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute('normal', new THREE.Float32BufferAttribute(new Float32Array(pos.length).map((_, k) => (k % 3 === 1 ? 1 : 0)), 3));
@@ -2083,6 +2111,9 @@ registerTextureSet((K) => {
     // the Fens' (world doc §3.2): the Toadking's mud, black and olive, a wet glint; the locks' slick blue-grey flags;
     // Vat Seven's flags stained sick green, slime in the joints; the abbey's pale cloister stone gone green-grey
     fen_mud: { px: [64, 64], normalScale: 0.5, gen: recolor('dirt', P(['#2c271e', '#3a3428', '#4a4232', '#5a503c', '#6a5e46', '#7a6c52', '#8a7a5e']), (s, x, y, i, t, ctx) => { if (K.hash2(x, y, ctx.seed + 5) > 0.985) s.set(x, y, WET[1]); }) },
+    // (step 9) the Drowned Mole's sea walls: irregular granite flags a unit or so across (the inn's layout), warm wet grey,
+    // dark joints with the sea's green in them (convert.js 'µ': the locks' blue tile grid read as a bathroom floor)
+    mole_flag: { px: [64, 64], normalScale: 0.8, gen: (s) => tavernFlags(s, K, P(['#23272a', '#4b4a46', '#57554f', '#625f58', '#6d6961', '#78736a', '#837d73']), true) },
     wet_flag: { px: [64, 64], normalScale: 0.6, gen: recolor('stone_tiles', P(['#2c3438', '#3a454a', '#4a565c', '#5a676e', '#6a7880', '#7c8a92', '#909ea4']), (s, x, y, i, t, ctx) => { if (t > 0.7 && K.hash2(x, y, ctx.seed + 5) > 0.93) s.set(x, y, WET[0]); }) },
     sick_flag: { px: [64, 64], normalScale: 0.6, gen: recolor('stone_tiles', P(['#2c3224', '#3a422e', '#4a5438', '#5a6544', '#6a7650', '#7a865c', '#8a9668']), (s, x, y, i, t, ctx) => { if (t < 0.14 && K.hash2(x >> 1, y >> 1, ctx.seed + 7) < 0.8) s.set(x, y, SLIME[(x + y) & 1]); }) },
     abbey_flag: { px: [64, 64], normalScale: 0.6, gen: recolor('stone_tiles', P(['#2e3430', '#3e4540', '#4f5650', '#606860', '#717970', '#838a80', '#969c90'])) },
@@ -2659,7 +2690,7 @@ function freeSpell(rec) {
 // meshes of one pool, the flash, smoke, splashes and kicks the spells' quads.
 const broadsides = [], bsLive = new Map(), shotPool = []; let shotMat = null;
 function shotMesh(i) {
-  if (!shotPool[i]) { shotMat ||= new THREE.MeshStandardMaterial({ color: 0x2a2a2e, roughness: 0.5, metalness: 0.6 }); const m = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 6), shotMat); m.castShadow = true; game.engine.scene.add(m); shotPool[i] = m; }
+  if (!shotPool[i]) { shotMat ||= new THREE.MeshStandardMaterial({ color: 0x3a3a42, roughness: 0.45, metalness: 0.5 }); const m = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), shotMat); m.castShadow = true; game.engine.scene.add(m); shotPool[i] = m; }
   return shotPool[i];
 }
 function broadside(list, dt) {
@@ -2684,14 +2715,14 @@ function broadside(list, dt) {
 function shotFrame(rec, t, L, ns) {
   const y0 = game.tileMap.getHeight(t.x, t.z), len = t.r;
   if (L == null) {
-    q(rec.flash, { frame: 'dragonEmbers', index: Math.floor(performance.now() / 120) % 2, x: t.x, y: y0 + 0.9, z: t.z, mode: 'billboard', scale: 0.35, r: 1.6, g: 0.7, b: 0.3, a: 0.4 + 0.5 * t.p });
-    rec.smoke.forEach((h, i) => q(h, { frame: 'dust', index: i % 3, x: t.x - t.dz * (i - 1) * 0.8, y: y0 + 0.8 + 0.2 * i, z: t.z + t.dx * (i - 1) * 0.8, mode: 'billboard', scale: 0.9, r: 0.55, g: 0.56, b: 0.6, a: 0.18 * t.p }));
+    q(rec.flash, { frame: 'dragonEmbers', index: Math.floor(performance.now() / 120) % 2, x: t.x, y: y0 + 0.9, z: t.z, mode: 'billboard', scale: 0.6, r: 1.8, g: 0.8, b: 0.3, a: 0.5 + 0.5 * t.p, halo: 1 });
+    rec.smoke.forEach((h, i) => q(h, { frame: 'dust', index: i % 3, x: t.x - t.dz * (i - 1) * 0.8, y: y0 + 0.8 + 0.2 * i, z: t.z + t.dx * (i - 1) * 0.8, mode: 'billboard', scale: 1.2, r: 0.7, g: 0.7, b: 0.74, a: 0.3 * t.p }));
     rec.kicks.forEach((h) => q(h, { frame: 'dust', index: 0, x: 0, y: -500, z: 0, mode: 'billboard', a: 0 }));
     return;
   }
   // landed: the flash (a third of a second white-orange), the smoke rolling out and up for two seconds and more
-  q(rec.flash, { frame: 'dragonBlast', index: Math.min(5, Math.floor(L * 20)), x: t.x, y: y0 + 0.9, z: t.z, mode: 'billboard', scale: 1.3, r: 2.2, g: 1.4, b: 0.6, a: L < 0.3 ? 1 : 0 });
-  rec.smoke.forEach((h, i) => { const k = Math.min(1, L / 2.6); q(h, { frame: 'dust', index: Math.min(2, Math.floor(k * 3)), x: t.x - t.dz * (i - 1) * 0.9 + t.dx * k * 0.6, y: y0 + 0.9 + 1.4 * k + 0.2 * i, z: t.z + t.dx * (i - 1) * 0.9 + t.dz * k * 0.6, mode: 'billboard', scale: 1.0 + 1.6 * k, r: 0.62, g: 0.62, b: 0.66, a: 0.55 * (1 - k) }); });
+  q(rec.flash, { frame: 'dragonBlast', index: Math.min(5, Math.floor(L * 20)), x: t.x, y: y0 + 0.9, z: t.z, mode: 'billboard', scale: 2.4, r: 2.4, g: 1.5, b: 0.6, a: L < 0.35 ? 1 : 0, halo: 1 });
+  rec.smoke.forEach((h, i) => { const k = Math.min(1, L / 2.6); q(h, { frame: 'dust', index: Math.min(2, Math.floor(k * 3)), x: t.x - t.dz * (i - 1) * 0.9 + t.dx * k * 0.6, y: y0 + 0.9 + 1.4 * k + 0.2 * i, z: t.z + t.dx * (i - 1) * 0.9 + t.dz * k * 0.6, mode: 'billboard', scale: 1.6 + 2.6 * k, r: 0.8, g: 0.8, b: 0.82, a: 0.8 * (1 - k) }); });
   // the iron: three balls, each a little behind the last, skipping up the lane: a hop every unit and a half, lower each time
   for (let b = 0; b < 3; b++) {
     const tb = L - b * 0.08 - (rec.seed % 5) * 0.01, m = shotMesh(ns.n++);
@@ -2699,11 +2730,11 @@ function shotFrame(rec, t, L, ns) {
     const end = len - b * 0.6, sp = 26, d = Math.min(end, tb * sp * Math.exp(-tb * 0.55)), hop = 1.6, ph = (d % hop) / hop, n = Math.floor(d / hop);
     const off = (b - 1) * t.w * 0.45, x = t.x + t.dx * d - t.dz * off, z = t.z + t.dz * d + t.dx * off;
     const hgt = 0.55 * Math.exp(-n * 0.55) * Math.sin(Math.PI * ph) * (d < end - 0.05 ? 1 : 0);
-    m.visible = tb < 3.0; m.position.set(x, game.tileMap.getHeight(x, z) + 0.11 + hgt, z);
+    m.visible = tb < 3.0; m.position.set(x, game.tileMap.getHeight(x, z) + 0.17 + hgt * 1.4, z);
     // where it strikes (each hop's landing): a splash on the sea, a kick of sand on the beach, a breath long
     const kh = rec.kicks[b * 2 + (n % 2)], kx = t.x + t.dx * n * hop - t.dz * off, kz = t.z + t.dz * n * hop + t.dx * off, wet = game.tileMap.getHeight(kx, kz) < 0.5;
-    q(kh, { frame: 'dust', index: Math.min(2, Math.floor(ph * 3)), x: kx, y: game.tileMap.getHeight(kx, kz) + 0.25 + 0.3 * ph, z: kz, mode: 'billboard', scale: 0.5 + 0.5 * ph,
-      r: wet ? 0.9 : 0.85, g: wet ? 0.97 : 0.76, b: wet ? 1.05 : 0.58, a: tb < 2.6 && n > 0 && d < end - 0.05 ? 0.7 * (1 - ph) : 0 });
+    q(kh, { frame: 'dust', index: Math.min(2, Math.floor(ph * 3)), x: kx, y: game.tileMap.getHeight(kx, kz) + 0.25 + 0.3 * ph, z: kz, mode: 'billboard', scale: 0.9 + 0.9 * ph,
+      r: wet ? 1.0 : 0.95, g: wet ? 1.05 : 0.84, b: wet ? 1.1 : 0.62, a: tb < 2.6 && n > 0 && d < end - 0.05 ? 0.9 * (1 - ph) : 0 });
   }
 }
 // (v1.154) burning pitch (battle.js hazards 'pitch', hybrid.js): over the tar pool and its rim (frame()), flames licking up

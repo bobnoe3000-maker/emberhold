@@ -1249,7 +1249,7 @@ export const PROPS = {
   // the hem; the stern-lantern of his ship on his belt, lit the drowned's pale sea-green (userData.glow, hung plumb)
   gracehat: () => {
     const g = PROPS.tricorne(); g.name = 'Grace_Hat';
-    const felt = new THREE.MeshStandardMaterial({ color: 0x1e2624, roughness: 0.9, side: THREE.DoubleSide }), lace = mat(0xb0903e, 0.5, 0.5), weed = mat(0x3e7048, 0, 0.9);
+    const felt = new THREE.MeshStandardMaterial({ color: 0x34403c, roughness: 0.9, side: THREE.DoubleSide }), lace = mat(0xc8a048, 0.5, 0.45), weed = mat(0x3e7048, 0, 0.9);
     g.traverse((o) => { if (o.isMesh) o.material = o.material.color.getHex() === 0xc89a2a ? lace : felt; });
     for (const [x, z, len] of [[-0.5, 0.1, 0.32], [0.46, -0.2, 0.26], [0.1, -0.6, 0.4], [-0.3, -0.5, 0.22]]) { const w = new THREE.Mesh(new THREE.BoxGeometry(0.06, len, 0.03), weed); w.position.set(x, 0.92 - len / 2, z); w.rotation.z = x * 0.3; w.name = 'Grace_Hat'; g.add(w); }
     return g;
