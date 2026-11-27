@@ -51,6 +51,7 @@ import { setFaceStyle, forgetFace } from './faces.js';
 // (GDD v1.79: every face is the painted head, faces.js paintedFace; ?faces=mesh the 3D parts, as before, for a comparison)
 if (typeof location !== 'undefined' && new URLSearchParams(location.search).get('faces') === 'mesh') setFaceStyle('mesh');
 import './ground.js';
+import { createShelf } from './shelf.js';
 
 let ASSETS = '';                                              // (the game's assets/: createWorld's `assets`)
 const FOV = 1;                                                // (degrees: near enough orthographic, see above)
@@ -75,9 +76,12 @@ const lampsFor = () => (quality === 'low' ? LOW_LAMPS : MAX_POINT_LIGHTS);
 // one, its programs compiled and its buffers on the GPU, instead of building it again (the owner, 2026-11-11: "Load
 // times from town to the main map takes up to 5-6 seconds"). Each with our art stood in it (its env sprites and kit
 // models), kept out of the scene meanwhile. Two at most: the overland, a town and a dungeon's floor are the round trips.
-const aside = new Map(), ASIDE_MAX = 2;
+// The shelf (shelf.js) runs the swaps one at a time and files each level left under its own key: two loads overlapping
+// (a restore while a level built) once filed the High Ramparts' world under Wickham Keep's key (shelf.js's header).
+const ASIDE_MAX = 2;
+const shelf = createShelf({ max: ASIDE_MAX, release: (/** @type {any} */ v) => { game.disposeKept(v.kept); dropEnv(v.env, v.made); } });
 const CALM_FLICKER = 0.12;                                    // (frame(): underground, no light flickers more than this)
-let curKey = '', curEnvKey = '', loading = false, lastWay = '';   // (lastWay: how the last level came: 'built', 'ahead', 'kept')
+let curEnvKey = '', loading = false, lastWay = '';   // (lastWay: how the last level came: 'built', 'ahead', 'kept')
 // The level next door built ahead (api.prepare: a town's overland, an overland's town), in slices (PREP_MS of work, then
 // PREP_GAP ms for the frames) while this one plays, as Luminati builds a campaign's next level (prepareWorld, buildSteps
 // paced); a swap to it takes it (swapLevel `prepared`), so the first trip there skips the build too. One at a time. Its
@@ -2168,10 +2172,10 @@ async function placeEnv(list, region) {
   dropEnv(envSprites, KIT_MADE); ringPieces.length = 0;
   envSprites = []; KIT_MADE = new Map();
   if (!list?.length) { sweepSheets(); return; }
-  const sets = ['env', `town-${region || 'vale'}`];
+  const sets = ['env', `town-${region || 'vale'}`], mine = levelId;
   const all = await Promise.all(sets.map((n) => json(`${ASSETS}env/${n}.json`)));
+  if (mine !== levelId) return;                               // (another level asked for meanwhile: not this art in it)
   const at = (id) => { for (let i = 0; i < sets.length; i++) { const m = all[i]?.sprites?.[id]; if (m) return [sets[i], m]; } return null; };
-  const mine = levelId;
   for (const p of list) {
     if (p.canvas) { standOurs(p); continue; }
     if (p.arch) { const g = buildArch(p.arch); game.engine.scene.add(g); envSprites.push(g); continue; }
@@ -3306,8 +3310,7 @@ function applyGrade() {
 // when visited). At boot the pool is made at its size (boot: game.lightPool)
 function lampsTo(n) {
   const old = game?.lightPool; if (!old || lampsSet === n || !game.lighting) return;
-  for (const [, v] of aside) { game.disposeKept(v.kept); dropEnv(v.env, v.made); } sweepSheets();
-  aside.clear(); dropPrep();
+  shelf.clear(); sweepSheets(); dropPrep();
   const np = new LightPool(game.lighting, [], { size: n, fixed: true });
   game.lightPool = np; lampsSet = n;
   const w = game.world;
@@ -4053,7 +4056,7 @@ const api = {
   prepare(level, region = 'vale') {
     if (!game || loading) return false;
     const lv = normalizeLevel(level).level, key = `${region}|${levelKey(lv)}`;
-    if (key === curKey || aside.has(key) || prep?.key === key) return false;
+    if (key === shelf.current || shelf.has(key) || prep?.key === key) return false;
     dropPrep();
     try {
       const world = game.prepareWorld(lv, () => true);
@@ -4067,48 +4070,52 @@ const api = {
   /** (for checks: the load times) Luminati's last level swap (ms), three.js's compiled programs and what's on the GPU */
   loadStats() {
     const R = game?.engine?.renderer;
-    return { swap: game?.loadStats?.lastSwap ?? null, programs: R?.info?.programs?.length ?? 0, geometries: R?.info?.memory?.geometries ?? 0, textures: R?.info?.memory?.textures ?? 0, kept: aside.size, ahead: prep ? (prep.done ? 'ready' : 'building') : '', last: lastWay };
+    return { swap: game?.loadStats?.lastSwap ?? null, programs: R?.info?.programs?.length ?? 0, geometries: R?.info?.memory?.geometries ?? 0, textures: R?.info?.memory?.textures ?? 0, kept: shelf.size, ahead: prep ? (prep.done ? 'ready' : 'building') : '', last: lastWay };
   },
-  /** build a level (the sim's world, converted), then stand our art in it; resolves when it's drawn */
+  /** build a level (the sim's world, converted), then stand our art in it; resolves when it's drawn (false: another
+   * load was asked for meanwhile, and this level isn't the one shown) */
   async load(level, sprites = [], region = 'vale') {
     const id = ++levelId;
-    if (region !== envRegion) { envRegion = region; envFrames.clear(); }
     const lv = normalizeLevel(level).level, key = `${region}|${levelKey(lv)}`, envKey = envKeyOf(sprites);
     loading = true;
-    building = (async () => {
-      let back = null;
+    // one load at a time, its art stood in before the next swap takes the level away (shelf.js: two overlapping filed a
+    // level under another's key). A load overtaken while it waited never runs.
+    building = shelf.swap(key, async ({ back, keep }) => {
+      let left = null;
       if (!game) { await boot(lv); lastWay = 'built'; }
       else {
-        back = aside.get(key) || null; if (back) aside.delete(key);
         const ahead = !back && prep && prep.key === key ? prep : null; if (ahead) prep = null;
         const to = back ? back.kept.level : ahead ? ahead.level : lv;
         lastWay = back ? 'kept' : ahead ? 'ahead' : 'built';
-        const { aside: left } = await game.swapLevel(to, { spawn: lv.spawn, keep: true, kept: back ? back.kept : null, prepared: ahead ? preparedOf(ahead) : null });
-        if (left && curKey) {                                     // the level left, with our art in it, out of the scene
+        const { aside } = await game.swapLevel(to, { spawn: lv.spawn, keep, kept: back ? back.kept : null, prepared: ahead ? preparedOf(ahead) : null });
+        if (aside) {                                              // the level left, with our art in it, out of the scene
           for (const o of envSprites) game.engine.scene.remove(o);
-          aside.set(curKey, { kept: left, env: envSprites, made: KIT_MADE, envKey: curEnvKey });
+          left = { kept: aside, env: envSprites, made: KIT_MADE, envKey: curEnvKey };
           envSprites = []; KIT_MADE = new Map();
-          while (aside.size > ASIDE_MAX) { const [k, v] = aside.entries().next().value; aside.delete(k); game.disposeKept(v.kept); dropEnv(v.env, v.made); }
-          sweepSheets();
         }
       }
-      curKey = key;
-      if (id !== levelId) return;
-      hidePlayer();
-      inside = !!lv.environment?.interior;
-      api.settings({ dof });
-      skyFor(lv, region);
-      if (back && back.envKey === envKey) {                       // its art as it was: stood back in
+      if (id === levelId) {
+        if (region !== envRegion) { envRegion = region; envFrames.clear(); }
+        hidePlayer();
+        inside = !!lv.environment?.interior;
+        api.settings({ dof });
+        skyFor(lv, region);
+      }
+      if (id === levelId && back && back.envKey === envKey) {   // its art as it was: stood back in
         dropEnv(envSprites, KIT_MADE);
         envSprites = back.env; KIT_MADE = back.made;
         for (const o of envSprites) { game.engine.scene.add(o); o.update?.(0, game.engine.camera); }
+        curEnvKey = envKey;
       } else {
         if (back) dropEnv(back.env, back.made);
-        await placeEnv(sprites, region);
+        if (id === levelId) await placeEnv(sprites, region);
+        // (overtaken, before its art or in placeEnv: not all of it stood in, so it's filed as having none)
+        if (id === levelId) curEnvKey = envKey;
+        else { dropEnv(envSprites, KIT_MADE); envSprites = []; KIT_MADE = new Map(); curEnvKey = ''; }
       }
-      curEnvKey = envKey;
-    })();
-    try { await building; } finally { loading = false; }
+      return left;
+    });
+    try { await building; sweepSheets(); } finally { loading = shelf.busy; }
     return id === levelId;
   },
   /** the menu's Graphics: the depth of field */
@@ -4393,7 +4400,8 @@ const api = {
     game.engine.step(Math.max(0, Math.min(0.1, f.dt)), { render: f.draw !== false });   // (draw false: stepped, not drawn: tools/capture/rig.mjs settling)
   },
   /** stand the converter's art again (a chest opened, a shrine used: hybrid.js), the level kept */
-  sprites(list) { if (game) { curEnvKey = envKeyOf(list); placeEnv(list, envRegion); } },
+  // (its key once all of it stands: a load overtaking it files the level as having none, not as having all)
+  sprites(list) { if (game) { const k = envKeyOf(list), id = levelId; curEnvKey = ''; placeEnv(list, envRegion).then(() => { if (id === levelId) curEnvKey = k; }); } },
   /** (for checks) a world point on the screen, CSS px, through this camera */
   project(x, y, z) {
     if (!game) return null;

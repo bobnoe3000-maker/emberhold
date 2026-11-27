@@ -21314,8 +21314,6 @@ var Kf = .25, qf = /* @__PURE__ */ new Set([
 	"fireflies",
 	"sparkle"
 ]);
-//#endregion
-//#region ember3d/world.js
 Object.assign(globalThis, { __emberGround: {
 	foliage(e) {
 		return this.scaled += e.length, e.map((e) => ({
@@ -21327,31 +21325,93 @@ Object.assign(globalThis, { __emberGround: {
 	size: Kf,
 	keeps: (e) => e?.emberExhibit === !0 || !qf.has(e?.preset),
 	dust: !1
-} }), typeof location < "u" && new URLSearchParams(location.search).get("faces") === "mesh" && pu("mesh");
-var Jf = "", Yf = 1, Xf = 3, Zf = 16 * Math.SQRT2, Qf = {
+} });
+//#endregion
+//#region ember3d/shelf.js
+function Jf({ max: e, release: t }) {
+	let n = /* @__PURE__ */ new Map(), r = "", i = 0, a = 0, o = Promise.resolve(), s = (r, i) => {
+		let a = n.get(r);
+		for (a !== void 0 && (n.delete(r), a !== i && t(a)), n.set(r, i); n.size > e;) {
+			let [e, r] = n.entries().next().value;
+			n.delete(e), t(r);
+		}
+	};
+	return {
+		get current() {
+			return r;
+		},
+		get busy() {
+			return a > 0;
+		},
+		get size() {
+			return n.size;
+		},
+		has: (e) => n.has(e),
+		keys: () => [...n.keys()],
+		clear() {
+			for (let e of n.values()) t(e);
+			n.clear();
+		},
+		async swap(e, c) {
+			let l = ++i, u = o, d = () => {};
+			o = new Promise((e) => {
+				d = () => e(void 0);
+			}), a++;
+			try {
+				if (await u, l !== i) return {
+					ran: !1,
+					back: null
+				};
+				let a = n.get(e) ?? null;
+				a !== null && n.delete(e);
+				let o = r, d = !!o && o !== e;
+				r = "";
+				let f = await c({
+					back: a,
+					keep: d
+				});
+				return f && (d ? s(o, f) : t(f)), r = e, {
+					ran: !0,
+					back: a
+				};
+			} finally {
+				a--, d();
+			}
+		}
+	};
+}
+//#endregion
+//#region ember3d/world.js
+typeof location < "u" && new URLSearchParams(location.search).get("faces") === "mesh" && pu("mesh");
+var Yf = "", Xf = 1, Zf = 3, Qf = 16 * Math.SQRT2, $f = {
 	billboard: "spherical",
 	normalUp: .6,
 	wrap: .6,
 	roundness: .35,
 	emissive: "#ffe9d2",
 	emissiveIntensity: .2
-}, $f = "en", ep = null, tp = null, np = null, rp = null, X = null, ip = null, ap = 0, op = "soft", sp = "sharp", cp = "sharp", lp = 45, up = 30, dp = "high", fp = 0, pp = null, mp = [], hp = 3, gp = () => dp === "low" ? hp : 12, _p = /* @__PURE__ */ new Map(), vp = 2, yp = .12, bp = "", xp = "", Sp = !1, Cp = "", wp = null, Tp = 5, Ep = 10;
-function Dp() {
-	wp && !wp.done && (kp(Tp), setTimeout(Dp, wp?.wait || Sp ? 60 : Ep));
+}, ep = "en", tp = null, np = null, rp = null, ip = null, X = null, ap = null, op = 0, sp = "soft", cp = "sharp", lp = "sharp", up = 45, dp = 30, fp = "high", pp = 0, mp = null, hp = [], gp = 3, _p = () => fp === "low" ? gp : 12, vp = Jf({
+	max: 2,
+	release: (e) => {
+		X.disposeKept(e.kept), Jh(e.env, e.made);
+	}
+}), yp = .12, bp = "", xp = !1, Sp = "", Cp = null, wp = 5, Tp = 10;
+function Ep() {
+	Cp && !Cp.done && (Op(wp), setTimeout(Ep, Cp?.wait || xp ? 60 : Tp));
 }
-function Op() {
-	if (wp) {
+function Dp() {
+	if (Cp) {
 		try {
-			wp.world.dispose();
+			Cp.world.dispose();
 		} catch (e) {
 			console.warn("[luminati] a level built ahead:", e);
 		}
-		wp = null;
+		Cp = null;
 	}
 }
-function kp(e) {
-	let t = wp;
-	if (!t || t.done || t.wait || Sp) return;
+function Op(e) {
+	let t = Cp;
+	if (!t || t.done || t.wait || xp) return;
 	let n = performance.now() + e;
 	try {
 		for (;;) {
@@ -21371,10 +21431,10 @@ function kp(e) {
 			if (performance.now() >= n) return;
 		}
 	} catch (e) {
-		console.warn("[luminati] building a level ahead:", e), wp === t && (wp = null);
+		console.warn("[luminati] building a level ahead:", e), Cp === t && (Cp = null);
 	}
 }
-var Ap = (e) => ({
+var kp = (e) => ({
 	world: e.world,
 	level: e.level,
 	async finish() {
@@ -21388,39 +21448,39 @@ var Ap = (e) => ({
 			t.value && "wait" in t.value && await t.value.wait;
 		}
 	}
-}), jp = /* @__PURE__ */ new Map(), Mp = /* @__PURE__ */ new Map(), Np = (e) => {
-	let t = jp.get(e);
+}), Ap = /* @__PURE__ */ new Map(), jp = /* @__PURE__ */ new Map(), Mp = (e) => {
+	let t = Ap.get(e);
 	return t || (t = new Promise((t, n) => {
 		let r = new Image();
 		r.decoding = "async", r.onload = () => t(r), r.onerror = n, r.src = e;
-	}), jp.set(e, t)), t;
-}, Pp = (e) => {
+	}), Ap.set(e, t)), t;
+}, Np = (e) => {
 	let t = 2166136261;
 	for (let n = 0; n < e.length; n++) t = Math.imul(t ^ e.charCodeAt(n), 16777619);
 	return (t >>> 0).toString(36);
-}, Fp = (e) => {
-	let t = Mp.get(e);
+}, Pp = (e) => {
+	let t = jp.get(e);
 	return t || (t = fetch(e, { cache: "no-cache" }).then((e) => e.ok ? e.text() : null).then((e) => {
 		if (!e) return null;
 		let t = JSON.parse(e);
-		return Object.defineProperty(t, "_v", { value: Pp(e) }), t;
-	}).catch(() => null), Mp.set(e, t)), t;
-}, Ip = /* @__PURE__ */ new Map();
-function Lp(e) {
-	return Ip.has(e) ? Ip.get(e) : (Ip.set(e, null), Fp(`${Jf}actors/${e}.json`).then((t) => t ? Np(`${Jf}actors/${e}.alb.png?v=${t._v}`).then((e) => [t, e]) : [null, null]).then(([t, r]) => {
+		return Object.defineProperty(t, "_v", { value: Np(e) }), t;
+	}).catch(() => null), jp.set(e, t)), t;
+}, Fp = /* @__PURE__ */ new Map();
+function Ip(e) {
+	return Fp.has(e) ? Fp.get(e) : (Fp.set(e, null), Pp(`${Yf}actors/${e}.json`).then((t) => t ? Mp(`${Yf}actors/${e}.alb.png?v=${t._v}`).then((e) => [t, e]) : [null, null]).then(([t, r]) => {
 		if (!t) {
-			Ip.set(e, !1);
+			Fp.set(e, !1);
 			return;
 		}
 		let i = new n(r);
-		i.magFilter = i.minFilter = D, i.generateMipmaps = !1, i.colorSpace = o, i.wrapS = i.wrapT = Oe, i.needsUpdate = !0, i.name = `ember-actor:${e}`, Ip.set(e, {
+		i.magFilter = i.minFilter = D, i.generateMipmaps = !1, i.colorSpace = o, i.wrapS = i.wrapT = Oe, i.needsUpdate = !0, i.name = `ember-actor:${e}`, Fp.set(e, {
 			meta: t,
 			tex: i,
 			sheets: /* @__PURE__ */ new Map()
 		});
-	}).catch(() => Ip.set(e, !1)), null);
+	}).catch(() => Fp.set(e, !1)), null);
 }
-function Rp(e, t) {
+function Lp(e, t) {
 	let n = t.toFixed(3), r = e.sheets.get(n);
 	if (!r) {
 		let i = e.meta;
@@ -21430,7 +21490,7 @@ function Rp(e, t) {
 			frameHeight: i.ch,
 			columns: i.frames,
 			rows: i.dirs,
-			pixelsPerUnit: Zf / t,
+			pixelsPerUnit: Qf / t,
 			anchor: [i.ax / i.cw, 0],
 			animations: { idle_down: {
 				frames: [{
@@ -21445,40 +21505,40 @@ function Rp(e, t) {
 	}
 	return r;
 }
-var zp = /* @__PURE__ */ new Map();
-function Bp(e, t) {
-	let n = zp.get(e);
-	for (n || zp.set(e, n = []); n.length <= t;) {
-		let t = new Vt(e, { ...Qf });
+var Rp = /* @__PURE__ */ new Map();
+function zp(e, t) {
+	let n = Rp.get(e);
+	for (n || Rp.set(e, n = []); n.length <= t;) {
+		let t = new Vt(e, { ...$f });
 		t.visible = !1, X.engine.scene.add(t), n.push(t);
 	}
 	return n[t];
 }
-function Vp(e, t, n, r, i) {
+function Bp(e, t, n, r, i) {
 	let a = 2 * r / i / Math.SQRT2, o = X.tileMap, s = t + a, c = n + a;
 	e.position.set(s, o.getHeight(t, n), c);
 }
-var Hp = "models", Up = new P(), Wp = .4, Gp = null, Kp = !1, qp = "", Jp = (e) => (Kp || (Kp = !0, Fp(`${Jf}models/cast.json`).then((e) => {
-	Gp = e || !1, e || (qp ||= "models/cast.json unreadable");
-})), Gp ? Gp.actors[e] || !1 : Gp !== !1 && null), Yp = new Co(), Xp = /* @__PURE__ */ new Map(), Zp = (e) => {
-	let t = `${Jf}models/${e.replace("./models/", "")}${Gp && Gp._v ? `?v=${Gp._v}` : ""}`, n = Xp.get(t);
-	return n || (n = Yp.loadAsync(t), Xp.set(t, n)), n.then((e) => ({
+var Vp = "models", Hp = new P(), Up = .4, Wp = null, Gp = !1, Kp = "", qp = (e) => (Gp || (Gp = !0, Pp(`${Yf}models/cast.json`).then((e) => {
+	Wp = e || !1, e || (Kp ||= "models/cast.json unreadable");
+})), Wp ? Wp.actors[e] || !1 : Wp !== !1 && null), Jp = new Co(), Yp = /* @__PURE__ */ new Map(), Xp = (e) => {
+	let t = `${Yf}models/${e.replace("./models/", "")}${Wp && Wp._v ? `?v=${Wp._v}` : ""}`, n = Yp.get(t);
+	return n || (n = Jp.loadAsync(t), Yp.set(t, n)), n.then((e) => ({
 		scene: xo(e.scene),
 		animations: e.animations
 	}));
-}, Qp = /* @__PURE__ */ new Map(), $p = /* @__PURE__ */ new Map(), em = /Helmet|Hat|Hood/, tm = (e, t) => t ? {
+}, Zp = /* @__PURE__ */ new Map(), Qp = /* @__PURE__ */ new Map(), $p = /Helmet|Hat|Hood/, em = (e, t) => t ? {
 	...e,
 	...t.appearance ? { appearance: t.appearance } : {},
 	...t.gear ? { gear: t.gear } : {},
-	...t.bare && e.show ? { show: e.show.filter((e) => !em.test(e)) } : {},
+	...t.bare && e.show ? { show: e.show.filter((e) => !$p.test(e)) } : {},
 	...t.bare && /_Hooded$/.test(e.model || "") ? { model: e.model.replace(/_Hooded$/, "") } : {}
 } : e;
-function nm(e, t, n = null, r = "") {
-	let i = r ? `${e}#${r}` : e, a = $p.get(i);
-	return a === void 0 ? ($p.set(i, null), Qp.has(e) || Fp(`${Jf}actors/${e}.json`).then((t) => Qp.set(e, t)), Nf(tm(t.v, n), {
+function tm(e, t, n = null, r = "") {
+	let i = r ? `${e}#${r}` : e, a = Qp.get(i);
+	return a === void 0 ? (Qp.set(i, null), Zp.has(e) || Pp(`${Yf}actors/${e}.json`).then((t) => Zp.set(e, t)), Nf(em(t.v, n), {
 		far: !1,
-		load: Zp,
-		faces: async () => Gp.faces,
+		load: Xp,
+		faces: async () => Wp.faces,
 		lod: "play"
 	}).then((e) => {
 		let n = [];
@@ -21493,7 +21553,7 @@ function nm(e, t, n = null, r = "") {
 		let { box: r, ppu: a } = wf(e.root, t.v, t.px);
 		for (let [e, t, r, i] of n) e.position.copy(t), e.quaternion.copy(r), e.scale.copy(i);
 		let o = Gf(e.root, on);
-		$p.set(i, {
+		Qp.set(i, {
 			root: e.root,
 			clips: e.clips,
 			frame: e.frame,
@@ -21504,32 +21564,32 @@ function nm(e, t, n = null, r = "") {
 			meshes: o
 		});
 	}).catch((e) => {
-		console.warn("[luminati] figure", i, e), qp ||= `${i}: ${e?.message || e}`, $p.set(i, !1);
+		console.warn("[luminati] figure", i, e), Kp ||= `${i}: ${e?.message || e}`, Qp.set(i, !1);
 	}), null) : a;
 }
-var rm = typeof location < "u" && new URLSearchParams(location.search).get("headshadow") === "1", im = /* @__PURE__ */ new Map(), am = 0, om = 0, sm = null;
-function cm() {
-	if (sm) return sm;
+var nm = typeof location < "u" && new URLSearchParams(location.search).get("headshadow") === "1", rm = /* @__PURE__ */ new Map(), im = 0, am = 0, om = null;
+function sm() {
+	if (om) return om;
 	let e = document.createElement("canvas");
 	e.width = e.height = 64;
 	let t = e.getContext("2d"), n = t.createRadialGradient(32, 32, 0, 32, 32, 32);
 	n.addColorStop(0, "rgba(225,210,255,0.95)"), n.addColorStop(.25, "rgba(170,140,255,0.55)"), n.addColorStop(1, "rgba(120,80,230,0)"), t.fillStyle = n, t.fillRect(0, 0, 64, 64);
 	let r = new Te(e);
-	return r.colorSpace = o, sm = new ne({
+	return r.colorSpace = o, om = new ne({
 		map: r,
 		transparent: !0,
 		depthWrite: !1,
 		blending: 2,
 		fog: !1
-	}), sm;
+	}), om;
 }
-function lm(e, t, n) {
-	let r = im.get(e);
-	if (r && r.name !== t && (X.engine.scene.remove(r.root), im.delete(e), r = null), r) return r;
+function cm(e, t, n) {
+	let r = rm.get(e);
+	if (r && r.name !== t && (X.engine.scene.remove(r.root), rm.delete(e), r = null), r) return r;
 	let i = xo(n.root), a = [];
 	i.traverse((e) => {
 		if (!e.isMesh) return;
-		e.castShadow = !e.userData.face || rm, e.receiveShadow = !0, e.frustumCulled = !1, e.material = e.material.clone(), e.material.isMeshStandardMaterial && (e.material.metalness = 0, e.material.roughness = Math.max(e.material.roughness ?? 1, .92));
+		e.castShadow = !e.userData.face || nm, e.receiveShadow = !0, e.frustumCulled = !1, e.material = e.material.clone(), e.material.isMeshStandardMaterial && (e.material.metalness = 0, e.material.roughness = Math.max(e.material.roughness ?? 1, .92));
 		let t = /Eyes/.test(e.name) || !!e.userData.glow && !e.material.userData.rarity || !e.material.emissive;
 		t || (e.material.emissive = e.material.map ? new N(16771538) : e.material.color.clone(), e.material.map && (e.material.emissiveMap = e.material.map)), !t && e.material.vertexColors && (e.material.onBeforeCompile = (e) => {
 			e.fragmentShader = e.fragmentShader.replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\n#ifdef USE_COLOR\n	totalEmissiveRadiance *= vColor.rgb;\n#endif");
@@ -21555,7 +21615,7 @@ function lm(e, t, n) {
 		e.name === "Cage_Soul" && s.push(e);
 	});
 	for (let e of s) {
-		let t = new pe(cm());
+		let t = new pe(sm());
 		t.scale.setScalar(.9 / Math.max(.001, e.scale.x)), t.renderOrder = 2, e.add(t), e.scale.multiplyScalar(1.3);
 	}
 	return r = {
@@ -21575,13 +21635,13 @@ function lm(e, t, n) {
 		seen: 0,
 		lit: "",
 		souls: s,
-		stack: n.creature === "furnace" ? fm(i) : null,
+		stack: n.creature === "furnace" ? dm(i) : null,
 		puff: 0,
 		puffN: 0,
-		eye: n.creature === "pilgrim" ? Tv(i) : null
-	}, X.engine.scene.add(i), im.set(e, r), r;
+		eye: n.creature === "pilgrim" ? wv(i) : null
+	}, X.engine.scene.add(i), rm.set(e, r), r;
 }
-var um = .14, dm = 5;
+var lm = .14, um = 5;
 tn({
 	emberSurf: {
 		mode: "burst",
@@ -21945,7 +22005,7 @@ tn({
 		alpha: .5
 	}
 });
-function fm(e) {
+function dm(e) {
 	let t = null, n = -Infinity;
 	return e.traverse((e) => {
 		if (!e.isSkinnedMesh || !e.userData.glow) return;
@@ -21956,20 +22016,20 @@ function fm(e) {
 		});
 	}), t;
 }
-var pm = new P(), mm = .75, hm = 2, gm = Object.freeze({}), _m = null, vm = null, ym = null, bm = (e, t) => e > .001 ? Math.min(hm, 1 + mm * (t / e - 1)) : 1;
-function xm(e) {
-	if (_m !== e && (_m = e, vm = e._burstConfig ? e._burstConfig("emberStackSmoke", gm) : null, ym = vm ? vm._color.clone() : null), !vm) return;
+var fm = new P(), pm = .75, mm = 2, hm = Object.freeze({}), gm = null, _m = null, vm = null, ym = (e, t) => e > .001 ? Math.min(mm, 1 + pm * (t / e - 1)) : 1;
+function bm(e) {
+	if (gm !== e && (gm = e, _m = e._burstConfig ? e._burstConfig("emberStackSmoke", hm) : null, vm = _m ? _m._color.clone() : null), !_m) return;
 	let t = wt.uSunColor.value, n = wt.uNight.value, r = .42 - .36 * n + t.r * .75, i = .45 - .37 * n + t.g * .75, a = .52 - .37 * n + t.b * .75, o = .2126 * r + .7152 * i + .0722 * a;
-	vm._color.setRGB(ym.r * bm(r, o), ym.g * bm(i, o), ym.b * bm(a, o));
+	_m._color.setRGB(vm.r * ym(r, o), vm.g * ym(i, o), vm.b * ym(a, o));
 }
-function Sm(e, t) {
+function xm(e, t) {
 	let n = X?.particles;
-	if (!n || !e.stack || (e.puff += t, e.puff < um)) return;
-	xm(n);
+	if (!n || !e.stack || (e.puff += t, e.puff < lm)) return;
+	bm(n);
 	let { mesh: r, idx: i } = e.stack;
-	for (pm.fromBufferAttribute(r.geometry.attributes.position, i), r.applyBoneTransform(i, pm), pm.applyMatrix4(r.matrixWorld); e.puff >= um; e.puff -= um) n.burst("emberStackSmoke", pm, 1), ++e.puffN % dm === 0 && n.burst("emberStackSpark", pm, 1);
+	for (fm.fromBufferAttribute(r.geometry.attributes.position, i), r.applyBoneTransform(i, fm), fm.applyMatrix4(r.matrixWorld); e.puff >= lm; e.puff -= lm) n.burst("emberStackSmoke", fm, 1), ++e.puffN % um === 0 && n.burst("emberStackSpark", fm, 1);
 }
-var Cm = new P(), wm = {
+var Sm = new P(), Cm = {
 	surf: [[
 		"emberSurf",
 		20,
@@ -22008,21 +22068,21 @@ var Cm = new P(), wm = {
 		.2
 	]]
 };
-function Tm(e) {
+function wm(e) {
 	let t = X?.particles;
 	if (t && e) for (let n of e) {
-		let e = wm[n.kind];
-		if (e) for (let [r, i, a] of e) Cm.set(n.x, X.tileMap.getHeight(n.x, n.z) + a, n.z), t.burst(r, Cm, i);
+		let e = Cm[n.kind];
+		if (e) for (let [r, i, a] of e) Sm.set(n.x, X.tileMap.getHeight(n.x, n.z) + a, n.z), t.burst(r, Sm, i);
 	}
 }
-var Em = new N(1, .45, .15);
-function Dm(e, t, n, r) {
-	if (Hp !== "models") return !1;
-	let i = Jp(e.name);
+var Tm = new N(1, .45, .15);
+function Em(e, t, n, r) {
+	if (Vp !== "models") return !1;
+	let i = qp(e.name);
 	if (!i) return !1;
-	let a = nm(e.name, i, e.look || null, e.lk || ""), o = Qp.get(e.name);
+	let a = tm(e.name, i, e.look || null, e.lk || ""), o = Zp.get(e.name);
 	if (!a || !o) return !1;
-	a.used = am, a.usedAt = om;
+	a.used = im, a.usedAt = am;
 	let s = null;
 	for (let t in o.clips) {
 		let n = o.clips[t];
@@ -22033,7 +22093,7 @@ function Dm(e, t, n, r) {
 	}
 	let c = s && i.clips[s];
 	if (!c) return !1;
-	let l = lm(t, e.lk ? `${e.name}#${e.lk}` : e.name, a), u = o.clips[s], d = c.frames, f = e.col - u.start;
+	let l = cm(t, e.lk ? `${e.name}#${e.lk}` : e.name, a), u = o.clips[s], d = c.frames, f = e.col - u.start;
 	if (l.key !== s) l.key = s, l.fpos = f;
 	else if (c.once) l.fpos = Math.min(Math.max(l.fpos + n * u.fps, f), Math.min(f + .999, d - 1));
 	else {
@@ -22043,7 +22103,7 @@ function Dm(e, t, n, r) {
 	let p = c.from ?? 0, m = c.to ?? 1, h = c.once ? p + (m - p) * (l.fpos / Math.max(1, d - 1)) : p + (m - p) * (l.fpos / d);
 	for (let [e, t, n, r] of l.bones) e.position.copy(t), e.quaternion.copy(n), e.scale.copy(r);
 	let g = (135 - 45 * e.row) * Math.PI / 180 + r - Math.PI / 4;
-	if (l.yaw === null || l.seen < am - 1) l.yaw = g;
+	if (l.yaw === null || l.seen < im - 1) l.yaw = g;
 	else {
 		let e = g - l.yaw;
 		e -= 2 * Math.PI * Math.round(e / (2 * Math.PI)), l.yaw += e * (1 - Math.exp(-n * 16));
@@ -22054,46 +22114,46 @@ function Dm(e, t, n, r) {
 		clip: e.mv.legs.clip,
 		t: Math.min(.999, e.mv.legs.t)
 	} : null) : Lf(l, c.clip, Math.min(.999, h), !0);
-	let _ = (e.cw && o.cw ? e.cw / o.cw : 1) * a.ppu / Zf, v = a.look;
+	let _ = (e.cw && o.cw ? e.cw / o.cw : 1) * a.ppu / Qf, v = a.look;
 	v ? l.root.scale.set(_ * v.w, _ * v.h, _ * v.w) : l.root.scale.setScalar(_), l.root.position.set(e.x, X.tileMap.getHeight(e.x, e.z) - a.minY * _ * (v ? v.h : 1) + (e.air || 0), e.z), l.root.updateMatrixWorld(!0);
 	let y = e.flash || 0, b = y ? 0 : Math.round((e.warn || 0) * 20) / 20, x = 1 - (e.fade || 0);
-	l.stack && x > .5 && Sm(l, n);
-	let S = `${lg}|${y}|${b}|${x.toFixed(2)}`;
+	l.stack && x > .5 && xm(l, n);
+	let S = `${cg}|${y}|${b}|${x.toFixed(2)}`;
 	if (l.lit !== S) {
 		l.lit = S;
 		for (let e of l.mats) {
-			e.own || (b ? e.m.emissive.copy(e.base).lerp(Em, Math.min(1, b)) : e.m.emissive.copy(e.base), e.m.emissiveIntensity = lg * Wp + e.add + y * 2.6 + b * .9);
+			e.own || (b ? e.m.emissive.copy(e.base).lerp(Tm, Math.min(1, b)) : e.m.emissive.copy(e.base), e.m.emissiveIntensity = cg * Up + e.add + y * 2.6 + b * .9);
 			let t = x < .999;
 			e.m.transparent !== t && (e.m.transparent = t, e.m.needsUpdate = !0), e.m.opacity = x;
 		}
 	}
 	if (l.shines) {
 		let e = .75 + .25 * Math.sin(performance.now() * .0026 + l.root.id);
-		for (let t of l.mats) t.shine && (t.m.emissiveIntensity = lg * Wp + t.add * e + y * 2.6 + b * .9);
+		for (let t of l.mats) t.shine && (t.m.emissiveIntensity = cg * Up + t.add * e + y * 2.6 + b * .9);
 	}
-	return l.root.visible = !0, l.seen = am, l.seenAt = om, !0;
+	return l.root.visible = !0, l.seen = im, l.seenAt = am, !0;
 }
-function Om() {
-	for (let [e, t] of im) t.seen !== am && (t.root.visible && (t.root.visible = !1), (am - t.seen > 3600 || om - (t.seenAt ?? om) > 6e4) && (X.engine.scene.remove(t.root), im.delete(e)));
-	if (am % 120 == 0) for (let [e, t] of $p) {
-		if (!t || !e.includes("#") || am - (t.used || 0) < 7200 && om - (t.usedAt || 0) < 12e4) continue;
+function Dm() {
+	for (let [e, t] of rm) t.seen !== im && (t.root.visible && (t.root.visible = !1), (im - t.seen > 3600 || am - (t.seenAt ?? am) > 6e4) && (X.engine.scene.remove(t.root), rm.delete(e)));
+	if (im % 120 == 0) for (let [e, t] of Qp) {
+		if (!t || !e.includes("#") || im - (t.used || 0) < 7200 && am - (t.usedAt || 0) < 12e4) continue;
 		let n = !1;
-		for (let t of im.values()) if (t.name === e) {
+		for (let t of rm.values()) if (t.name === e) {
 			n = !0;
 			break;
 		}
 		if (n) continue;
 		for (let e of t.root.userData.ownGeos || []) e.dispose();
-		$p.delete(e);
-		let r = km(t.root);
+		Qp.delete(e);
+		let r = Om(t.root);
 		if (r.size) {
-			for (let e of $p.values()) if (e) for (let t of km(e.root)) r.delete(t);
+			for (let e of Qp.values()) if (e) for (let t of Om(e.root)) r.delete(t);
 			for (let e of r) Zu(e);
 		}
 		break;
 	}
 }
-function km(e) {
+function Om(e) {
 	let t = /* @__PURE__ */ new Set();
 	return e.traverse((e) => {
 		if (e.isMesh) for (let n of Array.isArray(e.material) ? e.material : [e.material]) for (let e of ["map", "emissiveMap"]) {
@@ -22102,23 +22162,23 @@ function km(e) {
 		}
 	}), t;
 }
-var Am = [], jm = "chosen", Mm = [], Nm = 5, Pm = 1.3, Fm = /* @__PURE__ */ new Map(), Im = /* @__PURE__ */ new Map();
-for (let e of Wc) e.build && Fm.set(e.id, e);
-for (let e of Object.values(Gc)) for (let t of e) t.build && Fm.set(t.id, t);
-var Lm = /* @__PURE__ */ new Set([
+var km = [], Am = "chosen", jm = [], Mm = 5, Nm = 1.3, Pm = /* @__PURE__ */ new Map(), Fm = /* @__PURE__ */ new Map();
+for (let e of Wc) e.build && Pm.set(e.id, e);
+for (let e of Object.values(Gc)) for (let t of e) t.build && Pm.set(t.id, t);
+var Im = /* @__PURE__ */ new Set([
 	"vale_keep_1",
 	"ruin",
 	"chapelruin_0"
 ]);
-function Rm(e, t, n, r) {
-	let i = Im.get(e.id);
+function Lm(e, t, n, r) {
+	let i = Fm.get(e.id);
 	if (i) {
 		let e = i.clone();
 		return e.position.set(t, n, r), e;
 	}
 	let a = Uc(e.build, e.style, e.seed || 1, !!e.faceX);
 	e.rotY && (a.rotation.y = e.rotY * Math.PI / 180), e.scale && a.scale.multiplyScalar(e.scale), a.updateMatrixWorld(!0);
-	let o = X.world?.glassMaterial || null, s = /* @__PURE__ */ new Map(), c = new A(), l = e.desat ?? .3, u = Pm, d = e.tint || [
+	let o = X.world?.glassMaterial || null, s = /* @__PURE__ */ new Map(), c = new A(), l = e.desat ?? .3, u = Nm, d = e.tint || [
 		.95,
 		.92,
 		1
@@ -22151,12 +22211,12 @@ function Rm(e, t, n, r) {
 		let r = new M(n, e === o ? e : p(e));
 		r.castShadow = r.receiveShadow = !0, c.add(r);
 	}
-	c.name = `ember:kit:${e.id}`, c.scale.setScalar(Nm), Im.set(e.id, c);
+	c.name = `ember:kit:${e.id}`, c.scale.setScalar(Mm), Fm.set(e.id, c);
 	let m = c.clone();
 	return m.position.set(t, n, r), m;
 }
-var zm = 1.7;
-function Bm(e) {
+var Rm = 1.7;
+function zm(e) {
 	let t = X.world.factory, n = t.builder(), r = e.span, i = e.kind === "up" ? 1.55 : 1.35, a = .42, o = .5, s = r / 2 + a / 2, c = e.stone || "stone_brick", l = [
 		.05,
 		.045,
@@ -22215,7 +22275,7 @@ function Bm(e) {
 		(i + s * .92) / 2,
 		-.2
 	] }));
-	let u = t.finish(n, `ember:arch:${e.kind}`, e.x, e.level * .5, e.z + (e.kind === "up" ? .25 : 0), e.rot || 0), d = new N(e.glow).multiplyScalar(zm), f = new R({
+	let u = t.finish(n, `ember:arch:${e.kind}`, e.x, e.level * .5, e.z + (e.kind === "up" ? .25 : 0), e.rot || 0), d = new N(e.glow).multiplyScalar(Rm), f = new R({
 		color: d,
 		fog: !1
 	}), p = s - a / 2 - .02, m = new M(new I(p, .045, 5, 28, Math.PI), f);
@@ -22230,19 +22290,19 @@ function Bm(e) {
 		e.isMesh && e.material === f && e.geometry.dispose();
 	}), u;
 }
-var Vm = [
+var Bm = [
 	.5,
 	.37,
 	.27
-], Hm = [
+], Vm = [
 	.68,
 	.5,
 	.36
-], Um = [
+], Hm = [
 	.32,
 	.3,
 	.3
-], Wm = [
+], Um = [
 	["quilt_ochre", [
 		.95,
 		.9,
@@ -22268,9 +22328,9 @@ var Vm = [
 		.95,
 		.9
 	]]
-], Gm = null;
-function Km() {
-	if (Gm) return Gm;
+], Wm = null;
+function Gm() {
+	if (Wm) return Wm;
 	let e = document.createElement("canvas");
 	e.width = 64, e.height = 64;
 	let t = e.getContext("2d"), n = t.createImageData(64, 64);
@@ -22283,26 +22343,26 @@ function Km() {
 		].map((e) => Math.abs(t / 63 - e))), s = 1 - .55 * Math.exp(-(o * o) / .0012), c = Math.round(255 * Math.max(0, 1 - a) ** 1.6 * s), l = (e * 64 + t) * 4;
 		n.data[l] = n.data[l + 1] = n.data[l + 2] = c, n.data[l + 3] = 255;
 	}
-	return t.putImageData(n, 0, 0), Gm = new Te(e), Gm.colorSpace = o, Gm;
+	return t.putImageData(n, 0, 0), Wm = new Te(e), Wm.colorSpace = o, Wm;
 }
-var qm = .84, Jm = [
+var Km = .84, qm = [
 	.62,
 	.55,
 	.48
-], Ym = [
+], Jm = [
 	.38,
 	.35,
 	.32
-], Xm = [
+], Ym = [
 	.62,
 	.47,
 	.29
-], Zm = [
+], Xm = [
 	1.06,
 	.99,
 	.83
-], Qm = null, $m = null, eh = null, th = null, nh = null, rh = null, ih = null, ah = null, oh = null, sh = null, ch = null, lh = null, uh = null;
-function dh(e, t, n, r, i, a) {
+], Zm = null, Qm = null, $m = null, eh = null, th = null, nh = null, rh = null, ih = null, ah = null, oh = null, sh = null, ch = null, lh = null;
+function uh(e, t, n, r, i, a) {
 	let o = (e, t, n, r) => e.n === "z" ? [
 		e.x + t,
 		n,
@@ -22320,7 +22380,7 @@ function dh(e, t, n, r, i, a) {
 		n,
 		t
 	];
-	e.tinted(Zm, () => {
+	e.tinted(Xm, () => {
 		e.lathe("linen", [
 			{
 				y: -.45 * i,
@@ -22343,11 +22403,11 @@ function dh(e, t, n, r, i, a) {
 			at: o(t, n, r, a),
 			capTop: !0
 		}), e.box("linen", s(t, 1.2 * i, .55 * i, .9 * i), { at: o(t, n, r - .55 * i, a + .25 * i) });
-	}), Qm ||= new R({ color: "#0d0a08" });
-	for (let c of [-1, 1]) e.box(Qm, s(t, .36 * i, .34 * i, .05 * i), { at: o(t, n + c * .3 * i, r - .12 * i, a + .72 * i) });
-	e.box(Qm, s(t, .16 * i, .24 * i, .05 * i), { at: o(t, n, r - .48 * i, a + .72 * i) });
+	}), Zm ||= new R({ color: "#0d0a08" });
+	for (let c of [-1, 1]) e.box(Zm, s(t, .36 * i, .34 * i, .05 * i), { at: o(t, n + c * .3 * i, r - .12 * i, a + .72 * i) });
+	e.box(Zm, s(t, .16 * i, .24 * i, .05 * i), { at: o(t, n, r - .48 * i, a + .72 * i) });
 }
-var fh = null, ph = null, mh = null, hh = null, gh = null, _h = null, vh = null, yh = null, bh = null, xh = [
+var dh = null, fh = null, ph = null, mh = null, hh = null, gh = null, _h = null, vh = null, yh = null, bh = [
 	[
 		.26,
 		.34,
@@ -22378,14 +22438,14 @@ var fh = null, ph = null, mh = null, hh = null, gh = null, _h = null, vh = null,
 		.2,
 		.52
 	]
-], Sh = [
+], xh = [
 	.2,
 	.26,
 	.66
-], Ch = null, wh = null, Th = null, Eh = -1, Dh = () => Ch ||= new R({
+], Sh = null, Ch = null, wh = null, Th = -1, Eh = () => Sh ||= new R({
 	color: new N("#8fa6c8"),
 	fog: !1
-}), Oh = [
+}), Dh = [
 	[
 		0,
 		"#26334f",
@@ -22431,27 +22491,27 @@ var fh = null, ph = null, mh = null, hh = null, gh = null, _h = null, vh = null,
 		"#26334f",
 		.12
 	]
-], kh = Oh.map(([, e]) => new N(e)), Ah = {
+], Oh = Dh.map(([, e]) => new N(e)), kh = {
 	col: new N(),
 	k: 0
 };
-function jh(e) {
-	let t = Oh, n = 0;
+function Ah(e) {
+	let t = Dh, n = 0;
 	for (; n < t.length - 2 && e >= t[n + 1][0];) n++;
 	let r = Math.max(0, Math.min(1, (e - t[n][0]) / Math.max(.001, t[n + 1][0] - t[n][0])));
-	return Ah.col.copy(kh[n]).lerp(kh[n + 1], r), Ah.k = t[n][2] + (t[n + 1][2] - t[n][2]) * r, Ah;
+	return kh.col.copy(Oh[n]).lerp(Oh[n + 1], r), kh.k = t[n][2] + (t[n + 1][2] - t[n][2]) * r, kh;
 }
-function Mh(e) {
-	let t = X.world.factory, n = t.builder(), r = 1 + Nh, i = [], a = [], o = [], s = [];
-	ph ||= new R({
+function jh(e) {
+	let t = X.world.factory, n = t.builder(), r = 1 + Mh, i = [], a = [], o = [], s = [];
+	fh ||= new R({
 		color: new N("#ffb45e").multiplyScalar(2.2),
 		fog: !1
-	}), Qm ||= new R({ color: "#0d0a08" }), mh ||= new R({
+	}), Zm ||= new R({ color: "#0d0a08" }), ph ||= new R({
 		color: "#cfc9bf",
 		transparent: !0,
 		opacity: .45,
 		depthWrite: !1
-	}), hh ||= new R({
+	}), mh ||= new R({
 		color: "#e2dccf",
 		transparent: !0,
 		opacity: .1,
@@ -22490,10 +22550,10 @@ function Mh(e) {
 		"herbs"
 	]), f = new Proxy(n, { get: (e, t) => {
 		let n = e[t];
-		return typeof n == "function" ? Hh.has(t) ? (t, ...r) => n.call(e, Uh[t] || t, ...r) : n.bind(e) : n;
+		return typeof n == "function" ? Vh.has(t) ? (t, ...r) => n.call(e, Hh[t] || t, ...r) : n.bind(e) : n;
 	} });
 	for (let p of e) {
-		let e = p.fen && Vh.has(p.k) ? f : n, m = d.has(p.k) || p.k === "plaque" || p.k === "saint" || p.k === "mourner" || p.k === "greattomb" || p.k === "hatchment";
+		let e = p.fen && Bh.has(p.k) ? f : n, m = d.has(p.k) || p.k === "plaque" || p.k === "saint" || p.k === "mourner" || p.k === "greattomb" || p.k === "hatchment";
 		if (m) {
 			let t = p.k === "plaque" ? 1.8 : p.k === "saint" ? 1.45 : p.k === "mourner" ? 1.38 : p.k === "greattomb" || p.k === "hatchment" ? 1.3 : 1.95, n = p.k === "plaque" ? c(p, 0, 2.7, 0) : p.k === "saint" || p.k === "mourner" || p.k === "greattomb" ? [
 				p.x,
@@ -22502,23 +22562,23 @@ function Mh(e) {
 			] : c(p, 0, p.y, 0);
 			e.pushMatrix(new nt().makeTranslation(n[0], n[1], n[2]).multiply(new nt().makeScale(t, t, t)).multiply(new nt().makeTranslation(-n[0], -n[1], -n[2])));
 		}
-		if (p.k === "post") e.tinted(Vm, () => {
+		if (p.k === "post") e.tinted(Bm, () => {
 			let t = p.end * .13;
-			if (e.box("furniture_wood", l(p, .28, Nh, .2), { at: c(p, t, 1 + Nh / 2, .1) }), e.box("furniture_wood", l(p, .42, .16, .28), { at: c(p, t, 1.08, .14) }), e.box("furniture_wood", l(p, .26, .26, 1.05), { at: c(p, t, r - .3, .52) }), !p.end) for (let t of [-1, 1]) e.box("furniture_wood", l(p, .14, .95, .14), {
+			if (e.box("furniture_wood", l(p, .28, Mh, .2), { at: c(p, t, 1 + Mh / 2, .1) }), e.box("furniture_wood", l(p, .42, .16, .28), { at: c(p, t, 1.08, .14) }), e.box("furniture_wood", l(p, .26, .26, 1.05), { at: c(p, t, r - .3, .52) }), !p.end) for (let t of [-1, 1]) e.box("furniture_wood", l(p, .14, .95, .14), {
 				at: c(p, t * .36, r - .62, .09),
 				rot: u(p, t * .72)
 			});
 		});
-		else if (p.k === "beam") e.tinted(Vm, () => {
+		else if (p.k === "beam") e.tinted(Bm, () => {
 			let t = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), n = {
 				...p,
 				x: (p.x0 + p.x1) / 2,
 				z: (p.z0 + p.z1) / 2
 			};
-			e.box("furniture_wood", l(n, t, .3, .2), { at: c(n, 0, p.y, .1) }), e.tinted(Hm, () => e.box("furniture_wood", l(n, t, .04, .22), { at: c(n, 0, p.y + .17, .11) })), e.box("furniture_wood", l(n, t, .12, .14), { at: c(n, 0, 2.05, .07) });
+			e.box("furniture_wood", l(n, t, .3, .2), { at: c(n, 0, p.y, .1) }), e.tinted(Vm, () => e.box("furniture_wood", l(n, t, .04, .22), { at: c(n, 0, p.y + .17, .11) })), e.box("furniture_wood", l(n, t, .12, .14), { at: c(n, 0, 2.05, .07) });
 		});
 		else if (p.k === "shield") {
-			let [t, n] = Wm[p.look % Wm.length], r = p.n === "z" ? [
+			let [t, n] = Um[p.look % Um.length], r = p.n === "z" ? [
 				Math.PI / 2,
 				0,
 				0
@@ -22611,7 +22671,7 @@ function Mh(e) {
 			});
 		} else if (p.k === "lantern") {
 			let t = .85, n = p.y - .75;
-			e.tinted(Um, () => {
+			e.tinted(Hm, () => {
 				e.box("metal", l(p, .06, .06, .9), { at: c(p, 0, p.y, t / 2) }), e.box("metal", l(p, .05, .4, .05), { at: c(p, 0, p.y - .18, .04) }), e.box("metal", l(p, .05, .05, .5), {
 					at: c(p, 0, p.y - .18, .2),
 					rot: p.n === "z" ? [
@@ -22630,9 +22690,9 @@ function Mh(e) {
 					[-.13, .13],
 					[.13, .13]
 				]) e.box("metal", l(p, .03, .44, .03), { at: c(p, r, n, t + i) });
-			}), e.box(ph, l(p, .22, .38, .22), { at: c(p, 0, n, t) });
+			}), e.box(fh, l(p, .22, .38, .22), { at: c(p, 0, n, t) });
 		} else if (p.k === "board") {
-			e.tinted(Vm, () => {
+			e.tinted(Bm, () => {
 				e.box("furniture_wood", l(p, 3.4, 1.75, .1), { at: c(p, 0, p.y, .05) });
 			}), e.tinted([
 				1.02,
@@ -22642,7 +22702,7 @@ function Mh(e) {
 				e.box("furniture_wood", l(p, 3.8, .32, .18), { at: c(p, 0, p.y + 1, .09) });
 				for (let t of [-1, 1]) e.box("furniture_wood", l(p, .32, .46, .2), { at: c(p, t * 1.95, p.y + 1.05, .1) });
 				e.box("furniture_wood", l(p, .7, .2, .2), { at: c(p, 0, p.y + 1.24, .1) });
-			}), e.tinted(Vm, () => {
+			}), e.tinted(Bm, () => {
 				e.box("furniture_wood", l(p, 2.7, .12, .2), { at: c(p, 0, p.y - .9, .1) });
 			}), e.tinted([
 				.72,
@@ -22786,17 +22846,17 @@ function Mh(e) {
 				t[1] + (e[1] - t[1]) * n,
 				t[2] + (e[2] - t[2]) * n
 			];
-			for (let r of n) e.tube(mh, t, r, .018, .014, { segments: 3 });
+			for (let r of n) e.tube(ph, t, r, .018, .014, { segments: 3 });
 			for (let t of [
 				.28,
 				.5,
 				.72,
 				.95
-			]) for (let i = 0; i < n.length - 1; i++) e.tube(mh, r(n[i], t), r(n[i + 1], t), .012, .012, { segments: 3 });
+			]) for (let i = 0; i < n.length - 1; i++) e.tube(ph, r(n[i], t), r(n[i + 1], t), .012, .012, { segments: 3 });
 			for (let e = 0; e < n.length - 1; e++) a.push(...t, ...n[e], ...n[e + 1]);
 		} else if (p.k === "surround") {
 			let t = p.w / 2 + .36, n = 2.85;
-			for (let n of [-1, 1]) e.box("tavern_wall", l(p, .72, Nh, 1.2), { at: c(p, n * t, 1 + Nh / 2, .6) }), e.box("tavern_wall", l(p, .86, .2, 1.32), { at: c(p, n * t, 1.1, .66) });
+			for (let n of [-1, 1]) e.box("tavern_wall", l(p, .72, Mh, 1.2), { at: c(p, n * t, 1 + Mh / 2, .6) }), e.box("tavern_wall", l(p, .86, .2, 1.32), { at: c(p, n * t, 1.1, .66) });
 			{
 				let t = r - n;
 				e.tinted([
@@ -22817,7 +22877,7 @@ function Mh(e) {
 					1.1
 				], () => e.box("tavern_wall", l(p, p.w * .76, .04, .99), { at: c(p, 0, r + .95, .45) }));
 			}
-			e.tinted(Vm, () => e.box("furniture_wood", l(p, p.w + 1.6, .26, .34), { at: c(p, 0, n, 1.12) }));
+			e.tinted(Bm, () => e.box("furniture_wood", l(p, p.w + 1.6, .26, .34), { at: c(p, 0, n, 1.12) }));
 			for (let [t, n] of [
 				[-1.5, "jug"],
 				[-.9, "pot"],
@@ -22890,7 +22950,7 @@ function Mh(e) {
 				capBottom: "furniture_wood"
 			}));
 			let t = (e) => (Math.imul(p.seed + e * 977, 2654435761) >>> 0) % 1e3 / 1e3;
-			for (let n = 0; n < 9; n++) e.box(gh ||= new R({
+			for (let n = 0; n < 9; n++) e.box(hh ||= new R({
 				color: new N("#ff6a1e").multiplyScalar(1.6),
 				fog: !1
 			}), [
@@ -22906,7 +22966,7 @@ function Mh(e) {
 				]
 			});
 		} else if (p.k === "tableware") {
-			let t = Math.cos(p.rot || 0), n = Math.sin(p.rot || 0), r = (e, r) => [p.x + e * t + r * n, p.z - e * n + r * t], i = (e) => (Math.imul(p.seed + e * 977, 2654435761) >>> 0) % 1e3 / 1e3, a = 1 + (p.y - Ph);
+			let t = Math.cos(p.rot || 0), n = Math.sin(p.rot || 0), r = (e, r) => [p.x + e * t + r * n, p.z - e * n + r * t], i = (e) => (Math.imul(p.seed + e * 977, 2654435761) >>> 0) % 1e3 / 1e3, a = 1 + (p.y - Nh);
 			for (let t = 0; t < 5; t++) {
 				let [n, o] = r(-1.15 + t * .55 + (i(t) - .5) * .2, (i(t + 7) < .5 ? -1 : 1) * (.32 + i(t + 3) * .1));
 				if (Math.abs(-1.15 + t * .55) < .2) continue;
@@ -22995,7 +23055,7 @@ function Mh(e) {
 					a,
 					s
 				]
-			})), e.box(ph, [
+			})), e.box(fh, [
 				.05,
 				.1,
 				.05
@@ -23034,7 +23094,7 @@ function Mh(e) {
 				segments: 14,
 				at: c(p, 0, 1.4, .85)
 			});
-		}), e.box(gh ||= new R({
+		}), e.box(hh ||= new R({
 			color: new N("#ff6a1e").multiplyScalar(1.6),
 			fog: !1
 		}), l(p, .6, .02, .6), { at: c(p, 0, 1.95, .85) });
@@ -23047,7 +23107,7 @@ function Mh(e) {
 			], () => {
 				e.box("tavern_wall", l(p, 2.3, .4, .4), { at: c(p, 0, p.y + n / 2 + .2, .2) });
 				for (let t of [-1, 1]) e.box("tavern_wall", l(p, .4, 1.75, .36), { at: c(p, t * .8500000000000001, p.y, .18) });
-			}), e.tinted(Hm, () => e.box("furniture_wood", l(p, 2.4000000000000004, .12, .48), { at: c(p, 0, p.y - n / 2 - .06, .24) }));
+			}), e.tinted(Vm, () => e.box("furniture_wood", l(p, 2.4000000000000004, .12, .48), { at: c(p, 0, p.y - n / 2 - .06, .24) }));
 			let r = 1.1, i = p.n === "z" ? [
 				0,
 				-1.1,
@@ -23081,14 +23141,14 @@ function Mh(e) {
 				.1
 			], () => {
 				e.box("metal", l(p, .95, .12, .07), { at: c(p, .375, p.y + .12, .13) }), e.box("metal", l(p, .08, .2, .1), { at: c(p, .92, p.y + .12, .12) });
-			}), e.box(_h ||= new R({
+			}), e.box(gh ||= new R({
 				color: new N("#0b1019"),
 				fog: !1
-			}), l(p, t / 2 - .04, 1.51, .02), { at: c(p, -1.3 / 4, p.y, .03) }), e.box(vh ||= new R({
+			}), l(p, t / 2 - .04, 1.51, .02), { at: c(p, -1.3 / 4, p.y, .03) }), e.box(_h ||= new R({
 				color: new N("#141c2e"),
 				fog: !1
 			}), l(p, t / 2 - .04, n * .3, .02), { at: c(p, -1.3 / 4, p.y + n * .33, .035) });
-			for (let [t, n] of [[-.42, .55], [-.2, .3]]) e.box(yh ||= new R({
+			for (let [t, n] of [[-.42, .55], [-.2, .3]]) e.box(vh ||= new R({
 				color: new N("#8c97b4"),
 				fog: !1
 			}), l(p, .035, .035, .01), { at: c(p, t, p.y + n, .042) });
@@ -23106,7 +23166,7 @@ function Mh(e) {
 				segments: 7,
 				capTop: !0,
 				at: c(p, t / 2 - .15, p.y - n / 2, .3)
-			})), e.box(ph, [
+			})), e.box(fh, [
 				.05,
 				.09,
 				.05
@@ -23117,14 +23177,14 @@ function Mh(e) {
 				x: (p.x0 + p.x1) / 2,
 				z: (p.z0 + p.z1) / 2
 			};
-			e.box(bh ||= new R({
+			e.box(yh ||= new R({
 				color: "#0e0a08",
 				transparent: !0,
 				opacity: .34,
 				depthWrite: !1
-			}), l(n, t, .42, .01), { at: c(n, 0, 1.21, .012) }), e.box(bh, l(n, t, .28, .01), { at: c(n, 0, 1.56, .012) });
+			}), l(n, t, .42, .01), { at: c(n, 0, 1.21, .012) }), e.box(yh, l(n, t, .28, .01), { at: c(n, 0, 1.56, .012) });
 		} else if (p.k === "shelf") {
-			e.tinted(Vm, () => {
+			e.tinted(Bm, () => {
 				e.box("furniture_wood", l(p, 1.5, .07, .3), { at: c(p, 0, p.y, .15) });
 				for (let t of [-1, 1]) e.box("furniture_wood", l(p, .06, .28, .24), { at: c(p, t * .6, p.y - .17, .12) });
 				e.box("furniture_wood", l(p, 1.5, .04, .04), { at: c(p, 0, p.y + .12, .27) });
@@ -23242,7 +23302,7 @@ function Mh(e) {
 				});
 			}
 		});
-		else if (p.k === "pegs") e.tinted(Vm, () => {
+		else if (p.k === "pegs") e.tinted(Bm, () => {
 			e.box("furniture_wood", l(p, 1.4, .1, .06), { at: c(p, 0, p.y + .4, .03) });
 			for (let t of [
 				-.45,
@@ -23295,7 +23355,7 @@ function Mh(e) {
 				]
 			});
 		});
-		else if (p.k === "slate") e.tinted(Hm, () => e.box("furniture_wood", l(p, .9, .7, .06), { at: c(p, 0, p.y, .03) })), e.tinted([
+		else if (p.k === "slate") e.tinted(Vm, () => e.box("furniture_wood", l(p, .9, .7, .06), { at: c(p, 0, p.y, .03) })), e.tinted([
 			.22,
 			.23,
 			.25
@@ -23307,7 +23367,7 @@ function Mh(e) {
 			for (let t = 0; t < 3; t++) for (let n = 0; n < 4 + t; n++) e.box("linen", l(p, .018, .1, .01), { at: c(p, -.3 + n * .07 + (n > 3 ? .06 : 0), p.y + .16 - t * .15, .078) });
 		});
 		else if (p.k === "herbs") {
-			e.tinted(Vm, () => e.box("furniture_wood", l(p, 1.5, .06, .06), { at: c(p, 0, p.y + .55, .28) }));
+			e.tinted(Bm, () => e.box("furniture_wood", l(p, 1.5, .06, .06), { at: c(p, 0, p.y + .55, .28) }));
 			for (let t = 0; t < 5; t++) e.tinted(t % 2 ? [
 				.75,
 				1,
@@ -23368,13 +23428,13 @@ function Mh(e) {
 				segments: 7,
 				capTop: !0,
 				at: c(p, t, p.y, .12)
-			})), e.box(ph, [
+			})), e.box(fh, [
 				.04,
 				.08,
 				.04
 			], { at: c(p, t, p.y + n + .06, .12) });
 		} else if (p.k === "ham") {
-			if (e.tinted(Um, () => e.box("metal", l(p, .03, .35, .03), { at: c(p, 0, p.y + .2, .3) })), p.look) e.tinted([
+			if (e.tinted(Hm, () => e.box("metal", l(p, .03, .35, .03), { at: c(p, 0, p.y + .2, .3) })), p.look) e.tinted([
 				.85,
 				.55,
 				.4
@@ -23430,7 +23490,7 @@ function Mh(e) {
 				at: c(p, t % 2 ? .05 : -.05, p.y - .1 - t * .1, .3)
 			}));
 		} else if (p.k === "casks") {
-			e.tinted(Vm, () => {
+			e.tinted(Bm, () => {
 				for (let t of [-.5, .5]) e.box("furniture_wood", l(p, 1.9, .16, .14), { at: c(p, 0, 1.08, .35 + t) });
 			});
 			for (let [e, n] of [
@@ -23462,11 +23522,11 @@ function Mh(e) {
 					1.25,
 					1.22,
 					1.15
-				], () => e.box("palace_cap", l(p, .82, .06, .5), { at: c(p, t, 1.53, .25) })), e.box("palace_gilt", l(p, .78, .2, .48), { at: c(p, t, Wh + .1, .24) }), e.box("palace_gilt", l(p, .66, .06, .42), { at: c(p, t, Wh - .1, .21) }), e.tinted([
+				], () => e.box("palace_cap", l(p, .82, .06, .5), { at: c(p, t, 1.53, .25) })), e.box("palace_gilt", l(p, .78, .2, .48), { at: c(p, t, Uh + .1, .24) }), e.box("palace_gilt", l(p, .66, .06, .42), { at: c(p, t, Uh - .1, .21) }), e.tinted([
 					1.2,
 					1.18,
 					1.12
-				], () => e.box("palace_cap", l(p, .86, .1, .52), { at: c(p, t, Wh + .25, .26) }));
+				], () => e.box("palace_cap", l(p, .86, .1, .52), { at: c(p, t, Uh + .25, .26) }));
 				continue;
 			}
 			e.tinted([
@@ -23482,7 +23542,7 @@ function Mh(e) {
 				1.15,
 				1.08
 			], () => {
-				e.box("crypt_cap", l(p, .72, .16, .44), { at: c(p, t, Wh + .08, .22) }), e.box("crypt_cap", l(p, .62, .1, .38), { at: c(p, t, Wh - .05, .19) });
+				e.box("crypt_cap", l(p, .72, .16, .44), { at: c(p, t, Uh + .08, .22) }), e.box("crypt_cap", l(p, .62, .1, .38), { at: c(p, t, Uh - .05, .19) });
 			});
 		} else if (p.k === "cornice" || p.k === "plinth") {
 			let t = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), n = {
@@ -23522,14 +23582,14 @@ function Mh(e) {
 				.86,
 				.84,
 				.82
-			], () => e.box("crypt_cap", l(n, t, .26, .14), { at: c(n, 0, 1.13, .07) })), e.box($m ||= new R({
+			], () => e.box("crypt_cap", l(n, t, .26, .14), { at: c(n, 0, 1.13, .07) })), e.box(Qm ||= new R({
 				color: "#14120e",
 				transparent: !0,
 				opacity: .36,
 				depthWrite: !1
 			}), l(n, t, .4, .01), { at: c(n, 0, 1.46, .012) }));
 		} else if (p.k === "arcade") {
-			let t = p.w / 2 - .05, n = Math.min(t, (p.top || r) - .42 - Wh), i = (e, r) => [Math.cos(e) * (t + r), Wh + Math.sin(e) * (n + r)], a = p.pal ? "palace_wall" : "crypt_wall", o = p.pal ? "palace_cap" : "crypt_cap";
+			let t = p.w / 2 - .05, n = Math.min(t, (p.top || r) - .42 - Uh), i = (e, r) => [Math.cos(e) * (t + r), Uh + Math.sin(e) * (n + r)], a = p.pal ? "palace_wall" : "crypt_wall", o = p.pal ? "palace_cap" : "crypt_cap";
 			e.tinted(p.pal ? [
 				.86,
 				.78,
@@ -23539,7 +23599,7 @@ function Mh(e) {
 				.36,
 				.3
 			], () => {
-				e.box(p.pal ? "palace_top" : a, l(p, 2 * t, Wh - 1 - .26, .02), { at: c(p, 0, (Wh + 1 + .26) / 2, .01) }), e.lathe(p.pal ? "palace_top" : a, [
+				e.box(p.pal ? "palace_top" : a, l(p, 2 * t, Uh - 1 - .26, .02), { at: c(p, 0, (Uh + 1 + .26) / 2, .01) }), e.lathe(p.pal ? "palace_top" : a, [
 					{
 						y: 0,
 						r: 0
@@ -23558,7 +23618,7 @@ function Mh(e) {
 					}
 				], {
 					segments: 20,
-					at: c(p, 0, Wh, 0),
+					at: c(p, 0, Uh, 0),
 					rot: p.n === "z" ? [
 						Math.PI / 2,
 						0,
@@ -23594,11 +23654,11 @@ function Mh(e) {
 						rot: u(p, -Math.atan2(f - s, d - a))
 					});
 				}
-			}), p.pal ? e.box("palace_gilt", l(p, .34, .5, .44), { at: c(p, 0, Wh + n + .14, .22) }) : e.tinted([
+			}), p.pal ? e.box("palace_gilt", l(p, .34, .5, .44), { at: c(p, 0, Uh + n + .14, .22) }) : e.tinted([
 				1.62,
 				1.55,
 				1.42
-			], () => e.box("crypt_cap", l(p, .36, .52, .44), { at: c(p, 0, Wh + n + .14, .22) }));
+			], () => e.box("crypt_cap", l(p, .36, .52, .44), { at: c(p, 0, Uh + n + .14, .22) }));
 		} else if (p.k === "loculi") {
 			let t = (e) => (Math.imul(p.seed + e * 977, 2654435761) >>> 0) % 1e3 / 1e3;
 			for (let n = 0; n < 3; n++) for (let r = 0; r < 3; r++) {
@@ -23607,7 +23667,7 @@ function Mh(e) {
 					1.1,
 					1.07,
 					1
-				], () => e.box("crypt_cap", l(p, .96, .1, .24), { at: c(p, a, o - .36, .1) })), s) e.box(Qm, l(p, .86, .6, .02), { at: c(p, a, o, .03) }), t(i + 5) < .5 ? e.tinted([
+				], () => e.box("crypt_cap", l(p, .96, .1, .24), { at: c(p, a, o - .36, .1) })), s) e.box(Zm, l(p, .86, .6, .02), { at: c(p, a, o, .03) }), t(i + 5) < .5 ? e.tinted([
 					1.15,
 					1.1,
 					.98
@@ -23649,10 +23709,10 @@ function Mh(e) {
 						1.3,
 						1.3
 					]
-				})) : dh(e, p, a, o - .14, .14, .75);
+				})) : uh(e, p, a, o - .14, .14, .75);
 				else {
 					let n = t(i + 11) < .2 ? (t(i + 13) - .5) * .5 : 0;
-					e.box(Qm, l(p, .9, .62, .02), { at: c(p, a, o, .03) }), e.tinted([
+					e.box(Zm, l(p, .9, .62, .02), { at: c(p, a, o, .03) }), e.tinted([
 						1.18 + (t(i + 7) - .5) * .14,
 						1.13,
 						1.04
@@ -23693,7 +23753,7 @@ function Mh(e) {
 					let n = t === 0 ? .36 : .58 - t % 2 * .14;
 					e.box("crypt_cap", l(p, n, .025, .01), { at: c(p, -.29 + n / 2, 2.95 - t * .13, .145) });
 				}
-			}), dh(e, p, -.22, 1.97, .09, 1), e.tinted([
+			}), uh(e, p, -.22, 1.97, .09, 1), e.tinted([
 				.9,
 				.86,
 				.8
@@ -23717,7 +23777,7 @@ function Mh(e) {
 					at: c(p, .22, 1.8900000000000001, .1)
 				});
 			});
-		} else if (p.k === "saint") e.box(Qm, l(p, .76, 1.2, .02), { at: c(p, 0, 2.4, .03) }), e.lathe(Qm, [
+		} else if (p.k === "saint") e.box(Zm, l(p, .76, 1.2, .02), { at: c(p, 0, 2.4, .03) }), e.lathe(Zm, [
 			{
 				y: 0,
 				r: 0
@@ -23752,7 +23812,7 @@ function Mh(e) {
 			1
 		], () => {
 			e.box("crypt_cap", l(p, .7, .16, .38), { at: c(p, 0, 1.72, .19) }), e.box("crypt_cap", l(p, .5, .18, .28), { at: c(p, 0, 1.56, .14) });
-		}), th ||= new R({ color: new N("#d4a640").multiplyScalar(.85) }), e.tinted([
+		}), eh ||= new R({ color: new N("#d4a640").multiplyScalar(.85) }), e.tinted([
 			.8,
 			.7,
 			.45
@@ -23890,7 +23950,7 @@ function Mh(e) {
 			segments: 7,
 			capTop: !0,
 			at: c(p, .26, 1.8, .3)
-		})), e.box(ph, [
+		})), e.box(fh, [
 			.04,
 			.07,
 			.04
@@ -23900,7 +23960,7 @@ function Mh(e) {
 				1,
 				1,
 				1
-			] : Um, () => {
+			] : Hm, () => {
 				let t = p.gilt ? "palace_gilt" : "metal";
 				e.box(t, l(p, .2, .42, .04), { at: c(p, 0, p.y, .32) }), e.box(t, l(p, .05, .05, .42), { at: c(p, 0, p.y - .12, .52) }), e.lathe(t, [
 					{
@@ -23950,13 +24010,13 @@ function Mh(e) {
 				segments: 7,
 				capTop: !0,
 				at: c(p, t, p.y - .06, .72 + n)
-			})), e.box(ph, [
+			})), e.box(fh, [
 				.065,
 				.13,
 				.065
 			], { at: c(p, t, p.y - .06 + r + .08, .72 + n) });
 		} else if (p.k === "lightwell") {
-			e.box(rh ||= new R({
+			e.box(nh ||= new R({
 				color: new N("#6f8296"),
 				fog: !1
 			}), l(p, 1, .62, .02), { at: c(p, 0, p.y, .03) }), e.tinted([
@@ -23981,9 +24041,9 @@ function Mh(e) {
 					.36
 				]) e.box("metal", l(p, .05, .64, .05), { at: c(p, t, p.y, .08) });
 				e.box("metal", l(p, 1, .05, .05), { at: c(p, 0, p.y, .08) });
-			}), eh ||= new R({
+			}), $m ||= new R({
 				color: new N("#a9b8c8"),
-				map: Km(),
+				map: Gm(),
 				transparent: !0,
 				opacity: .42,
 				depthWrite: !1,
@@ -23991,7 +24051,7 @@ function Mh(e) {
 				blending: 2
 			});
 			let t = c(p, -1, 1.02, .5), n = c(p, 1, 1.02, .5), r = c(p, 1, 1.02, 2.7), i = c(p, -1, 1.02, 2.7);
-			e.quad(eh, p.n === "z" ? [
+			e.quad($m, p.n === "z" ? [
 				i,
 				r,
 				n,
@@ -24013,7 +24073,7 @@ function Mh(e) {
 				[0, 0]
 			]);
 		} else if (p.k === "skullniche") {
-			e.box(Qm, l(p, 1.1, 1, .02), { at: c(p, 0, 2.05, .03) }), e.lathe(Qm, [
+			e.box(Zm, l(p, 1.1, 1, .02), { at: c(p, 0, 2.05, .03) }), e.lathe(Zm, [
 				{
 					y: 0,
 					r: 0
@@ -24057,7 +24117,7 @@ function Mh(e) {
 				[-.15, .24],
 				[.15, .24],
 				[0, .48]
-			]) dh(e, p, t, 1.7 + n, .12, .3);
+			]) uh(e, p, t, 1.7 + n, .12, .3);
 			e.tinted([
 				1.2,
 				1.15,
@@ -24072,7 +24132,7 @@ function Mh(e) {
 				segments: 7,
 				capTop: !0,
 				at: c(p, .42, 1.59, .32)
-			})), e.box(ph, [
+			})), e.box(fh, [
 				.04,
 				.08,
 				.04
@@ -24086,8 +24146,8 @@ function Mh(e) {
 				e.box("crypt_cap", l(p, 1.5, .1, .36), { at: c(p, 0, 2.45, .18) });
 				for (let t of [-1, 1]) e.box("crypt_cap", l(p, .1, .24, .26), { at: c(p, t * .6, 2.29, .13) });
 			});
-			for (let t = 0; t < 5; t++) dh(e, p, -.56 + t * .28, 2.58, .11, .2);
-			e.tinted(Zm, () => {
+			for (let t = 0; t < 5; t++) uh(e, p, -.56 + t * .28, 2.58, .11, .2);
+			e.tinted(Xm, () => {
 				for (let t of [-1, 1]) e.tube("linen", c(p, -.38 * t, 1.8000000000000003, .1), c(p, .38 * t, 2.23, .1), .045, .045, { segments: 6 });
 			});
 		} else if (p.k === "tomb" || p.k === "greattomb") {
@@ -24311,7 +24371,7 @@ function Mh(e) {
 				segments: 7,
 				capTop: !0,
 				at: c(n / 2 - .1, d - .1, r / 2 - .12)
-			})), e.box(ph, [
+			})), e.box(fh, [
 				.05,
 				.09,
 				.05
@@ -24493,7 +24553,7 @@ function Mh(e) {
 							0
 						]
 					});
-				}), ih ||= new R({ color: new N("#a8853f") }), e.lathe(ih, [
+				}), rh ||= new R({ color: new N("#a8853f") }), e.lathe(rh, [
 					{
 						y: 0,
 						r: .16
@@ -24565,35 +24625,35 @@ function Mh(e) {
 				], {
 					segments: 9,
 					at: c(0, s, u + .04)
-				}), th ||= new R({ color: new N("#d4a640").multiplyScalar(.85) }), e.box(th, [
+				}), eh ||= new R({ color: new N("#d4a640").multiplyScalar(.85) }), e.box(eh, [
 					.5,
 					.2,
 					.04
 				], {
 					at: c(0, 4.55, u + .06),
 					rot: l
-				}), e.box(th, [
+				}), e.box(eh, [
 					.04,
 					.2,
 					.04
 				], {
 					at: c(0, 4.71, u + .06),
 					rot: l
-				}), nh ||= new R({ color: new N("#6e1e20") }), e.box(nh, [
+				}), th ||= new R({ color: new N("#6e1e20") }), e.box(th, [
 					.5 * f,
 					.15,
 					.66 * f
 				], {
 					at: c(-n * .37, d + .075, 0),
 					rot: l
-				}), e.box(ih, [
+				}), e.box(rh, [
 					1.4,
 					.06,
 					.09
 				], {
 					at: c(.22, d + .33, .2),
 					rot: l
-				}), e.box(ih, [
+				}), e.box(rh, [
 					.06,
 					.06,
 					.34
@@ -24779,29 +24839,29 @@ function Mh(e) {
 			]
 		}));
 		else if (p.k === "hatchment") {
-			th ||= new R({ color: new N("#d4a640").multiplyScalar(.85) }), e.tinted([
+			eh ||= new R({ color: new N("#d4a640").multiplyScalar(.85) }), e.tinted([
 				1.3,
 				1.25,
 				1.14
 			], () => e.box("crypt_cap", l(p, 1.12, 1.12, .04), {
 				at: c(p, 0, p.y, .04),
 				rot: u(p, Math.PI / 4)
-			})), e.box(th, l(p, .98, .98, .05), {
+			})), e.box(eh, l(p, .98, .98, .05), {
 				at: c(p, 0, p.y, .06),
 				rot: u(p, Math.PI / 4)
-			}), nh ||= new R({ color: new N("#6e1e20") }), e.box(nh, l(p, .92, .92, .02), {
+			}), th ||= new R({ color: new N("#6e1e20") }), e.box(th, l(p, .92, .92, .02), {
 				at: c(p, 0, p.y, .095),
 				rot: u(p, Math.PI / 4)
-			}), e.box(th, l(p, .6, .26, .03), { at: c(p, 0, p.y - .02, .11) }), e.box(th, l(p, .18, .16, .03), {
+			}), e.box(eh, l(p, .6, .26, .03), { at: c(p, 0, p.y - .02, .11) }), e.box(eh, l(p, .18, .16, .03), {
 				at: c(p, .34, p.y + .02, .11),
 				rot: u(p, -.4)
-			}), e.box(th, l(p, .05, .3, .03), { at: c(p, 0, p.y + .24, .11) });
+			}), e.box(eh, l(p, .05, .3, .03), { at: c(p, 0, p.y + .24, .11) });
 			for (let t of [
 				-.22,
 				-.12,
 				.1,
 				.2
-			]) e.box(th, l(p, .05, .18, .03), { at: c(p, t, p.y - .22, .11) });
+			]) e.box(eh, l(p, .05, .18, .03), { at: c(p, t, p.y - .22, .11) });
 		} else if (p.k === "ledger") {
 			let t = Math.cos(p.rot || 0), n = Math.sin(p.rot || 0), r = (e, r) => [
 				p.x + e * t + r * n,
@@ -24860,14 +24920,14 @@ function Mh(e) {
 					at: r(t, 0),
 					rot: i
 				});
-			}), ih ||= new R({ color: new N("#a8853f") }), e.box(ih, [
+			}), rh ||= new R({ color: new N("#a8853f") }), e.box(rh, [
 				.95,
 				.05,
 				.08
 			], {
 				at: r(-.4, 0),
 				rot: i
-			}), e.box(ih, [
+			}), e.box(rh, [
 				.08,
 				.05,
 				.6
@@ -24881,7 +24941,7 @@ function Mh(e) {
 				x: (p.x0 + p.x1) / 2,
 				z: (p.z0 + p.z1) / 2
 			}, r = p.out;
-			p.k === "dockedge" ? (e.tinted(Ym, () => e.box("furniture_wood", l(n, t, .3, .1), { at: c(n, 0, .87, r * .05) })), e.tinted([
+			p.k === "dockedge" ? (e.tinted(Jm, () => e.box("furniture_wood", l(n, t, .3, .1), { at: c(n, 0, .87, r * .05) })), e.tinted([
 				.74,
 				.64,
 				.52
@@ -24889,11 +24949,11 @@ function Mh(e) {
 				.42,
 				.5,
 				.36
-			], () => e.box("furniture_wood", l(n, t, .07, .12), { at: c(n, 0, .86, r * .04) }))) : e.tinted(Jm, () => {
+			], () => e.box("furniture_wood", l(n, t, .07, .12), { at: c(n, 0, .86, r * .04) }))) : e.tinted(qm, () => {
 				for (let i of [1.95, 1.5]) e.box("furniture_wood", l(n, t + .1, .1, .1), { at: c(n, 0, i, r * .12) });
 			});
 		} else if (p.k === "wtrunk" || p.k === "wsnag") {
-			let t = Vg(p.seed), n = p.kind === "oak", r = p.k === "wsnag", i = p.h, a = p.r, o = p.y, s = (p.far || 0) > 4.2 ? 1 : 1.35, c = r ? 2 : n ? 4 : 5, l = p.x, u = p.z, d = o - .3, f = a * (n ? 1.18 : 1.06), m = p.lean || 0, h = (t(1) - .5) * (n ? .4 : .06);
+			let t = Bg(p.seed), n = p.kind === "oak", r = p.k === "wsnag", i = p.h, a = p.r, o = p.y, s = (p.far || 0) > 4.2 ? 1 : 1.35, c = r ? 2 : n ? 4 : 5, l = p.x, u = p.z, d = o - .3, f = a * (n ? 1.18 : 1.06), m = p.lean || 0, h = (t(1) - .5) * (n ? .4 : .06);
 			for (let p = 0; p < c; p++) {
 				let g = (p + 1) / c, _ = o + i * g, v = i / c * (n ? 1 : .35), y = l + m * v, b = u + h * v, x = a * (n ? 1 - .36 * g : 1 - .3 * g), S = r || (n ? p < 2 || t(p + 20) < .4 : p < Math.ceil(c / 2)), C = r ? 1 : 1 - .62 * Math.max(0, g - .3) / .7;
 				e.tinted(S ? [
@@ -24995,7 +25055,7 @@ function Mh(e) {
 				}
 			});
 		} else if (p.k === "wbank") {
-			let t = Vg(p.seed), n = [
+			let t = Bg(p.seed), n = [
 				0,
 				p.rot || 0,
 				0
@@ -25054,7 +25114,7 @@ function Mh(e) {
 				}
 			});
 		} else if (p.k === "wboulder") {
-			let t = Vg(p.seed), n = p.s, r = [
+			let t = Bg(p.seed), n = p.s, r = [
 				0,
 				t(2) * 6.28,
 				0
@@ -25131,7 +25191,7 @@ function Mh(e) {
 				radiusFn: a
 			}));
 		} else if (p.k === "wroots") {
-			let t = Vg(p.seed);
+			let t = Bg(p.seed);
 			e.tinted([
 				.9,
 				1,
@@ -25192,7 +25252,7 @@ function Mh(e) {
 				}
 			});
 		} else if (p.k === "wfern") {
-			let t = Vg(p.seed), n = p.s, r = 7 + Math.floor(t(1) * 3), i = t(2);
+			let t = Bg(p.seed), n = p.s, r = 7 + Math.floor(t(1) * 3), i = t(2);
 			e.tinted([
 				.62 + i * .2,
 				.86 + i * .1,
@@ -25297,32 +25357,32 @@ function Mh(e) {
 					transparent: !0,
 					depthWrite: !1
 				});
-				s.push(g, h), Pg.add(g);
+				s.push(g, h), Ng.add(g);
 				let _ = new M(new x(n, r), g);
 				_.rotation.x = -Math.PI / 2, _.position.set(e / 2, a, t / 2), _.updateMatrixWorld(!0), i.push(_);
 			}
 		} else if (p.k === "wshaft") {
-			Fg ||= (() => {
+			Pg ||= (() => {
 				let e = new R({
 					color: new N("#eef0c8").multiplyScalar(.17),
-					alphaMap: Hg(),
+					alphaMap: Vg(),
 					transparent: !0,
 					depthWrite: !1,
 					blending: 2,
 					side: 2
 				});
-				return Pg.add(e), e;
-			})(), Ig ||= (() => {
+				return Ng.add(e), e;
+			})(), Fg ||= (() => {
 				let e = new R({
 					color: new N("#f0eabc").multiplyScalar(.3),
-					alphaMap: Ug(),
+					alphaMap: Hg(),
 					transparent: !0,
 					depthWrite: !1,
 					blending: 2
 				});
-				return Pg.add(e), e;
+				return Ng.add(e), e;
 			})();
-			let t = Vg(p.seed), n = [
+			let t = Bg(p.seed), n = [
 				-.612,
 				-.5,
 				-.612
@@ -25353,7 +25413,7 @@ function Mh(e) {
 				let h = f[1] * n[2] - f[2] * n[1], g = f[2] * n[0] - f[0] * n[2], _ = f[0] * n[1] - f[1] * n[0], v = Math.hypot(h, g, _);
 				h /= v, g /= v, _ /= v;
 				let y = t * .75, b = t * .5;
-				e.quad(Fg, [
+				e.quad(Pg, [
 					[
 						d[0] - h * y,
 						d[1] - g * y,
@@ -25382,7 +25442,7 @@ function Mh(e) {
 				]);
 			}
 			let a = p.w * 1.5;
-			e.quad(Ig, [
+			e.quad(Fg, [
 				[
 					p.x - a,
 					p.y + .03,
@@ -25494,7 +25554,7 @@ function Mh(e) {
 					t + 1.72,
 					p.z + .6
 				] });
-			}), e.box(ph, [
+			}), e.box(fh, [
 				.18,
 				.3,
 				.18
@@ -25502,7 +25562,7 @@ function Mh(e) {
 				p.x,
 				t + 1.42,
 				p.z + .6
-			] }), lh ||= (() => {
+			] }), ch ||= (() => {
 				let e = document.createElement("canvas");
 				e.width = e.height = 64;
 				let t = e.getContext("2d"), n = t.createRadialGradient(32, 32, 0, 32, 32, 32);
@@ -25515,11 +25575,11 @@ function Mh(e) {
 				});
 			})();
 			{
-				let e = new pe(lh);
+				let e = new pe(ch);
 				e.position.set(p.x, t + 1.42, p.z + .6), e.scale.setScalar(1.6), o.push(e);
 			}
 		} else if (p.k === "wblock") {
-			let t = Vg(p.seed);
+			let t = Bg(p.seed);
 			e.push([
 				p.x,
 				p.y + .3,
@@ -25573,7 +25633,7 @@ function Mh(e) {
 				]
 			}));
 		} else if (p.k === "wpillar") {
-			let t = Vg(p.seed);
+			let t = Bg(p.seed);
 			e.tinted([
 				.95,
 				.95,
@@ -25671,7 +25731,7 @@ function Mh(e) {
 				]
 			}));
 		} else if (p.k === "warcade") {
-			let t = Vg(p.seed), n = p.bays, r = (p.x1 - p.x0) / n, i = p.z, a = p.y, o = 2.9, s = a + .4 + o + .18, c = r - .46, l = s + c * .87 + .32, u = 1 + Math.floor(t(1) * (n - 2)), d = [
+			let t = Bg(p.seed), n = p.bays, r = (p.x1 - p.x0) / n, i = p.z, a = p.y, o = 2.9, s = a + .4 + o + .18, c = r - .46, l = s + c * .87 + .32, u = 1 + Math.floor(t(1) * (n - 2)), d = [
 				1.08,
 				1.1,
 				1.08
@@ -25886,7 +25946,7 @@ function Mh(e) {
 				});
 			}
 		} else if (p.k === "wgate") {
-			let t = Vg(p.seed), n = p.x, r = p.z, i = p.y, a = i + 1.4, o = n - 2.1, s = n - 4.8, c = (o + s) / 2, l = o - s, u = 1.3, d = 1.5, f = a + 2.1, m = f + u + .46;
+			let t = Bg(p.seed), n = p.x, r = p.z, i = p.y, a = i + 1.4, o = n - 2.1, s = n - 4.8, c = (o + s) / 2, l = o - s, u = 1.3, d = 1.5, f = a + 2.1, m = f + u + .46;
 			e.pushMatrix(new nt().makeTranslation(n, i, r).multiply(new nt().makeScale(1.45, 1.45, 1.45)).multiply(new nt().makeTranslation(-n, -i, -r))), e.tinted([
 				1.3,
 				1.3,
@@ -26016,7 +26076,7 @@ function Mh(e) {
 					m + .81,
 					r - .65
 				] });
-			}), Qm ||= new R({ color: "#0d0a08" }), e.box(Qm, [
+			}), Zm ||= new R({ color: "#0d0a08" }), e.box(Zm, [
 				l - .2,
 				f - a + u,
 				2 * u
@@ -26027,7 +26087,7 @@ function Mh(e) {
 			] });
 			{
 				let t = o - .12, n = (n, r, i) => {
-					e.tri(Qm, [
+					e.tri(Zm, [
 						t,
 						n[1],
 						n[0]
@@ -26039,7 +26099,7 @@ function Mh(e) {
 						t,
 						i[1],
 						i[0]
-					], [0, 0], [1, 0], [0, 1]), e.tri(Qm, [
+					], [0, 0], [1, 0], [0, 1]), e.tri(Zm, [
 						t,
 						n[1],
 						n[0]
@@ -26059,7 +26119,7 @@ function Mh(e) {
 					n([r, f], [r + Math.cos(t) * u, f + Math.sin(t) * u], [r + Math.cos(i) * u, f + Math.sin(i) * u]);
 				}
 			}
-			e.box(ph, [
+			e.box(fh, [
 				.14,
 				.22,
 				.14
@@ -26198,7 +26258,7 @@ function Mh(e) {
 				});
 			}), e.pop();
 		} else if (p.k === "wfalls") {
-			let t = Vg(p.seed), n = p.w;
+			let t = Bg(p.seed), n = p.w;
 			e.push([
 				p.x,
 				p.y,
@@ -26260,7 +26320,7 @@ function Mh(e) {
 						-.5 - i * 1.3
 					] });
 				}
-			}), Lg ||= (() => {
+			}), Ig ||= (() => {
 				let e = document.createElement("canvas");
 				e.width = 32, e.height = 128;
 				let t = e.getContext("2d");
@@ -26271,7 +26331,7 @@ function Mh(e) {
 				}
 				let n = new Te(e);
 				return n.wrapS = n.wrapT = T, n.repeat.set(1, 2), n;
-			})(), Rg ||= (() => {
+			})(), Lg ||= (() => {
 				let e = document.createElement("canvas");
 				e.width = 32, e.height = 64;
 				let t = e.getContext("2d"), n = t.createImageData(32, 64);
@@ -26281,14 +26341,14 @@ function Mh(e) {
 				}
 				t.putImageData(n, 0, 0);
 				let r = new Te(e), i = new R({
-					map: Lg,
+					map: Ig,
 					alphaMap: r,
 					color: "#dce8e2",
 					transparent: !0,
 					depthWrite: !1,
 					side: 2
 				});
-				return Pg.add(i), i;
+				return Ng.add(i), i;
 			})();
 			{
 				let t = [
@@ -26330,7 +26390,7 @@ function Mh(e) {
 				], n = (e) => 1 + e / (t.length - 1) * .9;
 				for (let [r, i] of [[0, 1], [-.95, .42]]) for (let a = 0; a < t.length - 1; a++) {
 					let o = t[a], s = t[a + 1], c = n(a) * i, l = n(a + 1) * i, u = 1 - a / (t.length - 1), d = 1 - (a + 1) / (t.length - 1);
-					i < 1 && a < 2 || e.quad(Rg, [
+					i < 1 && a < 2 || e.quad(Lg, [
 						[
 							r - l / 2,
 							s[1],
@@ -26359,18 +26419,18 @@ function Mh(e) {
 					]);
 				}
 			}
-			zg ||= (() => {
+			Rg ||= (() => {
 				let e = new R({ color: "#1c2a22" });
-				return Pg.add(e), e;
-			})(), Bg ||= (() => {
+				return Ng.add(e), e;
+			})(), zg ||= (() => {
 				let e = new R({
 					color: "#e8f0ea",
 					transparent: !0,
 					opacity: .55,
 					depthWrite: !1
 				});
-				return Pg.add(e), e;
-			})(), e.lathe(zg, [{
+				return Ng.add(e), e;
+			})(), e.lathe(Rg, [{
 				y: 0,
 				r: 0
 			}, {
@@ -26424,7 +26484,7 @@ function Mh(e) {
 				[1.7, .05]
 			]) for (let r = 0; r < 18; r++) {
 				let i = r / 18 * 6.283, a = (r + 1) / 18 * 6.283;
-				e.tube(Bg, [
+				e.tube(zg, [
 					Math.cos(i) * t * 1.5,
 					n,
 					.3 + Math.sin(i) * t * .85
@@ -26434,7 +26494,7 @@ function Mh(e) {
 					.3 + Math.sin(a) * t * .85
 				], .03, .03, { segments: 3 });
 			}
-			for (let n = 0; n < 6; n++) e.lathe(Bg, [
+			for (let n = 0; n < 6; n++) e.lathe(zg, [
 				{
 					y: 0,
 					r: .4 + t(n + 300) * .25
@@ -26457,7 +26517,7 @@ function Mh(e) {
 			});
 			e.pop();
 		} else if (p.k === "wlog") {
-			let t = Vg(p.seed), n = Math.cos(p.rot || 0), r = Math.sin(p.rot || 0), i = p.len / 2, a = [
+			let t = Bg(p.seed), n = Math.cos(p.rot || 0), r = Math.sin(p.rot || 0), i = p.len / 2, a = [
 				p.x - n * i,
 				p.y + p.r * .55,
 				p.z - r * i
@@ -26498,7 +26558,7 @@ function Mh(e) {
 			});
 		} else if (p.k === "pile") {
 			let t = p.back ? 2.12 : 1.62, n = c(p, 0, 0, p.out * .12), r = (e) => (Math.imul(p.seed + e * 977, 2654435761) >>> 0) % 1e3 / 1e3;
-			e.tinted(Ym, () => e.tube("furniture_wood", [
+			e.tinted(Jm, () => e.tube("furniture_wood", [
 				n[0],
 				-.4,
 				n[2]
@@ -26518,7 +26578,7 @@ function Mh(e) {
 				n[0],
 				.8999999999999999,
 				n[2]
-			], .145, .14, { segments: 8 })), e.tinted(Jm, () => e.lathe("furniture_wood", [
+			], .145, .14, { segments: 8 })), e.tinted(qm, () => e.lathe("furniture_wood", [
 				{
 					y: 0,
 					r: .13
@@ -26538,7 +26598,7 @@ function Mh(e) {
 					t,
 					n[2]
 				]
-			})), (p.back ? r(1) < .4 : r(1) < .75) && e.tinted(Xm, () => {
+			})), (p.back ? r(1) < .4 : r(1) < .75) && e.tinted(Ym, () => {
 				for (let t of p.back ? [1.62] : [1.3, 1.44]) e.lathe("linen", [{
 					y: 0,
 					r: .15
@@ -26554,7 +26614,7 @@ function Mh(e) {
 					]
 				});
 			});
-		} else if (p.k === "bollard") e.tinted(Um, () => {
+		} else if (p.k === "bollard") e.tinted(Hm, () => {
 			e.lathe("metal", [
 				{
 					y: 0,
@@ -26584,7 +26644,7 @@ function Mh(e) {
 				segments: 10,
 				at: c(p, 0, 1, -p.out * .3)
 			});
-		}), e.tinted(Xm, () => e.lathe("linen", [{
+		}), e.tinted(Ym, () => e.lathe("linen", [{
 			y: 0,
 			r: .16
 		}, {
@@ -26595,7 +26655,7 @@ function Mh(e) {
 			at: c(p, 0, 1.12, -p.out * .3)
 		}));
 		else if (p.k === "lamppost") {
-			ch ||= new R({ color: "#2a2019" }), e.box(ch, [
+			sh ||= new R({ color: "#2a2019" }), e.box(sh, [
 				.2,
 				2.75,
 				.2
@@ -26603,7 +26663,7 @@ function Mh(e) {
 				p.x,
 				2.375,
 				p.z
-			] }), e.box(ch, [
+			] }), e.box(sh, [
 				.34,
 				.3,
 				.34
@@ -26611,7 +26671,7 @@ function Mh(e) {
 				p.x,
 				1.15,
 				p.z
-			] }), e.box(ch, [
+			] }), e.box(sh, [
 				.12,
 				.12,
 				.85
@@ -26619,7 +26679,7 @@ function Mh(e) {
 				p.x,
 				3.62,
 				p.z + .38
-			] }), e.box(ch, [
+			] }), e.box(sh, [
 				.08,
 				.5,
 				.08
@@ -26634,7 +26694,7 @@ function Mh(e) {
 					0,
 					0
 				]
-			}), lh ||= (() => {
+			}), ch ||= (() => {
 				let e = document.createElement("canvas");
 				e.width = e.height = 64;
 				let t = e.getContext("2d"), n = t.createRadialGradient(32, 32, 0, 32, 32, 32);
@@ -26647,10 +26707,10 @@ function Mh(e) {
 				});
 			})();
 			{
-				let e = new pe(lh);
+				let e = new pe(ch);
 				e.position.set(p.x, 3.17, p.z + .68), e.scale.setScalar(1.9), o.push(e);
 			}
-			e.tinted(Um, () => {
+			e.tinted(Hm, () => {
 				e.box("metal", [
 					.3,
 					.04,
@@ -26711,7 +26771,7 @@ function Mh(e) {
 					3.55,
 					p.z + .68
 				] });
-			}), e.box(ph, [
+			}), e.box(fh, [
 				.24,
 				.34,
 				.24
@@ -26730,7 +26790,7 @@ function Mh(e) {
 				p.rot || 0,
 				0
 			];
-			e.tinted(Jm, () => {
+			e.tinted(qm, () => {
 				e.box("furniture_wood", [
 					1.1,
 					.06,
@@ -26940,7 +27000,7 @@ function Mh(e) {
 		} else if (p.k === "rowboat") {
 			let t = Math.cos(p.rot || 0), n = Math.sin(p.rot || 0), r = (e, r, i) => [
 				p.x + e * t + i * n,
-				r + qm - .44,
+				r + Km - .44,
 				p.z - e * n + i * t
 			], i = [
 				0,
@@ -27053,7 +27113,7 @@ function Mh(e) {
 					at: r(.1, .62, 0),
 					rot: i
 				});
-			}), e.tinted(Jm, () => {
+			}), e.tinted(qm, () => {
 				for (let t of [-1, 1]) e.box("furniture_wood", [
 					2,
 					.04,
@@ -27066,9 +27126,9 @@ function Mh(e) {
 						0
 					]
 				});
-			}), e.tinted(Xm, () => e.tube("linen", r(-1.3, .72, 0), r(-1.9, .7600000000000001, 0), .03, .03, { segments: 4 }));
+			}), e.tinted(Ym, () => e.tube("linen", r(-1.3, .72, 0), r(-1.9, .7600000000000001, 0), .03, .03, { segments: 4 }));
 		} else if (p.k === "crane") {
-			uh ||= new R({ color: "#3a3029" }), e.box(ch ||= new R({ color: "#2a2019" }), [
+			lh ||= new R({ color: "#3a3029" }), e.box(sh ||= new R({ color: "#2a2019" }), [
 				1.4,
 				.36,
 				1.4
@@ -27076,7 +27136,7 @@ function Mh(e) {
 				p.x,
 				1.18,
 				p.z
-			] }), e.box(ch, [
+			] }), e.box(sh, [
 				1,
 				.24,
 				1
@@ -27084,7 +27144,7 @@ function Mh(e) {
 				p.x,
 				1.48,
 				p.z
-			] }), e.box(uh, [
+			] }), e.box(lh, [
 				.3,
 				4.4,
 				.3
@@ -27092,7 +27152,7 @@ function Mh(e) {
 				p.x,
 				3.5,
 				p.z
-			] }), e.box(uh, [
+			] }), e.box(lh, [
 				.2,
 				.2,
 				3.4
@@ -27108,7 +27168,7 @@ function Mh(e) {
 					0
 				]
 			});
-			for (let t of [-1, 1]) e.box(uh, [
+			for (let t of [-1, 1]) e.box(lh, [
 				.1,
 				1.5,
 				.1
@@ -27124,7 +27184,7 @@ function Mh(e) {
 					t * .25
 				]
 			});
-			e.tinted(Xm, () => {
+			e.tinted(Ym, () => {
 				e.tube("linen", [
 					p.x,
 					5.76,
@@ -27211,9 +27271,9 @@ function Mh(e) {
 				1.14
 			], () => {
 				e.box("rampart_wall", l(n, t, .22, .22), { at: c(n, 0, -.9, 1.08) }), e.box("rampart_wall", l(n, t, .16, .16), { at: c(n, 0, -4.2, 1.05) });
-			}), Qm ||= new R({ color: "#0d0a08" });
-			for (let r = 4; r < t - 1; r += 4) for (let i of [-2.4, -6.2]) e.box(Qm, l(n, .14, .7, .04), { at: c(n, r - t / 2, i, 1.01) });
-			sh ||= (() => {
+			}), Zm ||= new R({ color: "#0d0a08" });
+			for (let r = 4; r < t - 1; r += 4) for (let i of [-2.4, -6.2]) e.box(Zm, l(n, .14, .7, .04), { at: c(n, r - t / 2, i, 1.01) });
+			oh ||= (() => {
 				let e = document.createElement("canvas");
 				e.width = 4, e.height = 64;
 				let t = e.getContext("2d"), n = t.createLinearGradient(0, 0, 0, 64);
@@ -27270,7 +27330,7 @@ function Mh(e) {
 					r[2] - a
 				]
 			];
-			e.quad(sh, o, [
+			e.quad(oh, o, [
 				[0, 1],
 				[1, 1],
 				[1, 0],
@@ -27384,7 +27444,7 @@ function Mh(e) {
 			}));
 			for (let t = 0; t < 2; t++) {
 				let a = (.25 + i(t) * .5) * Math.PI, o = r - 1.5 - t * 2.4;
-				e.box(ph, [
+				e.box(fh, [
 					.18,
 					.5,
 					.12
@@ -27394,7 +27454,7 @@ function Mh(e) {
 					p.z + Math.sin(a) * n
 				] });
 			}
-		} else if (p.k === "torchpole") e.tinted(Um, () => {
+		} else if (p.k === "torchpole") e.tinted(Hm, () => {
 			e.tube("metal", [
 				p.x,
 				1,
@@ -27444,7 +27504,7 @@ function Mh(e) {
 					p.z
 				]
 			});
-		}), e.box(ph, [
+		}), e.box(fh, [
 			.22,
 			.3,
 			.22
@@ -27452,7 +27512,7 @@ function Mh(e) {
 			p.x,
 			3.48,
 			p.z
-		] }), e.box(ph, [
+		] }), e.box(fh, [
 			.12,
 			.2,
 			.12
@@ -27505,7 +27565,7 @@ function Mh(e) {
 				1.7,
 				p.z
 			]
-		})), Qm ||= new R({ color: "#0d0a08" }), e.lathe(Qm, [
+		})), Zm ||= new R({ color: "#0d0a08" }), e.lathe(Zm, [
 			{
 				y: 0,
 				r: 0
@@ -27534,7 +27594,7 @@ function Mh(e) {
 				0,
 				0
 			]
-		}), e.box(Qm, [
+		}), e.box(Zm, [
 			.76,
 			.36,
 			.02
@@ -27542,10 +27602,10 @@ function Mh(e) {
 			p.x,
 			1.88,
 			p.z + .99
-		] }), gh ||= new R({
+		] }), hh ||= new R({
 			color: new N("#ff6a20").multiplyScalar(1.6),
 			fog: !1
-		}), e.box(gh, [
+		}), e.box(hh, [
 			.62,
 			.22,
 			.03
@@ -27553,7 +27613,7 @@ function Mh(e) {
 			p.x,
 			1.8,
 			p.z + .98
-		] }), e.box(gh, [
+		] }), e.box(hh, [
 			.42,
 			.16,
 			.03
@@ -27637,7 +27697,7 @@ function Mh(e) {
 			o.putImageData(c, 0, 0);
 			let l = new Te(a);
 			l.magFilter = l.minFilter = Ie;
-			let u = oh = new R({
+			let u = ah = new R({
 				color: "#46566a",
 				alphaMap: l,
 				transparent: !0,
@@ -27651,7 +27711,7 @@ function Mh(e) {
 			let m = new M(new x(n, r), f);
 			m.rotation.x = -Math.PI / 2, m.position.set(e / 2, .8099999999999999, t / 2), m.updateMatrixWorld(!0), i.push(m);
 		} else if (p.k === "lampglint") {
-			ah ||= new R({
+			ih ||= new R({
 				color: new N("#ffb060").multiplyScalar(.55),
 				transparent: !0,
 				opacity: .5,
@@ -27662,7 +27722,7 @@ function Mh(e) {
 			let t = (e) => (Math.imul(p.seed + e * 977, 2654435761) >>> 0) % 1e3 / 1e3;
 			for (let n = 0; n < 6; n++) {
 				let r = .55 - n * .06 + t(n) * .2, i = n * .3 + t(n + 7) * .08, a = (t(n + 3) - .5) * .3;
-				e.box(ah, p.along ? [
+				e.box(ih, p.along ? [
 					r,
 					.01,
 					.07
@@ -27695,7 +27755,7 @@ function Mh(e) {
 						o
 					], [
 						a + c,
-						qm + s,
+						Km + s,
 						o + c * .5
 					], .032, .008, { segments: 3 });
 				}
@@ -27774,7 +27834,7 @@ function Mh(e) {
 				p.x,
 				1.018,
 				p.z
-			] })), ih ||= new R({ color: new N("#a8853f") }), e.box(ih, [
+			] })), rh ||= new R({ color: new N("#a8853f") }), e.box(rh, [
 				.07,
 				.03,
 				.62
@@ -27782,7 +27842,7 @@ function Mh(e) {
 				p.x,
 				1.036,
 				p.z + .02
-			] }), e.box(ih, [
+			] }), e.box(rh, [
 				.36,
 				.03,
 				.07
@@ -27820,18 +27880,18 @@ function Mh(e) {
 				[3, .34],
 				[2, .56],
 				[1, .78]
-			]) for (let i = 0; i < n; i++) dh(e, p, (i - (n - 1) / 2) * .26, 1 + r, .13, .28 + t++ % 2 * .04);
+			]) for (let i = 0; i < n; i++) uh(e, p, (i - (n - 1) / 2) * .26, 1 + r, .13, .28 + t++ % 2 * .04);
 		} else if (p.k === "rood") e.tinted([
 			.3,
 			.22,
 			.16
-		], () => e.box("furniture_wood", l(p, 1, 1.4, .05), { at: c(p, 0, p.y, .04) })), ih ||= new R({ color: new N("#a8853f") }), e.tinted([
+		], () => e.box("furniture_wood", l(p, 1, 1.4, .05), { at: c(p, 0, p.y, .04) })), rh ||= new R({ color: new N("#a8853f") }), e.tinted([
 			.42,
 			.33,
 			.2
 		], () => {
 			e.box("metal", l(p, .24, 1.28, .04), { at: c(p, 0, p.y, .075) }), e.box("metal", l(p, .88, .24, .04), { at: c(p, 0, p.y + .24, .075) });
-		}), e.box(ih, l(p, .17, 1.2, .05), { at: c(p, 0, p.y, .09) }), e.box(ih, l(p, .8, .17, .05), { at: c(p, 0, p.y + .24, .09) });
+		}), e.box(rh, l(p, .17, 1.2, .05), { at: c(p, 0, p.y, .09) }), e.box(rh, l(p, .8, .17, .05), { at: c(p, 0, p.y + .24, .09) });
 		else if (p.k === "footcandles") {
 			let t = (e) => (Math.imul(p.seed + e * 977, 2654435761) >>> 0) % 1e3 / 1e3;
 			e.tinted([
@@ -27873,7 +27933,7 @@ function Mh(e) {
 						capTop: !0,
 						at: c(p, r, 1.12, i)
 					});
-				}), e.box(ph, [
+				}), e.box(fh, [
 					.04,
 					.07,
 					.04
@@ -27904,7 +27964,7 @@ function Mh(e) {
 					.34
 				]
 			]) e.tube("linen", c(p, t, 1.06, r), c(p, n, 1.08, i), .05, .045, { segments: 6 });
-		}), dh(e, p, .28, 1.1400000000000001, .15, .3);
+		}), uh(e, p, .28, 1.1400000000000001, .15, .3);
 		else if (p.k === "fallenslab") e.tinted([
 			1.25,
 			1.2,
@@ -27943,7 +28003,7 @@ function Mh(e) {
 			});
 		});
 		else if (p.k === "candlestand") {
-			e.tinted(Um, () => {
+			e.tinted(Hm, () => {
 				e.tube("metal", [
 					p.x,
 					1,
@@ -28028,7 +28088,7 @@ function Mh(e) {
 					1.95,
 					p.z + n
 				]
-			})), e.box(ph, [
+			})), e.box(fh, [
 				.065,
 				.13,
 				.065
@@ -28042,7 +28102,7 @@ function Mh(e) {
 				1,
 				1,
 				1
-			] : Um, () => {
+			] : Hm, () => {
 				let t = p.gilt ? "palace_gilt" : "metal";
 				for (let n = 0; n < 3; n++) {
 					let r = n / 3 * Math.PI * 2;
@@ -28153,7 +28213,7 @@ function Mh(e) {
 					2.92,
 					p.z
 				]
-			})), e.box(ph, [
+			})), e.box(fh, [
 				.065,
 				.13,
 				.065
@@ -28238,7 +28298,7 @@ function Mh(e) {
 				z: p.z,
 				n: "z"
 			};
-			e.tinted(Zm, () => {
+			e.tinted(Xm, () => {
 				for (let n = 0; n < 4; n++) {
 					let r = t(n) * 6.28, i = .26 + t(n + 9) * .1, a = p.x + (t(n + 3) - .5) * .3, o = p.z + (t(n + 5) - .5) * .3;
 					e.tube("linen", [
@@ -28268,7 +28328,7 @@ function Mh(e) {
 					0,
 					.3
 				]
-			].slice(0, 2 + +(t(1) < .6))) dh(e, n, r, 1 + a, .12, i);
+			].slice(0, 2 + +(t(1) < .6))) uh(e, n, r, 1 + a, .12, i);
 		} else if (p.k === "offering") {
 			e.tinted([
 				1.05,
@@ -28326,7 +28386,7 @@ function Mh(e) {
 				segments: 7,
 				capTop: !0,
 				at: c(p, .85, 1.88, .35)
-			})), e.box(ph, [
+			})), e.box(fh, [
 				.05,
 				.1,
 				.05
@@ -28348,8 +28408,8 @@ function Mh(e) {
 				1.1
 			], () => {
 				e.box("linen", l(p, 2.4, .02, .5), { at: c(p, 0, 2.11, .6) }), e.box("linen", l(p, 1.5, .12, .02), { at: c(p, 0, 2.06, 1.13) });
-			}), ih ||= new R({ color: new N("#a8853f") }), th ||= new R({ color: new N("#d4a640").multiplyScalar(.85) }), e.box(ih, l(p, .5, .3, .3), { at: c(p, 0, 2.27, .5) });
-			for (let t of [-1, 1]) e.box(th, l(p, .54, .05, .22), {
+			}), rh ||= new R({ color: new N("#a8853f") }), eh ||= new R({ color: new N("#d4a640").multiplyScalar(.85) }), e.box(rh, l(p, .5, .3, .3), { at: c(p, 0, 2.27, .5) });
+			for (let t of [-1, 1]) e.box(eh, l(p, .54, .05, .22), {
 				at: c(p, 0, 2.48, .5 + t * .07),
 				rot: p.n === "z" ? [
 					t * .6,
@@ -28399,13 +28459,13 @@ function Mh(e) {
 				segments: 7,
 				capTop: !0,
 				at: c(p, t * .85, 2.65, .55)
-			})), e.box(ph, [
+			})), e.box(fh, [
 				.05,
 				.09,
 				.05
 			], { at: c(p, t * .85, 3, .55) });
 		} else if (p.k === "pbanner") {
-			let t = p.look || 0, n = p.big ? 1.12 : 1, r = 1.3 * n, i = Wh + .9, a = 2.5 * n, o = i - a, s = .22, d = xh[t % xh.length];
+			let t = p.look || 0, n = p.big ? 1.12 : 1, r = 1.3 * n, i = Uh + .9, a = 2.5 * n, o = i - a, s = .22, d = bh[t % bh.length];
 			e.box("palace_gilt", l(p, r + .45, .07, .07), { at: c(p, 0, i + .05, s) });
 			for (let t of [-1, 1]) e.lathe("palace_gilt", [
 				{
@@ -28473,10 +28533,10 @@ function Mh(e) {
 				]) e.box("palace_gilt", l(p, .07 * n, t ? .16 * n : .22 * n, .025), { at: c(p, t * n, f + (t ? .63 : .66) * n, m) });
 			}
 		} else if (p.k === "pwindow") {
-			let t = 1.15, n = t / 2, r = 1.9, i = 3.9, a = p.lit ? wh ||= new R({
+			let t = 1.15, n = t / 2, r = 1.9, i = 3.9, a = p.lit ? Ch ||= new R({
 				color: new N("#ffb060").multiplyScalar(1.15),
 				fog: !1
-			}) : Dh();
+			}) : Eh();
 			e.box(a, l(p, t, r, .02), { at: c(p, 0, 2.95, .03) }), e.lathe(a, [
 				{
 					y: 0,
@@ -28531,16 +28591,16 @@ function Mh(e) {
 						rot: u(p, -Math.atan2(f - s, d - o))
 					});
 				}
-			}), e.box("palace_gilt", l(p, .2, .3, .34), { at: c(p, 0, 4.475 + .14, .17) }), e.tinted(xh[0], () => {
+			}), e.box("palace_gilt", l(p, .2, .3, .34), { at: c(p, 0, 4.475 + .14, .17) }), e.tinted(bh[0], () => {
 				for (let t of [-1, 1]) e.box("palace_weave", l(p, .34, 1.6, .1), { at: c(p, t * 1.035, 3.3499999999999996, .32) }), e.box("palace_weave", l(p, .22, 1.25, .1), {
 					at: c(p, t * .9949999999999999, 2, .32),
 					rot: u(p, -t * .12)
 				});
 			});
 			for (let t of [-1, 1]) e.box("palace_gilt", l(p, .3, .06, .13), { at: c(p, t * 1.025, 2.54, .33) }), e.box("palace_gilt", l(p, 2.55, .06, .06), { at: c(p, 0, 4.835, .34) });
-			if (Th ||= new R({
+			if (wh ||= new R({
 				color: new N(p.lit ? "#ffb060" : "#e8d4b0"),
-				map: Km(),
+				map: Gm(),
 				transparent: !0,
 				opacity: .32,
 				depthWrite: !1,
@@ -28548,7 +28608,7 @@ function Mh(e) {
 				blending: 2
 			}), !p.lit) {
 				let t = c(p, -.8, 1.02, .45), n = c(p, .8, 1.02, .45), r = c(p, .8, 1.02, 2.3), i = c(p, -.8, 1.02, 2.3);
-				e.quad(Th, p.n === "z" ? [
+				e.quad(wh, p.n === "z" ? [
 					i,
 					r,
 					n,
@@ -28613,7 +28673,7 @@ function Mh(e) {
 					1,
 					1
 				]
-			})), e.tinted(xh[0], () => {
+			})), e.tinted(bh[0], () => {
 				e.box("palace_weave", l(p, .62, .5, .04), { at: c(p, 0, 3.2, .12) }), e.box("palace_weave", l(p, .44, .44, .04), {
 					at: c(p, 0, 2.95, .12),
 					rot: u(p, Math.PI / 4)
@@ -28637,7 +28697,7 @@ function Mh(e) {
 				.2
 			]) e.box("palace_gilt", l(p, .08, t ? .16 : .22, .06), { at: c(p, t, 4.08, .1) });
 		} else if (p.k === "pstandard") {
-			let t = xh[(p.look || 1) % xh.length];
+			let t = bh[(p.look || 1) % bh.length];
 			e.tinted([
 				.55,
 				.45,
@@ -28965,8 +29025,8 @@ function Mh(e) {
 				i + s / 2,
 				n.z + a
 			] });
-			e.tinted(Sh, () => a("palace_weave", 0, 0, .02, t, p.w));
-			for (let e of [-1, 1]) a("palace_gilt", 0, e * (p.w / 2 - .16), .024, t - .2, .07), a(Qm, 0, e * (p.w / 2 - .02), .022, t, .04);
+			e.tinted(xh, () => a("palace_weave", 0, 0, .02, t, p.w));
+			for (let e of [-1, 1]) a("palace_gilt", 0, e * (p.w / 2 - .16), .024, t - .2, .07), a(Zm, 0, e * (p.w / 2 - .02), .022, t, .04);
 			e.tinted([
 				.13,
 				.16,
@@ -28999,7 +29059,7 @@ function Mh(e) {
 				n,
 				r + .18,
 				t + a + .005
-			] }), e.tinted(Sh, () => {
+			] }), e.tinted(xh, () => {
 				e.box("palace_weave", [
 					.85,
 					.02,
@@ -29027,7 +29087,7 @@ function Mh(e) {
 				n,
 				a + .25,
 				i
-			] }), e.tinted(xh[0], () => {
+			] }), e.tinted(bh[0], () => {
 				e.box("palace_weave", [
 					.84,
 					.36,
@@ -29053,7 +29113,7 @@ function Mh(e) {
 				n,
 				a + 1,
 				i - .38
-			] }), e.tinted(xh[0], () => e.box("palace_weave", [
+			] }), e.tinted(bh[0], () => e.box("palace_weave", [
 				.78,
 				1.35,
 				.02
@@ -29159,7 +29219,7 @@ function Mh(e) {
 					a + 2.42,
 					i - .38
 				]
-			}), nh ||= new R({ color: new N("#6e1e20") }), e.box(nh, [
+			}), th ||= new R({ color: new N("#6e1e20") }), e.box(th, [
 				.44,
 				.1,
 				.36
@@ -29205,7 +29265,7 @@ function Mh(e) {
 				] });
 			}
 			let o = 2.7;
-			e.tinted(xh[0], () => e.box("palace_weave", [
+			e.tinted(bh[0], () => e.box("palace_weave", [
 				o,
 				3.35,
 				.04
@@ -29252,7 +29312,7 @@ function Mh(e) {
 					]
 				});
 			}
-			e.tinted(xh[0], () => {
+			e.tinted(bh[0], () => {
 				e.box("palace_weave", [
 					3,
 					.2,
@@ -29373,7 +29433,7 @@ function Mh(e) {
 				p.x,
 				2.1,
 				p.z
-			] }), nh ||= new R({ color: new N("#6e1e20") }), e.box(nh, [
+			] }), th ||= new R({ color: new N("#6e1e20") }), e.box(th, [
 				.5,
 				.08,
 				.38
@@ -29381,7 +29441,7 @@ function Mh(e) {
 				p.x,
 				2.17,
 				p.z
-			] }), e.box(Qm, [
+			] }), e.box(Zm, [
 				.32,
 				.01,
 				.22
@@ -29444,7 +29504,7 @@ function Mh(e) {
 					z: p.wz,
 					n: "z"
 				};
-				e.box(Qm, l(t, .8, 1.15, .02), { at: c(t, 0, 3.0300000000000002, .03) }), e.lathe(Qm, [
+				e.box(Zm, l(t, .8, 1.15, .02), { at: c(t, 0, 3.0300000000000002, .03) }), e.lathe(Zm, [
 					{
 						y: 0,
 						r: 0
@@ -29502,7 +29562,7 @@ function Mh(e) {
 					1,
 					p.z + .5
 				]
-			})), e.box(ph, [
+			})), e.box(fh, [
 				.05,
 				.09,
 				.05
@@ -29516,7 +29576,7 @@ function Mh(e) {
 				p.x + e * t + i * n,
 				r,
 				p.z - e * n + i * t
-			], i = 1 + (p.y - Ph);
+			], i = 1 + (p.y - Nh);
 			if (p.letters) {
 				for (let t = 0; t < 4; t++) {
 					let n = (t - 1.5) * .18;
@@ -29535,7 +29595,7 @@ function Mh(e) {
 							(p.rot || 0) + n,
 							0
 						]
-					})), e.box(nh ||= new R({ color: new N("#6e1e20") }), [
+					})), e.box(th ||= new R({ color: new N("#6e1e20") }), [
 						.07,
 						.015,
 						.07
@@ -29634,7 +29694,7 @@ function Mh(e) {
 				segments: 7,
 				capTop: !0,
 				at: r(.5, i + .2, -.2)
-			})), e.box(ph, [
+			})), e.box(fh, [
 				.05,
 				.09,
 				.05
@@ -29657,7 +29717,7 @@ function Mh(e) {
 				0,
 				e
 			];
-			e.tinted(Vm, () => {
+			e.tinted(Bm, () => {
 				for (let t of [-1, 1]) e.box("furniture_wood", [
 					.09,
 					1.25,
@@ -29745,7 +29805,7 @@ function Mh(e) {
 					0
 				]
 			}));
-			e.box(nh ||= new R({ color: new N("#6e1e20") }), [
+			e.box(th ||= new R({ color: new N("#6e1e20") }), [
 				.06,
 				.012,
 				.06
@@ -29754,11 +29814,11 @@ function Mh(e) {
 				1.016,
 				p.z + (t(5) - .5) * .6
 			] });
-		} else if (p.k === "bniche" || p.k === "bdoor" || p.k === "bier" || p.k === "menhir" || p.k === "bshore" || p.k === "bpost") zh(e, p, c, l, u, 1);
-		else if (p.k === "kparapet" || p.k === "kbutt" || p.k === "kslit" || p.k === "kmerlons" || p.k === "hpost" || p.k === "kpier") Bh(e, p, c, l, 1);
+		} else if (p.k === "bniche" || p.k === "bdoor" || p.k === "bier" || p.k === "menhir" || p.k === "bshore" || p.k === "bpost") Rh(e, p, c, l, u, 1);
+		else if (p.k === "kparapet" || p.k === "kbutt" || p.k === "kslit" || p.k === "kmerlons" || p.k === "hpost" || p.k === "kpier") zh(e, p, c, l, 1);
 		else if (p.k === "eeltraps") {
 			let t = 3.3, n = (e) => (Math.imul(p.seed + e * 977, 2654435761) >>> 0) % 1e3 / 1e3;
-			e.tinted(Vm, () => {
+			e.tinted(Bm, () => {
 				e.box("furniture_wood", l(p, 2, .1, .08), { at: c(p, 0, t, .04) });
 				for (let n of [
 					-.65,
@@ -29772,7 +29832,7 @@ function Mh(e) {
 				[2, .65]
 			]) {
 				if (r === 2 && n(5) < .5) {
-					e.tinted(Xm, () => {
+					e.tinted(Ym, () => {
 						for (let [n, r] of [[.2, -.18], [.17, -.26]]) e.lathe("linen", [{
 							y: 0,
 							r: n
@@ -29877,7 +29937,7 @@ function Mh(e) {
 			}
 		} else if (p.k === "nets") {
 			let t = 2.2, n = 1.5, r = (e) => .18 * (1 - (2 * e / t) ** 2);
-			e.tinted(Vm, () => {
+			e.tinted(Bm, () => {
 				e.box("furniture_wood", l(p, 2.4000000000000004, .08, .08), { at: c(p, 0, 3.46, .04) });
 			});
 			let i = (e, t) => c(p, e, 3.4 - t - r(e) * (1 - t / n * .5) * (t > 0), .08 + t * .05);
@@ -30037,9 +30097,9 @@ function Mh(e) {
 					n(9) * .8,
 					0
 				]
-			})), p.lamp && (e.tinted(Um, () => {
+			})), p.lamp && (e.tinted(Hm, () => {
 				e.box("metal", l(p, .04, .04, .5), { at: t(0, 1 + a + .05, .62) }), e.box("metal", l(p, .03, .2, .03), { at: t(0, 1 + a - .06, .86) }), e.box("metal", l(p, .24, .05, .24), { at: t(0, 1 + a - .18, .86) }), e.box("metal", l(p, .22, .05, .22), { at: t(0, 1 + a - .52, .86) });
-			}), e.box(ph, l(p, .16, .28, .16), { at: t(0, 1 + a - .35, .86) }));
+			}), e.box(fh, l(p, .16, .28, .16), { at: t(0, 1 + a - .35, .86) }));
 		} else if (p.k === "rails") {
 			let t = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), n = {
 				x: (p.x0 + p.x1) / 2,
@@ -30269,7 +30329,7 @@ function Mh(e) {
 				1.4,
 				1.25,
 				1.05
-			], () => e.box("furniture_wood", l(p, .2, n, .2), { at: t(0, 1 + n / 2, r) })), e.tinted(Um, () => {
+			], () => e.box("furniture_wood", l(p, .2, n, .2), { at: t(0, 1 + n / 2, r) })), e.tinted(Hm, () => {
 				e.box("metal", l(p, .05, .05, .6), { at: t(0, 1 + n - .25, r + .36) }), e.box("metal", l(p, .04, .22, .04), { at: t(0, 1 + n - .37, r + .64) }), e.box("metal", l(p, .26, .05, .26), { at: t(0, 1 + n - .5, r + .64) }), e.box("metal", l(p, .24, .05, .24), { at: t(0, 1 + n - .86, r + .64) });
 				for (let [i, a] of [
 					[-.1, -.1],
@@ -30277,7 +30337,7 @@ function Mh(e) {
 					[-.1, .1],
 					[.1, .1]
 				]) e.box("metal", l(p, .025, .36, .025), { at: t(i, 1 + n - .68, r + .64 + a) });
-			}), e.box(ph, l(p, .17, .3, .17), { at: t(0, 1 + n - .68, r + .64) });
+			}), e.box(fh, l(p, .17, .3, .17), { at: t(0, 1 + n - .68, r + .64) });
 		} else if (p.k === "mladder") {
 			let t = (e, t, n) => c(p, e, t, n * (p.out || 1)), n = p.near ? 1.2 : 2.9;
 			e.tinted([
@@ -30391,7 +30451,7 @@ function Mh(e) {
 				.42,
 				.33,
 				.26
-			], () => e.box("furniture_wood", l(n, t, .95, .07), { at: c(n, 0, 1.475, .035) })), e.tinted(Hm, () => e.box("furniture_wood", l(n, t, .07, .12), { at: c(n, 0, 1.98, .06) })));
+			], () => e.box("furniture_wood", l(n, t, .95, .07), { at: c(n, 0, 1.475, .035) })), e.tinted(Vm, () => e.box("furniture_wood", l(n, t, .07, .12), { at: c(n, 0, 1.98, .06) })));
 		} else if (p.k === "cpillar") {
 			let t = p.broken ? .7 : 1.75;
 			e.tinted([
@@ -30464,15 +30524,15 @@ function Mh(e) {
 				e.box("count_top", l(p, .7, .3, .34), { at: c(p, t, 1.15, .17) }), e.box("count_top", l(p, .68, .16, .34), { at: c(p, t, 1 + n - .35, .17) });
 			});
 		} else if (p.k === "clamp" || p.k === "clampstand") {
-			if (fh ||= new R({
+			if (dh ||= new R({
 				color: new N("#d6e2f6").multiplyScalar(1.9),
 				fog: !1
 			}), p.k === "clamp") {
 				let t = .7, n = p.y - .55;
-				e.tinted(Um, () => {
+				e.tinted(Hm, () => {
 					e.box("metal", l(p, .05, .05, .75), { at: c(p, 0, p.y, t / 2) }), e.box("metal", l(p, .02, .32, .02), { at: c(p, 0, p.y - .17, t) }), e.box("metal", l(p, .3, .05, .3), { at: c(p, 0, n + .2, t) }), e.box("metal", l(p, .26, .05, .26), { at: c(p, 0, n - .18, t) });
-				}), e.box(fh, l(p, .2, .32, .2), { at: c(p, 0, n, t) });
-			} else e.tinted(Um, () => {
+				}), e.box(dh, l(p, .2, .32, .2), { at: c(p, 0, n, t) });
+			} else e.tinted(Hm, () => {
 				e.tube("metal", [
 					p.x,
 					1,
@@ -30511,7 +30571,7 @@ function Mh(e) {
 					2.77,
 					p.z
 				] });
-			}), e.box(fh, [
+			}), e.box(dh, [
 				.22,
 				.32,
 				.22
@@ -30522,7 +30582,7 @@ function Mh(e) {
 			] });
 		} else if (p.k === "tally" || p.k === "quotaboard") {
 			let t = p.k === "quotaboard", n = t ? 2.5 : 1.5, r = t ? 1.5 : 1.05, i = p.y + (t ? .15 : 0), a = (e) => (Math.imul(p.seed + e * 977, 2654435761) >>> 0) % 1e3 / 1e3;
-			e.tinted(Hm, () => e.box("furniture_wood", l(p, n + .14, r + .14, .06), { at: c(p, 0, i, .03) })), e.tinted([
+			e.tinted(Vm, () => e.box("furniture_wood", l(p, n + .14, r + .14, .06), { at: c(p, 0, i, .03) })), e.tinted([
 				.2,
 				.21,
 				.23
@@ -30557,7 +30617,7 @@ function Mh(e) {
 				p.x + e * t + i * n,
 				r,
 				p.z - e * n + i * t
-			], i = 1 + (p.y - Ph);
+			], i = 1 + (p.y - Nh);
 			e.tinted([
 				.5,
 				.3,
@@ -30766,13 +30826,13 @@ function Mh(e) {
 		let r = t.length > 1 ? on(t) : t[0];
 		for (let e of t) e !== r && e.dispose();
 		if (!r) continue;
-		let i = new M(r, e), a = e === ph || e === gh || e === _h || e === vh || e === yh || e === bh || e === Qm || e === $m || e === eh || e === th || e === nh || e === rh || e === ih || e === ah || e === oh || e === sh || e === Ch || e === wh || e === Th || e === fh || Pg.has(e);
-		i.castShadow = !a && e !== mh, i.receiveShadow = !a, h.add(i);
+		let i = new M(r, e), a = e === fh || e === hh || e === gh || e === _h || e === vh || e === yh || e === Zm || e === Qm || e === $m || e === eh || e === th || e === nh || e === rh || e === ih || e === ah || e === oh || e === Sh || e === Ch || e === wh || e === dh || Ng.has(e);
+		i.castShadow = !a && e !== ph, i.receiveShadow = !a, h.add(i);
 	}
 	for (let e of o) h.add(e);
 	if (a.length) {
 		let e = new Fe();
-		e.setAttribute("position", new O(a, 3)), h.add(new M(e, hh));
+		e.setAttribute("position", new O(a, 3)), h.add(new M(e, mh));
 	}
 	for (let e of [p, ...i]) e.traverse((e) => {
 		e.isMesh && e.geometry.dispose();
@@ -30785,15 +30845,15 @@ function Mh(e) {
 		s.length = 0;
 	}, h;
 }
-var Nh = 3, Ph = 1, Fh = [
+var Mh = 3, Nh = 1, Ph = [
 	.46,
 	.34,
 	.25
-], Ih = [
+], Fh = [
 	.66,
 	.5,
 	.36
-], Lh = [
+], Ih = [
 	[
 		1.3,
 		.86,
@@ -30809,16 +30869,16 @@ var Nh = 3, Ph = 1, Fh = [
 		.64,
 		.46
 	]
-], Rh = [
+], Lh = [
 	1.5,
 	1.38,
 	1.1
 ];
-function zh(e, t, n, r, i, a) {
+function Rh(e, t, n, r, i, a) {
 	let o = (e) => (Math.imul((t.seed || 7) + e * 977, 2654435761) >>> 0) % 1e3 / 1e3;
-	Qm ||= new R({ color: "#0d0a08" });
+	Zm ||= new R({ color: "#0d0a08" });
 	let s = (t, n, r, i) => {
-		e.tinted(Lh[i % 3], () => e.lathe("crypt_cap", [
+		e.tinted(Ih[i % 3], () => e.lathe("crypt_cap", [
 			{
 				y: 0,
 				r: r * .55
@@ -30963,18 +31023,18 @@ function zh(e, t, n, r, i, a) {
 	};
 	if (t.k === "bniche") {
 		let o = 1.15, l = a + .46;
-		e.box(Qm, r(t, 1.5, o, .04), { at: n(t, 0, l + o / 2, .02) }), e.tinted([
+		e.box(Zm, r(t, 1.5, o, .04), { at: n(t, 0, l + o / 2, .02) }), e.tinted([
 			1.12,
 			1.08,
 			1
 		], () => {
 			e.box("barrow_drystone", r(t, 2, .14, .5), { at: n(t, 0, l - .07, .25) }), e.box("barrow_drystone", r(t, 1.7, .32, .36), { at: n(t, 0, a + .16, .18) });
-		}), e.tinted(Fh, () => {
+		}), e.tinted(Ph, () => {
 			for (let i of [-1, 1]) e.box("furniture_wood", r(t, .22, 1.65, .22), { at: n(t, i * .86, a + 1.65 / 2, .13) });
 			e.box("furniture_wood", r(t, 2.35, .28, .34), { at: n(t, 0, l + o + .14, .17) });
-		}), e.tinted(Ih, () => e.box("furniture_wood", r(t, 2.35, .04, .36), { at: n(t, 0, l + o + .3, .18) }));
+		}), e.tinted(Fh, () => e.box("furniture_wood", r(t, 2.35, .04, .36), { at: n(t, 0, l + o + .3, .18) }));
 		let u = t.seed % 4, d = l;
-		(u === 0 || u === 3) && (s(n(t, -.38, d, .2), .42, .2, t.seed), s(n(t, .05, d, .24), .34, .17, t.seed + 1)), (u === 0 || u === 2) && dh(e, t, u === 0 ? .45 : -.42, d + .14, .13, .2), (u === 1 || u === 3) && c(n(t, u === 1 ? -.15 : .42, d + .43, .16), .4, t.n === "z" ? [
+		(u === 0 || u === 3) && (s(n(t, -.38, d, .2), .42, .2, t.seed), s(n(t, .05, d, .24), .34, .17, t.seed + 1)), (u === 0 || u === 2) && uh(e, t, u === 0 ? .45 : -.42, d + .14, .13, .2), (u === 1 || u === 3) && c(n(t, u === 1 ? -.15 : .42, d + .43, .16), .4, t.n === "z" ? [
 			Math.PI / 2 - .2,
 			0,
 			0
@@ -30995,7 +31055,7 @@ function zh(e, t, n, r, i, a) {
 				at: n(t, a * .06, d + 1.15, .06),
 				rot: i(t, a * .45)
 			}));
-		}), u === 2 && (e.tinted(Rh, () => {
+		}), u === 2 && (e.tinted(Lh, () => {
 			let r = [
 				[
 					-.1,
@@ -31060,10 +31120,10 @@ function zh(e, t, n, r, i, a) {
 			x: (t.x0 + t.x1) / 2,
 			z: (t.z0 + t.z1) / 2
 		}, s = a + 2.45;
-		e.tinted(Fh, () => {
+		e.tinted(Ph, () => {
 			for (let t of [-1, 1]) e.box("furniture_wood", r(o, .34, s - a, .34), { at: n(o, t * (i / 2 - .05), a + (s - a) / 2, .05) }), e.box("barrow_drystone", r(o, .6, .3, .6), { at: n(o, t * (i / 2 - .05), a + .15, .05) });
 			e.box("furniture_wood", r(o, i + .9, .4, .42), { at: n(o, 0, s + .2, .05) });
-		}), e.tinted(Ih, () => e.box("furniture_wood", r(o, i + .9, .05, .44), { at: n(o, 0, s + .42, .05) })), e.tinted([
+		}), e.tinted(Fh, () => e.box("furniture_wood", r(o, i + .9, .05, .44), { at: n(o, 0, s + .42, .05) })), e.tinted([
 			1.05,
 			1,
 			.94
@@ -31081,7 +31141,7 @@ function zh(e, t, n, r, i, a) {
 				a
 			];
 		};
-		e.tinted(Fh, () => {
+		e.tinted(Ph, () => {
 			for (let [t, n] of [
 				[-.9, -.32],
 				[.9, -.32],
@@ -31103,7 +31163,7 @@ function zh(e, t, n, r, i, a) {
 				at: l(0, a + .55, 0),
 				rot: s
 			});
-		}), e.tinted(Ih, () => {
+		}), e.tinted(Fh, () => {
 			for (let t of [-.4, .4]) e.box("furniture_wood", [
 				2.16,
 				.06,
@@ -31129,7 +31189,7 @@ function zh(e, t, n, r, i, a) {
 					0
 				]
 			});
-		}), e.tinted(Zm, () => {
+		}), e.tinted(Xm, () => {
 			for (let n = 0; n < 5; n++) e.box("linen", [
 				.42,
 				.05,
@@ -31312,7 +31372,7 @@ function zh(e, t, n, r, i, a) {
 				.05
 			]
 		}));
-	} else t.k === "bshore" ? (e.tinted(Fh, () => {
+	} else t.k === "bshore" ? (e.tinted(Ph, () => {
 		for (let o of [-1, 1]) e.box("furniture_wood", r(t, .2, 2.1, .2), {
 			at: n(t, o * .85, a + 1.05, 0),
 			rot: i(t, o * .05)
@@ -31331,7 +31391,7 @@ function zh(e, t, n, r, i, a) {
 			at: n(t, 0, a + s, -.14),
 			rot: i(t, (o(s * 10) - .5) * .06)
 		});
-	})) : t.k === "bpost" && (e.tinted(Fh, () => {
+	})) : t.k === "bpost" && (e.tinted(Ph, () => {
 		e.box("furniture_wood", r(t, .22, 2, .22), {
 			at: n(t, 0, a + 1, .13),
 			rot: i(t, (o(1) - .5) * .08)
@@ -31344,7 +31404,7 @@ function zh(e, t, n, r, i, a) {
 		for (let i of [.25, .58]) e.box("wood_planks", r(t, 1.5, .28, .05), { at: n(t, (o(2) - .5) * .3, a + i, .03) });
 	}));
 }
-function Bh(e, t, n, r, i) {
+function zh(e, t, n, r, i) {
 	if (t.k === "kparapet" || t.k === "kmerlons") {
 		let i = Math.hypot(t.x1 - t.x0, t.z1 - t.z0), a = {
 			n: t.n,
@@ -31392,9 +31452,9 @@ function Bh(e, t, n, r, i) {
 		1.12,
 		1.08,
 		1.02
-	], () => e.box("keep_ashlar", r(t, .5, 1.2, .06), { at: n(t, 0, t.y, .03) })), e.box(Qm ||= new R({ color: "#0d0a08" }), r(t, .13, .95, .03), { at: n(t, 0, t.y, .065) }), e.box(Qm, r(t, .36, .11, .03), { at: n(t, 0, t.y - .12, .065) });
+	], () => e.box("keep_ashlar", r(t, .5, 1.2, .06), { at: n(t, 0, t.y, .03) })), e.box(Zm ||= new R({ color: "#0d0a08" }), r(t, .13, .95, .03), { at: n(t, 0, t.y, .065) }), e.box(Zm, r(t, .36, .11, .03), { at: n(t, 0, t.y - .12, .065) });
 	else if (t.k === "hpost") {
-		let n = i + Nh;
+		let n = i + Mh;
 		e.tinted([
 			.9,
 			.88,
@@ -31407,14 +31467,14 @@ function Bh(e, t, n, r, i) {
 			t.x,
 			i + .11,
 			t.z
-		] })), e.tinted(Vm, () => {
+		] })), e.tinted(Bm, () => {
 			e.box("furniture_wood", [
 				.36,
-				Nh,
+				Mh,
 				.36
 			], { at: [
 				t.x,
-				i + Nh / 2,
+				i + Mh / 2,
 				t.z
 			] });
 			for (let [r, i] of [[1, 0], [-1, 0]]) e.box("furniture_wood", [
@@ -31491,26 +31551,26 @@ function Bh(e, t, n, r, i) {
 		}));
 	}
 }
-var Vh = /* @__PURE__ */ new Set([
+var Bh = /* @__PURE__ */ new Set([
 	"pier",
 	"cornice",
 	"plinth",
 	"arcade",
 	"skullniche",
 	"lightwell"
-]), Hh = /* @__PURE__ */ new Set([
+]), Vh = /* @__PURE__ */ new Set([
 	"box",
 	"lathe",
 	"tube",
 	"quad",
 	"poly",
 	"tri"
-]), Uh = {
+]), Hh = {
 	crypt_wall: "fen_brick",
 	crypt_cap: "fen_lime",
 	crypt_top: "fen_top"
-}, Wh = 3.25, Gh = [], Kh = 0, qh = "\nfloat mh(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }\nfloat mn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);\n  return mix(mix(mh(i), mh(i + vec2(1.0, 0.0)), f.x), mix(mh(i + vec2(0.0, 1.0)), mh(i + vec2(1.0, 1.0)), f.x), f.y); }";
-function Jh(e) {
+}, Uh = 3.25, Wh = [], Gh = 0, Kh = "\nfloat mh(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }\nfloat mn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);\n  return mix(mix(mh(i), mh(i + vec2(1.0, 0.0)), f.x), mix(mh(i + vec2(0.0, 1.0)), mh(i + vec2(1.0, 1.0)), f.x), f.y); }";
+function qh(e) {
 	let t = new A();
 	t.name = "ember:magma";
 	let n = [], r = [], i = [], a = [];
@@ -31538,12 +31598,12 @@ function Jh(e) {
 	let s = new R({
 		color: 16777215,
 		fog: !0
-	}), c = { value: Kh };
+	}), c = { value: Gh };
 	s.userData.u = c, s.onBeforeCompile = (e) => {
-		e.uniforms.uMagmaT = c, e.vertexShader = "attribute float crust;\nvarying float vCrust;\nvarying vec2 vMW;\n" + e.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\n  vCrust = crust; vMW = (modelMatrix * vec4(position, 1.0)).xz;"), e.fragmentShader = "uniform float uMagmaT;\nvarying float vCrust;\nvarying vec2 vMW;\n" + qh + "\n" + e.fragmentShader.replace("#include <color_fragment>", "#include <color_fragment>\n  { vec2 p = vMW * 3.2;\n    // (round 1: one flat bright band, a neon tube: cooler now, darker plates of crust drifting on it, the bright only in\n    // the cracks between them)\n    float a = mn(p + vec2(uMagmaT * 0.16, uMagmaT * 0.05)), b = mn(p * 2.4 - vec2(uMagmaT * 0.09, -uMagmaT * 0.17));\n    float heat = 0.6 * a + 0.4 * b;\n    heat *= smoothstep(0.0, 0.5, vCrust);                        // (cooler toward the banks)\n    float cr = smoothstep(0.5, 0.36, heat) * 0.92 + smoothstep(0.14, 0.0, vCrust) * 0.9;   // (crust: the cold plates, and the banks)\n    vec3 hot = mix(vec3(0.42, 0.07, 0.02), vec3(0.95, 0.3, 0.06), smoothstep(0.42, 0.62, heat));\n    hot = mix(hot, vec3(1.45, 0.78, 0.26), smoothstep(0.7, 0.86, heat));\n    diffuseColor.rgb = mix(hot, vec3(0.11, 0.05, 0.035), clamp(cr, 0.0, 1.0)); }");
+		e.uniforms.uMagmaT = c, e.vertexShader = "attribute float crust;\nvarying float vCrust;\nvarying vec2 vMW;\n" + e.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\n  vCrust = crust; vMW = (modelMatrix * vec4(position, 1.0)).xz;"), e.fragmentShader = "uniform float uMagmaT;\nvarying float vCrust;\nvarying vec2 vMW;\n" + Kh + "\n" + e.fragmentShader.replace("#include <color_fragment>", "#include <color_fragment>\n  { vec2 p = vMW * 3.2;\n    // (round 1: one flat bright band, a neon tube: cooler now, darker plates of crust drifting on it, the bright only in\n    // the cracks between them)\n    float a = mn(p + vec2(uMagmaT * 0.16, uMagmaT * 0.05)), b = mn(p * 2.4 - vec2(uMagmaT * 0.09, -uMagmaT * 0.17));\n    float heat = 0.6 * a + 0.4 * b;\n    heat *= smoothstep(0.0, 0.5, vCrust);                        // (cooler toward the banks)\n    float cr = smoothstep(0.5, 0.36, heat) * 0.92 + smoothstep(0.14, 0.0, vCrust) * 0.9;   // (crust: the cold plates, and the banks)\n    vec3 hot = mix(vec3(0.42, 0.07, 0.02), vec3(0.95, 0.3, 0.06), smoothstep(0.42, 0.62, heat));\n    hot = mix(hot, vec3(1.45, 0.78, 0.26), smoothstep(0.7, 0.86, heat));\n    diffuseColor.rgb = mix(hot, vec3(0.11, 0.05, 0.035), clamp(cr, 0.0, 1.0)); }");
 	}, s.customProgramCacheKey = () => "ember-magma-2";
 	let u = new M(o, s);
-	if (u.name = "ember:magma:surface", t.add(u), Gh.push(s), a.length) {
+	if (u.name = "ember:magma:surface", t.add(u), Wh.push(s), a.length) {
 		let e = [];
 		for (let [t, n, r, i, o] of a) {
 			let a = new F(i, .09, o);
@@ -31558,11 +31618,11 @@ function Jh(e) {
 		r.castShadow = !1, r.receiveShadow = !0, r.name = "ember:magma:lip", t.add(r);
 	}
 	return t.userData.dispose = () => {
-		let e = Gh.indexOf(s);
-		e >= 0 && Gh.splice(e, 1), o.dispose(), s.dispose();
+		let e = Wh.indexOf(s);
+		e >= 0 && Wh.splice(e, 1), o.dispose(), s.dispose();
 	}, t;
 }
-function Yh(e, t) {
+function Jh(e, t) {
 	for (let t of e) {
 		X.engine.scene.remove(t), t.dispose?.(), t.userData?.sheet?.dispose?.(), t.userData?.dispose?.();
 		let e = t.userData?.ourSheet;
@@ -31572,55 +31632,57 @@ function Yh(e, t) {
 		e.isMesh && e.geometry.dispose();
 	});
 }
-function Xh() {
-	for (let [e, t] of l_) t.refs <= 0 && (t.texture.dispose(), l_.delete(e));
+function Yh() {
+	for (let [e, t] of c_) t.refs <= 0 && (t.texture.dispose(), c_.delete(e));
 }
-async function Zh(e, t) {
-	if (Yh(Am, Im), Mm.length = 0, Am = [], Im = /* @__PURE__ */ new Map(), !e?.length) {
-		Xh();
+async function Xh(e, t) {
+	if (Jh(km, Fm), jm.length = 0, km = [], Fm = /* @__PURE__ */ new Map(), !e?.length) {
+		Yh();
 		return;
 	}
-	let n = ["env", `town-${t || "vale"}`], r = await Promise.all(n.map((e) => Fp(`${Jf}env/${e}.json`))), i = (e) => {
+	let n = ["env", `town-${t || "vale"}`], r = op, i = await Promise.all(n.map((e) => Pp(`${Yf}env/${e}.json`)));
+	if (r !== op) return;
+	let a = (e) => {
 		for (let t = 0; t < n.length; t++) {
-			let i = r[t]?.sprites?.[e];
-			if (i) return [n[t], i];
+			let r = i[t]?.sprites?.[e];
+			if (r) return [n[t], r];
 		}
 		return null;
-	}, a = ap;
+	};
 	for (let t of e) {
 		if (t.canvas) {
-			u_(t);
+			l_(t);
 			continue;
 		}
 		if (t.arch) {
-			let e = Bm(t.arch);
-			X.engine.scene.add(e), Am.push(e);
+			let e = zm(t.arch);
+			X.engine.scene.add(e), km.push(e);
 			continue;
 		}
 		if (t.tavern) {
-			let e = Mh(t.tavern.pieces);
-			X.engine.scene.add(e), Am.push(e);
+			let e = jh(t.tavern.pieces);
+			X.engine.scene.add(e), km.push(e);
 			continue;
 		}
 		if (t.seaMask) {
-			Dg = t.seaMask, Og && Mg(Og, kg, !0);
+			Eg = t.seaMask, Dg && jg(Dg, Og, !0);
 			continue;
 		}
 		if (t.magma) {
-			let e = Jh(t.magma.cells);
-			X.engine.scene.add(e), Am.push(e);
+			let e = qh(t.magma.cells);
+			X.engine.scene.add(e), km.push(e);
 			continue;
 		}
-		let e = Fm.get(t.id);
-		if (e && (jm === "all" || jm === "chosen" && !t.card || jm === "doors" && Lm.has(t.id))) {
-			let n = (e, n) => X.tileMap.getHeight(t.x + e, t.z + n), r = t.y ?? (t.here ? n(0, 0) : Math.max(n(0, 0), n(0, 3), n(0, -3), n(3, 0), n(-3, 0))), i = Rm(e, t.x, r, t.z);
-			t.ring && (i.userData.ring = t.ring, i.visible = !1, Mm.push(i)), X.engine.scene.add(i), Am.push(i);
+		let e = Pm.get(t.id);
+		if (e && (Am === "all" || Am === "chosen" && !t.card || Am === "doors" && Im.has(t.id))) {
+			let n = (e, n) => X.tileMap.getHeight(t.x + e, t.z + n), r = t.y ?? (t.here ? n(0, 0) : Math.max(n(0, 0), n(0, 3), n(0, -3), n(3, 0), n(-3, 0))), i = Lm(e, t.x, r, t.z);
+			t.ring && (i.userData.ring = t.ring, i.visible = !1, jm.push(i)), X.engine.scene.add(i), km.push(i);
 			continue;
 		}
-		let s = i(t.id);
+		let s = a(t.id);
 		if (!s) continue;
-		let [c, l] = s, u = await Np(`${Jf}env/${c}.alb.png?v=${r[n.indexOf(c)]._v}`).catch(() => null);
-		if (!u || a !== ap) return;
+		let [c, l] = s, u = await Mp(`${Yf}env/${c}.alb.png?v=${i[n.indexOf(c)]._v}`).catch(() => null);
+		if (!u || r !== op) return;
 		let d = document.createElement("canvas");
 		d.width = l.w, d.height = l.h, d.getContext("2d").drawImage(u, l.x, l.y, l.w, l.h, 0, 0, l.w, l.h);
 		let f = new Te(d);
@@ -31631,7 +31693,7 @@ async function Zh(e, t) {
 			frameHeight: l.h,
 			columns: 1,
 			rows: 1,
-			pixelsPerUnit: Zf,
+			pixelsPerUnit: Qf,
 			anchor: [l.ax / l.w, 0],
 			animations: { idle_down: {
 				frames: [{
@@ -31646,110 +31708,110 @@ async function Zh(e, t) {
 				f.dispose();
 			}
 		}, m = new Vt(p, {
-			...Qf,
+			...$f,
 			castShadow: !1,
 			blobShadow: !1
 		});
-		m.name = `ember:${c}:${t.id}`, m.userData.sheet = p, Vp(m, t.x, t.z, l.h - l.ay, Zf), X.engine.scene.add(m), Am.push(m), m.update(0, X.engine.camera);
+		m.name = `ember:${c}:${t.id}`, m.userData.sheet = p, Bp(m, t.x, t.z, l.h - l.ay, Qf), X.engine.scene.add(m), km.push(m), m.update(0, X.engine.camera);
 	}
-	Xh();
+	Yh();
 }
-var Qh = (e, t) => {
+var Zh = (e, t) => {
 	let n = new N(e), r = n.r * .299 + n.g * .587 + n.b * .114;
 	return n.r += (r - n.r) * t, n.g += (r - n.g) * t, n.b += (r - n.b) * t, "#" + n.getHexString();
-}, $h = (e, t) => {
+}, Qh = (e, t) => {
 	let n = new N(e);
 	return n.multiplyScalar(t), "#" + n.getHexString();
-}, eg = Mt.map((e) => {
+}, $h = Mt.map((e) => {
 	let t = e.night ?? 0;
 	return {
 		...e,
-		top: $h(Qh(e.top, .3), .8),
-		horizon: $h(Qh(e.horizon, .3), .6),
-		bottom: $h(Qh(e.bottom, .3), .75),
-		sun: Qh(e.sun, .3),
-		hemiSky: Qh(e.hemiSky, .45),
-		hemiGround: Qh(e.hemiGround, .3),
+		top: Qh(Zh(e.top, .3), .8),
+		horizon: Qh(Zh(e.horizon, .3), .6),
+		bottom: Qh(Zh(e.bottom, .3), .75),
+		sun: Zh(e.sun, .3),
+		hemiSky: Zh(e.hemiSky, .45),
+		hemiGround: Zh(e.hemiGround, .3),
 		sunI: e.sunI * .72,
 		hemiI: e.hemiI * (.86 - .08 * t) * (e.t >= 18 && e.t <= 20.5 ? 1.4 : 1),
 		exp: e.exp * .97,
 		fog: e.fog * (.5 + .3 * t)
 	};
-}), tg = {
+}), eg = {
 	saturation: .92,
 	exposure: .9,
 	contrast: 1.06,
 	vignette: .78
-}, ng = !1, rg = !1;
-function ig() {
+}, tg = !1, ng = !1;
+function rg() {
 	let e = X?.postfx?.settings?.grade, t = X?.lighting?.state?.night ?? 1;
-	if (rg && e) {
-		e.exposure = (pg?.exposure ?? 1) * ag * og;
+	if (ng && e) {
+		e.exposure = (fg?.exposure ?? 1) * ig * ag;
 		return;
 	}
-	ng && e && (e.saturation = .74 + .18 * t, e.exposure = (.84 + .06 * t) * ag * og);
+	tg && e && (e.saturation = .74 + .18 * t, e.exposure = (.84 + .06 * t) * ig * ag);
 }
-var ag = 1, og = 1, sg = 1.6, cg = 1, lg = Qf.emissiveIntensity, ug = 0, dg = (e) => .2126 * e.r + .7152 * e.g + .0722 * e.b;
-function fg() {
+var ig = 1, ag = 1, og = 1.6, sg = 1, cg = $f.emissiveIntensity, lg = 0, ug = (e) => .2126 * e.r + .7152 * e.g + .0722 * e.b;
+function dg() {
 	let e = X?.lighting, t = e?.hemi, n = e?.sun;
-	return ug = (t ? dg(t.color) * t.intensity : 0) + (n ? dg(n.color) * n.intensity * .5 : 0), Math.round(Math.min(cg, Math.max(Qf.emissiveIntensity, sg - ug)) * 100) / 100;
+	return lg = (t ? ug(t.color) * t.intensity : 0) + (n ? ug(n.color) * n.intensity * .5 : 0), Math.round(Math.min(sg, Math.max($f.emissiveIntensity, og - lg)) * 100) / 100;
 }
-var pg = null, mg = "default";
-function hg(e, t) {
+var fg = null, pg = "default";
+function mg(e, t) {
 	let n = X?.lighting;
 	if (!n) return;
 	let r = e.environment || {}, i = X.postfx?.settings?.grade, a = t === "reach" && !r.interior;
-	if (i && (pg ||= { ...i }, Object.assign(i, pg, t === "vale" ? tg : a ? vg : {}), pp = {
+	if (i && (fg ||= { ...i }, Object.assign(i, fg, t === "vale" ? eg : a ? _g : {}), mp = {
 		sharpen: i.sharpen,
 		grain: i.grain,
 		chromaticAberration: i.chromaticAberration
-	}, P_()), ng = t === "vale" && !r.interior, rg = a, r.climate === "arid" && !r.interior) {
+	}, N_()), tg = t === "vale" && !r.interior, ng = a, r.climate === "arid" && !r.interior) {
 		let e = a ? "ash" : "arid";
-		mg !== e && (n.setKeyframes(a ? _g : wi), mg = e);
+		pg !== e && (n.setKeyframes(a ? gg : wi), pg = e);
 	}
-	if (a && Kg(), r.harbour && Gg(), Mg(e, t), r.greenwood) {
-		Wg(), mg !== "greenwood" && (n.setKeyframes(Ng), mg = "greenwood");
+	if (a && Gg(), r.harbour && Wg(), jg(e, t), r.greenwood) {
+		Ug(), pg !== "greenwood" && (n.setKeyframes(Mg), pg = "greenwood");
 		return;
 	}
 	if (r.interior || r.climate || r.season) return;
 	let o = t === "vale" ? "dusky" : "default";
-	n.setKeyframes(o === "dusky" ? eg : Mt), mg = o;
+	n.setKeyframes(o === "dusky" ? $h : Mt), pg = o;
 }
-var gg = (e, t, n) => "#" + new N(e).lerp(new N(t), n).getHexString(), _g = wi.map((e) => {
+var hg = (e, t, n) => "#" + new N(e).lerp(new N(t), n).getHexString(), gg = wi.map((e) => {
 	let t = e.night ?? 0, n = +(e.t >= 16.5 && e.t <= 19.5);
 	return {
 		...e,
-		top: $h(gg(e.top, "#6c6a70", .45 * (1 - t)), .85),
-		horizon: gg(Qh(e.horizon, n ? .6 : .45), "#9a8a74", .35 * (1 - t)),
-		bottom: $h(Qh(e.bottom, .55), .8),
-		sun: n ? gg(Qh(e.sun, .35), "#e0a878", .45) : Qh(e.sun, .25),
+		top: Qh(hg(e.top, "#6c6a70", .45 * (1 - t)), .85),
+		horizon: hg(Zh(e.horizon, n ? .6 : .45), "#9a8a74", .35 * (1 - t)),
+		bottom: Qh(Zh(e.bottom, .55), .8),
+		sun: n ? hg(Zh(e.sun, .35), "#e0a878", .45) : Zh(e.sun, .25),
 		sunI: e.sunI * (n ? .92 : .96),
-		hemiSky: gg(Qh(e.hemiSky, n ? .7 : .5), "#4c4e5a", .75 * t),
-		hemiGround: Qh(e.hemiGround, .4),
+		hemiSky: hg(Zh(e.hemiSky, n ? .7 : .5), "#4c4e5a", .75 * t),
+		hemiGround: Zh(e.hemiGround, .4),
 		hemiI: e.hemiI * (n ? 1.2 : 1.1),
 		...t > .5 ? {
-			sun: Qh(e.sun, .75),
-			horizon: gg(e.horizon, "#2c2830", .5)
+			sun: Zh(e.sun, .75),
+			horizon: hg(e.horizon, "#2c2830", .5)
 		} : {},
 		fog: e.fog * 1.1,
 		clouds: Math.min(.5, (e.clouds ?? .15) + .15)
 	};
-}), vg = {
+}), _g = {
 	saturation: .86,
 	contrast: 1.05,
 	vignette: .8
-}, yg = [
+}, vg = [
 	"#6e5440",
 	"#4c3e33",
 	"#30302e",
 	"#1c1e21"
-], bg = "#8c7c6a", xg = "#a89a88", Sg = [
+], yg = "#8c7c6a", bg = "#a89a88", xg = [
 	"#1c262f",
 	"#18212a",
 	"#151d25",
 	"#121920"
-], Cg = null, wg = null, Tg = null, Eg = null, Dg = null, Og = null, kg = null, Ag = 170;
-function jg(e, t, n) {
+], Sg = null, Cg = null, wg = null, Tg = null, Eg = null, Dg = null, Og = null, kg = 170;
+function Ag(e, t, n) {
 	if (!e.userData.seaY) {
 		e.userData.seaY = Float32Array.from({ length: t.count }, (e, n) => t.getY(n)), n && (e.userData.seaC = Float32Array.from({ length: n.count }, (e, t) => n.getY(t)));
 		return;
@@ -31759,14 +31821,14 @@ function jg(e, t, n) {
 	if (n && i) for (let e = 0; e < n.count; e++) n.setY(e, i[e]);
 	t.needsUpdate = !0, n && (n.needsUpdate = !0);
 }
-function Mg(e, t, n = !1) {
-	n || (Dg = null), Og = e, kg = t, Cg &&= (Cg.parent?.remove(Cg), Cg.geometry.dispose(), null), Tg && Tg.userData.of !== X?.world?.water?.material && (Tg.dispose(), Tg = null);
+function jg(e, t, n = !1) {
+	n || (Eg = null), Dg = e, Og = t, Sg &&= (Sg.parent?.remove(Sg), Sg.geometry.dispose(), null), wg && wg.userData.of !== X?.world?.water?.material && (wg.dispose(), wg = null);
 	let r = e.environment || {}, i = X?.world, a = X?.tileMap;
 	if (t !== "tidemark" || r.interior || !i || !a || !i.water?.material) return;
 	let o = e.width || a.width, s = e.depth || a.depth, c = e.waterLevel ?? .4, l = (e, t) => {
 		let n = a.tileAt(Math.max(0, Math.min(o - 1, e)), Math.max(0, Math.min(s - 1, t)));
 		return !!(n && (n.water || n.type?.water || n.type?.top === "sand"));
-	}, u = (e, t) => e <= 0 || t <= 0 || e >= o || t >= s, d = (e, t) => l(Math.floor(Math.max(0, Math.min(o - .5, e))), Math.floor(Math.max(0, Math.min(s - .5, t)))), f = Dg, p = (e, t) => {
+	}, u = (e, t) => e <= 0 || t <= 0 || e >= o || t >= s, d = (e, t) => l(Math.floor(Math.max(0, Math.min(o - .5, e))), Math.floor(Math.max(0, Math.min(s - .5, t)))), f = Eg, p = (e, t) => {
 		if (!f) return null;
 		let n = Math.floor(e) - f.x0, r = Math.floor(t) - f.z0;
 		return n < 0 || r < 0 || n >= f.w || r >= f.d ? null : f.rows[r][n] === "1";
@@ -31774,7 +31836,7 @@ function Mg(e, t, n = !1) {
 		let n = p(e, t);
 		return n === null ? d(e, t) : n;
 	};
-	wg = {
+	Cg = {
 		flat: 0,
 		hid: 0,
 		kept: 0
@@ -31788,8 +31850,8 @@ function Mg(e, t, n = !1) {
 			let r = n.geometry.attributes.position;
 			t.copy(n.matrixWorld).invert();
 			let i = 0;
-			jg(n, r, null);
-			for (let a = 0; a < r.count; a++) e.fromBufferAttribute(r, a).applyMatrix4(n.matrixWorld), u(e.x, e.z) && m(e.x, e.z) && (e.y = Math.min(e.y, c - .9), e.applyMatrix4(t), r.setXYZ(a, e.x, e.y, e.z), i++, wg.flat++);
+			Ag(n, r, null);
+			for (let a = 0; a < r.count; a++) e.fromBufferAttribute(r, a).applyMatrix4(n.matrixWorld), u(e.x, e.z) && m(e.x, e.z) && (e.y = Math.min(e.y, c - .9), e.applyMatrix4(t), r.setXYZ(a, e.x, e.y, e.z), i++, Cg.flat++);
 			i && (r.needsUpdate = !0, n.geometry.computeVertexNormals(), n.geometry.computeBoundingSphere());
 		});
 	}
@@ -31802,11 +31864,11 @@ function Mg(e, t, n = !1) {
 	i.root.traverse((e) => {
 		if (!e.isMesh || !g(e)) return;
 		let t = e.geometry.attributes.position, n = e.geometry.attributes.aCenter, r = n || t, i = 0;
-		jg(e, t, n);
+		Ag(e, t, n);
 		for (let a = 0; a < t.count; a++) _.fromBufferAttribute(r, a).applyMatrix4(e.matrixWorld), u(_.x, _.z) && m(_.x, _.z) && (t.setY(a, -200), n && n.setY(a, -200), i++);
-		i ? (t.needsUpdate = !0, n && (n.needsUpdate = !0), e.geometry.computeBoundingSphere(), wg.hid += i) : wg.kept++;
+		i ? (t.needsUpdate = !0, n && (n.needsUpdate = !0), e.geometry.computeBoundingSphere(), Cg.hid += i) : Cg.kept++;
 	});
-	let v = [], y = (e, t, n, r) => v.push(e, c, t, e, c, r, n, c, r, e, c, t, n, c, r, n, c, t), b = Ag;
+	let v = [], y = (e, t, n, r) => v.push(e, c, t, e, c, r, n, c, r, e, c, t, n, c, r, n, c, t), b = kg;
 	if (f) {
 		for (let e = 0; e < f.d; e++) {
 			let t = -1;
@@ -31827,23 +31889,23 @@ function Mg(e, t, n = !1) {
 	if (!v.length) return;
 	let x = new Fe();
 	x.setAttribute("position", new O(v, 3)), x.setAttribute("normal", new O(new Float32Array(v.length).map((e, t) => +(t % 3 == 1)), 3)), x.setAttribute("aTop", new O(new Float32Array(v.length / 3).fill(1), 1));
-	let S = i.water.material, C = Tg ||= Object.assign(S.clone(), { userData: { of: S } });
+	let S = i.water.material, C = wg ||= Object.assign(S.clone(), { userData: { of: S } });
 	for (let e of Object.keys(S.uniforms)) C.uniforms[e] = S.uniforms[e];
-	Eg ||= Object.assign(new ie(new Uint8Array([
+	Tg ||= Object.assign(new ie(new Uint8Array([
 		255,
 		255,
 		128,
 		128
-	]), 1, 1), { needsUpdate: !0 }), C.uniforms.uShore = { value: Eg }, C.uniforms.uShoreRect = { value: new he(0, 0, 0, 0) }, Cg = new M(x, C), Cg.name = "ember:sea", Cg.receiveShadow = !0, Cg.frustumCulled = !1, i.root.add(Cg);
+	]), 1, 1), { needsUpdate: !0 }), C.uniforms.uShore = { value: Tg }, C.uniforms.uShoreRect = { value: new he(0, 0, 0, 0) }, Sg = new M(x, C), Sg.name = "ember:sea", Sg.receiveShadow = !0, Sg.frustumCulled = !1, i.root.add(Sg);
 }
-var Ng = Mt.map((e) => {
+var Mg = Mt.map((e) => {
 	let t = e.night ?? 0;
 	return {
 		...e,
-		top: gg("#2a3222", "#0c120a", t),
-		horizon: gg("#3a4230", "#1c2016", t),
-		bottom: gg("#2c3a2c", "#101810", t),
-		sun: gg("#e4f0c4", "#9aa8b0", t),
+		top: hg("#2a3222", "#0c120a", t),
+		horizon: hg("#3a4230", "#1c2016", t),
+		bottom: hg("#2c3a2c", "#101810", t),
+		sun: hg("#e4f0c4", "#9aa8b0", t),
 		sunI: 2.2 - 1.4 * t,
 		hemiSky: "#6a8a6c",
 		hemiGround: "#2a3422",
@@ -31855,8 +31917,8 @@ var Ng = Mt.map((e) => {
 		shadow: .7,
 		moon: 0
 	};
-}), Pg = /* @__PURE__ */ new Set(), Fg = null, Ig = null, Lg = null, Rg = null, zg = null, Bg = null, Vg = (e) => (t) => (Math.imul(e + t * 977, 2654435761) >>> 0) % 1e3 / 1e3;
-function Hg() {
+}), Ng = /* @__PURE__ */ new Set(), Pg = null, Fg = null, Ig = null, Lg = null, Rg = null, zg = null, Bg = (e) => (t) => (Math.imul(e + t * 977, 2654435761) >>> 0) % 1e3 / 1e3;
+function Vg() {
 	let e = document.createElement("canvas");
 	e.width = 32, e.height = 128;
 	let t = e.getContext("2d"), n = t.createImageData(32, 128);
@@ -31868,7 +31930,7 @@ function Hg() {
 	let r = new Te(e);
 	return r.magFilter = r.minFilter = Ie, r;
 }
-function Ug() {
+function Hg() {
 	let e = document.createElement("canvas");
 	e.width = e.height = 64;
 	let t = e.getContext("2d"), n = t.createRadialGradient(32, 32, 0, 32, 32, 32);
@@ -31876,7 +31938,7 @@ function Ug() {
 	let r = new Te(e);
 	return r.magFilter = r.minFilter = Ie, r;
 }
-function Wg() {
+function Ug() {
 	let e = X?.world;
 	if (!e) return;
 	let t = e.outerGround;
@@ -31887,7 +31949,7 @@ function Wg() {
 	let n = e.emitters?.dust?.uniforms;
 	n && (n.uColor0?.value.set("#d4e8b0"), n.uColor1?.value.set("#a8c088"));
 }
-function Gg() {
+function Wg() {
 	let e = X?.world, t = e?.water?.uniforms;
 	t && (e.waterBase ? Object.assign(e.waterBase, {
 		glint: 0,
@@ -31900,9 +31962,9 @@ function Gg() {
 		"uC1",
 		"uC2",
 		"uC3"
-	].forEach((e, n) => t[e]?.value.set(Sg[n])), t.uShallowOpacity && (t.uShallowOpacity.value = .97), t.uOpacity && (t.uOpacity.value = .97), t.uSaturation && (t.uSaturation.value = .6));
+	].forEach((e, n) => t[e]?.value.set(xg[n])), t.uShallowOpacity && (t.uShallowOpacity.value = .97), t.uOpacity && (t.uOpacity.value = .97), t.uSaturation && (t.uSaturation.value = .6));
 }
-function Kg() {
+function Gg() {
 	let e = X?.world;
 	if (!e) return;
 	let t = e.water?.uniforms;
@@ -31911,7 +31973,7 @@ function Kg() {
 		"uC1",
 		"uC2",
 		"uC3"
-	].forEach((e, n) => t[e]?.value.set(yg[n])), t.uCrest?.value.set(bg), t.uFoam?.value.set(xg), t.uSaturation && (t.uSaturation.value = .8));
+	].forEach((e, n) => t[e]?.value.set(vg[n])), t.uCrest?.value.set(yg), t.uFoam?.value.set(bg), t.uSaturation && (t.uSaturation.value = .8));
 	let n = e.outerGround;
 	n && e.textures && !n.userData.ash && (n.material = e.textures.material("cinder_earth", {
 		vertexColors: !0,
@@ -31920,7 +31982,7 @@ function Kg() {
 	let r = e.emitters?.dust?.uniforms;
 	r && (r.uColor0?.value.set("#b4aca2").multiplyScalar(1.1), r.uColor1?.value.set("#8a847e").multiplyScalar(1.1));
 }
-function qg(e, t, n, r, i, a) {
+function Kg(e, t, n, r, i, a) {
 	let o = e.w, s = e.h, c = new Int32Array(o * s).fill(-1), l = [], u = (e, t) => e[Math.max(0, Math.min(e.length - 1, Math.round(t * (e.length - 1))))];
 	for (let e = 0; e < s / 12; e++) {
 		let r = [], i = 0;
@@ -31962,7 +32024,7 @@ function qg(e, t, n, r, i, a) {
 		e.set(a, s, m.tint ? n.mixColor(b, m.tint, .12) : b), e.hf[f] = .35 + .65 * Math.min(1, v / 2.5) + (d[f] - .5) * .15;
 	}), { normal: 2.2 };
 }
-function Jg(e, t, n) {
+function qg(e, t, n) {
 	let r = e.w, i = e.h, a = t.field(r, i, 16, 4, 961, { oct: 3 }), o = (e) => n[Math.max(0, Math.min(n.length - 1, Math.round(e * (n.length - 1))))];
 	return e.each((r, i, s) => {
 		let c = Math.floor(i / 8), l = i % 8, u = Math.floor(t.hash2(c, 1, 963) * 64), d = 20 + Math.floor(t.hash2(c, 2, 965) * 20), f = (r + u) % d, p = Math.floor((r + u) / d);
@@ -31978,14 +32040,14 @@ function Jg(e, t, n) {
 		l === 2 ? m += .08 : l === 7 && (m -= .08), (f === 2 || f === d - 3) && (l === 2 || l === 5) && (m -= .3), t.hash2(r >> 1, c * 7 + l, 969) > .86 && (m -= .07), e.set(r, i, o(Math.max(.15, Math.min(1, m)))), e.hf[s] = .55 + (l === 1 ? .25 : 0) + (a[s] - .5) * .2;
 	}), { normal: 1.6 };
 }
-function Yg(e, t) {
+function Jg(e, t) {
 	let n = t.parseColor("#0b0f14"), r = t.parseColor("#2f2a25"), i = t.parseColor("#3e372f"), a = t.parseColor("#26301f");
 	return e.each((o, s, c) => {
 		let l = s % 16 < 3, u = s >= e.h - 6 && t.hash2(o, s >> 1, 971) > .35;
 		e.set(o, s, u ? a : l ? s % 16 == 0 ? i : r : n), e.hf[c] = l ? .6 : .05;
 	}), { normal: 1.2 };
 }
-function Xg(e, t, n) {
+function Yg(e, t, n) {
 	let r = e.w, i = e.h, a = t.field(r, i, 8, 8, 941, { oct: 3 }), o = (e) => n[Math.max(0, Math.min(n.length - 1, Math.round(e * (n.length - 1))))], s = r - 10, c = i - 4;
 	return e.each((r, i, l) => {
 		if (r < 10 || r > s || i < 4 || i > c) {
@@ -32006,7 +32068,7 @@ function Xg(e, t, n) {
 		t.hash2(r >> 2, i >> 2, 945) > .8 && (u -= .06), e.set(r, i, o(Math.max(.15, Math.min(1, u)))), e.hf[l] = d;
 	}), { normal: 2 };
 }
-function Zg(e, t) {
+function Xg(e, t) {
 	let n = e.w, r = e.h, i = [
 		"#5a5042",
 		"#706452",
@@ -32031,7 +32093,7 @@ function Zg(e, t) {
 		e.set(n, r, o(Math.max(0, Math.min(1, u)))), e.hf[i] = d;
 	}), { normal: 2.4 };
 }
-function Qg(e, t, n, r) {
+function Zg(e, t, n, r) {
 	let i = e.w, a = e.h, o = i / 4, s = [];
 	for (let e = 0; e < 4; e++) for (let n = 0; n < 4; n++) s.push([
 		(n + .15 + t.hash2(n, e, 931) * .7) * o,
@@ -32054,7 +32116,7 @@ function Qg(e, t, n, r) {
 		m < 1.8 && (h -= .1), e.set(t, n, l(Math.max(0, Math.min(1, h)))), e.hf[o] = .4 + .6 * Math.min(1, (m - .9) / 2.5);
 	}), { normal: 2.2 };
 }
-function $g(e, t, n, r) {
+function Qg(e, t, n, r) {
 	let i = e.w, a = e.h, o = new Int32Array(i * a).fill(-1), s = [], c = [
 		12,
 		10,
@@ -32102,7 +32164,7 @@ function $g(e, t, n, r) {
 		h <= 1 ? _ += .07 : h >= p.h - 2 && (_ -= .06), p.crack && Math.abs(m - p.w * .5 - (h - p.h * .5) * .8) < .6 && (_ -= .25), r && t.hash2(a >> 2, c >> 2, 907) > .78 && (_ -= .1), t.hash2(a, c, 909) > .985 && (_ -= .15), e.set(a, c, d(Math.max(.2, Math.min(1, _)))), e.hf[l] = .45 + .55 * Math.min(1, g / 2.5) + (u[l] - .5) * .1;
 	}), { normal: 2 };
 }
-function e_(e, t, n, r) {
+function $g(e, t, n, r) {
 	let i = e.w, a = e.h, o = t.field(i, a, 6, 6, r, { oct: 3 }), s = t.field(i, a, 3, 3, r + 3, { oct: 3 }), c = (e) => n[Math.max(1, Math.min(n.length - 1, Math.round(e * (n.length - 1))))];
 	return e.each((i, a, l) => {
 		let u = i % 16, d = a % 16, f = Math.min(u, d, 15 - u, 15 - d);
@@ -32114,7 +32176,7 @@ function e_(e, t, n, r) {
 		m < .015 && (p -= .14 * (1 - m / .015)), f < 1 && (p += u === 1 || d === 1 ? .05 : -.04), e.set(i, a, c(Math.max(0, Math.min(1, p)))), e.hf[l] = .9 + (o[l] - .5) * .06;
 	}), { normal: .6 };
 }
-function t_(e, t, n, r, i, a, o) {
+function e_(e, t, n, r, i, a, o) {
 	let s = e.w, c = e.h, l = t.field(s, c, 3, 3, o, { oct: 3 }), u = t.field(s, c, 5, 5, o + 3, { oct: 2 }), d = (e) => n[Math.max(0, Math.min(n.length - 1, Math.round(e * (n.length - 1))))];
 	return e.each((n, s, c) => {
 		let f = Math.floor(s / 4), p = s % 4, m = f % 2 * 5 + Math.floor(t.hash2(f, 1, o + 5) * 2), h = (n + m) % 10, g = Math.floor((n + m) / 10), _ = p === 3 || h === 9, v, y;
@@ -32131,7 +32193,7 @@ function t_(e, t, n, r, i, a, o) {
 		e.set(n, s, v), e.hf[c] = y;
 	}), { normal: 1.8 };
 }
-function n_(e, t, n, r, i) {
+function t_(e, t, n, r, i) {
 	let a = e.w, o = e.h, s = t.field(a, o, 4, 4, i, { oct: 3 }), c = (e) => n[Math.max(0, Math.min(n.length - 1, Math.round(e * (n.length - 1))))];
 	return e.each((n, a, o) => {
 		let l = Math.floor(n / 4), u = Math.floor(a / 4), d = ((l - u) % 4 + 4) % 4, f = n % 4, p = a % 4, m, h, g, _;
@@ -32155,7 +32217,7 @@ function n_(e, t, n, r, i) {
 		(g === 0 || h === 0) && (b += .07), t.hash2(n >> 2, a >> 2, i + 7) > .84 && (b -= .12), e.set(n, a, c(Math.max(0, Math.min(1, b)))), e.hf[o] = .6 + (g === 0 ? .2 : 0) + (s[o] - .5) * .12;
 	}), { normal: 1.6 };
 }
-function r_(e, t, n, r) {
+function n_(e, t, n, r) {
 	let i = e.w, a = e.h, o = t.field(i, a, 8, 3, r, { oct: 3 }), s = t.field(i, a, 24, 4, r + 1, { oct: 2 }), c = (e) => n[Math.max(0, Math.min(n.length - 1, Math.round(e * (n.length - 1))))];
 	return e.each((i, a, l) => {
 		let u = Math.floor(a / 8), d = a % 8, f = Math.floor(t.hash2(u, 3, r + 3) * 16), p = (i + f) % 16;
@@ -32167,17 +32229,17 @@ function r_(e, t, n, r) {
 		d <= 1 && (m += .12), t.hash2(i, a, r + 9) > .985 && (m += .4), e.set(i, a, c(Math.max(0, Math.min(1, m)))), e.hf[l] = .5 + (o[l] - .5) * .3 + (d <= 1 ? .2 : 0);
 	}), { normal: 1.6 };
 }
-function i_(e, t, n, r) {
+function r_(e, t, n, r) {
 	let i = e.w, a = e.h, o = t.field(i, a, 4, 4, r, { oct: 2 }), s = (e) => n[Math.max(0, Math.min(n.length - 1, Math.round(e * (n.length - 1))))];
 	return e.each((n, i, a) => {
 		let c = !(Math.floor(n / 8) + Math.floor(i / 8) & 1), l = c ? i % 2 : n % 2, u = c ? n % 8 : i % 8, d = .5 + (l ? -.18 : .1) + (o[a] - .5) * .25 + (t.hash2(c ? i : n, Math.floor((c ? n : i) / 8), r + 3) - .5) * .18;
 		(u === 0 || u === 7) && (d -= .16), e.set(n, i, s(Math.max(0, Math.min(1, d)))), e.hf[a] = l ? .4 : .75;
 	}), { normal: 1.4 };
 }
-var a_ = null;
+var i_ = null;
 qt((e) => {
 	let t = (t) => t.map((t) => e.parseColor(t)), n = (e, t) => e[Math.max(0, Math.min(e.length - 1, Math.round(t * (e.length - 1))))], r = (e) => (.3 * e[0] + .59 * e[1] + .11 * e[2]) / 255, i = (e, t, i = null) => (a, o) => {
-		let s = (a_ ||= new Kt({ seed: 7 })).pixels(e);
+		let s = (i_ ||= new Kt({ seed: 7 })).pixels(e);
 		if (!s) return {};
 		let { width: c, height: l } = s.color, u = new Float32Array(c * l), d = 1, f = 0;
 		for (let e = 0; e < l; e++) for (let t = 0; t < c; t++) {
@@ -32385,7 +32447,7 @@ qt((e) => {
 		mole_flag: {
 			px: [64, 64],
 			normalScale: .8,
-			gen: (n) => $g(n, e, t([
+			gen: (n) => Qg(n, e, t([
 				"#23272a",
 				"#4b4a46",
 				"#57554f",
@@ -32454,7 +32516,7 @@ qt((e) => {
 		tavern_flag: {
 			px: [64, 64],
 			normalScale: .8,
-			gen: (n) => $g(n, e, t([
+			gen: (n) => Qg(n, e, t([
 				"#40362c",
 				"#6b5e4f",
 				"#7b6d5c",
@@ -32467,7 +32529,7 @@ qt((e) => {
 		tavern_flag_worn: {
 			px: [64, 64],
 			normalScale: .8,
-			gen: (n) => $g(n, e, t([
+			gen: (n) => Qg(n, e, t([
 				"#332c27",
 				"#5a5148",
 				"#675d52",
@@ -32480,7 +32542,7 @@ qt((e) => {
 		tavern_wall: {
 			px: [48, 48],
 			normalScale: .85,
-			gen: (n, r) => qg(n, r, e, t([
+			gen: (n, r) => Kg(n, r, e, t([
 				"#3c3631",
 				"#4e4741",
 				"#605850",
@@ -32494,7 +32556,7 @@ qt((e) => {
 		crypt_wall: {
 			px: [48, 48],
 			normalScale: .75,
-			gen: (n, r) => qg(n, r, e, t([
+			gen: (n, r) => Kg(n, r, e, t([
 				"#857967",
 				"#998b76",
 				"#ae9e87",
@@ -32524,7 +32586,7 @@ qt((e) => {
 		crypt_sill: {
 			px: [48, 48],
 			normalScale: .75,
-			gen: (n, r) => qg(n, r, e, t([
+			gen: (n, r) => Kg(n, r, e, t([
 				"#5e5242",
 				"#6c5f4c",
 				"#7a6a55",
@@ -32554,7 +32616,7 @@ qt((e) => {
 		dock_deck: {
 			px: [64, 64],
 			normalScale: .85,
-			gen: (n) => Jg(n, e, t([
+			gen: (n) => qg(n, e, t([
 				"#22190f",
 				"#6c5a47",
 				"#776450",
@@ -32567,12 +32629,12 @@ qt((e) => {
 		dock_side: {
 			px: [32, 32],
 			normalScale: .6,
-			gen: (t) => Yg(t, e)
+			gen: (t) => Jg(t, e)
 		},
 		rampart_wall: {
 			px: [48, 48],
 			normalScale: .8,
-			gen: (n, r) => qg(n, r, e, t([
+			gen: (n, r) => Kg(n, r, e, t([
 				"#4a4c50",
 				"#56585c",
 				"#626468",
@@ -32599,7 +32661,7 @@ qt((e) => {
 		rampart_top: {
 			px: [64, 64],
 			normalScale: .7,
-			gen: (n) => $g(n, e, t([
+			gen: (n) => Qg(n, e, t([
 				"#36383b",
 				"#66686b",
 				"#717376",
@@ -32612,7 +32674,7 @@ qt((e) => {
 		crypt_flag: {
 			px: [64, 64],
 			normalScale: .7,
-			gen: (n) => $g(n, e, t([
+			gen: (n) => Qg(n, e, t([
 				"#312a23",
 				"#655b4d",
 				"#71675a",
@@ -32625,7 +32687,7 @@ qt((e) => {
 		crypt_ledger: {
 			px: [64, 64],
 			normalScale: .8,
-			gen: (n) => Xg(n, e, t([
+			gen: (n) => Yg(n, e, t([
 				"#36312b",
 				"#706757",
 				"#82786a",
@@ -32656,12 +32718,12 @@ qt((e) => {
 		ossuary_wall: {
 			px: [48, 48],
 			normalScale: 1,
-			gen: (t) => Zg(t, e)
+			gen: (t) => Xg(t, e)
 		},
 		tavern_rubble: {
 			px: [48, 48],
 			normalScale: .9,
-			gen: (n) => Qg(n, e, t([
+			gen: (n) => Zg(n, e, t([
 				"#4a433b",
 				"#5c544a",
 				"#6a6156",
@@ -32685,7 +32747,7 @@ qt((e) => {
 		palace_flag: {
 			px: [64, 64],
 			normalScale: .35,
-			gen: (n) => e_(n, e, t([
+			gen: (n) => $g(n, e, t([
 				"#6a5a48",
 				"#8c7a63",
 				"#98866e",
@@ -32698,7 +32760,7 @@ qt((e) => {
 		palace_flag2: {
 			px: [64, 64],
 			normalScale: .35,
-			gen: (n) => e_(n, e, t([
+			gen: (n) => $g(n, e, t([
 				"#5e4e46",
 				"#76645c",
 				"#806d65",
@@ -32711,7 +32773,7 @@ qt((e) => {
 		palace_yard: {
 			px: [64, 64],
 			normalScale: .75,
-			gen: (n) => $g(n, e, t([
+			gen: (n) => Qg(n, e, t([
 				"#3a342c",
 				"#6e665a",
 				"#797064",
@@ -32724,7 +32786,7 @@ qt((e) => {
 		palace_wall: {
 			px: [48, 48],
 			normalScale: .7,
-			gen: (n, r) => qg(n, r, e, t([
+			gen: (n, r) => Kg(n, r, e, t([
 				"#86705a",
 				"#977f65",
 				"#a88f72",
@@ -32754,7 +32816,7 @@ qt((e) => {
 		palace_sill: {
 			px: [48, 48],
 			normalScale: .6,
-			gen: (n, r) => qg(n, r, e, t([
+			gen: (n, r) => Kg(n, r, e, t([
 				"#6e5e4c",
 				"#7c6a56",
 				"#8a7660",
@@ -32856,7 +32918,7 @@ qt((e) => {
 		fen_brick: {
 			px: [48, 48],
 			normalScale: .8,
-			gen: (n) => t_(n, e, t([
+			gen: (n) => e_(n, e, t([
 				"#3a1c16",
 				"#4a231b",
 				"#5a2b20",
@@ -32868,7 +32930,7 @@ qt((e) => {
 		fen_lime: {
 			px: [32, 32],
 			normalScale: .6,
-			gen: (n) => t_(n, e, t([
+			gen: (n) => e_(n, e, t([
 				"#4a2a20",
 				"#5c3326",
 				"#6c3d2d",
@@ -32893,7 +32955,7 @@ qt((e) => {
 		fen_paver: {
 			px: [64, 64],
 			normalScale: .7,
-			gen: (n) => n_(n, e, t([
+			gen: (n) => t_(n, e, t([
 				"#4c3c32",
 				"#58463a",
 				"#634f42",
@@ -32905,7 +32967,7 @@ qt((e) => {
 		fen_peat: {
 			px: [32, 32],
 			normalScale: .8,
-			gen: (n) => r_(n, e, t([
+			gen: (n) => n_(n, e, t([
 				"#1a120d",
 				"#251a12",
 				"#302217",
@@ -32917,7 +32979,7 @@ qt((e) => {
 		fen_peat_top: {
 			px: [32, 32],
 			normalScale: .5,
-			gen: (n) => r_(n, e, t([
+			gen: (n) => n_(n, e, t([
 				"#221911",
 				"#2c2117",
 				"#36291c",
@@ -32930,7 +32992,7 @@ qt((e) => {
 			px: [48, 48],
 			normalScale: 1,
 			gen: (n) => {
-				let r = Zg(n, e), i = t(["#221810", "#2c2016"]);
+				let r = Xg(n, e), i = t(["#221810", "#2c2016"]);
 				return n.each((t, r, a) => {
 					n.hf[a] <= .2 && n.set(t, r, i[+(e.hash2(t >> 1, r >> 1, 1117) > .5)]);
 				}), r;
@@ -32939,7 +33001,7 @@ qt((e) => {
 		reed_mat: {
 			px: [32, 32],
 			normalScale: .6,
-			gen: (n) => i_(n, e, t([
+			gen: (n) => r_(n, e, t([
 				"#4e4230",
 				"#5e5038",
 				"#6e5e42",
@@ -32951,7 +33013,7 @@ qt((e) => {
 		count_wall: {
 			px: [48, 48],
 			normalScale: .6,
-			gen: (n, r) => qg(n, r, e, t([
+			gen: (n, r) => Kg(n, r, e, t([
 				"#77777a",
 				"#88888a",
 				"#99989a",
@@ -32965,7 +33027,7 @@ qt((e) => {
 		count_sill: {
 			px: [48, 48],
 			normalScale: .6,
-			gen: (n, r) => qg(n, r, e, t([
+			gen: (n, r) => Kg(n, r, e, t([
 				"#56565a",
 				"#626266",
 				"#6e6e72",
@@ -32995,7 +33057,7 @@ qt((e) => {
 		count_flag: {
 			px: [64, 64],
 			normalScale: .7,
-			gen: (n) => $g(n, e, t([
+			gen: (n) => Qg(n, e, t([
 				"#2e2c2a",
 				"#575350",
 				"#615d59",
@@ -33008,7 +33070,7 @@ qt((e) => {
 		count_flag_worn: {
 			px: [64, 64],
 			normalScale: .7,
-			gen: (n) => $g(n, e, t([
+			gen: (n) => Qg(n, e, t([
 				"#2a2826",
 				"#4e4b48",
 				"#585552",
@@ -33020,7 +33082,7 @@ qt((e) => {
 		}
 	};
 });
-function o_(e, t, n, r, i = 0) {
+function a_(e, t, n, r, i = 0) {
 	let a = e.w, o = e.h, s = new Int32Array(a * o).fill(-1), c = [], l = [
 		[3, 5],
 		[5, 3],
@@ -33096,7 +33158,7 @@ function o_(e, t, n, r, i = 0) {
 	}
 	return { normal: 2.4 };
 }
-function s_(e, t, n, r = 0) {
+function o_(e, t, n, r = 0) {
 	let i = e.w, a = e.h, o = t.field(i, a, 4, 3, n, { oct: 3 }), s = t.field(i, a, 8, 8, n + 1, { oct: 2 }), c = [
 		[
 			"#2c2118",
@@ -33142,7 +33204,7 @@ function s_(e, t, n, r = 0) {
 	}
 	return { normal: 2 };
 }
-function c_(e, t, n, r) {
+function s_(e, t, n, r) {
 	let i = e.w, a = e.h, o = i / 3, s = [];
 	for (let e = 0; e < 3; e++) for (let n = 0; n < 3; n++) s.push([
 		(n + .2 + t.hash2(n, e, 1171) * .6) * o,
@@ -33168,7 +33230,7 @@ function c_(e, t, n, r) {
 }
 qt((e) => {
 	let t = (t) => t.map((t) => e.parseColor(t)), n = (e, t) => e[Math.max(0, Math.min(e.length - 1, Math.round(t * (e.length - 1))))], r = (e) => (.3 * e[0] + .59 * e[1] + .11 * e[2]) / 255, i = (e, t) => (i) => {
-		let a = (a_ ||= new Kt({ seed: 7 })).pixels(e);
+		let a = (i_ ||= new Kt({ seed: 7 })).pixels(e);
 		if (!a) return {};
 		let { width: o, height: s } = a.color, c = new Float32Array(o * s), l = 1, u = 0;
 		for (let e = 0; e < s; e++) for (let t = 0; t < o; t++) {
@@ -33192,22 +33254,22 @@ qt((e) => {
 		barrow_drystone: {
 			px: [48, 48],
 			normalScale: .9,
-			gen: (t) => o_(t, e, a, 1101)
+			gen: (t) => a_(t, e, a, 1101)
 		},
 		barrow_turf: {
 			px: [48, 16],
 			normalScale: .9,
-			gen: (t) => o_(t, e, a, 1101, 4)
+			gen: (t) => a_(t, e, a, 1101, 4)
 		},
 		barrow_cut: {
 			px: [48, 48],
 			normalScale: .8,
-			gen: (t) => s_(t, e, 1131)
+			gen: (t) => o_(t, e, 1131)
 		},
 		barrow_cutturf: {
 			px: [48, 16],
 			normalScale: .8,
-			gen: (t) => s_(t, e, 1131, 4)
+			gen: (t) => o_(t, e, 1131, 4)
 		},
 		barrow_earth: {
 			px: [64, 64],
@@ -33225,7 +33287,7 @@ qt((e) => {
 		barrow_slab: {
 			px: [64, 64],
 			normalScale: .7,
-			gen: (n) => c_(n, e, t([
+			gen: (n) => s_(n, e, t([
 				"#5a554c",
 				"#6a6359",
 				"#787066",
@@ -33243,7 +33305,7 @@ qt((e) => {
 		keep_ashlar: {
 			px: [48, 48],
 			normalScale: .8,
-			gen: (n, r) => qg(n, r, e, t([
+			gen: (n, r) => Kg(n, r, e, t([
 				"#544c42",
 				"#665d51",
 				"#786e60",
@@ -33303,7 +33365,7 @@ qt((e) => {
 		keep_flag: {
 			px: [64, 64],
 			normalScale: .8,
-			gen: (n) => $g(n, e, t([
+			gen: (n) => Qg(n, e, t([
 				"#2e2a26",
 				"#5a554e",
 				"#666058",
@@ -33317,7 +33379,7 @@ qt((e) => {
 			px: [64, 64],
 			normalScale: .8,
 			gen: (n) => {
-				let r = $g(n, e, t([
+				let r = Qg(n, e, t([
 					"#2e2a26",
 					"#5a554e",
 					"#666058",
@@ -33455,7 +33517,7 @@ qt((e) => {
 			px: [64, 64],
 			normalScale: .9,
 			gen: (i) => {
-				let a = $g(i, e, t([
+				let a = Qg(i, e, t([
 					"#2a2d27",
 					"#4c4f46",
 					"#575a51",
@@ -33501,7 +33563,7 @@ qt((e) => {
 			px: [48, 48],
 			normalScale: .85,
 			gen: (t, i) => {
-				let a = qg(t, i, e, f, ["#1c2418", "#18201a"], ["#4a5440", "#4a4c56"]), o = e.field(t.w, t.h, 4, 4, 1301, { oct: 3 });
+				let a = Kg(t, i, e, f, ["#1c2418", "#18201a"], ["#4a5440", "#4a4c56"]), o = e.field(t.w, t.h, 4, 4, 1301, { oct: 3 });
 				return t.each((i, a, c) => {
 					t.hf[c] < .12 ? t.set(i, a, n(s, r(.3 + (o[c] - .5) * .6))) : o[c] > .7 && t.set(i, a, e.mixColor(t.get(i, a), s[4], Math.min(.7, (o[c] - .7) * 3)));
 				}), a;
@@ -33534,9 +33596,9 @@ qt((e) => {
 		}
 	};
 });
-var l_ = /* @__PURE__ */ new Map();
-function u_(e) {
-	let t = l_.get(e.canvas);
+var c_ = /* @__PURE__ */ new Map();
+function l_(e) {
+	let t = c_.get(e.canvas);
 	if (!t) {
 		let n = new Te(e.canvas);
 		n.magFilter = n.minFilter = D, n.generateMipmaps = !1, n.colorSpace = o, t = {
@@ -33545,7 +33607,7 @@ function u_(e) {
 			frameHeight: e.canvas.height,
 			columns: 1,
 			rows: 1,
-			pixelsPerUnit: Zf,
+			pixelsPerUnit: Qf,
 			anchor: [e.ax / e.canvas.width, 0],
 			animations: { idle_down: {
 				frames: [{
@@ -33558,38 +33620,38 @@ function u_(e) {
 			name: `ember-prop:${e.id}`,
 			canvas: e.canvas,
 			refs: 0
-		}, l_.set(e.canvas, t);
+		}, c_.set(e.canvas, t);
 	}
 	t.refs++;
 	let n = new Vt(t, {
-		...Qf,
+		...$f,
 		emissiveIntensity: .3,
 		castShadow: !1,
 		blobShadow: !e.flat
 	});
-	n.name = `ember:prop:${e.id}`, n.userData.ourSheet = t, Vp(n, e.x, e.z, e.canvas.height - e.ay, Zf), e.flat && n.traverse((e) => {
+	n.name = `ember:prop:${e.id}`, n.userData.ourSheet = t, Bp(n, e.x, e.z, e.canvas.height - e.ay, Qf), e.flat && n.traverse((e) => {
 		e.renderOrder = -1, e.material && (e.material.depthWrite = !1);
-	}), X.engine.scene.add(n), Am.push(n), n.update(0, X.engine.camera);
+	}), X.engine.scene.add(n), km.push(n), n.update(0, X.engine.camera);
 }
-var d_ = /* @__PURE__ */ new Map(), f_ = "vale";
-function p_(e) {
-	if (d_.has(e)) return d_.get(e);
-	d_.set(e, null);
-	let t = ["env", `town-${f_}`];
-	return Promise.all(t.map((e) => Fp(`${Jf}env/${e}.json`))).then(async (n) => {
+var u_ = /* @__PURE__ */ new Map(), d_ = "vale";
+function f_(e) {
+	if (u_.has(e)) return u_.get(e);
+	u_.set(e, null);
+	let t = ["env", `town-${d_}`];
+	return Promise.all(t.map((e) => Pp(`${Yf}env/${e}.json`))).then(async (n) => {
 		for (let r = 0; r < t.length; r++) {
 			let i = n[r]?.sprites?.[e];
 			if (!i) continue;
-			let a = await Np(`${Jf}env/${t[r]}.alb.png?v=${n[r]._v}`), s = document.createElement("canvas");
+			let a = await Mp(`${Yf}env/${t[r]}.alb.png?v=${n[r]._v}`), s = document.createElement("canvas");
 			s.width = i.w, s.height = i.h, s.getContext("2d").drawImage(a, i.x, i.y, i.w, i.h, 0, 0, i.w, i.h);
 			let c = new Te(s);
-			c.magFilter = c.minFilter = D, c.generateMipmaps = !1, c.colorSpace = o, d_.set(e, {
+			c.magFilter = c.minFilter = D, c.generateMipmaps = !1, c.colorSpace = o, u_.set(e, {
 				texture: c,
 				frameWidth: i.w,
 				frameHeight: i.h,
 				columns: 1,
 				rows: 1,
-				pixelsPerUnit: Zf,
+				pixelsPerUnit: Qf,
 				anchor: [i.ax / i.w, 0],
 				below: i.h - i.ay,
 				animations: { idle_down: {
@@ -33604,12 +33666,12 @@ function p_(e) {
 			});
 			return;
 		}
-		d_.set(e, !1);
-	}).catch(() => d_.set(e, !1)), null;
+		u_.set(e, !1);
+	}).catch(() => u_.set(e, !1)), null;
 }
-var m_ = /* @__PURE__ */ new WeakMap();
-function h_(e) {
-	let t = m_.get(e.canvas);
+var p_ = /* @__PURE__ */ new WeakMap();
+function m_(e) {
+	let t = p_.get(e.canvas);
 	if (!t) {
 		let n = new Te(e.canvas);
 		n.magFilter = n.minFilter = D, n.generateMipmaps = !1, n.colorSpace = o, t = {
@@ -33618,7 +33680,7 @@ function h_(e) {
 			frameHeight: e.canvas.height,
 			columns: 1,
 			rows: 1,
-			pixelsPerUnit: Zf,
+			pixelsPerUnit: Qf,
 			anchor: [e.ax / e.canvas.width, 0],
 			animations: { idle_down: {
 				frames: [{
@@ -33629,15 +33691,15 @@ function h_(e) {
 				loop: !1
 			} },
 			name: "ember-bit"
-		}, m_.set(e.canvas, t);
+		}, p_.set(e.canvas, t);
 	}
 	return t;
 }
-function g_(e, t) {
-	let n = zp.get(e);
-	for (n || zp.set(e, n = []); n.length <= t;) {
+function h_(e, t) {
+	let n = Rp.get(e);
+	for (n || Rp.set(e, n = []); n.length <= t;) {
 		let t = new Vt(e, {
-			...Qf,
+			...$f,
 			castShadow: !1,
 			blobShadow: !1
 		});
@@ -33645,18 +33707,18 @@ function g_(e, t) {
 	}
 	return n[t];
 }
-var __ = {
+var g_ = {
 	mesh: null,
 	id: "",
 	cap: 0
-}, v_ = 2.3, y_ = .07, b_ = /* @__PURE__ */ new Map(), x_ = new F(1, 1, 1);
-function S_(e) {
+}, __ = 2.3, v_ = .07, y_ = /* @__PURE__ */ new Map(), b_ = new F(1, 1, 1);
+function x_(e) {
 	let t = e.cells.length * 5, n = new l({
 		color: 2894383,
 		roughness: .48,
 		metalness: .65,
 		emissive: 1182984
-	}), r = new ue(x_, n, t);
+	}), r = new ue(b_, n, t);
 	r.name = "ember:gate", r.castShadow = !0, r.frustumCulled = !1;
 	let i = new nt(), a = new m(), o = new P(), s = new P(), c = new P(0, 1, 0), u = 0;
 	for (let [t, n, l, d] of e.cells) {
@@ -33666,33 +33728,33 @@ function S_(e) {
 			-.17,
 			0,
 			.17
-		]) o.set(f + (l ? 0 : t), e + v_ / 2, p + (l ? t : 0)), s.set(y_, v_, y_), i.compose(o, a, s), r.setMatrixAt(u++, i);
-		for (let t of [.55, 1.75]) o.set(f, e + t, p), s.set(.52, y_ * 1.4, y_ * 1.2), i.compose(o, a, s), r.setMatrixAt(u++, i);
+		]) o.set(f + (l ? 0 : t), e + __ / 2, p + (l ? t : 0)), s.set(v_, __, v_), i.compose(o, a, s), r.setMatrixAt(u++, i);
+		for (let t of [.55, 1.75]) o.set(f, e + t, p), s.set(.52, v_ * 1.4, v_ * 1.2), i.compose(o, a, s), r.setMatrixAt(u++, i);
 	}
 	return r.instanceMatrix.needsUpdate = !0, r;
 }
-var C_ = /* @__PURE__ */ new Set();
-function w_(e) {
-	if (C_.clear(), X) for (let t of e || []) {
-		let e = b_.get(t.id);
-		(!e || !e.parent) && (e && (e.material.dispose(), e.dispose?.()), e = S_(t), X.engine.scene.add(e), b_.set(t.id, e));
+var S_ = /* @__PURE__ */ new Set();
+function C_(e) {
+	if (S_.clear(), X) for (let t of e || []) {
+		let e = y_.get(t.id);
+		(!e || !e.parent) && (e && (e.material.dispose(), e.dispose?.()), e = x_(t), X.engine.scene.add(e), y_.set(t.id, e));
 		let n = Math.max(0, Math.min(1, t.drop));
-		e.visible = n < 1, e.position.y = -2.4 * n * n, C_.add(t.id);
+		e.visible = n < 1, e.position.y = -2.4 * n * n, S_.add(t.id);
 	}
-	for (let [e, t] of b_) C_.has(e) || (t.removeFromParent(), t.material.dispose(), t.dispose?.(), b_.delete(e));
+	for (let [e, t] of y_) S_.has(e) || (t.removeFromParent(), t.material.dispose(), t.dispose?.(), y_.delete(e));
 }
-function T_(e) {
+function w_(e) {
 	if (!e || !e.cells.length) {
-		__.mesh && (__.mesh.visible = !1), __.id = "";
+		g_.mesh && (g_.mesh.visible = !1), g_.id = "";
 		return;
 	}
-	if (e.id === __.id && __.mesh) {
-		__.mesh.visible = !0;
+	if (e.id === g_.id && g_.mesh) {
+		g_.mesh.visible = !0;
 		return;
 	}
 	let t = e.cells.length / 3;
-	if (!__.mesh || __.cap < t) {
-		__.mesh && (X.engine.scene.remove(__.mesh), __.mesh.geometry.dispose(), __.mesh.material.dispose());
+	if (!g_.mesh || g_.cap < t) {
+		g_.mesh && (X.engine.scene.remove(g_.mesh), g_.mesh.geometry.dispose(), g_.mesh.material.dispose());
 		let e = new x(.5, .5);
 		e.rotateX(-Math.PI / 2);
 		let n = new R({
@@ -33704,21 +33766,21 @@ function T_(e) {
 			polygonOffsetUnits: -2,
 			toneMapped: !1
 		});
-		__.cap = Math.max(256, Math.ceil(t * 1.5)), __.mesh = new ue(e, n, __.cap), __.mesh.renderOrder = 2, __.mesh.frustumCulled = !1, X.engine.scene.add(__.mesh);
+		g_.cap = Math.max(256, Math.ceil(t * 1.5)), g_.mesh = new ue(e, n, g_.cap), g_.mesh.renderOrder = 2, g_.mesh.frustumCulled = !1, X.engine.scene.add(g_.mesh);
 	}
 	let n = new nt(), r = new N().setRGB(16 / 255, 54 / 255, 64 / 255, o), i = new N().setRGB(40 / 255, 92 / 255, 104 / 255, o);
 	for (let a = 0; a < t; a++) {
 		let t = e.cells[a * 3], o = e.cells[a * 3 + 1];
-		n.makeTranslation(t, X.tileMap.getHeight(t, o) + .035, o), __.mesh.setMatrixAt(a, n), __.mesh.setColorAt(a, e.cells[a * 3 + 2] ? i : r);
+		n.makeTranslation(t, X.tileMap.getHeight(t, o) + .035, o), g_.mesh.setMatrixAt(a, n), g_.mesh.setColorAt(a, e.cells[a * 3 + 2] ? i : r);
 	}
-	__.mesh.count = t, __.mesh.instanceMatrix.needsUpdate = !0, __.mesh.instanceColor && (__.mesh.instanceColor.needsUpdate = !0), __.mesh.visible = !0, __.id = e.id;
+	g_.mesh.count = t, g_.mesh.instanceMatrix.needsUpdate = !0, g_.mesh.instanceColor && (g_.mesh.instanceColor.needsUpdate = !0), g_.mesh.visible = !0, g_.id = e.id;
 }
-var E_ = [];
-function D_(e, t) {
-	let n = E_[e];
-	return n && n.sheet !== t && (X.engine.scene.remove(n), n.dispose?.(), n = null), n || (n = new Vt(t, { ...Qf }), X.engine.scene.add(n), E_[e] = n), n.material.emissiveIntensity !== lg && (n.material.emissiveIntensity = lg), n;
+var T_ = [];
+function E_(e, t) {
+	let n = T_[e];
+	return n && n.sheet !== t && (X.engine.scene.remove(n), n.dispose?.(), n = null), n || (n = new Vt(t, { ...$f }), X.engine.scene.add(n), T_[e] = n), n.material.emissiveIntensity !== cg && (n.material.emissiveIntensity = cg), n;
 }
-var O_ = "uniform vec4 uRect; uniform vec2 uView; varying vec2 vUv;\nvoid main() { vUv = position.xy; vec2 p = uRect.xy + position.xy * uRect.zw; gl_Position = vec4(p.x / uView.x * 2.0 - 1.0, 1.0 - p.y / uView.y * 2.0, 0.0, 1.0); }", k_ = "uniform sampler2D tEmi, tDepth; uniform vec2 uTexel, uBuf; uniform mat4 uInvVP; uniform vec4 uKey; uniform float uFloor; varying vec2 vUv;\nvoid main() {\n  vec4 e = texture2D(tEmi, vUv); vec3 c = e.rgb * 2.4, g = vec3(0.0); float own = e.a;\n  for (int i = 0; i < 8; i++) { float a = float(i) * 0.785398; vec2 d = vec2(cos(a), sin(a)) * uTexel;\n    vec4 n = texture2D(tEmi, vUv + d * 2.0), f = texture2D(tEmi, vUv + d * 4.5); g += n.rgb + f.rgb * 0.6; own = max(own, max(n.a, f.a)); }\n  float k = 1.0;\n  if (uKey.w > 0.5 && own > 0.002) {\n    vec2 suv = gl_FragCoord.xy / uBuf; float z = texture2D(tDepth, suv).x;\n    if (z < 1.0) {\n      vec4 w = uInvVP * vec4(suv * 2.0 - 1.0, z * 2.0 - 1.0, 1.0); w.xyz /= w.w;\n      float scene = 2.0 * (w.x + w.z) + uKey.z, eff = uKey.x + own * 255.0 * uKey.y;\n      if (w.y > uFloor && scene > eff + 1.5) k = 0.22;\n    }\n  }\n  gl_FragColor = vec4((c + g * 0.12) * k, 1.0);\n}", A_ = {
+var D_ = "uniform vec4 uRect; uniform vec2 uView; varying vec2 vUv;\nvoid main() { vUv = position.xy; vec2 p = uRect.xy + position.xy * uRect.zw; gl_Position = vec4(p.x / uView.x * 2.0 - 1.0, 1.0 - p.y / uView.y * 2.0, 0.0, 1.0); }", O_ = "uniform sampler2D tEmi, tDepth; uniform vec2 uTexel, uBuf; uniform mat4 uInvVP; uniform vec4 uKey; uniform float uFloor; varying vec2 vUv;\nvoid main() {\n  vec4 e = texture2D(tEmi, vUv); vec3 c = e.rgb * 2.4, g = vec3(0.0); float own = e.a;\n  for (int i = 0; i < 8; i++) { float a = float(i) * 0.785398; vec2 d = vec2(cos(a), sin(a)) * uTexel;\n    vec4 n = texture2D(tEmi, vUv + d * 2.0), f = texture2D(tEmi, vUv + d * 4.5); g += n.rgb + f.rgb * 0.6; own = max(own, max(n.a, f.a)); }\n  float k = 1.0;\n  if (uKey.w > 0.5 && own > 0.002) {\n    vec2 suv = gl_FragCoord.xy / uBuf; float z = texture2D(tDepth, suv).x;\n    if (z < 1.0) {\n      vec4 w = uInvVP * vec4(suv * 2.0 - 1.0, z * 2.0 - 1.0, 1.0); w.xyz /= w.w;\n      float scene = 2.0 * (w.x + w.z) + uKey.z, eff = uKey.x + own * 255.0 * uKey.y;\n      if (w.y > uFloor && scene > eff + 1.5) k = 0.22;\n    }\n  }\n  gl_FragColor = vec4((c + g * 0.12) * k, 1.0);\n}", k_ = {
 	scene: null,
 	cam: null,
 	mat: null,
@@ -33726,14 +33788,14 @@ var O_ = "uniform vec4 uRect; uniform vec2 uView; varying vec2 vUv;\nvoid main()
 	on: !1,
 	keyed: !1
 };
-function j_() {
-	if (!A_.on || !X) return;
-	let e = X.engine.renderer, t = e.autoClear, n = A_.mat.uniforms, r = X.engine.camera;
-	n.tDepth.value = X.postfx?.depthTexture || null, n.uKey.value.w = A_.keyed && n.tDepth.value ? 1 : 0, e.getDrawingBufferSize(n.uBuf.value), n.uInvVP.value.multiplyMatrices(r.matrixWorld, r.projectionMatrixInverse), e.autoClear = !1, e.setRenderTarget(null), e.render(A_.scene, A_.cam), e.autoClear = t;
+function A_() {
+	if (!k_.on || !X) return;
+	let e = X.engine.renderer, t = e.autoClear, n = k_.mat.uniforms, r = X.engine.camera;
+	n.tDepth.value = X.postfx?.depthTexture || null, n.uKey.value.w = k_.keyed && n.tDepth.value ? 1 : 0, e.getDrawingBufferSize(n.uBuf.value), n.uInvVP.value.multiplyMatrices(r.matrixWorld, r.projectionMatrixInverse), e.autoClear = !1, e.setRenderTarget(null), e.render(k_.scene, k_.cam), e.autoClear = t;
 }
-function M_(e) {
+function j_(e) {
 	if (!e || !e.emi) {
-		A_.on = !1;
+		k_.on = !1;
 		return;
 	}
 	let t = new Uint32Array(e.emi.buffer, e.emi.byteOffset, e.emi.byteLength >> 2), n = !1;
@@ -33741,11 +33803,11 @@ function M_(e) {
 		n = !0;
 		break;
 	}
-	if (A_.on = n, n) {
-		if (!A_.scene) {
-			A_.scene = new p(), A_.cam = new xe(), A_.mat = new oe({
-				vertexShader: O_,
-				fragmentShader: k_,
+	if (k_.on = n, n) {
+		if (!k_.scene) {
+			k_.scene = new p(), k_.cam = new xe(), k_.mat = new oe({
+				vertexShader: D_,
+				fragmentShader: O_,
 				transparent: !0,
 				depthTest: !1,
 				depthWrite: !1,
@@ -33784,71 +33846,70 @@ function M_(e) {
 				2,
 				3
 			]);
-			let t = new M(e, A_.mat);
-			t.frustumCulled = !1, A_.scene.add(t), X.engine.events.on("afterRender", j_);
+			let t = new M(e, k_.mat);
+			t.frustumCulled = !1, k_.scene.add(t), X.engine.events.on("afterRender", A_);
 		}
-		(!A_.tex || A_.tex.image.width !== e.w || A_.tex.image.height !== e.h || A_.tex.image.data !== e.emi) && (A_.tex?.dispose(), A_.tex = new ie(e.emi, e.w, e.h, fe), A_.tex.flipY = !1, A_.tex.magFilter = A_.tex.minFilter = Ie, A_.tex.generateMipmaps = !1, A_.mat.uniforms.tEmi.value = A_.tex, A_.mat.uniforms.uTexel.value.set(1 / e.w, 1 / e.h)), A_.tex.needsUpdate = !0, A_.mat.uniforms.uRect.value.set(e.x, e.y, e.w * e.px, e.h * e.px), A_.mat.uniforms.uView.value.set(innerWidth, innerHeight), A_.keyed = !!e.key, e.key && A_.mat.uniforms.uKey.value.set(e.key.base, e.key.step, e.key.origin, 1);
+		(!k_.tex || k_.tex.image.width !== e.w || k_.tex.image.height !== e.h || k_.tex.image.data !== e.emi) && (k_.tex?.dispose(), k_.tex = new ie(e.emi, e.w, e.h, fe), k_.tex.flipY = !1, k_.tex.magFilter = k_.tex.minFilter = Ie, k_.tex.generateMipmaps = !1, k_.mat.uniforms.tEmi.value = k_.tex, k_.mat.uniforms.uTexel.value.set(1 / e.w, 1 / e.h)), k_.tex.needsUpdate = !0, k_.mat.uniforms.uRect.value.set(e.x, e.y, e.w * e.px, e.h * e.px), k_.mat.uniforms.uView.value.set(innerWidth, innerHeight), k_.keyed = !!e.key, e.key && k_.mat.uniforms.uKey.value.set(e.key.base, e.key.step, e.key.origin, 1);
 	}
 }
-function N_() {
+function M_() {
 	let e = X?.engine?.renderer;
 	if (!e) return;
-	let t = dp === "low" ? 0 : 1;
+	let t = fp === "low" ? 0 : 1;
 	e.shadowMap.type !== t && (e.shadowMap.type = t, e.shadowMap.needsUpdate = !0, X.engine.scene.traverse((e) => {
 		if (e.material) for (let t of [].concat(e.material)) t.needsUpdate = !0;
-	})), P_(), F_(gp()), I_();
+	})), N_(), P_(_p()), F_();
 }
-function P_() {
+function N_() {
 	let e = X?.postfx?.settings?.grade;
-	e && pp && Object.assign(e, dp === "low" ? {
+	e && mp && Object.assign(e, fp === "low" ? {
 		sharpen: 0,
 		grain: 0,
 		chromaticAberration: 0
-	} : pp);
+	} : mp);
 }
-function F_(e) {
+function P_(e) {
 	let t = X?.lightPool;
-	if (!t || fp === e || !X.lighting) return;
-	for (let [, e] of _p) X.disposeKept(e.kept), Yh(e.env, e.made);
-	Xh(), _p.clear(), Op();
+	if (!t || pp === e || !X.lighting) return;
+	vp.clear(), Yh(), Dp();
 	let n = new zt(X.lighting, [], {
 		size: e,
 		fixed: !0
 	});
-	X.lightPool = n, fp = e;
+	X.lightPool = n, pp = e;
 	let r = X.world;
 	r && (r._sharedPool = n, r._wireLights()), t.dispose();
 }
-function I_() {
+function F_() {
 	let e = X?.vfxLights?._slots;
-	if (e) for (let t of e) t.handle.light.visible = dp !== "low" || mp.includes(t);
+	if (e) for (let t of e) t.handle.light.visible = fp !== "low" || hp.includes(t);
 }
-var L_ = () => new Set((X?.vfxLights?._slots || []).filter((e) => e.loan)), R_ = {
+var I_ = () => new Set((X?.vfxLights?._slots || []).filter((e) => e.loan)), L_ = {
 	x: 0,
 	y: 1,
 	z: 0,
 	ppu: 22,
 	ready: !1
 };
-function z_() {
-	let e = X.rig, t = X.engine.camera, n = innerHeight / (2 * R_.ppu * Math.tan(Yf / 2 * Math.PI / 180));
-	e.target = null, e.bounds = null, e.lift = 0, e.minDistance = 1, e.maxDistance = 1e6, e.minPitch = 0, e.maxPitch = Math.PI / 2, e.freeYaw = !0, e.yaw = e.yawTarget = lp * Math.PI / 180, e.pitch = e.pitchTarget = up * Math.PI / 180, e.distance = e.distanceTarget = n, e.focusPoint.set(R_.x, R_.y, R_.z), (Math.abs(t.fov - Yf) > 1e-6 || Math.abs(t.far - (n + 600)) > 1) && (t.fov = Yf, t.near = Math.max(1, n - 300), t.far = n + 600, t.updateProjectionMatrix()), e._apply(0), Ra(n - 7);
+function R_() {
+	let e = X.rig, t = X.engine.camera, n = innerHeight / (2 * L_.ppu * Math.tan(Xf / 2 * Math.PI / 180));
+	e.target = null, e.bounds = null, e.lift = 0, e.minDistance = 1, e.maxDistance = 1e6, e.minPitch = 0, e.maxPitch = Math.PI / 2, e.freeYaw = !0, e.yaw = e.yawTarget = up * Math.PI / 180, e.pitch = e.pitchTarget = dp * Math.PI / 180, e.distance = e.distanceTarget = n, e.focusPoint.set(L_.x, L_.y, L_.z), (Math.abs(t.fov - Xf) > 1e-6 || Math.abs(t.far - (n + 600)) > 1) && (t.fov = Xf, t.near = Math.max(1, n - 300), t.far = n + 600, t.updateProjectionMatrix()), e._apply(0), Ra(n - 7);
 	let r = X.postfx?.settings?.dof;
 	r && (r.autoFocus = !1, r.focusDistance = n);
 }
-async function B_(e) {
-	await tp, Object.assign(globalThis, {
-		__emberUiRoot: rp,
+async function z_(e) {
+	await np, Object.assign(globalThis, {
+		__emberUiRoot: ip,
 		__emberInputTarget: new EventTarget(),
 		__emberSilent: !0,
-		__emberPixelRatio: Xf
+		__emberPixelRatio: Zf
 	}), X = new bo({
-		container: np,
+		container: rp,
 		level: e,
 		source: "emberfall",
 		autostart: !0,
-		lang: $f,
-		fonts: ep,
+		lang: ep,
+		fonts: tp,
 		look: "diorama"
 	});
 	let t = null;
@@ -33858,7 +33919,7 @@ async function B_(e) {
 		get: () => t,
 		set: (e) => {
 			t = e || t || (X.lighting ? new zt(X.lighting, [], {
-				size: fp = gp(),
+				size: pp = _p(),
 				fixed: !0
 			}) : null);
 		}
@@ -33871,22 +33932,22 @@ async function B_(e) {
 		}
 		return Promise.resolve(void 0);
 	}, X.engine.events.on("lateUpdate", () => {
-		X && z_();
-	}), X.engine.events.on("update", ig), X.engine.events.on("update", () => {
-		let e = Zv, t = X?.lighting;
+		X && R_();
+	}), X.engine.events.on("update", rg), X.engine.events.on("update", () => {
+		let e = Xv, t = X?.lighting;
 		e && t?.hemi && (t.hemi.color.setRGB(e.sky[0], e.sky[1], e.sky[2]), t.hemi.groundColor.setRGB(e.ground[0], e.ground[1], e.ground[2]), t.hemi.intensity = e.i, t.sun && (t.sun.intensity *= e.sun));
-	}), X.lighting && (X.lighting._shadowExtent = Math.max(X.lighting._shadowExtent || 22, 34)), By.settings({});
+	}), X.lighting && (X.lighting._shadowExtent = Math.max(X.lighting._shadowExtent || 22, 34)), zy.settings({});
 }
-function V_() {
+function B_() {
 	let e = X.player;
 	e && (e.sprite && (e.sprite.visible = !1), e.visible = !1);
 }
-var H_ = new u(.46, .6, 40), U_ = new Le(1, 40), W_ = new u(.8, 1, 40), G_ = (() => {
+var V_ = new u(.46, .6, 40), H_ = new Le(1, 40), U_ = new u(.8, 1, 40), W_ = (() => {
 	let e = [];
 	for (let t = 0; t < 4; t++) e.push(new u(.7, .8, 10, 1, t * Math.PI / 2 + .25, Math.PI / 2 - .5));
-	return K_(e);
+	return G_(e);
 })();
-function K_(e) {
+function G_(e) {
 	let t = [], n = [], r = 0;
 	for (let i of e) {
 		let e = i.getAttribute("position"), a = i.getIndex();
@@ -33897,7 +33958,7 @@ function K_(e) {
 	let i = new Fe();
 	return i.setAttribute("position", new O(t, 3)), i.setIndex(n), i;
 }
-var q_ = new u(.88, 1, 40), J_ = new x(1, 1).translate(.5, 0, 0), Y_ = 2 * Math.PI / 3, X_ = new Le(1, 36, -Y_ / 2, Y_), Z_ = new u(.93, 1, 36, 1, -Y_ / 2, Y_), Q_ = new u(.965, 1, 72), $_ = new u(.88, 1, 72), ev = (() => {
+var K_ = new u(.88, 1, 40), q_ = new x(1, 1).translate(.5, 0, 0), J_ = 2 * Math.PI / 3, Y_ = new Le(1, 36, -J_ / 2, J_), X_ = new u(.93, 1, 36, 1, -J_ / 2, J_), Z_ = new u(.965, 1, 72), Q_ = new u(.88, 1, 72), $_ = (() => {
 	let e = [], t = [];
 	for (let t = 0; t <= 120; t++) {
 		let n = t / 120 * Math.PI * 2, r = 1 + .022 * Math.sin(16 * n);
@@ -33906,21 +33967,21 @@ var q_ = new u(.88, 1, 40), J_ = new x(1, 1).translate(.5, 0, 0), Y_ = 2 * Math.
 	for (let e = 0; e < 120; e++) t.push(2 * e, 2 * e + 1, 2 * e + 2, 2 * e + 1, 2 * e + 3, 2 * e + 2);
 	let n = new Fe();
 	return n.setAttribute("position", new O(e, 3)), n.setIndex(t), n;
-})(), tv = (() => {
+})(), ev = (() => {
 	let e = [];
 	for (let t = 0; t < 9; t++) {
 		let n = t / 9 * Math.PI * 2 + .12 * Math.sin(t * 2.3);
 		e.push(new u(.9, 1, 8, 1, n, Math.PI * 2 / 9 - .22 - t % 3 * .06));
 	}
-	return K_(e);
-})(), nv = () => new R({
+	return G_(e);
+})(), tv = () => new R({
 	transparent: !0,
 	depthWrite: !1,
 	polygonOffset: !0,
 	polygonOffsetFactor: -2,
 	polygonOffsetUnits: -2,
 	toneMapped: !1
-}), rv = {
+}), nv = {
 	ring: [],
 	disc: [],
 	rim: [],
@@ -33934,82 +33995,82 @@ var q_ = new u(.88, 1, 40), J_ = new x(1, 1).translate(.5, 0, 0), Y_ = 2 * Math.
 	band: [],
 	wave: [],
 	shard: []
-}, iv = {
-	ring: H_,
-	disc: U_,
-	rim: W_,
-	focus: G_,
-	wfill: U_,
-	wrim: q_,
-	lane: J_,
-	cone: X_,
-	crim: Z_,
-	thin: Q_,
-	band: $_,
-	wave: ev,
-	shard: tv
-}, av = /* @__PURE__ */ new Set(["wave", "shard"]);
-function ov(e, t) {
-	let n = rv[e];
+}, rv = {
+	ring: V_,
+	disc: H_,
+	rim: U_,
+	focus: W_,
+	wfill: H_,
+	wrim: K_,
+	lane: q_,
+	cone: Y_,
+	crim: X_,
+	thin: Z_,
+	band: Q_,
+	wave: $_,
+	shard: ev
+}, iv = /* @__PURE__ */ new Set(["wave", "shard"]);
+function av(e, t) {
+	let n = nv[e];
 	for (; n.length <= t;) {
-		let t = new M(iv[e], nv());
-		av.has(e) && (t.material.side = 2), t.rotation.x = -Math.PI / 2, t.renderOrder = 2, t.visible = !1, X.engine.scene.add(t), n.push(t);
+		let t = new M(rv[e], tv());
+		iv.has(e) && (t.material.side = 2), t.rotation.x = -Math.PI / 2, t.renderOrder = 2, t.visible = !1, X.engine.scene.add(t), n.push(t);
 	}
 	return n[t];
 }
-function sv(e, t, n, r, i, a) {
+function ov(e, t, n, r, i, a) {
 	e.visible = a > .01, e.visible && (e.position.set(t, X.tileMap.getHeight(t, n) + .03, n), e.scale.setScalar(r), e.material.color.setRGB(i[0] / 255, i[1] / 255, i[2] / 255, o), e.material.opacity = a);
 }
-function cv(e, t, n, r, i, a, s, c, l) {
+function sv(e, t, n, r, i, a, s, c, l) {
 	let u = r - t, d = i - n, f = Math.hypot(u, d) * a;
 	e.visible = l > .01 && f > .02, e.visible && (e.position.set(t, Math.max(X.tileMap.getHeight(t, n), X.tileMap.getHeight(r, i)) + .05, n), e.rotation.z = Math.atan2(-d, u), e.scale.set(f, s, 1), e.material.color.setRGB(c[0] / 255, c[1] / 255, c[2] / 255, o), e.material.opacity = l);
 }
-var lv = [
+var cv = [
 	255,
 	86,
 	30
-], uv = [
+], lv = [
 	255,
 	238,
 	220
-], dv = [
+], uv = [
 	24,
 	6,
 	4
-], fv = [
+], dv = [
 	255,
 	222,
 	150
-], pv = [
+], fv = [
 	255,
 	246,
 	222
-], mv = [
+], pv = [
 	44,
 	32,
 	12
-], hv = [
+], mv = [
 	120,
 	150,
 	176
-], gv = [
+], hv = [
 	214,
 	232,
 	240
-], _v = [
+], gv = [
 	255,
 	150,
 	50
-], vv = [
+], _v = [
 	235,
 	36,
 	28
-], yv = [
+], vv = [
 	255,
 	92,
 	60
-], bv = 4.3, xv = .45, Sv = null, Cv = 0, wv = [];
-function Tv(e) {
+], yv = 4.3, bv = .45, xv = null, Sv = 0, Cv = [];
+function wv(e) {
 	let t = null;
 	if (e.traverse((e) => {
 		!t && e.isSkinnedMesh && /^Eyes$/.test(e.name) && (t = e);
@@ -34024,47 +34085,47 @@ function Tv(e) {
 		idx: r
 	};
 }
-var Ev = new P();
-function Dv() {
-	for (let e of im.values()) if (e.eye && e.root.visible) {
+var Tv = new P();
+function Ev() {
+	for (let e of rm.values()) if (e.eye && e.root.visible) {
 		let { m: t, idx: n } = e.eye;
-		return Ev.fromBufferAttribute(t.geometry.attributes.position, n), t.applyBoneTransform(n, Ev), Ev.applyMatrix4(t.matrixWorld);
+		return Tv.fromBufferAttribute(t.geometry.attributes.position, n), t.applyBoneTransform(n, Tv), Tv.applyMatrix4(t.matrixWorld);
 	}
 	return null;
 }
-function Ov(e) {
-	for (Sv ||= new k(1, 1, 1, 10, 1, !0).translate(0, .5, 0).rotateX(Math.PI / 2); wv.length <= e;) {
-		let e = new M(Sv, new R({
+function Dv(e) {
+	for (xv ||= new k(1, 1, 1, 10, 1, !0).translate(0, .5, 0).rotateX(Math.PI / 2); Cv.length <= e;) {
+		let e = new M(xv, new R({
 			transparent: !0,
 			depthWrite: !1,
 			blending: 2,
 			toneMapped: !1
 		}));
-		e.renderOrder = 3, e.visible = !1, e.frustumCulled = !1, X.engine.scene.add(e), wv.push(e);
+		e.renderOrder = 3, e.visible = !1, e.frustumCulled = !1, X.engine.scene.add(e), Cv.push(e);
 	}
-	return wv[e];
+	return Cv[e];
 }
-var kv = new P(), Av = new P();
-function jv(e, t, n, r, i, a, s, c) {
+var Ov = new P(), kv = new P();
+function Av(e, t, n, r, i, a, s, c) {
 	if (e.visible = c > .01, !e.visible) return;
-	let l = r - t, u = i - n, d = Math.hypot(l, u) || 1, f = Dv();
-	f ? kv.copy(f) : kv.set(t + l / d * xv, X.tileMap.getHeight(t, n) + bv, n + u / d * xv), Av.set(r, X.tileMap.getHeight(r, i) + .05, i), e.position.copy(kv), e.lookAt(Av), e.scale.set(a, a, kv.distanceTo(Av)), e.material.color.setRGB(s[0] / 255 * c, s[1] / 255 * c, s[2] / 255 * c, o), e.material.opacity = 1;
+	let l = r - t, u = i - n, d = Math.hypot(l, u) || 1, f = Ev();
+	f ? Ov.copy(f) : Ov.set(t + l / d * bv, X.tileMap.getHeight(t, n) + yv, n + u / d * bv), kv.set(r, X.tileMap.getHeight(r, i) + .05, i), e.position.copy(Ov), e.lookAt(kv), e.scale.set(a, a, Ov.distanceTo(kv)), e.material.color.setRGB(s[0] / 255 * c, s[1] / 255 * c, s[2] / 255 * c, o), e.material.opacity = 1;
 }
-var Mv = [
+var jv = [
 	255,
 	122,
 	24
-], Nv = [
+], Mv = [
 	255,
 	206,
 	96
-], Pv = [
+], Nv = [
 	232,
 	186,
 	92
-], Fv = 2.8, Iv = null, Lv = null, Rv = [];
-function zv() {
-	if (Iv) return Iv;
+], Pv = 2.8, Fv = null, Iv = null, Lv = [];
+function Rv() {
+	if (Fv) return Fv;
 	let e = [], t = [
 		[0, 0],
 		[.55, .015],
@@ -34085,13 +34146,13 @@ function zv() {
 		for (let e of Object.keys(t.attributes)) e !== "position" && e !== "normal" && t.deleteAttribute(e);
 		return t.attributes.normal || t.computeVertexNormals(), t;
 	});
-	Iv = on(i);
-	for (let t of [...e, ...i]) t !== Iv && t.dispose();
-	return Iv;
+	Fv = on(i);
+	for (let t of [...e, ...i]) t !== Fv && t.dispose();
+	return Fv;
 }
-function Bv(e) {
-	for (; Rv.length <= e;) {
-		Lv ||= new l({
+function zv(e) {
+	for (; Lv.length <= e;) {
+		Iv ||= new l({
 			color: new N("#b8893a"),
 			metalness: .55,
 			roughness: .42,
@@ -34099,16 +34160,16 @@ function Bv(e) {
 			emissiveIntensity: .12,
 			side: 2
 		});
-		let e = new M(zv(), Lv.clone());
-		e.castShadow = !0, e.receiveShadow = !1, e.visible = !1, e.name = "ember:pan", X.engine.scene.add(e), Rv.push(e);
+		let e = new M(Rv(), Iv.clone());
+		e.castShadow = !0, e.receiveShadow = !1, e.visible = !1, e.name = "ember:pan", X.engine.scene.add(e), Lv.push(e);
 	}
-	return Rv[e];
+	return Lv[e];
 }
-var Vv = (e) => e * e * e, Hv = new i(), Uv = /* @__PURE__ */ new WeakMap();
-function Wv(e, t) {
+var Bv = (e) => e * e * e, Vv = new i(), Hv = /* @__PURE__ */ new WeakMap();
+function Uv(e, t) {
 	let n = e && e.map, r = n && n.image;
 	if (!t || !r || !r.width) return null;
-	let i = Uv.get(r);
+	let i = Hv.get(r);
 	if (!i) {
 		try {
 			let e = document.createElement("canvas");
@@ -34122,14 +34183,14 @@ function Wv(e, t) {
 		} catch {
 			return null;
 		}
-		Uv.set(r, i);
+		Hv.set(r, i);
 	}
 	let a = n.offset.x + t.x * n.repeat.x, o = n.offset.y + t.y * n.repeat.y;
 	a -= Math.floor(a), o -= Math.floor(o);
 	let s = Math.min(i.w - 1, Math.floor(a * i.w)), c = Math.min(i.h - 1, Math.floor((n.flipY ? 1 - o : o) * i.h));
 	return i.px[(c * i.w + s) * 4 + 3];
 }
-var Gv = 6, Kv = 1.6, qv = null, Jv = null, Yv = -1, Xv = 0, Zv = null, Qv = !1, $v = {
+var Wv = 6, Gv = 1.6, Kv = null, qv = null, Jv = -1, Yv = 0, Xv = null, Zv = !1, Qv = {
 	body: [
 		1.15,
 		.8,
@@ -34155,7 +34216,7 @@ var Gv = 6, Kv = 1.6, qv = null, Jv = null, Yv = -1, Xv = 0, Zv = null, Qv = !1,
 		.56,
 		.1
 	]
-}, ey = {
+}, $v = {
 	body: [
 		.32,
 		.85,
@@ -34166,21 +34227,21 @@ var Gv = 6, Kv = 1.6, qv = null, Jv = null, Yv = -1, Xv = 0, Zv = null, Qv = !1,
 		1.65,
 		.25
 	]
-}, ty = [
+}, ey = [
 	.45,
 	.75,
 	1.4
-], ny = [
+], ty = [
 	1.6,
 	.85,
 	.25
-], ry = [
+], ny = [
 	1.6,
 	.8,
 	.3
-], Z = (e) => e <= 0 ? 0 : e >= 1 ? 1 : e * e * (3 - 2 * e), iy = (e) => e < 0 ? 0 : e > 1 ? 1 : e, ay = (e) => e <= 0 ? 0 : e < .55 ? 1.15 * (1 - (1 - e / .55) ** 3) : e < 1 ? 1.15 - .15 * Z((e - .55) / .45) : 1, oy = null, sy = null, cy = /* @__PURE__ */ new Map(), ly = {}, uy = new P();
-function dy() {
-	if (oy || !X?.engine) return oy;
+], Z = (e) => e <= 0 ? 0 : e >= 1 ? 1 : e * e * (3 - 2 * e), ry = (e) => e < 0 ? 0 : e > 1 ? 1 : e, iy = (e) => e <= 0 ? 0 : e < .55 ? 1.15 * (1 - (1 - e / .55) ** 3) : e < 1 ? 1.15 - .15 * Z((e - .55) / .45) : 1, ay = null, oy = null, sy = /* @__PURE__ */ new Map(), cy = {}, ly = new P();
+function uy() {
+	if (ay || !X?.engine) return ay;
 	let e = X.engine.scene, t = new Zr({ capacity: 48 }), n = new Qr({
 		capacity: 4,
 		heightField: {
@@ -34210,7 +34271,7 @@ function dy() {
 		mode: "billboard",
 		a: 1,
 		halo: 1
-	}), oy = {
+	}), ay = {
 		crystals: t,
 		frost: n,
 		quads: r,
@@ -34221,44 +34282,44 @@ function dy() {
 		warmQuad: c,
 		warmN: 4,
 		domeOf: null
-	}, oy;
+	}, ay;
 }
 function Q(e, t) {
-	for (let e in ly) delete ly[e];
-	Object.assign(ly, t), oy.quads.set(e, ly);
+	for (let e in cy) delete cy[e];
+	Object.assign(cy, t), ay.quads.set(e, cy);
 }
-function fy(e) {
-	for (let t of e.blades || []) oy.blades.free(t);
-	for (let t of e.rocks || []) oy.rocks.free(t);
-	for (let t of e.bells || []) oy.bells.free(t);
-	e.dome && oy.domeOf === e && (oy.dome.hide(), oy.domeOf = null);
-	for (let t of e.crystals) oy.crystals.free(t);
-	for (let t of e.quads) oy.quads.free(t);
-	e.gf >= 0 && oy.frost.free(e.gf);
+function dy(e) {
+	for (let t of e.blades || []) ay.blades.free(t);
+	for (let t of e.rocks || []) ay.rocks.free(t);
+	for (let t of e.bells || []) ay.bells.free(t);
+	e.dome && ay.domeOf === e && (ay.dome.hide(), ay.domeOf = null);
+	for (let t of e.crystals) ay.crystals.free(t);
+	for (let t of e.quads) ay.quads.free(t);
+	e.gf >= 0 && ay.frost.free(e.gf);
 }
-var py = [], my = /* @__PURE__ */ new Map(), hy = [], gy = null;
-function _y(e) {
-	if (!hy[e]) {
-		gy ||= new l({
+var fy = [], py = /* @__PURE__ */ new Map(), my = [], hy = null;
+function gy(e) {
+	if (!my[e]) {
+		hy ||= new l({
 			color: 3816002,
 			roughness: .45,
 			metalness: .5
 		});
-		let t = new M(new j(.17, 8, 6), gy);
-		t.castShadow = !0, X.engine.scene.add(t), hy[e] = t;
+		let t = new M(new j(.17, 8, 6), hy);
+		t.castShadow = !0, X.engine.scene.add(t), my[e] = t;
 	}
-	return hy[e];
+	return my[e];
 }
-function vy(e, t) {
-	let n = e.length || my.size ? dy() : null;
+function _y(e, t) {
+	let n = e.length || py.size ? uy() : null;
 	if (!n) {
-		for (let e of hy) e.visible &&= !1;
+		for (let e of my) e.visible &&= !1;
 		return;
 	}
 	let r = /* @__PURE__ */ new Set(), i = { n: 0 };
 	for (let t of e) {
 		r.add(t.key);
-		let e = my.get(t.key);
+		let e = py.get(t.key);
 		e || (e = {
 			flash: n.quads.alloc(),
 			smoke: [
@@ -34277,11 +34338,11 @@ function vy(e, t) {
 			seed: Math.abs(Math.round(t.x * 37 + t.z * 91 + t.dx * 53)) % 97,
 			t,
 			L: null
-		}, my.set(t.key, e)), e.t = t, e.L = t.land, yy(e, t, t.land, i);
+		}, py.set(t.key, e)), e.t = t, e.L = t.land, vy(e, t, t.land, i);
 	}
-	for (let [e, a] of my) if (!r.has(e)) {
+	for (let [e, a] of py) if (!r.has(e)) {
 		if (a.L != null && a.L < 3.2) {
-			a.L += t, yy(a, a.t, a.L, i);
+			a.L += t, vy(a, a.t, a.L, i);
 			continue;
 		}
 		for (let e of [
@@ -34289,11 +34350,11 @@ function vy(e, t) {
 			...a.smoke,
 			...a.kicks
 		]) n.quads.free(e);
-		my.delete(e);
+		py.delete(e);
 	}
-	for (let e = i.n; e < hy.length; e++) hy[e].visible && (hy[e].visible = !1);
+	for (let e = i.n; e < my.length; e++) my[e].visible && (my[e].visible = !1);
 }
-function yy(e, t, n, r) {
+function vy(e, t, n, r) {
 	let i = X.tileMap.getHeight(t.x, t.z), a = t.r;
 	if (n == null) {
 		Q(e.flash, {
@@ -34362,7 +34423,7 @@ function yy(e, t, n, r) {
 		});
 	});
 	for (let i = 0; i < 3; i++) {
-		let o = n - i * .08 - e.seed % 5 * .01, s = _y(r.n++);
+		let o = n - i * .08 - e.seed % 5 * .01, s = gy(r.n++);
 		if (o <= 0) {
 			s.visible = !1;
 			continue;
@@ -34385,14 +34446,14 @@ function yy(e, t, n, r) {
 		});
 	}
 }
-var by = /* @__PURE__ */ new Map(), xy = /* @__PURE__ */ new Set();
-function Sy(e, t, n, r, i) {
-	xy.clear();
+var yy = /* @__PURE__ */ new Map(), by = /* @__PURE__ */ new Set();
+function xy(e, t, n, r, i) {
+	by.clear();
 	let a = null;
 	for (let o of e || []) {
 		if (o.kind !== "pitch") continue;
-		xy.add(o.key);
-		let e = by.get(o.key);
+		by.add(o.key);
+		let e = yy.get(o.key);
 		e || (e = {
 			quads: [
 				0,
@@ -34405,7 +34466,7 @@ function Sy(e, t, n, r, i) {
 			splash: t.quads.alloc(),
 			smoke: t.quads.alloc(),
 			seed: Math.abs(Math.round(o.x * 97 + o.z * 31)) % 97 + 1
-		}, by.set(o.key, e));
+		}, yy.set(o.key, e));
 		let s = n(o.x, o.z), c = o.a, l = o.age, u = e.seed;
 		e.quads.forEach((e, t) => {
 			let n = t / 5 * Math.PI * 2 + u * .7, a = o.r * (t ? .55 : .05) * (.8 + .2 * ((u + t) % 3)), d = .8 + .25 * Math.sin(l * 7 + t * 1.9 + u);
@@ -34477,35 +34538,35 @@ function Sy(e, t, n, r, i) {
 			]
 		});
 	}
-	for (let [e, n] of by) if (!xy.has(e)) {
+	for (let [e, n] of yy) if (!by.has(e)) {
 		for (let e of [
 			...n.quads,
 			n.embers,
 			n.splash,
 			n.smoke
 		]) t.quads.free(e);
-		by.delete(e);
+		yy.delete(e);
 	}
 	return a;
 }
-function Cy(e, t, n, r, i) {
-	if (!oy && !r && !e.length) return;
-	let a = dy();
+function Sy(e, t, n, r, i) {
+	if (!ay && !r && !e.length) return;
+	let a = uy();
 	if (!a) return;
 	a.warmN > 0 && --a.warmN === 0 && (a.crystals.unwarm(), a.frost.unwarm(), a.dome.unwarm(), a.blades.unwarm(), a.rocks.unwarm(), a.bells.unwarm(), a.quads.free(a.warmQuad));
 	let o = /* @__PURE__ */ new Set(), s = (e, t) => X.tileMap.getHeight(e, t);
-	X.engine.camera.getWorldDirection(uy);
-	let c = Math.hypot(uy.x, uy.z) || 1, l = -uy.x / c, u = -uy.z / c, d = null;
+	X.engine.camera.getWorldDirection(ly);
+	let c = Math.hypot(ly.x, ly.z) || 1, l = -ly.x / c, u = -ly.z / c, d = null;
 	for (let n of e) {
 		o.add(n.key);
-		let e = cy.get(n.key);
+		let e = sy.get(n.key);
 		e || (e = {
 			crystals: [],
 			quads: [],
 			gf: -1,
 			landed: !1,
 			seed: (n.seed >>> 0) % 8192
-		}, cy.set(n.key, e));
+		}, sy.set(n.key, e));
 		let r = n.land;
 		if (n.id === "frost_nova") {
 			if (e.gf < 0 && (e.gf = a.frost.add({
@@ -34560,7 +34621,7 @@ function Cy(e, t, n, r, i) {
 				if (n.h < 0) continue;
 				let e = (r - n.start) / .13, i = Z((r - .55) / .3), o = Z((r - .88) / .3);
 				a.crystals.set(n.h, {
-					rise: ay(e) * (1 - o),
+					rise: iy(e) * (1 - o),
 					crack: i,
 					glint: Z((r - .08 - n.start) / .38),
 					glow: 1 + .35 * Math.exp(-Math.max(0, r - n.start - .07) / .1) + .2 * t + .5 * i
@@ -34588,9 +34649,9 @@ function Cy(e, t, n, r, i) {
 				mode: "flat",
 				scale: 2 * n.r / 8 * (.35 + .65 * t),
 				rot: n.age * .9,
-				r: $v.glyph[0],
-				g: $v.glyph[1],
-				b: $v.glyph[2],
+				r: Qv.glyph[0],
+				g: Qv.glyph[1],
+				b: Qv.glyph[2],
 				a: .85 * t * i * (r != null && r < .12 ? 1.25 : 1)
 			}), r != null) {
 				e.landed || (e.landed = !0, e.ring = a.quads.alloc(), e.over = a.quads.alloc(), e.quads.push(e.ring, e.over), e.dead = n.reached.slice(0, 6).map((t) => {
@@ -34613,9 +34674,9 @@ function Cy(e, t, n, r, i) {
 					z: n.z,
 					mode: "flat",
 					scale: 2.2 * n.r / 6 * (.15 + .85 * t),
-					r: $v.ring[0],
-					g: $v.ring[1],
-					b: $v.ring[2],
+					r: Qv.ring[0],
+					g: Qv.ring[1],
+					b: Qv.ring[2],
 					a: .9 * (1 - Z((r - .2) / .3))
 				}), Q(e.over, {
 					frame: "partySunburst",
@@ -34625,9 +34686,9 @@ function Cy(e, t, n, r, i) {
 					z: n.z + u * .3,
 					mode: "billboard",
 					scale: 1.5,
-					r: $v.burst[0],
-					g: $v.burst[1],
-					b: $v.burst[2],
+					r: Qv.burst[0],
+					g: Qv.burst[1],
+					b: Qv.burst[2],
 					a: 1 - Z((r - .15) / .2),
 					halo: 1
 				});
@@ -34654,9 +34715,9 @@ function Cy(e, t, n, r, i) {
 						z: t.z + u * .15,
 						mode: "billboard",
 						scale: i,
-						r: $v.body[0],
-						g: $v.body[1],
-						b: $v.body[2],
+						r: Qv.body[0],
+						g: Qv.body[1],
+						b: Qv.body[2],
 						a: .9 * Math.max(0, Math.min(1, (.32 - e) / .14))
 					}), Q(t.core, {
 						frame: "partyPillar",
@@ -34666,9 +34727,9 @@ function Cy(e, t, n, r, i) {
 						z: t.z + u * .17,
 						mode: "billboard",
 						scale: i,
-						r: $v.core[0],
-						g: $v.core[1],
-						b: $v.core[2],
+						r: Qv.core[0],
+						g: Qv.core[1],
+						b: Qv.core[2],
 						a: Math.max(0, Math.min(1, (.24 - e) / .1)),
 						halo: 1
 					}), Q(t.foot, {
@@ -34680,9 +34741,9 @@ function Cy(e, t, n, r, i) {
 						mode: "flat",
 						scale: 1.1,
 						rot: e * 2,
-						r: $v.burst[0],
-						g: $v.burst[1],
-						b: $v.burst[2],
+						r: Qv.burst[0],
+						g: Qv.burst[1],
+						b: Qv.burst[2],
 						a: Math.max(0, 1 - e / .4),
 						halo: 1
 					});
@@ -34707,7 +34768,7 @@ function Cy(e, t, n, r, i) {
 			].map(() => a.quads.alloc()), e.body = a.quads.alloc(), e.core = a.quads.alloc(), e.foot = a.quads.alloc(), e.quads.push(...e.orbs, e.body, e.core, e.foot));
 			let t = s(n.x, n.z) + 1.2, i = s(n.tx, n.tz) + .9;
 			e.orbs.forEach((e, a) => {
-				let o = iy((r - a * .05) / .3), s = Math.sin(o * Math.PI) * .6;
+				let o = ry((r - a * .05) / .3), s = Math.sin(o * Math.PI) * .6;
 				Q(e, {
 					frame: "partyHolyOrb",
 					index: Math.floor(r * 12) % 2,
@@ -34716,9 +34777,9 @@ function Cy(e, t, n, r, i) {
 					z: n.z + (n.tz - n.z) * o + u * .2,
 					mode: "billboard",
 					scale: 1.2,
-					r: ey.core[0],
-					g: ey.core[1],
-					b: ey.core[2],
+					r: $v.core[0],
+					g: $v.core[1],
+					b: $v.core[2],
 					a: +(o > 0 && o < 1),
 					halo: 1
 				});
@@ -34732,10 +34793,10 @@ function Cy(e, t, n, r, i) {
 				z: n.tz + u * .3,
 				mode: "billboard",
 				scale: f,
-				r: ey.body[0],
-				g: ey.body[1],
-				b: ey.body[2],
-				a: o > 0 ? .85 * iy((.45 - o) / .18) : 0
+				r: $v.body[0],
+				g: $v.body[1],
+				b: $v.body[2],
+				a: o > 0 ? .85 * ry((.45 - o) / .18) : 0
 			}), Q(e.core, {
 				frame: "partyPillar",
 				index: 0,
@@ -34744,10 +34805,10 @@ function Cy(e, t, n, r, i) {
 				z: n.tz + u * .32,
 				mode: "billboard",
 				scale: f,
-				r: ey.core[0],
-				g: ey.core[1],
-				b: ey.core[2],
-				a: o > 0 ? iy((.28 - o) / .1) : 0,
+				r: $v.core[0],
+				g: $v.core[1],
+				b: $v.core[2],
+				a: o > 0 ? ry((.28 - o) / .1) : 0,
 				halo: 1
 			}), Q(e.foot, {
 				frame: "partySunburst",
@@ -34758,9 +34819,9 @@ function Cy(e, t, n, r, i) {
 				mode: "flat",
 				scale: 1,
 				rot: o * 2,
-				r: ey.core[0],
-				g: ey.core[1],
-				b: ey.core[2],
+				r: $v.core[0],
+				g: $v.core[1],
+				b: $v.core[2],
 				a: o > 0 ? Math.max(0, 1 - o / .5) : 0,
 				halo: 1
 			});
@@ -34786,9 +34847,9 @@ function Cy(e, t, n, r, i) {
 				mode: "flat",
 				scale: .32 + .14 * Z(r / .3),
 				rot: r * .8,
-				r: $v.glyph[0],
-				g: $v.glyph[1],
-				b: $v.glyph[2],
+				r: Qv.glyph[0],
+				g: Qv.glyph[1],
+				b: Qv.glyph[2],
 				a: .9 * t
 			}), e.bursts.forEach((e, t) => {
 				let i = n.reached[t], a = r - .15;
@@ -34800,9 +34861,9 @@ function Cy(e, t, n, r, i) {
 					z: i.z + u * .2,
 					mode: "billboard",
 					scale: .9,
-					r: $v.burst[0],
-					g: $v.burst[1],
-					b: $v.burst[2],
+					r: Qv.burst[0],
+					g: Qv.burst[1],
+					b: Qv.burst[2],
 					a: a > 0 ? Math.max(0, 1 - a / .4) : 0,
 					halo: 1
 				});
@@ -34854,7 +34915,7 @@ function Cy(e, t, n, r, i) {
 				});
 			});
 		} else if (n.id === "shield_wall" && r != null) e.snaps || (e.snaps = n.reached.slice(0, 8).map(() => a.quads.alloc()), e.quads.push(...e.snaps)), e.snaps.forEach((e, t) => {
-			let i = n.reached[t], a = iy(r / .35);
+			let i = n.reached[t], a = ry(r / .35);
 			Q(e, {
 				frame: "partyRing",
 				index: a < .5 ? 0 : 1,
@@ -34863,14 +34924,14 @@ function Cy(e, t, n, r, i) {
 				z: i.z,
 				mode: "flat",
 				scale: .25 + .2 * a,
-				r: ny[0],
-				g: ny[1],
-				b: ny[2],
+				r: ty[0],
+				g: ty[1],
+				b: ty[2],
 				a: 1 - a
 			});
 		});
 		else if (n.id === "aura_wall") {
-			if ((!a.domeOf || !cy.has(a.domeOf.key)) && (a.dome.show({
+			if ((!a.domeOf || !sy.has(a.domeOf.key)) && (a.dome.show({
 				x: n.x,
 				y: s(n.x, n.z),
 				z: n.z,
@@ -34880,7 +34941,7 @@ function Cy(e, t, n, r, i) {
 				let r = e.t * .6 % 1;
 				a.dome.set({
 					rise: Z(e.t / .35),
-					dissolve: 1 - iy(n.k / .8),
+					dissolve: 1 - ry(n.k / .8),
 					sweepA: r,
 					sweepB: (r + .5) % 1
 				});
@@ -34893,9 +34954,9 @@ function Cy(e, t, n, r, i) {
 			mode: "flat",
 			scale: .85 + .05 * Math.sin(e.t * 4),
 			rot: e.t * .5,
-			r: ty[0],
-			g: ty[1],
-			b: ty[2],
+			r: ey[0],
+			g: ey[1],
+			b: ey[2],
 			a: .9 * Z(e.t / .25),
 			halo: 1
 		});
@@ -34906,7 +34967,7 @@ function Cy(e, t, n, r, i) {
 				2,
 				3
 			].map(() => a.quads.alloc()), e.quads.push(e.pot, e.fire, ...e.smoke), e.t = 0), e.t += t;
-			let r = iy(n.k), i = .45 + .28 * Math.hypot(n.tx - n.fx, n.tz - n.fz), o = (e) => {
+			let r = ry(n.k), i = .45 + .28 * Math.hypot(n.tx - n.fx, n.tz - n.fz), o = (e) => {
 				let t = n.fx + (n.tx - n.fx) * e, r = n.fz + (n.tz - n.fz) * e;
 				return [
 					t,
@@ -34986,9 +35047,9 @@ function Cy(e, t, n, r, i) {
 			z: n.z + u * .2,
 			mode: "billboard",
 			scale: 1.5,
-			r: ry[0],
-			g: ry[1],
-			b: ry[2],
+			r: ny[0],
+			g: ny[1],
+			b: ny[2],
 			a: 1,
 			halo: 1
 		});
@@ -35012,9 +35073,9 @@ function Cy(e, t, n, r, i) {
 					z: n.tz + Math.sin(s) * c,
 					mode: "billboard",
 					scale: .9 + .3 * t,
-					r: ry[0],
-					g: ry[1],
-					b: ry[2],
+					r: ny[0],
+					g: ny[1],
+					b: ny[2],
 					a: t,
 					halo: 1
 				});
@@ -35032,65 +35093,65 @@ function Cy(e, t, n, r, i) {
 				a: +(r < .3),
 				halo: 1
 			});
-		} else if (Ly[n.id]) {
-			let i = Ly[n.id](n, e, r, a, s, l, u, t);
+		} else if (Iy[n.id]) {
+			let i = Iy[n.id](n, e, r, a, s, l, u, t);
 			i && (!d || i.k > d.k) && (d = i);
 		}
 	}
-	for (let [e, t] of cy) o.has(e) || (fy(t), cy.delete(e));
+	for (let [e, t] of sy) o.has(e) || (dy(t), sy.delete(e));
 	{
-		let e = Sy(i, a, s, l, u);
+		let e = xy(i, a, s, l, u);
 		e && (!d || e.k > d.k) && (d = e);
 	}
-	sy && (d && d.k > .02 ? sy.set(d.x, s(d.x, d.z) + 1.4, d.z, {
+	oy && (d && d.k > .02 ? oy.set(d.x, s(d.x, d.z) + 1.4, d.z, {
 		color: d.color,
 		intensity: 2.6 * d.k / (n ?? 1),
 		distance: 6.5,
 		decay: 1.5,
 		flicker: .08
-	}) : sy.off()), a.domeOf && !cy.has(a.domeOf.key) && (a.dome.hide(), a.domeOf = null), a.crystals.update(t), a.frost.update(t), a.blades.update(t), a.rocks.update(t), a.bells.update(t), a.quads.update();
+	}) : oy.off()), a.domeOf && !sy.has(a.domeOf.key) && (a.dome.hide(), a.domeOf = null), a.crystals.update(t), a.frost.update(t), a.blades.update(t), a.rocks.update(t), a.bells.update(t), a.quads.update();
 }
-var wy = [
+var Cy = [
 	1.6,
 	1.3,
 	.85
-], Ty = [
+], wy = [
 	2,
 	1.85,
 	1.45
-], Ey = [
+], Ty = [
 	1.7,
 	.22,
 	.32
-], Dy = [
+], Ey = [
 	.45,
 	1.5,
 	.6
-], Oy = [
+], Dy = [
 	.75,
 	.72,
 	.8
-], ky = [
+], Oy = [
 	.55,
 	.75,
 	1.7
-], Ay = [
+], ky = [
 	.55,
 	.95,
 	1.9
-], jy = [
+], Ay = [
 	.35,
 	1.45,
 	1.25
-], My = [
+], jy = [
 	.75,
 	1.55,
 	.3
-], Ny = [
+], My = [
 	1.15,
 	.45,
 	1.65
-], Py = [
+], Ny = [
 	.7,
 	.58,
 	.42
@@ -35099,26 +35160,26 @@ var wy = [
 	g: e[1] * t,
 	b: e[2] * t
 });
-function Fy(e, t, n) {
+function Py(e, t, n) {
 	if (!e[t]) {
 		e[t] = [];
 		for (let r = 0; r < n; r++) {
-			let n = oy.quads.alloc();
+			let n = ay.quads.alloc();
 			n >= 0 && (e[t].push(n), e.quads.push(n));
 		}
 	}
 	return e[t];
 }
-var Iy = (e, t) => {
+var Fy = (e, t) => {
 	let n = Math.hypot(e, t) || 1;
 	return {
 		dirX: t / n,
 		dirZ: -e / n
 	};
-}, Ly = {
+}, Iy = {
 	vault(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let s = e.air || .3, c = e.hit == null ? n >= s + .25 ? n - s : null : e.hit, [l, u, d, f, ...p] = Fy(t, "q", 11), m = p.slice(0, 5), h = p.slice(5), g = i(e.tx, e.tz), _ = i(e.fx, e.fz), v = Z(n / s), y = c == null ? 1 : 1 - Z((c - .3) / .4);
+		let s = e.air || .3, c = e.hit == null ? n >= s + .25 ? n - s : null : e.hit, [l, u, d, f, ...p] = Py(t, "q", 11), m = p.slice(0, 5), h = p.slice(5), g = i(e.tx, e.tz), _ = i(e.fx, e.fz), v = Z(n / s), y = c == null ? 1 : 1 - Z((c - .3) / .4);
 		Q(l, {
 			frame: "heroSigil",
 			x: e.tx,
@@ -35127,7 +35188,7 @@ var Iy = (e, t) => {
 			mode: "flat",
 			scale: .1 + .14 * v,
 			rot: n * 2.2,
-			...$(wy, .5 + .6 * v),
+			...$(Cy, .5 + .6 * v),
 			a: .95 * y
 		}), h.forEach((t, r) => {
 			let i = r * 3.1416 + .8, a = n, o = .25 + .45 * Z(a / .35);
@@ -35139,7 +35200,7 @@ var Iy = (e, t) => {
 				z: e.fz + Math.sin(i) * o,
 				mode: "billboard",
 				scale: 1.6,
-				...$(Py),
+				...$(Ny),
 				a: .8 * (1 - Z(a / .45))
 			});
 		});
@@ -35151,7 +35212,7 @@ var Iy = (e, t) => {
 			z: e.tz,
 			mode: "flat",
 			scale: .62 * Z(b / .1),
-			...$(wy, .9),
+			...$(Cy, .9),
 			a: b >= 0 ? 1 - Z((b - .45) / .4) : 0
 		}), Q(d, {
 			frame: "impact",
@@ -35161,7 +35222,7 @@ var Iy = (e, t) => {
 			z: e.tz + o * .3,
 			mode: "billboard",
 			scale: 2.8,
-			...$(Ty),
+			...$(wy),
 			a: +(b >= 0 && b < .25),
 			halo: 1
 		}), Q(f, {
@@ -35172,7 +35233,7 @@ var Iy = (e, t) => {
 			z: e.tz,
 			mode: "flat",
 			scale: .15 + .5 * Z(b / .35),
-			...$(Py, 1.2),
+			...$(Ny, 1.2),
 			a: b >= 0 ? .8 * (1 - Z(b / .45)) : 0
 		}), m.forEach((n, r) => {
 			let i = r * 1.2566 + t.seed % 5 * .2, a = .35 + .9 * Z(b / .45);
@@ -35184,7 +35245,7 @@ var Iy = (e, t) => {
 				z: e.tz + Math.sin(i) * a,
 				mode: "billboard",
 				scale: 2.3,
-				...$(Py),
+				...$(Ny),
 				a: b >= 0 ? 1 - Z(b / .6) : 0
 			});
 		}), c == null ? {
@@ -35209,7 +35270,7 @@ var Iy = (e, t) => {
 	},
 	cutting_wave(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let [s, c, l] = Fy(t, "q", 3), u = e.tx - e.fx, d = e.tz - e.fz, f = Math.hypot(u, d) || 1, p = u / f, m = d / f, h = 3 * Z(n / .35), g = 1 - Z((n - .45) / .35), _ = e.fx + p * h, v = e.fz + m * h, y = i(_, v), b = Iy(u, d);
+		let [s, c, l] = Py(t, "q", 3), u = e.tx - e.fx, d = e.tz - e.fz, f = Math.hypot(u, d) || 1, p = u / f, m = d / f, h = 3 * Z(n / .35), g = 1 - Z((n - .45) / .35), _ = e.fx + p * h, v = e.fz + m * h, y = i(_, v), b = Fy(u, d);
 		return Q(s, {
 			frame: "heroWaveLit",
 			index: Math.floor(n * 24) % 4,
@@ -35219,7 +35280,7 @@ var Iy = (e, t) => {
 			mode: "flat",
 			...b,
 			scale: .75,
-			...$(Ty),
+			...$(wy),
 			a: g,
 			halo: 1
 		}), Q(c, {
@@ -35231,7 +35292,7 @@ var Iy = (e, t) => {
 			mode: "flat",
 			...b,
 			scale: .6,
-			...$(wy),
+			...$(Cy),
 			a: .8 * g
 		}), Q(l, {
 			frame: "heroFangCrestLit",
@@ -35241,7 +35302,7 @@ var Iy = (e, t) => {
 			z: v + o * .2,
 			mode: "billboard",
 			scale: .85,
-			...$(Ty),
+			...$(wy),
 			a: g,
 			halo: 1
 		}), {
@@ -35257,7 +35318,7 @@ var Iy = (e, t) => {
 	},
 	earthshatter(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let s = i(e.x, e.z), [c, l, ...u] = Fy(t, "q", 8);
+		let s = i(e.x, e.z), [c, l, ...u] = Py(t, "q", 8);
 		if (!t.rocks) {
 			t.rocks = [], t.spec = [];
 			for (let n = 0; n < 12; n++) {
@@ -35280,7 +35341,7 @@ var Iy = (e, t) => {
 			}
 		}
 		for (let e of t.spec) r.rocks.set(e.h, {
-			rise: ay((n - e.start) / .14) * (1 - Z((n - 1) / .35)),
+			rise: iy((n - e.start) / .14) * (1 - Z((n - 1) / .35)),
 			crack: Z((n - .65) / .3)
 		});
 		return Q(c, {
@@ -35291,7 +35352,7 @@ var Iy = (e, t) => {
 			mode: "flat",
 			scale: .35 * Z(n / .15),
 			rot: t.seed % 7 * .4,
-			...$(Py, 1.1),
+			...$(Ny, 1.1),
 			a: 1 - Z((n - 1) / .35)
 		}), Q(l, {
 			frame: "partyRing",
@@ -35301,7 +35362,7 @@ var Iy = (e, t) => {
 			z: e.z,
 			mode: "flat",
 			scale: .2 + .4 * Z(n / .3),
-			...$(wy, .9),
+			...$(Cy, .9),
 			a: 1 - Z((n - .1) / .3)
 		}), u.forEach((t, r) => {
 			let i = r * 1.047 + .3, a = n - .12, o = .6 + .8 * Z(a / .5);
@@ -35313,7 +35374,7 @@ var Iy = (e, t) => {
 				z: e.z + Math.sin(i) * o,
 				mode: "billboard",
 				scale: 2.4,
-				...$(Py),
+				...$(Ny),
 				a: a > 0 ? 1 - Z(a / .7) : 0
 			});
 		}), {
@@ -35342,7 +35403,7 @@ var Iy = (e, t) => {
 			palette: 0,
 			seed: t.seed + n * 13
 		}));
-		let [s] = Fy(t, "q", 1), c = i(e.x, e.z) + .6, l = Z(n / .25), u = Z((n - 4.6) / .45), d = .8;
+		let [s] = Py(t, "q", 1), c = i(e.x, e.z) + .6, l = Z(n / .25), u = Z((n - 4.6) / .45), d = .8;
 		return t.blades.forEach((t, i) => {
 			if (t < 0) return;
 			let a = n * 5.2 + i * Math.PI * 2 / 3, o = Math.cos(a), s = Math.sin(a);
@@ -35371,7 +35432,7 @@ var Iy = (e, t) => {
 			mode: "flat",
 			scale: .32,
 			rot: -n * 6,
-			...$(wy, .75),
+			...$(Cy, .75),
 			a: .75 * l * (1 - u)
 		}), {
 			x: e.x,
@@ -35386,7 +35447,7 @@ var Iy = (e, t) => {
 	},
 	kidney_shot(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let [s, c] = Fy(t, "q", 2), l = i(e.tx, e.tz);
+		let [s, c] = Py(t, "q", 2), l = i(e.tx, e.tz);
 		return Q(s, {
 			frame: "crit",
 			index: Math.min(3, Math.floor(n * 12)),
@@ -35395,7 +35456,7 @@ var Iy = (e, t) => {
 			z: e.tz + o * .3,
 			mode: "billboard",
 			scale: 2.4,
-			...$(Ey, 1.2),
+			...$(Ty, 1.2),
 			a: +(n < .35),
 			halo: 1
 		}), Q(c, {
@@ -35424,7 +35485,7 @@ var Iy = (e, t) => {
 	},
 	fan_of_knives(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let s = Fy(t, "q", 5), c = Fy(t, "h", Math.min(4, e.reached.length)), l = Math.atan2(e.tz - e.z, e.tx - e.x), u = 3 * Z(n / .28), d = i(e.x, e.z) + .6;
+		let s = Py(t, "q", 5), c = Py(t, "h", Math.min(4, e.reached.length)), l = Math.atan2(e.tz - e.z, e.tx - e.x), u = 3 * Z(n / .28), d = i(e.x, e.z) + .6;
 		return s.forEach((t, r) => {
 			let i = l + (r - 2) * .26, a = Math.cos(i), o = Math.sin(i);
 			Q(t, {
@@ -35434,9 +35495,9 @@ var Iy = (e, t) => {
 				y: d,
 				z: e.z + o * (.3 + u),
 				mode: "flat",
-				...Iy(a, o),
+				...Fy(a, o),
 				scale: .6,
-				...$(Dy, 1.2),
+				...$(Ey, 1.2),
 				a: +(n < .3),
 				halo: 1
 			});
@@ -35450,7 +35511,7 @@ var Iy = (e, t) => {
 				z: s.z + o * .3,
 				mode: "billboard",
 				scale: 2,
-				...$(Dy, 1.3),
+				...$(Ey, 1.3),
 				a: +(c > 0 && c < .28),
 				halo: 1
 			});
@@ -35458,7 +35519,7 @@ var Iy = (e, t) => {
 	},
 	shadowstep(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let s = e.air || 0, c = (e.hit == null ? n >= s + .25 ? n - s : null : e.hit) ?? -1, l = Fy(t, "p", 8), [u, d] = Fy(t, "q", 2), f = i(e.tx, e.tz);
+		let s = e.air || 0, c = (e.hit == null ? n >= s + .25 ? n - s : null : e.hit) ?? -1, l = Py(t, "p", 8), [u, d] = Py(t, "q", 2), f = i(e.tx, e.tz);
 		return l.forEach((t, r) => {
 			let a = r < 4 ? {
 				x: e.fx,
@@ -35491,7 +35552,7 @@ var Iy = (e, t) => {
 			mode: "billboard",
 			scale: 1.1,
 			rot: .6,
-			...$(Ey, 1.3),
+			...$(Ty, 1.3),
 			a: +(c >= 0 && c < .28),
 			halo: 1
 		}), Q(d, {
@@ -35502,7 +35563,7 @@ var Iy = (e, t) => {
 			z: e.tz + o * .32,
 			mode: "billboard",
 			scale: 2.4,
-			...$(Ey, 1.4),
+			...$(Ty, 1.4),
 			a: +(c > .02 && c < .38),
 			halo: 1
 		}), c >= 0 ? {
@@ -35518,9 +35579,9 @@ var Iy = (e, t) => {
 	},
 	caltrops(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let s = Fy(t, "q", 14), [c] = Fy(t, "r", 1), l = 1 - Z((n - 5.4) / .6), u = Math.max(.6, e.r);
+		let s = Py(t, "q", 14), [c] = Py(t, "r", 1), l = 1 - Z((n - 5.4) / .6), u = Math.max(.6, e.r);
 		return s.forEach((r, a) => {
-			let o = (a * 137.5 + t.seed) % 360 * Math.PI / 180, s = u * .85 * Math.sqrt((a * 61 + t.seed) % 97 / 97), c = e.tx + Math.cos(o) * s, d = e.tz + Math.sin(o) * s, f = iy((n - a * .015) / .25), p = .6 + .4 * Math.sin(n * 6 + a * 1.7);
+			let o = (a * 137.5 + t.seed) % 360 * Math.PI / 180, s = u * .85 * Math.sqrt((a * 61 + t.seed) % 97 / 97), c = e.tx + Math.cos(o) * s, d = e.tz + Math.sin(o) * s, f = ry((n - a * .015) / .25), p = .6 + .4 * Math.sin(n * 6 + a * 1.7);
 			Q(r, {
 				frame: "partyIceShard",
 				index: a % 4,
@@ -35529,7 +35590,7 @@ var Iy = (e, t) => {
 				z: d,
 				mode: "billboard",
 				scale: .55,
-				...$(Oy, .8 + .6 * p),
+				...$(Dy, .8 + .6 * p),
 				a: f > 0 ? l : 0
 			});
 		}), Q(c, {
@@ -35540,13 +35601,13 @@ var Iy = (e, t) => {
 			z: e.tz,
 			mode: "flat",
 			scale: 2 * u / 6,
-			...$(Ey, .5),
+			...$(Ty, .5),
 			a: .7 * Z(n / .3) * l
 		}), null;
 	},
 	flare(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let [s, c, l, u, ...d] = Fy(t, "q", 10), f = i(e.tx, e.tz), p = n - .7;
+		let [s, c, l, u, ...d] = Py(t, "q", 10), f = i(e.tx, e.tz), p = n - .7;
 		return Q(s, {
 			frame: "heroSigil",
 			x: e.tx,
@@ -35555,7 +35616,7 @@ var Iy = (e, t) => {
 			mode: "flat",
 			scale: .1 + .12 * Z(n / .7),
 			rot: n * 2.2,
-			...$(ry, .9),
+			...$(ny, .9),
 			a: n < .7 ? .8 + .2 * Math.sin(n * 30) : 1 - Z(p / .3)
 		}), Q(c, {
 			frame: "pillar",
@@ -35565,7 +35626,7 @@ var Iy = (e, t) => {
 			z: e.tz + o * .2,
 			mode: "billboard",
 			scale: 1.4,
-			...$(ry, 1.1),
+			...$(ny, 1.1),
 			a: p > 0 ? 1 - Z((p - .25) / .3) : 0,
 			halo: 1
 		}), Q(l, {
@@ -35579,7 +35640,7 @@ var Iy = (e, t) => {
 			r: 2,
 			g: 1.5,
 			b: .7,
-			a: p > 0 ? iy((.25 - p) / .1) : 0,
+			a: p > 0 ? ry((.25 - p) / .1) : 0,
 			halo: 1
 		}), Q(u, {
 			frame: "impact",
@@ -35604,7 +35665,7 @@ var Iy = (e, t) => {
 				z: e.tz + Math.sin(i) * a,
 				mode: "billboard",
 				scale: 1,
-				...$(ry),
+				...$(ny),
 				a: p > 0 ? 1 - Z((p - .25) / .35) : 0,
 				halo: 1
 			});
@@ -35621,7 +35682,7 @@ var Iy = (e, t) => {
 	},
 	gather(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let [s, c] = Fy(t, "q", 2), l = Fy(t, "p", Math.min(5, e.reached.length)), u = i(e.tx, e.tz), d = 1 - Z((n - .5) / .35);
+		let [s, c] = Py(t, "q", 2), l = Py(t, "p", Math.min(5, e.reached.length)), u = i(e.tx, e.tz), d = 1 - Z((n - .5) / .35);
 		return Q(s, {
 			frame: "partySwirl",
 			index: Math.floor(n * 8) % 2,
@@ -35631,7 +35692,7 @@ var Iy = (e, t) => {
 			mode: "flat",
 			scale: e.r * 2 / 5 * (1 - .6 * Z(n / .5)),
 			rot: n * 7,
-			...$(ky, 1.1),
+			...$(Oy, 1.1),
 			a: d
 		}), Q(c, {
 			frame: "partySwirl",
@@ -35642,7 +35703,7 @@ var Iy = (e, t) => {
 			mode: "flat",
 			scale: e.r * 2 / 7 * (1 - .6 * Z(n / .5)),
 			rot: -n * 9,
-			...$(ky, 1.4),
+			...$(Oy, 1.4),
 			a: .8 * d,
 			halo: 1
 		}), l.forEach((t, r) => {
@@ -35654,9 +35715,9 @@ var Iy = (e, t) => {
 				y: i(s, c) + .4,
 				z: c,
 				mode: "flat",
-				...Iy(e.tx - a.x, e.tz - a.z),
+				...Fy(e.tx - a.x, e.tz - a.z),
 				scale: .45,
-				...$(ky, 1.3),
+				...$(Oy, 1.3),
 				a: +(n < .45)
 			});
 		}), {
@@ -35691,7 +35752,7 @@ var Iy = (e, t) => {
 				1.9
 			]
 		};
-		let s = Fy(t, "s", Math.min(5, e.reached.length)), c = Z((n - 2.4) / .3);
+		let s = Py(t, "s", Math.min(5, e.reached.length)), c = Z((n - 2.4) / .3);
 		if (!t.spikes) {
 			t.spikes = [];
 			for (let n of e.reached.slice(0, 5)) for (let e = 0; e < 2; e++) {
@@ -35710,7 +35771,7 @@ var Iy = (e, t) => {
 			}
 		}
 		return t.spikes.forEach((e) => r.crystals.set(e, {
-			rise: ay(n / .13) * (1 - c),
+			rise: iy(n / .13) * (1 - c),
 			crack: Z((n - 2.1) / .3),
 			glint: Z(n / .4),
 			glow: 1.1
@@ -35729,7 +35790,7 @@ var Iy = (e, t) => {
 				z: s.z + o * .12,
 				mode: "billboard",
 				scale: 1.15 - .1 * Z(n / .1),
-				...$(Ay, .85),
+				...$(ky, .85),
 				a: +(n > .05) * (1 - c),
 				halo: 1
 			});
@@ -35746,7 +35807,7 @@ var Iy = (e, t) => {
 	},
 	blizzard(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let [s, c, l] = Fy(t, "q", 3), u = Fy(t, "f", 18), d = i(e.tx, e.tz), f = Z(n / .4) * (1 - Z((n - 5.4) / .6)), p = Math.max(.6, e.r);
+		let [s, c, l] = Py(t, "q", 3), u = Py(t, "f", 18), d = i(e.tx, e.tz), f = Z(n / .4) * (1 - Z((n - 5.4) / .6)), p = Math.max(.6, e.r);
 		return Q(l, {
 			frame: "partyFrostFloor",
 			x: e.tx,
@@ -35755,7 +35816,7 @@ var Iy = (e, t) => {
 			mode: "flat",
 			scale: 2 * p / 4,
 			rot: .3,
-			...$(Ay, .55),
+			...$(ky, .55),
 			a: .8 * f
 		}), Q(s, {
 			frame: "partySwirl",
@@ -35766,7 +35827,7 @@ var Iy = (e, t) => {
 			mode: "flat",
 			scale: 2 * p / 5 * 1.1,
 			rot: n * 2.4,
-			...$(Ay, .9),
+			...$(ky, .9),
 			a: .85 * f
 		}), Q(c, {
 			frame: "partySwirl",
@@ -35777,7 +35838,7 @@ var Iy = (e, t) => {
 			mode: "flat",
 			scale: 2 * p / 5 * .75,
 			rot: -n * 3.6,
-			...$(Ay, 1.1),
+			...$(ky, 1.1),
 			a: .85 * f,
 			halo: 1
 		}), u.forEach((t, r) => {
@@ -35790,7 +35851,7 @@ var Iy = (e, t) => {
 				z: c,
 				mode: "billboard",
 				scale: 1.4,
-				...$(Ay, 1.3),
+				...$(ky, 1.3),
 				a: f * +(i < .95)
 			});
 		}), {
@@ -35806,7 +35867,7 @@ var Iy = (e, t) => {
 	},
 	sanctuary(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let [s] = Fy(t, "q", 1), c = Fy(t, "m", 8), l = Fy(t, "r", Math.min(3, e.reached.length)), u = i(e.tx, e.tz), d = Z(n / .3) * (1 - Z((n - 3.5) / .5)), f = Math.max(.6, e.r);
+		let [s] = Py(t, "q", 1), c = Py(t, "m", 8), l = Py(t, "r", Math.min(3, e.reached.length)), u = i(e.tx, e.tz), d = Z(n / .3) * (1 - Z((n - 3.5) / .5)), f = Math.max(.6, e.r);
 		return Q(s, {
 			frame: "partyGlyphHoly",
 			x: e.tx,
@@ -35815,7 +35876,7 @@ var Iy = (e, t) => {
 			mode: "flat",
 			scale: 2 * f / 8,
 			rot: n * .6,
-			...$(ey.core, .8),
+			...$($v.core, .8),
 			a: .9 * d,
 			halo: 1
 		}), c.forEach((t, r) => {
@@ -35828,7 +35889,7 @@ var Iy = (e, t) => {
 				z: e.tz + Math.sin(a) * o,
 				mode: "billboard",
 				scale: .9,
-				...$(ey.core),
+				...$($v.core),
 				a: d * (1 - i),
 				halo: 1
 			});
@@ -35842,7 +35903,7 @@ var Iy = (e, t) => {
 				mode: "flat",
 				scale: .9,
 				rot: n,
-				...$(ey.core, .9),
+				...$($v.core, .9),
 				a: d,
 				halo: 1
 			});
@@ -35859,7 +35920,7 @@ var Iy = (e, t) => {
 	},
 	consecrate(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let [s, c] = Fy(t, "q", 2), l = Fy(t, "s", 5), u = i(e.tx, e.tz), d = Z(n / .4) * (1 - Z((n - 7.4) / .6)), f = Math.max(.6, e.r);
+		let [s, c] = Py(t, "q", 2), l = Py(t, "s", 5), u = i(e.tx, e.tz), d = Z(n / .4) * (1 - Z((n - 7.4) / .6)), f = Math.max(.6, e.r);
 		return Q(s, {
 			frame: "partyGlyphHoly",
 			x: e.tx,
@@ -35868,7 +35929,7 @@ var Iy = (e, t) => {
 			mode: "flat",
 			scale: 2 * f / 8,
 			rot: -n * .3,
-			...$($v.glyph, 1),
+			...$(Qv.glyph, 1),
 			a: .9 * d,
 			halo: 1
 		}), Q(c, {
@@ -35879,7 +35940,7 @@ var Iy = (e, t) => {
 			z: e.tz,
 			mode: "flat",
 			scale: 2 * f / 6,
-			...$($v.ring, 1.1),
+			...$(Qv.ring, 1.1),
 			a: .8 * d
 		}), l.forEach((t, r) => {
 			let i = r * 1.2566 + n * .2, a = f * .6, o = (n * .5 + r * .2) % 1;
@@ -35891,7 +35952,7 @@ var Iy = (e, t) => {
 				z: e.tz + Math.sin(i) * a,
 				mode: "billboard",
 				scale: .45,
-				...$($v.body, .7),
+				...$(Qv.body, .7),
 				a: d * .6 * Math.sin(o * Math.PI)
 			});
 		}), {
@@ -35907,7 +35968,7 @@ var Iy = (e, t) => {
 	},
 	revive(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let [s, c, l, u] = Fy(t, "q", 4), d = Fy(t, "m", 6), f = i(e.tx, e.tz), p = .9, m = 3 * p;
+		let [s, c, l, u] = Py(t, "q", 4), d = Py(t, "m", 6), f = i(e.tx, e.tz), p = .9, m = 3 * p;
 		return Q(s, {
 			frame: "partyPillar",
 			index: 1 + Math.min(2, Math.floor(n / .15)),
@@ -35916,8 +35977,8 @@ var Iy = (e, t) => {
 			z: e.tz + o * .2,
 			mode: "billboard",
 			scale: p,
-			...$($v.body),
-			a: .95 * iy((1 - n) / .4)
+			...$(Qv.body),
+			a: .95 * ry((1 - n) / .4)
 		}), Q(c, {
 			frame: "partyPillar",
 			index: 0,
@@ -35926,8 +35987,8 @@ var Iy = (e, t) => {
 			z: e.tz + o * .22,
 			mode: "billboard",
 			scale: p,
-			...$($v.core),
-			a: iy((.5 - n) / .2),
+			...$(Qv.core),
+			a: ry((.5 - n) / .2),
 			halo: 1
 		}), Q(l, {
 			frame: "partySunburst",
@@ -35938,7 +35999,7 @@ var Iy = (e, t) => {
 			mode: "flat",
 			scale: 1.4,
 			rot: n * 2,
-			...$($v.burst),
+			...$(Qv.burst),
 			a: Math.max(0, 1 - n / .6),
 			halo: 1
 		}), Q(u, {
@@ -35949,11 +36010,11 @@ var Iy = (e, t) => {
 			z: e.tz + o * .3,
 			mode: "billboard",
 			scale: 1.4,
-			...$($v.burst),
+			...$(Qv.burst),
 			a: n > .3 ? 1 - Z((n - .45) / .25) : 0,
 			halo: 1
 		}), d.forEach((t, r) => {
-			let i = iy((n - r * .08) / 1.1), a = r * 1.047;
+			let i = ry((n - r * .08) / 1.1), a = r * 1.047;
 			Q(t, {
 				frame: "partyHolyOrb",
 				index: r % 2,
@@ -35962,7 +36023,7 @@ var Iy = (e, t) => {
 				z: e.tz + Math.sin(a) * .3,
 				mode: "billboard",
 				scale: .9,
-				...$($v.core),
+				...$(Qv.core),
 				a: i > 0 && i < 1 ? 1 - i : 0,
 				halo: 1
 			});
@@ -35979,7 +36040,7 @@ var Iy = (e, t) => {
 	},
 	judgement(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let [s, c, l, u] = Fy(t, "q", 4), d = Fy(t, "six", 6), f = i(e.tx, e.tz), p = Math.max(.6, e.r), m = n - .8;
+		let [s, c, l, u] = Py(t, "q", 4), d = Py(t, "six", 6), f = i(e.tx, e.tz), p = Math.max(.6, e.r), m = n - .8;
 		Q(s, {
 			frame: "partyGlyphHoly",
 			x: e.tx,
@@ -35988,7 +36049,7 @@ var Iy = (e, t) => {
 			mode: "flat",
 			scale: 2 * p / 8 * (.4 + .6 * Z(n / .4)),
 			rot: n * 1.2,
-			...$($v.glyph),
+			...$(Qv.glyph),
 			a: .9 * (1 - Z((n - 1.2) / .4)),
 			halo: 1
 		}), d.forEach((t, r) => {
@@ -36001,8 +36062,8 @@ var Iy = (e, t) => {
 				z: u + o * .1,
 				mode: "billboard",
 				scale: .5,
-				...$($v.body),
-				a: c > 0 ? iy((.35 - c) / .12) : 0,
+				...$(Qv.body),
+				a: c > 0 ? ry((.35 - c) / .12) : 0,
 				halo: 1
 			});
 		});
@@ -36015,8 +36076,8 @@ var Iy = (e, t) => {
 			z: e.tz + o * .25,
 			mode: "billboard",
 			scale: h,
-			...$($v.body, 1.2),
-			a: m > 0 ? iy((.45 - m) / .15) : 0
+			...$(Qv.body, 1.2),
+			a: m > 0 ? ry((.45 - m) / .15) : 0
 		}), Q(l, {
 			frame: "partyPillar",
 			index: 0,
@@ -36025,8 +36086,8 @@ var Iy = (e, t) => {
 			z: e.tz + o * .27,
 			mode: "billboard",
 			scale: h,
-			...$($v.core, 1.2),
-			a: m > 0 ? iy((.3 - m) / .1) : 0,
+			...$(Qv.core, 1.2),
+			a: m > 0 ? ry((.3 - m) / .1) : 0,
 			halo: 1
 		}), Q(u, {
 			frame: "partySunburst",
@@ -36037,7 +36098,7 @@ var Iy = (e, t) => {
 			mode: "flat",
 			scale: 1.8,
 			rot: m * 2,
-			...$($v.burst),
+			...$(Qv.burst),
 			a: m > 0 ? Math.max(0, 1 - m / .45) : 0,
 			halo: 1
 		}), {
@@ -36053,7 +36114,7 @@ var Iy = (e, t) => {
 	},
 	binding_roots(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let [s] = Fy(t, "q", 1), c = Fy(t, "t", Math.min(15, e.reached.length * 3)), l = i(e.tx, e.tz), u = 1 - Z((n - 2.1) / .4);
+		let [s] = Py(t, "q", 1), c = Py(t, "t", Math.min(15, e.reached.length * 3)), l = i(e.tx, e.tz), u = 1 - Z((n - 2.1) / .4);
 		return Q(s, {
 			frame: "partyRing",
 			index: n < .15 ? 0 : 1,
@@ -36062,7 +36123,7 @@ var Iy = (e, t) => {
 			z: e.tz,
 			mode: "flat",
 			scale: 2 * Math.max(.6, e.r) / 6 * (.4 + .6 * Z(n / .25)),
-			...$(My, .9),
+			...$(jy, .9),
 			a: 1 - Z((n - .3) / .4)
 		}), c.forEach((t, r) => {
 			let s = e.reached[Math.floor(r / 3)], c = r % 3 * 2.094 + .5, l = s.x + Math.cos(c) * .22, d = s.z + Math.sin(c) * .22;
@@ -36092,7 +36153,7 @@ var Iy = (e, t) => {
 	},
 	old_marks(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let [s, c, l] = Fy(t, "q", 3), u = i(e.tx, e.tz), d = e.k || 1;
+		let [s, c, l] = Py(t, "q", 3), u = i(e.tx, e.tz), d = e.k || 1;
 		return Q(s, {
 			frame: "heroRunes",
 			index: (d - 1) % 2,
@@ -36101,7 +36162,7 @@ var Iy = (e, t) => {
 			z: e.tz + o * .3,
 			mode: "billboard",
 			scale: .7 + .15 * d,
-			...$(d >= 3 ? Ny : jy, 1.1 + .2 * d),
+			...$(d >= 3 ? My : Ay, 1.1 + .2 * d),
 			a: 1 - Z((n - .45) / .3),
 			halo: 1
 		}), Q(c, {
@@ -36112,7 +36173,7 @@ var Iy = (e, t) => {
 			z: e.tz + o * .32,
 			mode: "billboard",
 			scale: 2.6,
-			...$(Ny, 1.3),
+			...$(My, 1.3),
 			a: +(d >= 3 && n < .35),
 			halo: 1
 		}), Q(l, {
@@ -36123,7 +36184,7 @@ var Iy = (e, t) => {
 			z: e.tz + o * .3,
 			mode: "billboard",
 			scale: 1.3,
-			...$(Ny, 1.2),
+			...$(My, 1.2),
 			a: d >= 3 ? Math.max(0, 1 - n / .4) : 0,
 			halo: 1
 		}), d >= 3 ? {
@@ -36139,7 +36200,7 @@ var Iy = (e, t) => {
 	},
 	spirit_totem(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let s = i(e.tx, e.tz), c = Z(n / .4), l = Z((n - 7.4) / .6), u = n % 1.5 / 1.5, [d, f] = Fy(t, "q", 2);
+		let s = i(e.tx, e.tz), c = Z(n / .4), l = Z((n - 7.4) / .6), u = n % 1.5 / 1.5, [d, f] = Py(t, "q", 2);
 		t.bells ||= [r.bells.spawn({
 			x: e.tx,
 			y: -500,
@@ -36170,7 +36231,7 @@ var Iy = (e, t) => {
 			mode: "flat",
 			scale: 2.2,
 			rot: n * .4,
-			...$(jy, .8),
+			...$(Ay, .8),
 			a: .85 * c * (1 - l),
 			halo: 1
 		}), Q(f, {
@@ -36181,7 +36242,7 @@ var Iy = (e, t) => {
 			z: e.tz,
 			mode: "flat",
 			scale: .3 + .7 * (1 - u),
-			...$(jy, 1.2),
+			...$(Ay, 1.2),
 			a: c * (1 - l) * (1 - Z(u / .8))
 		}), {
 			x: e.tx,
@@ -36196,7 +36257,7 @@ var Iy = (e, t) => {
 	},
 	thunder_drum(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let [s, c, l] = Fy(t, "q", 3), u = Fy(t, "g", Math.min(5, e.reached.length)), d = i(e.tx, e.tz), f = Z(n / .3), p = Math.max(.6, e.r);
+		let [s, c, l] = Py(t, "q", 3), u = Py(t, "g", Math.min(5, e.reached.length)), d = i(e.tx, e.tz), f = Z(n / .3), p = Math.max(.6, e.r);
 		return Q(s, {
 			frame: "partyRing",
 			index: n < .12 ? 0 : 1,
@@ -36205,7 +36266,7 @@ var Iy = (e, t) => {
 			z: e.tz,
 			mode: "flat",
 			scale: 2 * p / 6 * (.15 + .95 * f),
-			...$(jy, 1.4),
+			...$(Ay, 1.4),
 			a: 1 - Z((n - .25) / .3),
 			halo: 1
 		}), Q(c, {
@@ -36230,7 +36291,7 @@ var Iy = (e, t) => {
 			z: e.tz + o * .3,
 			mode: "billboard",
 			scale: 1.5,
-			...$(jy, 1.3),
+			...$(Ay, 1.3),
 			a: Math.max(0, 1 - n / .3),
 			halo: 1
 		}), u.forEach((t, r) => {
@@ -36242,9 +36303,9 @@ var Iy = (e, t) => {
 				y: i(a.x, a.z) + .4,
 				z: a.z,
 				mode: "flat",
-				...Iy(a.x - e.tx, a.z - e.tz),
+				...Fy(a.x - e.tx, a.z - e.tz),
 				scale: .55,
-				...$(jy, 1.2),
+				...$(Ay, 1.2),
 				a: +(o > 0 && o < .4)
 			});
 		}), {
@@ -36259,7 +36320,7 @@ var Iy = (e, t) => {
 		};
 	},
 	aura_stun(e, t, n, r, i, a, o, s) {
-		let [c] = Fy(t, "q", 1);
+		let [c] = Py(t, "q", 1);
 		return t.t = (t.t || 0) + s, Q(c, {
 			frame: "stun",
 			index: Math.floor(t.t * 10) % 4,
@@ -36276,7 +36337,7 @@ var Iy = (e, t) => {
 		}), null;
 	},
 	aura_frozen(e, t, n, r, i, a, o, s) {
-		let [c] = Fy(t, "q", 1);
+		let [c] = Py(t, "q", 1);
 		return t.t = (t.t || 0) + s, Q(c, {
 			frame: "partyIceShellLit",
 			index: 0,
@@ -36285,13 +36346,13 @@ var Iy = (e, t) => {
 			z: e.z + o * .12,
 			mode: "billboard",
 			scale: 1.1,
-			...$(Ay, .85),
+			...$(ky, .85),
 			a: Z(t.t / .1),
 			halo: 1
 		}), null;
 	},
 	aura_root(e, t, n, r, i, a, o, s) {
-		let c = Fy(t, "q", 3);
+		let c = Py(t, "q", 3);
 		return t.t = (t.t || 0) + s, c.forEach((t, n) => {
 			let r = n * 2.094 + .5, s = e.x + Math.cos(r) * .22, c = e.z + Math.sin(r) * .22;
 			Q(t, {
@@ -36310,7 +36371,7 @@ var Iy = (e, t) => {
 		}), null;
 	}
 };
-function Ry(e) {
+function Ly(e) {
 	let t = JSON.stringify(e), n = 2166136261, r = 16777619;
 	for (let e = 0; e < t.length; e++) {
 		let i = t.charCodeAt(e);
@@ -36318,23 +36379,23 @@ function Ry(e) {
 	}
 	return `${t.length}.${(n >>> 0).toString(36)}.${(r >>> 0).toString(36)}`;
 }
-var zy = (e) => Ry(e.map((e) => [
+var Ry = (e) => Ly(e.map((e) => [
 	e.id,
 	e.x,
 	e.z,
 	e.prop || "",
 	+!!e.arch,
 	e.tavern ? e.tavern.pieces.length : 0
-])), By = {
+])), zy = {
 	ready: !1,
 	prepare(e, t = "vale") {
-		if (!X || Sp) return !1;
-		let n = Hn(e).level, r = `${t}|${Ry(n)}`;
-		if (r === bp || _p.has(r) || wp?.key === r) return !1;
-		Op();
+		if (!X || xp) return !1;
+		let n = Hn(e).level, r = `${t}|${Ly(n)}`;
+		if (r === vp.current || vp.has(r) || Cp?.key === r) return !1;
+		Dp();
 		try {
 			let e = X.prepareWorld(n, () => !0);
-			wp = {
+			Cp = {
 				key: r,
 				level: n,
 				world: e,
@@ -36342,9 +36403,9 @@ var zy = (e) => Ry(e.map((e) => [
 				wait: null,
 				done: !1,
 				t0: performance.now()
-			}, setTimeout(Dp, Ep);
+			}, setTimeout(Ep, Tp);
 		} catch (e) {
-			return console.warn("[luminati] building a level ahead:", e), wp = null, !1;
+			return console.warn("[luminati] building a level ahead:", e), Cp = null, !1;
 		}
 		return !0;
 	},
@@ -36358,100 +36419,92 @@ var zy = (e) => Ry(e.map((e) => [
 			programs: e?.info?.programs?.length ?? 0,
 			geometries: e?.info?.memory?.geometries ?? 0,
 			textures: e?.info?.memory?.textures ?? 0,
-			kept: _p.size,
-			ahead: wp ? wp.done ? "ready" : "building" : "",
-			last: Cp
+			kept: vp.size,
+			ahead: Cp ? Cp.done ? "ready" : "building" : "",
+			last: Sp
 		};
 	},
 	async load(e, t = [], n = "vale") {
-		let r = ++ap;
-		n !== f_ && (f_ = n, d_.clear());
-		let i = Hn(e).level, a = `${n}|${Ry(i)}`, o = zy(t);
-		Sp = !0, ip = (async () => {
-			let e = null;
-			if (!X) await B_(i), Cp = "built";
+		let r = ++op, i = Hn(e).level, a = `${n}|${Ly(i)}`, o = Ry(t);
+		xp = !0, ap = vp.swap(a, async ({ back: e, keep: s }) => {
+			let c = null;
+			if (!X) await z_(i), Sp = "built";
 			else {
-				e = _p.get(a) || null, e && _p.delete(a);
-				let t = !e && wp && wp.key === a ? wp : null;
-				t && (wp = null);
+				let t = !e && Cp && Cp.key === a ? Cp : null;
+				t && (Cp = null);
 				let n = e ? e.kept.level : t ? t.level : i;
-				Cp = e ? "kept" : t ? "ahead" : "built";
+				Sp = e ? "kept" : t ? "ahead" : "built";
 				let { aside: r } = await X.swapLevel(n, {
 					spawn: i.spawn,
-					keep: !0,
+					keep: s,
 					kept: e ? e.kept : null,
-					prepared: t ? Ap(t) : null
+					prepared: t ? kp(t) : null
 				});
-				if (r && bp) {
-					for (let e of Am) X.engine.scene.remove(e);
-					for (_p.set(bp, {
+				if (r) {
+					for (let e of km) X.engine.scene.remove(e);
+					c = {
 						kept: r,
-						env: Am,
-						made: Im,
-						envKey: xp
-					}), Am = [], Im = /* @__PURE__ */ new Map(); _p.size > vp;) {
-						let [e, t] = _p.entries().next().value;
-						_p.delete(e), X.disposeKept(t.kept), Yh(t.env, t.made);
-					}
-					Xh();
+						env: km,
+						made: Fm,
+						envKey: bp
+					}, km = [], Fm = /* @__PURE__ */ new Map();
 				}
 			}
-			if (bp = a, r === ap) {
-				if (V_(), Qv = !!i.environment?.interior, By.settings({ dof: op }), hg(i, n), e && e.envKey === o) {
-					Yh(Am, Im), Am = e.env, Im = e.made;
-					for (let e of Am) X.engine.scene.add(e), e.update?.(0, X.engine.camera);
-				} else e && Yh(e.env, e.made), await Zh(t, n);
-				xp = o;
-			}
-		})();
+			if (r === op && (n !== d_ && (d_ = n, u_.clear()), B_(), Zv = !!i.environment?.interior, zy.settings({ dof: sp }), mg(i, n)), r === op && e && e.envKey === o) {
+				Jh(km, Fm), km = e.env, Fm = e.made;
+				for (let e of km) X.engine.scene.add(e), e.update?.(0, X.engine.camera);
+				bp = o;
+			} else e && Jh(e.env, e.made), r === op && await Xh(t, n), r === op ? bp = o : (Jh(km, Fm), km = [], Fm = /* @__PURE__ */ new Map(), bp = "");
+			return c;
+		});
 		try {
-			await ip;
+			await ap, Yh();
 		} finally {
-			Sp = !1;
+			xp = vp.busy;
 		}
-		return r === ap;
+		return r === op;
 	},
 	settings(e = {}) {
-		if (e.dof && (op = e.dof), (e.res === "sharp" || e.res === "balanced" || e.res === "fast") && (sp = e.res), X?.engine && (sp !== "sharp" || cp !== "sharp")) {
-			let e = X.engine, t = Math.min(globalThis.devicePixelRatio || 1, e.maxPixelRatio || Xf), n = sp === "fast" ? 1.5 : sp === "balanced" ? 2 : 0;
-			X.resolution && (X.resolution.manual = n > 0), e.renderScale = n > 0 ? Math.min(1, n / t) : 1, cp = sp;
+		if (e.dof && (sp = e.dof), (e.res === "sharp" || e.res === "balanced" || e.res === "fast") && (cp = e.res), X?.engine && (cp !== "sharp" || lp !== "sharp")) {
+			let e = X.engine, t = Math.min(globalThis.devicePixelRatio || 1, e.maxPixelRatio || Zf), n = cp === "fast" ? 1.5 : cp === "balanced" ? 2 : 0;
+			X.resolution && (X.resolution.manual = n > 0), e.renderScale = n > 0 ? Math.min(1, n / t) : 1, lp = cp;
 		}
-		e.bright > 0 && (ag = e.bright), e.figLit > 0 && (sg = e.figLit), e.carryUp > 0 && (Gv = e.carryUp), e.carryGain > 0 && (Kv = e.carryGain), e.figMax > 0 && (cg = e.figMax), (e.figures === "models" || e.figures === "sprites") && (Hp = e.figures), [
+		e.bright > 0 && (ig = e.bright), e.figLit > 0 && (og = e.figLit), e.carryUp > 0 && (Wv = e.carryUp), e.carryGain > 0 && (Gv = e.carryGain), e.figMax > 0 && (sg = e.figMax), (e.figures === "models" || e.figures === "sprites") && (Vp = e.figures), [
 			"chosen",
 			"doors",
 			"all",
 			"sprites"
-		].includes(e.landmarks) && (jm = e.landmarks);
+		].includes(e.landmarks) && (Am = e.landmarks);
 		let t = X?.postfx?.settings;
 		t?.dof && Object.assign(t.dof, {
-			enabled: op !== "off" && !Qv,
+			enabled: sp !== "off" && !Zv,
 			focusRange: 1e4,
 			tiltShift: .45,
 			tiltCenter: .5,
 			tiltWidth: .7,
 			tiltFeather: .15
-		}), (e.quality === "high" || e.quality === "low") && (dp = e.quality), N_();
+		}), (e.quality === "high" || e.quality === "low") && (fp = e.quality), M_();
 	},
 	frame(e) {
 		if (!X || !X.engine) return;
-		if (og = e.bright > 0 ? e.bright : 1, R_.x = e.focus[0], R_.y = e.focus[1], R_.z = e.focus[2], R_.ppu = e.ppu, Number.isFinite(e.hour) && Math.abs((X.lighting?.timeOfDay ?? -1) - e.hour) > .004 && X.setTime(e.hour), e.weather && X.weather?.weather !== e.weather && X.setWeather(e.weather), Ch && Number.isFinite(e.hour) && Math.abs(e.hour - Eh) > .02) {
-			Eh = e.hour;
-			let t = jh(e.hour);
-			Ch.color.copy(t.col).multiplyScalar(.4 + 1.1 * t.k), Th && (Th.color.copy(t.col), Th.opacity = t.k);
+		if (ag = e.bright > 0 ? e.bright : 1, L_.x = e.focus[0], L_.y = e.focus[1], L_.z = e.focus[2], L_.ppu = e.ppu, Number.isFinite(e.hour) && Math.abs((X.lighting?.timeOfDay ?? -1) - e.hour) > .004 && X.setTime(e.hour), e.weather && X.weather?.weather !== e.weather && X.setWeather(e.weather), Sh && Number.isFinite(e.hour) && Math.abs(e.hour - Th) > .02) {
+			Th = e.hour;
+			let t = Ah(e.hour);
+			Sh.color.copy(t.col).multiplyScalar(.4 + 1.1 * t.k), wh && (wh.color.copy(t.col), wh.opacity = t.k);
 		}
-		X.lighting?.settings && (X.lighting.settings.fogMul = 1 + .6 * (e.fog || 0), X.lighting.settings.pointLightMul = e.ambient?.lamps ?? 1), e.hero && X.player && (V_(), X.player.position.set(e.hero[0], X.tileMap.getHeight(e.hero[0], e.hero[1]), e.hero[1])), lg = fg();
+		X.lighting?.settings && (X.lighting.settings.fogMul = 1 + .6 * (e.fog || 0), X.lighting.settings.pointLightMul = e.ambient?.lamps ?? 1), e.hero && X.player && (B_(), X.player.position.set(e.hero[0], X.tileMap.getHeight(e.hero[0], e.hero[1]), e.hero[1])), cg = dg();
 		let t = /* @__PURE__ */ new Map(), n = X.engine.camera, r = /* @__PURE__ */ new Map();
-		am++, om = performance.now(), n.getWorldDirection(Up);
-		let i = Math.atan2(-Up.x, -Up.z);
+		im++, am = performance.now(), n.getWorldDirection(Hp);
+		let i = Math.atan2(-Hp.x, -Hp.z);
 		for (let a of e.actors) {
 			let o = r.get(a.name) || 0;
-			if (r.set(a.name, o + 1), Dm(a, a.key ?? `${a.name}#${o}`, Math.max(0, Math.min(.1, e.dt || 0)), i)) continue;
-			let s = Lp(a.name);
+			if (r.set(a.name, o + 1), Em(a, a.key ?? `${a.name}#${o}`, Math.max(0, Math.min(.1, e.dt || 0)), i)) continue;
+			let s = Ip(a.name);
 			if (!s) continue;
-			let c = a.cw ? a.cw / s.meta.cw : 1, l = Rp(s, c), u = t.get(l) || 0;
+			let c = a.cw ? a.cw / s.meta.cw : 1, l = Lp(s, c), u = t.get(l) || 0;
 			t.set(l, u + 1);
-			let d = Bp(l, u);
-			d.visible = !0, d.material.emissiveIntensity !== lg && (d.material.emissiveIntensity = lg), (d._col !== a.col || d._row !== a.row) && d.setFrame(a.col, a.row), Vp(d, a.x, a.z, (s.meta.ch - s.meta.ay) * c, l.pixelsPerUnit * c);
+			let d = zp(l, u);
+			d.visible = !0, d.material.emissiveIntensity !== cg && (d.material.emissiveIntensity = cg), (d._col !== a.col || d._row !== a.row) && d.setFrame(a.col, a.row), Bp(d, a.x, a.z, (s.meta.ch - s.meta.ay) * c, l.pixelsPerUnit * c);
 			let f = a.flash || 0, p = f ? 0 : Math.round((a.warn || 0) * 20) / 20;
 			if (d._emberFlash !== f || d._emberWarn !== p) {
 				d._emberFlash = f, d._emberWarn = p;
@@ -36462,10 +36515,10 @@ var zy = (e) => Ry(e.map((e) => [
 			Math.abs(d.opacity - m) > .01 && (d.opacity = m), d.update(0, n);
 		}
 		for (let r of e.bits || []) {
-			let e = h_(r), i = t.get(e) || 0;
+			let e = m_(r), i = t.get(e) || 0;
 			t.set(e, i + 1);
-			let a = g_(e, i), o = r.glow ? 1.6 : .3;
-			a.visible = !0, a.material.emissiveIntensity !== o && (a.material.emissiveIntensity = o), Vp(a, r.x, r.z, r.canvas.height - r.ay - r.lift, Zf);
+			let a = h_(e, i), o = r.glow ? 1.6 : .3;
+			a.visible = !0, a.material.emissiveIntensity !== o && (a.material.emissiveIntensity = o), Bp(a, r.x, r.z, r.canvas.height - r.ay - r.lift, Qf);
 			let s = r.flash || 0;
 			if (a._emberFlash !== s) {
 				a._emberFlash = s;
@@ -36474,11 +36527,11 @@ var zy = (e) => Ry(e.map((e) => [
 			}
 			a.update(0, n);
 		}
-		for (let [e, n] of zp) {
+		for (let [e, n] of Rp) {
 			let r = t.get(e) || 0;
 			for (let e = r; e < n.length; e++) n[e].visible && (n[e].visible = !1);
 		}
-		Om();
+		Dm();
 		let a = {
 			ring: 0,
 			disc: 0,
@@ -36494,18 +36547,18 @@ var zy = (e) => Ry(e.map((e) => [
 			wave: 0,
 			shard: 0
 		};
-		for (let t of e.rings || []) sv(ov("ring", a.ring++), t.x, t.z, 1, t.col, t.a);
+		for (let t of e.rings || []) ov(av("ring", a.ring++), t.x, t.z, 1, t.col, t.a);
 		if (e.mark) {
-			let t = ov("focus", a.focus++);
-			sv(t, e.mark.x, e.mark.z, 1, [
+			let t = av("focus", a.focus++);
+			ov(t, e.mark.x, e.mark.z, 1, [
 				255,
 				226,
 				150
-			], .7 + .2 * Math.sin(Xv * 4)), t.rotation.z = Xv, Xv += (e.dt || 0) * .9;
+			], .7 + .2 * Math.sin(Yv * 4)), t.rotation.z = Yv, Yv += (e.dt || 0) * .9;
 		}
 		for (let t of e.hazards || []) {
 			let e = t.kind === "pitch" ? .8 + .2 * Math.sin(performance.now() * .009 + t.x * 5.3) : 1;
-			sv(ov("disc", a.disc++), t.x, t.z, t.r, t.col, (t.kind === "pitch" ? .9 : .82) * t.a), sv(ov("rim", a.rim++), t.x, t.z, t.r, t.rim, (t.kind === "pitch" ? .22 * e : .42) * t.a), t.kind === "pitch" && sv(ov("wfill", a.wfill++), t.x, t.z, t.r * .85, [
+			ov(av("disc", a.disc++), t.x, t.z, t.r, t.col, (t.kind === "pitch" ? .9 : .82) * t.a), ov(av("rim", a.rim++), t.x, t.z, t.r, t.rim, (t.kind === "pitch" ? .22 * e : .42) * t.a), t.kind === "pitch" && ov(av("wfill", a.wfill++), t.x, t.z, t.r * .85, [
 				255,
 				92,
 				20
@@ -36513,108 +36566,108 @@ var zy = (e) => Ry(e.map((e) => [
 		}
 		for (let t of e.warns || []) {
 			let e = t.heavy ? 1 : .62, n = t.hit > 0 ? t.hit : 1, r = 1 - (1 - t.p) * (1 - t.p);
-			t.lane ? (cv(ov("lane", a.lane++), t.x, t.z, t.tx, t.tz, 1, t.w * 1.25, dv, .3 * e * n), cv(ov("lane", a.lane++), t.x, t.z, t.tx, t.tz, 1, t.w, lv, .16 * e * n), cv(ov("lane", a.lane++), t.x, t.z, t.tx, t.tz, t.p, t.w * .7, t.hit > 0 ? uv : lv, (.22 + .28 * t.p) * e * n), sv(ov("wrim", a.wrim++), t.tx, t.tz, t.heavy ? .42 : .3, t.hit > 0 ? uv : lv, (.35 + .4 * t.p) * e * n)) : (sv(ov("wrim", a.wrim++), t.tx, t.tz, t.r * 1.1, dv, .5 * n), sv(ov("wfill", a.wfill++), t.tx, t.tz, t.r * r, t.hit > 0 ? uv : lv, (.26 + .3 * t.p) * n), sv(ov("wrim", a.wrim++), t.tx, t.tz, t.r, t.hit > 0 ? uv : lv, (.7 + .3 * t.p) * n));
+			t.lane ? (sv(av("lane", a.lane++), t.x, t.z, t.tx, t.tz, 1, t.w * 1.25, uv, .3 * e * n), sv(av("lane", a.lane++), t.x, t.z, t.tx, t.tz, 1, t.w, cv, .16 * e * n), sv(av("lane", a.lane++), t.x, t.z, t.tx, t.tz, t.p, t.w * .7, t.hit > 0 ? lv : cv, (.22 + .28 * t.p) * e * n), ov(av("wrim", a.wrim++), t.tx, t.tz, t.heavy ? .42 : .3, t.hit > 0 ? lv : cv, (.35 + .4 * t.p) * e * n)) : (ov(av("wrim", a.wrim++), t.tx, t.tz, t.r * 1.1, uv, .5 * n), ov(av("wfill", a.wfill++), t.tx, t.tz, t.r * r, t.hit > 0 ? lv : cv, (.26 + .3 * t.p) * n), ov(av("wrim", a.wrim++), t.tx, t.tz, t.r, t.hit > 0 ? lv : cv, (.7 + .3 * t.p) * n));
 		}
 		let o = 0, s = 0, c = null;
-		Cv = 0, py.length = 0;
+		Sv = 0, fy.length = 0;
 		for (let t of e.tells || []) {
 			if (t.kind === "canticle") {
 				let e = t.r, n = Math.max(.2, e * t.p), r = t.hit > 0 ? t.hit : 1;
 				if (t.broke) {
-					let r = 1 - t.hit, i = ov("shard", a.shard++), o = ov("shard", a.shard++);
-					sv(i, t.x, t.z, n + 1.4 * r + .2, r < .15 ? pv : fv, .95 * t.hit), i.visible && (i.rotation.z = .5 * r), sv(o, t.x, t.z, e * (1 + .22 * r), r < .15 ? pv : fv, .75 * t.hit), o.visible && (o.rotation.z = -.35 * r + .2), sv(ov("disc", a.disc++), t.x, t.z, n, pv, .12 * t.hit * t.hit);
+					let r = 1 - t.hit, i = av("shard", a.shard++), o = av("shard", a.shard++);
+					ov(i, t.x, t.z, n + 1.4 * r + .2, r < .15 ? fv : dv, .95 * t.hit), i.visible && (i.rotation.z = .5 * r), ov(o, t.x, t.z, e * (1 + .22 * r), r < .15 ? fv : dv, .75 * t.hit), o.visible && (o.rotation.z = -.35 * r + .2), ov(av("disc", a.disc++), t.x, t.z, n, fv, .12 * t.hit * t.hit);
 					continue;
 				}
 				let i = t.hit > 0 ? 0 : 1, o = t.age * .7;
-				sv(ov("thin", a.thin++), t.x, t.z, e, fv, .45 * r), sv(ov("disc", a.disc++), t.x, t.z, n, fv, .06 * r), sv(ov("thin", a.thin++), t.x, t.z, n + .08, mv, .45 * r), sv(ov("band", a.band++), t.x, t.z, n, i ? fv : pv, (.72 + .25 * t.p) * r);
+				ov(av("thin", a.thin++), t.x, t.z, e, dv, .45 * r), ov(av("disc", a.disc++), t.x, t.z, n, dv, .06 * r), ov(av("thin", a.thin++), t.x, t.z, n + .08, pv, .45 * r), ov(av("band", a.band++), t.x, t.z, n, i ? dv : fv, (.72 + .25 * t.p) * r);
 				for (let e = 0; e < 3; e++) {
-					let r = (o + e / 3) % 1, s = ov("wave", a.wave++);
-					sv(s, t.x, t.z, Math.max(.25, n * r), fv, .5 * Math.sin(r * Math.PI) * i), s.visible && (s.rotation.z = (e % 2 ? -1 : 1) * t.age * .35);
+					let r = (o + e / 3) % 1, s = av("wave", a.wave++);
+					ov(s, t.x, t.z, Math.max(.25, n * r), dv, .5 * Math.sin(r * Math.PI) * i), s.visible && (s.rotation.z = (e % 2 ? -1 : 1) * t.age * .35);
 				}
-				i || sv(ov("band", a.band++), t.x, t.z, e * (1 + .18 * (1 - t.hit)), pv, .85 * t.hit);
+				i || ov(av("band", a.band++), t.x, t.z, e * (1 + .18 * (1 - t.hit)), fv, .85 * t.hit);
 				continue;
 			}
-			let e = 1 - (1 - t.p) * (1 - t.p), n = t.hit > 0, r = n ? uv : lv, i = n ? t.hit : 1;
+			let e = 1 - (1 - t.p) * (1 - t.p), n = t.hit > 0, r = n ? lv : cv, i = n ? t.hit : 1;
 			if (t.kind === "gaze" && t.sea) {
 				let r = t.x + t.dx * t.r, o = t.z + t.dz * t.r;
-				cv(ov("lane", a.lane++), t.x, t.z, r, o, 1, t.w * 1.3, dv, .38 * i), cv(ov("lane", a.lane++), t.x, t.z, r, o, 1, t.w, n ? uv : hv, (.12 + .12 * t.p) * i), cv(ov("lane", a.lane++), t.x, t.z, r, o, e, t.w * .45, n ? uv : gv, (.3 + .4 * t.p) * i), py.push(t);
+				sv(av("lane", a.lane++), t.x, t.z, r, o, 1, t.w * 1.3, uv, .38 * i), sv(av("lane", a.lane++), t.x, t.z, r, o, 1, t.w, n ? lv : mv, (.12 + .12 * t.p) * i), sv(av("lane", a.lane++), t.x, t.z, r, o, e, t.w * .45, n ? lv : hv, (.3 + .4 * t.p) * i), fy.push(t);
 				continue;
 			}
 			if (t.kind === "gaze") {
 				let r = t.x + t.dx * t.r, o = t.z + t.dz * t.r;
-				if (cv(ov("lane", a.lane++), t.x, t.z, r, o, 1, t.w * 1.3, dv, .42 * i), cv(ov("lane", a.lane++), t.x, t.z, r, o, 1, t.w, n ? uv : lv, (.14 + .12 * t.p) * i), cv(ov("lane", a.lane++), t.x, t.z, r, o, e, t.w * .55, n ? uv : _v, (.3 + .45 * t.p) * i), !n && t.p > .6) {
+				if (sv(av("lane", a.lane++), t.x, t.z, r, o, 1, t.w * 1.3, uv, .42 * i), sv(av("lane", a.lane++), t.x, t.z, r, o, 1, t.w, n ? lv : cv, (.14 + .12 * t.p) * i), sv(av("lane", a.lane++), t.x, t.z, r, o, e, t.w * .55, n ? lv : gv, (.3 + .45 * t.p) * i), !n && t.p > .6) {
 					let e = (t.p - .6) / .4;
-					jv(Ov(s++), t.x, t.z, r, o, .02 + .03 * e, _v, .25 + .5 * e * (.75 + .25 * Math.sin(performance.now() * .05)));
+					Av(Dv(s++), t.x, t.z, r, o, .02 + .03 * e, gv, .25 + .5 * e * (.75 + .25 * Math.sin(performance.now() * .05)));
 				}
-				n && (jv(Ov(s++), t.x, t.z, r, o, .34 * t.hit + .06, _v, .75 * t.hit), jv(Ov(s++), t.x, t.z, r, o, .12 * t.hit + .03, uv, t.hit)), (!c || t.p > c.p) && (c = t), n && (Cv = Math.max(Cv, t.hit));
+				n && (Av(Dv(s++), t.x, t.z, r, o, .34 * t.hit + .06, gv, .75 * t.hit), Av(Dv(s++), t.x, t.z, r, o, .12 * t.hit + .03, lv, t.hit)), (!c || t.p > c.p) && (c = t), n && (Sv = Math.max(Sv, t.hit));
 				continue;
 			}
 			if (t.kind === "scales") {
-				let e = Bv(o++), r = n ? Fv * Vv(iy((1 - t.hit - .35) / .65)) : Fv * (1 - Vv(t.p));
-				e.visible = !0, e.position.set(t.x, X.tileMap.getHeight(t.x, t.z) + .02 + r, t.z), e.scale.setScalar(t.r * .95), e.rotation.y = t.p * .6, e.material.emissiveIntensity = .12 + .25 * t.p + (n ? 1.6 * t.hit * t.hit : 0), sv(ov("wrim", a.wrim++), t.x, t.z, t.r * .9, n ? uv : Pv, (.45 + .4 * t.p) * i);
+				let e = zv(o++), r = n ? Pv * Bv(ry((1 - t.hit - .35) / .65)) : Pv * (1 - Bv(t.p));
+				e.visible = !0, e.position.set(t.x, X.tileMap.getHeight(t.x, t.z) + .02 + r, t.z), e.scale.setScalar(t.r * .95), e.rotation.y = t.p * .6, e.material.emissiveIntensity = .12 + .25 * t.p + (n ? 1.6 * t.hit * t.hit : 0), ov(av("wrim", a.wrim++), t.x, t.z, t.r * .9, n ? lv : Nv, (.45 + .4 * t.p) * i);
 			}
 			if (t.kind === "vent") {
 				let r = .85 + .15 * Math.sin(performance.now() * .012 + t.x * 3.1);
-				sv(ov("wrim", a.wrim++), t.x, t.z, t.r * 1.08, dv, .5 * i), sv(ov("wfill", a.wfill++), t.x, t.z, t.r * e, n ? uv : Mv, (.28 + .36 * t.p) * r * i), sv(ov("wfill", a.wfill++), t.x, t.z, t.r * .5 * e, n ? uv : Nv, .35 * t.p * r * i), sv(ov("wrim", a.wrim++), t.x, t.z, t.r, n ? uv : Mv, (.75 + .25 * t.p) * i);
+				ov(av("wrim", a.wrim++), t.x, t.z, t.r * 1.08, uv, .5 * i), ov(av("wfill", a.wfill++), t.x, t.z, t.r * e, n ? lv : jv, (.28 + .36 * t.p) * r * i), ov(av("wfill", a.wfill++), t.x, t.z, t.r * .5 * e, n ? lv : Mv, .35 * t.p * r * i), ov(av("wrim", a.wrim++), t.x, t.z, t.r, n ? lv : jv, (.75 + .25 * t.p) * i);
 				continue;
 			}
 			if (t.kind === "sweep") {
 				let o = Math.atan2(-t.dz, t.dx), s = (e, a, s) => {
-					sv(e, t.x, t.z, a, n ? uv : s === .5 ? dv : r, s * i), e.visible && (e.rotation.z = o);
+					ov(e, t.x, t.z, a, n ? lv : s === .5 ? uv : r, s * i), e.visible && (e.rotation.z = o);
 				};
-				s(ov("cone", a.cone++), t.r * 1.03, .5), s(ov("cone", a.cone++), t.r * e, .22 + .32 * t.p), s(ov("crim", a.crim++), t.r, .75 + .25 * t.p);
+				s(av("cone", a.cone++), t.r * 1.03, .5), s(av("cone", a.cone++), t.r * e, .22 + .32 * t.p), s(av("crim", a.crim++), t.r, .75 + .25 * t.p);
 				for (let e of [-1, 1]) {
-					let n = o + e * Y_ / 2;
-					cv(ov("lane", a.lane++), t.x, t.z, t.x + Math.cos(n) * t.r, t.z - Math.sin(n) * t.r, 1, .06, r, (.7 + .3 * t.p) * i);
+					let n = o + e * J_ / 2;
+					sv(av("lane", a.lane++), t.x, t.z, t.x + Math.cos(n) * t.r, t.z - Math.sin(n) * t.r, 1, .06, r, (.7 + .3 * t.p) * i);
 				}
-			} else sv(ov("wrim", a.wrim++), t.x, t.z, t.r * 1.08, dv, .5 * i), sv(ov("wfill", a.wfill++), t.x, t.z, t.r * e, r, (.24 + .32 * t.p) * i), sv(ov("wrim", a.wrim++), t.x, t.z, t.r, r, (.75 + .25 * t.p) * i);
+			} else ov(av("wrim", a.wrim++), t.x, t.z, t.r * 1.08, uv, .5 * i), ov(av("wfill", a.wfill++), t.x, t.z, t.r * e, r, (.24 + .32 * t.p) * i), ov(av("wrim", a.wrim++), t.x, t.z, t.r, r, (.75 + .25 * t.p) * i);
 		}
-		vy(py, e.dt || 0);
-		for (let e = o; e < Rv.length; e++) Rv[e].visible && (Rv[e].visible = !1);
-		for (let e = s; e < wv.length; e++) wv[e].visible && (wv[e].visible = !1);
+		_y(fy, e.dt || 0);
+		for (let e = o; e < Lv.length; e++) Lv[e].visible && (Lv[e].visible = !1);
+		for (let e = s; e < Cv.length; e++) Cv[e].visible && (Cv[e].visible = !1);
 		if (c) {
 			let e = c.hit > 0 ? c.hit : .5 + .5 * c.p, t = performance.now() * 6e-4;
-			sv(ov("wfill", a.wfill++), c.x, c.z, 2.7, vv, .14 * e), sv(ov("wrim", a.wrim++), c.x, c.z, 2.9, dv, .55 * e), sv(ov("wrim", a.wrim++), c.x, c.z, 2.75, yv, .95 * e), sv(ov("wrim", a.wrim++), c.x, c.z, 1.9, vv, .75 * e);
-			let n = ov("focus", a.focus++);
-			sv(n, c.x, c.z, 3, yv, .85 * e), n.visible && (n.rotation.z = t);
-			let r = ov("focus", a.focus++);
-			sv(r, c.x, c.z, 2.2, vv, .75 * e), r.visible && (r.rotation.z = -t * 1.6);
+			ov(av("wfill", a.wfill++), c.x, c.z, 2.7, _v, .14 * e), ov(av("wrim", a.wrim++), c.x, c.z, 2.9, uv, .55 * e), ov(av("wrim", a.wrim++), c.x, c.z, 2.75, vv, .95 * e), ov(av("wrim", a.wrim++), c.x, c.z, 1.9, _v, .75 * e);
+			let n = av("focus", a.focus++);
+			ov(n, c.x, c.z, 3, vv, .85 * e), n.visible && (n.rotation.z = t);
+			let r = av("focus", a.focus++);
+			ov(r, c.x, c.z, 2.2, _v, .75 * e), r.visible && (r.rotation.z = -t * 1.6);
 		}
-		Tm(e.puffs), T_(e.water), w_(e.gates);
-		for (let e of Object.keys(rv)) for (let t = a[e]; t < rv[e].length; t++) rv[e][t].visible = !1;
-		if (Yv !== ap) {
-			let e = L_();
-			Yv = ap, Jv = X.world?.acquireSpellLight?.({ minor: !1 }) ?? null;
-			let t = L_();
-			qv = X.world?.acquireSpellLight?.({ minor: !1 }) ?? null;
-			let n = L_();
-			sy = X.world?.acquireSpellLight?.({ minor: !1 }) ?? null, mp = [...t].filter((t) => !e.has(t)).concat([...L_()].filter((e) => !n.has(e))), I_();
-			for (let e of cy.values()) oy && fy(e);
-			if (cy.clear(), oy) for (let e of by.values()) for (let t of [
+		wm(e.puffs), w_(e.water), C_(e.gates);
+		for (let e of Object.keys(nv)) for (let t = a[e]; t < nv[e].length; t++) nv[e][t].visible = !1;
+		if (Jv !== op) {
+			let e = I_();
+			Jv = op, qv = X.world?.acquireSpellLight?.({ minor: !1 }) ?? null;
+			let t = I_();
+			Kv = X.world?.acquireSpellLight?.({ minor: !1 }) ?? null;
+			let n = I_();
+			oy = X.world?.acquireSpellLight?.({ minor: !1 }) ?? null, hp = [...t].filter((t) => !e.has(t)).concat([...I_()].filter((e) => !n.has(e))), F_();
+			for (let e of sy.values()) ay && dy(e);
+			if (sy.clear(), ay) for (let e of yy.values()) for (let t of [
 				...e.quads,
 				e.embers,
 				e.splash,
 				e.smoke
-			]) oy.quads.free(t);
-			by.clear();
+			]) ay.quads.free(t);
+			yy.clear();
 		}
-		if (Jv && e.hero) {
-			let t = Math.max(0, Math.min(1, e.carry ?? 0)), n = e.hero[0] + .35, r = e.hero[1] + .35, i = Hp === "models" ? Gv : 2.4, a = Hp === "models" ? Kv : 1;
-			Jv.set(n, X.tileMap.getHeight(e.hero[0], e.hero[1]) + i, r, {
+		if (qv && e.hero) {
+			let t = Math.max(0, Math.min(1, e.carry ?? 0)), n = e.hero[0] + .35, r = e.hero[1] + .35, i = Vp === "models" ? Wv : 2.4, a = Vp === "models" ? Gv : 1;
+			qv.set(n, X.tileMap.getHeight(e.hero[0], e.hero[1]) + i, r, {
 				color: [
 					1.9,
 					1.15,
 					.42
 				],
 				intensity: 4.5 * a * t / (e.ambient?.lamps ?? 1),
-				distance: Hp === "models" ? Math.hypot(6.2, i) : 6 + (i - 2.4),
+				distance: Vp === "models" ? Math.hypot(6.2, i) : 6 + (i - 2.4),
 				decay: 1.4,
 				flicker: 0
 			});
 		}
-		if (qv) {
-			let t = e.blast, n = Cv > .01 ? Dv() : null;
-			t && t.k > .01 ? qv.set(t.x, X.tileMap.getHeight(t.x, t.z) + 1.6, t.z, {
+		if (Kv) {
+			let t = e.blast, n = Sv > .01 ? Ev() : null;
+			t && t.k > .01 ? Kv.set(t.x, X.tileMap.getHeight(t.x, t.z) + 1.6, t.z, {
 				color: [
 					2,
 					.95,
@@ -36624,39 +36677,44 @@ var zy = (e) => Ry(e.map((e) => [
 				distance: 7,
 				decay: 1.6,
 				flicker: .25
-			}) : n ? qv.set(n.x, n.y, n.z, {
+			}) : n ? Kv.set(n.x, n.y, n.z, {
 				color: [
 					2,
 					1.05,
 					.4
 				],
-				intensity: 12 * Cv / (e.ambient?.lamps ?? 1),
+				intensity: 12 * Sv / (e.ambient?.lamps ?? 1),
 				distance: 9,
 				decay: 1.4,
 				flicker: .1
-			}) : qv.off();
+			}) : Kv.off();
 		}
-		Cy(e.spells || [], e.dt || 0, e.ambient?.lamps, !!(e.rings && e.rings.length), e.hazards);
-		for (let t of Mm) t.visible = t.userData.ring === (e.ringOn || null);
-		if (Gh.length) {
-			Kh += Math.min(.1, e.dt || 0);
-			for (let e of Gh) e.userData.u && (e.userData.u.value = Kh);
+		Sy(e.spells || [], e.dt || 0, e.ambient?.lamps, !!(e.rings && e.rings.length), e.hazards);
+		for (let t of jm) t.visible = t.userData.ring === (e.ringOn || null);
+		if (Wh.length) {
+			Gh += Math.min(.1, e.dt || 0);
+			for (let e of Wh) e.userData.u && (e.userData.u.value = Gh);
 		}
-		if (Qv) for (let e of X.lighting?._pointLights || []) e.flicker > yp && (e.flicker = yp);
+		if (Zv) for (let e of X.lighting?._pointLights || []) e.flicker > yp && (e.flicker = yp);
 		let l = 0;
 		for (let t of e.beasts || []) {
-			let e = p_(t.id);
+			let e = f_(t.id);
 			if (!e) continue;
-			let r = D_(l++, e);
-			r.visible = !0, Vp(r, t.x, t.z, e.below, Zf), r.update(0, n);
+			let r = E_(l++, e);
+			r.visible = !0, Bp(r, t.x, t.z, e.below, Qf), r.update(0, n);
 		}
-		for (let e = l; e < E_.length; e++) E_[e]?.visible && (E_[e].visible = !1);
-		Zv = e.ambient || null, Lg && (Lg.offset.y = (Lg.offset.y + Math.max(0, Math.min(.1, e.dt || 0)) * 1.1) % 1);
-		for (let e of Am) e.update?.(0, n);
-		M_(e.light), X.engine.step(Math.max(0, Math.min(.1, e.dt)), { render: e.draw !== !1 });
+		for (let e = l; e < T_.length; e++) T_[e]?.visible && (T_[e].visible = !1);
+		Xv = e.ambient || null, Ig && (Ig.offset.y = (Ig.offset.y + Math.max(0, Math.min(.1, e.dt || 0)) * 1.1) % 1);
+		for (let e of km) e.update?.(0, n);
+		j_(e.light), X.engine.step(Math.max(0, Math.min(.1, e.dt)), { render: e.draw !== !1 });
 	},
 	sprites(e) {
-		X && (xp = zy(e), Zh(e, f_));
+		if (X) {
+			let t = Ry(e), n = op;
+			bp = "", Xh(e, d_).then(() => {
+				n === op && (bp = t);
+			});
+		}
 	},
 	project(e, t, n) {
 		if (!X) return null;
@@ -36666,10 +36724,10 @@ var zy = (e) => Ry(e.map((e) => [
 	occluded(e) {
 		if (!X) return e.map(() => null);
 		let t = X.engine.camera, n = /* @__PURE__ */ new Set(), r = [];
-		for (let e of im.values()) n.add(e.root);
-		for (let e of zp.values()) for (let t of e) n.add(t);
-		for (let e of E_) e && n.add(e);
-		for (let e of Object.keys(rv)) for (let t of rv[e]) n.add(t);
+		for (let e of rm.values()) n.add(e.root);
+		for (let e of Rp.values()) for (let t of e) n.add(t);
+		for (let e of T_) e && n.add(e);
+		for (let e of Object.keys(nv)) for (let t of nv[e]) n.add(t);
 		let i = (e) => {
 			if (n.has(e) || !e.visible || e.parent && e.parent.shadowProxy === e) return;
 			let t = e.material, a = Array.isArray(t) ? t[0] : t;
@@ -36677,12 +36735,12 @@ var zy = (e) => Ry(e.map((e) => [
 			for (let t of e.children) i(t);
 		};
 		i(X.engine.scene);
-		let a = Hv, o = new P(), s = new P(), c = new P();
+		let a = Vv, o = new P(), s = new P(), c = new P();
 		return a.camera = t, e.map(([e, n, i]) => {
 			o.set(e, n, i), t.isOrthographicCamera ? (t.getWorldDirection(c).multiplyScalar(-1), a.far = 400) : (t.getWorldPosition(s), c.copy(s).sub(o), a.far = c.length(), c.normalize()), a.set(o.clone().addScaledVector(c, .05), c);
 			for (let e of a.intersectObjects(r, !1)) {
 				if (e.object.name === "Sprite3D.mesh") {
-					let t = Wv(e.object.material, e.uv);
+					let t = Uv(e.object.material, e.uv);
 					if (t === null ? e.uv && (e.uv.x < .15 || e.uv.x > .85 || e.uv.y > .92) : t < 128) continue;
 					return e.object.parent?.name || "card";
 				}
@@ -36695,61 +36753,61 @@ var zy = (e) => Ry(e.map((e) => [
 		return X?.tileMap ? X.tileMap.getHeight(e, t) : null;
 	},
 	get stats() {
-		let e = (e) => rv[e].filter((e) => e.visible).length;
+		let e = (e) => nv[e].filter((e) => e.visible).length;
 		return {
-			bits: [...zp.entries()].filter(([e]) => e.name === "ember-bit").reduce((e, [, t]) => e + t.filter((e) => e.visible).length, 0),
-			water: __.mesh && __.mesh.visible ? __.mesh.count : 0,
-			fig: lg,
-			lit: Math.round(ug * 100) / 100,
-			beasts: E_.filter((e) => e?.visible).length,
-			light: +!!A_.on,
-			lightDepth: A_.on && A_.keyed && X?.postfx?.depthTexture ? 1 : 0,
+			bits: [...Rp.entries()].filter(([e]) => e.name === "ember-bit").reduce((e, [, t]) => e + t.filter((e) => e.visible).length, 0),
+			water: g_.mesh && g_.mesh.visible ? g_.mesh.count : 0,
+			fig: cg,
+			lit: Math.round(lg * 100) / 100,
+			beasts: T_.filter((e) => e?.visible).length,
+			light: +!!k_.on,
+			lightDepth: k_.on && k_.keyed && X?.postfx?.depthTexture ? 1 : 0,
 			rings: e("ring"),
 			hazards: e("disc"),
 			warns: e("wrim"),
 			lanes: e("lane"),
-			pans: Rv.filter((e) => e.visible).length,
-			spells: cy.size,
-			dome: oy && oy.domeOf ? 1 : 0,
-			blades: oy ? oy.blades.count - (oy.warmN > 0 ? 2 : 0) : 0,
-			crystals: oy ? oy.crystals.count - +(oy.warmN > 0) : 0,
-			frost: oy ? oy.frost.count - +(oy.warmN > 0) : 0,
-			spellLight: sy && oy ? 1 : 0,
+			pans: Lv.filter((e) => e.visible).length,
+			spells: sy.size,
+			dome: ay && ay.domeOf ? 1 : 0,
+			blades: ay ? ay.blades.count - (ay.warmN > 0 ? 2 : 0) : 0,
+			crystals: ay ? ay.crystals.count - +(ay.warmN > 0) : 0,
+			frost: ay ? ay.frost.count - +(ay.warmN > 0) : 0,
+			spellLight: oy && ay ? 1 : 0,
 			focus: e("focus"),
-			carry: +!!Jv,
-			level: ap,
-			actors: [...zp.values()].reduce((e, t) => e + t.filter((e) => e.visible).length, 0) + [...im.values()].filter((e) => e.root.visible).length,
-			models: [...im.values()].filter((e) => e.root.visible).length,
-			modelNames: [...new Set([...im.values()].filter((e) => e.root.visible).map((e) => e.name))],
-			figErr: qp,
-			figFailed: [...$p.values()].filter((e) => e === !1).length,
+			carry: +!!qv,
+			level: op,
+			actors: [...Rp.values()].reduce((e, t) => e + t.filter((e) => e.visible).length, 0) + [...rm.values()].filter((e) => e.root.visible).length,
+			models: [...rm.values()].filter((e) => e.root.visible).length,
+			modelNames: [...new Set([...rm.values()].filter((e) => e.root.visible).map((e) => e.name))],
+			figErr: Kp,
+			figFailed: [...Qp.values()].filter((e) => e === !1).length,
 			pr: X?.engine?.pixelRatio ?? null,
 			dpr: devicePixelRatio || 1,
-			modelMeshes: [...$p.values()].filter(Boolean).map((e) => e.meshes.after).reduce((e, t) => e + t, 0),
-			modelMeshesBefore: [...$p.values()].filter(Boolean).map((e) => e.meshes.before).reduce((e, t) => e + t, 0),
-			figures: Hp,
-			atlases: Ip.size,
-			env: Am.length,
-			sky: mg,
-			sea: wg,
-			ours: Am.filter((e) => e.name.startsWith("ember:prop:")).length,
+			modelMeshes: [...Qp.values()].filter(Boolean).map((e) => e.meshes.after).reduce((e, t) => e + t, 0),
+			modelMeshesBefore: [...Qp.values()].filter(Boolean).map((e) => e.meshes.before).reduce((e, t) => e + t, 0),
+			figures: Vp,
+			atlases: Fp.size,
+			env: km.length,
+			sky: pg,
+			sea: Cg,
+			ours: km.filter((e) => e.name.startsWith("ember:prop:")).length,
 			programs: X?.engine?.renderer?.info?.programs?.length ?? null
 		};
 	}
 };
-function Vy(e) {
-	if (np) throw Error("createWorld: one world a page");
-	return np = e.container, rp = e.uiRoot, Jf = e.assets, $f = In("en"), Ft(), ep = Nn({
-		lang: $f,
+function By(e) {
+	if (rp) throw Error("createWorld: one world a page");
+	return rp = e.container, ip = e.uiRoot, Yf = e.assets, ep = In("en"), Ft(), tp = Nn({
+		lang: ep,
 		px: Pn({
 			w: innerWidth,
 			h: innerHeight,
 			dpr: devicePixelRatio || 1
 		}).px
-	}), tp = Jr($f, {}), By.ready = !0, By;
+	}), np = Jr(ep, {}), zy.ready = !0, zy;
 }
-function Hy(e, t) {
-	Jf ||= t.assets;
+function Vy(e, t) {
+	Yf ||= t.assets;
 	let n = new st({
 		canvas: e,
 		alpha: !0,
@@ -36842,12 +36900,12 @@ function Hy(e, t) {
 			if (!!r.close !== h && (h = !!r.close, _(!1), se()), i === b && y) return !0;
 			let a = ++x;
 			b = i;
-			let o = await Fp(`${Jf}models/cast.json`);
-			o && !Gp && (Gp = o);
+			let o = await Pp(`${Yf}models/cast.json`);
+			o && !Wp && (Wp = o);
 			let c = o && o.actors[e];
 			if (!c || E || a !== x) return !1;
 			try {
-				let e = tm(c.v, {
+				let e = em(c.v, {
 					appearance: n,
 					gear: r.gear || null,
 					bare: !!r.bare
@@ -36858,8 +36916,8 @@ function Hy(e, t) {
 				});
 				let t = await Nf(e, {
 					far: !1,
-					load: Zp,
-					faces: async () => Gp.faces
+					load: Xp,
+					faces: async () => Wp.faces
 				});
 				if (E || a !== x) return !1;
 				t.root.traverse((e) => {
@@ -36906,26 +36964,26 @@ function Hy(e, t) {
 		e.preventDefault(), E || t.onError?.(/* @__PURE__ */ Error("preview: the WebGL context was lost"));
 	}), de;
 }
-var Uy = 96, Wy = 112, Gy = 3, Ky = [
+var Hy = 96, Uy = 112, Wy = 3, Gy = [
 	8,
 	5,
 	14
-], qy = null, Jy = 0;
-function Yy() {
-	clearTimeout(Jy), Jy = setTimeout(() => {
-		qy &&= (qy.dispose(), qy.forceContextLoss(), null);
+], Ky = null, qy = 0;
+function Jy() {
+	clearTimeout(qy), qy = setTimeout(() => {
+		Ky &&= (Ky.dispose(), Ky.forceContextLoss(), null);
 	}, 4e3);
 }
-async function Xy(e, t = null, n = {}) {
-	!Jf && n.assets && (Jf = n.assets);
-	let i = await Fp(`${Jf}models/cast.json`);
-	i && !Gp && (Gp = i);
+async function Yy(e, t = null, n = {}) {
+	!Yf && n.assets && (Yf = n.assets);
+	let i = await Pp(`${Yf}models/cast.json`);
+	i && !Wp && (Wp = i);
 	let a = i && i.actors[e];
 	if (!a) return null;
-	let s = await Nf(tm(a.v, t), {
+	let s = await Nf(em(a.v, t), {
 		far: !1,
-		load: Zp,
-		faces: async () => Gp.faces
+		load: Xp,
+		faces: async () => Wp.faces
 	});
 	s.root.traverse((e) => {
 		e.isMesh && e.material && e.material.isMeshStandardMaterial && (e.material = e.material.clone(), e.material.metalness = 0, e.material.roughness = Math.max(e.material.roughness ?? 1, .92));
@@ -36934,7 +36992,7 @@ async function Xy(e, t = null, n = {}) {
 	c && s.root.scale.set(c.w, c.h, c.w), s.root.rotation.y = ge.degToRad(22), s.root.updateMatrixWorld(!0);
 	let l = Tf(s.root, "head");
 	if (!l) return null;
-	let u = l.localToWorld(new P(0, 1.08, 0)), d = l.localToWorld(new P(0, 0, .1)), m = u.y - d.y, h = m / .6, g = u.y + m * .1 - h / 2, _ = (u.x + d.x) / 2, v = ge.degToRad(8), y = new ee(-(h * Uy / Wy) / 2, h * Uy / Wy / 2, h / 2, -h / 2, .1, 100);
+	let u = l.localToWorld(new P(0, 1.08, 0)), d = l.localToWorld(new P(0, 0, .1)), m = u.y - d.y, h = m / .6, g = u.y + m * .1 - h / 2, _ = (u.x + d.x) / 2, v = ge.degToRad(8), y = new ee(-(h * Hy / Uy) / 2, h * Hy / Uy / 2, h / 2, -h / 2, .1, 100);
 	y.position.set(_, g + 20 * Math.sin(v), 20 * Math.cos(v)), y.lookAt(_, g, 0), y.updateMatrixWorld(!0);
 	let b = new p();
 	b.add(s.root), b.add(new f(12101848, 2760752, 1.25));
@@ -36943,24 +37001,24 @@ async function Xy(e, t = null, n = {}) {
 	let S = new r(9413887, .55);
 	S.position.set(2.2, .4, 1.2), b.add(S);
 	let C = new r(12624127, 1.6);
-	C.position.set(1.5, 2.2, -2.6), b.add(C), qy || (qy = new st({
+	C.position.set(1.5, 2.2, -2.6), b.add(C), Ky || (Ky = new st({
 		alpha: !0,
 		antialias: !1,
 		preserveDrawingBuffer: !0
-	}), qy.outputColorSpace = o, qy.toneMapping = 4, qy.toneMappingExposure = 1), qy.setPixelRatio(1), qy.setSize(288, 336, !1), qy.setClearColor(0, 0), qy.render(b, y), Yy();
+	}), Ky.outputColorSpace = o, Ky.toneMapping = 4, Ky.toneMappingExposure = 1), Ky.setPixelRatio(1), Ky.setSize(288, 336, !1), Ky.setClearColor(0, 0), Ky.render(b, y), Jy();
 	let w = document.createElement("canvas");
 	w.width = 288, w.height = 336;
 	let T = w.getContext("2d", { willReadFrequently: !0 });
-	T.drawImage(qy.domElement, 0, 0);
-	let E = T.getImageData(0, 0, 288, 336).data, D = /* @__PURE__ */ new Uint8ClampedArray(43008), te = Gy;
-	for (let e = 0; e < Wy; e++) for (let t = 0; t < Uy; t++) {
+	T.drawImage(Ky.domElement, 0, 0);
+	let E = T.getImageData(0, 0, 288, 336).data, D = /* @__PURE__ */ new Uint8ClampedArray(43008), te = Wy;
+	for (let e = 0; e < Uy; e++) for (let t = 0; t < Hy; t++) {
 		let n = 0, r = 0, i = 0, a = 0;
 		for (let o = 0; o < te; o++) for (let s = 0; s < te; s++) {
 			let c = ((e * te + o) * 288 + t * te + s) * 4;
 			E[c + 3] < 128 || (n++, r += E[c] * E[c], i += E[c + 1] * E[c + 1], a += E[c + 2] * E[c + 2]);
 		}
 		if (n * 2 < 9) continue;
-		let o = (e * Uy + t) * 4;
+		let o = (e * Hy + t) * 4;
 		D[o] = Math.sqrt(r / n), D[o + 1] = Math.sqrt(i / n), D[o + 2] = Math.sqrt(a / n), D[o + 3] = 255;
 	}
 	for (let e = 0; e < D.length; e += 4) {
@@ -36968,13 +37026,13 @@ async function Xy(e, t = null, n = {}) {
 		let t = D[e], n = D[e + 1], r = D[e + 2], i = .3 * t + .59 * n + .11 * r, a = (e) => Math.max(0, Math.min(255, 128 + (e - 128) * 1.08));
 		D[e] = a(t + (i - t) * .14) * .9, D[e + 1] = a(n + (i - n) * .14) * .91, D[e + 2] = a(r + (i - r) * .14) * .98;
 	}
-	let ne = new Uint8ClampedArray(D), O = (e, t) => e >= 0 && t >= 0 && e < Uy && t < Wy && D[(t * Uy + e) * 4 + 3] > 0;
-	for (let e = 0; e < Wy; e++) for (let t = 0; t < Uy; t++) {
-		let n = (e * Uy + t) * 4;
-		!D[n + 3] && e < 111 && (O(t + 1, e) || O(t - 1, e) || O(t, e + 1) || O(t, e - 1)) && (ne[n] = Ky[0], ne[n + 1] = Ky[1], ne[n + 2] = Ky[2], ne[n + 3] = 255);
+	let ne = new Uint8ClampedArray(D), O = (e, t) => e >= 0 && t >= 0 && e < Hy && t < Uy && D[(t * Hy + e) * 4 + 3] > 0;
+	for (let e = 0; e < Uy; e++) for (let t = 0; t < Hy; t++) {
+		let n = (e * Hy + t) * 4;
+		!D[n + 3] && e < 111 && (O(t + 1, e) || O(t - 1, e) || O(t, e + 1) || O(t, e - 1)) && (ne[n] = Gy[0], ne[n + 1] = Gy[1], ne[n + 2] = Gy[2], ne[n + 3] = 255);
 	}
 	let re = document.createElement("canvas");
-	return re.width = Uy, re.height = Wy, re.getContext("2d").putImageData(new ImageData(ne, Uy, Wy), 0, 0), re;
+	return re.width = Hy, re.height = Uy, re.getContext("2d").putImageData(new ImageData(ne, Hy, Uy), 0, 0), re;
 }
 //#endregion
-export { Hy as createPreview, Vy as createWorld, Xy as renderPortrait };
+export { Vy as createPreview, By as createWorld, Yy as renderPortrait };
