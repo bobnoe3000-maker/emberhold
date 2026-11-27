@@ -567,6 +567,7 @@ function barPatch() {
   return PATCH_TEX;
 }
 const DOCK_WL = 0.84;   // (the harbour's surface: convert.js DOCK_WL)
+const WET_WL = 0.8;     // (a channel's water indoors: convert.js WET_WL, docs/water-indoors.md)
 const DOCK_WOOD = [0.62, 0.55, 0.48], DOCK_WOOD_DARK = [0.38, 0.35, 0.32], DOCK_ROPE = [0.62, 0.47, 0.29], DOCK_HULL = [0.34, 0.28, 0.23];   // (round 1: the rope tan hemp, not grey rings; the hull dark)   // (a wharf's timbers, grey with salt and wet: docs/docks-dungeon.md)
 const BONE_TINT = [1.06, 0.99, 0.83];   // (the dead's bones: old ivory, gone yellow-grey; round 6, a quarter down, they were the whitest thing on screen)   // (the dead's bones: old ivory, gone yellow-grey)
 let cryptDark = null, cryptDamp = null, cryptPatch = null, cryptGold = null, cryptOx = null, cryptSky = null, cryptBrass = null, dockGlint = null, dockMist = null, rampFog = null, dockPost = null, dockHalo = null, dockCrane = null;
@@ -1189,6 +1190,49 @@ function buildTavern(pieces) {
       b.tinted([0.62, 0.48, 0.34], () => { for (let r = 0; r < 3; r++) for (let k = 0; k < 4 - r; k++) b.tube('furniture_wood', [p.x + 1.45, FL + 0.14 + r * 0.24, p.z - 0.5 + k * 0.26 + r * 0.13], [p.x + 2.4, FL + 0.14 + r * 0.24, p.z - 0.5 + k * 0.26 + r * 0.13], 0.12, 0.12, { segments: 6 }); });   // (split logs)
       b.tinted([0.76, 0.6, 0.42], () => b.box('furniture_wood', [1.1, 0.06, 0.5], { at: [p.x - 1.75, FL + 0.9, p.z + 0.3] }));
       b.tinted([1.05, 0.72, 0.42], () => { for (let k = 0; k < 4; k++) b.lathe('linen', [{ y: 0, r: 0.14 }, { y: 0.08, r: 0.13 }, { y: 0.12, r: 0 }], { segments: 8, at: [p.x - 2.15 + k * 0.26, FL + 0.93, p.z + 0.3] }); });   // (the loaves on their board)
+    } else if (p.k === 'wkerb') {
+      // (water indoors, docs/water-indoors.md) a channel's coping: a pale stone kerb along the bank's edge, a little proud of
+      // the floor, its face down to the water; the joints every unit or so
+      const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), cx = (p.x0 + p.x1) / 2, cz = (p.z0 + p.z1) / 2, alongX = p.n === 'z';
+      const at = (o, y) => (alongX ? [cx, y, cz + p.out * o] : [cx + p.out * o, y, cz]), sz = (l, h, d) => (alongX ? [l, h, d] : [d, h, l]);
+      b.tinted([1.35, 1.38, 1.42], () => b.box('fen_cap', sz(len, 0.1, 0.26), { at: at(0.13, FL + 0.03) }));
+      b.tinted([0.5, 0.56, 0.5], () => b.box('fen_cap', sz(len, 0.3, 0.04), { at: at(0.005, WET_WL + 0.13) }));   // (its wet face at the waterline, green)
+      for (let t = 1; t < len - 0.2; t += 1 + (p.seed % 3) * 0.1) b.tinted([0.6, 0.62, 0.64], () => b.box('fen_cap', alongX ? [0.03, 0.105, 0.265] : [0.265, 0.105, 0.03], { at: alongX ? [Math.min(p.x0, p.x1) + t, FL + 0.035, cz + p.out * 0.13] : [cx + p.out * 0.13, FL + 0.035, Math.min(p.z0, p.z1) + t] }));
+    } else if (p.k === 'wrail') {
+      // a plank bridge's open side over the channel: a post at each end and one between, a rail at the hand, piles down
+      const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), alongX = p.n === 'z', o = p.out * 0.08;
+      const P = (t) => (alongX ? [Math.min(p.x0, p.x1) + t, p.z0 + o] : [p.x0 + o, Math.min(p.z0, p.z1) + t]);
+      b.tinted(DOCK_WOOD, () => {
+        for (const t of [0.08, len / 2, len - 0.08]) { const [x, z] = P(t); b.box('furniture_wood', [0.11, 0.78, 0.11], { at: [x, FL + 0.39, z] }); b.box('furniture_wood', [0.13, FL - WET_WL + 0.3, 0.13], { at: [x, WET_WL - 0.15 + (FL - WET_WL + 0.3) / 2 - 0.15, z] }); }
+        const [mx, mz] = P(len / 2); b.box('furniture_wood', alongX ? [len, 0.07, 0.09] : [0.09, 0.07, len], { at: [mx, FL + 0.74, mz] });
+        b.box('furniture_wood', alongX ? [len, 0.05, 0.07] : [0.07, 0.05, len], { at: [mx, FL + 0.42, mz] });
+      });
+      b.tinted(DOCK_WOOD_DARK, () => { const [mx, mz] = P(len / 2); b.box('furniture_wood', alongX ? [len, 0.18, 0.06] : [0.06, 0.18, len], { at: [mx, FL - 0.09, mz + (alongX ? p.out * 0.02 : 0)] }); });   // (the deck's edge board)
+    } else if (p.k === 'lockgate') {
+      // a lock gate: two heavy timber leaves meeting in a shallow V across the channel, standing a little out of the water
+      // over the floor, iron-strapped; a plank walk along their tops with a rail, a paddle post on each leaf
+      const ax = p.across === 'x', span = p.span, half = span / 2, top = FL + 0.62, bot = 0.05, hgt = top - bot;   // (round 2: over a knee-high near wall)
+      for (const sg of [-1, 1]) {
+        const ang = sg * 0.16, lx = sg * half / 2, lz = -0.12;   // (each leaf from the bank to the middle, its mitre pointing up the channel)
+        const at = (u, y, v) => (ax ? [p.x + u, y, p.z + v] : [p.x + v, y, p.z + u]), rot = ax ? [0, ang, 0] : [0, -ang + Math.PI / 2, 0];
+        b.tinted([0.62, 0.48, 0.35], () => b.box('wood_planks_dark', [half + 0.04, hgt, 0.2], { at: at(lx, bot + hgt / 2, lz + Math.abs(lx) * 0.16), rot }));
+        b.tinted(TAV_IRON, () => { for (const y of [FL - 0.1, FL + 0.18]) b.box('metal', [half + 0.06, 0.05, 0.22], { at: at(lx, y, lz + Math.abs(lx) * 0.16), rot }); });
+        b.tinted(DOCK_WOOD, () => { b.box('furniture_wood', [half + 0.1, 0.05, 0.36], { at: at(lx, top + 0.03, lz + Math.abs(lx) * 0.16), rot }); b.box('furniture_wood', [half, 0.05, 0.05], { at: at(lx, top + 0.5, lz + Math.abs(lx) * 0.16 - 0.16), rot }); });
+        b.tinted(TAV_IRON, () => { const [x, , z] = at(lx, 0, lz + Math.abs(lx) * 0.16 + 0.12); b.box('metal', [0.09, 0.52, 0.09], { at: [x, top + 0.26, z] }); b.box('metal', [0.2, 0.06, 0.06], { at: [x, top + 0.5, z] }); });
+      }
+    } else if (p.k === 'sluice') {
+      // a sluice: two stone piers either side of the channel, a lintel over, the timber board between them raised a little
+      // (the water through under it), its winch wheel stood on the lintel
+      const ax = p.across === 'x', half = p.span / 2, at = (u, y) => (ax ? [p.x + u, y, p.z] : [p.x, y, p.z + u]), sz = (w, h, d) => (ax ? [w, h, d] : [d, h, w]), LT = FL + 1.05;
+      b.tinted([0.9, 0.93, 0.96], () => { for (const sg of [-1, 1]) b.box('fen_cap', sz(0.3, LT - 0.0, 0.42), { at: at(sg * (half - 0.15), LT / 2) }); b.box('fen_cap', sz(p.span, 0.2, 0.42), { at: at(0, LT + 0.1) }); });
+      b.tinted([0.4, 0.32, 0.24], () => b.box('wood_planks_dark', sz(p.span - 0.6, 0.85, 0.12), { at: at(0, WET_WL + 0.3) }));
+      b.tinted(TAV_IRON, () => {
+        const c = at(0, LT + 0.55), R = 0.36, N = 12;
+        for (let k = 0; k < N; k++) { const a0 = (k / N) * Math.PI * 2, a1 = ((k + 1) / N) * Math.PI * 2, P = (a) => (ax ? [c[0] + Math.cos(a) * R, c[1] + Math.sin(a) * R, c[2] + 0.02] : [c[0] + 0.02, c[1] + Math.sin(a) * R, c[2] + Math.cos(a) * R]); b.tube('metal', P(a0), P(a1), 0.035, 0.035, { segments: 4 }); }
+        for (let k = 0; k < 4; k++) { const a = (k / 4) * Math.PI; const d = ax ? [Math.cos(a) * R, Math.sin(a) * R, 0] : [0, Math.sin(a) * R, Math.cos(a) * R]; b.tube('metal', [c[0] - d[0], c[1] - d[1], c[2] - d[2]], [c[0] + d[0], c[1] + d[1], c[2] + d[2]], 0.025, 0.025, { segments: 4 }); }
+        b.box('metal', [0.08, 0.5, 0.08], { at: [c[0], LT + 0.35, c[2]] });   // (its stand)
+        b.box('metal', sz(0.05, LT - WET_WL, 0.05), { at: at(0.12, (LT + WET_WL) / 2) });   // (the rod down to the board)
+      });
     } else if (p.k === 'harbourmist') {
       // the harbour's mist: one sheet over the water at a hand over its surface, clear at the decks' edges and thick from
       // six tiles out (its alpha by each tile's distance from a deck: convert.js docksDress), faded out at the sheet's own
@@ -1612,6 +1656,94 @@ function buildMagma(cells) {
   g.userData.dispose = () => { const i = magmaMats.indexOf(mat); if (i >= 0) magmaMats.splice(i, 1); geo.dispose(); mat.dispose(); };
   return g;
 }
+// ── water indoors (convert.js wetGround; docs/water-indoors.md) ───────────────────────────────────────────────────────
+// Shin-deep water over a floor: one sheet over every wet tile of ours (a quad each, half a unit), a hand over the floor
+// (WET_SHEET), so a figure's feet go a little under it and the floor shows through. Lit as the floor is, and glossy: the
+// lamps' and the braziers' light comes back off it, broken by its ripples (two layers of value noise drifting, as the
+// magma's, their slope its normal), so each light stands in the water as a shaking streak. Its edge against dry floor
+// soft (each corner's `edge`, convert.js: 0 where it touches dry floor), against a wall or a channel none. A look's scum
+// (Vat Seven's, the garth's duckweed) drifts on it in patches, matt. Transparent and drawn before the rings and the
+// warnings (their renderOrder 2), which never write its depth: they stay on top. One draw a look.
+const WET_SHEET = 0.075;
+/** each kit's water (convert.js KIT_LOOK `wet`): the sheet's colour and how much of the floor it hides, its ripples, its scum,
+ *  a garth's sky in it; and its channels' deep water (Luminati's: its four bands, dark to darker) */
+const WET_LOOKS = {
+  // the Canal Locks: canal water, green-brown and dark, the flags plain under it
+  canal: { tint: '#24352e', alpha: 0.5, rip: 0.42, rough: 0.1, scum: '#5a6a3a', scumAmt: 0, sky: '#8c9db4', deep: ['#557a6c', '#486a5e', '#3b5a50', '#2f4a42'] },
+  // Vat Seven: sick green, thicker, a yellow scum in drifts on it
+  sick: { tint: '#5a6e1c', alpha: 0.8, rip: 0.28, rough: 0.16, scum: '#b4c04a', scumAmt: 0.85, glow: 1.3, sky: '#a4b84a', deep: ['#7a8c2c', '#687a24', '#566a1e', '#465818'] },
+  // the Drowned Abbey: black-green, still; duckweed on the garth's, the sky in it
+  abbey: { tint: '#17221f', alpha: 0.6, rip: 0.3, rough: 0.08, scum: '#4e6a26', scumAmt: 0, skyScum: 0.55, sky: '#7f93b2', deep: ['#3c5654', '#324a48', '#283e3c', '#1f3230'] },
+  // the Sunken Chapel: the river come in, peat-brown and clear
+  chapel: { tint: '#3a3424', alpha: 0.55, rip: 0.4, rough: 0.1, scum: '#5a5a30', scumAmt: 0, sky: '#8c9db4', deep: ['#5a5236', '#4c452e', '#3e3926', '#322e1e'] },
+};
+const wetMats = []; let wetT = 0;
+function buildShallows(sh) {
+  const g = new THREE.Group(); g.name = 'ember:shallows';
+  const look = WET_LOOKS[sh.look] || WET_LOOKS.canal, c = sh.cells, n = c.length / 3;
+  const pos = new Float32Array(n * 12), edge = new Float32Array(n * 4), sky = new Float32Array(n * 4), idx = new Uint32Array(n * 6);
+  // (each cell's third number: 1 open to the sky, and the corners that touch dry floor, NW NE SE SW, from bit 1)
+  const CORN = [[-0.25, -0.25], [0.25, -0.25], [0.25, 0.25], [-0.25, 0.25]];
+  for (let k = 0; k < n; k++) {
+    const x = c[k * 3], z = c[k * 3 + 1], f = c[k * 3 + 2], y = game.tileMap.getHeight(x, z) + WET_SHEET;
+    for (let q = 0; q < 4; q++) { pos.set([x + CORN[q][0], y, z + CORN[q][1]], k * 12 + q * 3); edge[k * 4 + q] = (f >> (q + 1)) & 1 ? 0 : 1; sky[k * 4 + q] = f & 1; }
+    idx.set([k * 4, k * 4 + 3, k * 4 + 1, k * 4 + 1, k * 4 + 3, k * 4 + 2], k * 6);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(n * 12).map((_, i) => (i % 3 === 1 ? 1 : 0)), 3));
+  geo.setAttribute('aEdge', new THREE.BufferAttribute(edge, 1)); geo.setAttribute('aSky', new THREE.BufferAttribute(sky, 1)); geo.setIndex(new THREE.BufferAttribute(idx, 1));
+  geo.computeBoundingSphere();
+  const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(look.tint), roughness: look.rough, metalness: 0, transparent: true, opacity: look.alpha, depthWrite: false, fog: true });
+  const u = { uGlow: { value: look.glow ?? 1 }, uWT: { value: wetT }, uRip: { value: look.rip }, uScum: { value: new THREE.Color(look.scum) }, uScumAmt: { value: look.scumAmt }, uSkyScum: { value: look.skyScum || 0 }, uSky: { value: new THREE.Color(look.sky) } };
+  mat.userData.u = u.uWT;
+  mat.onBeforeCompile = (s) => {
+    Object.assign(s.uniforms, u);
+    s.vertexShader = 'attribute float aEdge;\nattribute float aSky;\nvarying float vEdge;\nvarying float vSkyW;\nvarying vec2 vWP;\n' + s.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vEdge = aEdge; vSkyW = aSky; vWP = (modelMatrix * vec4(position, 1.0)).xz;');
+    s.fragmentShader = 'uniform float uGlow;\nuniform float uWT;\nuniform float uRip;\nuniform vec3 uScum;\nuniform float uScumAmt;\nuniform float uSkyScum;\nuniform vec3 uSky;\nvarying float vEdge;\nvarying float vSkyW;\nvarying vec2 vWP;\n' + MAGMA_NOISE + `
+float wRip(vec2 p) { return mn(p * 2.6 + vec2(uWT * 0.21, uWT * 0.13)) * 0.6 + mn(p * 5.3 - vec2(uWT * 0.17, -uWT * 0.27)) * 0.4; }
+float wScum() { float a = mn(vWP * 1.15 + vec2(uWT * 0.012, uWT * 0.008)) * 0.7 + mn(vWP * 3.7 - vec2(uWT * 0.01, 0.0)) * 0.3; return smoothstep(0.52, 0.7, a) * clamp(uScumAmt + vSkyW * uSkyScum, 0.0, 1.0); }
+` + s.fragmentShader
+      .replace('#include <color_fragment>', `#include <color_fragment>
+  float wsc = wScum();
+  diffuseColor.rgb = mix(diffuseColor.rgb, uSky * 0.55, vSkyW * 0.35);   // (a garth's: the sky in it)
+  diffuseColor.rgb = mix(diffuseColor.rgb, uScum, wsc);
+  // (ripple dashes, as Luminati's own water has them: pixel-stepped, long across the screen, drifting; and a pale line where
+  // it meets dry floor)
+  // (they and a faint sheen of the room are its own light: in a dark room, lit only by the fill, the sheet read as a
+  // darker floor; round 2)
+  float wGlow = 0.0;
+  { vec2 q = floor(vWP * 16.0) / 16.0, d = vec2(q.x - q.y, q.x + q.y);
+    float row = floor(d.y * 3.0), thin = step(fract(d.y * 3.0), 0.2);
+    float dash = thin * step(0.74, mn(vec2(d.x * 1.3 + uWT * 0.18 * (mod(row, 2.0) - 0.5) + row * 7.13, row * 3.71))) * (1.0 - wsc);
+    float men = clamp(1.0 - abs(vEdge - 0.4) * 5.0, 0.0, 1.0) * step(vEdge, 0.95);
+    float sheen = 0.5 + 0.5 * mn(vWP * 0.33 + vec2(uWT * 0.01, -uWT * 0.007));
+    wGlow = 0.07 * sheen * (1.0 - wsc) + 0.22 * dash * (0.6 + 0.8 * fract(row * 0.618)) + 0.32 * men;
+    diffuseColor.a = max(diffuseColor.a, 0.6 * dash + 0.55 * men); }
+  diffuseColor.a = max(diffuseColor.a * mix(0.15, 1.0, smoothstep(0.0, 1.0, vEdge)), wsc * 0.92 * vEdge);`)
+      .replace('#include <opaque_fragment>', `#include <opaque_fragment>
+  // (the lamps' light off it counts toward how much of it is seen: a transparent sheet's specular went with its alpha)
+  gl_FragColor.a = clamp(gl_FragColor.a + dot(reflectedLight.directSpecular + reflectedLight.indirectSpecular, vec3(0.3, 0.59, 0.11)) * 1.6, 0.0, 1.0);`)
+      .replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\n  reflectedLight.directSpecular = min(reflectedLight.directSpecular, vec3(0.55));')   // (round 2: the Crossing's daylight came back as two white blots)
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.85, wsc);')
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n  totalEmissiveRadiance += uSky * wGlow * uGlow;')
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+  { float e = 0.04, h0 = wRip(vWP), hx = wRip(vWP + vec2(e, 0.0)), hz = wRip(vWP + vec2(0.0, e)), k = uRip * (1.0 - wsc);
+    vec3 nw = normalize(vec3(-(hx - h0) / e * k, 1.0, -(hz - h0) / e * k));
+    normal = normalize((viewMatrix * vec4(nw, 0.0)).xyz); }`);
+  };
+  mat.customProgramCacheKey = () => 'ember-shallows-1';
+  const m = new THREE.Mesh(geo, mat); m.name = 'ember:shallows:' + sh.look; m.renderOrder = 1; m.castShadow = false; m.receiveShadow = true; g.add(m); wetMats.push(mat);
+  g.userData.dispose = () => { const i = wetMats.indexOf(mat); if (i >= 0) wetMats.splice(i, 1); geo.dispose(); mat.dispose(); };
+  return g;
+}
+/** a wet kit's deep water (its channels: Luminati's water over the sunk tiles): its look's bands, still, no glint or foam */
+function wetAir(kind) {
+  const W = game?.world, u = W?.water?.uniforms, look = WET_LOOKS[kind]; if (!u || !look) return;
+  if (W.waterBase) Object.assign(W.waterBase, { glint: 0, brightness: 1.3 }); else W.waterBase = { glint: 0, brightness: 1.3 };
+  ['uC0', 'uC1', 'uC2', 'uC3'].forEach((k, i) => u[k]?.value.set(look.deep[i]));
+  u.uCrest?.value.set(look.deep[0]); u.uFoam?.value.set(look.deep[1]);
+  if (u.uFoamAmount) u.uFoamAmount.value = 0; if (u.uShallowOpacity) u.uShallowOpacity.value = 0.96; if (u.uOpacity) u.uOpacity.value = 0.96; if (u.uSaturation) u.uSaturation.value = 0.8;
+}
 /** our art of a level gone for good: its cards (and their sheets' textures, which Sprite3D's dispose leaves: a texture a
  * card leaked every load, 199 → 288 over four trips), its arches and its kit models */
 function dropEnv(list, made) {
@@ -1641,6 +1773,7 @@ async function placeEnv(list, region) {
     if (p.tavern) { const g = buildTavern(p.tavern.pieces); game.engine.scene.add(g); envSprites.push(g); continue; }
     if (p.seaMask) { seaMask = p.seaMask; if (seaLv) seaAir(seaLv, seaRegion, true); continue; }
     if (p.magma) { const g = buildMagma(p.magma.cells); game.engine.scene.add(g); envSprites.push(g); continue; }
+    if (p.shallows) { const g = buildShallows(p.shallows); game.engine.scene.add(g); envSprites.push(g); continue; }
     const kit = KIT.get(p.id);
     if (kit && (LANDMARKS === 'all' || (LANDMARKS === 'chosen' && !p.card) || (LANDMARKS === 'doors' && DOORS.has(p.id)))) {
       // (on the ground round it, not the tile under its middle: the chapel stands in water the converter laid under it)
@@ -1723,6 +1856,7 @@ function skyFor(lv, region) {
   if (env.climate === 'arid' && !env.interior) { const want = ash ? 'ash' : 'arid'; if (skyShown !== want) { L.setKeyframes(ash ? ASH_KEYFRAMES : ARID_KEYFRAMES); skyShown = want; } }
   if (ash) reachAir();
   if (env.harbour) harbourAir();
+  if (env.wet) wetAir(env.wet);
   seaAir(lv, region);
   if (env.interior || env.climate || env.season) return;                 // (underground: the ambient's ours; a climate's sky its own)
   const want = region === 'vale' ? 'dusky' : 'default';
@@ -1896,6 +2030,30 @@ function ashlar(s, ctx, K, STONE, mortar, tints) {
     s.hf[i] = 0.35 + 0.65 * Math.min(1, d / 2.5) + (N[i] - 0.5) * 0.15;
   });
   return { normal: 2.2 };
+}
+// a wall's waterline (docs/water-indoors.md): the side textures are world-aligned (Luminati's TileMap: v = y / units), so
+// a texture six units high (px 96 at 16 a unit) puts its line at one world height on every wall; the floor's top
+// is at 1, a ruined back wall's at 4.5 at most, a channel's bed at 0. Over the line the stone as it is, a faint stain
+// just above it; the line itself a dark tide mark; under it the stone wet and green, weed hanging from the line in strands
+// and thicker toward the bed. `line`: the line's height; `wet`, `mark`: colours; `weed`: its ramp, dark to light
+const FEN_WL = { line: 1.7, wet: '#2c4630', mark: '#141c16', crust: '#c4c8b4', weed: ['#1e3119', '#28401f', '#345126', '#41602d'] };
+const ABBEY_WL = { line: 1.95, wet: '#2e4232', mark: '#161d18', crust: '#d2d0bc', weed: ['#1a2a18', '#24381e', '#304a25', '#3c5a2c'] };
+function waterlined(s, K, ctx, o) {
+  const H = s.h, U = H / 16, weed = o.weed.map((c) => K.parseColor(c)), seed = ctx.seed + 1201;
+  s.each((x, y, i) => {
+    const wy = U * (1 - (y + 0.5) / H), d = o.line - wy, c = s.get(x, y);   // (d: how far under the line)
+    if (d < -0.36) return;
+    // (round 2: at play's size the line read as a shadow: a pale crust of lime just over it, two texels, the mark under
+    // that, two, the stone under the line a clear wet green)
+    if (d < -0.13) { s.set(x, y, K.mixColor(c, o.wet, 0.3 * (1 + d / 0.36))); return; }
+    if (d < 0) { s.set(x, y, K.mixColor(c, o.crust, 0.55)); return; }
+    if (d < 0.12 + 0.06 * K.hash2(x >> 2, 0, seed)) { s.set(x, y, K.parseColor(o.mark)); s.hf[i] *= 0.6; return; }
+    let col = K.mixColor(c, o.wet, Math.min(0.85, 0.62 + d * 0.3));
+    // the weed: a strand from the line down, its length by its column, thicker below the floor's top
+    const len = 0.12 + 0.55 * K.hash2(x, 1, seed) + (wy < 1 ? 1 : 0), wob = Math.sin(wy * 9 + x) > 0.6 ? 1 : 0;
+    if (d < len && K.hash2((x + wob) >> 1, 2, seed) < 0.42 + Math.min(0.4, d * 0.5)) { col = weed[Math.min(3, Math.floor(K.hash2(x, y >> 2, seed + 3) * 4))]; s.hf[i] = 0.75; }
+    s.set(x, y, col);
+  });
 }
 /** a wharf's deck: planks along x, six texels wide (three-eighths of a unit), their ends staggered, a dark seam between, a
  * nail at each end, the grain along them; the tone kept narrow (round 1: "noisy"), a grey-green weathering here and there */
@@ -2181,6 +2339,13 @@ registerTextureSet((K) => {
       s.each((x, y, i) => { const w = ((x + (y >> 1)) & 1) ? 0.62 : 0.42, t = w + (K.hash2(x >> 2, y >> 2, 1003) - 0.5) * 0.18; s.set(x, y, at(R, Math.max(0, Math.min(1, t)))); s.hf[i] = 0.5 + (w - 0.5); });
       return { normal: 0.9 };
     } },
+    // water indoors (docs/water-indoors.md): the Canal Locks' own stone, a pale blue-grey ashlar gone green at the
+    // waterline, weed hanging below it; the Drowned Abbey's pale stone above its flood line, darker and weeded under it
+    // (two units high so a back wall shows its line once); the coping along a channel's banks; the garth's drowned turf
+    fen_wall: { px: [48, 96], normalScale: 0.8, gen: (s, ctx) => { ashlar(s, ctx, K, P(['#4c555c', '#5a646c', '#68727b', '#76808a', '#848e97', '#929ba3', '#a0a8af', '#adb4ba']), ['#3c444a', '#343b40'], ['#7f8b78', '#8a909c']); waterlined(s, K, ctx, FEN_WL); return { normal: 2.2 }; } },
+    abbey_wall: { px: [48, 96], normalScale: 0.75, gen: (s, ctx) => { ashlar(s, ctx, K, P(['#6c6962', '#7c7870', '#8c877e', '#9b968c', '#aaa59a', '#b8b3a8', '#c5c0b5', '#d1ccc1']), ['#66625b', '#5a5650'], ['#a9a690', '#9aa0a4']); waterlined(s, K, ctx, ABBEY_WL); return { normal: 2.2 }; } },
+    fen_cap: { px: [32, 32], normalScale: 0.35, gen: (s) => { const N = K.field(s.w, s.h, 4, 4, 1011, { oct: 2 }), R = P(['#5e666c', '#6c757b', '#7a838a', '#889198', '#959ea4']); s.each((x, y, i) => { s.set(x, y, at(R, Math.max(0, Math.min(1, 0.5 + (N[i] - 0.5) * 0.7 - (K.hash2(x, y, 1013) > 0.95 ? 0.3 : 0))))); s.hf[i] = 0.6 + (N[i] - 0.5) * 0.2; }); return { normal: 1 }; } },
+    drowned_turf: { px: [64, 64], normalScale: 0.4, gen: recolor('grass_dark', P(['#1c2214', '#262e19', '#30391e', '#3a4524', '#44502a', '#4e5c30', '#586737'])) },
     palace_gilt: { px: [32, 32], normalScale: 0.4, gen: (s) => {
       const N = K.field(s.w, s.h, 4, 4, 1005, { oct: 2 }), R = P(['#6a4a18', '#86601e', '#a07826', '#ba922e', '#d2aa40', '#e2c058', '#eed272']);
       s.each((x, y, i) => { const t = 0.55 + (N[i] - 0.5) * 0.6 + (K.hash2(x, y, 1007) > 0.93 ? 0.25 : 0); s.set(x, y, at(R, Math.max(0, Math.min(1, t)))); s.hf[i] = 0.6 + (N[i] - 0.5) * 0.3; });
@@ -3472,6 +3637,7 @@ const api = {
     placeSpells(f.spells || [], f.dt || 0, f.ambient?.lamps, !!(f.rings && f.rings.length), f.hazards);
     for (const g of ringPieces) g.visible = g.userData.ring === (f.ringOn || null);
     if (magmaMats.length) { magmaT += Math.min(0.1, f.dt || 0); for (const m of magmaMats) if (m.userData.u) m.userData.u.value = magmaT; }
+    if (wetMats.length) { wetT += Math.min(0.1, f.dt || 0); for (const m of wetMats) if (m.userData.u) m.userData.u.value = wetT; }
     // underground, the lights' flicker held to CALM_FLICKER (the owner, 2026-11-11: "Player and npc characters flicker in
     // the dungeon not overland. Probably due to torch lighting effect"): Luminati's wall torch swings its light ±38 %
     // (flicker 0.45) 2.6 times a second, and a figure by a wall, close to it, took the whole swing while the floor beyond
