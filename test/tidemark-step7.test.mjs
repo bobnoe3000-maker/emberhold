@@ -51,7 +51,7 @@ test('the Sister\'s Cabin: one floor of five on the hulk kit, the drowned fleet 
   const S = SITES.sisters_cabin; assert.deepEqual([S.region, S.base, S.floors, S.family, S.hidden, S.secret, S.vault], ['tidemark', 45, 1, 'drowned_fleet', true, true, 'the_graces_manifest']);
   const plan = PLANS.sisters_cabin; assert.equal(plan.floors.length, 1); assert.equal(plan.floors[0].spaces.length, 5);
   assert.deepEqual(checkPlan(plan), [], 'the plan keeps the rules');
-  assert.ok(plan.floors[0].spaces.every((q) => q.kit === 'hulk' && !q.boss));
+  assert.ok(plan.floors[0].spaces.every((q) => q.kit === (q.role === 'entrance' ? 'strand' : 'hulk') && !q.boss), 'the reef before her, the hulk aboard');
   assert.ok(HEIRLOOMS.the_graces_manifest);
   const sim = createSim(SEED, undefined, { scene: 'town' }); sim.tick(); sim.state.party[0].level = 45; sim.state.revealed.add('sisters_cabin');
   at(sim, 'sisters_cabin', 0);

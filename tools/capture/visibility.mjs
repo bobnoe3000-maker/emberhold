@@ -27,6 +27,8 @@ export const MAPS = {
   'chapel-f1': { scene: 'dungeon', site: 'sunken_chapel', floor: 0 }, 'chapel-f2': { scene: 'dungeon', site: 'sunken_chapel', floor: 1 },
   'pens-f1': { scene: 'dungeon', site: 'proving_pens', floor: 0 }, 'pens-f2': { scene: 'dungeon', site: 'proving_pens', floor: 1 },
   'mound-f1': { scene: 'dungeon', site: 'toadking_mound', floor: 0 }, 'mound-f2': { scene: 'dungeon', site: 'toadking_mound', floor: 1 }, 'locks-f1': { scene: 'dungeon', site: 'canal_locks', floor: 0 }, 'locks-f2': { scene: 'dungeon', site: 'canal_locks', floor: 1 }, 'abbey-f1': { scene: 'dungeon', site: 'drowned_abbey', floor: 0 }, 'abbey-f2': { scene: 'dungeon', site: 'drowned_abbey', floor: 1 },
+  // (the Tidemark's coast floors: docs/strand-dungeon.md)
+  'isles-f1': { scene: 'dungeon', site: 'gull_isles', floor: 0 }, 'lampfort-f1': { scene: 'dungeon', site: 'lamp_fort', floor: 0 }, 'cabin-f1': { scene: 'dungeon', site: 'sisters_cabin', floor: 0 },
 };
 const want = args.filter((a) => !a.startsWith('--')), names = !want.length || want.includes('all') ? Object.keys(MAPS) : want;
 

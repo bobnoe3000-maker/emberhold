@@ -126,6 +126,17 @@ const DOOR_LIGHT = { dig: 'lantern', gallery: 'candles', muster: 'torch', bailey
   mound: 'lantern', locks: 'lantern', vats: 'lantern', abbey: 'candelabra', pithead: 'lantern', warren: 'torch',
   yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra', tavern: 'torch', tavern_cellar: 'candles', crypt: 'candles', ossuary: 'candles', docks: 'lantern', mole: 'lantern', ramparts: 'torch', seacave: 'lantern', hulk: 'lantern', palace: 'candelabra' };   // (the crypt's doorways a low pricket: a candelabrum crowded the threshold, round 3)   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
 const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave', yards: 'storehouse', quota: 'cellar', forge: 'muster', deepforge: 'binding', works: 'storehouse', vault: 'cave', strongroom: 'muster', tavern: 'storehouse', tavern_cellar: 'storehouse', crypt: 'crypt', ossuary: 'ossuary', docks: 'storehouse', mole: 'storehouse', ramparts: 'storehouse', seacave: 'cave', hulk: 'storehouse', palace: 'crypt' };
+// (dungeon-looks-plan item 7, docs/strand-dungeon.md) the coast's two new kits: the strand, the shore itself in the open
+// (the Gull Isles' landing and careening beach, the reef below the Grace), dressed in the sim as the sea cave was, a
+// boulder its one piece out on the sand; and a sea fort's walk (the Lamp Fort's curtain walk and lamp room), the ramparts'
+// in every rule, so its rooms fight as they did. Their looks are the renderer's (convert.js coastGround)
+Object.assign(DRESS, {
+  strand:   { rooms: ['cave', 'storehouse', 'cave'], decor: ['boulder', 'barrels', 'lantern'], obstacles: ['boulder'] },
+  fortwall: { rooms: ['storehouse', 'storehouse', 'storehouse'], decor: ['barrels', 'crates', 'torch'], obstacles: ['pillar'] },
+});
+Object.assign(PLAN_OB, { strand: ['boulder'], fortwall: [] });
+Object.assign(DOOR_LIGHT, { strand: 'lantern', fortwall: 'torch' });
+Object.assign(PLAN_THEME, { strand: 'cave', fortwall: 'storehouse' });
 const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', crates: 'crates', sacks: 'sacks', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', skulls: 'bones', bones: 'bones', barrels: 'barrels' };
 function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, count }) {
   // every piece through the room's caps (CAP): a recipe can't stand a second well or a fifth torch

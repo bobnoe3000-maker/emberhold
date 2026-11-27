@@ -118,6 +118,19 @@ export const LEGEND = {
   '^': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'N', walkable: true }, v: { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'S', walkable: true },
   '>': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'E', walkable: true }, '<': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'W', walkable: true },
 };
+// the Tidemark's coast (docs/dungeon-looks-plan.md item 7; docs/strand-dungeon.md; painted by world.js, ours): the sea
+// cave's wet black rock ('Σ' its walls, 'Ξ' an outcrop or the isle's rock over a cave) and its shingle ('Π'); the strand's
+// sand, dry ('Δ') and wet ('Λ'), the dunes behind it ('Φ', and 'Ψ' a dune you walk on, the overland's); a rock pool ('Ω':
+// a skin of still water over its bed, walked through, the figures at the floor's height); the sea ('Γ': over wet sand,
+// its surface the level's)
+Object.assign(LEGEND, {
+  'Σ': { top: 'sea_rock_top', side: 'sea_rock', walkable: false }, 'Ξ': { top: 'sea_rock_top', side: 'sea_rock', walkable: false },
+  'Π': { top: 'sea_shingle', side: 'sea_rock', walkable: true },
+  'Δ': { top: 'strand_sand', side: 'dune_sand', walkable: true }, 'Λ': { top: 'wet_sand', side: 'wet_sand', walkable: true },
+  'Φ': { top: 'dune_sand', side: 'dune_sand', walkable: false }, 'Ψ': { top: 'dune_sand', side: 'dune_sand', walkable: true },
+  'Ω': { top: 'pool_bed', side: 'sea_rock', water: true, walkable: true, waterDepth: 0.05, flow: 0 },
+  'Γ': { top: 'wet_sand', side: 'wet_sand', water: true, walkable: false, flow: [0.02, 0.05] },
+});
 // a town's walls by its region (the owner, 2026-11-02: "bring back the wooden walls to thornwick? Save stone walls for
 // another town"): the Vale's are Thornwick's timber palisade on an earth bank, with its watchtowers and gatehouse (world
 // doc §3.1), as Emberlit draws them: our own baked pieces (town-vale's curtain, tower, gatehouse) stood on a bank one
@@ -469,6 +482,9 @@ function outdoor(w, region) {
     add({ type: 'light', x: X(bt.at[0] + bt.lamp[0]), z: Z(bt.at[1] + bt.lamp[1]), dy: 3.1, color: '#ffc070', intensity: 2.6, distance: 5.5, flicker: 0.12, nightOnly: true });
     figures.push({ name: bt.man, x: X(bt.at[0] + bt.stern[0]), z: Z(bt.at[1] + bt.stern[1]), air: BOAT_FLOOR, row: bt.row });
   }
+  // (dungeon-looks-plan item 7) the Tidemark's shore: the sim's huts, boats and nets, and the renderer's own dunes, surf,
+  // wrack and rock pools
+  if (region === 'tidemark' && w.kind === 'overland') shoreLand(w, { W, D, tiles, heights, X, Z, add, sprites, inside });
   // the lit things on the ground (the town's braziers: a fire each, sharing Luminati's lamps)
   for (const [k, kind] of w.props || []) {
     const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);
@@ -659,8 +675,19 @@ KIT_LOOK.mole = { floor: ['µ', 'µ'], wall: 'o', cave: 'o', hour: 19.4, mix: 0,
 // (v1.151) the Gull Isles (docs/tidemark-plan.md step 4): the sea cave, dark earth and rock under the isle with its wet
 // shingle, a cool fill off the water; the hulks, a ship's inside, deck planks under whole timber walls (the inn's, its frame
 // the ribs), the lanterns warm. A first look: the art pass (step 9) takes them further
-KIT_LOOK.seacave = { floor: ['d', 'U'], wall: 'D', cave: 'D', hour: 20.2, mix: 22 };
 KIT_LOOK.hulk = { floor: ['_', '#'], wall: '@', cave: '@', hour: 19.6, mix: 0, inside: true };
+// (dungeon-looks-plan item 7, docs/strand-dungeon.md; the owner, 2026-11-27: "Tidemark needs to be more beachy, including
+// the dungeons.. sea caves and docks like you have now") the coast's kits, each laid out room by room on a floor with the
+// sea round it (`coast`, coastGround): the sea cave in wet black rock over shingle and wet sand, its tide pools, barnacles
+// and weed at the tide line, light down its blowholes ('cave'; it was the Cold Seam's dirt and crag: the two read alike);
+// the strand, the shore itself in the open, dry sand and wet, dunes and rocks behind it and the sea and its surf in front
+// ('strand'); a sea fort's walk, its walls standing behind it and its parapet over the rocks and the sea ('fort': the Lamp
+// Fort). A cold sea light, the lamps warm against it
+const SEA_FILL = { sky: [0.66, 0.78, 0.96], ground: [0.36, 0.37, 0.4], lamps: 2.3 };
+const STRAND_FILL = { sky: [0.84, 0.88, 1.0], ground: [0.62, 0.54, 0.44], lamps: 2.1 };
+KIT_LOOK.seacave = { floor: ['Π', 'Λ'], wall: 'Σ', cave: 'Σ', hour: 20.2, mix: 28, coast: 'cave', fill: SEA_FILL, backdrop: '#3e4d62' };
+KIT_LOOK.strand = { floor: ['Δ', 'Λ'], wall: 'Γ', cave: 'Γ', hour: 19.6, mix: 0, coast: 'strand', fill: STRAND_FILL, backdrop: '#4a5c70' };
+KIT_LOOK.fortwall = { floor: ['µ', '{'], wall: ']', cave: ']', hour: 20.2, mix: 24, coast: 'fort', fill: SEA_FILL, backdrop: '#3e4d62' };
 // (v1.154) the Seventh's Palace (docs/tidemark-plan.md step 6, docs/art-critic-pass-palace.md): a march-kingdom's seat
 // dressed for a coronation that never came. The crypt kit's dressed stone and arcade, warmer and grander (palaceRun): honey
 // limestone under marble piers with gilt capitals, the household's banners in the bays, tall windows with the hour's sky
@@ -776,7 +803,7 @@ const INSIDE_FILL = { sky: [1.05, 0.88, 0.72], ground: [0.56, 0.45, 0.36] };   /
 export function ambientOf(kit) {
   // (a building's inside is lit, not a cellar: a lamp-and-hearth warmth in the fill, the floor readable from wall to wall,
   // the lamps a little stronger in their pools: docs/tavern-dungeon.md)
-  if (KIT_LOOK[kit]?.inside) { const F = KIT_LOOK[kit].fill || INSIDE_FILL; return { sky: F.sky, ground: F.ground, i: 1, sun: 0, lamps: F.lamps || 1.9 }; }   // (a crypt's own, cold: CRYPT_FILL)
+  if (KIT_LOOK[kit]?.inside || KIT_LOOK[kit]?.coast) { const F = KIT_LOOK[kit].fill || INSIDE_FILL; return { sky: F.sky, ground: F.ground, i: 1, sun: 0, lamps: F.lamps || 1.9 }; }   // (a crypt's own, cold: CRYPT_FILL)
   // (the tint squared: at its own strength every floor read one navy; the dig wants its warmth, the gallery its cold)
   const t = (KIT_TINT[kit] || AMB_TINT[kit] || [1, 1, 1]).map((v) => v * v), c = (k) => AMB_BASE.map((v, i) => r2(v * t[i] * k));
   // (the owner on the phone, 2026-11-02: "The dungeons are too dark". At Emberlit's own brightness a room's floor away
@@ -1263,11 +1290,12 @@ TAVERN_3D.tomb_y = TAVERN_3D.tomb; TAVERN_3D.pew_y = TAVERN_3D.pew;
 // carried on down as piles into the water; the near edges (south and east, between the camera and the fight) only a low
 // stringer and the piles' heads, a bollard now and then, so a fight is never behind a rail. Every choice a hash of the
 // tile: the same wharf every visit.
-function docksDress(W, D, open, add, trim, arches, stone = false) {
+function docksDress(W, D, open, add, trim, arches, stone = false, only = null) {
   const clearOf = (x, z) => arches.every((a) => Math.abs(x - a.x) > a.span / 2 + 1.2 || Math.abs(z - a.z) > 2.5);
   // the harbour's mist (round 1: "the single strongest feature of the reference"): one layer on the water, none at the
   // decks' edges and thickening out to six tiles off them, by each water tile's distance from a deck (world.js)
-  { const dist = new Uint8Array(W * D).fill(9), q = [];
+  // (`only`: a coast floor's decks among its other rooms, coastDress: their edges alone, the mist its own)
+  if (!only) { const dist = new Uint8Array(W * D).fill(9), q = [];
     for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) if (open(i, j)) { dist[j * W + i] = 0; q.push(j * W + i); }
     for (let h = 0; h < q.length; h++) { const k = q[h], i = k % W, j = (k / W) | 0, d = dist[k] + 1; if (d > 8) continue;
       for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= D) continue; const kk = jj * W + ii; if (dist[kk] > d) { dist[kk] = d; q.push(kk); } } }
@@ -1276,7 +1304,7 @@ function docksDress(W, D, open, add, trim, arches, stone = false) {
   // runs along each edge line: n (a deck's north edge, along x at z = j), w (west, along z at x = i), s, e
   const lines = new Map(), push = (key, t) => (lines.get(key) || lines.set(key, []).get(key)).push(t);
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
-    if (!open(i, j)) continue;
+    if (!open(i, j) || (only && !only(i, j))) continue;
     if (!open(i, j - 1)) push(`n|${j}`, i);
     if (!open(i - 1, j)) push(`w|${i}`, j);
     if (!open(i, j + 1)) push(`s|${j + 1}`, i);
@@ -1401,6 +1429,262 @@ const DOCK_3D = {
   brazier: (x, z, h, k, ctx) => DOCK_3D.lantern(x, z, h, k, ctx),   // (the way in's: lamps, as every light on a wharf)
 };
 
+// ── the Tidemark's coast (docs/dungeon-looks-plan.md item 7; docs/strand-dungeon.md) ────────────────────────────────────
+// A floor with a coast kit in it (KIT_LOOK `coast`) is laid out room by room, each room's ground round it in its own kind,
+// and the sea past it all at the harbour's level (DOCK_WL), into the mist past the level's edges:
+//   · strand: no walls. Behind it (north and west, the side the camera looks across it to) dunes and rock outcrops up to
+//     three tiles deep; in front of it, and past the dunes, the sea; its floor dry sand, wet sand toward the sea;
+//   · cave: its ring of rock wall (the ruin pass breaks the near side down, ruinWalls), the isle's rock behind it, the sea
+//     in front of it (the near wall a low rim with the sea outside);
+//   · fort: behind it the fort's walls standing whole, in front a parapet, a band of rocks and the sea;
+//   · the wharf's decks (docks), the sea all round them as the Drowned Mole's;
+//   · any other (the hulk's, walls standing whole: tavernWalls): its ring of wall, the sea past it.
+// A hall takes the kind of the room nearest it along the floor. Every choice a hash of the tile: the same shore every
+// visit. Nothing here touches the sim.
+/** the coast's water: the sea's slow swell; world.js coastAir its colours */
+const COAST_WATER = { flow: [0.04, 0.07], reflect: 0.4, neutral: 0.55, glint: 0 };
+/** what a tile within this many of ours south-east of a floor is: in front of it (between the camera and the fight) */
+const COAST_FRONT = 7;
+const coastKind = (lk) => (lk ? lk.coast || (lk === KIT_LOOK.docks || lk === KIT_LOOK.mole ? 'deck' : 'walled') : null);
+const floorTile = (lk, i, j) => (hash('d', i, j) % 100 < (lk.mix ?? 18) ? lk.floor[1] : lk.floor[0]);
+const N8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+function coastGround(W, D, tiles, heights, open, looks, roomOf, propTiles) {
+  const N = W * D;
+  // the halls: each tile the look of the room nearest it along the floor
+  { const q = [], seen = new Uint8Array(N);
+    for (let k = 0; k < N; k++) if (roomOf[k] >= 0 && looks[k]) { seen[k] = 1; q.push(k); }
+    for (let h = 0; h < q.length; h++) {
+      const k = q[h], i = k % W, j = (k / W) | 0;
+      for (const [di, dj] of N8.slice(0, 4)) {
+        const ii = i + di, jj = j + dj; if (!open(ii, jj)) continue; const kk = jj * W + ii; if (seen[kk]) continue;
+        seen[kk] = 1; if (looks[kk] !== looks[k]) { looks[kk] = looks[k]; tiles[jj][ii] = floorTile(looks[k], ii, jj); } q.push(kk);
+      }
+    } }
+  // every other tile: how far from the floor (in a ring, as the walls are laid) and the floor it's nearest
+  const dist = new Uint8Array(N).fill(255), src = new Int32Array(N).fill(-1), q = [];
+  for (let k = 0; k < N; k++) if (open(k % W, (k / W) | 0)) { dist[k] = 0; src[k] = k; q.push(k); }
+  for (let h = 0; h < q.length; h++) {
+    const k = q[h], d = dist[k] + 1, i = k % W, j = (k / W) | 0; if (d > 12) continue;
+    for (const [di, dj] of N8) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= D) continue; const kk = jj * W + ii; if (dist[kk] <= d) continue; dist[kk] = d; src[kk] = src[k]; q.push(kk); }
+  }
+  // (in front: a floor within COAST_FRONT to its north or west, the camera's diagonal, as the ramparts' parapet is placed)
+  const front = (i, j) => { for (let a = 0; a <= COAST_FRONT; a++) for (let b = 0; b <= COAST_FRONT; b++) if ((a || b) && a + b <= COAST_FRONT + 2 && open(i - a, j - b)) return true; return false; };
+  // (the perf pass tried the sea past seven tiles as the far plane alone, void tiles under it: the water's shore foam ran
+  // along that line and the plane read a brighter blue than the water. Kept as water to the margin: docs/art-critic-pass-tidemark-coast.md)
+  const sea = (i, j) => { tiles[j][i] = 'Γ'; heights[j][i] = '0'; };
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    const k = j * W + i; if (open(i, j)) continue;
+    const d = dist[k]; if (d === 255) { sea(i, j); continue; }
+    const lk = looks[src[k]], kd = coastKind(lk), fr = front(i, j);
+    if (kd === 'strand') {
+      // the dunes, rock breaking through them in outcrops (a broad noise, so a run of rock, not a speckle)
+      if (fr || d > 3) { sea(i, j); continue; }
+      // (round 2: the dunes one level slab: their tops rise and fall by a noise, the rock standing over them)
+      const rock = vnoise(i, j, 'cr', 4) < 0.34, up = vnoise(i, j, 'dh', 3) > 0.5 ? 1 : 0;
+      tiles[j][i] = rock ? 'Ξ' : 'Φ'; heights[j][i] = rock ? (d === 1 ? '5' : '7') : String(Math.min(5, 2 + Math.min(d, 2) + up));
+    } else if (kd === 'cave') {
+      if (d === 1) { tiles[j][i] = lk.wall; heights[j][i] = String(WALL); continue; }   // (its wall, for the ruin pass)
+      // (the isle's rock over the cave, behind it, turf on its crown from its edge in: round 4, a black mass read as void)
+      if (!fr && d <= 5) { const turf = d >= 3 && vnoise(i, j, 'it', 3) > 0.35; tiles[j][i] = turf ? 'G' : 'Ξ'; heights[j][i] = '7'; } else sea(i, j);
+    } else if (kd === 'fort') {
+      if (fr) { if (d === 1) { tiles[j][i] = '['; heights[j][i] = '3'; } else if (d === 2) { tiles[j][i] = 'Ξ'; heights[j][i] = '2'; } else sea(i, j); }   // (the parapet, the rocks at its foot)
+      else if (d <= 3) { tiles[j][i] = ']'; heights[j][i] = '8'; } else sea(i, j);    // (the fort's walls standing whole behind its walk)
+    } else if (kd === 'deck') { tiles[j][i] = 'o'; heights[j][i] = '0'; }
+    else if (d === 1) { tiles[j][i] = lk.wall; heights[j][i] = String(WALL); }        // (a walled room's: the hulk's side, standing in the sea)
+    else sea(i, j);
+  }
+  // (round 5: a lone tile of the isle's rock left between two rooms' fronts stood out of the sea as a pillar: under three
+  // of its kind round it, it's sea)
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) if (heights[j][i] === '7' && N8.filter(([di, dj]) => heights[j + dj]?.[i + di] === '7').length < 3) sea(i, j);
+  // the shallows off a strand: two tiles of the sea a step up from the deep, its sand bed showing (round 2: the beach
+  // stood straight out of deep water, a platform)
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) { const k = j * W + i; if (tiles[j][i] === 'Γ' && dist[k] <= 2 && coastKind(looks[src[k]]) === 'strand') heights[j][i] = '1'; }
+  // the floors: the strand's sand wet toward the sea (two tiles, ragged), shingle by its rocks; the cave's tide pools in
+  // the hollows along its back walls, the strand's rock pools by its outcrops (never under a piece: propTiles)
+  const toSea = new Uint8Array(N).fill(9), sq = [];
+  for (let k = 0; k < N; k++) { const i = k % W, j = (k / W) | 0; if (!open(i, j) && (tiles[j][i] === 'Γ' || tiles[j][i] === 'o')) { toSea[k] = 0; sq.push(k); } }
+  for (let h = 0; h < sq.length; h++) { const k = sq[h], d = toSea[k] + 1, i = k % W, j = (k / W) | 0; if (d > 4) continue; for (const [di, dj] of N8.slice(0, 4)) { const ii = i + di, jj = j + dj; if (!open(ii, jj)) continue; const kk = jj * W + ii; if (toSea[kk] <= d) continue; toSea[kk] = d; sq.push(kk); } }
+  const rockBy = (i, j) => N8.some(([di, dj]) => tiles[j + dj]?.[i + di] === 'Ξ');
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    const k = j * W + i; if (!open(i, j) || propTiles.has(k)) continue;
+    const kd = coastKind(looks[k]), h = hash('cf', i, j);
+    if (kd === 'strand') {
+      const ts = toSea[k];
+      // (round 1: a hashed ragged edge read as a checker of dark squares: the band by its distance and a broad noise)
+      tiles[j][i] = ts <= 1 || (ts <= 3 && vnoise(i, j, 'ws', 5) < 0.45) ? 'Λ' : rockBy(i, j) ? (h % 4 ? 'Π' : 'Ω') : 'Δ';
+    } else if (kd === 'cave') {
+      // (round 1: the shingle and the wet sand mixed by the tile read as cobbles: wet sand in broad drifts across it)
+      tiles[j][i] = vnoise(i, j, 'cw', 6) < 0.45 ? 'Λ' : 'Π';
+    }
+    if (kd === 'cave' && roomOf[k] >= 0) {
+      // (a hollow: the back wall a tile or two to its north or west; a pool two of ours across at most, a few a room)
+      const back = !open(i, j - 1) || !open(i - 1, j) || !open(i, j - 2) || !open(i - 2, j);
+      if (back && hash('tp', i >> 1, j >> 1) % 6 === 0 && hash('tq', i, j) % 4) tiles[j][i] = 'Ω';
+    }
+  }
+}
+/** the room a piece of the sim's stands in (its tile's cell) */
+const roomAtProp = (w, k) => { const c = w.level.cells.get(k); return c && c.room >= 0 ? w.level.rooms[c.room] : null; };
+/** the coast's dressing (world.js buildTavern's coast pieces): the mist and the far sea past the level; the decks' edges;
+ *  the surf along every shore; marram on the dunes; the wrack and driftwood along the strand's tide line; barnacles and weed
+ *  along the sea cave's back walls, kelp and wreck timbers at their feet, light down a blowhole in each fighting cave; the
+ *  fort's parapet crenellated */
+function coastDress(W, D, tiles, heights, open, looks, roomOf, add, trim, arches, L, X, Z) {
+  const N = W * D, kindAt = (i, j) => (i < 0 || j < 0 || i >= W || j >= D ? null : coastKind(looks[j * W + i]));
+  const clearOf = (x, z, r = 0) => arches.every((a) => Math.abs(x - a.x) > a.span / 2 + 1.2 + r || Math.abs(z - a.z) > 2.5 + r);
+  // the mist and the far sea (the harbour's, world.js 'harbourmist'): none at the shore, thick from six tiles out
+  { const dist = new Uint8Array(N).fill(9), q = [];
+    for (let k = 0; k < N; k++) { const i = k % W, j = (k / W) | 0; if (!(heights[j][i] === '0' && (tiles[j][i] === 'Γ' || tiles[j][i] === 'o'))) { dist[k] = 0; q.push(k); } }
+    for (let h = 0; h < q.length; h++) { const k = q[h], i = k % W, j = (k / W) | 0, d = dist[k] + 1; if (d > 8) continue;
+      for (const [di, dj] of N8.slice(0, 4)) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= D) continue; const kk = jj * W + ii; if (dist[kk] > d) { dist[kk] = d; q.push(kk); } } }
+    const rows = []; for (let j = 0; j < D; j++) { let r = ''; for (let i = 0; i < W; i++) r += dist[j * W + i]; rows.push(r); }
+    trim.push({ k: 'harbourmist', W, D, rows, coast: true }); }
+  // the decks' edges, as the wharf's
+  docksDress(W, D, open, add, trim, arches, false, (i, j) => kindAt(i, j) === 'deck');
+  // the surf: along every edge of land (sand, dune, rock, a deck's not: its piles) with the sea past it, a broken line of
+  // foam on the water a hand out, its runs as the wharf's edges (n, w, s, e)
+  const wet = (i, j) => i >= 0 && j >= 0 && i < W && j < D && tiles[j][i] === 'Γ';   // (the shallows too: the surf at the sand, not at the deep's edge)
+  const shore = (i, j) => !wet(i, j) && kindAt(i, j) !== 'deck' && /[ΔΛΠΩΦΞ[\]ΣG]/.test(tiles[j][i]) && i >= 0 && j >= 0 && i < W && j < D;
+  const lines = new Map(), push = (key, t) => (lines.get(key) || lines.set(key, []).get(key)).push(t);
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    if (!shore(i, j)) continue;
+    if (wet(i, j - 1)) push(`n|${j}`, i); if (wet(i - 1, j)) push(`w|${i}`, j); if (wet(i, j + 1)) push(`s|${j + 1}`, i); if (wet(i + 1, j)) push(`e|${i + 1}`, j);
+  }
+  for (const [key, ts] of lines) {
+    ts.sort((a, b) => a - b);
+    const [side, c0] = key.split('|'), c = +c0, along = side === 'n' || side === 's', out = side === 'n' || side === 'w' ? -1 : 1, P = (t) => (along ? [t, c] : [c, t]);
+    const runs = []; for (const t of ts) { const r = runs[runs.length - 1]; if (r && t === r[1]) r[1] = t + 1; else runs.push([t, t + 1]); }
+    for (const [a, b] of runs) { const [x0, z0] = P(a), [x1, z1] = P(b); trim.push({ k: 'surf', x0, z0, x1, z1, n: along ? 'z' : 'x', out, seed: hash('su', key, a) % 997 }); }
+  }
+  // the fort's parapet crenellated, as the ramparts' (world.js 'merlons'), along each walk's front
+  { const ml = new Map(), mp = (key, t) => (ml.get(key) || ml.set(key, []).get(key)).push(t);
+    for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) { if (!open(i, j) || kindAt(i, j) !== 'fort') continue; if (tiles[j + 1]?.[i] === '[') mp(`s|${j + 1}`, i); if (tiles[j]?.[i + 1] === '[') mp(`e|${i + 1}`, j); }
+    for (const [key, ts] of ml) {
+      ts.sort((a, b) => a - b);
+      const [side, c0] = key.split('|'), c = +c0, along = side === 's', P = (t) => (along ? [t, c] : [c, t]);
+      const runs = []; for (const t of ts) { const r = runs[runs.length - 1]; if (r && t === r[1]) r[1] = t + 1; else runs.push([t, t + 1]); }
+      for (const [a, b] of runs) { const [x0, z0] = P(a), [x1, z1] = P(b); trim.push({ k: 'merlons', x0, z0, x1, z1, n: along ? 'z' : 'x' }); }
+    } }
+  // the dunes' marram, a clump on most dune tiles (on the dune's top: its height); a boulder on an outcrop now and then
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    const t = tiles[j][i], h = hash('dm', i, j), y = parseInt(heights[j][i], 36) * 0.5;
+    if ((t === 'Φ' && h % 5 < 3) || (t === 'G' && heights[j][i] === '7' && h % 4 === 0)) trim.push({ k: 'marram', x: r2(i + 0.3 + (h % 7) * 0.06), z: r2(j + 0.3 + ((h >> 3) % 7) * 0.06), y, seed: h % 997 });
+    else if (t === 'Ξ' && heights[j][i] !== '7' && h % 13 === 0) add({ type: 'rock', x: r2(i + 0.5), z: r2(j + 0.5), opts: { size: r2(0.7 + (h % 5) * 0.12), stone: 'basalt', seed: h % 97 } });
+  }
+  // the strand's tide line: wrack where the wet sand meets the dry, a driftwood log now and then there or at a dune's foot
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    if (!open(i, j) || kindAt(i, j) !== 'strand') continue;
+    const t = tiles[j][i], h = hash('wr', i, j), x = r2(i + 0.5), z = r2(j + 0.5);
+    const line = t === 'Δ' && N8.slice(0, 4).some(([di, dj]) => tiles[j + dj]?.[i + di] === 'Λ');
+    const foot = t === 'Δ' && N8.slice(0, 4).some(([di, dj]) => tiles[j + dj]?.[i + di] === 'Φ' || tiles[j + dj]?.[i + di] === 'Ξ');
+    if (line && h % 3 !== 0) trim.push({ k: 'wrack', x, z, rot: (h % 13) * 0.24, seed: h % 997 });
+    if ((line && h % 11 === 0) || (foot && h % 9 === 0)) { if (clearOf(x, z)) trim.push({ k: 'driftwood', x, z, rot: (h % 17) * 0.37, seed: h % 997 }); }
+  }
+  // the sea cave's back walls: weed and barnacles at the tide line, kelp heaped at their feet, wreck timbers washed up
+  // against them; and in each fighting cave light down a blowhole
+  const faces = new Map(), fpush = (key, t) => (faces.get(key) || faces.set(key, []).get(key)).push(t);
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    if (tiles[j][i] !== 'Σ' || heights[j][i] === '0') continue;
+    if (open(i, j + 1) && kindAt(i, j + 1) === 'cave') fpush(`s|${j + 1}`, i);
+    if (open(i + 1, j) && kindAt(i + 1, j) === 'cave') fpush(`e|${i + 1}`, j);
+  }
+  for (const [key, ts] of faces) {
+    ts.sort((a, b) => a - b);
+    const [side, c0] = key.split('|'), c = +c0, along = side === 's', P = (t) => (along ? [t, c] : [c, t]);
+    const runs = []; for (const t of ts) { const r = runs[runs.length - 1]; if (r && t === r[1]) r[1] = t + 1; else runs.push([t, t + 1]); }
+    for (const [a, b] of runs) {
+      const [x0, z0] = P(a), [x1, z1] = P(b); trim.push({ k: 'tideline', x0, z0, x1, z1, n: along ? 'z' : 'x', seed: hash('tl', key, a) % 997 });
+      for (let t = a + 1; t < b - 1; t += 3) {
+        const h = hash('kp', key, t), [x, z] = P(t + 0.5), px = along ? x : x + 0.55, pz = along ? z + 0.55 : z;
+        if (!clearOf(px, pz)) continue;
+        if (h % 4 === 0) trim.push({ k: 'kelp', x: r2(px), z: r2(pz), rot: along ? 0 : Math.PI / 2, seed: h % 997 });
+        else if (h % 9 === 1) trim.push({ k: 'wreckwood', x: r2(along ? x : x + 0.35), z: r2(along ? z + 0.35 : z), n: along ? 'z' : 'x', seed: h % 997 });
+      }
+    }
+  }
+  if (L.plan) for (const r of L.rooms) {
+    if (r === L.entrance || KIT_LOOK[r.kit]?.coast !== 'cave') continue;
+    // (a blowhole over the room's back third, off its middle: the fight stands in the lamps' light, the shaft beside it)
+    const sx = X(r.cx - r.rw * 0.35), sz = Z(r.cy - r.rh * 0.3), hb = hash('bh', r.id);
+    trim.push({ k: 'blowhole', x: sx, z: sz, seed: hb % 997, room: r.id });
+    add({ type: 'light', x: sx, z: sz, dy: 3, color: '#d4e6ff', intensity: 22, distance: 6, flicker: 0, nightOnly: false });   // (the day's cold light, a hard pool: the Crossing's shaft's)
+    add({ type: 'emitter', x: sx, z: sz, preset: 'dust', size: [1.8, 4, 1.8], dy: 2.2, count: 16 });
+  }
+}
+/** a coast floor's piece by the kind of room it stands in: the decks' as the wharf's (DOCK_3D), the fort's as the ramparts'
+ *  (RAMP_3D, and the lamp room's light on its stand), the strand's and the cave's lamps on posts, cargo, rope and nets as
+ *  the wharf's and their boats drawn up on the sand @returns {boolean} whether it's built */
+function coastProp(kind, x, z, h, lk, { add, trim, open, room }) {
+  const kd = coastKind(lk);
+  if (kd === 'deck') { if (!DOCK_3D[kind]) return false; DOCK_3D[kind](x, z, h, kind, { add, trim, open, edge: edgeOf((i, j) => open(i, j), x, z) }); return true; }
+  if (kd === 'fort') {
+    if (kind === 'brazier' && room?.role === 'end') { trim.push({ k: 'beacon', x, z: r2(z - 0.3), seed: h % 997 }); add({ type: 'light', x, z: r2(z + 0.6), dy: 3.2, color: '#ffc070', intensity: 9, distance: 11, flicker: 0.06, nightOnly: false }); return true; }   // (the lamp itself, Gannet's light, kept lit)
+    if (!RAMP_3D[kind]) return false; RAMP_3D[kind](x, z, h, kind, { add, trim, open }); return true;
+  }
+  if (kd !== 'strand' && kd !== 'cave') return false;
+  if (kind === 'boat') { trim.push({ k: 'beachboat', x, z, rot: (h % 2 ? 0.25 : -0.3) + ((h >> 3) % 5) * 0.06, keel: kd === 'cave' || h % 3 === 0, seed: h % 997 }); return true; }   // (drawn up on the sand, one in three keel up)
+  if (kind === 'lantern' || kind === 'brazier') { DOCK_3D.lantern(x, z, h, kind, { add, trim, edge: null }); return true; }
+  if (DOCK_3D[kind] && kind !== 'crane') { DOCK_3D[kind](x, z, h, kind, { add, trim, open, edge: null }); return true; }
+  if (kind === 'puddle') { trim.push({ k: 'rockpool', x, z, seed: h % 997 }); return true; }   // (the weed's and the drips' puddles: a rock pool's skin of water, flat)
+  if (kind === 'stalagmite') { add({ type: 'crag', x, z, rotation: (h % 11) * 0.5, opts: { kind: 'spire', stone: 'basalt', height: 1.3 + (h % 4) * 0.3, width: 0.75, seed: h % 997 } }); return true; }   // (a sea stack's stump, low and black)
+  return false;
+}
+
+// ── the Tidemark's shore on its overland (dungeon-looks-plan item 7: "dunes and marram grass, driftwood and wrack along
+// the tideline, rock pools, beached boats, nets drying on poles, a few fishing huts"). The sim's pieces (outdoor.js
+// SHORE: the huts, the boats, the nets, each holding its tiles) and the renderer's own over its sand: the sand wet where
+// the sea washes it, dunes where it meets the grass with marram on them, wrack and a driftwood log on the tide line, a
+// rock pool now and then down the east beach under the Lamp Fort, the surf a hand off every beach. None of it stands
+// near a way in, an arrival or a spawn point's ground (the visibility rule), and the roads keep their own tiles
+const SHORE_WALL = 'wood_planks_dark';
+function shoreLand(w, { W, D, tiles, heights, X, Z, add, sprites, inside }) {
+  const trim = [], wet = (i, j) => i >= 0 && j >= 0 && i < W && j < D && !!LEGEND[tiles[j][i]]?.water;
+  const sandy = (c) => c === 's' || c === 'Λ' || c === 'Ψ' || c === 'Ω';
+  const keep = [...(w.exits || []).map((e) => [X((e.x0 + e.x1) / 2), Z((e.y0 + e.y1) / 2), 5]), ...Object.values(w.arrivals || {}).map((a) => [X(a.x), Z(a.y), 4]),
+    ...Object.values(CAMP_BY).filter((c) => c.region === 'tidemark').map((c) => [X(c.x), Z(c.y), (c.arena || 12) / 2 + 1]), ...(w.shore || []).map((s) => [X(s.x), Z(s.y), 2.2])];
+  const clear = (x, z) => !keep.some(([kx, kz, r]) => Math.abs(x - kx) < r && Math.abs(z - kz) < r);
+  // the sand: wet a tile or two up from the sea (a noise, so its edge wanders), dunes where it meets the land behind it
+  const N4 = N8.slice(0, 4), land = (i, j) => i >= 0 && j >= 0 && i < W && j < D && !wet(i, j) && !sandy(tiles[j][i]) && heights[j][i] === '2' && !/[cb._]/.test(tiles[j][i]);
+  const wetBy = (i, j, r) => { for (let dj = -r; dj <= r; dj++) for (let di = -r; di <= r; di++) if (wet(i + di, j + dj)) return true; return false; };
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    if (tiles[j][i] !== 's' || heights[j][i] !== '2') continue;
+    if (wetBy(i, j, 1) || (wetBy(i, j, 2) && vnoise(i, j, 'sw', 4) < 0.5)) tiles[j][i] = 'Λ';
+    else if ((N4.some(([di, dj]) => land(i + di, j + dj)) || (vnoise(i, j, 'sd', 5) > 0.62 && N8.some(([di, dj]) => land(i + 2 * di, j + 2 * dj)))) && wetBy(i, j, 7)) tiles[j][i] = 'Ψ';   // (the dunes the shore's, not the sand drifted inland)
+  }
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    const t = tiles[j][i], h = hash('sl', i, j), x = r2(i + 0.5), z = r2(j + 0.5);
+    if (!clear(x, z)) continue;
+    if (t === 'Ψ' && h % 2 === 0) trim.push({ k: 'marram', x: r2(i + 0.25 + (h % 7) * 0.07), z: r2(j + 0.25 + ((h >> 3) % 7) * 0.07), y: 1, seed: h % 997 });
+    else if (t === 's' && N4.some(([di, dj]) => tiles[j + dj]?.[i + di] === 'Λ')) {
+      // the tide line: wrack along it, a log now and then; down the east beach a rock pool by a rock
+      if (h % 3 !== 0) trim.push({ k: 'wrack', x, z, rot: (h % 13) * 0.24, seed: h % 997 });
+      if (h % 23 === 0) trim.push({ k: 'driftwood', x, z, rot: (h % 17) * 0.37, seed: h % 997 });
+      else if (h % 29 === 1 && x > X(212)) { tiles[j][i] = 'Ω'; add({ type: 'rock', x: r2(x + 0.7), z: r2(z - 0.4), opts: { size: r2(0.6 + (h % 4) * 0.15), stone: 'basalt', seed: h % 97 } }); }
+    }
+  }
+  // the surf: along every edge of the sand with the sea past it, at the water's own level
+  const wl = 0.4, lines = new Map(), push = (key, t) => (lines.get(key) || lines.set(key, []).get(key)).push(t);
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    if (!sandy(tiles[j][i]) || wet(i, j)) continue;
+    if (wet(i, j - 1)) push(`n|${j}`, i); if (wet(i - 1, j)) push(`w|${i}`, j); if (wet(i, j + 1)) push(`s|${j + 1}`, i); if (wet(i + 1, j)) push(`e|${i + 1}`, j);
+  }
+  for (const [key, ts] of lines) {
+    ts.sort((a, b) => a - b);
+    const [side, c0] = key.split('|'), c = +c0, along = side === 'n' || side === 's', out = side === 'n' || side === 'w' ? -1 : 1, P = (t) => (along ? [t, c] : [c, t]);
+    const runs = []; for (const t of ts) { const r = runs[runs.length - 1]; if (r && t === r[1]) r[1] = t + 1; else runs.push([t, t + 1]); }
+    for (const [a, b] of runs) { const [x0, z0] = P(a), [x1, z1] = P(b); trim.push({ k: 'surf', x0, z0, x1, z1, n: along ? 'z' : 'x', out, y: wl, seed: hash('so', key, a) % 997 }); }
+  }
+  // the sim's pieces: a fishing hut a tarred plank shed under thatch, a boat drawn up (one keel up), nets on their poles
+  (w.shore || []).forEach((s, n) => {
+    const x = X(s.x), z = Z(s.y), h = hash('sh', s.x, s.y);
+    if (!inside(x, z)) return;
+    if (s.kind === 'hut') add({ type: 'house', x, z, rotation: 0, light: n === 0, opts: { width: 3, depth: 2.5, stories: 1, wall: SHORE_WALL, roof: 'roof_thatch', chimney: n !== 1, shutters: false, doorHood: false, woodpile: false, gableFront: false, sign: false, upperWall: '', seed: h % 997 } });
+    else if (s.kind === 'boat') trim.push({ k: 'beachboat', x, z, rot: -(s.rot || 0), keel: n % 2 === 1, seed: h % 997 });
+    else if (s.kind === 'nets') trim.push({ k: 'netrack', x, z, rot: -(s.rot || 0), seed: h % 997 });
+  });
+  if (trim.length) sprites.push({ tavern: { pieces: trim } });
+}
+
 /** @param {any} w @param {{ region?: string, stairs?: string, walls?: string}} [o] */
 function dungeon(w, o = {}) {
   const cells = w.level.cells;
@@ -1411,13 +1695,19 @@ function dungeon(w, o = {}) {
   // Mound and the Scrag Warren run past 256 of ours); round where the hero comes in when they're further apart
   const up = (w.structs || []).find((s) => s.id.startsWith('stairsup')) || sp, wl = w.stairwell, dn = wl ? { x: (wl.x0 + wl.x1) / 2, y: (wl.y0 + wl.y1) / 2 } : w.stairsAt || sp;
   const both = Math.abs(up.x - dn.x) < MAX_TILES - 24 && Math.abs(up.y - dn.y) < MAX_TILES - 24;
-  const { x0, y0, W, D } = crop(bx0 - 2, by0 - 2, bx1 + 2, by1 + 2, both ? (up.x + dn.x) / 2 : sp.x, both ? (up.y + dn.y) / 2 : sp.y);
+  // (a coast floor's sea runs well out past its rooms, coastGround: at two of ours the camera saw past the level's edge, a
+  // flat sheet of mist where the sea stopped)
+  const mg = w.level.plan && (w.level.rooms || []).some((r) => KIT_LOOK[r.kit]?.coast) ? 8 : 2;
+  const { x0, y0, W, D } = crop(bx0 - mg, by0 - mg, bx1 + mg, by1 + mg, both ? (up.x + dn.x) / 2 : sp.x, both ? (up.y + dn.y) / 2 : sp.y);
   const X = (x) => r2((x - x0) / 2), Z = (y) => r2((y - y0) / 2);
   // (a plan with no kit of its own, the Ninth Vault: its rooms' one kit, in the Reach; the Vale's Ninth Milestone keeps
   // the chasm's halls it was approved in)
   const L0 = w.level, one = L0.plan && L0.rooms?.length ? [...new Set(L0.rooms.map((r) => r.kit).filter(Boolean))] : [];
   // (a building's inside: its kits all inside ones, the first its floor's; wherever it stands)
-  const kit = w.kit || (one.length === 1 && SITES[w.site]?.region === 'reach' ? one[0] : one.length && one.every((k) => KIT_LOOK[k]?.inside) ? one[0] : null);
+  // (a coast floor, coastGround: its kits room by room, the sea round them; with no kit of its own, its sea cave's)
+  const coast = one.some((k) => KIT_LOOK[k]?.coast);
+  const kit = w.kit || (one.length === 1 && SITES[w.site]?.region === 'reach' ? one[0] : one.length && one.every((k) => KIT_LOOK[k]?.inside) ? one[0] : null)
+    || (coast ? one.find((k) => KIT_LOOK[k].coast === 'cave') || one.find((k) => KIT_LOOK[k]?.coast) : null);
   const look = KIT_LOOK[kit] || THEME_LOOK[w.theme] || DEFAULT_LOOK;
   const tiles = grid(W, D, look.wall), heights = grid(W, D, '6'), pools = w.pools || new Set();
   // an authored floor (plans.js) is dressed room by room: each room in its own kit's stone (the Keep's barracks in dressed
@@ -1426,7 +1716,7 @@ function dungeon(w, o = {}) {
     const r = L.plan && c && c.room >= 0 ? L.rooms[c.room] : null; if (!r) return look;
     const k = KIT_LOOK[r.kit] || look; return r.shape === 'cave' ? (k.caveLook ||= { ...k, wall: k.cave || 'x' }) : k;
   };
-  const looks = new Array(W * D).fill(null);
+  const looks = new Array(W * D).fill(null), roomOf = new Int16Array(W * D).fill(-1);
   // a tile is floor when any of its four of ours is (a corridor one of ours wide stays open); standing water where two are
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
     let floor = 0, wet = 0, lk = null, rm = -1;
@@ -1437,6 +1727,7 @@ function dungeon(w, o = {}) {
     }
     // (a palace's: its marble in a checker by the tile, its yard in flags: KIT_LOOK.palace)
     const yard = lk && lk.yard && L.plan && rm >= 0 && L.rooms[rm]?.role === 'entrance';
+    if (floor && rm >= 0) roomOf[j * W + i] = rm;
     if (floor) { looks[j * W + i] = lk; tiles[j][i] = wet >= 2 ? 'P' : yard ? lk.yard : lk.checker ? lk.floor[(i + j) & 1] : hash('d', i, j) % 100 < (lk.mix ?? 18) ? lk.floor[1] : lk.floor[0]; heights[j][i] = '2'; }
   }
   // a crypt's ledger stones in a row down each fighting room's long axis (round 3: scattered, they were lost), flat, so
@@ -1478,6 +1769,9 @@ function dungeon(w, o = {}) {
     // a wall in the stone of the room it stands by (an authored floor's rooms differ; elsewhere the floor's one look)
     for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const n = open(i + di, j + dj) ? looks[(j + dj) * W + i + di] : null; if (n && n !== look) { tiles[j][i] = n.wall; dj = di = 2; } }
   }
+  // (a coast floor: each room's own ground round it, the sea past it all; before the walls are cut and dressed below)
+  const propTiles = new Set(); if (coast) for (const [k] of w.props || []) { const [tx, ty] = k.split(',').map(Number); propTiles.add(Math.floor((ty - y0) / 2) * W + Math.floor((tx - x0) / 2)); }
+  if (coast) coastGround(W, D, tiles, heights, open, looks, roomOf, propTiles);
   // the Old Cellars' broken floor (world.js 'pit'): its tiles sunk two steps, rock at the bottom, a black hole to look into
   for (const [k, kind] of w.props || []) {
     if (kind !== 'pit') continue;
@@ -1494,11 +1788,12 @@ function dungeon(w, o = {}) {
   for (const a of stairLights.arches || []) sprites.push({ arch: { ...a, stone: archStone } });
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; const o = { id: `${ob.type}_${count[ob.type]}`, ...ob }; objects.push(o); return o; };
   const drop = (o) => { const i = objects.indexOf(o); if (i >= 0) objects.splice(i, 1); };   // (a lantern's light gone with it: a corner's stores take its bay)
-  const trim = inside ? [] : null;
+  const trim = inside || coast ? [] : null;
   // (the room a floor tile of Luminati's is in: a palace's bays dress by what their room was for, palaceRun)
   const roomAt = (i, j) => { if (!L.plan) return null; for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const c = cells.get(`${x0 + 2 * i + dx},${y0 + 2 * j + dy}`); if (c && c.room >= 0) return L.rooms[c.room]; } return null; };
   if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim, roomAt, look === KIT_LOOK.hulk ? SHIP_STORY : TAV_STORY); if (look.palace) trim.push(...palaceRunners(w, L, X, Z)); if (look.water) docksDress(W, D, open, add, trim, stairLights.arches || [], !!look.stone); if (rampart) rampartsDress(W, D, open, rampart, add, trim, stairLights.arches || []); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
-  if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h) { add({ ...c.ob(X, Z), onWall: true }); if (c.sprite) sprites.push(c.sprite); }   // (onWall: on a wall's top, not the room's own)   // (what stands on the walls' tops, where the stairs didn't take the wall)
+  if (coast) { coastDress(W, D, tiles, heights, open, looks, roomOf, add, trim, stairLights.arches || [], L, X, Z); if (!inside) sprites.push({ tavern: { pieces: trim } }); }
+  if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h && !(coast && c.sprite)) { add({ ...c.ob(X, Z), onWall: true }); if (c.sprite) sprites.push(c.sprite); }   // (onWall: on a wall's top, not the room's own)   // (what stands on the walls' tops, where the stairs didn't take the wall)
   for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity * (look.fill ? 0.45 : 1), distance: l.glow.distance * (look.fill ? 0.7 : 1), flicker: 0.08, nightOnly: false }
     : { type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });
   const magma = /** @type {[number, number][]} */ ([]);   // (the Magma Vault's magma tiles, of ours: built as one flow below)
@@ -1511,6 +1806,8 @@ function dungeon(w, o = {}) {
     // (the Magma Vault, the owner 2026-11-26: "flowing magma and a few furnaces, anvils"; sim/world.js magma_channel,
     // magma_pool, furnaces, anvils) its pieces in every kit they stand in (the vault's caves, the works' hall)
     if (kind === 'magma') { magma.push([tx, ty]); continue; }
+    // (a coast floor: each piece by the kind of room it stands in, coastProp; the rest as anywhere)
+    if (coast && coastProp(kind, x, z, h, looks[Math.floor(z) * W + Math.floor(x)], { add, trim, open, room: roomAtProp(w, k) })) continue;
     if (MAGMA_3D[kind]) { MAGMA_3D[kind](tx, ty, h, { X, Z, add, sprites, props: w.props }); continue; }
     if (inside && look.ramparts && RAMP_3D[kind]) { RAMP_3D[kind](x, z, h, kind, { add, trim, open }); continue; }
     // (the hulk's way in, a gangway or the Grace's reef ladder, takes the wharf's rope coils and nets: with no drawer of
@@ -1540,8 +1837,8 @@ function dungeon(w, o = {}) {
   if (magma.length) magmaFlow(magma, X, Z, add, sprites);
   const level = frame({ name: w.siteName || 'The Old Barrows', W, D, tiles, heights, objects, spawn: { x: X(sp.x), z: Z(sp.y), facing: 'up' },
     // (black beyond the walls, as Emberlit's: a backdrop colour, which the fog takes too, so the far rooms fade to it)
-    environment: { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: true, backdrop: look.backdrop || '#040306', ...(look.water ? { harbour: true } : {}) },
-    water: look.water ? { flow: [0.03, 0.05], reflect: 0.45, neutral: 0.7 } : null, waterLevel: look.water ? DOCK_WL : 0.4 });   // (a harbour's water nearly still, the fog's colour in it: world.js harbourAir)
+    environment: { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: true, backdrop: look.backdrop || '#040306', ...(look.water ? { harbour: true } : {}), ...(coast ? { coast: true } : {}) },
+    water: look.water ? { flow: [0.03, 0.05], reflect: 0.45, neutral: 0.7 } : coast ? COAST_WATER : null, waterLevel: look.water || coast ? DOCK_WL : 0.4 });   // (a harbour's water nearly still, the fog's colour in it: world.js harbourAir)
   if (look.vents) vents(W, D, heights, open, add, look.vents);   // (the vault's and the deep forges' ember beds)
   const amb = ambientOf(kit || (AMB_TINT[w.theme] ? w.theme : kit));
   return { level, sprites, ambient: amb, origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D } };
