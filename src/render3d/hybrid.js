@@ -243,7 +243,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   // A trip there then skips its build; if the sim's world converts to anything else, it's built as before.
   const AHEAD_S = 1.5;
   let aheadFor = null, builtAt = 0;
-  let api = null, built = null, building = null, last = 0, origin = { x: 0, y: 0 }, lastC = null, ours = [], kept = [], oursState = '', oursCheck = 0, houses = [], ambient = null;
+  let api = null, built = null, building = null, last = 0, origin = { x: 0, y: 0 }, lastC = null, ours = [], kept = [], oursState = '', oursCheck = 0, houses = [], ambient = null, held = null;   // (held: a level's own hour, the pass's day: convert.js)
   // (the boatmen stood in the Tidemark's waiting boats: convert.js BOATS, decor, never the sim's; the world they were made for)
   let decor = /** @type {{ name: string, x: number, z: number, air: number, row: number }[]} */ ([]), decorFor = null;
   const state = { level: null, sprites: 0, loads: 0, failed: '', timing: { convert: 0, sprites: 0, load: 0 } };
@@ -283,7 +283,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         const r = convertWorld(w, { region: w.region || region, stairs: new URLSearchParams(location.search).get('stairs') || '', walls: new URLSearchParams(location.search).get('walls') || '' });   // (?stairs=plain: the stairs before their arches, docs/dungeon-stairs-proposal.md)
         const t1 = performance.now(); state.timing = { convert: Math.round(t1 - t0), load: 0, sprites: 0 };
         origin = r.origin; state.level = `${r.level.width}×${r.level.depth}`; state.sprites = r.sprites.length; state.loads++;
-        ours = r.sprites.filter((q) => q.prop); kept = r.sprites.filter((q) => !q.prop); oursState = propState(w, ours); ambient = r.ambient || null;
+        ours = r.sprites.filter((q) => q.prop); kept = r.sprites.filter((q) => !q.prop); oursState = propState(w, ours); ambient = r.ambient || null; held = r.hour ?? null;
         decor = r.figures || []; decorFor = w;
         houses = r.level.objects.filter((o) => o.type === 'house' && o.name).map((o) => ({ o, sv: (w.services || []).find((v) => v.name === o.name) })).filter((q) => q.sv);
         const sprites = r.sprites.map((q) => (q.prop ? propSprite(w, q) : q)).filter(Boolean), t2 = performance.now();
@@ -351,7 +351,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         if (d.guide) rings.push({ x: X, z: Z, col: GUIDE_RGB, a: 0.9 });
         // in a fight, a ring at each fighter's feet in its side's colour (Emberlit's footMark), on the ground in 3D
         if (c.rings && d.team !== undefined && TEAM_RGB[d.team] && !(d.look && (d.look.ghost || d.look.dissolve))) {
-          rings.push({ x: X, z: Z, col: TEAM_RGB[d.team], a: sim.world.arena ? 0.9 : 0.55 });   // (on the Bowl's sunlit sand a ring at 0.55 all but vanished)
+          rings.push({ x: X, z: Z, col: TEAM_RGB[d.team], a: sim.world.arena || held != null ? 0.9 : 0.55 });   // (and on the pass's snow)   // (on the Bowl's sunlit sand a ring at 0.55 all but vanished)
           if (d.uid && d.uid === sim.focusId) mark = { x: X, z: Z };   // the foe a tap set the party on (battle.js focus)
         }
       }
@@ -370,7 +370,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       state.actors = actors.length; state.rings = rings.length; state.pots = potsNow.length;   // (dev: what this frame stood up)
       const p = sim.state.player, wx = sim.world.kind === 'dungeon' ? null : weatherNow(sim);
       const arena = !!sim.world.arena;                       // (the Bowl's Quarry Ring: a bright day, whatever the hour, convert.js arena)
-      api.frame({ dt, focus: [(mx - origin.x) / 2, GROUND_Y, (my - origin.y) / 2], ppu, hour: arena ? ARENA_HOUR : hourOf(c.t ?? sim.state.t),
+      api.frame({ dt, focus: [(mx - origin.x) / 2, GROUND_Y, (my - origin.y) / 2], ppu, hour: arena ? ARENA_HOUR : held ?? hourOf(c.t ?? sim.state.t),
         weather: wx && wx.k > 0.3 && (wx.kind === 'rain' || wx.kind === 'snow') ? wx.kind : 'clear',
         fog: wx && wx.kind === 'fog' ? wx.k : 0,                    // (Luminati has no fog weather: its air thickened; Emberlit's overlay drifts the banks)
         hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards, beasts, mark, ambient, bits, water: waterOf(c.battle, origin), gates: gatesOf(sim.world, origin, now),
@@ -400,7 +400,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         light: c.emi ? { emi: c.emi, w: c.nvw, h: c.nvh, x: (c.rx - c.ox) * (c.S / c.k), y: (c.ry - c.oy) * (c.S / c.k), px: c.S / c.k,
           key: c.key ? { base: c.key.base, step: c.key.step, origin: origin.x + origin.y } : null } : null,
         // the hero's ember-wisp (Emberlit's carry light): a light at the shoulder, strong underground and by night, gone by day
-        carry: arena ? 0 : sim.world.kind === 'dungeon' ? 1 : CARRY[Math.floor((((c.t ?? sim.state.t) % DAY_S) + DAY_S) % DAY_S / PART_S)] });
+        carry: arena || held != null ? 0 : sim.world.kind === 'dungeon' ? 1 : CARRY[Math.floor((((c.t ?? sim.state.t) % DAY_S) + DAY_S) % DAY_S / PART_S)] });
     },
   });
   // (the bundle's entry at its build's version, version.json asked for afresh: a browser that kept an old entry built the

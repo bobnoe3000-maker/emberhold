@@ -24,6 +24,7 @@ import { PROP_LIGHT } from '../render/gsprite.js';
 import { KIT_TINT } from '../render/palette.js';
 import { SITES } from '../sim/sites.js';
 import { CAMP_BY } from '../sim/camps.js';
+import { PLANS } from '../sim/plans.js';
 
 /** the most of ours a level takes each way: 128 of Luminati's */
 export const MAX_TILES = 256;
@@ -118,6 +119,16 @@ export const LEGEND = {
   '^': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'N', walkable: true }, v: { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'S', walkable: true },
   '>': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'E', walkable: true }, '<': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'W', walkable: true },
 };
+// the pass (docs/pass-dungeon.md; docs/dungeon-looks-plan.md items 13 and 10, the owner's three references): the ledges'
+// snowfield, wind-scoured and flecked with grit, a scoured patch of it; the dark blue-grey rock in big facets with snow on
+// its tops, and the gully's brown; the bridge's planks over its truss; the Praetory's walls, dressed stone under rime
+// (painted by world.js, ours; letters picked clear of every other kit's)
+Object.assign(LEGEND, {
+  'ä': { top: 'pass_snow', side: 'pass_rock', walkable: true }, 'ö': { top: 'pass_scour', side: 'pass_rock', walkable: true },
+  'ø': { top: 'pass_cap', side: 'pass_rock', walkable: false }, 'å': { top: 'pass_cap', side: 'pass_brown', walkable: false },
+  'æ': { top: 'pass_plank', side: 'pass_truss', walkable: true },
+  'é': { top: 'pass_cap', side: 'frost_wall', walkable: false }, 'ê': { top: 'frost_flag', side: 'frost_wall', walkable: true },
+});
 // a town's walls by its region (the owner, 2026-11-02: "bring back the wooden walls to thornwick? Save stone walls for
 // another town"): the Vale's are Thornwick's timber palisade on an earth bank, with its watchtowers and gatehouse (world
 // doc §3.1), as Emberlit draws them: our own baked pieces (town-vale's curtain, tower, gatehouse) stood on a bank one
@@ -203,7 +214,7 @@ const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, d: 2, G: 1, g: 0 };
  * The world the sim is in, as a Luminati level, and the pieces of our own art to stand in it.
  * @param {any} w the sim's world (sim.world)
  * @param {{ region?: string, stairs?: string, walls?: string}} [o]
- * @returns {{ level: any, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps: number }, sprites: { id?: string, prop?: string, tx?: number, ty?: number, flat?: boolean, here?: boolean, x: number, z: number }[], figures?: { name: string, x: number, z: number, air: number, row: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
+ * @returns {{ level: any, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps: number }, hour?: number, sprites: { id?: string, prop?: string, tx?: number, ty?: number, flat?: boolean, here?: boolean, x: number, z: number }[], figures?: { name: string, x: number, z: number, air: number, row: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
  */
 export function convertWorld(w, o = {}) {
   return w.arena ? arena(w, o) : w.kind === 'dungeon' ? dungeon(w, o) : outdoor(w, o.region || w.region || 'vale');
@@ -670,6 +681,18 @@ KIT_LOOK.hulk = { floor: ['_', '#'], wall: '@', cave: '@', hour: 19.6, mix: 0, i
 // fighting room's middle (`pools`, as the crypt's), the candelabra gilt
 const PALACE_FILL = { sky: [1.1, 1.02, 0.92], ground: [0.62, 0.52, 0.42], lamps: 2.1 };
 KIT_LOOK.palace = { floor: ['(', ')'], yard: '/', wall: '|', cave: '|', hour: 19.6, mix: 0, checker: true, pools: true, inside: true, palace: true, fill: PALACE_FILL };
+// (docs/pass-dungeon.md; docs/dungeon-looks-plan.md item 13) the pass: the Pilgrims' Stair's ledges in the open air, no
+// walls: the rock at each ledge's back, the drop into the cloud at its front (passGround, passDress), its bridges over
+// the crevasses. A cold high light held whatever the hour (`held`; hybrid.js), the sun out (`fill.sun`), the cloud's own
+// pale for the sky past the edges (`backdrop`; `open`: not a room, Luminati's sky and sun); the gully its brown rock
+const PASS_FILL = { sky: [0.66, 0.72, 0.84], ground: [0.38, 0.4, 0.46], lamps: 1.1, sun: 0.8 };   // (round 1: the snow blown out to white)
+KIT_LOOK.pass = { floor: ['ä', 'ö'], wall: 'ø', cave: 'ø', hour: 10.6, held: 10.6, mix: 0, inside: true, pass: true, open: true, fill: PASS_FILL, backdrop: '#c4cfdc' };
+KIT_LOOK.gully = { ...KIT_LOOK.pass, wall: 'å', cave: 'å', brown: true };
+// (item 10) the Praetory's frostkeep: the barracks kit's fortress rooms in frost cobbles, walls of dressed stone under
+// rime, icicles along their tops, snow drifted in at the doors, the guard frozen at their posts (frostDress, FROST_3D)
+const FROST_FILL = { sky: [0.66, 0.7, 0.8], ground: [0.36, 0.36, 0.4], lamps: 1.5 };   // (round 1: underground's violet through a cold tint went navy)
+KIT_LOOK.frostkeep = { floor: ['ê', 'ê'],   // (round 2: Luminati's frost cobble, its blue, read navy under the fort's cold fill: our flags, rime in their joints)
+   wall: 'é', cave: 'é', hour: 19.4, mix: 0, frost: true, fill: FROST_FILL };
 const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KIT_LOOK.cellar, nave: KIT_LOOK.nave, cinder: KIT_LOOK.cultcut, chasm: { floor: ['U', 'm'], wall: 'x', hour: 22.8 },
   warren: KIT_LOOK.warren, ember: KIT_LOOK.ember, lava: KIT_LOOK.lava, mire: KIT_LOOK.mound, sluice: KIT_LOOK.locks, poison: KIT_LOOK.vats, water: KIT_LOOK.abbey };
 /** the fill's tint underground for the Reach's kits and themes (palette.js KIT_TINT holds the Vale's and the Fens'):
@@ -680,6 +703,7 @@ const AMB_TINT = { pithead: [1.08, 0.97, 0.86], warren: [1.04, 0.96, 0.88], embe
   // (the inn: firelight's warmth in the fill, a lit room's not a cellar's)
   tavern: [1.3, 1.06, 0.84], tavern_cellar: [1.3, 1.06, 0.84],
   seacave: [0.94, 1.0, 1.12], hulk: [1.22, 1.04, 0.86] };
+AMB_TINT.frostkeep = [0.9, 1.0, 1.2];   // (the Praetory's: a cold fill, the torches warm against it)
 const DEFAULT_LOOK = { floor: ['k', 'm'], wall: 'x', hour: 19.4 };
 /** an overland prop of ours (gsprite.js), a spawn point's dressing (sim/camps.js) */
 const OVERLAND_OURS = new Set(['tent', 'carcass', 'burrow', 'rack', 'banner', 'standard', 'bedroll', 'reeds', 'boat', 'bound', 'urns', 'candles', 'saint', 'chains']);   // (v1.68: every land's spawn points' dressing)
@@ -776,7 +800,7 @@ const INSIDE_FILL = { sky: [1.05, 0.88, 0.72], ground: [0.56, 0.45, 0.36] };   /
 export function ambientOf(kit) {
   // (a building's inside is lit, not a cellar: a lamp-and-hearth warmth in the fill, the floor readable from wall to wall,
   // the lamps a little stronger in their pools: docs/tavern-dungeon.md)
-  if (KIT_LOOK[kit]?.inside) { const F = KIT_LOOK[kit].fill || INSIDE_FILL; return { sky: F.sky, ground: F.ground, i: 1, sun: 0, lamps: F.lamps || 1.9 }; }   // (a crypt's own, cold: CRYPT_FILL)
+  if (KIT_LOOK[kit]?.inside || KIT_LOOK[kit]?.frost) { const F = KIT_LOOK[kit].fill || INSIDE_FILL; return { sky: F.sky, ground: F.ground, i: 1, sun: F.sun || 0, lamps: F.lamps || 1.9 }; }   // (sun: the pass's, open to the sky)   // (a crypt's own, cold: CRYPT_FILL)
   // (the tint squared: at its own strength every floor read one navy; the dig wants its warmth, the gallery its cold)
   const t = (KIT_TINT[kit] || AMB_TINT[kit] || [1, 1, 1]).map((v) => v * v), c = (k) => AMB_BASE.map((v, i) => r2(v * t[i] * k));
   // (the owner on the phone, 2026-11-02: "The dungeons are too dark". At Emberlit's own brightness a room's floor away
@@ -1401,6 +1425,176 @@ const DOCK_3D = {
   brazier: (x, z, h, k, ctx) => DOCK_3D.lantern(x, z, h, k, ctx),   // (the way in's: lamps, as every light on a wharf)
 };
 
+// ── the pass (the Pilgrims' Stair, docs/pass-dungeon.md; docs/dungeon-looks-plan.md item 13, from the owner's three
+// references: a snowfield with a frozen pool among big blocks of dark rock, ledges over a drop into cloud with a rope
+// bridge across a crevasse, a canyon of brown rock with a frozen river and broken bridges). No walls: behind a ledge
+// (north of it, or west) the rock stands in big snow-topped blocks, rising as it goes back; in front (south, east) the
+// ledge's edge and the drop into the cloud; between two ledges the drop. A tile with a ledge within six to its north-west
+// is in front of it (the camera looks over it): no rock there, whatever lies behind it, as the ramparts keep their houses.
+/** the pass's bridges: the plan's `bridge` halls, in Luminati's tiles. Along a bridge only the tiles all of whose four of
+ *  ours are the hall's (its ends meet the ledges); across it every tile it touches (a strip of snow along the planks read
+ *  as more ledge) @returns {{ i0: number, i1: number, j0: number, j1: number, along: 'x' | 'z', kind: string }[]} */
+function passBridges(w, x0, y0) {
+  const P = PLANS[w.site]?.floors[w.depth || 0], L = w.level; if (!P || !L.plan) return [];
+  const sp = P.spaces[0], r0 = L.rooms.find((r) => r.part === sp.id); if (!r0) return [];
+  const ox = r0.x0 - sp.x, oy = r0.y0 - sp.y, byId = new Map(P.spaces.map((s) => [s.id, s]));
+  return P.halls.filter((h) => h.bridge).map((h) => {
+    const a = byId.get(h.from), alongX = h.x + h.w === a.x || a.x + a.w === h.x;
+    const sx0 = ox + h.x - x0, sy0 = oy + h.y - y0, sx1 = sx0 + h.w, sy1 = sy0 + h.h;   // (ours, from the crop's corner)
+    const inner = (s0, s1) => [Math.ceil(s0 / 2), Math.floor(s1 / 2) - 1], touch = (s0, s1) => [Math.floor(s0 / 2), Math.ceil(s1 / 2) - 1];
+    const [i0, i1] = alongX ? inner(sx0, sx1) : touch(sx0, sx1), [j0, j1] = alongX ? touch(sy0, sy1) : inner(sy0, sy1);
+    return { i0, i1, j0, j1, along: alongX ? 'x' : 'z', kind: h.bridge };
+  });
+}
+/** the pass's ground: the ledges' snow (a scoured patch of it in broad patches), the bridges' planks, the rock behind the
+ *  ledges a little higher the further back, the drop everywhere else @returns {{ F: Uint8Array, rock: Uint8Array }} */
+function passGround(W, D, tiles, heights, open0, looks, bridges, hallAt) {
+  const F = new Uint8Array(W * D);   // 1 a ledge, 2 a bridge
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) if (open0(i, j)) F[j * W + i] = 1;
+  const crev = new Uint8Array(W * D), inb = (i, j) => i >= 0 && j >= 0 && i < W && j < D;
+  for (const b of bridges) {
+    for (let j = b.j0; j <= b.j1; j++) for (let i = b.i0; i <= b.i1; i++) if (inb(i, j) && F[j * W + i]) { F[j * W + i] = 2; tiles[j][i] = 'æ'; }
+    // (beside a bridge the crevasse is kept open: no rock across from its deck)
+    for (let j = b.j0 - (b.along === 'x' ? 5 : 0); j <= b.j1 + (b.along === 'x' ? 5 : 0); j++) for (let i = b.i0 - (b.along === 'z' ? 5 : 0); i <= b.i1 + (b.along === 'z' ? 5 : 0); i++) if (inb(i, j)) crev[j * W + i] = 1;
+  }
+  const ledge = (i, j) => inb(i, j) && F[j * W + i] === 1, any = (i, j) => inb(i, j) && F[j * W + i] > 0;
+  const hallTiles = []; for (let k = 0; k < W * D; k++) if (F[k] === 1 && hallAt(k % W, (k / W) | 0)) hallTiles.push(k);
+  const rock = new Uint8Array(W * D);   // how far behind its ledge a rock tile stands (1–4), and 8 if the gully's brown
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    const k0 = j * W + i; if (F[k0]) continue;
+    let d = 0, lk = null;
+    for (let k = 1; k <= 4 && !d; k++) for (const [a, b] of [[0, k], [k, 0], [k, k]]) if (!d && ledge(i + a, j + b)) { d = k; lk = looks[(j + b) * W + i + a]; }
+    let front = false;
+    for (let a = 0; a <= 6 && !front; a++) for (let b = 0; b <= 6; b++) if ((a || b) && a + b <= 8 && any(i - a, j - b)) { front = true; break; }
+    // (round 1: taller columns, a step each, read as stacked cubes: a low plinth now, the blocks on it the rock)
+    if (d && !front && !crev[k0]) { tiles[j][i] = lk?.brown ? 'å' : 'ø'; heights[j][i] = (4 + d + Math.floor(vnoise(i, j, 'pr', 3) * 2.2)).toString(36); rock[k0] = d | (lk?.brown ? 8 : 0); continue; }
+    tiles[j][i] = ' '; heights[j][i] = '0';
+  }
+  // (round 1: the scoured snow by the tile, in patches, read as a grid of square blocks: the scour is the texture's own now;
+  // the halls that aren't bridges, the way trodden, in the scoured snow)
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) if (F[j * W + i] === 1) { const lk = looks[j * W + i]; if (lk?.pass) tiles[j][i] = lk.floor[0]; }
+  for (const r of hallTiles) if (F[r] === 1) tiles[(r / W) | 0][r % W] = 'ö';
+  return { F, rock };
+}
+/** the pass's dressing: the cloud below, the ledges' faces down into it, the rock's blocks, pines on the rock, the
+ *  mountains far off, the snow falling, the bridges and the frozen river */
+function passDress(W, D, { F, rock }, heights, looks, add, ptrim, bridges, clear = []) {
+  const inb = (i, j) => i >= 0 && j >= 0 && i < W && j < D, ledge = (i, j) => inb(i, j) && F[j * W + i] === 1, voidAt = (i, j) => !inb(i, j) || heights[j][i] === '0';
+  // the cloud's veil, by each tile's distance from a ledge or a bridge (the wharf's mist)
+  { const dist = new Uint8Array(W * D).fill(9), q = [];
+    for (let k = 0; k < W * D; k++) if (F[k]) { dist[k] = 0; q.push(k); }
+    for (let h = 0; h < q.length; h++) { const k = q[h], i = k % W, j = (k / W) | 0, d = dist[k] + 1; if (d > 8) continue;
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + di, jj = j + dj; if (!inb(ii, jj)) continue; const kk = jj * W + ii; if (dist[kk] > d) { dist[kk] = d; q.push(kk); } } }
+    const rows = []; for (let j = 0; j < D; j++) { let r = ''; for (let i = 0; i < W; i++) r += rock[j * W + i] ? 0 : dist[j * W + i]; rows.push(r); }
+    ptrim.push({ k: 'cloud', W, D, rows }); }
+  // the ledges' faces down into the cloud: their south and east edges over the drop (the faces the camera sees), in runs
+  const lines = new Map(), push = (key, t) => (lines.get(key) || lines.set(key, []).get(key)).push(t);
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    if (!ledge(i, j)) continue;
+    if (voidAt(i, j + 1)) push(`s|${j + 1}`, i);
+    if (voidAt(i + 1, j)) push(`e|${i + 1}`, j);
+  }
+  for (const [key, ts] of lines) {
+    ts.sort((a, b) => a - b);
+    const [side, c0] = key.split('|'), c = +c0, along = side === 's';
+    const runs = []; for (const t of ts) { const r = runs[runs.length - 1]; if (r && t === r[1]) r[1] = t + 1; else runs.push([t, t + 1]); }   // (round 2: split, the veils overlapped and stood a pale pillar in the cloud)
+    for (const [a, b] of runs) {
+      const lk = looks[along ? (c - 1) * W + a : a * W + c - 1];
+      ptrim.push({ k: 'cliff', x0: along ? a : c, z0: along ? c : a, x1: along ? b : c, z1: along ? c : b, n: along ? 'z' : 'x', out: 1, seed: hash('pc', key, a) % 997, brown: !!lk?.brown });
+    }
+  }
+  // the rock's blocks: big ones along a ledge's back, standing on its snow against the rock; smaller ones over the rock's
+  // tops, breaking its steps (Luminati's faceted boulder: the references' angular blocks); a pine here and there up there
+  let pines = 0;
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    const d = rock[j * W + i] & 7, brown = !!(rock[j * W + i] & 8); if (!d) continue;
+    const hh = hash('pk', i, j), top = parseInt(heights[j][i], 36) * 0.5;
+    if (clear.some((c) => Math.abs(i + 0.5 - c.x) < c.r && Math.abs(j + 0.5 - c.z) < c.r)) continue;   // (round 2: the blocks stood over the fall, the shrine and the stair's arch)
+    if (d === 1 && hh % 4 !== 3) {
+      const s = 1.3 + (hh % 7) * 0.17, fs = ledge(i, j + 1), fe = ledge(i + 1, j);
+      ptrim.push({ k: 'rock', x: r2(i + 0.5 + (fe ? 0.3 : 0) + ((hh >> 3) % 5 - 2) * 0.08), y: 0.7, z: r2(j + 0.5 + (fs ? 0.3 : 0) + ((hh >> 6) % 5 - 2) * 0.08), s: [r2(s * 1.15), r2(s * (1.0 + (hh % 5) * 0.12)), r2(s)], yaw: r2((hh % 13) * 0.48), seed: hh % 997, brown });
+    } else if (d >= 2 && hh % 2 === 0) {
+      const s = 1.2 + (hh % 6) * 0.2;
+      ptrim.push({ k: 'rock', x: r2(i + 0.5 + ((hh >> 4) % 5 - 2) * 0.1), y: r2(top - s * 0.5), z: r2(j + 0.5 + ((hh >> 7) % 5 - 2) * 0.1), s: [r2(s * 1.15), r2(s * (0.9 + (hh % 3) * 0.2)), r2(s)], yaw: r2((hh % 11) * 0.55), seed: hh % 997, brown, flat: 0.3 });
+    }
+    if (d >= 2 && hh % 13 === 5 && pines < 8) { pines++; add({ type: 'tree', x: r2(i + 0.5), z: r2(j + 0.5), collider: false, opts: { kind: 'snowpine', height: r2(2.6 + (hh % 5) * 0.35), seed: hh % 997 } }); }
+  }
+  // the mountains far off, standing up out of the cloud round the pass (behind it and to its sides, never before it; round
+  // 1: their tops under the ledges', one close in to the north-west read as a rock floating in the sky)
+  for (const [x, z, s] of [[-26, D * 0.35, 1.6], [W * 0.3, -28, 1.8], [-22, -20, 1.5], [W + 22, -12, 1.3]]) ptrim.push({ k: 'peak', x: r2(x), z: r2(z), s, seed: hash('pp', x, z) % 997 });
+  // the snow falling (Luminati's own, in a box that follows the camera; a light fall, not a storm)
+  add({ type: 'emitter', x: r2(W / 2), z: r2(D / 2), preset: 'snow', dy: 5, size: [44, 14, 44], count: 600, params: { followCamera: true, alpha: 0.9, size: [0.15, 0.24] } });   // (round 3: the preset's flakes, two pixels at the game's zoom, didn't read)
+  // the bridges; under the one over the river, the river frozen at the crevasse's foot, between the ledges either side
+  for (const b of bridges) {
+    ptrim.push({ k: 'bridge', x0: b.i0, z0: b.j0, x1: b.i1 + 1, z1: b.j1 + 1, along: b.along });
+    if (b.kind !== 'river') continue;
+    if (b.along === 'x') {
+      let ja = b.j0, jb = b.j1; while (ja > 0 && (ledge(b.i0 - 1, ja - 1) || ledge(b.i1 + 1, ja - 1))) ja--; while (jb < D - 1 && (ledge(b.i0 - 1, jb + 1) || ledge(b.i1 + 1, jb + 1))) jb++;
+      ptrim.push({ k: 'river', x0: b.i0, x1: b.i1 + 1, z0: ja - 3, z1: jb + 4, y: -3.4, along: 'z' });
+    } else {
+      let ia = b.i0, ib = b.i1; while (ia > 0 && (ledge(ia - 1, b.j0 - 1) || ledge(ia - 1, b.j1 + 1))) ia--; while (ib < W - 1 && (ledge(ib + 1, b.j0 - 1) || ledge(ib + 1, b.j1 + 1))) ib++;
+      ptrim.push({ k: 'river', x0: ia - 3, x1: ib + 4, z0: b.j0, z1: b.j1 + 1, y: -3.4, along: 'x' });
+    }
+  }
+}
+/** the pass's pieces (sim/world.js, the pass's dressing): the pilgrims' prayer posts, the doorways' lanterns hung from
+ *  them, cairns, snow-laden pines, the blue ice's crystals (Luminati's own ice, glowing), the frozen fall, the shrine, the
+ *  packs the pilgrims left (a frozen pool's ice is gathered: dungeon()) */
+const PASS_3D = {
+  pass_post: (x, z, h, k, { ptrim }) => ptrim.push({ k: 'post', x, z, seed: h % 997 }),
+  lantern: (x, z, h, k, { ptrim, add }) => { ptrim.push({ k: 'post', x, z, seed: h % 997, lamp: true }); add({ type: 'light', x: r2(x - 0.46), z, dy: 1.9, color: '#ffb45e', intensity: 2.6, distance: 4.5, flicker: 0.12, nightOnly: false }); },
+  pass_cairn: (x, z, h, k, { ptrim }) => ptrim.push({ k: 'cairn', x, z, seed: h % 997, s: 1 + (h % 3) * 0.15 }),
+  pass_pine: (x, z, h, k, { add }) => add({ type: 'tree', x, z, collider: false, opts: { kind: 'snowpine', height: r2(3.0 + (h % 4) * 0.3), seed: h % 997 } }),
+  pass_crystals: (x, z, h, k, { add }) => {
+    add({ type: 'crag', x, z, rotation: r2((h % 7) * 0.9), opts: { kind: 'spire', stone: 'ice', height: r2(1.4 + (h % 4) * 0.25), width: 0.9, seed: h % 997 } });
+    for (const [dx, dz, s] of [[0.6, 0.3, 0.5], [-0.5, 0.45, 0.42]]) add({ type: 'rock', x: r2(x + dx), z: r2(z + dz), opts: { stone: 'ice', size: s, seed: (h + Math.round(dx * 10)) % 97 } });
+    if (h % 2 === 0) add({ type: 'light', x, z: r2(z + 0.7), dy: 1.0, color: '#7fd8ff', intensity: 2.4, distance: 3.8, flicker: 0, nightOnly: false });
+  },
+  pass_icefall: (x, z, h, k, { ptrim, add, wall, heights }) => {
+    const n = wall?.side === 'w' ? 'x' : 'z', fx = n === 'x' ? r2(wall.x + 0.25) : x, fz = n === 'z' && wall ? r2(wall.z + 0.25) : z;
+    const bi = n === 'x' ? Math.floor(fx) - 1 : Math.floor(fx), bj = n === 'z' ? Math.floor(fz) - 1 : Math.floor(fz), top = Math.max(4.4, (parseInt(heights[bj]?.[bi] || '8', 36) || 8) * 0.5 + 0.2);
+    ptrim.push({ k: 'icefall', x: fx, z: fz, n, top, seed: h % 997 });
+    for (const [du, s] of [[-1.1, 2.2], [1.2, 2.0], [0, 2.6]]) ptrim.push({ k: 'rock', x: n === 'z' ? r2(fx + du) : r2(fx - 1.3), y: 0.6, z: n === 'z' ? r2(fz - 1.3) : r2(fz + du), s: [s, r2(top - 0.6), r2(s * 0.8)], yaw: r2(du), seed: (h + Math.round(du * 10)) % 997, brown: true, detail: 1, flat: 0.25 });   // (the rock the fall comes down: round 1, it hung on a low step)
+    add({ type: 'light', x: n === 'z' ? fx : r2(fx + 1.2), z: n === 'z' ? r2(fz + 1.2) : fz, dy: 1.6, color: '#86dcff', intensity: 4, distance: 5, flicker: 0, nightOnly: false });
+  },
+  pass_shrine: (x, z, h, k, { ptrim }) => ptrim.push({ k: 'shrine', x, z: r2(z - 0.25), seed: h % 997 }),
+  barrels: (x, z, h, k, ctx) => RAMP_3D.barrels(x, z, h, k, ctx), crates: (x, z, h, k, ctx) => RAMP_3D.crates(x, z, h, k, ctx), sacks: (x, z, h, k, ctx) => RAMP_3D.sacks(x, z, h, k, ctx),
+};
+PASS_3D.brazier = PASS_3D.lantern; PASS_3D.torch = PASS_3D.lantern;
+// ── the Praetory's frost (item 10): icicles along every back wall's top, snow drifted in at the doors (its tiles trodden
+// snow, a drift either side), and the guard frozen at their posts (FROST_3D)
+function frostDress(W, D, tiles, heights, open, w, x0, y0, add, ptrim) {
+  const FLR = String(FLOOR);
+  // the icicles: under each back wall's top (its face to the room: south or east), in runs of one height
+  const lines = new Map(), push = (key, t) => (lines.get(key) || lines.set(key, []).get(key)).push(t);
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    if (heights[j][i] === FLR || heights[j][i] === '0' || tiles[j][i] === ' ') continue;
+    const hy = parseInt(heights[j][i], 36); if (hy < 6) continue;   // (a near wall broken down low: none)
+    if (open(i, j + 1)) push(`s|${j + 1}|${hy}`, i);
+    if (open(i + 1, j)) push(`e|${i + 1}|${hy}`, j);
+  }
+  for (const [key, ts] of lines) {
+    ts.sort((a, b) => a - b);
+    const [side, c0, hy] = key.split('|'), c = +c0, along = side === 's', y = +hy * 0.5;
+    const runs = []; for (const t of ts) { const r = runs[runs.length - 1]; if (r && t === r[1]) r[1] = t + 1; else runs.push([t, t + 1]); }
+    for (const [a, b] of runs) ptrim.push({ k: 'icicles', x0: along ? a : c, z0: along ? c : a, x1: along ? b : c, z1: along ? c : b, n: along ? 'z' : 'x', out: 1, y, seed: hash('fi', key, a) % 997 });
+  }
+  // the doors: where a hall meets a room, trodden snow on the tiles and a drift to one side
+  const cells = w.level.cells, seen = new Set();
+  for (const [k, c] of cells) {
+    if (c.kind !== 'floor' || c.room >= 0) continue;
+    const [x, y] = k.split(',').map(Number);
+    if (![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => { const n = cells.get(`${x + dx},${y + dy}`); return n && n.kind === 'floor' && n.room >= 0; })) continue;
+    const i = Math.floor((x - x0) / 2), j = Math.floor((y - y0) / 2), key = `${i},${j}`; if (seen.has(key)) continue; seen.add(key);
+    for (const [di, dj] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) if (open(i + di, j + dj) && tiles[j + dj][i + di] === 'ê') tiles[j + dj][i + di] = 'h';
+    const h = hash('fd', i, j); if (h % 3 === 0) add({ type: 'rock', x: r2(i + 0.5 + ((h >> 2) % 3 - 1) * 0.6), z: r2(j + 0.5 + ((h >> 4) % 3 - 1) * 0.6), opts: { stone: 'snow', size: r2(0.9 + (h % 4) * 0.2), seed: h % 97 } });
+  }
+}
+/** the Praetory's pieces: a guard frozen at his post (our bound legionary, the ice grown up round him) */
+const FROST_3D = {
+  frozen_guard: (x, z, h, k, { ptrim, sprites, tx, ty }) => { sprites.push({ prop: 'bound', kind: 'bound', tx, ty, x, z }); ptrim.push({ k: 'iceshell', x, z, seed: h % 997 }); },
+};
+
 /** @param {any} w @param {{ region?: string, stairs?: string, walls?: string}} [o] */
 function dungeon(w, o = {}) {
   const cells = w.level.cells;
@@ -1470,8 +1664,9 @@ function dungeon(w, o = {}) {
   const open = (i, j) => i >= 0 && j >= 0 && i < W && j < D && heights[j][i] === '2';
   if (look.water) for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) if (heights[j][i] !== '2') { tiles[j][i] = look.wall; heights[j][i] = '0'; }
   const rampart = look.ramparts ? rampartGround(W, D, tiles, heights, open) : null;   // (the ramparts: the houses' street behind, the parapet in front, the drop)
+  const passB = look.pass ? passBridges(w, x0, y0) : [], pass = look.pass ? passGround(W, D, tiles, heights, open, looks, passB, (i, j) => { for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const c = cells.get(`${x0 + 2 * i + dx},${y0 + 2 * j + dy}`); if (c && c.kind === 'floor' && c.room >= 0) return false; } return true; }) : null;   // (the pass: the rock behind its ledges, the drop in front, its bridges)
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
-    if (heights[j][i] === '2' || look.water || look.ramparts) continue;
+    if (heights[j][i] === '2' || look.water || look.ramparts || look.pass) continue;
     let near = false;
     for (let dj = -1; dj <= 1 && !near; dj++) for (let di = -1; di <= 1 && !near; di++) near = open(i + di, j + dj);
     if (!near) { tiles[j][i] = ' '; heights[j][i] = '0'; continue; }
@@ -1484,7 +1679,7 @@ function dungeon(w, o = {}) {
     const [tx, ty] = k.split(',').map(Number), i = Math.floor((tx - x0) / 2), j = Math.floor((ty - y0) / 2);
     if (i >= 0 && j >= 0 && i < W && j < D && heights[j][i] === '2') { heights[j][i] = '0'; tiles[j][i] = 'U'; }
   }
-  const inside = !!look.inside, faces = inside ? tavernWalls(W, D, heights, open, looks, tiles) : null;   // (a building's walls stand whole: below)
+  const inside = !!look.inside, faces = inside && !look.pass ? tavernWalls(W, D, heights, open, looks, tiles) : inside ? [] : null;   // (a building's walls stand whole: below)
   const crown = o.walls === 'plain' || inside ? null : ruinWalls(W, D, tiles, heights, open);   // (the walls' ragged tops, below; ?walls=plain: level boxes, as before)
   const stairLights = stairs(w, x0, y0, W, D, tiles, heights, o.stairs !== 'plain');
   const objects = [], count = {}, sprites = [];
@@ -1495,9 +1690,12 @@ function dungeon(w, o = {}) {
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; const o = { id: `${ob.type}_${count[ob.type]}`, ...ob }; objects.push(o); return o; };
   const drop = (o) => { const i = objects.indexOf(o); if (i >= 0) objects.splice(i, 1); };   // (a lantern's light gone with it: a corner's stores take its bay)
   const trim = inside ? [] : null;
+  const ptrim = look.pass || look.frost ? [] : null, passIce = /** @type {[number, number][]} */ ([]);   // (the pass's and the Praetory's own pieces: world.js buildPass)
   // (the room a floor tile of Luminati's is in: a palace's bays dress by what their room was for, palaceRun)
   const roomAt = (i, j) => { if (!L.plan) return null; for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const c = cells.get(`${x0 + 2 * i + dx},${y0 + 2 * j + dy}`); if (c && c.room >= 0) return L.rooms[c.room]; } return null; };
   if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim, roomAt, look === KIT_LOOK.hulk ? SHIP_STORY : TAV_STORY); if (look.palace) trim.push(...palaceRunners(w, L, X, Z)); if (look.water) docksDress(W, D, open, add, trim, stairLights.arches || [], !!look.stone); if (rampart) rampartsDress(W, D, open, rampart, add, trim, stairLights.arches || []); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
+  if (pass) passDress(W, D, pass, heights, looks, add, ptrim, passB, [...(stairLights.arches || []).map((a) => ({ x: a.x, z: a.z, r: a.span / 2 + 1.5 })), ...[...(w.props || [])].filter(([, k]) => k === 'pass_icefall' || k === 'pass_shrine').map(([k, kind]) => { const [tx, ty] = k.split(',').map(Number); return { x: X(tx + 0.5), z: Z(ty + 0.5), r: kind === 'pass_icefall' ? 3.2 : 2.6 }; })]);
+  if (look.frost) frostDress(W, D, tiles, heights, open, w, x0, y0, add, ptrim);
   if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h) { add({ ...c.ob(X, Z), onWall: true }); if (c.sprite) sprites.push(c.sprite); }   // (onWall: on a wall's top, not the room's own)   // (what stands on the walls' tops, where the stairs didn't take the wall)
   for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity * (look.fill ? 0.45 : 1), distance: l.glow.distance * (look.fill ? 0.7 : 1), flicker: 0.08, nightOnly: false }
     : { type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });
@@ -1512,6 +1710,9 @@ function dungeon(w, o = {}) {
     // magma_pool, furnaces, anvils) its pieces in every kit they stand in (the vault's caves, the works' hall)
     if (kind === 'magma') { magma.push([tx, ty]); continue; }
     if (MAGMA_3D[kind]) { MAGMA_3D[kind](tx, ty, h, { X, Z, add, sprites, props: w.props }); continue; }
+    if (look.pass && kind === 'pass_ice') { passIce.push([x, z]); continue; }   // (a frozen pool's ice, gathered: one pool, its rim lit)
+    if (inside && look.pass && PASS_3D[kind]) { PASS_3D[kind](x, z, h, kind, { add, trim, ptrim, open, heights, wall: wallOf(open, W, D, x, z) }); continue; }
+    if (look.frost && FROST_3D[kind]) { FROST_3D[kind](x, z, h, kind, { ptrim, sprites, tx, ty }); continue; }
     if (inside && look.ramparts && RAMP_3D[kind]) { RAMP_3D[kind](x, z, h, kind, { add, trim, open }); continue; }
     // (the hulk's way in, a gangway or the Grace's reef ladder, takes the wharf's rope coils and nets: with no drawer of
     // their own there they stood as dark hooded shapes, read as foes: docs/art-critic-pass-tidemark-step7.md)
@@ -1538,13 +1739,14 @@ function dungeon(w, o = {}) {
     if (lit && kind !== 'brazier' && kind !== 'cookfire') add({ type: 'light', x, z, dy: kind === 'candelabra' ? 1.7 : 0.9, color: hex(lit), intensity: pool[0], distance: pool[1], flicker: 0.15, nightOnly: false });
   }
   if (magma.length) magmaFlow(magma, X, Z, add, sprites);
+  if (ptrim) { if (passIce.length) ptrim.push({ k: 'pool', cells: passIce }); sprites.push({ pass: { pieces: ptrim } }); }
   const level = frame({ name: w.siteName || 'The Old Barrows', W, D, tiles, heights, objects, spawn: { x: X(sp.x), z: Z(sp.y), facing: 'up' },
     // (black beyond the walls, as Emberlit's: a backdrop colour, which the fog takes too, so the far rooms fade to it)
-    environment: { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: true, backdrop: look.backdrop || '#040306', ...(look.water ? { harbour: true } : {}) },
+    environment: { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: !look.open, backdrop: look.backdrop || '#040306', ...(look.water ? { harbour: true } : {}), ...(look.pass ? { pass: true } : {}) },   // (open: the pass, under the sky)
     water: look.water ? { flow: [0.03, 0.05], reflect: 0.45, neutral: 0.7 } : null, waterLevel: look.water ? DOCK_WL : 0.4 });   // (a harbour's water nearly still, the fog's colour in it: world.js harbourAir)
   if (look.vents) vents(W, D, heights, open, add, look.vents);   // (the vault's and the deep forges' ember beds)
   const amb = ambientOf(kit || (AMB_TINT[w.theme] ? w.theme : kit));
-  return { level, sprites, ambient: amb, origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D } };
+  return { level, sprites, ambient: amb, ...(look.held != null ? { hour: look.held } : {}), origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D } };   // (hour: a look's held hour, the pass's day: hybrid.js)
 }
 
 /** ember beds along a hot floor's walls (KIT_LOOK `vents`): on a floor tile against a wall, never a corridor's or a
