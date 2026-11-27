@@ -157,6 +157,17 @@ DRESS.fenbrick = DRESS.crypt; DRESS.fenbones = DRESS.ossuary;
 PLAN_OB.fenbrick = PLAN_OB.crypt; PLAN_OB.fenbones = PLAN_OB.ossuary;
 DOOR_LIGHT.fenbrick = DOOR_LIGHT.crypt; DOOR_LIGHT.fenbones = DOOR_LIGHT.ossuary;
 PLAN_THEME.fenbrick = PLAN_THEME.crypt; PLAN_THEME.fenbones = PLAN_THEME.ossuary;
+// (dungeon-looks-plan item 7, docs/strand-dungeon.md) the coast's two new kits: the strand, the shore itself in the open
+// (the Gull Isles' landing and careening beach, the reef below the Grace), dressed in the sim as the sea cave was, a
+// boulder its one piece out on the sand; and a sea fort's walk (the Lamp Fort's curtain walk and lamp room), the ramparts'
+// in every rule, so its rooms fight as they did. Their looks are the renderer's (convert.js coastGround)
+Object.assign(DRESS, {
+  strand:   { rooms: ['cave', 'storehouse', 'cave'], decor: ['boulder', 'barrels', 'lantern'], obstacles: ['boulder'] },
+  fortwall: { rooms: ['storehouse', 'storehouse', 'storehouse'], decor: ['barrels', 'crates', 'torch'], obstacles: ['pillar'] },
+});
+Object.assign(PLAN_OB, { strand: ['boulder'], fortwall: [] });
+Object.assign(DOOR_LIGHT, { strand: 'lantern', fortwall: 'torch' });
+Object.assign(PLAN_THEME, { strand: 'cave', fortwall: 'storehouse' });
 const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', crates: 'crates', sacks: 'sacks', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', skulls: 'bones', bones: 'bones', barrels: 'barrels' };
 function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, count, near = () => false, bridge = () => {} }) {
   // every piece through the room's caps (CAP): a recipe can't stand a second well or a fifth torch

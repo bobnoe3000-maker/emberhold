@@ -28,7 +28,7 @@ test('the Gull Isles: a band of five on the Tidemark, its plan to the rules, the
   const S = SITES.gull_isles, P = PLANS.gull_isles;
   assert.equal(S.region, 'tidemark'); assert.equal(levelBand('gull_isles'), '36–40'); assert.equal(bossAt('gull_isles', 1), 'hesk');
   assert.deepEqual(checkPlan(P), []);
-  assert.deepEqual(P.floors.map((f) => [...new Set(f.spaces.map((s) => s.kit))]), [['seacave'], ['hulk']]);
+  assert.deepEqual(P.floors.map((f) => [...new Set(f.spaces.map((s) => s.kit))]), [['strand', 'seacave'], ['hulk']], 'the beach and the sea cave, then the hulks');
   assert.deepEqual(P.floors.map((f) => [Math.min(...f.spaces.map((s) => s.lv)), Math.max(...f.spaces.map((s) => s.lv))]), [[0, 2], [3, 4]]);
   assert.ok(P.floors[1].spaces.some((s) => s.id === 'the_wardroom' && s.role === 'offshoot'), 'Hesk\'s commission');
 });

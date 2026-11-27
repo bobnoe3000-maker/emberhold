@@ -1427,7 +1427,10 @@ function buildTidemark(seed) {
   // Tollhaven from outside: grey stone on its landward sides, the gate west on the coast road, its roofs inside; the
   // harbour beyond its north wall (the jetties and the moles laid above)
   { const X0 = tollhaven[0], X1 = 214, Y0 = 84, Y1 = 124, GY = tollhaven[1];
-    for (const [id, x, y] of [[B('temple'), 196, 96], [B('inn'), 186, 112], [B('house', 1), 204, 114], [B('workshopx'), 204, 98]]) put(o, id, x, y);
+    // (the inn east by the wall, the house north of the gate, both off the camera's line to it: drawn on their walled tiles since the pathing fix,
+    // the inn just inside the gate and the house past it, south-east of the way in, each hid it whole from the camera:
+    // visibility.mjs tidemark, way:town 0 % in view)
+    for (const [id, x, y] of [[B('temple'), 196, 96], [B('inn'), 201.5, 109], [B('house', 1), 184, 92], [B('workshopx'), 204, 98]]) put(o, id, x, y);
     putWall(o, B('curtain'), true, Y0, X0, X1); putWall(o, B('curtain'), true, Y1, X0, X1); putWall(o, B('curtainy'), false, X1, Y0, Y1);
     putWall(o, B('curtainy'), false, X0, Y0, GY - 7); putWall(o, B('curtainy'), false, X0, GY + 7, Y1);
     for (const [x, y] of [[X0, Y0], [X1, Y0], [X0, Y1], [X1, Y1], [(X0 + X1) / 2, Y0], [(X0 + X1) / 2, Y1]]) put(o, B('tower'), x, y, 'round', 0.1);
@@ -1499,7 +1502,31 @@ function buildTidemark(seed) {
     highmarch: { x: highmarch[0] + 7.5, y: highmarch[1] + 0.5 },   // (v1.154: back out on the road, off the gate)
     sisters_cabin: { x: reef[0] - 8.5, y: reef[1] + 0.5 } };   // (v1.156: up the beach from the reef)
   o.spawn = o.arrivals.default;
+  shore(o);
   return o;
+}
+// (dungeon-looks-plan item 7, docs/strand-dungeon.md; the owner, 2026-11-27: "Tidemark needs to be more beachy") the shore
+// worked: fishing huts on the sand by Gullwick and down the east beach, boats drawn up above the tide, nets drying on their
+// poles. A fixed list, no draw (no stream moves); each stands only where its whole footprint is open sand, clear of a
+// spawn point's arena and of every way in and arrival, and holds its tiles as a building does. The renderer draws them
+// (convert.js shoreWorks); the dunes, the wrack and driftwood, the rock pools and the surf are the renderer's alone
+/** [kind, x, y, turn (radians: a boat's or a rack's long axis off east-west)] */
+const SHORE = [['hut', 191, 240, 0], ['hut', 227, 225, 0], ['hut', 229, 250, 0], ['boat', 190, 243.5, 0.2], ['boat', 230, 238.5, -0.3], ['boat', 226, 256, 0.4],
+  ['boat', 228, 192, 1.3], ['nets', 223, 233, 0], ['nets', 234, 244.5, 0], ['nets', 222, 215, 0]];
+const SHORE_FOOT = { hut: [6, 5], boat: [5, 2], nets: [4, 1] };
+function shore(o) {
+  const keep = [...campsOf('tidemark').map((c) => [c.x, c.y, (c.arena || c.reach || 10) + 2]),
+    ...o.exits.map((e) => [(e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2, 9]), ...Object.values(o.arrivals).map((a) => [a.x, a.y, 7])];
+  o.shore = [];
+  for (const [kind, x, y, rot] of SHORE) {
+    const [fw, fh] = SHORE_FOOT[kind], across = Math.abs(rot) > 0.8, w = across ? fh : fw, h = across ? fw : fh;
+    const x0 = Math.floor(x - w / 2), y0 = Math.floor(y - h / 2), cells = [];
+    let ok = !keep.some(([kx, ky, r]) => hypot(x - kx, y - ky) < r);
+    for (let ty = y0; ok && ty < y0 + h; ty++) for (let tx = x0; tx < x0 + w; tx++) { const i = gi(o, tx, ty); if (i < 0 || o.tmat[i] !== G.SAND || o.blocked[i] || o.occ[i]) { ok = false; break; } cells.push(i); }
+    if (!ok) continue;
+    for (const i of cells) { o.blocked[i] = 1; o.occ[i] = 1; }
+    o.shore.push({ kind, x, y, rot });
+  }
 }
 
 // The Stage (docs/character-stage-proposal.md; src/dev/stage.js): a dev-only preview scene, a flat field
