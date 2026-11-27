@@ -1427,7 +1427,10 @@ function buildTidemark(seed) {
   // Tollhaven from outside: grey stone on its landward sides, the gate west on the coast road, its roofs inside; the
   // harbour beyond its north wall (the jetties and the moles laid above)
   { const X0 = tollhaven[0], X1 = 214, Y0 = 84, Y1 = 124, GY = tollhaven[1];
-    for (const [id, x, y] of [[B('temple'), 196, 96], [B('inn'), 186, 112], [B('house', 1), 204, 114], [B('workshopx'), 204, 98]]) put(o, id, x, y);
+    // (the inn east by the wall, the house north of the gate, both off the camera's line to it: drawn on their walled tiles since the pathing fix,
+    // the inn just inside the gate and the house past it, south-east of the way in, each hid it whole from the camera:
+    // visibility.mjs tidemark, way:town 0 % in view)
+    for (const [id, x, y] of [[B('temple'), 196, 96], [B('inn'), 201.5, 109], [B('house', 1), 184, 92], [B('workshopx'), 204, 98]]) put(o, id, x, y);
     putWall(o, B('curtain'), true, Y0, X0, X1); putWall(o, B('curtain'), true, Y1, X0, X1); putWall(o, B('curtainy'), false, X1, Y0, Y1);
     putWall(o, B('curtainy'), false, X0, Y0, GY - 7); putWall(o, B('curtainy'), false, X0, GY + 7, Y1);
     for (const [x, y] of [[X0, Y0], [X1, Y0], [X0, Y1], [X1, Y1], [(X0 + X1) / 2, Y0], [(X0 + X1) / 2, Y1]]) put(o, B('tower'), x, y, 'round', 0.1);
