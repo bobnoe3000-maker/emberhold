@@ -106,6 +106,13 @@ export const SITES = {
   // (the owner, 2026-11-23, from a reference: "the reaches, high up on the ramparts": the ramparts kit, plans.js high_ramparts;
   // parked, a prototype for review, on no land yet)
   high_ramparts: { name: 'The High Ramparts', region: 'reach', theme: 'dread', base: 22, perFloor: 0, floors: 1, plan: true, family: 'yards', rooms: [5, 5], layout: 'halls', flat: true, parked: true, mix: 0x4a3b },
+  // (docs/dungeon-looks-plan.md item 13, docs/pass-dungeon.md: the `pass` kit, a mountain pass in the open air, from the
+  // owner's three references; plans.js pilgrims_stair. Parked, a prototype on no land until the Heights' dungeons are
+  // built; the Redhand turning to hold the Stair, as the catalogue's beat has it, stand in for its frost revenants)
+  pilgrims_stair: { name: "The Pilgrims' Stair", region: 'heights', theme: 'dread', base: 62, perFloor: 0, floors: 1, plan: true, family: 'redhand', rooms: [5, 5], layout: 'halls', flat: true, parked: true, dress: ['pass'], mix: 0x5a17 },
+  // (item 10: the `frostkeep` look, the barracks kit's fortress rooms frozen; plans.js praetory. Parked as the Stair is;
+  // Highmarch's legionaries stand in for the Praetorians)
+  praetory: { name: 'The Praetory', region: 'heights', theme: 'dread', base: 70, perFloor: 0, floors: 1, plan: true, family: 'siege', rooms: [5, 5], layout: 'halls', flat: true, parked: true, dress: ['frostkeep'], mix: 0x9a70 },
   scrag_warren: { name: 'The Scrag Warren', region: 'reach', theme: 'warren', base: 2, perFloor: 1, floors: 2, family: 'goblin', rooms: [6, 6], parked: true, mix: 0x6b1d },
 };
 export const SITE_IDS = Object.keys(SITES);

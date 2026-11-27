@@ -87,6 +87,12 @@ export const DRESS = {
   vault:    { rooms: ['cave', 'binding', 'cave'], decor: ['chains', 'brazier', 'bones'], obstacles: ['stalagmite', 'boulder', 'spoil'] },
   // (obstacles stand: never a decor piece, crates or a rack, which the room rule would count in every kit's rooms)
   strongroom: { rooms: ['muster', 'storehouse', 'muster'], decor: ['urns', 'candles', 'crates'], obstacles: ['pillar', 'pillar', 'brokenpillar'] },
+  // (docs/dungeon-looks-plan.md items 13 and 10, docs/pass-dungeon.md) the Pilgrims' Stair: a mountain pass in the open air,
+  // ledges of snow over the cloud with the rock at their backs (convert.js), no walls; the red gully its cut of brown rock;
+  // the Praetory's frostkeep, the barracks kit's fortress rooms frozen, the bound guard at their posts
+  pass:     { rooms: ['storehouse', 'storehouse', 'storehouse'], decor: ['sacks', 'crates', 'lantern'], obstacles: ['pillar'] },
+  gully:    { rooms: ['storehouse', 'storehouse', 'storehouse'], decor: ['sacks', 'crates', 'lantern'], obstacles: ['pillar'] },
+  frostkeep: { rooms: ['barracks', 'storehouse', 'barracks'], decor: ['rack', 'banner', 'crates'], obstacles: ['pillar', 'pillar', 'rack'] },
 };
 // An authored room (plans.js), dressed for what it was (the dressing pass: docs/vale-dungeon-dressing.md). Its plan's
 // `dress` names the pieces; each name is a small recipe here, placed by the room's own axes: u along its length, v
@@ -101,6 +107,7 @@ export const DRESS_PIECES = new Set(['tomb', 'great_tomb', 'mourner', 'offering'
   'fallen_door', 'bars', 'strongbox', 'map_table', 'ledgers', 'stockade', 'guardian', 'sarcophagus_open', 'cask_rack', 'torch', 'candelabra', 'cookfire', 'block', 'crane', 'fishcrates', 'market_stall', 'oven',
   'throne', 'reliquary',
   'magma', 'furnace', 'anvil', 'crucible',   // (the Magma Vault's: the owner, 2026-11-26, "flowing magma and a few furnaces, anvils")
+  'pass_post', 'pass_cairn', 'pass_pine', 'pass_crystals', 'pass_ice', 'pass_icefall', 'pass_shrine', 'frozen_guard',   // (the Pilgrims' Stair's and the Praetory's: docs/pass-dungeon.md)
   ...[...ORIENT].map((k) => k + '_y')]);
 // what lights a doorway, by the room's kit (a brazier each side, before, in every room: the screen was a field of
 // identical fires; now the light says the place): the dig's lanterns on poles, the crypt's candles, the keep's and the
@@ -116,6 +123,7 @@ export const DRESS_CAP = { tomb: 6, great_tomb: 1, mourner: 2, offering: 1, hear
   market_stall: 2, oven: 1,   // (the ramparts')
   throne: 1, reliquary: 1,   // (the palace's: v1.154)
   furnace: 2, anvil: 3, crucible: 2,   // (the Magma Vault's; its magma has no cap: a channel is many tiles of it)
+  pass_post: 4, pass_cairn: 3, pass_pine: 3, pass_crystals: 3, pass_icefall: 1, pass_shrine: 1, frozen_guard: 12,   // (the pass's and the frostkeep's; a frozen pool's ice has no cap: many tiles of it)
   saint: 2, lantern: 4, candles: 4, candelabra: 4, torch: 4, brazier: 4, ladder: 1, puddle: 4, scorch: 3, straw: 6, sacks: 3, crates: 2, barrels: 2, cracks: 6 };
 /** what stands out on an authored room's floor, by its place (not the kit's whole list: a gibbet in the stables and the
  *  gate-warden's chapel, a monolith in the legion's vault, said nothing) */
@@ -126,6 +134,11 @@ const DOOR_LIGHT = { dig: 'lantern', gallery: 'candles', muster: 'torch', bailey
   mound: 'lantern', locks: 'lantern', vats: 'lantern', abbey: 'candelabra', pithead: 'lantern', warren: 'torch',
   yards: 'lantern', quota: 'lantern', forge: 'torch', deepforge: 'torch', works: 'torch', vault: 'torch', strongroom: 'candelabra', tavern: 'torch', tavern_cellar: 'candles', crypt: 'candles', ossuary: 'candles', docks: 'lantern', mole: 'lantern', ramparts: 'torch', seacave: 'lantern', hulk: 'lantern', palace: 'candelabra' };   // (the crypt's doorways a low pricket: a candelabrum crowded the threshold, round 3)   // (v1.126: the Assay's lanterns, the forges' and the works' torches)   // (the miners' lamps; the goblins' torches)   // (the toad-men's and the lock-men's lanterns, the abbey's candelabra)
 const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding', mound: 'mound', locks: 'lockhall', vats: 'vats', abbey: 'nave', pithead: 'cellar', warren: 'cave', yards: 'storehouse', quota: 'cellar', forge: 'muster', deepforge: 'binding', works: 'storehouse', vault: 'cave', strongroom: 'muster', tavern: 'storehouse', tavern_cellar: 'storehouse', crypt: 'crypt', ossuary: 'ossuary', docks: 'storehouse', mole: 'storehouse', ramparts: 'storehouse', seacave: 'cave', hulk: 'storehouse', palace: 'crypt' };
+// (the Pilgrims' Stair's pass and gully, the Praetory's frostkeep: docs/pass-dungeon.md) nothing stands out on a ledge's
+// floor, which is for the fight; the pilgrims' lanterns on posts at its doorways; the frozen fort's torches
+Object.assign(PLAN_OB, { pass: [], gully: [], frostkeep: [] });   // (the Praetory's floors open: black pillars stood in an ice fort, round 1)
+Object.assign(DOOR_LIGHT, { pass: 'lantern', gully: 'lantern', frostkeep: 'torch' });
+Object.assign(PLAN_THEME, { pass: 'storehouse', gully: 'storehouse', frostkeep: 'barracks' });
 const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', crates: 'crates', sacks: 'sacks', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', skulls: 'bones', bones: 'bones', barrels: 'barrels' };
 function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, count }) {
   // every piece through the room's caps (CAP): a recipe can't stand a second well or a fifth torch
@@ -315,6 +328,21 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       case 'pens': for (let u = -L * 0.7, i = 0; u <= L * 0.7 + 0.01; u += 7, i++) { putAt(u, -wall, alongK('stall')); putAt(u + 1, -wall + 2.5, i % 2 ? 'straw' : 'reeds'); } putAt(L * 0.5, Wd * 0.45, alongK('trough')); break;
       case 'windlasses': for (const s of [-1, 1]) putAt(s * L * 0.45, -wall, 'windlass'); break;   // (the gear either side, at the back wall)
       case 'vats': for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 10) putAt(u, -(Wd - 3), 'vat'); break;   // (the tubs down the back wall: tall, so never the near one, §4.2)
+      // ── the Pilgrims' Stair (docs/pass-dungeon.md; docs/dungeon-looks-plan.md item 13, the owner's references): ledges of
+      // snow over the cloud, the rock at their backs and the drop in front (convert.js). Every piece by the rock or the
+      // drop, the middle left for the fight: the pilgrims' prayer posts and cairns along the way, snow-laden pines and the
+      // blue ice's crystals at the back, a pool frozen in a back corner (its ice walked over), the gully's fall frozen down
+      // its back wall, the wayside shrine against the rock, the packs the pilgrims left
+      case 'prayer_posts': for (const s of [-1, 1]) putAt(s * L * 0.62, -Wd, 'pass_post'); putAt(L * 0.3, Wd, 'pass_post'); break;
+      case 'cairns': putAt(-L * 0.82, -(Wd - 1), 'pass_cairn'); putAt(L * 0.72, Wd - 0.5, 'pass_cairn'); break;
+      case 'pines': putAt(-(L - 1), -Wd * 0.45, 'pass_pine'); putAt(L * 0.45, -Wd, 'pass_pine'); break;   // (the back only: a pine's crown before a fight hides it)
+      case 'ice_crystals': putAt(L * 0.82, -(Wd - 1), 'pass_crystals'); putAt(-L * 0.28, -Wd, 'pass_crystals'); break;
+      case 'frozen_pool': for (const s of [-1, 1]) { let n = 0; for (let a = 0; a < 7; a++) for (let b = 0; b < 4; b++) if (!(a === 6 && b === 3) && !(a === 0 && b === 3) && putAt(s * L * 0.78 - (s > 0 ? 6 : 0) + a, -Wd + 1 + b, 'pass_ice')) n++; if (n >= 12) break; } break;   // (a back corner, the west if its doorway leaves room, else the east; flat: the fight walks over it)
+      case 'frozen_fall': if (unit(L * 0.15, -Wd + 1, -2, 2, -1, 0, 'pass_icefall')) for (let a = -3; a <= 3; a++) for (let b = 1; b <= 2; b++) putAt(L * 0.15 + a, -Wd + 1 + b, 'pass_ice'); break;   // (against the back rock, its foot a frozen pool)
+      case 'wayside_shrine': unit(-L * 0.2, -Wd + 1, -1, 1, -1, 0, 'pass_shrine'); putAt(-L * 0.2 + 3, -Wd + 1, 'pass_cairn'); break;
+      case 'pass_cargo': putAt(L * 0.55, -Wd, 'sacks'); putAt(L * 0.55 + 2, -Wd, 'crates'); putAt(-L * 0.55, Wd, 'sacks'); break;
+      // ── the Praetory (item 10): the Empress's bound guard frozen at their posts, a file along each long wall, the middle open
+      case 'frozen_guards': row(-wall, -L * 0.6, L * 0.6, 6, 'frozen_guard'); if (r.role !== 'entrance') for (const s of [-1, 1]) putAt(s * (L - 1.5), Wd * 0.2, 'frozen_guard'); break;
       default: if (PLAN_KIND[d]) at(d === 'candles' || d === 'lanterns' ? 2 : d === 'spoil' || d === 'bedrolls' ? 3 : 1, 6, PLAN_KIND[d]);
     }
   }
@@ -322,6 +350,7 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
 
 // Props you walk over (flat on the floor, or underfoot): a dropped cage, a binding circle.
 export const FLAT_PROPS = new Set(['cage', 'circle', 'shaft', 'straw', 'rug', 'scorch', 'cracks', 'coins', 'papers', 'puddle', 'rope', 'net']);   // (a wharf's rope coils and nets lie flat on its deck: walked over)
+FLAT_PROPS.add('pass_ice');   // (a frozen pool's ice, on the pass: walked over)
 export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   const S = siteOf(site), FAM = familyAt(site, depth), kit = dressAt(site, depth), KIT = kit ? DRESS[kit] : null;   // (its furniture below: `human`, `themes`, or its kit)
   const th = theme || themeAt(site, depth) || THEME_KEYS[(seed >>> 0) % THEME_KEYS.length];
