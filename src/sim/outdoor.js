@@ -1317,7 +1317,7 @@ function buildTidemark(seed) {
   for (const x of [gullwick[0] + 6, gullwick[0] + 12]) putRun(o, 'fence_0', x, gullwick[1] + 4);
   for (const [id, x, y] of [['barrel', ferry[0] - 9, gullwick[1] + 6], ['crate_A_small', ferry[0] - 10, gullwick[1] + 8], ['sack', gullwick[0] - 6, gullwick[1] + 4]]) put(o, id, x, y, 'rect', 0.1);
   // the Lamp Fort on its headland: Old Gannet's light, a tower in a wall
-  put(o, B('tower'), lampfort[0] + 2, lampfort[1] - 2, 'round', 0.1); put(o, B('wall'), lampfort[0] - 4, lampfort[1] + 4);
+  put(o, B('tower'), lampfort[0] + 2, lampfort[1] - 2, 'round', 0.1); put(o, B('wall'), lampfort[0] - 4, lampfort[1] - 8);   // (north of the door: south of it, the wall hid the door and the arrival from the camera, visibility.mjs)
   o.labels.push({ x: BRIDGE[0], y: cross[1], id: B('standard'), text: 'Brine Cross' }, { x: highmarch[0], y: highmarch[1], id: B('gatehousey'), text: 'Highmarch' },
     { x: tollhaven[0], y: tollhaven[1], id: B('gatehousey'), text: 'Tollhaven' }, { x: gullwick[0], y: gullwick[1], id: B('cottage'), text: 'Gullwick' },
     { x: lampfort[0], y: lampfort[1], id: B('tower'), text: 'The Lamp Fort' }, { x: 132, y: 20, text: 'The salt marsh' },
