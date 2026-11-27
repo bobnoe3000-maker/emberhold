@@ -127,7 +127,7 @@ Object.assign(LEGEND, {
   'ä': { top: 'pass_snow', side: 'pass_rock', walkable: true }, 'ö': { top: 'pass_scour', side: 'pass_rock', walkable: true },
   'ø': { top: 'pass_cap', side: 'pass_rock', walkable: false }, 'å': { top: 'pass_cap', side: 'pass_brown', walkable: false },
   'æ': { top: 'pass_plank', side: 'pass_truss', walkable: true },
-  'é': { top: 'pass_cap', side: 'frost_wall', walkable: false }, 'ê': { top: 'frost_flag', side: 'frost_wall', walkable: true },
+  'é': { top: 'pass_cap', side: 'frost_wall', walkable: false }, 'ê': { top: 'frost_flag', side: 'frost_wall', walkable: true }, 'ë': { top: 'pass_snow', side: 'frost_wall', walkable: true },
 });
 // a town's walls by its region (the owner, 2026-11-02: "bring back the wooden walls to thornwick? Save stone walls for
 // another town"): the Vale's are Thornwick's timber palisade on an earth bank, with its watchtowers and gatehouse (world
@@ -685,8 +685,8 @@ KIT_LOOK.palace = { floor: ['(', ')'], yard: '/', wall: '|', cave: '|', hour: 19
 // walls: the rock at each ledge's back, the drop into the cloud at its front (passGround, passDress), its bridges over
 // the crevasses. A cold high light held whatever the hour (`held`; hybrid.js), the sun out (`fill.sun`), the cloud's own
 // pale for the sky past the edges (`backdrop`; `open`: not a room, Luminati's sky and sun); the gully its brown rock
-const PASS_FILL = { sky: [0.66, 0.72, 0.84], ground: [0.38, 0.4, 0.46], lamps: 1.1, sun: 0.8 };   // (round 1: the snow blown out to white)
-KIT_LOOK.pass = { floor: ['ä', 'ö'], wall: 'ø', cave: 'ø', hour: 10.6, held: 10.6, mix: 0, inside: true, pass: true, open: true, fill: PASS_FILL, backdrop: '#c4cfdc' };
+const PASS_FILL = { sky: [0.56, 0.68, 0.98], ground: [0.3, 0.37, 0.58], lamps: 1.1, sun: 0.85 };   // (round 5: the fill bluer, the shade side of the snow a deep blue)   // (round 1: the snow blown out to white)
+KIT_LOOK.pass = { floor: ['ä', 'ö'], wall: 'ø', cave: 'ø', hour: 10.6, held: 10.6, mix: 0, inside: true, pass: true, open: true, fill: PASS_FILL, backdrop: '#8ea3c8' };   // (round 5: the far cloud a blue-grey, the frame's top darker)
 KIT_LOOK.gully = { ...KIT_LOOK.pass, wall: 'å', cave: 'å', brown: true };
 // (item 10) the Praetory's frostkeep: the barracks kit's fortress rooms in frost cobbles, walls of dressed stone under
 // rime, icicles along their tops, snow drifted in at the doors, the guard frozen at their posts (frostDress, FROST_3D)
@@ -1519,11 +1519,19 @@ function passDress(W, D, { F, rock }, heights, looks, add, ptrim, bridges, clear
     }
     if (d >= 2 && hh % 13 === 5 && pines < 8) { pines++; add({ type: 'tree', x: r2(i + 0.5), z: r2(j + 0.5), collider: false, opts: { kind: 'snowpine', height: r2(2.6 + (hh % 5) * 0.35), seed: hh % 997 } }); }
   }
+  // (round 5, the coordinator: "banks of cloud with shadowed undersides") the cloud's banks in the drop, a lump every few
+  // tiles of it two or more out from a ledge, lower the nearer the ledge, and on round past the level's edges
+  { const rows = /** @type {any} */ (ptrim.find((q) => q.k === 'cloud')).rows;
+    for (let j = -14; j < D + 14; j += 4) for (let i = -14; i < W + 14; i += 4) {
+      const hb = hash('cb', i, j); if (hb % 5 === 0) continue;
+      const inl = i >= 0 && j >= 0 && i < W && j < D, d = inl ? +rows[j][i] : 9; if (inl && (heights[j][i] !== '0' || d < 2)) continue;
+      if (hb % 3 !== 0) continue;   // (rounds 6–7: fewer, the dark floor of the cloud between them)
+      ptrim.push({ k: 'cloudbank', x: r2(i + 0.5 + ((hb >> 3) % 5 - 2) * 0.4), y: r2(-5.2 + Math.min(d, 6) * 0.12 - (hb % 3) * 0.3), z: r2(j + 0.5 + ((hb >> 6) % 5 - 2) * 0.4), s: r2(1 + (hb % 4) * 0.15), seed: hb % 997 }); } }
   // the mountains far off, standing up out of the cloud round the pass (behind it and to its sides, never before it; round
   // 1: their tops under the ledges', one close in to the north-west read as a rock floating in the sky)
-  for (const [x, z, s] of [[-26, D * 0.35, 1.6], [W * 0.3, -28, 1.8], [-22, -20, 1.5], [W + 22, -12, 1.3]]) ptrim.push({ k: 'peak', x: r2(x), z: r2(z), s, seed: hash('pp', x, z) % 997 });
-  // the snow falling (Luminati's own, in a box that follows the camera; a light fall, not a storm)
-  add({ type: 'emitter', x: r2(W / 2), z: r2(D / 2), preset: 'snow', dy: 5, size: [44, 14, 44], count: 600, params: { followCamera: true, alpha: 0.9, size: [0.15, 0.24] } });   // (round 3: the preset's flakes, two pixels at the game's zoom, didn't read)
+  for (const [x, z, s] of [[-24, D * 0.35, 1.6], [W * 0.3, -24, 1.8], [-20, -18, 1.5], [W + 20, -12, 1.3], [W * 0.75, -20, 1.4], [-22, D * 0.85, 1.4]]) ptrim.push({ k: 'peak', x: r2(x), z: r2(z), s, seed: hash('pp', x, z) % 997 });
+  // the snow falling, a light fall, not a storm
+  ptrim.push({ k: 'snowfall', W, D });   // (round 6: our own, world.js; Luminati's snow preset never showed here)   // (round 3: the preset's flakes, two pixels at the game's zoom, didn't read)
   // the bridges; under the one over the river, the river frozen at the crevasse's foot, between the ledges either side
   for (const b of bridges) {
     ptrim.push({ k: 'bridge', x0: b.i0, z0: b.j0, x1: b.i1 + 1, z1: b.j1 + 1, along: b.along });
@@ -1545,9 +1553,8 @@ const PASS_3D = {
   lantern: (x, z, h, k, { ptrim, add }) => { ptrim.push({ k: 'post', x, z, seed: h % 997, lamp: true }); add({ type: 'light', x: r2(x - 0.46), z, dy: 1.9, color: '#ffb45e', intensity: 2.6, distance: 4.5, flicker: 0.12, nightOnly: false }); },
   pass_cairn: (x, z, h, k, { ptrim }) => ptrim.push({ k: 'cairn', x, z, seed: h % 997, s: 1 + (h % 3) * 0.15 }),
   pass_pine: (x, z, h, k, { add }) => add({ type: 'tree', x, z, collider: false, opts: { kind: 'snowpine', height: r2(3.0 + (h % 4) * 0.3), seed: h % 997 } }),
-  pass_crystals: (x, z, h, k, { add }) => {
-    add({ type: 'crag', x, z, rotation: r2((h % 7) * 0.9), opts: { kind: 'spire', stone: 'ice', height: r2(1.4 + (h % 4) * 0.25), width: 0.9, seed: h % 997 } });
-    for (const [dx, dz, s] of [[0.6, 0.3, 0.5], [-0.5, 0.45, 0.42]]) add({ type: 'rock', x: r2(x + dx), z: r2(z + dz), opts: { stone: 'ice', size: s, seed: (h + Math.round(dx * 10)) % 97 } });
+  pass_crystals: (x, z, h, k, { add, ptrim }) => {
+    ptrim.push({ k: 'crystals', x, z, seed: h % 997, s: r2(1 + (h % 3) * 0.15) });   // (round 5: ours, vivid and haloed; Luminati's ice glowed at 0.15, grey-blue slabs)
     if (h % 2 === 0) add({ type: 'light', x, z: r2(z + 0.7), dy: 1.0, color: '#7fd8ff', intensity: 2.4, distance: 3.8, flicker: 0, nightOnly: false });
   },
   pass_icefall: (x, z, h, k, { ptrim, add, wall, heights }) => {
@@ -1563,7 +1570,7 @@ const PASS_3D = {
 PASS_3D.brazier = PASS_3D.lantern; PASS_3D.torch = PASS_3D.lantern;
 // ── the Praetory's frost (item 10): icicles along every back wall's top, snow drifted in at the doors (its tiles trodden
 // snow, a drift either side), and the guard frozen at their posts (FROST_3D)
-function frostDress(W, D, tiles, heights, open, w, x0, y0, add, ptrim) {
+function frostDress(W, D, tiles, heights, open, w, x0, y0, add, ptrim, roomAt = (i, j) => null) {
   const FLR = String(FLOOR);
   // the icicles: under each back wall's top (its face to the room: south or east), in runs of one height
   const lines = new Map(), push = (key, t) => (lines.get(key) || lines.set(key, []).get(key)).push(t);
@@ -1579,6 +1586,18 @@ function frostDress(W, D, tiles, heights, open, w, x0, y0, add, ptrim) {
     const runs = []; for (const t of ts) { const r = runs[runs.length - 1]; if (r && t === r[1]) r[1] = t + 1; else runs.push([t, t + 1]); }
     for (const [a, b] of runs) ptrim.push({ k: 'icicles', x0: along ? a : c, z0: along ? c : a, x1: along ? b : c, z1: along ? c : b, n: along ? 'z' : 'x', out: 1, y, seed: hash('fi', key, a) % 997 });
   }
+  // (round 5, the coordinator: "snow drifted across the floor, not just at the doors") the snow in broad drifts over the
+  // flags, deepest along the walls' feet
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    if (!open(i, j) || tiles[j][i] !== 'ê') continue;
+    let wall = false; for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) wall ||= !open(i + di, j + dj) && heights[j + dj]?.[i + di] !== '0';
+    // (round 6: patches out in the open, a tile at a time, read as square blocks of snow; round 7, Luminati's drifts too small
+    // to see: the snow against the walls' feet a tile deep, and over the floor our own drifts, low soft lumps with edges of
+    // their own, in broad drifts by value noise, thinnest under the fight)
+    if (wall) tiles[j][i] = 'ë';
+    const hd = hash('fm', i, j), r = roomAt(i, j), mid = r && Math.abs(x0 + 2 * i + 1 - r.cx) < r.rw * 0.4 && Math.abs(y0 + 2 * j + 1 - r.cy) < r.rh * 0.4, v = vnoise(i, j, 'fd', 4);
+    if (wall || (v < 0.4 && hd % (mid ? 7 : 2) === 0)) ptrim.push({ k: 'drift', x: r2(i + 0.5 + ((hd >> 3) % 5 - 2) * 0.15), z: r2(j + 0.5 + ((hd >> 6) % 5 - 2) * 0.15), s: r2((wall ? 1.3 : 1.0) + (hd % 5) * 0.15), seed: hd % 997 });
+  }
   // the doors: where a hall meets a room, trodden snow on the tiles and a drift to one side
   const cells = w.level.cells, seen = new Set();
   for (const [k, c] of cells) {
@@ -1586,7 +1605,7 @@ function frostDress(W, D, tiles, heights, open, w, x0, y0, add, ptrim) {
     const [x, y] = k.split(',').map(Number);
     if (![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => { const n = cells.get(`${x + dx},${y + dy}`); return n && n.kind === 'floor' && n.room >= 0; })) continue;
     const i = Math.floor((x - x0) / 2), j = Math.floor((y - y0) / 2), key = `${i},${j}`; if (seen.has(key)) continue; seen.add(key);
-    for (const [di, dj] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) if (open(i + di, j + dj) && tiles[j + dj][i + di] === 'ê') tiles[j + dj][i + di] = 'h';
+    for (const [di, dj] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) if (open(i + di, j + dj) && (tiles[j + dj][i + di] === 'ê' || tiles[j + dj][i + di] === 'ë')) tiles[j + dj][i + di] = 'h';
     const h = hash('fd', i, j); if (h % 3 === 0) add({ type: 'rock', x: r2(i + 0.5 + ((h >> 2) % 3 - 1) * 0.6), z: r2(j + 0.5 + ((h >> 4) % 3 - 1) * 0.6), opts: { stone: 'snow', size: r2(0.9 + (h % 4) * 0.2), seed: h % 97 } });
   }
 }
@@ -1695,7 +1714,7 @@ function dungeon(w, o = {}) {
   const roomAt = (i, j) => { if (!L.plan) return null; for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const c = cells.get(`${x0 + 2 * i + dx},${y0 + 2 * j + dy}`); if (c && c.room >= 0) return L.rooms[c.room]; } return null; };
   if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim, roomAt, look === KIT_LOOK.hulk ? SHIP_STORY : TAV_STORY); if (look.palace) trim.push(...palaceRunners(w, L, X, Z)); if (look.water) docksDress(W, D, open, add, trim, stairLights.arches || [], !!look.stone); if (rampart) rampartsDress(W, D, open, rampart, add, trim, stairLights.arches || []); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
   if (pass) passDress(W, D, pass, heights, looks, add, ptrim, passB, [...(stairLights.arches || []).map((a) => ({ x: a.x, z: a.z, r: a.span / 2 + 1.5 })), ...[...(w.props || [])].filter(([, k]) => k === 'pass_icefall' || k === 'pass_shrine').map(([k, kind]) => { const [tx, ty] = k.split(',').map(Number); return { x: X(tx + 0.5), z: Z(ty + 0.5), r: kind === 'pass_icefall' ? 3.2 : 2.6 }; })]);
-  if (look.frost) frostDress(W, D, tiles, heights, open, w, x0, y0, add, ptrim);
+  if (look.frost) frostDress(W, D, tiles, heights, open, w, x0, y0, add, ptrim, roomAt);
   if (crown) for (const c of crown) if (heights[c.j]?.[c.i] === c.h) { add({ ...c.ob(X, Z), onWall: true }); if (c.sprite) sprites.push(c.sprite); }   // (onWall: on a wall's top, not the room's own)   // (what stands on the walls' tops, where the stairs didn't take the wall)
   for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity * (look.fill ? 0.45 : 1), distance: l.glow.distance * (look.fill ? 0.7 : 1), flicker: 0.08, nightOnly: false }
     : { type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });

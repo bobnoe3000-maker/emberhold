@@ -92,8 +92,9 @@ test('the Stair drawn: ledges of snow, the rock behind them and never before one
   const by = (k) => P.pass.pieces.filter((p) => p.k === k).length;
   assert.equal(by('bridge'), 2); assert.equal(by('river'), 1); assert.equal(by('cloud'), 1); assert.equal(by('icefall'), 1); assert.equal(by('shrine'), 1); assert.equal(by('pool'), 1);
   assert.ok(by('cliff') >= 8 && by('rock') >= 60 && by('post') >= 8 && by('cairn') >= 4, 'the ledges\' faces, the rock\'s blocks, the posts and cairns');
-  assert.ok(level.objects.some((o) => o.type === 'crag' && o.opts.stone === 'ice') && level.objects.some((o) => o.type === 'tree' && o.opts.kind === 'snowpine'), 'the ice\'s crystals, the pines');
-  assert.ok(level.objects.some((o) => o.type === 'emitter' && o.preset === 'snow'), 'the snow falling');
+  assert.ok(by('crystals') >= 4 && level.objects.some((o) => o.type === 'tree' && o.opts.kind === 'snowpine'), 'the ice\'s crystals, the pines');
+  assert.ok(by('cloudbank') >= 40, 'the cloud\'s banks below the ledges');
+  assert.equal(by('snowfall'), 1, 'the snow falling');
   assert.ok(level.objects.filter((o) => o.type === 'light').length <= 16, 'its lights within reason');
   assert.ok(!sprites.some((s) => ['pass_post', 'pass_cairn', 'pass_pine', 'pass_crystals', 'pass_ice', 'pass_icefall', 'pass_shrine', 'lantern', 'sacks', 'crates'].includes(s.prop)), 'no piece left to a card');
 });
@@ -102,7 +103,7 @@ test('the Praetory drawn: walls in rime, icicles along their tops, snow in at th
   const w = floorOf('praetory', 20260807);
   const { level, sprites } = convertWorld(w, { region: 'heights' });
   const ts = new Set(level.tiles.join('').split(''));
-  assert.ok(ts.has('é') && ts.has('ê') && ts.has('h'), 'rimed walls, frosted flags, snow at the doors');
+  assert.ok(ts.has('é') && ts.has('ê') && ts.has('ë') && ts.has('h'), 'rimed walls, frosted flags, snow drifted over them, snow at the doors');
   assert.ok(level.objects.some((o) => o.type === 'rock' && o.opts.stone === 'snow'), 'drifts at the doors');
   const P = sprites.find((s) => s.pass); assert.ok(P);
   const guards = [...w.props.values()].filter((k) => k === 'frozen_guard').length;
