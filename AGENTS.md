@@ -32,7 +32,7 @@ npm run serve                             # open http://localhost:8080 (ES modul
 #   ?headshadow=1 (the figures' heads in the shadow pass, as the painted head first shipped: docs/painted-faces-spike.md)
 #   ?chest=plain (the chests' look: the default since 2026-11-12 the owner's gold, honey oak under gold bands and a gold lock; plain the dark oak and iron as before, for a before: render/gsprite.js CHEST_LOOK)
 #   ?notitle (skip the splash, loading screen and title and play at once; tests and captures)
-#   ?region=vale|fens|reach|tidemark|heights  ?site=barrows|wickham_keep|sunken_chapel|proving_pens|ninth_milestone|toadking_mound|canal_locks|drowned_abbey|root_granary (parked: the greenwood kit)|… (with ?scene=dungeon; sim/sites.js)
+#   ?region=vale|fens|reach|tidemark|heights  ?site=barrows|wickham_keep|sunken_chapel|proving_pens|ninth_milestone|toadking_mound|canal_locks|drowned_abbey|root_granary (parked: the greenwood kit)|pilgrims_stair|praetory (parked: the pass, frostkeep)|… (with ?scene=dungeon; sim/sites.js)
 #   ?dev (localhost only: globalThis.__sim)
 #   ?dev&seed=N (localhost, with ?scene=: a fresh world on that seed, a generated floor's other draws: docs/art-critic-pass-stone.md)
 #   ?dev&slow=8 (slow motion) · ?dev&manual (you drive frames: globalThis.__frame(ms)) · ?dev&tod=dawn|day|dusk|night|0..1 (hold the light)

@@ -23,7 +23,7 @@
 
 /** @typedef {'entrance' | 'room' | 'offshoot' | 'descent' | 'end'} Role */
 /** @typedef {{ id: string, name: string, role: Role, x: number, y: number, w: number, h: number, shape: 'rect' | 'cave' | 'round', lv: number, kit: string, boss?: string, foes?: string, dress: string[], note: string }} Space */
-/** @typedef {{ from: string, to: string, x: number, y: number, w: number, h: number, rough?: boolean }} Hall */
+/** @typedef {{ from: string, to: string, x: number, y: number, w: number, h: number, rough?: boolean, bridge?: 'river' | 'cloud' }} Hall */   // (bridge: the pass kit's plank-and-rope bridge over a crevasse, the frozen river or the cloud under it, drawn by convert.js; to the sim a hall as any other)
 /** @typedef {{ name: string, spaces: Space[], halls: Hall[] }} Floor */
 /** @typedef {{ site: string, name: string, kind: string, base: number, step?: number, flat?: boolean, floors: Floor[] }} Plan */
 
@@ -757,6 +757,56 @@ export const PLANS = {
       { from: 'the_market_terrace', to: 'the_watch_walk', x: 52, y: 20, w: 10, h: 10 },
       { from: 'the_market_terrace', to: 'the_bakers_row', x: 92, y: 44, w: 10, h: 10 },
       { from: 'the_market_terrace', to: 'the_bastion', x: 48, y: 70, w: 10, h: 10 },
+    ] },
+  ] },
+
+  // ── The Pilgrims' Stair (a prototype: the pass kit, docs/pass-dungeon.md; docs/dungeon-looks-plan.md item 13, from the
+  //    owner's three references): the road up from the Frozen Hospice to the Lip in the open air, snowfields on ledges
+  //    over the cloud, dark rock in big blocks behind them, the drop in front. Two of its halls are plank-and-rope bridges
+  //    over crevasses (`bridge`), one over the frozen river into the red gully, one out over the cloud to the last ledge.
+  //    Every piece by the rock or the drop, the middle of each ledge open for the fight. The Redhand hold the Stair behind
+  //    Lucan.
+  pilgrims_stair: { site: 'pilgrims_stair', name: "The Pilgrims' Stair", kind: 'pass', base: 62, flat: true, floors: [
+    { name: 'The Stair', spaces: [
+      { id: 'the_stair_foot', name: 'The Stair Foot', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'pass',
+        dress: ['prayer_posts', 'cairns', 'pass_cargo'], note: 'Where the Stair leaves the Hospice\'s road: the first cairn, the first posts, the packs the pilgrims left to come back for.' },
+      { id: 'the_first_turn', name: 'The First Turn', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'pass', foes: 'redhand',
+        dress: ['frozen_pool', 'ice_crystals', 'pines', 'prayer_posts', 'cairns'], note: 'A broad ledge of wind-scoured snow under the rock, a pool frozen in its back corner, the crystals grown up out of the ice.' },
+      { id: 'the_wayside_shrine', name: 'The Wayside Shrine', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'pass', foes: 'redhand',
+        dress: ['wayside_shrine', 'prayer_posts', 'ice_crystals'], note: 'A pilgrims\' shrine in a hollow of the rock: a stone with a roof over it, the offerings frozen to its step.' },
+      { id: 'the_red_gully', name: 'The Red Gully', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'gully', foes: 'redhand',
+        dress: ['frozen_fall', 'ice_crystals', 'pines', 'chest'], note: 'Across the bridge over the frozen river: a cut of brown rock under snow, a fall frozen down its back wall.' },
+      { id: 'the_cloud_ledge', name: 'The Cloud Ledge', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'pass', foes: 'redhand',
+        dress: ['cairns', 'prayer_posts', 'ice_crystals', 'pines', 'frozen_pool', 'pass_cargo', 'chest'], note: 'The last ledge before the Stair turns up out of sight, the whole drop under it in the cloud.' },
+    ], halls: [
+      { from: 'the_stair_foot', to: 'the_first_turn', x: 32, y: 44, w: 10, h: 10 },
+      { from: 'the_first_turn', to: 'the_wayside_shrine', x: 52, y: 20, w: 10, h: 10 },
+      { from: 'the_first_turn', to: 'the_red_gully', x: 92, y: 44, w: 10, h: 10, bridge: 'river' },
+      { from: 'the_first_turn', to: 'the_cloud_ledge', x: 48, y: 70, w: 10, h: 10, bridge: 'cloud' },
+    ] },
+  ] },
+
+  // ── The Praetory (a prototype: the frostkeep look, docs/pass-dungeon.md §5; docs/dungeon-looks-plan.md item 10): the
+  //    Empress's guard house east of the Lip, frozen through. The barracks kit's fortress rooms in frost cobbles, rime on
+  //    the walls, icicles at their tops, snow drifted in at the doors, the bound guard frozen at their posts along the
+  //    walls, the middles open for the fight.
+  praetory: { site: 'praetory', name: 'The Praetory', kind: 'keep', base: 70, flat: true, floors: [
+    { name: 'The Guard House', spaces: [
+      { id: 'the_watch_gate', name: 'The Watch Gate', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'frostkeep',
+        dress: ['frozen_guards', 'banners'], note: 'The gate passage, the snow blown in over the step, the watch still at the door.' },
+      { id: 'the_guard_hall', name: 'The Guard Hall', role: 'room', x: 42, y: 30, w: 50, h: 40, shape: 'rect', lv: 0, kit: 'frostkeep', foes: 'siege',
+        dress: ['frozen_guards', 'racks', 'banners'], note: 'The guard in two files along the walls, each at his post, the frost grown over them where they stood.' },
+      { id: 'the_armoury', name: 'The Armoury', role: 'offshoot', x: 48, y: 0, w: 26, h: 20, shape: 'rect', lv: 0, kit: 'frostkeep', foes: 'siege',
+        dress: ['racks', 'frozen_guards'], note: 'The racks rimed white, the spears frozen into them.' },
+      { id: 'the_mess', name: 'The Mess', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 0, kit: 'frostkeep', foes: 'siege',
+        dress: ['frozen_guards', 'braziers', 'chest'], note: 'The guard\'s mess, the bowls frozen to the boards; somebody has lit the braziers again.' },
+      { id: 'the_praetors_door', name: 'The Praetor\'s Door', role: 'end', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 0, kit: 'frostkeep', foes: 'siege',
+        dress: ['frozen_guards', 'banners', 'braziers', 'chest'], note: 'The guard drawn up before the inner door in two ranks, and nobody to open it.' },
+    ], halls: [
+      { from: 'the_watch_gate', to: 'the_guard_hall', x: 32, y: 44, w: 10, h: 10 },
+      { from: 'the_guard_hall', to: 'the_armoury', x: 52, y: 20, w: 10, h: 10 },
+      { from: 'the_guard_hall', to: 'the_mess', x: 92, y: 44, w: 10, h: 10 },
+      { from: 'the_guard_hall', to: 'the_praetors_door', x: 48, y: 70, w: 10, h: 10 },
     ] },
   ] },
 

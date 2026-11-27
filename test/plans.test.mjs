@@ -13,7 +13,7 @@ test('plans: every plan keeps the owner\'s rules (≤ 2 floors, ≤ 5 spaces, ha
 test('plans: each floor runs entrance → rooms → its last hall, with one offshoot, and levels climb the band', () => {
   for (const p of Object.values(PLANS)) {
     if (SITES[p.site] && SITES[p.site].arena) continue;          // (the Bowl's sand: a way in and the sand, test/bowl.test.mjs)
-    assert.ok(SITES[p.site] && (['vale', 'fens', 'reach', 'tidemark'].includes(SITES[p.site].region) || (SITES[p.site].parked && SITES[p.site].region === 'greenwood')), `${p.site} is a site of a land`);   // (a parked prototype may wait on a land not built yet: the Root Granary, docs/greenwood-dungeon.md)   // (the Reach since v1.124, the Tidemark since v1.150)
+    assert.ok(SITES[p.site] && (['vale', 'fens', 'reach', 'tidemark', 'heights'].includes(SITES[p.site].region) || (SITES[p.site].parked && SITES[p.site].region === 'greenwood')), `${p.site} is a site of a land`);   // (the Reach since v1.124, the Tidemark since v1.150; a parked prototype may wait on a land not built: the Heights' (docs/pass-dungeon.md), the greenwood's)
     assert.equal(p.base, SITES[p.site].base, `${p.site}: the band's base as sites.js has it`);
     p.floors.forEach((f, fi) => {
       assert.equal(f.spaces.filter((s) => s.role === 'offshoot').length, 1, `${p.site} floor ${fi + 1}: one offshoot`);

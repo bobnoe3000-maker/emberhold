@@ -43,6 +43,7 @@ import { setFogStart } from '../src/game/AtmosphereFog.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { makeBuilding } from './buildkit.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { rockGeom } from '../src/engine/world/props/SmallProps.js';   // (the pass's faceted rock: buildPass)
 import ENV_LIST from './env.json';
 import TOWN_SETS from './town.json';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
@@ -2149,6 +2150,220 @@ function buildMagma(cells) {
   g.userData.dispose = () => { const i = magmaMats.indexOf(mat); if (i >= 0) magmaMats.splice(i, 1); geo.dispose(); mat.dispose(); };
   return g;
 }
+// ── the pass (docs/pass-dungeon.md; convert.js passGround, passDress, PASS_3D): the Pilgrims' Stair's ledges over the
+// cloud and the Praetory's frost. One batch a level, as the inn's trim (one draw a material), plus the cloud's sheets.
+//   rock: a big angular block of the dark rock (Luminati's faceted boulder, its icosahedron), snow on its upward faces;
+//   cliff: a ledge's face down into the cloud under its edge, chunks of rock jutting from it, the cloud hanging over its
+//     foot; cloud: the cloud below (a floor of it far down, billowed, and a veil over the drop, clear at the ledges'
+//     edges and thick out from them); peak: a mountain's top standing up out of it, far off;
+//   bridge: the plank-and-rope bridge's posts and ropes (its deck is the level's own tiles, convert.js 'æ'); river: the
+//     frozen river at the crevasse's foot; pool: a frozen pool's ice and its rim lit pale blue; icefall: a fall frozen
+//     down the rock;
+//   post, cairn, shrine: the pilgrims' prayer posts, cairns and the wayside shrine;
+//   iceshell, icicles: the Praetory's guard frozen at his post, the icicles along its walls' tops.
+const PASS_CLOUD = '#a9bad6', PASS_FL = 1.0;
+let passGlow = null, passIce = null, passFall = null, passVeil = null, passShell = null, passCloudTex = null, passCloudMat = null, passHalo = null, passRimHalo = null, passCrystal = null, passGlaze = null;
+const passR = (seed) => (k) => ((Math.imul(seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+function buildPass(pieces) {
+  const f = game.world.factory, b = f.builder(), bs = f.builder(), bc = f.builder(), own = [], extra = [], FL = PASS_FL;   // (bc: the cloud's banks, round 5)   // (bs: what casts no shadow, the cliffs' faces below the ledges, the far peaks: the perf pass, round 3)
+  // (round 5, ice-1: "a bright cyan rim and a deep blue body, the crystals a vivid blue with a halo")
+  passGlow ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#9ff6ff').multiplyScalar(2.0), transparent: true, opacity: 0.95, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+  passIce ||= f.textures.material('pass_ice', { emissiveIntensity: 1.7 });
+  passFall ||= f.textures.material('pass_ice', { emissiveIntensity: 2.0 });
+  passShell ||= new THREE.MeshStandardMaterial({ color: new THREE.Color('#bfe6ff'), emissive: new THREE.Color('#3ea8ff'), emissiveIntensity: 0.95, transparent: true, opacity: 0.6, roughness: 0.15, depthWrite: false });
+  passCrystal ||= new THREE.MeshStandardMaterial({ color: new THREE.Color('#8fd4ff'), emissive: new THREE.Color('#1f8cff'), emissiveIntensity: 1.35, roughness: 0.25, flatShading: true });
+  passGlaze ||= new THREE.MeshStandardMaterial({ color: new THREE.Color('#9fd2ff'), emissive: new THREE.Color('#2c7ad0'), emissiveIntensity: 0.45, transparent: true, opacity: 0.5, roughness: 0.1, depthWrite: false });
+  const grad = (radial) => { const c = document.createElement('canvas'); c.width = c.height = 64; const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), gr = radial ? g2.createRadialGradient(32, 32, 0, 32, 32, 32) : g2.createLinearGradient(0, 0, 0, 64);
+    gr.addColorStop(0, '#fff'); gr.addColorStop(radial ? 0.35 : 0.2, '#999'); gr.addColorStop(1, '#000'); g2.fillStyle = gr; g2.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); t.magFilter = t.minFilter = THREE.LinearFilter; return t; };
+  passHalo ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#3fb4ff'), alphaMap: grad(true), transparent: true, opacity: 0.75, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+  passRimHalo ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#47d2ff'), alphaMap: grad(false), transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, side: THREE.DoubleSide });
+  const halo = (x, z, r, y = FL + 0.03) => b.quad(passHalo, [[x - r, y, z - r], [x + r, y, z - r], [x + r, y, z + r], [x - r, y, z + r]], [[0, 1], [1, 1], [1, 0], [0, 0]]);
+  passVeil ||= (() => { const c = document.createElement('canvas'); c.width = 4; c.height = 64; const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), gr = g2.createLinearGradient(0, 0, 0, 64); gr.addColorStop(0, '#000'); gr.addColorStop(0.12, '#333'); gr.addColorStop(0.45, '#bbb'); gr.addColorStop(1, '#fff'); g2.fillStyle = gr; g2.fillRect(0, 0, 4, 64); const t = new THREE.CanvasTexture(c); t.magFilter = t.minFilter = THREE.LinearFilter; return new THREE.MeshBasicMaterial({ color: PASS_CLOUD, alphaMap: t, transparent: true, depthWrite: false, side: THREE.DoubleSide }); })();
+  const on = (p, u, y, v) => (p.n === 'z' ? [p.x + u, y, p.z + v] : [p.x + v, y, p.z + u]);
+  const sz = (p, w, h, d) => (p.n === 'z' ? [w, h, d] : [d, h, w]);
+  const rock = (x, y, z, s, seed, { brown = false, detail = 0, yaw = 0, flat = 0.3, sink = 0.2, tint = [1, 1, 1], bb = b } = {}) =>
+    rockGeom(bb, x, y, z, s, f.rng('pass', x, z, seed), { top: 'pass_cap', side: brown ? 'pass_brown' : 'pass_rock', detail, yaw, sink, flatTop: flat, rough: 0.38, tint });
+  for (const p of pieces) {
+    const R = passR(p.seed || 1);
+    if (p.k === 'rock') rock(p.x, p.y, p.z, p.s, p.seed, { brown: p.brown, detail: p.detail || 0, yaw: p.yaw || 0, flat: p.flat ?? 0.3 });
+    else if (p.k === 'cliff') {
+      // a ledge's face down into the cloud: the rock's face, chunks jutting from it, a snow lip along its top, the cloud's
+      // veil hanging over its foot a little out from it
+      const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { n: p.n, x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 }, LOW = -11;
+      bs.box(p.brown ? 'pass_brown' : 'pass_rock', sz(q, len, -LOW, 1.2), { at: on(q, 0, LOW / 2, -p.out * 0.6) });
+      for (let t = 0.4, k = 0; t < len; t += 1.1 + R(k) * 1.2, k++) {
+        const s = 0.7 + R(k + 3) * 1.1, y = -0.8 - R(k + 5) * 6.5;
+        rock(...on(q, t - len / 2, y, p.out * (0.15 + R(k + 7) * 0.25)).map((v, i) => (i === 1 ? y : v)), [s, s * (0.9 + R(k + 9) * 0.8), s * 0.8], (p.seed || 0) + k, { brown: p.brown, yaw: R(k + 11) * 6, flat: 0.15, sink: 0.5, bb: bs });
+      }
+      b.tinted([1.06, 1.06, 1.08], () => b.box('pass_cap', sz(q, len + 0.1, 0.1, 0.22), { at: on(q, 0, FL + 0.03, p.out * 0.06) }));   // (the snow's lip along the edge: the references' inked line, lit)
+      const o = on(q, 0, 0, p.out * 2.0), y0 = -7.5, y1 = 0.35, h2 = len / 2 + 1.5;
+      bs.quad(passVeil, q.n === 'z' ? [[o[0] - h2, y1, o[2]], [o[0] + h2, y1, o[2]], [o[0] + h2, y0, o[2]], [o[0] - h2, y0, o[2]]] : [[o[0], y1, o[2] - h2], [o[0], y1, o[2] + h2], [o[0], y0, o[2] + h2], [o[0], y0, o[2] - h2]], [[0, 1], [1, 1], [1, 0], [0, 0]]);
+    } else if (p.k === 'cloud') {
+      // the cloud below: a floor of it far down, billowed (a soft noise, tiled), and over the drop a veil by each tile's
+      // distance from a ledge (convert.js passDress rows), clear at the edges, thick six out, past the level all cloud
+      passCloudTex ||= (() => {
+        const c = document.createElement('canvas'); c.width = c.height = 128; const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), img = g2.createImageData(128, 128);
+        const n = (x, y, s) => { let v = 0, a = 1, t = 0; for (let o = 0; o < 4; o++) { const fx = x / (32 >> o), fy = y / (32 >> o), x0 = Math.floor(fx), y0 = Math.floor(fy), u = fx - x0, w = fy - y0, sm = (k) => k * k * (3 - 2 * k), m = (128 / (32 >> o)) | 0;
+          const h = (i, j) => ((Math.imul(((i % m) + m) % m + s * 131, 0x27d4eb2d) ^ Math.imul(((j % m) + m) % m + 7, 0x165667b1)) >>> 0) % 1000 / 1000;
+          const a0 = h(x0, y0), b0 = h(x0 + 1, y0), c0 = h(x0, y0 + 1), d0 = h(x0 + 1, y0 + 1); v += a * (a0 + (b0 - a0) * sm(u) + (c0 - a0) * sm(w) + (a0 - b0 - c0 + d0) * sm(u) * sm(w)); t += a; a *= 0.5; } return v / t; };
+        for (let y = 0; y < 128; y++) for (let x = 0; x < 128; x++) { const v = n(x, y, 3), k = Math.round(150 + 105 * Math.max(0, Math.min(1, (v - 0.3) * 2.4))), o = (y * 128 + x) * 4; img.data[o] = k - 14; img.data[o + 1] = k - 6; img.data[o + 2] = Math.min(255, k + 6); img.data[o + 3] = 255; }
+        g2.putImageData(img, 0, 0); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; return t;
+      })();
+      const PD = 60, W = p.W, D = p.D, GW = W + 2 * PD, GD = D + 2 * PD;
+      const floorMat = new THREE.MeshBasicMaterial({ map: passCloudTex.clone(), color: '#7d93be' });   // (round 5: a deep blue-grey under the banks, so they stand off it; round 1: near white, a blank)
+      floorMat.map.repeat.set(GW / 24, GD / 24); floorMat.map.needsUpdate = true; own.push(floorMat, floorMat.map);   // (round 5: this line had been swallowed by a comment, the billows stretched to one over the whole sheet)
+      const deep = new THREE.Mesh(new THREE.PlaneGeometry(GW, GD), floorMat); deep.rotation.x = -Math.PI / 2; deep.position.set(W / 2, -6.5, D / 2); deep.updateMatrixWorld(true); extra.push(deep);
+      const c = document.createElement('canvas'); c.width = GW; c.height = GD;
+      const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), img = g2.createImageData(GW, GD);
+      for (let j = 0; j < GD; j++) for (let i = 0; i < GW; i++) { const li = i - PD, lj = j - PD, inl = li >= 0 && lj >= 0 && li < W && lj < D, d = inl ? +p.rows[lj][li] : 9, a = Math.max(0, Math.min(1, (d - 1.5) / 6)) * 0.22, o = (j * GW + i) * 4; img.data[o] = img.data[o + 1] = img.data[o + 2] = Math.round(255 * a); img.data[o + 3] = 255; }
+      g2.putImageData(img, 0, 0); const tex = new THREE.CanvasTexture(c); tex.magFilter = tex.minFilter = THREE.LinearFilter;
+      const veilMat = new THREE.MeshBasicMaterial({ color: '#d4dce6', alphaMap: tex, transparent: true, depthWrite: false }); own.push(veilMat, tex);
+      for (const [y, k] of [[-0.9, 1]]) {   // (round 5: one thin veil; the second hid the banks)
+ const m = k === 1 ? veilMat : Object.assign(veilMat.clone(), { opacity: k }); if (m !== veilMat) own.push(m); const veil = new THREE.Mesh(new THREE.PlaneGeometry(GW, GD), m); veil.rotation.x = -Math.PI / 2; veil.position.set(W / 2, y, D / 2); veil.renderOrder = 2; veil.updateMatrixWorld(true); extra.push(veil); }
+    } else if (p.k === 'cloudbank') {
+      // (round 5, the coordinator: "banks of cloud with shadowed undersides") a bank of cloud below the ledges: two or three
+      // soft lumps, lit by the sun from above and the blue fill from below, so their undersides fall into shadow
+      passCloudMat ||= new THREE.MeshLambertMaterial({ color: new THREE.Color('#93a8cf'), emissive: new THREE.Color('#1c2b4e'), emissiveIntensity: 0.35 });   // (rounds 6–7: near white, the banks read as more snow, a field of boulders below the ledges: a blue-grey body, the sun's tops pale)
+      const n = 1 + Math.floor(R(1) * 2), S = p.s || 1;   // (round 7: wide and flat, a bank, not a boulder)
+      for (let k = 0; k < n; k++) rockGeom(bc, p.x + (R(k + 2) - 0.5) * 3 * S, p.y + R(k + 5) * 0.4, p.z + (R(k + 8) - 0.5) * 2.4 * S, [(2.6 + R(k + 11) * 1.6) * S, (0.5 + R(k + 14) * 0.35) * S, (2.2 + R(k + 17) * 1.4) * S], f.rng('pass:cloud', p.x, p.z, (p.seed || 0) + k), { top: passCloudMat, side: passCloudMat, detail: 1, rough: 0.12, flatTop: 0, sink: 0.35 });
+    } else if (p.k === 'snowfall') {
+      // (round 6) the snow falling: Luminati's snow preset is the weather's and never showed in a dungeon level, so our own,
+      // one draw: flakes over the level and round it, each falling on the shared clock (uTime) and wrapping, drifting a
+      // little sideways, soft round dots in a cold white
+      let a = 911; const rnd = () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };   // (round 8: a stream, not passR: its draws one after another fell on a line)
+      const N = 1400, pos = new Float32Array(N * 3);
+      for (let k = 0; k < N; k++) { pos[3 * k] = -8 + rnd() * (p.W + 16); pos[3 * k + 1] = rnd() * 13; pos[3 * k + 2] = -8 + rnd() * (p.D + 16); }
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const dot = (() => { const c = document.createElement('canvas'); c.width = c.height = 16; const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), gr = g2.createRadialGradient(8, 8, 0, 8, 8, 8); gr.addColorStop(0, '#fff'); gr.addColorStop(0.5, 'rgba(255,255,255,0.8)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g2.fillStyle = gr; g2.fillRect(0, 0, 16, 16); return new THREE.CanvasTexture(c); })();
+      const mat = new THREE.PointsMaterial({ color: '#f4f8ff', size: 2.6 * Math.min(3, globalThis.devicePixelRatio || 1), map: dot, transparent: true, opacity: 0.9, depthWrite: false, sizeAttenuation: false, fog: false }); own.push(mat, dot);   // (round 7: in pixels; attenuated, a flake was under one at the game's camera distance)
+      mat.onBeforeCompile = (sh) => { sh.uniforms.uTime = globalUniforms.uTime;
+        sh.vertexShader = 'uniform float uTime;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  transformed.y = mod(position.y - uTime * 0.85, 13.0) - 2.5;\n  transformed.x += sin(uTime * 0.6 + position.z * 1.7) * 0.35;\n  transformed.z += cos(uTime * 0.5 + position.x * 1.3) * 0.2;'); };
+      mat.customProgramCacheKey = () => 'ember-passsnow-1';
+      const pts = new THREE.Points(geo, mat); pts.frustumCulled = false; pts.renderOrder = 4; extra.push(pts);
+    } else if (p.k === 'drift') {
+      // (round 7) snow drifted over the Praetory's floor: a low soft lump, wider than it's long, its edge its own
+      const S = p.s || 1;
+      rockGeom(bs, p.x, FL - 0.06, p.z, [1.05 * S, 0.16 + R(1) * 0.12, 0.8 * S], f.rng('pass:drift', p.x, p.z, p.seed), { top: 'pass_snow', side: 'pass_snow', detail: 0, rough: 0.1, flatTop: 0.35, sink: 0.4, yaw: R(2) * 6, tint: [0.9, 0.94, 1.02] });   // (round 8: the cap's rock showing through read as camouflage over the floor)
+    } else if (p.k === 'peak') {
+      // a mountain's top far off, standing up out of the cloud: a big faceted mass and a shoulder, snow on its faces
+      const S = p.s || 1;
+      rock(p.x, -16, p.z, [5 * S, 8.5 * S + R(1) * 3, 4.5 * S], p.seed, { detail: 1, yaw: R(2) * 6, flat: 0.04, sink: 0.1, tint: [0.8, 0.86, 1.0], bb: bs });
+      rock(p.x + (R(3) - 0.5) * 8 * S, -14, p.z + (R(4) - 0.5) * 6 * S, [3.5 * S, 5.5 * S, 3 * S], p.seed + 7, { yaw: R(5) * 6, flat: 0.04, sink: 0.1, tint: [0.9, 0.92, 0.98], bb: bs });
+    } else if (p.k === 'bridge') {
+      // the plank-and-rope bridge: a timber post at each corner and along each side, a hand rope and a lower one sagging
+      // between them, ties down to the deck's edge log, the end posts heavier with rope wound round them
+      const ax = p.along === 'x', L = ax ? p.x1 - p.x0 : p.z1 - p.z0, Wd = ax ? p.z1 - p.z0 : p.x1 - p.x0;
+      const at = (u, y, v) => (ax ? [p.x0 + u, y, p.z0 + v] : [p.x0 + v, y, p.z0 + u]);
+      const posts = [0.1]; for (let u = 2.4; u < L - 1.2; u += 2.4) posts.push(u); posts.push(L - 0.1);
+      for (const v of [0.12, Wd - 0.12]) {
+        b.tinted([0.42, 0.36, 0.3], () => b.tube('furniture_wood', at(-0.3, FL + 0.05, v), at(L + 0.3, FL + 0.05, v), 0.13, 0.13, { segments: 6 }));   // (the edge log)
+        posts.forEach((u, k) => {
+          const end = k === 0 || k === posts.length - 1, r = end ? 0.13 : 0.08, top = FL + (end ? 1.45 : 1.15);
+          b.tinted([0.46, 0.4, 0.33], () => b.tube('furniture_wood', at(u, FL - (end ? 0.5 : 0.25), v), at(u, top, v), r, r * 0.85, { segments: 6 }));
+          b.tinted([1.05, 1.06, 1.1], () => b.lathe('pass_cap', [{ y: 0, r: r * 1.05 }, { y: 0.07, r: r * 0.9 }, { y: 0.1, r: 0 }], { segments: 6, at: at(u, top, v) }));   // (snow on its head)
+          if (end) b.tinted([0.6, 0.48, 0.32], () => { for (let t = 0; t < 4; t++) b.lathe('linen', [{ y: 0, r: r + 0.03 }, { y: 0.05, r: r + 0.035 }, { y: 0.06, r: 0 }], { segments: 8, at: at(u, FL + 0.7 + t * 0.07, v) }); });
+        });
+        for (const [y0, sag] of [[1.05, 0.2], [0.55, 0.12]]) for (let k = 0; k + 1 < posts.length; k++) {
+          const ua = posts[k], ub = posts[k + 1], N = 4;
+          for (let s = 0; s < N; s++) { const t0 = s / N, t1 = (s + 1) / N, ya = FL + y0 - sag * 4 * t0 * (1 - t0), yb = FL + y0 - sag * 4 * t1 * (1 - t1);
+            b.tinted([0.62, 0.5, 0.34], () => b.tube('linen', at(ua + (ub - ua) * t0, ya, v), at(ua + (ub - ua) * t1, yb, v), 0.03, 0.03, { segments: 4 })); }
+          for (let t = 0.25; t < 1; t += 0.25) { const u = ua + (ub - ua) * t, yh = FL + 1.05 - 0.2 * 4 * t * (1 - t);
+            b.tinted([0.58, 0.47, 0.32], () => b.tube('linen', at(u, yh, v), at(u, FL + 0.12, v), 0.015, 0.015, { segments: 3 })); }
+        }
+      }
+    } else if (p.k === 'river') {
+      // the frozen river at the crevasse's foot, lit icy blue from inside, snow banked along both sides
+      const w = p.x1 - p.x0, d = p.z1 - p.z0, cx = (p.x0 + p.x1) / 2, cz = (p.z0 + p.z1) / 2;
+      bs.box(passFall, [w, 0.3, d], { at: [cx, p.y, cz] });
+      bs.tinted([1.02, 1.03, 1.06], () => { for (const s of [-1, 1]) bs.box('pass_cap', p.along === 'z' ? [0.5, 0.45, d] : [w, 0.45, 0.5], { at: p.along === 'z' ? [cx + s * (w / 2 - 0.2), p.y + 0.12, cz] : [cx, p.y + 0.12, cz + s * (d / 2 - 0.2)] }); });
+    } else if (p.k === 'pool') {
+      // a frozen pool: its ice laid just over the snow, its open edges lit pale blue and banked with a lip of snow
+      const has = new Set(p.cells.map(([x, z]) => `${x},${z}`)), H = 0.25;
+      for (const [x, z] of p.cells) {
+        b.box(passIce, [0.5, 0.03, 0.5], { at: [x, FL + 0.015, z] });
+        for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          if (has.has(`${x + dx * 0.5},${z + dz * 0.5}`)) continue;
+          b.box(passGlow, dx ? [0.1, 0.035, 0.5] : [0.5, 0.035, 0.1], { at: [x + dx * H, FL + 0.035, z + dz * H] });
+          { const a = H + 0.03, o = H + 0.55, y = FL + 0.1;   // (the rim's light out over the snow bank: a strip fading from the rim)
+            const P0 = dx ? [x + dx * a, y, z - 0.25] : [x - 0.25, y, z + dz * a], P1 = dx ? [x + dx * a, y, z + 0.25] : [x + 0.25, y, z + dz * a], P2 = dx ? [x + dx * o, y, z + 0.25] : [x + 0.25, y, z + dz * o], P3 = dx ? [x + dx * o, y, z - 0.25] : [x - 0.25, y, z + dz * o];
+            b.quad(passRimHalo, [P0, P1, P2, P3], [[0, 1], [1, 1], [1, 0], [0, 0]]); }
+          b.tinted([1.05, 1.06, 1.1], () => b.box('pass_cap', dx ? [0.14, 0.09, 0.56] : [0.56, 0.09, 0.14], { at: [x + dx * (H + 0.09), FL + 0.04, z + dz * (H + 0.09)] }));
+        }
+      }
+    } else if (p.k === 'crystals') {
+      // (round 5) a cluster of blue ice crystal: six to eight faceted prisms leaning out from a root, vivid blue and lit from
+      // inside, a halo on the snow round it (Luminati's own ice glowed at 0.15 and read as grey-blue slabs)
+      const n = 6 + Math.floor(R(1) * 3), S = p.s || 1;
+      for (let k = 0; k < n; k++) {
+        const a = (k / n) * 6.28 + R(k + 2) * 0.8, lean = k === 0 ? 0 : 0.25 + R(k + 4) * 0.45, h = (k === 0 ? 1.6 : 0.6 + R(k + 6) * 0.9) * S, r = (0.12 + R(k + 8) * 0.1) * S, d = k === 0 ? 0 : 0.18 * S;
+        const up = new THREE.Vector3(0, 1, 0), dir = new THREE.Vector3(Math.cos(a) * lean, 1, Math.sin(a) * lean).normalize();
+        b.push([p.x + Math.cos(a) * d, FL - 0.05, p.z + Math.sin(a) * d], new THREE.Quaternion().setFromUnitVectors(up, dir));
+        b.lathe(passCrystal, [{ y: 0, r }, { y: h * 0.72, r: r * 0.9 }, { y: h, r: 0.01 }], { segments: 5, phase: R(k + 10) * 3, smooth: false });
+        b.pop();
+      }
+      halo(p.x, p.z, 1.6 * S);
+    } else if (p.k === 'icefall') {
+      // a fall frozen down the back rock: a sheet of ice from the rock's top to the floor, columns of it standing out of
+      // the sheet, tapering up, a mound of ice at its foot; lit from inside
+      const q = { n: p.n, x: p.x, z: p.z }, top = p.top || 4.5, h = top - FL;
+      b.box(passFall, sz(q, 3.6, h, 0.4), { at: on(q, 0, FL + h / 2, -0.15) });
+      for (let k = 0; k < 13; k++) { const u = -1.8 + k * 0.3 + (R(k) - 0.5) * 0.1, r = 0.13 + R(k + 3) * 0.16, hh = h * (0.5 + R(k + 5) * 0.5);
+        b.lathe(passFall, [{ y: 0, r: r * 1.4 }, { y: hh * 0.3, r }, { y: hh * 0.85, r: r * 0.7 }, { y: hh, r: 0.02 }], { segments: 6, at: on(q, u, FL, 0.08 + R(k + 7) * 0.2) }); }
+      b.lathe(passFall, [{ y: 0, r: 2.0 }, { y: 0.3, r: 1.5 }, { y: 0.5, r: 0.4 }, { y: 0.55, r: 0 }], { segments: 10, at: on(q, 0, FL, 0.4) });
+      { const c = on(q, 0, FL + 0.04, 1.2); halo(c[0], c[2], 3.2); }
+    } else if (p.k === 'post') {
+      // a pilgrims' prayer post: a weathered pole, a crossbar, strips of faded cloth hung from it, a small bell, snow on its
+      // head; stones heaped at its foot; at a doorway a lantern hung from the bar's end
+      const lean = (R(1) - 0.5) * 0.08, tx = p.x + lean, H = 2.9;
+      b.tinted([0.5, 0.43, 0.36], () => { b.tube('furniture_wood', [p.x, FL - 0.1, p.z], [tx, FL + H, p.z], 0.075, 0.06, { segments: 6 }); b.box('furniture_wood', [1.0, 0.09, 0.09], { at: [tx, FL + H - 0.25, p.z] }); });
+      b.tinted([1.05, 1.06, 1.1], () => { b.box('pass_cap', [1.02, 0.05, 0.1], { at: [tx, FL + H - 0.18, p.z] }); b.lathe('pass_cap', [{ y: 0, r: 0.07 }, { y: 0.08, r: 0 }], { segments: 6, at: [tx, FL + H, p.z] }); });
+      const CL = [[0.72, 0.2, 0.16], [0.82, 0.6, 0.22], [0.26, 0.38, 0.66], [0.86, 0.84, 0.78], [0.3, 0.5, 0.36]];
+      for (let k = 0; k < 4; k++) { const u = -0.38 + k * 0.25, L = 0.7 + R(k + 2) * 0.55, sw = (R(k + 4) - 0.5) * 0.3;
+        b.tinted(CL[(k + (p.seed || 0)) % CL.length], () => b.box('linen', [0.18, L, 0.02], { at: [tx + u + sw * 0.5, FL + H - 0.3 - L / 2, p.z + 0.06], rot: [0, 0, sw] })); }
+      b.tinted([0.62, 0.48, 0.26], () => b.lathe('metal', [{ y: 0, r: 0.09 }, { y: 0.02, r: 0.08 }, { y: 0.14, r: 0.05 }, { y: 0.16, r: 0 }], { segments: 8, at: [tx + 0.44, FL + H - 0.48, p.z] }));
+      for (let k = 0; k < 3; k++) rock(p.x + (R(k + 9) - 0.5) * 0.5, FL - 0.05, p.z + (R(k + 12) - 0.5) * 0.5, [0.22 + R(k) * 0.1, 0.16, 0.2], (p.seed || 0) + k, { flat: 0.4 });
+      if (p.lamp) { b.tinted(TAV_IRON, () => b.box('metal', [0.04, 0.3, 0.04], { at: [tx - 0.46, FL + H - 0.42, p.z] })); b.tinted(TAV_IRON, () => b.box('metal', [0.2, 0.26, 0.2], { at: [tx - 0.46, FL + H - 0.7, p.z] })); b.box(tavernGlass ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffb45e').multiplyScalar(2.2), fog: false }), [0.14, 0.18, 0.14], { at: [tx - 0.46, FL + H - 0.7, p.z] }); }
+    } else if (p.k === 'cairn') {
+      // a cairn: flat stones stacked smaller as it goes up, the top ones under snow
+      const n = 5 + Math.floor(R(1) * 3), S = p.s || 1; let y = FL - 0.05;
+      for (let k = 0; k < n; k++) { const s = (0.62 - k * 0.07) * S, hh = (0.2 + R(k + 3) * 0.08) * S;
+        rockGeom(b, p.x + (R(k + 5) - 0.5) * 0.12, y, p.z + (R(k + 7) - 0.5) * 0.12, [s, hh, s * (0.8 + R(k + 9) * 0.3)], f.rng('pass:cairn', p.x, p.z, (p.seed || 0) + k * 13), { top: k === n - 1 ? 'pass_cap' : 'pass_rock', side: 'pass_rock', detail: 0, yaw: R(k + 11) * 6, flatTop: 0.45, sink: 0.05, rough: 0.3, tint: [1.15, 1.15, 1.2] }); y += hh * 1.6; }   // (round 2: snow on every stone read as a snowman)
+    } else if (p.k === 'shrine') {
+      // the wayside shrine: a stone on a step under a little gabled roof of slate, snow on the roof; the offerings frozen to
+      // the step, a lamp kept lit in its niche
+      b.pushMatrix(new THREE.Matrix4().makeTranslation(p.x, FL, p.z).multiply(new THREE.Matrix4().makeScale(1.35, 1.35, 1.35)).multiply(new THREE.Matrix4().makeTranslation(-p.x, -FL, -p.z)));   // (round 2: a set piece, a third bigger)
+      b.tinted([0.92, 0.94, 0.98], () => { b.box('stone_brick', [2.2, 0.3, 1.3], { at: [p.x, FL + 0.15, p.z] }); b.box('stone_brick', [1.1, 1.5, 0.7], { at: [p.x, FL + 0.3 + 0.75, p.z - 0.15] }); for (const s of [-1, 1]) b.box('stone_brick', [0.18, 1.7, 0.18], { at: [p.x + s * 0.72, FL + 0.3 + 0.85, p.z + 0.1] }); });
+      b.box(cryptDark ||= new THREE.MeshBasicMaterial({ color: '#0d0a08' }), [0.42, 0.5, 0.04], { at: [p.x, FL + 1.15, p.z + 0.21] });
+      b.box(tavernGlass ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffb45e').multiplyScalar(2.2), fog: false }), [0.1, 0.14, 0.05], { at: [p.x, FL + 1.0, p.z + 0.22] });
+      for (const s of [-1, 1]) { b.tinted([0.66, 0.7, 0.8], () => b.box('roof_slate', [0.95, 0.07, 1.25], { at: [p.x + s * 0.42, FL + 2.18, p.z], rot: [0, 0, s * -0.55] })); b.tinted([1.08, 1.08, 1.12], () => b.box('pass_cap', [0.85, 0.05, 1.15], { at: [p.x + s * 0.4, FL + 2.25, p.z], rot: [0, 0, s * -0.55] })); }
+      b.tinted([0.7, 0.62, 0.52], () => { for (let k = 0; k < 4; k++) b.lathe('linen', [{ y: 0, r: 0.05 }, { y: 0.06, r: 0.09 }, { y: 0.08, r: 0.09 }, { y: 0.081, r: 0 }], { segments: 8, at: [p.x - 0.75 + k * 0.5, FL + 0.3, p.z + 0.42] }); });
+      b.tinted([1.05, 1.06, 1.1], () => { for (let k = 0; k < 3; k++) b.lathe('pass_cap', [{ y: 0, r: 0.07 }, { y: 0.04, r: 0 }], { segments: 6, at: [p.x - 0.5 + k * 0.5, FL + 0.38, p.z + 0.42] }); });
+      b.pop();
+    } else if (p.k === 'iceshell') {
+      // a guard frozen at his post: the ice grown up round him in a block, faceted, clear enough to see him in it; rime at
+      // its foot (its own mesh: drawn through)
+      const g = f.builder(); rockGeom(g, p.x, FL - 0.05, p.z, [0.62, 1.5, 0.56], f.rng('pass:shell', p.x, p.z, p.seed), { top: passShell, side: passShell, detail: 0, rough: 0.25, flatTop: 0.12, sink: 0.08 });
+      const sh = g.build('ember:iceshell', { castShadow: false }).group; sh.traverse((o) => { if (o.isMesh) { o.renderOrder = 3; o.castShadow = false; } }); sh.updateMatrixWorld(true); extra.push(sh);
+      b.tinted([1.05, 1.06, 1.1], () => b.lathe('pass_cap', [{ y: 0, r: 0.72 }, { y: 0.05, r: 0.6 }, { y: 0.07, r: 0 }], { segments: 10, at: [p.x, FL, p.z] }));
+      halo(p.x, p.z, 1.1, FL + 0.09);   // (round 5: the ice glowing faintly blue round him)
+    } else if (p.k === 'icicles') {
+      // icicles along a wall's top: a ragged run of them, long and short, pale ice
+      const len = Math.hypot(p.x1 - p.x0, p.z1 - p.z0), q = { n: p.n, x: (p.x0 + p.x1) / 2, z: (p.z0 + p.z1) / 2 };
+      // (round 5: "big icicles that read at phone size": half a figure long the longest, thick, fewer)
+      for (let t = 0.12, k = 0; t < len - 0.08; t += 0.22 + R(k) * 0.24, k++) { const L = 0.3 + R(k + 3) ** 1.5 * 1.15, r = 0.06 + R(k + 5) * 0.07;
+        b.lathe(passFall, [{ y: 0, r: 0.004 }, { y: L * 0.7, r: r * 0.65 }, { y: L, r }], { segments: 5, at: on(q, t - len / 2, p.y - L, p.out * (0.06 + r)) }); }
+      b.box(passGlaze, sz(q, len, 1.35, 0.08), { at: on(q, 0, FL + 0.67, p.out * 0.04) });   // (round 5: "a blue ice glaze on the walls' lower courses")
+      b.tinted([1.05, 1.06, 1.1], () => b.box('pass_cap', sz(q, len, 0.12, 0.4), { at: on(q, 0, p.y + 0.06, -p.out * 0.1) }));
+    }
+  }
+  const built = b.build('ember:pass').group; built.updateMatrixWorld(true);
+  built.traverse((o) => { if (o.isMesh && [passGlow, passVeil, passIce, passFall, passHalo, passRimHalo, passGlaze].includes(o.material)) o.castShadow = false; });
+  const flat = bs.build('ember:pass:below', { castShadow: false }).group; flat.updateMatrixWorld(true);
+  const banks = bc.build('ember:pass:cloud', { castShadow: false, receiveShadow: false }).group; banks.updateMatrixWorld(true);
+  const g = new THREE.Group(); g.name = 'ember:pass'; g.add(built, flat, banks); for (const o of extra) g.add(o);
+  g.dispose = () => { g.traverse((o) => { if (o.isMesh) o.geometry.dispose(); }); for (const r of own) r.dispose(); own.length = 0; };
+  return g;
+}
 /** our art of a level gone for good: its cards (and their sheets' textures, which Sprite3D's dispose leaves: a texture a
  * card leaked every load, 199 → 288 over four trips), its arches and its kit models */
 function dropEnv(list, made) {
@@ -2178,6 +2393,7 @@ async function placeEnv(list, region) {
     if (p.tavern) { const g = buildTavern(p.tavern.pieces); game.engine.scene.add(g); envSprites.push(g); continue; }
     if (p.seaMask) { seaMask = p.seaMask; if (seaLv) seaAir(seaLv, seaRegion, true); continue; }
     if (p.magma) { const g = buildMagma(p.magma.cells); game.engine.scene.add(g); envSprites.push(g); continue; }
+    if (p.pass) { const g = buildPass(p.pass.pieces); game.engine.scene.add(g); envSprites.push(g); continue; }   // (the pass's ledges and the Praetory's frost: docs/pass-dungeon.md)
     const kit = KIT.get(p.id);
     if (kit && (LANDMARKS === 'all' || (LANDMARKS === 'chosen' && !p.card) || (LANDMARKS === 'doors' && DOORS.has(p.id)))) {
       // (on the ground round it, not the tile under its middle: the chapel stands in water the converter laid under it)
@@ -2254,13 +2470,14 @@ let skyShown = 'default';
 function skyFor(lv, region) {
   const L = game?.lighting; if (!L) return;
   const env = lv.environment || {}, G = game.postfx?.settings?.grade, ash = region === 'reach' && !env.interior;
-  if (G) { if (!gradeOwn) gradeOwn = { ...G }; Object.assign(G, gradeOwn, region === 'vale' ? VALE_GRADE : ash ? REACH_GRADE : {}); gradeKeep = { sharpen: G.sharpen, grain: G.grain, chromaticAberration: G.chromaticAberration }; applyGrade(); }
+  if (G) { if (!gradeOwn) gradeOwn = { ...G }; Object.assign(G, gradeOwn, env.pass ? PASS_GRADE : region === 'vale' ? VALE_GRADE : ash ? REACH_GRADE : {}); gradeKeep = { sharpen: G.sharpen, grain: G.grain, chromaticAberration: G.chromaticAberration }; applyGrade(); }
   graded = region === 'vale' && !env.interior; gradedReach = ash;
   // (the Reach: the arid climate's sky graded to ash; any other arid level, the Bowl, its own again)
   if (env.climate === 'arid' && !env.interior) { const want = ash ? 'ash' : 'arid'; if (skyShown !== want) { L.setKeyframes(ash ? ASH_KEYFRAMES : ARID_KEYFRAMES); skyShown = want; } }
   if (ash) reachAir();
   if (env.harbour) harbourAir();
   seaAir(lv, region);
+  if (env.pass) { L.setKeyframes(PASS_KEYFRAMES); skyShown = 'pass'; return; }   // (the pass's cold high light, its sun's colour and the air: docs/pass-dungeon.md)
   if (env.greenwood) { greenwoodAir(); if (skyShown !== 'greenwood') { L.setKeyframes(WOOD_KEYFRAMES); skyShown = 'greenwood'; } return; }   // (the greenwood: its own gloom, docs/greenwood-dungeon.md)
   if (env.interior || env.climate || env.season) return;                 // (underground: the ambient's ours; a climate's sky its own)
   const want = region === 'vale' ? 'dusky' : 'default';
@@ -2286,6 +2503,12 @@ const ASH_KEYFRAMES = ARID_KEYFRAMES.map((f) => {
     fog: f.fog * 1.1, clouds: Math.min(0.5, (f.clouds ?? 0.15) + 0.15) };
 });
 const REACH_GRADE = { saturation: 0.86, contrast: 1.05, vignette: 0.8 };
+// the pass (docs/pass-dungeon.md; the First Pilgrim's Heights, docs/art-critic-pass-pilgrim.md): a cold high light, the
+// sun white and a little weaker than the lowlands', the shade blue, the air thick with the cloud's own colour (its
+// backdrop) so what's far off goes into it. The hour is held (convert.js KIT_LOOK.pass `held`), so one frame matters
+const PASS_KEYFRAMES = DEFAULT_KEYFRAMES.map((f) => ({ ...f, top: '#7d95c2', horizon: '#a9bad6', bottom: '#90a4c8', sun: mixHex(f.sun, '#f6f9ff', 0.8), sunI: f.sunI * 0.66,
+  hemiSky: mixHex(f.hemiSky, '#94b4ee', 0.7), hemiGround: mixHex(f.hemiGround, '#4a5f92', 0.8), fog: f.fog * 0.8, clouds: 0 }));   // (round 5: the shade bluer, the sun whiter)
+const PASS_GRADE = { saturation: 1.14, contrast: 1.06, vignette: 0.8 };   // (round 5: the references' saturated blues; darker toward the frame's edges)   // (round 1: at 1.6 the cloud swallowed the ledges' faces)
 // the Ashwater murky (slate over rust silt, not a mountain stream's blue); the land past the map's edge in cracked dark
 // earth (the arid climate lays it in orange dry dirt); the climate's gold dust motes as ash
 const MURK = ['#6e5440', '#4c3e33', '#30302e', '#1c1e21'], MURK_CREST = '#8c7c6a', MURK_FOAM = '#a89a88';
@@ -3083,6 +3306,124 @@ registerTextureSet((K) => {
         s.set(x, y, at(MOSS, cl(0.3 + (N[i] - 0.5) * 0.9 + (K.hash2(x, y, 1343) > 0.9 ? 0.18 : 0)))); s.hf[i] = 0.5 + (N[i] - 0.5) * 0.5;
       });
       return { normal: 1.6 };
+    } },
+  };
+});
+
+// ── the pass (docs/pass-dungeon.md; docs/dungeon-looks-plan.md items 13 and 10, the owner's three references: painted,
+// inked battle maps of a snowfield, ledges and a bridge, a canyon) ─────────────────────────────────────────────────────
+// Its own textures, in the hand of the crypt's and the dock's: the snowfield wind-scoured and flecked with grit, a scoured
+// patch of it a step darker where the rock shows; the dark blue-grey rock in big angular facets, each lit across its face
+// from the upper left and inked round its edge (the references' line); snow lying on the rock's tops; the canyon's brown
+// rock in the same facets, banded; the bridge's planks, weathered dark with snow in the seams, and the truss under them;
+// the frozen pool's ice, blue with white cracks, glowing; the Praetory's walls, dressed stone under rime.
+/** angular facets (a Voronoi of a jittered grid, wrapped): each facet one plane lit across it (`lit`, upper left), its own
+ *  tone in the ramp, an inked edge two texels wide; `strata`: dark bands across (the canyon's); `snow`: snow on the tops
+ *  of the facets that face up */
+function facets(s, K, R, { cells = 3, seed = 0, ink = '#141922', strata = 0, snow = null, rim = null } = {}) {
+  const w = s.w, h = s.h, cw = w / cells, ch = h / cells, pts = [];
+  for (let j = 0; j < cells; j++) for (let i = 0; i < cells; i++) pts.push({ x: (i + 0.15 + K.hash2(i, j, seed + 1) * 0.7) * cw, y: (j + 0.15 + K.hash2(i, j, seed + 2) * 0.7) * ch, t: K.hash2(i, j, seed + 3), a: K.hash2(i, j, seed + 4) * 6.28, up: K.hash2(i, j, seed + 5) < 0.3 });
+  const at = (t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))], INK = K.parseColor(ink), N = K.field(w, h, 6, 6, seed + 7, { oct: 2 });
+  const SNOW = snow ? snow.map((c) => K.parseColor(c)) : null;
+  s.each((x, y, i) => {
+    let d1 = 1e9, d2 = 1e9, k1 = 0, dx1 = 0, dy1 = 0;
+    for (let k = 0; k < pts.length; k++) for (let oy = -h; oy <= h; oy += h) for (let ox = -w; ox <= w; ox += w) {
+      const dx = x + 0.5 - pts[k].x - ox, dy = y + 0.5 - pts[k].y - oy, d = Math.abs(dx) + Math.abs(dy) * 1.15;   // (a diamond metric: straight, angular edges)
+      if (d < d1) { d2 = d1; d1 = d; k1 = k; dx1 = dx; dy1 = dy; } else if (d < d2) d2 = d;
+    }
+    const e = (d2 - d1) / 2, p = pts[k1];
+    if (e < 1.0) { s.set(x, y, INK); s.hf[i] = 0.02; return; }   // (the inked edge)
+    // the facet's plane: lit along its own slope, the upper left brighter; a facet that faces up carries snow on its top
+    let t = 0.28 + p.t * 0.36 + ((-dx1 * Math.cos(p.a) - dy1 * Math.sin(p.a)) / cw) * 0.18 + (N[i] - 0.5) * 0.12;
+    if (e < 2.2) t += dy1 < 0 ? 0.12 : -0.1;                          // (a lit top lip, a shadowed underside)
+    if (rim && e < 2.4 && dy1 < 0 && dx1 < 0) { s.set(x, y, K.mixColor(at(Math.max(0, Math.min(1, t))), rim, 0.6)); s.hf[i] = 0.5; return; }   // (round 5: a cyan-lit edge along the upper left)
+    if (strata && ((y + Math.floor(N[i] * 4)) % strata) < 2) t -= 0.14;
+    if (SNOW && p.up && dy1 < -cw * 0.08 && e > 1.6) { s.set(x, y, SNOW[Math.min(SNOW.length - 1, Math.floor((N[i] + K.hash2(x, y, seed + 9) * 0.4) * SNOW.length * 0.8))]); s.hf[i] = 0.8; return; }
+    s.set(x, y, at(Math.max(0, Math.min(1, t))));
+    s.hf[i] = 0.35 + 0.65 * Math.min(1, e / 3.5) + (N[i] - 0.5) * 0.1;
+  });
+  return { normal: 2.4 };
+}
+/** the snowfield: pale snow in broad soft drifts, the wind's scour along it in long streaks a step darker and bluer, grit
+ *  flecked over it (one texel, now and then a pair), a lit crust here and there. `R` the snow, `G` the grit's two tones,
+ *  `scour` how much of it the wind has bared */
+function snowfield(s, K, R, G, { seed = 0, scour = 0.22 } = {}) {
+  const w = s.w, h = s.h, N = K.field(w, h, 4, 4, seed + 1, { oct: 3 }), S = K.field(w, h, 6, 4, seed + 2, { oct: 3 }), at = (t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
+  const GR = G.map((c) => K.parseColor(c));
+  s.each((x, y, i) => {
+    let t = 0.62 + (N[i] - 0.5) * 0.34;
+    const sc = S[i] < scour ? 1 : S[i] < scour + 0.06 ? 0.5 : 0;       // (the wind's scour: a long streak, its edge soft)
+    t -= sc * 0.22;
+    const q = K.hash2(x, y, seed + 3);
+    if (q > 0.978 - sc * 0.03) { s.set(x, y, GR[q > 0.996 ? 0 : 1]); s.hf[i] = 0.3; return; }   // (grit, thicker where it's bared)
+    if (K.hash2(x >> 1, y, seed + 4) > 0.993) { s.set(x, y, GR[1]); s.set(Math.min(w - 1, x + 1), y, GR[1]); s.hf[i] = 0.3; return; }
+    if (q < 0.01) t += 0.12;                                             // (a lit crust)
+    s.set(x, y, at(Math.max(0, Math.min(1, t)))); s.hf[i] = 0.55 + (N[i] - 0.5) * 0.3 - sc * 0.12;
+  });
+  return { normal: 0.9 };
+}
+registerTextureSet((K) => {
+  const P = (a) => a.map((c) => K.parseColor(c)), at = (R, t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
+  const SNOW = ['#6a84bf', '#86a0d2', '#a1b8e2', '#b9cced', '#cddcf4', '#dfe8f9', '#eef3fc'];   // (round 5: pale blues, deeper blue shadows, the lit tops near white; the references are saturated)   // (round 2: bluer, the references' cold white; round 1: a step down, it blew out)   // (round 1: a step down, it blew out)
+  const ROCK = P(['#121a30', '#19233e', '#212d4e', '#2a3860', '#354573', '#425487', '#52659b']);   // (round 5: slate-navy)
+  const BROWN = P(['#2a1a15', '#3a251c', '#4e3224', '#63412d', '#7a5238', '#916545', '#a87a55']);
+  const CAP = ['#b6cbec', '#cbdbf4', '#dfe9fa', '#f0f5fd'];
+  return {
+    // the ledges' snow (round 1: a mid pale blue-grey, not white: on white the party's gold rings went)
+    pass_snow: { px: [64, 64], normalScale: 0.5, gen: (s) => snowfield(s, K, P(SNOW), ['#2a2826', '#4a4641'], { seed: 2101, scour: 0.24 }) },
+    pass_scour: { px: [64, 64], normalScale: 0.6, gen: (s) => snowfield(s, K, P(['#5f77ad', '#7590c4', '#8ba5d4', '#a0b8e0', '#b4c8e9', '#c4d4ef', '#d2def4']), ['#26241f', '#423e38'], { seed: 2111, scour: 0.42 }) },
+    // the rock: dark blue-grey in big facets, inked; its tops under snow (the cap), the gully's brown banded
+    pass_rock: { px: [48, 48], normalScale: 0.9, gen: (s) => facets(s, K, ROCK, { cells: 2, seed: 2121, ink: '#0a0e1a', snow: CAP, rim: '#6cc2e8' }) },   // (round 5: cyan-lit edges)
+    pass_brown: { px: [48, 48], normalScale: 0.9, gen: (s) => facets(s, K, BROWN, { cells: 2, seed: 2131, ink: '#1a0f0b', strata: 9, snow: CAP }) },
+    pass_cap: { px: [32, 32], normalScale: 0.5, gen: (s) => {
+      const N = K.field(s.w, s.h, 3, 3, 2141, { oct: 3 }), R = P(CAP), INK = K.parseColor('#1a1f28');
+      s.each((x, y, i) => { const n = N[i]; if (n < 0.2) { s.set(x, y, n < 0.17 ? at(ROCK, 0.35 + K.hash2(x, y, 2143) * 0.3) : INK); s.hf[i] = 0.2; return; }   // (the rock showing through, inked round)
+        s.set(x, y, at(R, Math.max(0, Math.min(1, 0.3 + (n - 0.5) * 0.9 + (K.hash2(x, y, 2145) > 0.97 ? 0.3 : 0))))); s.hf[i] = 0.6 + (n - 0.5) * 0.4; });
+      return { normal: 1.0 };
+    } },
+    // the bridge: weathered dark planks, snow lying in the seams and drifted at the ends; under it, the truss
+    pass_plank: { px: [64, 64], normalScale: 0.85, gen: (s) => {
+      const r = dockPlanks(s, K, P(['#15120f', '#3a342e', '#443d36', '#4e463e', '#584f46', '#62584e', '#6c6156'])), N = K.field(s.w, s.h, 3, 3, 2151, { oct: 2 }), SN = P(['#b9c3d0', '#cdd5e0']);
+      s.each((x, y, i) => { if ((y % 8 <= 1 && K.hash2(x >> 1, y, 2153) > 0.45) || N[i] > 0.72) s.set(x, y, SN[K.hash2(x, y, 2155) > 0.5 ? 1 : 0]); });
+      return r;
+    } },
+    pass_truss: { px: [32, 32], normalScale: 0.7, gen: (s) => {
+      const GAP = K.parseColor('#1c222c'), BEAM = P(['#2c241d', '#3a3027', '#463a2f']), SN = K.parseColor('#c2ccd8');
+      s.each((x, y, i) => {
+        const top = y < 6, xb = Math.abs(((x + y) % 32) - 16) < 2 || Math.abs(((x - y + 64) % 32) - 16) < 2;   // (the stringer along the top, X braces below it)
+        if (y === 0) { s.set(x, y, SN); s.hf[i] = 0.9; return; }
+        if (top || xb) { s.set(x, y, BEAM[y === 1 || (xb && K.hash2(x, y, 2161) > 0.6) ? 2 : top && y > 4 ? 0 : 1]); s.hf[i] = 0.7; return; }
+        s.set(x, y, GAP); s.hf[i] = 0.02;
+      });
+      return { normal: 1.4 };
+    } },
+    // the frozen pool's ice: deep blue under a clear skin, white cracks across it, glowing faintly (its emissive mask)
+    pass_ice: { px: [32, 32], normalScale: 0.3, emissive: true, gen: (s) => {
+      const N = K.field(s.w, s.h, 3, 3, 2171, { oct: 3 }), R = P(['#123f94', '#1a52ad', '#2166c4', '#2b7bd6', '#3a91e2', '#52a8ec']), CR = K.parseColor('#c8f0ff'), em = s.emissive();
+      const pts = []; for (let k = 0; k < 7; k++) pts.push([K.hash2(k, 1, 2173) * s.w, K.hash2(k, 2, 2173) * s.h]);
+      s.each((x, y, i) => {
+        let d1 = 1e9, d2 = 1e9; for (const [px, py] of pts) for (let oy = -s.h; oy <= s.h; oy += s.h) for (let ox = -s.w; ox <= s.w; ox += s.w) { const d = Math.hypot(x - px - ox, y - py - oy); if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d; }
+        const crack = d2 - d1 < 0.9 && K.hash2(x, y, 2175) > 0.2;
+        const c = crack ? CR : at(R, Math.max(0, Math.min(1, 0.45 + (N[i] - 0.5) * 0.8)));
+        s.set(x, y, c); em.set(x, y, crack ? '#b4ecff' : K.mixColor(c, '#000000', 0.3)); s.hf[i] = crack ? 0.4 : 0.8;
+      });
+      return { normal: 0.6 };
+    } },
+    // the Praetory's floor: grey flags, rime in their joints and over them in patches (Luminati's frost cobble read navy)
+    frost_flag: { px: [64, 64], normalScale: 0.7, gen: (s) => {
+      const r = tavernFlags(s, K, P(['#2e343c', '#5c636c', '#677079', '#727b84', '#7d868f', '#88919a', '#949ca4']), false), N = K.field(s.w, s.h, 4, 4, 2191, { oct: 3 }), RIME = P(['#b8c4d0', '#ccd6e0']);
+      s.each((x, y, i) => { if (s.hf[i] <= 0.16) s.set(x, y, RIME[K.hash2(x, y, 2193) > 0.5 ? 1 : 0]); else if (N[i] > 0.66) s.set(x, y, K.mixColor(s.get(x, y), RIME[1], Math.min(0.7, (N[i] - 0.66) * 5))); });
+      return r;
+    } },
+    // the Praetory's walls: grey-blue ashlar gone white with rime along every block's top and in patches over its face
+    frost_wall: { px: [48, 48], normalScale: 0.8, gen: (s, ctx) => {
+      const r = ashlar(s, ctx, K, P(['#3c4450', '#4a535f', '#58616e', '#66707c', '#747e8a', '#838c97', '#929aa4', '#a0a8b1']), ['#2c323b', '#262b33'], ['#7c8a9a', '#8a8a92']);
+      const N = K.field(s.w, s.h, 5, 5, 2181, { oct: 3 }), RIME = P(['#c8d4e0', '#dbe4ee', '#e8eef5']);
+      s.each((x, y, i) => {
+        const top = s.hf[i] > 0.05 && y % 12 <= 2 && K.hash2(x, y >> 2, 2183) > 0.2;
+        if (top || N[i] > 0.64) s.set(x, y, K.mixColor(s.get(x, y), RIME[N[i] > 0.75 ? 2 : N[i] > 0.68 ? 1 : 0], top ? 0.75 : Math.min(0.85, (N[i] - 0.64) * 6)));
+      });
+      return r;
     } },
   };
 });
