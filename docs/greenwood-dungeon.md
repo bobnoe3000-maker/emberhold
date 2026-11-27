@@ -64,18 +64,25 @@ The converter is src/render3d/convert.js (`KIT_LOOK.greenwood`, `woodGround`, `w
 tools/render3d/world.js (`buildTavern`'s greenwood pieces, the greenwood's textures, `greenwoodAir`, `WOOD_KEYFRAMES`).
 
 - **Open air.** The level is Luminati's outdoor kind (`interior: false`), its air ours (`greenwood: true`): the same green
-  gloom at every hour of the sim's clock (`WOOD_KEYFRAMES`), a cool green fill (`WOOD_FILL`), the sun a little through the
-  canopy for the trunks' shadows, warm only at a lamp. The backdrop and the fog a mid moss green (`#384a3c`), so the far
-  trunks stand dark against it.
+  gloom at every hour of the sim's clock (`WOOD_KEYFRAMES`), an olive fill with a warm earth bounce (`WOOD_FILL`), the sun
+  a little through the canopy for the trunks' shadows, warm only at a lamp. The backdrop and the fog an olive gloom
+  (`#3a4230`), so the far trunks stand dark against it.
 - **The ground** (`woodGround`): the glades at the floor's level in moss and fern with stones in it (`ᚠ`, `wood_moss`),
   leaf litter in drifts a few units across (`ᚢ`, `wood_litter`: a soft noise, not a scatter by the tile); the Tithe
   Road's flags in an eight-tile band (`ᚦ`, `tithe_flag`, moss in every joint), a third swallowed by the moss. Off the
   glades the wood's own ground a step up (`ᚨ`, `wood_ground`, its bank `wood_bank`, earth and roots), the root-bank round
-  every glade. The road runs on through the wood, sunk in its bank. Past 12.5 units from a glade nothing is built (`ground`).
-- **The trunks** (`woodDress`): a jittered grid over the wood. Round each glade, one to four units out, the great trunks:
-  tall and straight, or old twisted oaks with their limbs, moss at their feet (all of an oak's), the bark going into the
-  gloom toward the top (the canopy is out of the frame), buttress roots and roots down the bank onto the glade's edge.
-  Past them slimmer trunks into the mist.
+  every glade, its lip in the glades' moss. The road runs on through the wood, sunk in its bank. Past 12.5 units from a
+  glade nothing is built (`ground`). The glades are a clear step lighter than the wood: lit clearings.
+- **The stair up** in the empire's grey steps, flagged, in ashlar (`ᚪ ᚫ ᚬ ᚭ`, the shared stair tiles swapped for them),
+  under the kit's arch.
+- **The trunks** (`woodDress`): first the great trunks along every glade's back edges (north and west) every four units
+  or so: tall and straight (0.9–1.4 units through) or old twisted oaks (1.8–2.4) with their limbs, green moss on their
+  lower halves, the bark going into the gloom toward the top (the canopy is out of the frame), buttress roots, and roots
+  down the bank, over its lip and onto the glade's edge. Where another glade lies behind on the camera's line, an old
+  bole broken off at what the ground allows, its girth kept, or a great fallen trunk along the edge. Then a jittered
+  grid fills the wood: slimmer trunks into the mist.
+- **The edges:** moss-heaped root-banks along every glade's lip (`wbank`) with boulders among them, knee-high at most
+  where the camera looks across them at a fight, heaped up at the back.
 - **The camera's rule.** The camera looks north-west at 30°: anything south-east of a glade stands between it and the
   fight. Each trunk is as tall as the ground it stands before allows (`reach`: how far along the camera's line to the
   nearest glade, × tan 30°, a figure's feet kept in view), an oak's limbs counted. Where a trunk may not stand tall, a
@@ -84,28 +91,32 @@ tools/render3d/world.js (`buildTavern`'s greenwood pieces, the greenwood's textu
   granary-f1` finds no subject under half in view.
 - **The mist:** two sheets a little over the ground, clear over the glades and thickening into the wood, and a dark
   third where the wood's ground stops, near opaque, so the level's edge goes into shadow, not a cliff or a fog bank.
-- **The shafts:** pale green light down through the canopy, one or two a glade onto its back third (never its middle),
-  a broad soft beam and two thin ones, slanting from the screen's top left, a pale pool where it lands, motes in it
-  (Luminati's `dust` emitter). One falls on the granary's steps.
+- **The shafts:** pale light down through the canopy, one a glade onto its back third (never its middle), each its own
+  width, slant and place, one soft beam and a faint thin one, the light in a pool where it lands, motes in it (Luminati's
+  `dust` emitter). The Granary Door's falls on its steps.
 - **The ruins:**
   - **the arcade** (`warcade`) along the Arcade's back: pointed arches on clustered piers, two lancets and a roundel in
-    each head, solid spandrels, an entablature, the bronze cresting gone green (`wood_verdigris`), ivy, one bay fallen
-    with its stones in the moss;
-  - **the granary's door** (`wgate`) on the Granary Door's west side: five steps up, a round-headed opening black
-    inside with the tithe-lamp a glint in its dark, a jamb's top broken away, a great oak behind it with its roots over
+    each head, solid spandrels, an entablature, ivy, one bay fallen with its stones in the moss (the bronze cresting went in
+    round 10: it never read at a phone's size);
+  - **the granary's door** (`wgate`) on the Granary Door's west side, half again as big as first built: five pale steps
+    up, a round-headed opening black to its face (a black face just inside the ring, so it reads from any angle) with the
+    tithe-lamp a glint in its dark, a jamb's top broken away, a great oak behind it with its roots over
     the top and down the sides, a broken pillar by the steps, a light from the shaft on its stone;
   - **the falls** (`wfalls`) past the Falls' back corner, straight up the screen from it: a face of dark rock stepping up
-    under moss, the water running down a cleft in two falls, a dark pool and its foam, the spray (Luminati's `mist`);
+    under moss, the water curling over the lip and falling as a sheet in two falls, wider at its foot, its edges soft and
+    torn, white water streaming down it; foam heaped at its foot, a dark pool with its rings and a mossy lip, the spray
+    (Luminati's `mist`);
   - **the fallen blocks and broken pillars** in the glades (`wblock`, `wpillar`), the waymarks' lamps on stone posts
     with bronze arms (`waylamp`).
 - Everything is ours (the textures in `world.js` at Luminati's density, the pieces in `buildTavern`) but the emitters.
 
 ## 3. The numbers
 
-- **Legend letters:** `ᚠ ᚢ ᚦ ᚨ` (U+16A0, U+16A2, U+16A6, U+16A8, runic, clear of every other kit's).
+- **Legend letters:** `ᚠ ᚢ ᚦ ᚨ` (U+16A0, U+16A2, U+16A6, U+16A8) and the stair's `ᚪ ᚫ ᚬ ᚭ` (U+16AA–U+16AD): runic, clear of
+  every other kit's.
 - **Textures:** `wood_moss`, `wood_ground`, `wood_litter`, `tithe_flag`, `wood_bank`, `wood_ashlar`, `wood_verdigris`,
   `wood_mossbark`.
-- **Pieces:** sim `fallen_block`; trim `wtrunk`, `wsnag`, `wroots`, `wboulder`, `wlog`, `wfern`, `woodmist`, `wshaft`,
+- **Pieces:** sim `fallen_block`; trim `wtrunk`, `wsnag`, `wroots`, `wbank`, `wboulder`, `wlog`, `wfern`, `woodmist`, `wshaft`,
   `waylamp`, `wblock`, `wpillar`, `warcade`, `wgate`, `wfalls`.
 - **Perf:** draws and triangles a drawn frame, counted at the WebGL context over 20 s with the hero at the floor's way in
   (the same count for all three, on one machine; `figperf.mjs` on the shared box, under a load of 32, returned medians
@@ -113,8 +124,9 @@ tools/render3d/world.js (`buildTavern`'s greenwood pieces, the greenwood's textu
 
   | Floor | Draws | Triangles |
   |---|---|---|
-  | the Root Granary | 86 | 280 k |
-  | the Old Eel Wharf (docks) | 86 | 284 k |
+  | the Root Granary, round 9 | 86 | 280 k |
+  | the Root Granary, round 12 | 88 | 296 k |
+  | the Old Eel Wharf (docks) | 86–88 | 284–286 k |
   | the High Ramparts | 89 | 212 k |
 
   Round 4 stood at 92 draws and 293 k with the wood's ground run to the level's edge (the terrain was 346 k of its own
@@ -136,8 +148,10 @@ references, as the earlier kits were.
 | 3–4: the falls up the screen from their glade, a mid-green gloom, fallen logs before the camera, the stone a step paler, the arcade taller, a shaft on the door | 6.5 | 6.5 | 6 | 8 | 7 | 6 | 5.5 | **6.5** |
 | 5–7: the wood's ground stops 12.5 units out, a dark sheet over its end (no cliff, no fog bank) | 7 | 6.5 | 6.5 | 8 | 7 | 6.5 | 6 | **6.5** |
 | 8–9: the road's flags paler, our own boulders swathed in moss | 7.5 | 6.5 | 7 | 8 | 7 | 7 | 6 | **7** |
+| 10: one soft shaft a glade, varied; trunks two to three times the girth, moss on their lower halves; root-banks along every lip; olive and warm earth; the door half again as big with a black opening; the falls a falling sheet; stone steps; the cresting gone | 7.5 | 7.5 | 7 | 8 | 7.5 | 7 | 6.5 | **7.5** |
+| 11–12: the great trunks along every back edge first, broken boles and fallen trunks where a glade lies behind; the wood a step darker than the glades; the banks' roots a tangle (they read as a fence's rails), the moss quieter | 8.5 | 8 | 8 | 8 | 8 | 7.5 | 7.5 | **8** |
 
-Round 9's verdict. It reads as forest-2's green gloom at play scale: the shafts slanting down onto the glades' backs, the
+Round 9's verdict (kept for the record; round 12's below). It reads as forest-2's green gloom at play scale: the shafts slanting down onto the glades' backs, the
 moss floor with the road's flags across it, lamps warm only at the waymarks, the wood's foot going into the dark, the
 falls and the arcade where the eye goes. The fights read: rings and figures clear on the floor, nothing in the middles,
 nothing tall before a glade. What holds it under 8:
@@ -150,3 +164,18 @@ nothing tall before a glade. What holds it under 8:
 - **The stair up** (the floor's way in, `stairs()` on the kit's arch stone) reads as a wooden pallet under its glowing
   arch.
 - **The bronze cresting** is lost at play scale; it shows only in a close view.
+
+Round 12's verdict (the coordinator's seven notes on round 9, 2026-11-27: the shafts searchlights, the wood a teal wash
+of thin poles, the colour, the door, the falls, the stair, the cresting). Beside the references it now reads as their
+wood at play scale: an olive gloom with lit clearings in it, great mossy trunks at the glades' backs (the Tithe Road and
+the Falls the best of them, the falls between two of them as forest-1's), forest-2's gateway as a broken arch with pale
+steps up into the black, one soft shaft a glade landing in a pool. Fights read: rings and figures clear on the floor,
+nothing in the middles, nothing tall before a glade (`visibility.mjs granary-f1`: 8 subjects, none under half in view).
+What's left:
+
+- **The Great Oaks has few tall trunks of its own.** The one-floor template stacks a glade behind each of its back edges
+  (the Falls north, the Tithe Road west), so the camera's rule keeps them broken boles and fallen trunks. A floor laid
+  out for the wood (the glades staggered so each back edge opens onto wood) would give every glade its wall of oaks.
+- **The near edges' root-banks** are a busy field of green humps at some angles; fewer and larger would be calmer.
+- **The leaf litter's drifts** read as dark patches more than leaves at a phone's size.
+- The lattices beside the halls are the game's own gates (the floor's `GATE 0/10` bars), the same in every kit.
