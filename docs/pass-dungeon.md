@@ -69,7 +69,7 @@ The converter is src/render3d/convert.js (`KIT_LOOK.pass`, `.gully`, `passBridge
 
 - **The ground** (`passGround`) sorts every tile that isn't a ledge:
   - **Behind a ledge** (north or west of it, within four tiles): the rock. It is a low plinth, a little higher the
-    further back it goes. Tile `ø`, or `å` for the gully's brown.
+    further back it goes. Tile `გ`, or `დ` for the gully's brown.
   - **In front of a ledge** (a ledge within six tiles to its north-west, so the camera looks over it): the drop. No rock
     stands there, whatever lies behind it, as with the ramparts' houses.
   - **Beside a bridge:** the drop again. The crevasse is kept open.
@@ -87,7 +87,7 @@ The converter is src/render3d/convert.js (`KIT_LOOK.pass`, `.gully`, `passBridge
   - The backdrop is a blue-grey, `#8ea3c8`, and the grade's vignette (`PASS_GRADE`) darkens the frame toward its edges.
   - Six mountains stand far off, their tops out of the cloud and under the ledges.
 - **The bridges:**
-  - The planks are tile `æ`: `pass_plank` over `pass_truss`, weathered dark, with snow in the seams.
+  - The planks are tile `ე`: `pass_plank` over `pass_truss`, weathered dark, with snow in the seams.
   - `buildPass` adds a timber post at each corner and every 2.4 units, a hand rope and a lower one sagging between
     them, ties down to an edge log, and rope wound round the end posts.
   - Under the river bridge, the frozen river is lit icy blue at the crevasse's foot, between the two ledges' faces.
@@ -126,9 +126,9 @@ The converter is src/render3d/convert.js (`KIT_LOOK.pass`, `.gully`, `passBridge
 The converter is `KIT_LOOK.frostkeep`, `frostDress` and `FROST_3D`. The builder is the same `buildPass`.
 
 - **The walls:** the barracks' walls, ragged tops and all (`ruinWalls`), in `frost_wall`. That is grey-blue ashlar with
-  rime along each block's top and in patches over its face. Tile `é`.
-- **The floor:** `frost_flag` (tile `ê`), grey flags with rime in their joints.
-  - **The snow drifted across it** (round 7): a tile of snow (`ë`) against every wall's foot, and over the floor our
+  rime along each block's top and in patches over its face. Tile `ვ`.
+- **The floor:** `frost_flag` (tile `ზ`), grey flags with rime in their joints.
+  - **The snow drifted across it** (round 7): a tile of snow (`თ`) against every wall's foot, and over the floor our
     own drifts, low soft lumps in broad patches by value noise, thinnest under the fight. Snow by the tile in the open
     read as square blocks.
   - Round 2 had Luminati's `frost_cobble` (`R`), as the plan asked. Its blue read navy under the fort's cold fill.

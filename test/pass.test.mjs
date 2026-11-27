@@ -81,11 +81,11 @@ test('the Stair drawn: ledges of snow, the rock behind them and never before one
   const { level, sprites, hour, ambient } = convertWorld(w, { region: 'heights' });
   assert.equal(hour, 10.6, 'a held day'); assert.ok(ambient && ambient.sun > 0, 'the sun out'); assert.equal(level.environment.interior, false, 'open to the sky');
   const ts = new Set(level.tiles.join('').split(''));
-  for (const ch of ['ä', 'ø', 'å', 'æ', ' ']) assert.ok(ts.has(ch), `the ${ch} tile`);
+  for (const ch of ['ა', 'გ', 'დ', 'ე', ' ']) assert.ok(ts.has(ch), `the ${ch} tile`);
   // no rock before a ledge: none with a ledge within four tiles to its north or west (the camera looks over it)
   const ledge = (i, j) => level.heights[j]?.[i] === '2';
   for (let j = 0; j < level.depth; j++) for (let i = 0; i < level.width; i++) {
-    if (!/[øå]/.test(level.tiles[j][i])) continue;
+    if (!/[გდ]/.test(level.tiles[j][i])) continue;
     for (let k = 1; k <= 4; k++) assert.ok(!ledge(i, j - k) && !ledge(i - k, j), `rock at ${i},${j} stands before a ledge`);
   }
   const P = sprites.find((s) => s.pass); assert.ok(P, 'the pass\'s own pieces');
@@ -103,7 +103,7 @@ test('the Praetory drawn: walls in rime, icicles along their tops, snow in at th
   const w = floorOf('praetory', 20260807);
   const { level, sprites } = convertWorld(w, { region: 'heights' });
   const ts = new Set(level.tiles.join('').split(''));
-  assert.ok(ts.has('é') && ts.has('ê') && ts.has('ë') && ts.has('h'), 'rimed walls, frosted flags, snow drifted over them, snow at the doors');
+  assert.ok(ts.has('ვ') && ts.has('ზ') && ts.has('თ') && ts.has('h'), 'rimed walls, frosted flags, snow drifted over them, snow at the doors');
   assert.ok(level.objects.some((o) => o.type === 'rock' && o.opts.stone === 'snow'), 'drifts at the doors');
   const P = sprites.find((s) => s.pass); assert.ok(P);
   const guards = [...w.props.values()].filter((k) => k === 'frozen_guard').length;

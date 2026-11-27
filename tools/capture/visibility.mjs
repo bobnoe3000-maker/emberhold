@@ -27,7 +27,10 @@ export const MAPS = {
   'chapel-f1': { scene: 'dungeon', site: 'sunken_chapel', floor: 0 }, 'chapel-f2': { scene: 'dungeon', site: 'sunken_chapel', floor: 1 },
   'pens-f1': { scene: 'dungeon', site: 'proving_pens', floor: 0 }, 'pens-f2': { scene: 'dungeon', site: 'proving_pens', floor: 1 },
   'mound-f1': { scene: 'dungeon', site: 'toadking_mound', floor: 0 }, 'mound-f2': { scene: 'dungeon', site: 'toadking_mound', floor: 1 }, 'locks-f1': { scene: 'dungeon', site: 'canal_locks', floor: 0 }, 'locks-f2': { scene: 'dungeon', site: 'canal_locks', floor: 1 }, 'abbey-f1': { scene: 'dungeon', site: 'drowned_abbey', floor: 0 }, 'abbey-f2': { scene: 'dungeon', site: 'drowned_abbey', floor: 1 },
+  'granary-f1': { scene: 'dungeon', site: 'root_granary', floor: 0 },   // (the greenwood prototype, parked: docs/greenwood-dungeon.md)
 };
+// (docs/art-critic-pass-stone.md: the floors the stone-and-mine track dressed, items 6, 8, 9)
+Object.assign(MAPS, { 'seam-f1': { scene: 'dungeon', site: 'cold_seam', floor: 0 }, 'seam-f2': { scene: 'dungeon', site: 'cold_seam', floor: 1 }, 'assay-f2': { scene: 'dungeon', site: 'assay_yards', floor: 1 }, 'undercroft': { scene: 'dungeon', site: 'reedholm_undercroft', floor: 0 } });
 const want = args.filter((a) => !a.startsWith('--')), names = !want.length || want.includes('all') ? Object.keys(MAPS) : want;
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg' };
