@@ -41,7 +41,7 @@ test('the Reedholm Undercroft: a designed floor on the crypt kit, its vault in t
   assert.ok(S.plan && S.secret && S.hidden && S.vault === 'the_fair_copy'); assert.equal(P.base, S.base);
   assert.deepEqual(checkPlan(P), []);
   const w = createWorld(7, undefined, 0, 'reedholm_undercroft'), L = w.level;
-  assert.deepEqual(L.rooms.map((r) => r.kit), ['crypt', 'crypt', 'crypt', 'ossuary', 'crypt']);
+  assert.deepEqual(L.rooms.map((r) => r.kit), ['fenbrick', 'fenbrick', 'fenbrick', 'fenbones', 'fenbrick']);   // (the crypt kit's plan in the reed town's brick: docs/dungeon-looks-plan.md item 6)
   const end = L.rooms.find((r) => r.role === 'end'), c = L.cells.get(w.vault.key);
   assert.ok(c && c.room === end.id, 'the vault\'s chest in the Fair Copy');
   assert.equal(w.props.get(w.vault.key), 'chest');

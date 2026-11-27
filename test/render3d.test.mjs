@@ -233,7 +233,7 @@ test('dungeons: the Reach\'s kits and themes have their own stone (the Cold Seam
 
 test('dungeons: every plan kit has a look of its own, the Reach\'s other bands and the Fens\' kits no longer in the default stone', async () => {
   const { createWorld } = await import('../src/sim/world.js'), { SITES } = await import('../src/sim/sites.js');
-  const want = { assay_yards: ['Z', 'W'], forgehall: ['j', 'O'], cinderworks: ['Z', 'O'], ninth_vault: ['j'], toadking_mound: ['u', 'u'], canal_locks: ['B', 'W'], drowned_abbey: ['C', 'C'] };
+  const want = { assay_yards: ['Z', 'с'], forgehall: ['j', 'O'], cinderworks: ['Z', 'O'], ninth_vault: ['j'], toadking_mound: ['u', 'u'], canal_locks: ['B', 'W'], drowned_abbey: ['C', 'C'] };
   for (const [site, walls] of Object.entries(want)) {
     if (!SITES[site]) continue;                                   // (the Reach's sites are landing alongside)
     walls.forEach((wall, depth) => {
