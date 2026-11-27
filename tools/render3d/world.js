@@ -1079,6 +1079,232 @@ function buildTavern(pieces) {
         b.tinted([0.74, 0.64, 0.52], () => b.box('furniture_wood', sz(q, len, 0.08, 0.2), { at: on(q, 0, FL + 0.03, -o * 0.08) }));   // (the edge beam along the deck's lip: round 4)
         b.tinted([0.42, 0.5, 0.36], () => b.box('furniture_wood', sz(q, len, 0.07, 0.12), { at: on(q, 0, DOCK_WL + 0.02, o * 0.04) }));   // (the weed at the waterline)
       } else b.tinted(DOCK_WOOD, () => { for (const y of [FL + 0.95, FL + 0.5]) b.box('furniture_wood', sz(q, len + 0.1, 0.1, 0.1), { at: on(q, 0, y, o * 0.12) }); });
+    } else if (p.k === 'wtrunk' || p.k === 'wsnag') {
+      // ── the greenwood (convert.js woodDress; docs/greenwood-dungeon.md) ───────────────────────────────────────────────
+      // a trunk: tall and straight, or an old twisted oak swathed in moss; its bole in sections, each leaning on from the
+      // last, moss at its foot (all of an oak's), the bark going into the gloom toward its top (the canopy is out of the
+      // frame: the trunks rise into the green dark); buttress roots, and roots down the bank toward the glade (`to`). A
+      // snag: a broken trunk where a tall one would hide a fight, its top splintered
+      const R = woodRnd(p.seed), oak = p.kind === 'oak', snag = p.k === 'wsnag', H = p.h, r = p.r, y0 = p.y, far = (p.far || 0) > 4.2 ? 1.0 : 1.35;   // (round 1: the trunks read as black posts; lighter, the moss green)
+      const n = snag ? 2 : oak ? 4 : 5; let px = p.x, pz = p.z, py = y0 - 0.3, rad = r * (oak ? 1.18 : 1.06), dx = p.lean || 0, dz = (R(1) - 0.5) * (oak ? 0.4 : 0.06);
+      for (let k = 0; k < n; k++) {
+        const fr = (k + 1) / n, ny = y0 + H * fr, step = (H / n) * (oak ? 1 : 0.35), nx = px + dx * step, nz = pz + dz * step, r1 = r * (oak ? 1 - 0.36 * fr : 1 - 0.3 * fr);
+        const moss = snag || (oak ? k < 2 || R(k + 20) < 0.4 : k < Math.ceil(n / 2)), g = snag ? 1 : 1 - 0.62 * Math.max(0, fr - 0.3) / 0.7;   // (the bark into the gloom, toward its top)
+        b.tinted(moss ? [1.12 * g * far, 1.3 * g * far, 1.0 * g * far] : [0.86 * g * far, 0.84 * g * far, 0.76 * g * far], () => b.tube(moss ? 'wood_mossbark' : 'bark', [px, py, pz], [nx, ny, nz], rad, r1, { segments: oak ? 9 : 7 }));
+        px = nx; pz = nz; py = ny; rad = r1;
+        if (oak) { dx += (R(k + 3) - 0.5) * 0.3; dz += (R(k + 7) - 0.5) * 0.3; }   // (round 1: a twist, not a wander: at 0.7 a bole walked three units off its roots)
+      }
+      if (snag) b.tinted([0.5, 0.46, 0.4], () => { for (let k = 0; k < 4; k++) { const a = (k / 4) * 6.28 + R(k + 30), hh = 0.3 + R(k + 34) * 0.6; b.lathe('bark', [{ y: 0, r: rad * 0.45 }, { y: hh, r: 0 }], { segments: 5, at: [px + Math.cos(a) * rad * 0.45, py, pz + Math.sin(a) * rad * 0.45] }); } });   // (its top splintered)
+      else if (oak) b.tinted([0.62 * far, 0.72 * far, 0.56 * far], () => {   // (an oak's great limbs, out and up into the dark, moss along them)
+        for (let k = 0; k < 3; k++) { const a = (k / 3) * 6.28 + R(k + 40) * 1.5, L = 2.2 + R(k + 44) * 1.8; b.tube('wood_mossbark', [px, py - 0.4, pz], [px + Math.cos(a) * L, py + 0.8 + R(k + 48) * 1.6, pz + Math.sin(a) * L], rad * 0.7, rad * 0.18, { segments: 6 }); }
+      });
+      // buttress roots, swathed in moss
+      b.tinted([0.92 * far, 1.0 * far, 0.84 * far], () => { const m = oak ? 6 : 4; for (let k = 0; k < m; k++) { const a = (k / m) * 6.28 + R(k + 50) * 0.8, o = r * (oak ? 2.7 : 2.0) * (0.8 + R(k + 54) * 0.4);
+        b.tube('wood_mossbark', [p.x + Math.cos(a) * r * 0.45, y0 + r * (oak ? 1.0 : 0.7), p.z + Math.sin(a) * r * 0.45], [p.x + Math.cos(a) * o, y0 - 0.08, p.z + Math.sin(a) * o], r * 0.4, r * 0.08, { segments: 6 }); } });
+      // roots down the bank toward the glade, over its lip and onto the floor's edge
+      if (p.to) b.tinted([0.82, 0.86, 0.72], () => { const [ux, uz, t] = p.to, m = oak ? 3 : 2; for (let k = 0; k < m; k++) {
+        const sp = (k - (m - 1) / 2) * 0.45 + (R(k + 60) - 0.5) * 0.2, cx = ux * Math.cos(sp) - uz * Math.sin(sp), cz = ux * Math.sin(sp) + uz * Math.cos(sp), L = t + 0.25;
+        const A = [p.x + cx * r * 0.8, y0 + 0.4, p.z + cz * r * 0.8], B = [p.x + cx * L * 0.55, y0 + 0.22, p.z + cz * L * 0.55], C = [p.x + cx * (L + 0.7), 1.02, p.z + cz * (L + 0.7)];   // (round 10: over the lip and spreading onto the glade's edge)
+        b.tube('wood_mossbark', A, B, r * 0.24, r * 0.15, { segments: 5 }); b.tube('bark', B, C, r * 0.15, 0.05, { segments: 5 });
+      } });
+    } else if (p.k === 'wbank') {
+      // a root-bank along a glade's lip (round 10): a long low heap of moss over the roots, a root or two breaking out of it
+      const R = woodRnd(p.seed), rot = [0, p.rot || 0, 0], hh = p.h, L = 1.2 + R(1) * 0.6, lump = (i, j, a) => 1 + 0.14 * Math.sin(a * 3 + R(2) * 6);
+      b.tinted([0.86, 0.94, 0.76], () => b.lathe('wood_moss', [{ y: 0, r: 1 }, { y: hh * 0.5, r: 0.82 }, { y: hh * 0.9, r: 0.4 }, { y: hh, r: 0 }], { segments: 8, at: [p.x, p.y - 0.06, p.z], rot, scale: [L, 1, 0.7], radiusFn: lump }));
+      b.tinted([0.72, 0.62, 0.46], () => { for (let k = 0; k < 2; k++) { const a = (p.rot || 0) + (R(k + 3) - 0.5) * 1.2, c = Math.cos(a), sn = Math.sin(a); b.tube('bark', [p.x - c * L * 0.8, p.y + hh * 0.3, p.z + sn * L * 0.8], [p.x + c * L * 0.9, p.y - 0.1, p.z - sn * L * 0.9], 0.11, 0.05, { segments: 5 }); } });
+    } else if (p.k === 'wboulder') {
+      // a boulder swathed in moss (forest-1's foreground): grey rock, lumpy, half sunk, a thick cap of moss over its top
+      const R = woodRnd(p.seed), S = p.s, rot = [0, R(2) * 6.28, 0], sc = [1 + R(4) * 0.4, 0.75 + R(5) * 0.3, 0.9 + R(6) * 0.2], lump = (i, j, a) => 1 + 0.16 * Math.sin(a * 3 + R(7) * 6) + 0.08 * Math.sin(a * 5 + i);
+      b.tinted([1.05, 1.12, 1.0], () => b.lathe('cliff', [{ y: 0, r: 0.5 * S }, { y: 0.22 * S, r: 0.56 * S }, { y: 0.45 * S, r: 0.46 * S }, { y: 0.6 * S, r: 0.2 * S }, { y: 0.63 * S, r: 0 }], { segments: 8, at: [p.x, p.y - 0.12, p.z], rot, scale: sc, radiusFn: lump }));
+      b.tinted([1.05, 1.18, 0.9], () => b.lathe('wood_moss', [{ y: 0, r: 0.58 * S }, { y: 0.14 * S, r: 0.5 * S }, { y: 0.26 * S, r: 0.26 * S }, { y: 0.3 * S, r: 0 }], { segments: 8, at: [p.x, p.y - 0.12 + 0.34 * S * sc[1], p.z], rot, scale: sc, radiusFn: lump }));
+    } else if (p.k === 'wroots') {
+      // a root-mound where a trunk would stand in front of a fight: roots arching over the bank, a hump of moss
+      const R = woodRnd(p.seed);
+      b.tinted([0.9, 1.0, 0.82], () => b.lathe('wood_moss', [{ y: 0, r: 0.95 }, { y: 0.22, r: 0.8 }, { y: 0.38, r: 0.45 }, { y: 0.44, r: 0 }], { segments: 9, at: [p.x, p.y - 0.04, p.z] }));
+      b.tinted([0.66, 0.6, 0.5], () => { const [ux, uz, t] = p.to || [1, 0, 1.5]; for (let k = 0; k < 3; k++) { const sp = (k - 1) * 0.6 + (R(k) - 0.5) * 0.3, cx = ux * Math.cos(sp) - uz * Math.sin(sp), cz = ux * Math.sin(sp) + uz * Math.cos(sp);
+        b.tube('bark', [p.x - cx * 0.6, p.y + 0.1, p.z - cz * 0.6], [p.x + cx * 0.4, p.y + 0.32, p.z + cz * 0.4], 0.13, 0.11, { segments: 5 }); b.tube('bark', [p.x + cx * 0.4, p.y + 0.32, p.z + cz * 0.4], [p.x + cx * (t + 0.2), 1.02, p.z + cz * (t + 0.2)], 0.11, 0.04, { segments: 5 }); } });
+    } else if (p.k === 'wfern') {
+      // a fern: fronds out from its crown, arching up and over, each a strip of three (both faces: seen from above)
+      const R = woodRnd(p.seed), S = p.s, n = 7 + Math.floor(R(1) * 3), c = R(2);
+      b.tinted([0.62 + c * 0.2, 0.86 + c * 0.1, 0.44], () => { for (let k = 0; k < n; k++) {
+        const a = (k / n) * 6.283 + R(k + 3) * 0.6, L = S * (0.55 + R(k + 5) * 0.35), up = S * (0.32 + R(k + 9) * 0.2), wv = 0.1 * S, ca = Math.cos(a), sa = Math.sin(a), qx = -sa, qz = ca;
+        const pts = [[0, 0.03], [0.35, up * 0.9], [0.7, up], [1.0, up * 0.5]].map(([t, h]) => [p.x + ca * L * t, p.y + h, p.z + sa * L * t]), Wf = [wv * 0.5, wv * 1.1, wv * 0.8, 0.012];
+        for (let q = 0; q < 3; q++) { const A = pts[q], B = pts[q + 1], wa = Wf[q], wb = Wf[q + 1];
+          const Q = [[A[0] - qx * wa, A[1], A[2] - qz * wa], [A[0] + qx * wa, A[1], A[2] + qz * wa], [B[0] + qx * wb, B[1], B[2] + qz * wb], [B[0] - qx * wb, B[1], B[2] - qz * wb]];
+          b.quad('leaves', Q, [[0, 0], [1, 0], [1, 1], [0, 1]]); b.quad('leaves', [Q[1], Q[0], Q[3], Q[2]], [[1, 0], [0, 0], [0, 1], [1, 1]]); }
+      } });
+    } else if (p.k === 'woodmist') {
+      // the wood's mist: a sheet a little over the ground, clear over the glades and thick from five units out (its alpha
+      // by each tile's distance from a glade: convert.js woodDress), run far past the level; a second, higher and further
+      // out, so the trunks go into it in layers
+      const PD = 40, W = p.W, D = p.D, GW = W + 2 * PD, GD = D + 2 * PD;
+      for (const [y, from, top, col, edge] of [[p.y, 1.2, 0.42, '#3c4430', false], [p.y + 2.4, 4, 0.34, '#424a34', false], [p.y + 0.3, 99, 0, '#14170c', true]]) {   // (round 6: where the wood's ground stops, a dark sheet of its own: a pale one there lay over the frame's foot as a fog bank; dark, the wood's foot goes into shadow as forest-2's does)   // (round 1: a pale sheet read as snow; the wood's own dark green, the backdrop's)
+        const c = document.createElement('canvas'); c.width = GW; c.height = GD;
+        const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), img = g2.createImageData(GW, GD);
+        for (let j = 0; j < GD; j++) for (let i = 0; i < GW; i++) { const li = i - PD, lj = j - PD, inl = li >= 0 && lj >= 0 && li < W && lj < D, d = (inl ? +p.rows[lj][li] : 9) * 1.2, a = edge ? (inl ? (+p.fade[lj][li] / 9) * 0.96 : 0.96) : inl ? Math.max(0, Math.min(1, (d - from) / 5)) * top * (1 - +p.fade[lj][li] / 9) : 0   /* (past the level's edge, thicker to near opaque: the edge melts into the backdrop) */, o = (j * GW + i) * 4; img.data[o] = img.data[o + 1] = img.data[o + 2] = Math.round(255 * a); img.data[o + 3] = 255; }
+        g2.putImageData(img, 0, 0); const tex = new THREE.CanvasTexture(c); tex.magFilter = tex.minFilter = THREE.LinearFilter;
+        const mat = new THREE.MeshBasicMaterial({ color: col, alphaMap: tex, transparent: true, depthWrite: false }); own.push(mat, tex); WOOD_UNLIT.add(mat);
+        const mist = new THREE.Mesh(new THREE.PlaneGeometry(GW, GD), mat); mist.rotation.x = -Math.PI / 2; mist.position.set(W / 2, y, D / 2); mist.updateMatrixWorld(true); furn.push(mist);
+      }
+    } else if (p.k === 'wshaft') {
+      // a shaft of light down through the canopy: a broad soft beam and two thin ones beside it, slanting from the screen's
+      // top left, turned broadside to the camera (it never moves); a pale green pool where it lands; motes in it (convert.js)
+      // (round 10: one soft beam and a faint thin one, each its own width and slant (p.tilt, p.side), the light in its pool)
+      woodShaftMat ||= (() => { const m = new THREE.MeshBasicMaterial({ color: new THREE.Color('#eef0c8').multiplyScalar(0.17), alphaMap: woodShaftTex(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }); WOOD_UNLIT.add(m); return m; })();
+      woodPoolMat ||= (() => { const m = new THREE.MeshBasicMaterial({ color: new THREE.Color('#f0eabc').multiplyScalar(0.3), alphaMap: woodPoolTex(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }); WOOD_UNLIT.add(m); return m; })();
+      const R = woodRnd(p.seed), H = 11, CD = [-0.612, -0.5, -0.612];
+      const T = p.tilt ?? 0.28, sd = p.side ?? 1;
+      for (const [off, wk, hk] of [[0, 1, 1], [0.9 * sd, 0.3, 0.75 + R(2) * 0.25]]) {
+        const w = p.w * wk, bx = p.x + off * p.w * 0.7, bz = p.z - off * p.w * 0.7, top = [bx - T * H * hk * sd, p.y + H * hk, bz + T * H * hk * sd], bot = [bx, p.y + 0.02, bz];
+        const ax = [top[0] - bot[0], top[1] - bot[1], top[2] - bot[2]], al = Math.hypot(...ax); ax[0] /= al; ax[1] /= al; ax[2] /= al;
+        let sx = ax[1] * CD[2] - ax[2] * CD[1], sy = ax[2] * CD[0] - ax[0] * CD[2], szz = ax[0] * CD[1] - ax[1] * CD[0]; const sl = Math.hypot(sx, sy, szz); sx /= sl; sy /= sl; szz /= sl;
+        const wb = w * 0.75, wt = w * 0.5;
+        b.quad(woodShaftMat, [[bot[0] - sx * wb, bot[1] - sy * wb, bot[2] - szz * wb], [bot[0] + sx * wb, bot[1] + sy * wb, bot[2] + szz * wb], [top[0] + sx * wt, top[1] + sy * wt, top[2] + szz * wt], [top[0] - sx * wt, top[1] - sy * wt, top[2] - szz * wt]], [[0, 0], [1, 0], [1, 1], [0, 1]]);
+      }
+      const pr = p.w * 1.5; b.quad(woodPoolMat, [[p.x - pr, p.y + 0.03, p.z - pr * 0.75], [p.x - pr, p.y + 0.03, p.z + pr * 0.75], [p.x + pr, p.y + 0.03, p.z + pr * 0.75], [p.x + pr, p.y + 0.03, p.z - pr * 0.75]], [[0, 0], [0, 1], [1, 1], [1, 0]]);
+    } else if (p.k === 'waylamp') {
+      // a waymark of the Tithe Road: a squared stone post, a bronze arm off its head, the lamp hung from it lit
+      const y = p.y;
+      b.tinted([0.95, 0.95, 0.92], () => { b.box('wood_ashlar', [0.36, 1.9, 0.36], { at: [p.x, y + 0.95, p.z] }); b.box('wood_ashlar', [0.5, 0.16, 0.5], { at: [p.x, y + 1.95, p.z] }); b.box('wood_ashlar', [0.56, 0.22, 0.56], { at: [p.x, y + 0.11, p.z] }); });
+      b.tinted([1, 1, 1], () => { b.box('wood_verdigris', [0.07, 0.07, 0.6], { at: [p.x, y + 1.82, p.z + 0.36] }); b.box('wood_verdigris', [0.26, 0.04, 0.26], { at: [p.x, y + 1.6, p.z + 0.6] }); b.box('wood_verdigris', [0.28, 0.05, 0.28], { at: [p.x, y + 1.24, p.z + 0.6] }); for (const [ex, ez] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) b.box('wood_verdigris', [0.03, 0.36, 0.03], { at: [p.x + ex * 0.11, y + 1.42, p.z + 0.6 + ez * 0.11] }); b.box('wood_verdigris', [0.02, 0.2, 0.02], { at: [p.x, y + 1.72, p.z + 0.6] }); });
+      b.box(tavernGlass, [0.18, 0.3, 0.18], { at: [p.x, y + 1.42, p.z + 0.6] });
+      dockHalo ||= (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), gr = g2.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,190,120,0.55)'); gr.addColorStop(0.35, 'rgba(255,170,90,0.18)'); gr.addColorStop(1, 'rgba(255,160,80,0)'); g2.fillStyle = gr; g2.fillRect(0, 0, 64, 64); return new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }); })();
+      { const hs = new THREE.Sprite(dockHalo); hs.position.set(p.x, y + 1.42, p.z + 0.6); hs.scale.setScalar(1.6); loose.push(hs); }
+    } else if (p.k === 'wblock') {
+      // a block of the empire's ashlar down in the moss, tilted where it fell, moss on its top, a chip of it beside
+      const R = woodRnd(p.seed);
+      b.push([p.x, p.y + 0.3, p.z], [(R(1) - 0.5) * 0.2, p.rot || 0, (R(2) - 0.5) * 0.25]);
+      b.tinted([0.95, 0.95, 0.92], () => b.box('wood_ashlar', [1.45, 0.78, 0.95], { at: [0, 0, 0] }));
+      b.tinted([0.95, 1.05, 0.85], () => b.box('wood_moss', [1.3, 0.08, 0.82], { at: [0.04, 0.42, -0.02] }));
+      b.pop();
+      if (R(3) < 0.7) b.tinted([0.9, 0.9, 0.88], () => b.box('wood_ashlar', [0.5, 0.36, 0.44], { at: [p.x + 0.95, p.y + 0.14, p.z + 0.5], rot: [0.2, R(4) * 2, 0.15] }));
+    } else if (p.k === 'wpillar') {
+      // a broken column of the empire's: its plinth, two drums still standing, the top snapped off, a drum fallen beside it
+      const R = woodRnd(p.seed);
+      b.tinted([0.95, 0.95, 0.92], () => {
+        b.box('wood_ashlar', [1.0, 0.32, 1.0], { at: [p.x, p.y + 0.16, p.z] });
+        b.lathe('wood_ashlar', [{ y: 0, r: 0.4 }, { y: 0.08, r: 0.36 }, { y: 0.62, r: 0.35 }], { segments: 12, at: [p.x, p.y + 0.32, p.z] });
+        b.lathe('wood_ashlar', [{ y: 0, r: 0.35 }, { y: 0.4 + R(1) * 0.3, r: 0.34 }, { y: 0.6 + R(1) * 0.3, r: 0.12 }], { segments: 12, at: [p.x, p.y + 0.95, p.z], rot: [0.08, 0, -0.06] });
+        b.tube('wood_ashlar', [p.x + 0.7, p.y + 0.3, p.z + 0.55], [p.x + 1.35, p.y + 0.3, p.z + 0.95], 0.32, 0.32, { segments: 12, capTop: true, capBottom: true });
+      });
+      b.tinted([0.95, 1.05, 0.85], () => b.lathe('wood_moss', [{ y: 0, r: 0.37 }, { y: 0.06, r: 0.3 }, { y: 0.08, r: 0 }], { segments: 10, at: [p.x, p.y + 0.92, p.z] }));
+    } else if (p.k === 'warcade') {
+      // the empire's arcade (forest-1): a run of pointed arches along the glade's back in dark grey stone, a clustered pier
+      // between each, two lancets and a roundel in each arch's head, the spandrels solid, an entablature over all and the
+      // bronze cresting along its top gone green; one bay fallen, its stones in the moss; moss on every ledge, ivy hanging
+      const R = woodRnd(p.seed), n = p.bays, bw = (p.x1 - p.x0) / n, z = p.z, y = p.y, SP = 2.9, ys = y + 0.4 + SP + 0.18, s = bw - 0.46, yt = ys + s * 0.87 + 0.32;   // (round 3: taller, the arches read at a phone's size)
+      const fallen = 1 + Math.floor(R(1) * (n - 2)), dark = [1.08, 1.1, 1.08];
+      const seg = (A, B, t, d) => { const L = Math.hypot(B[0] - A[0], B[1] - A[1]); b.box('wood_ashlar', [L + 0.04, t, d], { at: [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2, z], rot: [0, 0, Math.atan2(B[1] - A[1], B[0] - A[0])] }); };
+      const arc = (xl, xr, yb, rr, k0 = 7) => { const L = [], Rr = []; for (let q = 0; q <= k0; q++) { const th = (q / k0) * (Math.PI / 3); L.push([xr - rr * Math.cos(th), yb + rr * Math.sin(th)]); Rr.push([xl + rr * Math.cos(th), yb + rr * Math.sin(th)]); } return [L, Rr]; };
+      for (let k = 0; k <= n; k++) {
+        const x = p.x0 + k * bw, low = k === fallen + 1 ? 1.1 + R(2) * 0.5 : 0;
+        b.tinted(dark, () => {
+          b.box('wood_ashlar', [0.74, 0.4, 0.82], { at: [x, y + 0.2, z] });
+          b.box('wood_ashlar', [0.46, low || SP, 0.56], { at: [x, y + 0.4 + (low || SP) / 2, z] });
+          if (!low) { for (const sx of [-1, 1]) b.tube('wood_ashlar', [x + sx * 0.25, y + 0.4, z + 0.3], [x + sx * 0.25, ys - 0.18, z + 0.3], 0.07, 0.07, { segments: 6 }); b.box('wood_ashlar', [0.66, 0.18, 0.72], { at: [x, ys - 0.09, z] }); }
+        });
+        if (low) b.tinted([0.95, 1.05, 0.85], () => b.box('wood_moss', [0.5, 0.06, 0.6], { at: [x, y + 0.4 + low + 0.03, z] }));
+      }
+      for (let k = 0; k < n; k++) {
+        const xl = p.x0 + k * bw + 0.23, xr = xl + s, xm = (xl + xr) / 2;
+        if (k === fallen) {   // (its stones in the moss before it)
+          b.tinted(dark, () => { for (let q = 0; q < 4; q++) b.box('wood_ashlar', [0.5 + R(q + 3) * 0.4, 0.32, 0.42], { at: [xm + (R(q + 5) - 0.5) * 1.6, y - 0.32 + 0.16 + (q > 2 ? 0.3 : 0), z + 1.0 + R(q + 7) * 1.0], rot: [R(q + 9) * 0.4, R(q + 11) * 3, R(q + 13) * 0.4] }); });
+          continue;
+        }
+        const [L, Rr] = arc(xl, xr, ys, s);
+        b.tinted(dark, () => {
+          for (let q = 0; q < L.length - 1; q++) { seg(L[q], L[q + 1], 0.26, 0.48); seg(Rr[q], Rr[q + 1], 0.26, 0.48); }
+          // the spandrels: fans from the bay's top corners over the arch's curve, a hand behind its face
+          const zf = z - 0.05, TL = [xl - 0.23, yt], TR = [xr + 0.23, yt], AP = L[L.length - 1], tri = (A, B, C) => { b.tri('wood_ashlar', [A[0], A[1], zf], [B[0], B[1], zf], [C[0], C[1], zf], [A[0] * 0.5, A[1] * 0.5], [B[0] * 0.5, B[1] * 0.5], [C[0] * 0.5, C[1] * 0.5]); b.tri('wood_ashlar', [A[0], A[1], zf], [C[0], C[1], zf], [B[0], B[1], zf], [A[0] * 0.5, A[1] * 0.5], [C[0] * 0.5, C[1] * 0.5], [B[0] * 0.5, B[1] * 0.5]); };
+          for (let q = 0; q < L.length - 1; q++) { tri(TL, L[q], L[q + 1]); tri(TR, Rr[q + 1], Rr[q]); }
+          tri(TL, AP, [xm, yt]); tri(TR, [xm, yt], AP);
+          tri([xl - 0.23, ys], L[0], TL);
+          // two lancets under it, a mullion between, a roundel in the head
+          b.box('wood_ashlar', [0.12, ys - y - 0.4, 0.2], { at: [xm, (y + 0.4 + ys) / 2, z] });
+          const s2 = s / 2 - 0.08; for (const [a0, a1] of [[xl + 0.04, xm - 0.06], [xm + 0.06, xr - 0.04]]) { const [l2, r2] = arc(a0, a1, ys, s2, 4); for (let q = 0; q < l2.length - 1; q++) { seg(l2[q], l2[q + 1], 0.1, 0.22); seg(r2[q], r2[q + 1], 0.1, 0.22); } }
+          const cy = ys + s * 0.58, rr = Math.min(0.3, s * 0.15); for (let q = 0; q < 10; q++) { const a0 = (q / 10) * 6.283, a1 = ((q + 1) / 10) * 6.283; seg([xm + Math.cos(a0) * rr, cy + Math.sin(a0) * rr], [xm + Math.cos(a1) * rr, cy + Math.sin(a1) * rr], 0.08, 0.22); }
+        });
+        // the entablature over this bay (round 10: its bronze cresting went, it never read at a phone's size)
+        b.tinted(dark, () => b.box('wood_ashlar', [bw + 0.02, 0.36, 0.66], { at: [xm, yt + 0.18, z] }));
+        b.tinted([0.95, 1.05, 0.85], () => b.box('wood_moss', [bw * (0.5 + R(k + 20) * 0.5), 0.07, 0.6], { at: [xm + (R(k + 22) - 0.5) * bw * 0.3, yt + 0.39, z] }));
+        b.tinted([0.6, 0.82, 0.42], () => { for (let q = 0; q < 3; q++) { if (R(k * 7 + q) < 0.4) continue; const x = xm + (R(k * 7 + q + 30) - 0.5) * bw, L = 0.6 + R(k * 7 + q + 40) * 1.2; b.quad('leaves', [[x - 0.1, yt - L, z + 0.34], [x + 0.1, yt - L, z + 0.34], [x + 0.13, yt, z + 0.34], [x - 0.13, yt, z + 0.34]], [[0, 0], [1, 0], [1, 1], [0, 1]]); } });   // (ivy hanging off it)
+      }
+    } else if (p.k === 'wgate') {
+      // the Root Granary's door (forest-2): a broken gateway of the empire's in under the roots, facing east into the glade;
+      // five steps up out of the glade to its sill, the opening round-headed and black inside, the tithe-lamp a glint in
+      // its dark; one jamb's top broken away; a great oak's roots over it and down its sides; a broken pillar by the steps
+      const R = woodRnd(p.seed), X = p.x, Z = p.z, F = p.y, top = F + 1.4, gx0 = X - 2.1, gx1 = X - 4.8, gx = (gx0 + gx1) / 2, dep = gx0 - gx1, half = 1.3, jw = 1.5, ys = top + 2.1, yT = ys + half + 0.46;
+      b.pushMatrix(new THREE.Matrix4().makeTranslation(X, F, Z).multiply(new THREE.Matrix4().makeScale(1.45, 1.45, 1.45)).multiply(new THREE.Matrix4().makeTranslation(-X, -F, -Z)));   // (round 10: half again as big, to read at a phone's size)
+      b.tinted([1.3, 1.3, 1.22], () => {   // (round 10: the steps pale, each tread's edge clear)
+        for (let k = 0; k < 5; k++) { const yk = F + 0.28 * (k + 1); b.box('wood_ashlar', [0.42, yk - (F - 0.25), 3.4], { at: [X - 0.21 - 0.42 * k, (yk + F - 0.25) / 2, Z] }); }   // (the steps)
+        b.box('wood_ashlar', [2.6, top - (F - 0.25), 3.6], { at: [X - 2.1 - 1.3 + 0.84, (top + F - 0.25) / 2, Z] });   // (the sill's landing, run in under the gate)
+        for (const sg of [-1, 1]) b.box('wood_ashlar', [2.4, 1.2, 0.5], { at: [X - 1.2, F + 0.6, Z + sg * 1.95] });   // (cheek walls either side of the steps)
+      });
+      b.tinted([1.15, 1.17, 1.14], () => {
+        for (const sg of [-1, 1]) { const brk = sg > 0 && R(1) < 0.8, hh = brk ? 2.6 : 3.8; b.box('wood_ashlar', [dep, hh, jw], { at: [gx, top + hh / 2, Z + sg * (half + jw / 2)] }); if (brk) for (let q = 0; q < 3; q++) b.box('wood_ashlar', [dep * (0.9 - q * 0.25), 0.5, jw * (0.8 - q * 0.2)], { at: [gx - q * 0.2, top + hh + 0.25 + q * 0.5, Z + sg * (half + jw / 2) - sg * q * 0.12] }); }
+        // the round head, its voussoirs through the gate's depth
+        for (let q = 0; q < 9; q++) { const a0 = (q / 9) * Math.PI, a1 = ((q + 1) / 9) * Math.PI, rr = half + 0.18, A = [Z + Math.cos(a0) * rr, ys + Math.sin(a0) * rr], B = [Z + Math.cos(a1) * rr, ys + Math.sin(a1) * rr], L = Math.hypot(B[0] - A[0], B[1] - A[1]);
+          b.box('wood_ashlar', [dep + 0.1, 0.36, L + 0.04], { at: [gx, (A[1] + B[1]) / 2, (A[0] + B[0]) / 2], rot: [-Math.atan2(B[1] - A[1], B[0] - A[0]), 0, 0] }); }
+        // the spandrels' face, the lintel course over the arch, the cornice; the right end's top fallen
+        const xf = gx0 + 0.02, tri = (A, Bp, C) => { b.tri('wood_ashlar', [xf, A[1], A[0]], [xf, Bp[1], Bp[0]], [xf, C[1], C[0]], [A[0] * 0.5, A[1] * 0.5], [Bp[0] * 0.5, Bp[1] * 0.5], [C[0] * 0.5, C[1] * 0.5]); b.tri('wood_ashlar', [xf, A[1], A[0]], [xf, C[1], C[0]], [xf, Bp[1], Bp[0]], [A[0] * 0.5, A[1] * 0.5], [C[0] * 0.5, C[1] * 0.5], [Bp[0] * 0.5, Bp[1] * 0.5]); };
+        const rr = half + 0.36, pts = []; for (let q = 0; q <= 8; q++) { const a = (q / 8) * Math.PI; pts.push([Z + Math.cos(a) * rr, ys + Math.sin(a) * rr]); }
+        for (let q = 0; q < 4; q++) tri([Z + rr, yT], pts[q], pts[q + 1]); for (let q = 4; q < 8; q++) tri([Z - rr, yT], pts[q], pts[q + 1]);
+        tri([Z + rr, yT], pts[4], [Z, yT]); tri([Z - rr, yT], [Z, yT], pts[4]);
+        b.box('wood_ashlar', [dep, 0.7, 2 * (half + jw) - 0.8], { at: [gx, yT + 0.35, Z - 0.4] });
+        b.box('wood_ashlar', [dep + 0.3, 0.22, 2 * (half + jw) - 1.3], { at: [gx + 0.05, yT + 0.81, Z - 0.65] });
+      });
+      cryptDark ||= new THREE.MeshBasicMaterial({ color: '#0d0a08' });
+      b.box(cryptDark, [dep - 0.2, ys - top + half, 2 * half], { at: [gx - 0.2, (top + ys + half) / 2, Z] });   // (the dark inside, under the roots)
+      // (round 10: and the opening's own black face just inside the ring, its round head and all, so it reads as a doorway
+      // into the dark from any angle)
+      { const xo = gx0 - 0.12, f = (A, Bq, C) => { b.tri(cryptDark, [xo, A[1], A[0]], [xo, Bq[1], Bq[0]], [xo, C[1], C[0]], [0, 0], [1, 0], [0, 1]); b.tri(cryptDark, [xo, A[1], A[0]], [xo, C[1], C[0]], [xo, Bq[1], Bq[0]], [0, 0], [0, 1], [1, 0]); };
+        f([Z - half, top], [Z + half, top], [Z + half, ys]); f([Z - half, top], [Z + half, ys], [Z - half, ys]);
+        for (let q = 0; q < 10; q++) { const a0 = (q / 10) * Math.PI, a1 = ((q + 1) / 10) * Math.PI; f([Z, ys], [Z + Math.cos(a0) * half, ys + Math.sin(a0) * half], [Z + Math.cos(a1) * half, ys + Math.sin(a1) * half]); } }
+      b.box(tavernGlass, [0.14, 0.22, 0.14], { at: [gx0 - 1.5, top + 0.5, Z + 0.6] });   // (the tithe-lamp, still burning in there)
+      // moss on its ledges; the oak behind it and its roots over the top and down the sides
+      b.tinted([0.95, 1.05, 0.85], () => { b.box('wood_moss', [dep - 0.1, 0.08, 2 * (half + jw) - 1.4], { at: [gx, yT + 0.96, Z - 0.6] }); b.box('wood_moss', [2.4, 0.06, 3.3], { at: [X - 2.4, top + 0.04, Z] }); });
+      b.tinted([0.62, 0.62, 0.56], () => b.tube('bark', [gx1 - 1.6, F + 0.2, Z + 0.4], [gx1 - 2.0, F + 6.5, Z + 0.9], 1.5, 1.0, { segments: 10 }));
+      b.tinted([0.9, 1.0, 0.82], () => { for (let q = 0; q < 6; q++) { const zz = Z + (q - 2.5) * 0.9 + (R(q + 3) - 0.5) * 0.3, A = [gx1 - 1.4, yT + 1.6 + R(q + 5) * 0.8, zz * 0.3 + (Z + 0.4) * 0.7], Bq = [gx, yT + 1.0, zz], Cq = [gx0 + 0.15, yT - 0.2 - R(q + 9) * 0.6, zz + (R(q + 11) - 0.5) * 0.4];
+        b.tube('wood_mossbark', A, Bq, 0.26, 0.18, { segments: 6 }); b.tube('wood_mossbark', Bq, Cq, 0.18, 0.06, { segments: 5 }); }
+        for (const sg of [-1, 1]) { const zz = Z + sg * (half + jw + 0.1); b.tube('wood_mossbark', [gx1 - 1.2, yT + 0.8, zz - sg * 0.6], [gx, yT, zz], 0.3, 0.24, { segments: 6 }); b.tube('wood_mossbark', [gx, yT, zz], [gx0 + 0.3, F + 0.1, zz + sg * 0.5], 0.24, 0.08, { segments: 6 }); } });
+      // a broken pillar by the steps, a fallen block
+      b.tinted([0.92, 0.94, 0.9], () => { b.box('wood_ashlar', [0.8, 0.3, 0.8], { at: [X - 0.6, F + 0.15, Z + 2.9] }); b.lathe('wood_ashlar', [{ y: 0, r: 0.3 }, { y: 1.5, r: 0.28 }, { y: 1.9, r: 0.08 }], { segments: 10, at: [X - 0.6, F + 0.3, Z + 2.9], rot: [0, 0, 0.08] }); b.box('wood_ashlar', [1.1, 0.6, 0.7], { at: [X + 0.4, F + 0.22, Z - 2.9], rot: [0.12, 0.5, 0.1] }); });
+      b.pop();
+    } else if (p.k === 'wfalls') {
+      // the falls past a glade's back corner (forest-1, behind the arcade): a face of dark rock stepping up and back under
+      // moss, turned to the camera (local x along it, +z toward the camera), the water down a cleft in its middle in two
+      // falls, a dark pool and its foam at the foot, the spray (convert.js: Luminati's mist emitter)
+      const R = woodRnd(p.seed), w = p.w, FT = 7.2;
+      b.push([p.x, p.y, p.z], Math.PI / 4);
+      b.tinted([0.82, 0.84, 0.72], () => { for (let q = 0; q < 30; q++) { const tier = q % 3, u = (R(q) - 0.5) * (w - tier * 1.5), hh = 1.8 + R(q + 30) * 2.4 + tier * 0.6, ww = 1.4 + R(q + 60) * 1.6; if (Math.abs(u) < 0.9 + ww / 2 && tier < 2) continue;
+        b.box('cliff', [ww, hh, 1.8 + R(q + 90) * 1.2], { at: [u, -0.4 + tier * 2.3 + hh / 2, -0.8 - tier * 1.3], rot: [(R(q + 180) - 0.5) * 0.2, (R(q + 120) - 0.5) * 0.5, (R(q + 150) - 0.5) * 0.2] }); }
+        for (let q = 0; q < 3; q++) b.box('cliff', [2.4, 2.2, 1.6], { at: [(q - 1) * 1.6, 5.6 + q % 2 * 0.6, -4.2], rot: [0, R(q + 210) - 0.5, 0] }); });   // (the lip the water comes over)
+      b.tinted([0.95, 1.08, 0.85], () => { for (let q = 0; q < 14; q++) { const tier = q % 3, u = (R(q + 200) - 0.5) * w; if (Math.abs(u) < 1.2) continue; b.box('wood_moss', [1.5 + R(q + 230) * 0.8, 0.14, 1.1], { at: [u, 1.6 + tier * 2.3 + R(q + 260) * 0.5, -0.5 - tier * 1.3] }); } });
+      // (round 10: a falling sheet, not a card: it curls over the lip and drops, wider at its foot, its edges soft and torn,
+      // white water streaming down it; foam heaped at its foot over a dark pool with its rings)
+      woodFallTex ||= (() => { const c = document.createElement('canvas'); c.width = 32; c.height = 128; const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')); g2.fillStyle = '#8eaaa2'; g2.fillRect(0, 0, 32, 128); for (let k = 0; k < 90; k++) { const xx = (k * 37) % 32, yy = (k * 53) % 128, L = 12 + (k % 5) * 9; g2.fillStyle = k % 3 ? 'rgba(244,250,246,0.7)' : 'rgba(58,80,74,0.5)'; g2.fillRect(xx, yy, 1 + (k % 2), L); g2.fillRect(xx, yy - 128, 1 + (k % 2), L); } const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 2); return t; })();
+      woodFallMat ||= (() => {
+        const c = document.createElement('canvas'); c.width = 32; c.height = 64; const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), img = g2.createImageData(32, 64);
+        for (let j = 0; j < 64; j++) for (let i = 0; i < 32; i++) { const u = Math.abs((i + 0.5) / 32 - 0.5) * 2, torn = 0.78 + 0.18 * Math.sin(j * 0.9 + i * 0.3) * Math.sin(j * 0.37), a = Math.max(0, Math.min(1, (torn - u) / 0.22)) * (j < 3 ? j / 3 : 1), o = (j * 32 + i) * 4; img.data[o] = img.data[o + 1] = img.data[o + 2] = Math.round(255 * a); img.data[o + 3] = 255; }
+        g2.putImageData(img, 0, 0); const at = new THREE.CanvasTexture(c);
+        const m = new THREE.MeshBasicMaterial({ map: woodFallTex, alphaMap: at, color: '#dce8e2', transparent: true, depthWrite: false, side: THREE.DoubleSide }); WOOD_UNLIT.add(m); return m; })();
+      { const path = [[0, FT + 0.15, -3.9], [0, FT + 0.3, -3.4], [0, FT - 0.4, -2.9], [0, FT - 2.2, -2.5], [0, 3.2, -1.9], [0, 1.2, -1.1], [0, 0.2, -0.4]], wAt = (k) => 1.0 + (k / (path.length - 1)) * 0.9;
+        for (const [ux, sc] of [[0, 1], [-0.95, 0.42]]) for (let k = 0; k < path.length - 1; k++) { const A = path[k], B = path[k + 1], wa = wAt(k) * sc, wb = wAt(k + 1) * sc, va = 1 - k / (path.length - 1), vb = 1 - (k + 1) / (path.length - 1);
+          if (sc < 1 && k < 2) continue;
+          b.quad(woodFallMat, [[ux - wb / 2, B[1], B[2]], [ux + wb / 2, B[1], B[2]], [ux + wa / 2, A[1], A[2]], [ux - wa / 2, A[1], A[2]]], [[0, vb], [1, vb], [1, va], [0, va]]); } }
+      woodPoolDark ||= (() => { const m = new THREE.MeshBasicMaterial({ color: '#1c2a22' }); WOOD_UNLIT.add(m); return m; })();
+      woodFoam ||= (() => { const m = new THREE.MeshBasicMaterial({ color: '#e8f0ea', transparent: true, opacity: 0.55, depthWrite: false }); WOOD_UNLIT.add(m); return m; })();
+      b.lathe(woodPoolDark, [{ y: 0, r: 0 }, { y: 0.001, r: 2.3 }], { segments: 20, at: [0, 0.04, 1.0], scale: [1.5, 1, 0.85] });
+      b.tinted([0.9, 1.0, 0.95], () => b.lathe('wood_moss', [{ y: 0, r: 2.5 }, { y: 0.12, r: 2.3 }, { y: 0.13, r: 2.2 }], { segments: 20, at: [0, 0.0, 1.0], scale: [1.5, 1, 0.85] }));   // (its mossy lip)
+      for (const [r0, y] of [[0.6, 0.06], [1.15, 0.055], [1.7, 0.05]]) { const N = 18; for (let q = 0; q < N; q++) { const a0 = (q / N) * 6.283, a1 = ((q + 1) / N) * 6.283; b.tube(woodFoam, [Math.cos(a0) * r0 * 1.5, y, 0.3 + Math.sin(a0) * r0 * 0.85], [Math.cos(a1) * r0 * 1.5, y, 0.3 + Math.sin(a1) * r0 * 0.85], 0.03, 0.03, { segments: 3 }); } }   // (its rings, out from the foot)
+      for (let q = 0; q < 6; q++) b.lathe(woodFoam, [{ y: 0, r: 0.4 + R(q + 300) * 0.25 }, { y: 0.2 + R(q + 310) * 0.2, r: 0.25 }, { y: 0.32 + R(q + 310) * 0.2, r: 0 }], { segments: 8, at: [(R(q + 320) - 0.5) * 1.6, 0.03, -0.2 + R(q + 330) * 0.6] });   // (the foam heaped at its foot)
+      b.pop();
+    } else if (p.k === 'wlog') {
+      // a fallen trunk along the wood's floor, half sunk, moss along its top, a broken end and a root-plate at the other
+      const R = woodRnd(p.seed), c = Math.cos(p.rot || 0), s2 = Math.sin(p.rot || 0), L = p.len / 2, A = [p.x - c * L, p.y + p.r * 0.55, p.z - s2 * L], Bq = [p.x + c * L, p.y + p.r * 0.45, p.z + s2 * L];
+      b.tinted([1.0, 1.1, 0.9], () => b.tube('wood_mossbark', A, Bq, p.r, p.r * 0.8, { segments: 8 }));
+      b.tinted([0.95, 1.05, 0.85], () => b.tube('wood_moss', [A[0], A[1] + p.r * 0.55, A[2]], [Bq[0], Bq[1] + p.r * 0.45, Bq[2]], p.r * 0.55, p.r * 0.45, { segments: 6 }));
+      b.tinted([0.6, 0.56, 0.5], () => { for (let k = 0; k < 5; k++) { const a = (k / 5) * 6.28 + R(k), rr = p.r * (1.6 + R(k + 5) * 0.8); b.tube('bark', A, [A[0] - c * 0.3 + Math.cos(a) * rr * 0.3, A[1] + Math.sin(a) * rr, A[2] - s2 * 0.3 + Math.cos(a) * rr * 0.9], p.r * 0.25, 0.05, { segments: 4 }); } });   // (the root-plate torn up with it)
     } else if (p.k === 'pile') {
       // a pile: a round post driven into the harbour bed, its head carried up as the rail's post on a back edge, a turn of
       // rope round it; on a near edge only its head, proud of the deck
@@ -1738,7 +1964,7 @@ function buildTavern(pieces) {
     for (const q of geos) if (q !== merged) q.dispose();
     if (!merged) continue;
     const mesh = new THREE.Mesh(merged, m);
-    const lit = m === tavernGlass || m === tavernEmber || m === tavernNight || m === tavernNightHi || m === tavernStar || m === tavernGrime || m === cryptDark || m === cryptDamp || m === cryptPatch || m === cryptGold || m === cryptOx || m === cryptSky || m === cryptBrass || m === dockGlint || m === dockMist || m === rampFog || m === palaceSky || m === palaceLit || m === palacePatch || m === countGlass;
+    const lit = m === tavernGlass || m === tavernEmber || m === tavernNight || m === tavernNightHi || m === tavernStar || m === tavernGrime || m === cryptDark || m === cryptDamp || m === cryptPatch || m === cryptGold || m === cryptOx || m === cryptSky || m === cryptBrass || m === dockGlint || m === dockMist || m === rampFog || m === palaceSky || m === palaceLit || m === palacePatch || m === countGlass || WOOD_UNLIT.has(m);
     mesh.castShadow = !lit && m !== tavernWeb; mesh.receiveShadow = !lit;
     g.add(mesh);
   }
@@ -2035,6 +2261,7 @@ function skyFor(lv, region) {
   if (ash) reachAir();
   if (env.harbour) harbourAir();
   seaAir(lv, region);
+  if (env.greenwood) { greenwoodAir(); if (skyShown !== 'greenwood') { L.setKeyframes(WOOD_KEYFRAMES); skyShown = 'greenwood'; } return; }   // (the greenwood: its own gloom, docs/greenwood-dungeon.md)
   if (env.interior || env.climate || env.season) return;                 // (underground: the ambient's ours; a climate's sky its own)
   const want = region === 'vale' ? 'dusky' : 'default';
   L.setKeyframes(want === 'dusky' ? DUSKY : DEFAULT_KEYFRAMES); skyShown = want;   // (each outdoor level: a climate before may have set its own)
@@ -2158,6 +2385,43 @@ function seaAir(lv, region, masked = false) {
   mat.uniforms.uShore = { value: seaDeep }; mat.uniforms.uShoreRect = { value: new THREE.Vector4(0, 0, 0, 0) };
   seaSheet = new THREE.Mesh(g, mat); seaSheet.name = 'ember:sea'; seaSheet.receiveShadow = true; seaSheet.frustumCulled = false;
   W.root.add(seaSheet);
+}
+// ── the greenwood's air (docs/greenwood-dungeon.md; convert.js `greenwood`): the same green gloom under the canopy whatever
+// the sim's hour (a dungeon's light is its own), a little darker by night: the sky's horizon (the fog's colour) a deep moss
+// green, the air thick enough that the wood past the glades goes into it, the sun a pale green-white and weak (only its
+// shadows through the trunks: the fill is convert.js's); the outer ground the wood's own, the motes pale green
+const WOOD_KEYFRAMES = DEFAULT_KEYFRAMES.map((f) => {
+  const night = f.night ?? 0;
+  return { ...f, top: mixHex('#2a3222', '#0c120a', night), horizon: mixHex('#3a4230', '#1c2016', night), bottom: mixHex('#2c3a2c', '#101810', night),
+    sun: mixHex('#e4f0c4', '#9aa8b0', night), sunI: 2.2 - 1.4 * night, hemiSky: '#6a8a6c', hemiGround: '#2a3422', hemiI: 1, fog: 0.034 + 0.006 * night, exp: 1.0, clouds: 0, glow: 0.4, shadow: 0.7, moon: 0 };
+});
+/** the greenwood's unlit materials (its mist, shafts, falls): no shadows cast (buildTavern's merge) */
+const WOOD_UNLIT = new Set();
+let woodShaftMat = null, woodPoolMat = null, woodFallTex = null, woodFallMat = null, woodPoolDark = null, woodFoam = null;
+const woodRnd = (seed) => (k) => ((Math.imul(seed + k * 977, 0x9e3779b1) >>> 0) % 1000) / 1000;
+/** a shaft's alpha: soft across, coming in from nothing at the canopy and gone just over the ground, streaked along */
+function woodShaftTex() {
+  const c = document.createElement('canvas'); c.width = 32; c.height = 128;
+  const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), img = g2.createImageData(32, 128);
+  for (let j = 0; j < 128; j++) for (let i = 0; i < 32; i++) {
+    const u = (i + 0.5) / 32 - 0.5, v = 1 - (j + 0.5) / 128, across = Math.exp(-(u * u) / 0.045), along = Math.min(1, v / 0.1) * Math.min(1, (1 - v) / 0.4), streak = 0.75 + 0.25 * Math.sin(i * 1.9 + Math.sin(i * 0.7) * 3);
+    const a = Math.round(255 * Math.max(0, Math.min(1, across * along * streak))), o = (j * 32 + i) * 4; img.data[o] = img.data[o + 1] = img.data[o + 2] = a; img.data[o + 3] = 255;
+  }
+  g2.putImageData(img, 0, 0); const t = new THREE.CanvasTexture(c); t.magFilter = t.minFilter = THREE.LinearFilter; return t;
+}
+/** where a shaft lands: a soft oval */
+function woodPoolTex() {
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const g2 = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), gr = g2.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gr.addColorStop(0, '#fff'); gr.addColorStop(0.5, '#888'); gr.addColorStop(1, '#000'); g2.fillStyle = gr; g2.fillRect(0, 0, 64, 64);
+  const t = new THREE.CanvasTexture(c); t.magFilter = t.minFilter = THREE.LinearFilter; return t;
+}
+function greenwoodAir() {
+  const W = game?.world; if (!W) return;
+  const og = W.outerGround;
+  if (og && W.textures && !og.userData.wood) { og.material = W.textures.material('wood_ground', { vertexColors: true, normalScale: 0.35 }); og.userData.wood = true; }
+  const d = W.emitters?.dust?.uniforms;
+  if (d) { d.uColor0?.value.set('#d4e8b0'); d.uColor1?.value.set('#a8c088'); }
 }
 function harbourAir() {
   const W = game?.world, u = W?.water?.uniforms; if (!u) return;
@@ -2721,6 +2985,104 @@ registerTextureSet((K) => {
         for (let q = 0; q < L; q++) { const x = (x0 + Math.round(Math.cos(a) * q) + s.w) % s.w, y = (y0 + Math.round(Math.sin(a) * q) + s.h) % s.h; s.set(x, y, c); s.hf[y * s.w + x] = 0.85; }
       }
       return r;
+    } },
+  };
+});
+
+// ── the greenwood's own (docs/greenwood-dungeon.md; convert.js its runic letters): the glades' moss and fern with stones
+// in it, leaf litter in drifts, the Tithe Road's grey flags with moss in every joint, the wood's darker ground off the
+// glades and its banks of earth and roots; the empire's dark grey ashlar under moss (the arcade, the granary's door, the
+// fallen blocks), its bronze gone green, the trunks' moss. Mid-dark greens all, kept narrow in tone: the figures and the
+// fights' rings read on them (the floor quieter than the wood round it, so the glades read as clearings)
+registerTextureSet((K) => {
+  const P = (a) => a.map((c) => K.parseColor(c)), at = (R, t) => R[Math.max(0, Math.min(R.length - 1, Math.round(t * (R.length - 1))))];
+  const cl = (t) => Math.max(0, Math.min(1, t));
+  // stones in the moss: a few to each 16 px cell, wrapping
+  const stonesOf = (s, seed, p) => { const out = []; for (let cy = 0; cy < s.h / 16; cy++) for (let cx = 0; cx < s.w / 16; cx++) if (K.hash2(cx, cy, seed) < p) out.push({ x: cx * 16 + 3 + K.hash2(cx, cy, seed + 2) * 10, y: cy * 16 + 3 + K.hash2(cx, cy, seed + 4) * 10, r: 1.4 + K.hash2(cx, cy, seed + 6) * 2.6 }); return out; };
+  const stoneAt = (s, st, x, y) => { let dx = Math.abs(x - st.x), dy = Math.abs(y - st.y); dx = Math.min(dx, s.w - dx); dy = Math.min(dy, s.h - dy); return Math.hypot(dx, dy * 1.3) / st.r; };
+  const mossy = (MOSS, STONE, seed, stoneP, litter = null) => (s) => {
+    const N = K.field(s.w, s.h, 4, 4, seed, { oct: 3 }), M = K.field(s.w, s.h, 16, 16, seed + 1, { oct: 2 }), stones = stonesOf(s, seed + 3, stoneP);
+    s.each((x, y, i) => {
+      for (const st of stones) { const d = stoneAt(s, st, x, y); if (d < 1) { const k = 1 - d, top = y < st.y ? 0.15 : -0.1; s.set(x, y, at(STONE, cl(0.25 + k * 0.55 + top + (K.hash2(x, y, seed + 9) - 0.5) * 0.15))); s.hf[i] = 0.55 + k * 0.45; return; } }
+      let t = 0.45 + (N[i] - 0.5) * 0.55 + (M[i] - 0.5) * 0.4;
+      if (K.hash2(x, y, seed + 11) > 0.92) t += 0.16;                       // (a lit tip of a tuft)
+      if (litter && K.hash2(x >> 1, y >> 1, seed + 13) > 0.94) { s.set(x, y, litter[(x + y) & 1]); s.hf[i] = 0.5; return; }   // (a fallen leaf)
+      s.set(x, y, at(MOSS, cl(t))); s.hf[i] = 0.35 + (M[i] - 0.5) * 0.5 + (N[i] - 0.5) * 0.2;
+    });
+    return { normal: 1.5 };
+  };
+  const MOSS = P(['#2e3418', '#3a421c', '#465222', '#525e28', '#5e6a2e', '#6a7634', '#7a863e']);   // (round 10: olive and a step up, the glades lit clearings against the wood)
+  const STONE = P(['#34362f', '#43453c', '#53554a', '#626456', '#717362']);
+  const LEAF = P(['#6a4a26', '#7e5c30']), DEEP = P(['#0e1208', '#14180a', '#1a200e', '#202612', '#262e16', '#2c341a', '#323c1e']);   // (round 10: the wood a clear step under the glades)
+  const LITTER = P(['#2e2618', '#3c3220', '#4a3e28', '#584a30', '#665638', '#5c5a34', '#74603e']);   // (round 10: warm earth, lifted)
+  const ASH = P(['#363a38', '#424644', '#4e5250', '#5a5e5a', '#666a64', '#72766e', '#7e8278', '#8a8e84']);   // (round 2: a step up, the arcade and the door were lost in the gloom)
+  const VERD = P(['#26403a', '#30524a', '#3c6658', '#4a7a68', '#5a8e78', '#6ea288', '#86b69a']), BRONZE = P(['#3a2e1c', '#4a3a22']);
+  return {
+    // the glades' floor: moss and fern, a stone or two in it, a fallen leaf now and then
+    wood_moss: { px: [64, 64], normalScale: 0.7, gen: mossy(MOSS, STONE, 1201, 0.32, LEAF) },
+    // the wood's ground off the glades: the same moss a step darker, fewer stones, more leaves
+    wood_ground: { px: [64, 64], normalScale: 0.7, gen: mossy(DEEP, STONE, 1221, 0.18, LEAF) },
+    // leaf litter in its drifts: last year's oak leaves, brown and ochre over a dark earth, an olive one among them
+    wood_litter: { px: [64, 64], normalScale: 0.8, gen: (s) => {
+      const N = K.field(s.w, s.h, 6, 6, 1241, { oct: 2 });
+      s.each((x, y, i) => { s.set(x, y, at(LITTER, cl(0.12 + (N[i] - 0.5) * 0.2))); s.hf[i] = 0.2; });
+      for (let k = 0; k < 150; k++) {
+        const cx = K.hash2(k, 1, 1243) * s.w, cy = K.hash2(k, 2, 1243) * s.h, a = K.hash2(k, 3, 1243) * Math.PI, L = 2.2 + K.hash2(k, 4, 1243) * 2.4, Wd = 1.1 + K.hash2(k, 5, 1243) * 0.9;
+        const t = 0.3 + K.hash2(k, 6, 1243) * 0.7, ca = Math.cos(a), sa = Math.sin(a), hf = 0.4 + (k / 150) * 0.6;
+        for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
+          const u = dx * ca + dy * sa, v = -dx * sa + dy * ca; if ((u / L) ** 2 + (v / Wd) ** 2 > 1) continue;
+          const x = ((Math.floor(cx + dx) % s.w) + s.w) % s.w, y = ((Math.floor(cy + dy) % s.h) + s.h) % s.h, i = y * s.w + x;
+          s.set(x, y, at(LITTER, cl(t + (Math.abs(v) < 0.4 ? -0.12 : 0) + (u > 0 ? 0.05 : -0.04)))); s.hf[i] = hf;   // (its midrib a shade darker, lit toward its tip)
+        }
+      }
+      return { normal: 1.6 };
+    } },
+    // the Tithe Road: the empire's grey flags (the inn's layout of slabs) gone dark with the wood's damp, moss in every
+    // joint and creeping over their edges, a crack here and there
+    tithe_flag: { px: [64, 64], normalScale: 0.9, gen: (s) => {
+      const r = tavernFlags(s, K, P(['#2a2d27', '#4c4f46', '#575a51', '#62645b', '#6c6e64', '#76776c', '#808074']), true);   // (round 7: a step paler, the road was lost in the moss)
+      const N = K.field(s.w, s.h, 5, 5, 1261, { oct: 3 });
+      s.each((x, y, i) => {
+        if (s.hf[i] < 0.2) { s.set(x, y, at(MOSS, cl(0.35 + (N[i] - 0.5) * 0.8 + (K.hash2(x, y, 1263) > 0.8 ? 0.2 : 0)))); s.hf[i] = 0.3; return; }   // (moss in the joints)
+        if (N[i] > 0.66) s.set(x, y, K.mixColor(s.get(x, y), at(MOSS, cl(0.4 + (N[i] - 0.66) * 1.5)), Math.min(0.85, (N[i] - 0.66) * 3)));   // (and over the edges)
+      });
+      return r;
+    } },
+    // the banks' faces: dark earth, roots across it, the moss's lip along the top
+    wood_bank: { px: [32, 32], normalScale: 0.8, gen: (s) => {
+      const N = K.field(s.w, s.h, 4, 4, 1281, { oct: 3 }), EARTH = P(['#1a140e', '#231b12', '#2c2217', '#352a1c']), ROOT = P(['#4a3a28', '#5a4832']);
+      s.each((x, y, i) => {
+        // (round 11: the roots a tangle, not two straight courses: those read as a fence's rails along every bank; the moss
+        // hanging over the lip in a ragged edge, a third of the way down)
+        const root = Math.abs(y - (12 + 6 * Math.sin(x * 0.35 + 1.3) + 3 * Math.sin(x * 0.9))) < 0.8 && N[i] > 0.45;
+        if (y < 8 + 5 * N[(x % s.w)] + (K.hash2(x, 1, 1283) > 0.5 ? 2 : 0)) { s.set(x, y, at(MOSS, cl(0.35 + (N[i] - 0.5) * 0.7))); s.hf[i] = 0.7; return; }   // (the moss's lip)
+        if (root) { s.set(x, y, ROOT[(x >> 2) & 1]); s.hf[i] = 0.8; return; }
+        s.set(x, y, at(EARTH, cl(0.5 + (N[i] - 0.5) * 0.9))); s.hf[i] = 0.3 + (N[i] - 0.5) * 0.4;
+      });
+      return { normal: 1.4 };
+    } },
+    // the empire's stone in the wood: dark grey ashlar, its joints green, moss on the blocks' tops
+    wood_ashlar: { px: [48, 48], normalScale: 0.85, gen: (s, ctx) => {
+      const r = ashlar(s, ctx, K, ASH, ['#1c2418', '#18201a'], ['#4a5440', '#4a4c56']);
+      const N = K.field(s.w, s.h, 4, 4, 1301, { oct: 3 });
+      s.each((x, y, i) => { if (s.hf[i] < 0.12) s.set(x, y, at(MOSS, cl(0.3 + (N[i] - 0.5) * 0.6))); else if (N[i] > 0.7) s.set(x, y, K.mixColor(s.get(x, y), MOSS[4], Math.min(0.7, (N[i] - 0.7) * 3))); });
+      return r;
+    } },
+    // bronze gone green: the arcade's cresting, the waymarks' lamps
+    wood_verdigris: { px: [32, 32], normalScale: 0.5, gen: (s) => {
+      const N = K.field(s.w, s.h, 4, 4, 1321, { oct: 3 });
+      s.each((x, y, i) => { const t = N[i]; s.set(x, y, t < 0.22 ? BRONZE[(x + y) & 1] : at(VERD, cl((t - 0.22) * 1.4 + (K.hash2(x, y, 1323) > 0.9 ? 0.2 : 0)))); s.hf[i] = 0.5 + (t - 0.5) * 0.4; });
+      return { normal: 1.0 };
+    } },
+    // the trunks' moss: bark gone green, thick on the boles' feet and the old oaks' limbs
+    wood_mossbark: { px: [32, 32], normalScale: 0.9, gen: (s) => {
+      const N = K.field(s.w, s.h, 4, 8, 1341, { oct: 3 }), BARK = P(['#1e1a14', '#2a241a']);
+      s.each((x, y, i) => {
+        const furrow = Math.abs(((x + Math.sin(y * 0.35) * 1.5) % 6) - 3) < 0.7;
+        if (furrow && N[i] < 0.45) { s.set(x, y, BARK[(y >> 2) & 1]); s.hf[i] = 0.1; return; }
+        s.set(x, y, at(MOSS, cl(0.3 + (N[i] - 0.5) * 0.9 + (K.hash2(x, y, 1343) > 0.9 ? 0.18 : 0)))); s.hf[i] = 0.5 + (N[i] - 0.5) * 0.5;
+      });
+      return { normal: 1.6 };
     } },
   };
 });
@@ -4023,6 +4385,7 @@ const api = {
     }
     for (let i = nb; i < beastPool.length; i++) if (beastPool[i]?.visible) beastPool[i].visible = false;
     frameAmbient = f.ambient || null;
+    if (woodFallTex) woodFallTex.offset.y = (woodFallTex.offset.y + Math.max(0, Math.min(0.1, f.dt || 0)) * 1.1) % 1;   // (the greenwood's falls, running)
     // our art kept standing (env, props) faces the camera: turned each frame as the figures are. Turned once, when it was
     // placed, it kept the camera's angle before the camera was set, and the props read as thin leaning strips
     for (const s of envSprites) s.update?.(0, camera);
