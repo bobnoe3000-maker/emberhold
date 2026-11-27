@@ -32,6 +32,7 @@ for (const [scene, region, site] of worlds) {
       if ('x' in o) { assert.ok(o.x >= 0 && o.x <= level.width && o.z >= 0 && o.z <= level.depth, `${o.type} outside the level`); }
     }
     for (const s of sprites) {
+      if (s.tavern) { assert.ok(Array.isArray(s.tavern.pieces), 'a batch of our pieces'); continue; }   // (the inn's frame, the barrow's timber, the keep's parapets: built in one batch)
       const at = s.arch || s;                                   // (a stair's arch, GDD v1.57: its place on its face, its kind)
       assert.ok(at.x >= 0 && at.x <= level.width && at.z >= 0 && at.z <= level.depth && (typeof s.id === 'string' || typeof s.prop === 'string' || ['up', 'down'].includes(s.arch?.kind)), JSON.stringify(s));
     }
@@ -91,7 +92,7 @@ test('convert: a dungeon floor\'s way up is three tiles wide and each way stands
 // fall, piers stand taller with candles and an unlit flame, the near walls are broken down low, nothing on the tops is bones,
 // it's the same every build, and ?walls=plain gives the level boxes as before
 test('convert: a dungeon floor\'s walls rise and fall, piers lit by candles, the near walls low, no bones on the tops; walls=plain as before', () => {
-  for (const site of ['barrows', 'wickham_keep', 'sunken_chapel']) {
+  for (const site of ['barrows', 'proving_pens', 'sunken_chapel']) {   // (Wickham Keep's bailey stands whole since docs/dungeon-looks-plan.md item 2: below)
     const w = createSim(SEED, undefined, { scene: 'dungeon', site }).world;
     const a = convertWorld(w, { region: 'vale' }), b = convertWorld(w, { region: 'vale', walls: 'plain' }), c = convertWorld(w, { region: 'vale' });
     const walls = (L) => { const n = {}; L.heights.forEach((r, j) => [...r].forEach((h, i) => { if (h !== '0' && h !== '2' && L.tiles[j][i] !== ' ') n[h] = (n[h] || 0) + 1; })); return n; };
@@ -107,6 +108,25 @@ test('convert: a dungeon floor\'s walls rise and fall, piers lit by candles, the
   }
 });
 
+test('convert: the Vale\'s stone (docs/dungeon-looks-plan.md items 1, 2): the Barrows a barrow, the Keep\'s bailey whole under its parapet, its barracks a great hall', () => {
+  const at = (site, d) => { const s0 = createSim(SEED, undefined, { scene: 'dungeon', site }); if (d) s0.restore({ ...JSON.parse(JSON.stringify(s0.snapshot())), depth: d }); return convertWorld(s0.world, { region: 'vale' }); };
+  const pieces = (r) => r.sprites.find((q) => q.tavern)?.tavern.pieces || [], kinds = (r) => new Set(pieces(r).map((p) => p.k)), tiles = (r) => new Set(r.level.tiles.flatMap((row) => [...row]));
+  for (const d of [0, 1]) {
+    const r = at('barrows', d), t = tiles(r);
+    assert.ok(t.has('Þ') && r.level.legend['Þ'].lip === 'barrow_turf' && r.level.legend['Þ'].top === 'grass_dark', `barrows ${d + 1}: drystone under turf`);
+    assert.ok(t.has('þ') && t.has('ð') && !t.has('B') && !t.has('W'), `barrows ${d + 1}: slabs and earth underfoot, no brick`);
+    assert.ok(kinds(r).has('bniche') && kinds(r).has('menhir'), `barrows ${d + 1}: its niches framed in timber, its columns standing stones`);
+    assert.ok(!r.sprites.some((q) => q.prop === 'urnshelf' || q.prop === 'sarcophagus'), `barrows ${d + 1}: no shelf or coffin cards`);
+  }
+  assert.ok(tiles(at('barrows', 0)).has('Ð') && kinds(at('barrows', 0)).has('bshore'), 'the mouth cut earth, shored');
+  assert.ok(kinds(at('barrows', 1)).has('bier'), 'the Long Gallery\'s dead on biers');
+  const y = at('wickham_keep', 0), hy = new Set(y.level.heights.flatMap((row) => [...row]));
+  assert.ok(tiles(y).has('Æ') && tiles(y).has('æ') && hy.has('a') && hy.has('3') && kinds(y).has('kparapet') && kinds(y).has('kmerlons'), 'the bailey: cobbles, curtain walls whole (10) and cut to a parapet (3), merlons on both');
+  assert.ok(y.ambient.sun > 0 && y.ambient.sky[0] > 0.8, 'the bailey lit as a yard, a low sun');
+  const h = at('wickham_keep', 1);
+  assert.ok(tiles(h).has('Ø') && tiles(h).has('x') && kinds(h).has('surround') && kinds(h).has('beam') && h.level.objects.some((o) => o.type === 'hearth'), 'the barracks a great hall, hearth and frame; its cellars still rock');
+});
+
 test('convert: each Vale dungeon floor is dressed in its kit: its stone, its hour, its furniture in 3D or as our props, its lights', () => {
   const seen = new Map();
   for (const [site, floors] of [['barrows', 2], ['wickham_keep', 2], ['sunken_chapel', 2]]) for (let d = 0; d < floors; d++) {   // (2026-11-02: two floors each, authored)
@@ -118,13 +138,13 @@ test('convert: each Vale dungeon floor is dressed in its kit: its stone, its hou
     assert.equal(level.objects.filter((o) => o.type === 'fire' && o.opts.kind === 'brazier' && !o.onWall).length, kinds.get('brazier') || 0, `${w.kit}: braziers`);   // (a pier's flame on a wall's top isn't the room's: convert.js ruinWalls)
     // each piece of its kit stood as one or the other
     for (const [k, n] of kinds) if (!/^stair|^exit$|^brazier$/.test(k)) assert.ok(ours.has(k) || n === 0 || [...types].length > 0, `${w.kit}: ${k}`);
-    for (const k of ['standard', 'banner', 'saint', 'bound', 'font', 'sarcophagus', 'urnshelf', 'tent', 'bunk', 'altar']) if (kinds.has(k)) assert.ok(ours.has(k), `${w.kit}: ${k} is our prop`);
+    for (const k of ['standard', 'banner', 'saint', 'bound', 'font', 'sarcophagus', 'urnshelf', 'tent', 'bunk', 'altar']) if (kinds.has(k) && !(['urnshelf', 'sarcophagus'].includes(k) && site === 'barrows')) assert.ok(ours.has(k), `${w.kit}: ${k} is our prop`);   // (the barrow's niches and biers are built: below)
     for (const [k, t] of [['crates', 'crateStack'], ['barrels', 'barrel'], ['sacks', 'sacks'], ['boulder', 'rock'], ['stalagmite', 'crag'], ['pew', 'bench']]) if (kinds.has(k)) assert.ok(types.has(t), `${w.kit}: ${k} as ${t}`);
     // a light at each prop Emberlit lights
     const lit = ['lantern', 'candles', 'altar', 'circle', 'font'].reduce((n, k) => n + (kinds.get(k) || 0), 0);
     assert.ok(level.objects.filter((o) => o.type === 'light').length >= lit, `${w.kit}: lights`);
-    const all = level.tiles.flatMap((r) => [...r]), built = ['B', 'W', 'C'].filter((c) => all.includes(c));
-    seen.set(w.kit, { hour: level.environment.timeOfDay, walls: built, earth: all.includes('D'), rock: all.includes('x'), dressed: built.length > 0 });
+    const all = level.tiles.flatMap((r) => [...r]), built = ['B', 'W', 'C', 'Þ', 'Æ', 'Ø'].filter((c) => all.includes(c));
+    seen.set(w.kit, { hour: level.environment.timeOfDay, walls: built, earth: all.includes('D') || all.includes('Ð'), rock: all.includes('x'), dressed: built.length > 0 });
     // the dressing pass: Luminati's own well, bench, shelves, campfire and table where it has them; a big piece's footprint
     // is nothing drawn; the broken floor sunk
     for (const [k, t] of [['well', 'well'], ['bench', 'bench'], ['shelf', 'shelf'], ['shelf_y', 'shelf'], ['cookfire', 'campfire'], ['map_table', 'table'], ['hen_cart', 'critters']]) if (kinds.has(k)) assert.ok(types.has(t), `${w.kit}: ${k} as ${t}`);
@@ -134,10 +154,11 @@ test('convert: each Vale dungeon floor is dressed in its kit: its stone, its hou
   assert.deepEqual([...seen.keys()], ['dig', 'gallery', 'bailey', 'barracks', 'nave', 'binding'], 'six floors, each its kit');
   assert.ok(seen.get('gallery').hour > seen.get('dig').hour && seen.get('bailey').hour < seen.get('binding').hour, 'warm and cold kits at their hours');
   // each place in its own stone (the dressing pass): the chapel's pale sandstone, the crypts' limestone, the dig's earth,
-  // the keep's stone brick (its Chancel in the cult's rock: the cut goes down under the altar)
+  // (its Chancel in the cult's rock: the cut goes down under the altar); since docs/dungeon-looks-plan.md items 1, 2 the
+  // barrow's drystone and the keep's ashlar
   assert.ok(seen.get('nave').walls.includes('C') && seen.get('nave').rock, 'the nave in pale sandstone, the chancel in rock');
-  assert.ok(seen.get('gallery').walls.includes('W') && seen.get('binding').walls.includes('W'), 'the crypts in dressed limestone');
-  assert.ok(seen.get('dig').earth && seen.get('bailey').walls.includes('B'), 'the dig in earth, the bailey in stone brick');
+  assert.ok(seen.get('gallery').walls.includes('Þ') && seen.get('binding').walls.includes('W'), 'the barrow in drystone, the binding crypt in dressed limestone');
+  assert.ok(seen.get('dig').earth && seen.get('bailey').walls.includes('Æ'), 'the dig in earth, the bailey in the keep\'s ashlar');
   // a floor dressed room by room: the Keep's barracks in dressed stone and the cave under its cellars in rock; the Chapel's
   // cut dug rough, its crypts built
   assert.ok(seen.get('barracks').dressed && seen.get('barracks').rock, 'the Keep\'s second floor: stone and rock');
