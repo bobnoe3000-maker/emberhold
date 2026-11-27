@@ -17,8 +17,8 @@
 // Luminati holds a level to 128 units a side (LevelFormat MAX_SIZE): a bigger map is cropped round its middle (the plan's
 // §5; the overlands lose a few tiles of their edges).
 // Pure: reads the world, writes nothing to it (presentation only, AGENTS.md rule 2).
-import { ENV_FOOT } from '../sim/envfoot.js';
-import { G, REACH } from '../sim/outdoor.js';
+import { ENV_FOOT, DRAWN_FOOT } from '../sim/envfoot.js';
+import { G, REACH, wallCells, bareTree, homeWalls, isHome, reachKitOf } from '../sim/outdoor.js';
 import { FLOOR_Z } from '../sim/level.js';
 import { PROP_LIGHT } from '../render/gsprite.js';
 import { KIT_TINT } from '../render/palette.js';
@@ -194,6 +194,9 @@ const GROUND = [['g', '2'], ['.', '2'], ['c', '2'], ['~', '0'], ['s', '1'], ['F'
 // MARSH_FRONT: the Sunken Chapel's water reaches this far in front of its middle (sim tiles; its porch stands dry past it).
 // KEEP_FACE: Wickham Keep's door face before its middle (sim tiles: buildkit keep's front wall, 0.475 kit units, and the torch's plate).
 const MARSH_FRONT = 5, KEEP_FACE = 4.8;
+// a bridge's deck, Luminati's units across: the sim's walkable deck (outdoor.js 'deck') is the tiles whose middles lie within
+// 3.2 of its line, up to 3 out; at 2.8 (2.8 tiles each side) its rails stood across the outer rows (docs/pathing-audit.md)
+const BRIDGE_W = 3.4;
 const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, d: 2, G: 1, g: 0 };
 
 /**
@@ -238,12 +241,10 @@ const STACK_H = 9.3, VENTS = 24;
 const SMOKE = { color: '#5a5450', colorEnd: '#8e8884', size: [0.7, 1.0], sizeEnd: 5.5, life: [5, 8.5], alpha: 0.55, velocity: [0, 1.1, 0] };
 const near = (s, at, r) => at && Math.abs(s.x - at[0]) < r && Math.abs(s.y - at[1]) < r;
 const stackAt = (region, w, s) => region === 'reach' && w.kind === 'overland' && (/_stack_/.test(s.id) || (/_tower_\d/.test(s.id) && (near(s, REACH.works, 16) || near(s, REACH.vault, 16))));
-const worksAt = (w, s) => w.kind === 'overland' && near(s, REACH.works, 3);
-/** the Reach's site doors on the overland (part 2): [the sim's piece, the REACH place it stands at, our kit's piece] @type {[RegExp, string, string][]} */
-const SITE_DOORS = [[/_longhouse_\d/, 'yards', 'reach_assayhouse'], [/_keep_\d/, 'forge', 'reach_forgedoor'], [/^chapelruin_0$/, 'ninth', 'reach_ninthdoor'], [/^ruin$/, 'vault', 'reach_vaultmouth']];
+// (the Reach's site doors on the overland, part 2, and the Cinderworks' furnace hall: the sim's REACH_KIT, outdoor.js reachKitOf)
 /** Furnace Nine's yard (the region boss's ground, camps.js reach_mouth: the furnace yard west of the Vault's ruin, its
  *  arena cleared of scatter): char and cracked earth to its reach, slag heaps just past its arena, vents inside them */
-const FURNACE_YARD = { heaps: 20, vents: 10 };
+const FURNACE_YARD = { vents: 10 };
 function outdoor(w, region) {
   // the map, its approach roads (a town's exits lie past its edge) and a margin; never past the grid the sim built
   let bx0 = 0, by0 = 0, bx1 = w.W, by1 = w.H;
@@ -268,7 +269,7 @@ function outdoor(w, region) {
   const objects = [], sprites = [], count = {};
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; objects.push({ id: `${ob.type}_${count[ob.type]}`, ...ob }); };
   const inside = (x, z, m = 0.5) => x > m && z > m && x < W - m && z < D - m;
-  const foot = (s) => { const f = ENV_FOOT[s.id]; if (!f) return null; return { cx: X(s.x + (f[0] + f[2]) / 2), cz: Z(s.y + (f[1] + f[3]) / 2), w: (f[2] - f[0]) / 2, d: (f[3] - f[1]) / 2, f }; };
+  const foot = (s) => { const f = ENV_FOOT[s.id] || DRAWN_FOOT[s.id]; if (!f) return null; return { cx: X(s.x + (f[0] + f[2]) / 2), cz: Z(s.y + (f[1] + f[3]) / 2), w: (f[2] - f[0]) / 2, d: (f[3] - f[1]) / 2, f }; };
   const services = new Map((w.services || []).map((v) => [v.id, v]));
   // raised ground under a footprint (the town's walls; a mountain, highest at its middle)
   const raise = (s, level, ch, dome = false) => {
@@ -277,20 +278,41 @@ function outdoor(w, region) {
     for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
       if (i < 0 || j < 0 || i >= W || j >= D) continue;
       let h = level;
-      if (dome) { const u = ((i + 0.5 - (i0 + i1) / 2) / ((i1 - i0) / 2)) ** 2 + ((j + 0.5 - (j0 + j1) / 2) / ((j1 - j0) / 2)) ** 2; if (u > 1) continue; h = Math.round(3 + (level - 3) * (1 - u)); }
+      if (dome) {
+        const u = ((i + 0.5 - (i0 + i1) / 2) / ((i1 - i0) / 2)) ** 2 + ((j + 0.5 - (j0 + j1) / 2) / ((j1 - j0) / 2)) ** 2; if (u > 1) continue; h = Math.round(3 + (level - 3) * (1 - u));
+        // (above a step only where the sim walls the whole cell: outdoor.js MOUNT_SHRINK; a step's rise is walked up)
+        const tx = x0 + 2 * i, ty = y0 + 2 * j; if (h > 3 && !(blockedAt(tx, ty) && blockedAt(tx + 1, ty) && blockedAt(tx, ty + 1) && blockedAt(tx + 1, ty + 1))) h = 3;
+      }
       const cur = parseInt(heights[j][i], 36);
       if (cur < h) { tiles[j][i] = ch; heights[j][i] = h.toString(36); }
     }
   };
+  // a stone wall piece the sim walls on whole cells (outdoor.js wallCells, `cells`): raised on just those cells, every tile of
+  // which the sim blocks (a gate's way through left at the ground): what you see is where its wall is (docs/pathing-audit.md:
+  // raised over its whole footprint, four tiles thick and its gatehouse ten wide over the sim's one and three, the party
+  // walked along on top of Ashgate's walls)
+  const blockedAt = (x, y) => { const gx = x + w.PAD, gy = y + w.PAD; return gx >= 0 && gy >= 0 && gx < w.GW && gy < w.GH && w.blocked[gy * w.GW + gx] === 1; };
+  const raiseCells = (s, level, ch) => {
+    const [a, b, c, d] = wallCells(s.id, s.x, s.y);
+    for (let ty = b; ty <= d; ty += 2) for (let tx = a; tx <= c; tx += 2) {
+      if (!(blockedAt(tx, ty) && blockedAt(tx + 1, ty) && blockedAt(tx, ty + 1) && blockedAt(tx + 1, ty + 1))) continue;
+      const i = (tx - x0) / 2, j = (ty - y0) / 2;
+      if (i < 0 || j < 0 || i >= W || j >= D) continue;
+      if (parseInt(heights[j][i], 36) < level) { tiles[j][i] = ch; heights[j][i] = level.toString(36); }
+    }
+  };
+  /** the tiles the sim walls inside a piece's footprint */
+  const walledNear = (s, f) => { let n = 0; for (let y = Math.floor(s.y + f[1]); y <= Math.floor(s.y + f[3]); y++) for (let x = Math.floor(s.x + f[0]); x <= Math.floor(s.x + f[2]); x++) if (blockedAt(x, y)) n++; return n; };
   const gates = [], timber = PALISADE.has(region), stoneWall = B.wall || 'k';
   // a tower out on the Reach's roads, away from any wall, is a dead beacon (outdoor.js beacons): our kit's drum tower
   // (town.json reach_tower_1) stood on the ground, not a block of slag brick raised under it (round 1: a black slab)
   const walls = region === 'reach' && w.kind === 'overland' ? w.structs.filter((q) => /_curtainy?_\d|_gatehousey?_\d/.test(q.id)) : [];
   const beacon = (s) => walls.length > 0 && /_tower_\d/.test(s.id) && !stackAt(region, w, s) && !walls.some((q) => Math.abs(q.x - s.x) < 14 && Math.abs(q.y - s.y) < 14);
   for (const s of w.structs) {
-    if (/_curtainy?_\d/.test(s.id)) raise(s, timber ? 3 : 6, timber ? 'E' : stoneWall);
-    else if (/_tower_\d/.test(s.id)) { if (!stackAt(region, w, s) && !beacon(s)) raise(s, timber ? 3 : 8, timber ? 'E' : stoneWall); }   // (a Cinderworks stack, a beacon: ours, below)
-    else if (/_gatehousey?_\d/.test(s.id)) { raise(s, timber ? 3 : 8, timber ? 'E' : stoneWall); gates.push(s); }
+    const up = s.cells ? raiseCells : raise;
+    if (/_curtainy?_\d/.test(s.id)) up(s, timber ? 3 : 6, timber ? 'E' : stoneWall);
+    else if (/_tower_\d/.test(s.id)) { if (!stackAt(region, w, s) && !beacon(s)) up(s, timber ? 3 : 8, timber ? 'E' : stoneWall); }   // (a Cinderworks stack, a beacon: ours, below)
+    else if (/_gatehousey?_\d/.test(s.id)) { up(s, timber ? 3 : 8, timber ? 'E' : stoneWall); gates.push(s); }
     else if (/^mountain_/.test(s.id)) raise(s, /massif/.test(s.id) ? 16 : 11, B.mountain, true);
   }
   // the roads through a gate stay open (the sim walks them)
@@ -339,23 +361,31 @@ function outdoor(w, region) {
     // (part 2: the other sites' doors, on the sim's own footprints: the Yards' counting house with the Assay's gate, the
     // Forgehall's bronze doors in their hill, the Ninth Vault's strongroom door in the volcano's flank, the Magma Vault's
     // mouth; each door on its +y face, where the sim's other doors are)
-    const door = reach && w.kind === 'overland' ? SITE_DOORS.find(([re, at]) => re.test(id) && near(s, REACH[at], 6)) : null;
-    if (door) { sprites.push({ id: door[2], x: X(s.x), z: Z(s.y) }); continue; }
-    if (reach && worksAt(w, s) && /_smith_/.test(id)) { works(s, p); continue; }
+    const kit = reachKitOf(w, s);
+    if (kit === 'reach_works') { works(s, p); continue; }
+    if (kit) { sprites.push({ id: kit, x: X(s.x), z: Z(s.y) }); continue; }
     if (reach && /^(wheat|pumpkins)_/.test(id)) continue;      // (Ashgate's fields are the sim's generic town's: nothing grows green in the Reach)
-    const house = HOUSES.find(([re]) => re.test(id));
-    if (house && /^(vale|fens|reach|heights|tidemark)_/.test(id) && !/_stilt|_punt|_cistern|_eeltrap/.test(id)) {
+    const house = isHome(w, s) && HOUSES.find(([re]) => re.test(id));
+    if (house) {
       const svc = services.get(id), hh = hash(id, s.x, s.y), { roofs, uppers, stone, ...lk } = look;
       const mine = { ...lk, ...(roofs ? { roof: roofs[hh % roofs.length] } : {}), ...(uppers && (house[1].stories || 1) > 1 ? { upperWall: uppers[(hh >>> 4) % uppers.length] } : {}) };
-      add({ type: 'house', x: p.cx, z: p.cz, rotation: 0, ...(svc ? { name: svc.name } : {}), light: !!svc || hash(id, s.x) % 3 === 0,
-        opts: { width: r2(clamp(p.w * 0.82, 3, 8)), depth: r2(clamp(p.d * 0.72, 2.5, 6)), chimney: true, shutters: true, doorHood: false, woodpile: false,
-          gableFront: false, sign: false, upperWall: '', ...house[1], ...(/_temple_|_smith_/.test(id) ? { ...mine, wall: stone || 'stone_brick' } : mine), seed: hh % 997 } });
+      // (on exactly the tiles the sim walls for it, its plinth to their edge: outdoor.js homeWalls, the house's size as it
+      // was drawn, 82 % by 72 % of the footprint within Luminati's least and most, laid on whole tiles. Walled 12 % in from
+      // its footprint's sides, the sim stopped the party up to a tile inside its walls: docs/pathing-audit.md)
+      const k = homeWalls(id, s.x, s.y), PLINTH = 0.1;
+      add({ type: 'house', x: X((k[0] + k[2]) / 2), z: Z((k[1] + k[3]) / 2), rotation: 0, ...(svc ? { name: svc.name } : {}), light: !!svc || hash(id, s.x) % 3 === 0,
+        opts: { width: r2((k[2] - k[0]) / 2 - 2 * PLINTH), depth: r2((k[3] - k[1]) / 2 - 2 * PLINTH), chimney: true, shutters: true, doorHood: false, woodpile: false,
+          gableFront: false, sign: false, upperWall: '', ...house[1], ...(/_temple_|_smith_/.test(id) ? { ...mine, wall: stone || 'stone_brick' } : mine), seed: hh % 997,
+          // (a service's chimney on its east end, toward the camera: laid on whole tiles the houses moved a little, Luminati
+          // drew their chimneys afresh, and Saltmere's chandlery's stood in front of the Stilt House's door, 33 % in view)
+          ...(svc ? { chimneySide: 1 } : {}) } });
       continue;
     }
     const m = /^([a-z]+)_\d/.exec(id), kind = m && m[1];
     if (kind && (TREES[kind] || kind === 'grove')) {
       if (raised(p.cx, p.cz)) continue;
-      const h = hash(id, s.x, s.y), tk0 = kind === 'grove' ? ['oak', 'oak', 'pine', 'autumn', 'deadwood'][h % 5] : TREES[kind], tk = B.trees[tk0] || tk0;
+      // (a grove in a land whose trees are bare is bare: the sim walls only a bare tree's trunk, outdoor.js bareTree)
+      const h = hash(id, s.x, s.y), tk0 = kind === 'grove' ? (bareTree(region, id) ? 'oak' : ['oak', 'oak', 'pine', 'autumn', 'deadwood'][h % 5]) : TREES[kind], tk = B.trees[tk0] || tk0;
       add({ type: 'tree', x: p.cx, z: p.cz, collider: false, opts: { kind: tk, height: r2(clamp(Math.max(p.w, p.d) * 0.62, 2.6, 6.2)), seed: h % 997 } });
     } else if (/^rock_/.test(id)) {
       // (a rock on snow is basalt showing through it: the land's own snow stone, white on white, hid the rocks that stand
@@ -363,20 +393,30 @@ function outdoor(w, region) {
       // is black slag, red only where the ground is red rock: round 1's one in five red read as orange boulders everywhere)
       const onSnow = B.stone === 'snow' && tm(Math.floor(s.x), Math.floor(s.y)) === G.SNOW;
       const stone = onSnow ? 'basalt' : reach && tiles[Math.floor(p.cz)]?.[Math.floor(p.cx)] === 'M' ? 'redrock' : B.stone;
-      const size = onSnow ? clamp(Math.max(p.w, p.d) * 0.3, 0.4, 0.8) : clamp(Math.max(p.w, p.d) * 0.55, 0.6, 1.6);   // (and small: stones through the snow, not boulders: round 3)
+      // (and no bigger than the ground the sim walls for it: Luminati's boulder reaches 0.8 of its size out, a leaning one
+      // beside it from a size of 1; drawn to its footprint, it stood a tile or two past the wall, docs/pathing-audit.md)
+      const walled = Math.sqrt(walledNear(s, p.f) / Math.PI) / 2;   // (its wall's radius, Luminati's units)
+      const fit = walled >= 1 ? walled : Math.max(0.3, Math.min(0.99, walled / 0.8));   // (from a size of 1 the leaning one reaches about its size out)
+      const size = Math.min(onSnow ? clamp(Math.max(p.w, p.d) * 0.3, 0.4, 0.8) : clamp(Math.max(p.w, p.d) * 0.55, 0.6, 1.6), fit);   // (and small: stones through the snow, not boulders: round 3)
       add({ type: 'rock', x: p.cx, z: p.cz, opts: { size: r2(size), ...(stone ? { stone } : {}), seed: hash(id, s.x) % 97 } });
     }
     else if (/^(fence|drywall)_/.test(id)) {
-      const f = p.f, horiz = f[2] - f[0] > f[3] - f[1];
-      add(horiz ? { type: 'fence', x0: X(s.x + f[0]), z0: p.cz, x1: X(s.x + f[2]), z1: p.cz, opts: {} } : { type: 'fence', x0: p.cx, z0: Z(s.y + f[1]), x1: p.cx, z1: Z(s.y + f[3]), opts: {} });
+      // (down the middle of the row the sim walls, end to end of it: outdoor.js putRun. On the footprint's own middle line
+      // it stood off the walled row's middle by up to half a tile, in the next row the party walks)
+      const f = p.f, horiz = f[2] - f[0] > f[3] - f[1], a = Math.floor((horiz ? s.x + f[0] : s.y + f[1]) + 0.5), b = Math.ceil((horiz ? s.x + f[2] : s.y + f[3]) - 0.5);
+      const mid = Math.floor(horiz ? s.y + (f[1] + f[3]) / 2 : s.x + (f[0] + f[2]) / 2) + 0.5;
+      add(horiz ? { type: 'fence', x0: X(a), z0: Z(mid), x1: X(b), z1: Z(mid), opts: {} } : { type: 'fence', x0: X(mid), z0: Z(a), x1: X(mid), z1: Z(b), opts: {} });
     }
     else if (/_(well|lanewell)_\d/.test(id)) add({ type: 'well', x: p.cx, z: p.cz, rotation: 0, opts: { roof: reach ? 'roof_rust' : 'roof_thatch' } });
     else if (/^windmill_/.test(id)) add({ type: 'windmill', x: p.cx, z: p.cz, rotation: 0, opts: { height: 7, roof: 'roof_thatch', seed: 7 } });
     else if (/^lamppost_/.test(id)) add({ type: 'lamppost', x: p.cx, z: p.cz, rotation: 0, opts: { style: 'arm' } });
     else if (/_foodstand_/.test(id)) add({ type: 'marketStall', x: p.cx, z: p.cz, rotation: 0, opts: { cloth: 'cloth_stripe', width: 3, crates: 'right', seed: 2 } });
     else if (/^barrel/.test(id)) add({ type: 'barrel', x: p.cx, z: p.cz, rotation: (hash(id, s.x, s.y) % 7) / 7, opts: { height: 1, lying: false } });
-    else if (/^crate_|^boxes/.test(id)) add({ type: 'crateStack', x: p.cx, z: p.cz, rotation: 0.2, opts: { count: /^boxes/.test(id) ? 3 : 2, size: 0.8, seed: hash(id, s.x) % 31 } });
-    else if (/^sack/.test(id)) add({ type: 'sacks', x: p.cx, z: p.cz, rotation: 0, opts: { count: 3, seed: 5 } });
+    // (a crate's and a sack's pile on the ground the sim walls for it, no barrel beside it: two crates of 0.8 and a barrel, or
+    // three sacks, stood two to four tiles wide over a wall of one or two, docs/pathing-audit.md)
+    else if (/^crate_|^boxes/.test(id)) { const n = /^boxes/.test(id) ? 3 : 1, side = Math.sqrt(Math.max(1, walledNear(s, p.f))) / 2;
+      add({ type: 'crateStack', x: p.cx, z: p.cz, rotation: 0.2, opts: { count: n, size: r2(clamp((side * 0.85) / n, 0.35, 0.8)), barrel: false, seed: hash(id, s.x) % 31 } }); }
+    else if (/^sack/.test(id)) add({ type: 'sacks', x: p.cx, z: p.cz, rotation: 0, opts: { count: 1, seed: 5 } });
     else if (/^table_/.test(id)) add({ type: 'table', x: p.cx, z: p.cz, rotation: 0, opts: { shape: 'rect', width: 1.6, depth: 0.9, cloth: false, items: true, candle: false, seed: 6 } });
     else if (/^bench_/.test(id)) add({ type: 'bench', x: p.cx, z: p.cz, rotation: 0, opts: { length: 1.6, back: true } });
     else if (/^hay_/.test(id)) add({ type: 'haystack', x: p.cx, z: p.cz, opts: { size: 0.8, seed: hash(id, s.x) % 31 } });
@@ -385,8 +425,8 @@ function outdoor(w, region) {
     // line (outdoor.js 'deck': the walkable 6.4 tiles of the footprint's short side), the river left open under it
     else if (/^bridge/.test(id)) {
       const f = p.f, alongX = f[2] - f[0] > f[3] - f[1];
-      add(alongX ? { type: 'bridge', x0: X(s.x + f[0]), z0: Z(s.y), x1: X(s.x + f[2]), z1: Z(s.y), deckY: GROUND_Y, opts: { width: 2.8, arch: 0.22 } }
-        : { type: 'bridge', x0: X(s.x), z0: Z(s.y + f[1]), x1: X(s.x), z1: Z(s.y + f[3]), deckY: GROUND_Y, opts: { width: 2.8, arch: 0.22 } });
+      add(alongX ? { type: 'bridge', x0: X(s.x + f[0]), z0: Z(s.y), x1: X(s.x + f[2]), z1: Z(s.y), deckY: GROUND_Y, opts: { width: BRIDGE_W, arch: 0.22 } }
+        : { type: 'bridge', x0: X(s.x), z0: Z(s.y + f[1]), x1: X(s.x), z1: Z(s.y + f[3]), deckY: GROUND_Y, opts: { width: BRIDGE_W, arch: 0.22 } });
     }
     else if (/^hens_/.test(id)) add({ type: 'critters', x: p.cx, z: p.cz, kind: 'chicken', count: 4, radius: 1.6 });   // (Luminati's own hens, pecking about)
     else if (/^(cow|sheep)_/.test(id)) continue;               // (the farm's beasts are figures, alive: hybrid.js beasts, from Emberlit's animator)
@@ -434,18 +474,13 @@ function outdoor(w, region) {
     }
   }
   if (reach && w.kind === 'overland') {
-    const camp = CAMP_BY.reach_mouth, c = camp ? [camp.x, camp.y] : [REACH.vault[0] - 20, REACH.vault[1] - 18], r = camp ? camp.reach : 21, rim = camp ? camp.arena + 1 : r + 5;
+    const camp = CAMP_BY.reach_mouth, c = camp ? [camp.x, camp.y] : [REACH.vault[0] - 20, REACH.vault[1] - 18], r = camp ? camp.reach : 21;
     // the yard's floor: char and cracked earth inside the ring (only open ground: the stack's plinth, a heap, a road stay)
     for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
       const d = Math.hypot(x0 + 2 * i + 1 - c[0], y0 + 2 * j + 1 - c[1]);
       if (d < r && heights[j][i] === '2' && /[AHKLQMy]/.test(tiles[j][i])) tiles[j][i] = vnoise(i, j, 'fy', 3) < 0.55 ? 'H' : 'Q';
     }
-    // the heaps on its rim, past the cleared arena (a gap to the south, the way in), vents round its reach
-    for (let k = 0; k < FURNACE_YARD.heaps; k++) {
-      const a = (k / FURNACE_YARD.heaps) * Math.PI * 2 + 0.2, gx = c[0] + Math.cos(a) * rim, gy = c[1] + Math.sin(a) * rim;
-      if (Math.sin(a) > 0.94 || Math.hypot(gx - REACH.vault[0], gy - REACH.vault[1]) < 10) continue;   // (the way in from the south, the vault's mouth)
-      const x = X(gx), z = Z(gy); if (inside(x, z) && !raised(x, z)) sprites.push({ id: 'reach_slagheap', x, z });
-    }
+    // (the heaps on its rim are the sim's, walled: outdoor.js furnaceHeaps, stood as its other pieces are) vents round its reach
     for (let k = 0; k < FURNACE_YARD.vents; k++) {
       const a = ((k + 0.5) / FURNACE_YARD.vents) * Math.PI * 2 + 0.2, x = X(c[0] + Math.cos(a) * (r - 1)), z = Z(c[1] + Math.sin(a) * (r - 1));
       if (inside(x, z) && !raised(x, z)) add({ type: 'fire', x, z, opts: { kind: 'embers', size: 0.55, smoke: k % 2 === 0, light: false, seed: 300 + k } });

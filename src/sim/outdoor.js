@@ -11,9 +11,9 @@
 
 import { mulberry32, streamSeed, fbm } from './rng.js';
 import { FLOOR_Z } from './level.js';
-import { ENV_FOOT } from './envfoot.js';
+import { ENV_FOOT, DRAWN_FOOT } from './envfoot.js';
 import { hypot, sin, cos } from './detmath.js';
-import { campsOf } from './camps.js';
+import { campsOf, CAMP_BY } from './camps.js';
 
 // ground codes (pixel + tile)
 // (M8: the Fens' swamp ground, docs/region-towns-proposal.md: MARSH is wet peat and reeds you can walk; POOL still bog
@@ -174,14 +174,106 @@ function fits(o, id, x, y, margin = 1, allowRoad = false) {
   return true;
 }
 
-// shape: 'rect' (buildings), 'round' (trees, mountains), 'none', 'deck' (bridges clear water)
+// A town's circuit (its curtains, towers and gatehouses) is drawn as raised ground (render3d/convert.js: stone, or for
+// Thornwick a bank a step high under our kit's timber palisade, as thick as its footprint), and the drawn ground comes in
+// cells of two tiles each way, on even tiles (a Luminati tile is two of ours, and a level is cropped on even tiles). Walled
+// by its footprint (a curtain's middle row, a tower's circle), the sim's wall was a tile thick where four were drawn, and the
+// party walked along on top of it (docs/pathing-audit.md; the owner, 2026-11-26: "Ashgate.. characters often auto path and
+// walk over or through walls"). So a wall piece is walled on whole cells, the ones its footprint covers at least half of
+// each way (wallCells; a tower's those its round holds), and the converter raises those same cells (`cells` on the
+// struct). A tower out on the Reach's roads or at its works, away from any wall, is a beacon or a furnace stack (our kit's,
+// stood on the ground: convert.js), its footprint as any building's.
+const STONE_PIECE = /^(vale|fens|reach|heights|tidemark)_(curtainy?|gatehousey|tower)_\d$/;
+/** the tiles a stone wall piece walls (whole cells, even-aligned): [tx0, ty0, tx1, ty1], inclusive @param {string} id @param {number} x @param {number} y */
+export function wallCells(id, x, y) {
+  const [x0, y0, x1, y1] = footRect(id, x, y);
+  const lo = (a) => { const c = Math.floor(a / 2) * 2; return c + 2 - a < 1 ? c + 2 : c; };   // (the first cell it covers half of)
+  const hi = (b) => { const c = Math.floor(b / 2) * 2; return (b - c < 1 ? c - 2 : c) + 1; };
+  return [lo(x0), lo(y0), hi(x1), hi(y1)];
+}
+const cellPiece = (o, id, x, y) => STONE_PIECE.test(id) && (!/_tower_/.test(id) || o.kind === 'town' || o.region !== 'reach' ||
+  o.structs.some((q) => /_(curtainy?|gatehousey)_\d$/.test(q.id) && Math.abs(q.x - x) < 14 && Math.abs(q.y - y) < 14));   // (convert.js beacon(): the same 14)
+/** wall a stone piece's cells, but those `keep` leaves open (a gate's way through); a tower's are those whose middles its
+ * round (90 % of its footprint, as it was walled) holds */
+function wallOn(o, id, x, y, keep = null) {
+  const [a, b, c, d] = wallCells(id, x, y), [x0, y0, x1, y1] = footRect(id, x, y), mx = (x0 + x1) / 2, my = (y0 + y1) / 2, rx = (x1 - x0) * 0.45, ry = (y1 - y0) * 0.45;
+  const round = /_tower_/.test(id), out = (tx, ty) => { const cx = Math.floor(tx / 2) * 2 + 1, cy = Math.floor(ty / 2) * 2 + 1; const u = (cx - mx) / rx, v = (cy - my) / ry; return u * u + v * v > 1; };
+  for (let ty = b; ty <= d; ty++) for (let tx = a; tx <= c; tx++) { if ((keep && keep(tx, ty)) || (round && out(tx, ty))) continue; const i = gi(o, tx, ty); if (i >= 0) { o.blocked[i] = 1; if (o.occ[i] !== 2) o.occ[i] = 1; } }
+}
+
+// A home or a service of a town's set is drawn as Luminati's own house (render3d/convert.js HOUSES): a box HOME.w of its
+// footprint's width by HOME.d of its depth (within HOME's least and most, in Luminati's units, two of our tiles each), on a
+// plinth a tenth of a unit wider each side, centred on its footprint. Walled by its footprint 12 % in from each side, the
+// sim's wall stood up to a tile inside the walls drawn (the small homes most: drawn at Luminati's least house, three units
+// by two and a half), and the party walked through them (docs/pathing-audit.md). So a home is walled on the tiles whose
+// middles the drawn house covers (homeWalls), and the converter draws the house on exactly those tiles. Not a piece the
+// Reach's overland draws as one of our kit's (REACH_KIT: the Assay Yards' counting house, the Cinderworks' furnace hall).
+const HOME_ID = /^(vale|fens|reach|heights|tidemark)_(temple|tavern|shop|smith|inn|longhousex?|workshopx?|cottagex?|housex?|farmx?)_\d+$/;
+export const HOME = { w: 0.82, d: 0.72, minW: 3, maxW: 8, minD: 2.5, maxD: 6, plinth: 0.1 };
+const clampH = (v, a, b) => Math.max(a, Math.min(b, v)), r2 = (v) => Math.round(v * 100) / 100;
+/** the tiles a home walls, as their outer edges [x0, y0, x1, y1] in our tiles @param {string} id @param {number} x @param {number} y */
+export function homeWalls(id, x, y) {
+  const f = ENV_FOOT[id], cx = x + (f[0] + f[2]) / 2, cy = y + (f[1] + f[3]) / 2;
+  const hw = clampH(r2(((f[2] - f[0]) / 2) * HOME.w), HOME.minW, HOME.maxW) + 2 * HOME.plinth, hd = clampH(r2(((f[3] - f[1]) / 2) * HOME.d), HOME.minD, HOME.maxD) + 2 * HOME.plinth;   // (units across: half that, in tiles, each side)
+  return [Math.floor(cx - hw - 0.5) + 1, Math.floor(cy - hd - 0.5) + 1, Math.ceil(cx + hw - 0.5), Math.ceil(cy + hd - 0.5)];
+}
+/** the Reach's overland pieces drawn as our kit's on the sim's footprints (convert.js): [the sim's piece, the REACH place
+ * it stands at (within `r`), the kit's piece] @type {[RegExp, string, string, number][]} */
+export const REACH_KIT = [[/_longhouse_\d/, 'yards', 'reach_assayhouse', 6], [/_keep_\d/, 'forge', 'reach_forgedoor', 6], [/^chapelruin_0$/, 'ninth', 'reach_ninthdoor', 6], [/^ruin$/, 'vault', 'reach_vaultmouth', 6], [/_smith_/, 'works', 'reach_works', 3],
+  [/_tower_\d/, 'works', 'reach_stack', 16], [/_tower_\d/, 'vault', 'reach_stack', 16]];   // (a tower by the works or the Vault's mouth is a furnace stack)
+// (the furnace hall and the stacks are stood on their host's footprint's middle; the doors on its origin: convert.js)
+const KIT_AT_MIDDLE = new Set(['reach_works', 'reach_stack']);
+/** the kit piece the Reach's overland draws this piece as, or null @param {any} o @param {{ id: string, x: number, y: number }} s */
+export function reachKitOf(o, s) {
+  if (o.kind !== 'overland' || o.region !== 'reach') return null;
+  const k = REACH_KIT.find(([re, at, , r]) => re.test(s.id) && Math.abs(s.x - REACH[at][0]) < r && Math.abs(s.y - REACH[at][1]) < r);
+  return k ? k[2] : null;
+}
+/** is this piece drawn as a home (Luminati's house)? @param {any} o @param {{ id: string, x: number, y: number }} s */
+export const isHome = (o, s) => HOME_ID.test(s.id) && !reachKitOf(o, s);
+
+// A tree is walled by its crown's ellipse where a crown is drawn over the ground. Where it's drawn bare (convert.js BIOMES:
+// every tree of the Reach dead, the Heights' leafless but its pines, a dead tree anywhere) only its trunk stands at a figure's
+// height, and the crown's wall was a wall of nothing round a dead stick, two to four tiles out (docs/pathing-audit.md):
+// there it walls its trunk, TRUNK_R round the footprint's middle, where it's drawn.
+const TREE_ID = /^(pine|oak|autumn|dead|grove|birch|alder|willow|carr)_\d/;
+export const TRUNK_R = 1;
+/** is this tree drawn bare in this land? (convert.js draws each land's trees as BIOMES says) @param {string} region @param {string} id */
+export const bareTree = (region, id) => TREE_ID.test(id) && (/^dead_/.test(id) || region === 'reach' || (region === 'heights' && !/^pine_/.test(id)));
+
+// A mountain is drawn as raised ground, a dome from a step at its footprint's edge to its top (convert.js raise): walled at
+// 65 % of its footprint, the party walked up its flanks, three and four steps up (docs/pathing-audit.md). Walled to where the
+// dome stands more than a step high (its edge, MOUNT_SHRINK in); the converter raises only the cells it walls whole.
+// A rock on the Heights' snow is drawn as a small stone showing through it (convert.js, the foliage critic's round 3), so
+// it walls what a trunk does.
+export const MOUNT_SHRINK = 0.03;
+
+// shape: 'rect' (buildings), 'round' (trees, mountains), 'none', 'deck' (bridges clear water), 'trunk' (a bare tree, a stone in the snow: TRUNK_R)
 function put(o, id, x, y, shape = 'rect', shrink = 0.12) {
   if (!ENV_FOOT[id]) return;
+  if ((shape === 'round' || shape === 'rect') && bareTree(o.region, id)) shape = 'trunk';   // (a birch is scattered as 'rect')
+  if (shape === 'round' && /^mountain_/.test(id)) shrink = MOUNT_SHRINK;
+  if (shape === 'rect' && /_stilt/.test(id)) shrink = 0;   // (a stilt house's deck runs out to its footprint's edge at a man's chest, on its stilts: our kit's, buildkit.js)
+  if (/^rock_/.test(id) && shape !== 'none' && o.tmat[gi(o, x, y)] === G.SNOW) { shape = 'trunk'; }   // (a stone through the snow: SNOW_STONE)
+  const kit = reachKitOf(o, { id, x, y });
+  if (kit && DRAWN_FOOT[kit]) {   // (the Reach's site doors, its furnace hall and stacks, walled as our kit's piece drawn there: as big as a hill, the Forgehall's)
+    o.structs.push({ id, x, y }); stamp(o, id, x, y, 'none', 0);
+    const f = ENV_FOOT[id], k = DRAWN_FOOT[kit], at = KIT_AT_MIDDLE.has(kit) ? [x + (f[0] + f[2]) / 2, y + (f[1] + f[3]) / 2] : [x, y];
+    stamp(o, id, at[0], at[1], kit === 'reach_stack' ? 'round' : 'rect', kit === 'reach_stack' ? 0.1 : 0.12, k);
+    return;
+  }
+  if (shape === 'rect' && isHome(o, { id, x, y })) {   // (homeWalls: what's drawn)
+    o.structs.push({ id, x, y }); stamp(o, id, x, y, 'none', 0);
+    const [a, b, c, d] = homeWalls(id, x, y);
+    for (let ty = b; ty < d; ty++) for (let tx = a; tx < c; tx++) { const i = gi(o, tx, ty); if (i >= 0) { o.blocked[i] = 1; if (o.occ[i] !== 2) o.occ[i] = 1; } }
+    return;
+  }
+  if (/_tower_\d$/.test(id) && cellPiece(o, id, x, y)) { o.structs.push({ id, x, y, cells: true }); stamp(o, id, x, y, 'none', 0); wallOn(o, id, x, y); return; }
   o.structs.push({ id, x, y }); stamp(o, id, x, y, shape, shrink);
 }
 // a footprint's tiles: held (occ), and walled where it stands (blocked) by its shape
-function stamp(o, id, x, y, shape, shrink) {
-  const [x0, y0, x1, y1] = footRect(id, x, y), w = x1 - x0, h = y1 - y0;
+function stamp(o, id, x, y, shape, shrink, foot = null) {   // (foot: another piece's footprint, drawn there in its place)
+  const [x0, y0, x1, y1] = foot ? [x + foot[0], y + foot[1], x + foot[2], y + foot[3]] : footRect(id, x, y), w = x1 - x0, h = y1 - y0;
   for (let ty = Math.floor(y0); ty <= Math.floor(y1); ty++) for (let tx = Math.floor(x0); tx <= Math.floor(x1); tx++) {
     const i = gi(o, tx, ty); if (i < 0) continue;
     if (shape !== 'deck' && o.occ[i] !== 2) o.occ[i] = 1;
@@ -189,11 +281,14 @@ function stamp(o, id, x, y, shape, shrink) {
     if (shape === 'rect') { if (cx > x0 + w * shrink && cx < x1 - w * shrink && cy > y0 + h * shrink && cy < y1 - h * shrink) o.blocked[i] = 1; }
     else if (shape === 'round') { const u = (cx - (x0 + x1) / 2) / (w / 2 * (1 - shrink)), v = (cy - (y0 + y1) / 2) / (h / 2 * (1 - shrink)); if (u * u + v * v < 1) o.blocked[i] = 1; }
     else if (shape === 'deck' && (w > h ? Math.abs(cy - y) < 3.2 : Math.abs(cx - x) < 3.2)) o.blocked[i] = 0;   // the walkable deck only
+    else if (shape === 'trunk') { const u = cx - (x0 + x1) / 2, v = cy - (y0 + y1) / 2; if (u * u + v * v < TRUNK_R * TRUNK_R) o.blocked[i] = 1; }
+    if (shape === 'round' && shrink === MOUNT_SHRINK && o.occ[i] === 2 && /^mountain_/.test(id)) o.blocked[i] = o.tmat[i] === G.WATER || o.tmat[i] === G.POOL ? 1 : 0;   // (never over a road or a plaza it leans on: fits' margin)
   }
 }
 // a thin run (fence / wall) that must block at least one tile across
 function putRun(o, id, x, y) {
   put(o, id, x, y, 'none');
+  if (cellPiece(o, id, x, y)) { o.structs[o.structs.length - 1].cells = true; wallOn(o, id, x, y); return; }
   const [x0, y0, x1, y1] = footRect(id, x, y), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
   if (x1 - x0 > y1 - y0) { for (let tx = Math.floor(x0 + 0.5); tx < x1 - 0.5; tx++) { const i = gi(o, tx, cy); if (i >= 0) o.blocked[i] = 1; } }
   else for (let ty = Math.floor(y0 + 0.5); ty < y1 - 0.5; ty++) { const i = gi(o, cx, ty); if (i >= 0) o.blocked[i] = 1; }
@@ -202,6 +297,12 @@ function putRun(o, id, x, y) {
 function putGate(o, id, x, y) {
   put(o, id, x, y, 'none');
   const [x0, y0, x1, y1] = footRect(id, x, y), alongX = x1 - x0 > y1 - y0;
+  if (cellPiece(o, id, x, y)) {   // (its way through: every cell holding a tile of the ±3, as the converter clears the road through it)
+    o.structs[o.structs.length - 1].cells = true;
+    const g = alongX ? x : y, way = (t) => { const c = Math.floor(t / 2) * 2; return Math.abs(c + 0.5 - g) < 3 || Math.abs(c + 1.5 - g) < 3; };
+    wallOn(o, id, x, y, (tx, ty) => way(alongX ? tx : ty));
+    return;
+  }
   for (let t = Math.floor(alongX ? x0 : y0); t <= (alongX ? x1 : y1); t++) {
     if (Math.abs(t + 0.5 - (alongX ? x : y)) < 3) continue;
     for (let d = -1; d <= 1; d++) { const i = alongX ? gi(o, t, y + d) : gi(o, x + d, t); if (i >= 0) o.blocked[i] = 1; }
@@ -283,8 +384,10 @@ function undergrowth(o, x0, y0, x1, y1, step, density, kinds = { low: LOW, solid
   for (let y = y0; y < y1; y += step) for (let x = x0; x < x1; x += step) {
     const jx = x + (rng() - 0.5) * step * 0.9, jy = y + (rng() - 0.5) * step * 0.9, d = density(jx, jy), r = rng();
     if (!(d > 0) || r > d) continue;
+    // (a bush isn't walled: the converter leaves the undergrowth to Luminati's ground cover, and nothing stood there at a
+    // figure's height, an invisible wall: docs/pathing-audit.md. The stones are drawn, and walled)
     const solid = rng() < 0.3, id = pick(rng, solid ? kinds.solid : kinds.low);
-    if (fits(o, id, jx, jy, solid ? 0.4 : 0.1)) put(o, id, jx, jy, solid ? 'round' : 'none', 0.35);
+    if (fits(o, id, jx, jy, solid ? 0.4 : 0.1)) put(o, id, jx, jy, solid && !/^ug_/.test(id) ? 'round' : 'none', 0.35);
   }
   for (const t of o.structs.slice()) {
     if (!/pine|oak|autumn|grove|alder|willow|carr/.test(t.id) || rng() < 0.35) continue;
@@ -1136,7 +1239,26 @@ function buildReach(seed) {
     cinderworks: { x: works[0] + 0.5, y: works[1] + 12.5 },
     ninth_vault: { x: ninth[0] + 0.5, y: ninth[1] + 15.5 }, shuttered_inn: { x: inn[0] + 1.5, y: inn[1] + 12.5 } };
   o.spawn = o.arrivals.default;
+  // Furnace Nine's yard (camps.js reach_mouth): slag heaps round its arena, a gap south for the way in and at the Vault's
+  // mouth. Last, so nothing placed before moves; each walled as our kit's heap (DRAWN_FOOT), off the roads. (The converter
+  // stood them on its own, walled by nothing: docs/pathing-audit.md)
+  for (const [x, y] of furnaceHeaps()) {
+    const k = DRAWN_FOOT.reach_slagheap; let road = false;
+    for (let ty = Math.floor(y + k[1]); ty <= y + k[3] && !road; ty++) for (let tx = Math.floor(x + k[0]); tx <= x + k[2]; tx++) { const i = gi(o, tx, ty); if (i < 0 || o.occ[i] === 2) { road = true; break; } }
+    if (!road) { o.structs.push({ id: 'reach_slagheap', x, y }); stamp(o, 'reach_slagheap', x, y, 'round', 0.15, k); }
+  }
   return o;
+}
+/** the slag heaps round Furnace Nine's yard: [x, y][] (20 round its arena's rim, the south and the Vault's mouth left open) */
+export function furnaceHeaps() {
+  const camp = CAMP_BY.reach_mouth, out = [], N = 20; if (!camp) return out;
+  const rim = camp.arena + 1;
+  for (let k = 0; k < N; k++) {
+    const a = (k / N) * Math.PI * 2 + 0.2, x = camp.x + cos(a) * rim, y = camp.y + sin(a) * rim;
+    if (sin(a) > 0.94 || hypot(x - REACH.vault[0], y - REACH.vault[1]) < 10) continue;
+    out.push([x, y]);
+  }
+  return out;
 }
 
 // ── THE PALE HEIGHTS (world doc §3.4, v1.34; docs/reach-heights-overlands.md) — the overland around Frosthold ───
@@ -1209,7 +1331,9 @@ function buildHeights(seed) {
   for (const [x, y] of [[30, 70], [56, 66], [18, 96], [24, 112], [6, 70], [40, 46], [10, 30], [70, 40], [100, 24], [96, 62], [212, 70], [240, 58], [236, 14], [196, 16],
     [246, 112], [230, 136], [102, 84], [120, 128], [96, 190], [184, 200], [236, 176], [120, 14], [172, 12], [252, 84], [36, 150], [20, 52], [86, 50]]) {
     const id = pick(mrng, ['mountain_A', 'mountain_B', 'mountain_A', 'mountain_B', 'mountain_massif_C']), jx = x + (mrng() - 0.5) * 8, jy = y + (mrng() - 0.5) * 8;
-    if (clear(jx, jy, 22) && !inFrontOf(sights, jx, jy, 72, 28) && fits(o, id, jx, jy, -1) && offRoad(o, id, jx, jy)) put(o, id, jx, jy, 'round', 0.35);   // (a peak is tall: a deeper wedge)
+    // (and its wall off a spawn point's ground: walled to its foot, MOUNT_SHRINK, the Glass Keep's peak stood in its fight)
+    const off = (cc) => { const f = F(id); return hypot(jx - cc.x, jy - cc.y) > cc.reach + Math.max(f[2] - f[0], f[3] - f[1]) / 2; };
+    if (clear(jx, jy, 22) && !inFrontOf(sights, jx, jy, 72, 28) && fits(o, id, jx, jy, -1) && offRoad(o, id, jx, jy) && campsOf('heights').every(off)) put(o, id, jx, jy, 'round', 0.35);   // (a peak is tall: a deeper wedge)
   }
   for (let x = -90, i = 0; x < 360; i++) { const id = ['mountain_massif_A', 'mountain_massif_B', 'mountain_massif_C'][i % 3], f = F(id); put(o, id, x - f[0], -14 - f[3] - mrng() * 12, 'round', 0.3); x += (f[2] - f[0]) * (0.6 + mrng() * 0.2); }
   for (let y = -20; y < 330; ) { const id = pick(mrng, ['mountain_A', 'mountain_B', 'mountain_massif_C']), f = F(id); put(o, id, -12 - f[2] - mrng() * 10, y - f[1], 'round', 0.35); y += (f[3] - f[1]) * (0.7 + mrng() * 0.2); }
