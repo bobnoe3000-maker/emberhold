@@ -64,7 +64,7 @@ sites share a kit and must look different (the Undercroft). New sim pieces follo
 | 4 | Fens | **The Canal Locks wet:** channels of water across the floors with lock gates, winch wheels, sluice boards and plank bridges; the vats' pools sick green. Fen stone of its own, not the Vale's brick. | `locks`, `vats` | M |
 | 5 | Fens | **The Drowned Abbey drowned:** a cloister garth open to the sky and standing in water, the pale abbey stone above a waterline, weed below it; its walls no longer the Vale nave's sandstone. | `abbey` | M |
 | 6 | Fens | **The Reedholm Undercroft its own:** the reed town's brick vaults, peat-cut walls, reed matting, eel traps, the crypt kit's plan and set pieces kept. | new `fenbrick`, `fenbones` | S |
-| 7 | Tidemark | **The Gull Isles' sea cave:** wet black rock, a shingle floor, tide pools in the hollows (the docks kit's water), kelp, barnacled walls, wreck timbers, light down through blowholes. | `seacave` | M |
+| 7 | Tidemark | **The Tidemark a coast, dungeons and all** (the owner, 2026-11-27: "Tidemark needs to be more beachy, including the dungeons.. sea caves and docks like you have now"). (a) **A sea cave of its own** for the Gull Isles: wet black rock, a shingle floor, tide pools in the hollows (the docks kit's water), kelp, barnacled walls, wreck timbers, light down through blowholes. (b) **A new open-air `strand` kit**, the shore itself: sand and wet sand in bands, the tideline's wrack and driftwood, rock outcrops and boulders as the walls, rock pools, the sea and its surf past the edges (the docks' water with a foam line). (c) **More of each in the Tidemark's dungeons:** the Gull Isles' first floor part beach and part cave; the Lamp Fort down off its headland, a sea cave in the rock and a landing stage below the walls, the lamp room still its end, its ramparts over the sea; the Sister's Cabin reached across the reef at low water; Highmarch's walls over the sea if canon puts the city on the coast. (d) **The overland beachier still:** dunes and marram grass, driftwood and wrack along the tideline, rock pools, beached boats, nets drying on poles, fishing huts. | `seacave`, new `strand`, the Tidemark's plans | M+ |
 | 8 | Reach | **The Cold Seam a worked mine:** timber shoring sets along the galleries, rails with ore carts, ladders, lamps on hooks, spoil heaps. | `pithead`, `warren` | S |
 | 9 | Reach | **The quota office a counting house:** ledger walls, chained clerks' desks, tally boards, the clerk's cool lamp. Built here first, then reused for the Greenwood's Tally-House and the Archive's wing. | `quota` (the look `counting`) | S |
 | 10 | Heights | **A frozen fortress** for the Praetory, ahead of the Heights' dungeons: frost cobbles, rime on the walls, icicles, the bound guard frozen at their posts. It uses the overland's snow and ice textures. It's built on a parked prototype floor until the Praetory is. | new `frostkeep` | S |
@@ -74,13 +74,14 @@ sites share a kit and must look different (the Undercroft). New sim pieces follo
 
 ## 4. Order
 
-Five tracks, built side by side:
+Six tracks, built side by side:
 
 1. **The Vale's stone** (items 1, 2).
-2. **The water** (items 3, 4, 5, 7: one way of drawing water inside walls, four places).
-3. **Stone and mine** (items 6, 8, 9, 11).
-4. **The forest** (item 12).
-5. **The ice** (items 10, 13: the pass first, the frozen fortress after it, sharing its snow, rock and ice).
+2. **The water** (items 3, 4, 5: one way of drawing water inside walls, three places).
+3. **The Tidemark's coast** (item 7: the sea cave, the strand, the dungeons and the overland).
+4. **Stone and mine** (items 6, 8, 9, 11).
+5. **The forest** (item 12).
+6. **The ice** (items 10, 13: the pass first, the frozen fortress after it, sharing its snow, rock and ice).
 
 Each track ends with:
 
