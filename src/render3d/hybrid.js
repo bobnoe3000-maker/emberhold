@@ -45,10 +45,6 @@ import { PITCH_R } from '../sim/battle.js';
 // (dusk is Luminati's golden hour and sunset: Emberlit's dusk is a warm low sun, the game's old fixed look; held across
 // Luminati's purple dusk it sat darker than its own night)
 const PART_HOURS = [5, 7.5, 17, 19.6, 29];
-// ?dlook=b|c|bc: a spike of the dungeons' look, for the owner to compare (docs/dungeon-look-spike.md): b the floors and walls
-// in painted high-res textures (world.js, tools/render3d/hires.js), c rubble at the walls' feet and a cooler, darker fill
-// (convert.js). Off by default; nothing ships on it until chosen.
-const DLOOK = (() => { try { const v = new URLSearchParams(location.search).get('dlook') || ''; return /^(b|c|bc)$/.test(v) ? v : ''; } catch { return ''; } })();
 /** the hour on Luminati's 24-hour clock for t seconds of play @param {number} t */
 export function hourOf(t) {
   const s = ((t % DAY_S) + DAY_S) % DAY_S, p = Math.floor(s / PART_S), u = (s - p * PART_S) / PART_S;
@@ -284,7 +280,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       if (building !== w) {                                   // a new world: convert it and build it behind black
         building = w;
         const t0 = performance.now();
-        const r = convertWorld(w, { region: w.region || region, stairs: new URLSearchParams(location.search).get('stairs') || '', walls: new URLSearchParams(location.search).get('walls') || '', dlook: DLOOK });   // (?stairs=plain: the stairs before their arches, docs/dungeon-stairs-proposal.md)
+        const r = convertWorld(w, { region: w.region || region, stairs: new URLSearchParams(location.search).get('stairs') || '', walls: new URLSearchParams(location.search).get('walls') || '' });   // (?stairs=plain: the stairs before their arches, docs/dungeon-stairs-proposal.md)
         const t1 = performance.now(); state.timing = { convert: Math.round(t1 - t0), load: 0, sprites: 0 };
         origin = r.origin; state.level = `${r.level.width}×${r.level.depth}`; state.sprites = r.sprites.length; state.loads++;
         ours = r.sprites.filter((q) => q.prop); kept = r.sprites.filter((q) => !q.prop); oursState = propState(w, ours); ambient = r.ambient || null;
@@ -305,7 +301,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         const to = w.kind === 'town' ? 'overland' : w.kind === 'overland' ? 'town' : '';
         if (to && w.region && api.prepare) {
           try {
-            const r = convertWorld(createOutdoor(w.seed, to, w.region), { region: w.region, stairs: new URLSearchParams(location.search).get('stairs') || '', walls: new URLSearchParams(location.search).get('walls') || '', dlook: DLOOK });
+            const r = convertWorld(createOutdoor(w.seed, to, w.region), { region: w.region, stairs: new URLSearchParams(location.search).get('stairs') || '', walls: new URLSearchParams(location.search).get('walls') || '' });
             api.prepare(r.level, w.region);
           } catch (err) { console.warn('[luminati] the level next door:', err); }
         }
@@ -413,7 +409,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   const mod = await import(ver && ver.v ? `${at.href}?v=${ver.v}` : vendor);
   api = mod.createWorld({ container: box, uiRoot: ui, assets: new URL('../../assets/', import.meta.url).href });
   api.settings({ dof: readGraphics().dof, res: readGraphics().res, quality: readGraphics().quality, figures: new URLSearchParams(location.search).get('figures') === 'sprites' ? 'sprites' : 'models',
-    dlook: DLOOK, landmarks: ['doors', 'all', 'sprites'].includes(new URLSearchParams(location.search).get('landmarks')) ? new URLSearchParams(location.search).get('landmarks') : 'chosen' });   // (?landmarks=doors|all|sprites: which of our kit's pieces stand in 3D, docs/vale-landmarks-proposal.md §8)   // (?figures=sprites: the atlases, as before the models: docs/dungeon-kit-proposal.md §9)
+    landmarks: ['doors', 'all', 'sprites'].includes(new URLSearchParams(location.search).get('landmarks')) ? new URLSearchParams(location.search).get('landmarks') : 'chosen' });   // (?landmarks=doors|all|sprites: which of our kit's pieces stand in 3D, docs/vale-landmarks-proposal.md §8)   // (?figures=sprites: the atlases, as before the models: docs/dungeon-kit-proposal.md §9)
   let dial = readGraphics().bright;                              // (the menu's Brightness tray: a percentage a part, ui/brightness.js)
   return {
     box, state,

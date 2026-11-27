@@ -27,7 +27,6 @@ npm run serve                             # open http://localhost:8080 (ES modul
 #   ?landmarks=doors|all|sprites (which of the kit's pieces, tools/actor-lab/buildkit.js, stand in 3D, every region's since docs/buildings-art-pass.md; default: the owner's choice, every one but Thornwick's palisade seen from inside the town, docs/vale-landmarks-proposal.md §8; doors the three dungeon doors alone; all every piece; sprites all as baked cards, as before)
 #   ?stairs=plain (a dungeon floor's stairs as they were before their arches; the default since GDD v1.57: the way up three tiles wide, an arch over each way, its inner edge glowing: docs/dungeon-stairs-proposal.md)
 #   ?walls=plain (a dungeon's walls as level boxes, as before their ragged tops; the default since GDD v1.98: the back walls stepping up and down, piers with candles, rubble on the tops, the near walls broken down low: docs/walls-ruin-spike.md)
-#   ?dlook=b|c|bc (a spike for the owner's review, off by default: b the dungeons' floors and walls in painted high-res textures, c rubble at the walls' feet and a cooler, darker fill, bc both: docs/dungeon-look-spike.md)
 #   ?figures=sprites (the people as their atlas sprites, as before they were models: docs/dungeon-kit-proposal.md §9.6)
 #   ?faces=mesh (the faces as their 3D parts, as before the painted head: GDD v1.79, docs/painted-faces-spike.md)
 #   ?headshadow=1 (the figures' heads in the shadow pass, as the painted head first shipped: docs/painted-faces-spike.md)

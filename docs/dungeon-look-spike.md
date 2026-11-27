@@ -1,6 +1,6 @@
 # The dungeons' look: a spike of B, C and B + C
 
-**Status:** Spike, for the owner's review (2026-11-15). Behind `?dlook=b|c|bc`; the game's look is unchanged.
+**Status:** Declined (the owner, 2026-11-27: "Dont use the high res proposal from Nov 15, continue to build on our own assets"). The spike's code (`?dlook`, `tools/render3d/hires.js`) is retired; the dungeons' looks are taken further with our own kits (GDD v1.158).
 
 The owner, 2026-11-15, of a reference (a stylised dungeon from another game): *"Why are these tile assets so smooth and
 hi res, what can we do to improve the quality of our assets"*, then *"The overland we currently have i just want to
