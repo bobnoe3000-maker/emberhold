@@ -1671,7 +1671,7 @@ const WET_LOOKS = {
   // the Canal Locks: canal water, green-brown and dark, the flags plain under it
   canal: { tint: '#24352e', alpha: 0.5, rip: 0.42, rough: 0.1, scum: '#5a6a3a', scumAmt: 0, sky: '#8c9db4', deep: ['#557a6c', '#486a5e', '#3b5a50', '#2f4a42'] },
   // Vat Seven: sick green, thicker, a yellow scum in drifts on it
-  sick: { tint: '#5a6e1c', alpha: 0.8, rip: 0.28, rough: 0.16, scum: '#b4c04a', scumAmt: 0.85, glow: 1.3, sky: '#a4b84a', deep: ['#7a8c2c', '#687a24', '#566a1e', '#465818'] },
+  sick: { tint: '#56701a', alpha: 0.9, rip: 0.28, rough: 0.16, scum: '#b8c44c', scumAmt: 1.3, glow: 1.3, rimDark: 1, sky: '#a4b84a', deep: ['#7a8c2c', '#687a24', '#566a1e', '#465818'] },
   // the Drowned Abbey: black-green, still; duckweed on the garth's, the sky in it
   abbey: { tint: '#17221f', alpha: 0.6, rip: 0.3, rough: 0.08, scum: '#4e6a26', scumAmt: 0, skyScum: 0.55, sky: '#7f93b2', deep: ['#3c5654', '#324a48', '#283e3c', '#1f3230'] },
   // the Sunken Chapel: the river come in, peat-brown and clear
@@ -1694,12 +1694,12 @@ function buildShallows(sh) {
   geo.setAttribute('aEdge', new THREE.BufferAttribute(edge, 1)); geo.setAttribute('aSky', new THREE.BufferAttribute(sky, 1)); geo.setIndex(new THREE.BufferAttribute(idx, 1));
   geo.computeBoundingSphere();
   const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(look.tint), roughness: look.rough, metalness: 0, transparent: true, opacity: look.alpha, depthWrite: false, fog: true });
-  const u = { uGlow: { value: look.glow ?? 1 }, uWT: { value: wetT }, uRip: { value: look.rip }, uScum: { value: new THREE.Color(look.scum) }, uScumAmt: { value: look.scumAmt }, uSkyScum: { value: look.skyScum || 0 }, uSky: { value: new THREE.Color(look.sky) } };
+  const u = { uRimDark: { value: look.rimDark ?? 0 }, uGlow: { value: look.glow ?? 1 }, uWT: { value: wetT }, uRip: { value: look.rip }, uScum: { value: new THREE.Color(look.scum) }, uScumAmt: { value: look.scumAmt }, uSkyScum: { value: look.skyScum || 0 }, uSky: { value: new THREE.Color(look.sky) } };
   mat.userData.u = u.uWT;
   mat.onBeforeCompile = (s) => {
     Object.assign(s.uniforms, u);
     s.vertexShader = 'attribute float aEdge;\nattribute float aSky;\nvarying float vEdge;\nvarying float vSkyW;\nvarying vec2 vWP;\n' + s.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vEdge = aEdge; vSkyW = aSky; vWP = (modelMatrix * vec4(position, 1.0)).xz;');
-    s.fragmentShader = 'uniform float uGlow;\nuniform float uWT;\nuniform float uRip;\nuniform vec3 uScum;\nuniform float uScumAmt;\nuniform float uSkyScum;\nuniform vec3 uSky;\nvarying float vEdge;\nvarying float vSkyW;\nvarying vec2 vWP;\n' + MAGMA_NOISE + `
+    s.fragmentShader = 'uniform float uRimDark;\nuniform float uGlow;\nuniform float uWT;\nuniform float uRip;\nuniform vec3 uScum;\nuniform float uScumAmt;\nuniform float uSkyScum;\nuniform vec3 uSky;\nvarying float vEdge;\nvarying float vSkyW;\nvarying vec2 vWP;\n' + MAGMA_NOISE + `
 float wRip(vec2 p) { return mn(p * 2.6 + vec2(uWT * 0.21, uWT * 0.13)) * 0.6 + mn(p * 5.3 - vec2(uWT * 0.17, -uWT * 0.27)) * 0.4; }
 float wScum() { float a = mn(vWP * 1.15 + vec2(uWT * 0.012, uWT * 0.008)) * 0.7 + mn(vWP * 3.7 - vec2(uWT * 0.01, 0.0)) * 0.3; return smoothstep(0.52, 0.7, a) * clamp(uScumAmt + vSkyW * uSkyScum, 0.0, 1.0); }
 ` + s.fragmentShader
@@ -1717,7 +1717,9 @@ float wScum() { float a = mn(vWP * 1.15 + vec2(uWT * 0.012, uWT * 0.008)) * 0.7 
     float dash = thin * step(0.74, mn(vec2(d.x * 1.3 + uWT * 0.18 * (mod(row, 2.0) - 0.5) + row * 7.13, row * 3.71))) * (1.0 - wsc);
     float men = clamp(1.0 - abs(vEdge - 0.4) * 5.0, 0.0, 1.0) * step(vEdge, 0.95);
     float sheen = 0.5 + 0.5 * mn(vWP * 0.33 + vec2(uWT * 0.01, -uWT * 0.007));
-    wGlow = 0.07 * sheen * (1.0 - wsc) + 0.22 * dash * (0.6 + 0.8 * fract(row * 0.618)) + 0.32 * men;
+    // (a thick water's edge a dark ring, not a pale one: Vat Seven's pools read as outlines, round 3)
+    diffuseColor.rgb *= 1.0 - 0.55 * men * uRimDark;
+    wGlow = 0.07 * sheen * (1.0 - wsc) + 0.22 * dash * (0.6 + 0.8 * fract(row * 0.618)) + 0.32 * men * (1.0 - uRimDark);
     diffuseColor.a = max(diffuseColor.a, 0.6 * dash + 0.55 * men); }
   diffuseColor.a = max(diffuseColor.a * mix(0.15, 1.0, smoothstep(0.0, 1.0, vEdge)), wsc * 0.92 * vEdge);`)
       .replace('#include <opaque_fragment>', `#include <opaque_fragment>

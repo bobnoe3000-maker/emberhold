@@ -1604,13 +1604,14 @@ function wetGround(w, { x0, y0, W, D, X, Z, tiles, heights, looks, roomLook }) {
   }
   const D4 = /** @type {[number, number, string][]} */ ([[0, -1, 'n'], [1, 0, 'e'], [0, 1, 's'], [-1, 0, 'w']]), dAt = (i, j) => i >= 0 && j >= 0 && i < W && j < D && deepAt[j * W + i] === 1;
   const floorAt = (i, j) => i >= 0 && j >= 0 && i < W && j < D && heights[j][i] === '2' && !STAIR_TILE.test(tiles[j][i]);
-  // a near wall (between the camera and the water: south or east of it) knee-high, so the channel and its gates are seen
-  // over it (round 1: at the ruin's three to five it hid all but a sliver of the Lock Gate's channel)
+  // a near wall (between the camera and the water: south or east of it) cut to the floor's height, a quay's edge, so the
+  // channel and its gates are seen over it (round 1: at the ruin's three to five it hid all but a sliver of the Lock Gate's)
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
-    const h = parseInt(heights[j][i], 36); if (!(h > 3) || !(dAt(i, j - 1) || dAt(i - 1, j) || dAt(i - 1, j - 1))) continue;
+    // (its water beside it, or a step of floor away: a channel's rows begin on an even tile, so one of ours may lie between)
+    const h = parseInt(heights[j][i], 36); if (!(h > 2) || !(dAt(i, j - 1) || dAt(i - 1, j) || dAt(i - 1, j - 1) || (floorAt(i, j - 1) && dAt(i, j - 2)) || (floorAt(i - 1, j) && dAt(i - 2, j)))) continue;
     if (dAt(i, j + 1) || dAt(i + 1, j)) continue;   // (a wall with water on its far side too: between two channels, left)
     if (floorAt(i, j + 1) || floorAt(i + 1, j)) continue;   // (one with the room on its camera side is a back wall)
-    heights[j][i] = '3';
+    heights[j][i] = '2';   // (round 3: knee-high still hid the water behind it, a sliver at the camera's angle: flush, a quay's edge)
   }
   // the banks: a floor tile beside the water takes its kit's walling down into it
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
