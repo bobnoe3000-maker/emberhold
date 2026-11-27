@@ -208,6 +208,14 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
         }
       } break;
       case 'casks': row(-wall, -L * 0.6, L * 0.6, 8, 'cask_rack'); putAt(L * 0.7, wall, 'barrels'); putAt(-L * 0.7, wall, 'barrels'); break;
+      // (Wickham Keep's great hall, docs/dungeon-looks-plan.md item 2: the trestles down its sides, a bench on the room's side
+      // of each, two along the back wall either side of the hearth and one along the near wall; the armoury's racks along
+      // the back wall's west end, where the camera sees them; the middle open for the fight)
+      case 'trestles': for (const [u, v, s] of [[-L * 0.4, -Wd + 3.5, 1], [L * 0.72, -Wd + 3.5, 1], [L * 0.1, Wd - 3.5, -1]]) {
+        if (!unit(u, v, -2, 2, -1, 1, alongK('longtable'))) continue;
+        unit(u, v + s * 2, -2, 2, 0, 0, alongK('tbench'));
+      } break;
+      case 'armoury': row(-wall, -L * 0.88, -L * 0.6, 4, 'rack'); break;
       case 'bunks': for (const s of [-1, 1]) for (let u = -L * 0.75, i = 0; u <= L * 0.75 + 0.01; u += 6, i++) { putAt(u, s * wall, 'bunk'); if (s < 0 && i % 3 === 1) putAt(u + 3, s * (wall - 2), 'straw'); } break;
       case 'iron_door': break;                                             // (at the doorway: dressRoom, which knows the openings)
       case 'chests': at(2, 6, 'chest'); break;   // (the paymaster's two: Brannoc's errand)
