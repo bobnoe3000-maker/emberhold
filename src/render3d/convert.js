@@ -257,7 +257,7 @@ const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, d: 2, G: 1, g: 0 };
  * The world the sim is in, as a Luminati level, and the pieces of our own art to stand in it.
  * @param {any} w the sim's world (sim.world)
  * @param {{ region?: string, stairs?: string, walls?: string}} [o]
- * @returns {{ level: any, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps: number }, hour?: number, sprites: { id?: string, prop?: string, tx?: number, ty?: number, flat?: boolean, here?: boolean, x: number, z: number }[], figures?: { name: string, x: number, z: number, air: number, row: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
+ * @returns {{ level: any, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps: number }, hour?: number, sprites: { id?: string, prop?: string, tx?: number, ty?: number, flat?: boolean, here?: boolean, fleet?: { lit: boolean, pieces: any[] }, x: number, z: number }[], figures?: { name: string, x: number, z: number, air: number, row: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
  */
 export function convertWorld(w, o = {}) {
   return w.arena ? arena(w, o) : w.kind === 'dungeon' ? dungeon(w, o) : outdoor(w, o.region || w.region || 'vale');
@@ -891,6 +891,18 @@ Object.assign(KIT_LOOK, {
 // (Ŧ: the rampart's wall under a timber cap) over grey flags, the night's cold fill the walls have, the braziers warm
 Object.assign(LEGEND, { 'Ŧ': { top: 'tavern_cap', side: 'rampart_wall', walkable: false } });
 KIT_LOOK.towerhall = { floor: ['ø', 'µ'], wall: 'Ŧ', cave: 'Ŧ', hour: 21.0, mix: 18, whole: true, inside: true, arch: 'rampart_wall', fill: RAMP_FILL };
+/** the Seventh Tower's sea and fleet (buildTavern 'fleetsea', 'fleethull'): the sea SEA_Y under the floor, five ships
+ * riding off the roof's south and east parapets, a few units out, each turned and sized by its own hash */
+const SEA_Y = -6;
+function fleetPieces(roof, W, D, X, Z) {
+  /** @type {any[]} */
+  const out = [{ k: 'fleetsea', W, D, y: SEA_Y }], R = (k) => (hash('fleet', k) % 1000) / 1000;
+  const sx = X(roof.x1 + 1), sz = Z(roof.y1 + 1), wx = X(roof.x0), wz = Z(roof.y0);
+  // (along the south parapet, then round the corner down the east: out in the drop and down on the water)
+  const at = [[wx + (sx - wx) * 0.25, sz + 3.6], [wx + (sx - wx) * 0.66, sz + 5.2], [sx + 3.4, sz + 2.6], [sx + 4.2, wz + (sz - wz) * 0.5], [sx + 7.5, sz + 7.5]];
+  at.forEach(([x, z], k) => out.push({ k: 'fleethull', x: r2(x + (R(k) - 0.5) * 2), z: r2(z + (R(k + 9) - 0.5) * 2), y: SEA_Y, ry: r2((R(k + 17) - 0.5) * 1.2 + (k % 2 ? 0.6 : -0.3)), s: r2(0.9 + R(k + 31) * 0.4), seed: (hash('fh', k) % 997) }));
+  return out;
+}
 /** a site's own look for a kit it shares (renderer only: the sim's kit stands) */
 const SITE_KIT = { ninth_milestone: { muster: 'milestone' }, highmarch: { barracks: 'towerhall' } };
 /** the sites in the Vale's stone, whose halls take their rooms' looks (dungeon) */
@@ -2669,6 +2681,10 @@ function dungeon(w, o = {}) {
   // hanging there burned white, §4.6)
   const lamps = /** @type {[number, number][]} */ ([]); for (const [k, kind] of w.props) if (PROP_LIGHT[kind]) { const [x, y] = k.split(',').map(Number); lamps.push([X(x + 0.5), Z(y + 0.5)]); }
   if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim, roomAt, look === KIT_LOOK.hulk ? SHIP_STORY : TAV_STORY, lamps); if (look.palace) trim.push(...palaceRunners(w, L, X, Z)); if (L.plan) trim.push(...fenMats(w, L, X, Z)); if (look.water) docksDress(W, D, open, add, trim, stairLights.arches || [], !!look.stone); if (rampart) rampartsDress(W, D, open, rampart, add, trim, stairLights.arches || []); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
+  // (v1.166) the Seventh Tower's roof (Highmarch's second floor, docs/highmarch-floor2-proposal.md §6): the salt marsh at
+  // high water far under the tower, and the drowned fleet riding in it off the roof's south and east parapets, their
+  // stern-lanterns lit while Lucan's song holds them (`lit`: hybrid.js puts them out when he sits down)
+  if (w.site === 'highmarch' && (w.depth || 0) === 1 && L.plan) { const roof = L.rooms.find((r) => r.part === 'the_roof'); if (roof) sprites.push({ fleet: { lit: true, pieces: fleetPieces(roof, W, D, X, Z) } }); }
   if (wood) { woodDress(W, D, wood, L, x0, y0, add, trim, stairLights.arches || []); sprites.push({ tavern: { pieces: trim } }); }
   // (a coast floor's own ground dressed, coastDress; its trim goes out with the rest's, below, or the inside's, above)
   if (coast) coastDress(W, D, tiles, heights, open, looks, roomOf, add, trim, stairLights.arches || [], L, X, Z);

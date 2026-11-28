@@ -243,7 +243,9 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   // A trip there then skips its build; if the sim's world converts to anything else, it's built as before.
   const AHEAD_S = 1.5;
   let aheadFor = null, builtAt = 0;
-  let api = null, built = null, building = null, last = 0, origin = { x: 0, y: 0 }, lastC = null, ours = [], kept = [], oursState = '', oursCheck = 0, houses = [], ambient = null, held = null;   // (held: a level's own hour, the pass's day: convert.js)
+  let api = null, built = null, building = null, last = 0, origin = { x: 0, y: 0 }, lastC = null, ours = [], kept = [], oursState = '', oursCheck = 0, fleetCheck = 0, houses = [], ambient = null, held = null;   // (held: a level's own hour, the pass's day: convert.js)
+  /** the Seventh Tower's fleet lit: Lucan's song still holding them (not sat down, not spared, not gone north) @param {any} w */
+  const fleetLit = (w) => !(sim.state.flags?.lucan_gone || (w.npcs || []).some((n) => n.id === 'lucan') || (w.enemies || []).some((e) => e.boss === 'lucan' && e.spared));
   // (the boatmen stood in the Tidemark's waiting boats: convert.js BOATS, decor, never the sim's; the world they were made for)
   let decor = /** @type {{ name: string, x: number, z: number, air: number, row: number }[]} */ ([]), decorFor = null;
   const state = { level: null, sprites: 0, loads: 0, failed: '', timing: { convert: 0, sprites: 0, load: 0 } };
@@ -283,10 +285,10 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         const r = convertWorld(w, { region: w.region || region, stairs: new URLSearchParams(location.search).get('stairs') || '', walls: new URLSearchParams(location.search).get('walls') || '' });   // (?stairs=plain: the stairs before their arches, docs/dungeon-stairs-proposal.md)
         const t1 = performance.now(); state.timing = { convert: Math.round(t1 - t0), load: 0, sprites: 0 };
         origin = r.origin; state.level = `${r.level.width}×${r.level.depth}`; state.sprites = r.sprites.length; state.loads++;
-        ours = r.sprites.filter((q) => q.prop); kept = r.sprites.filter((q) => !q.prop); oursState = propState(w, ours); ambient = r.ambient || null; held = r.hour ?? null;
+        ours = r.sprites.filter((q) => q.prop); kept = r.sprites.filter((q) => !q.prop).map((q) => (q.fleet ? { fleet: { ...q.fleet, lit: fleetLit(w) } } : q)); oursState = propState(w, ours); ambient = r.ambient || null; held = r.hour ?? null;
         decor = r.figures || []; decorFor = w;
         houses = r.level.objects.filter((o) => o.type === 'house' && o.name).map((o) => ({ o, sv: (w.services || []).find((v) => v.name === o.name) })).filter((q) => q.sv);
-        const sprites = r.sprites.map((q) => (q.prop ? propSprite(w, q) : q)).filter(Boolean), t2 = performance.now();
+        const sprites = [...kept, ...ours.map((q) => propSprite(w, q))].filter(Boolean), t2 = performance.now();
         state.timing.sprites = Math.round(t2 - t1);
         api.load(r.level, sprites, w.region || region).then((ok) => { state.timing.load = Math.round(performance.now() - t2); if (ok && building === w) { built = w; builtAt = performance.now(); } })
           .catch((err) => { state.failed = String(err?.message || err); console.error('[luminati]', err); built = w; });
@@ -306,6 +308,8 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
           } catch (err) { console.warn('[luminati] the level next door:', err); }
         }
       }
+      // (the Seventh Tower: the drowned fleet's lanterns go out as Lucan sits down, and stay out: convert.js fleetPieces)
+      if (++fleetCheck % 20 === 0) { const i = kept.findIndex((q) => q.fleet); if (i >= 0 && kept[i].fleet.lit !== fleetLit(sim.world)) { kept[i] = { fleet: { ...kept[i].fleet, lit: !kept[i].fleet.lit } }; api.sprites([...kept, ...ours.map((q) => propSprite(sim.world, q)).filter(Boolean)]); } }
       if (ours.length && ++oursCheck % 20 === 0) {                 // (a chest opened, a shrine used: its prop as it is now)
         const st = propState(sim.world, ours);
         // (with the rest it was placed with: alone, a chest opening took the kit's models and the stairs' arches away)
