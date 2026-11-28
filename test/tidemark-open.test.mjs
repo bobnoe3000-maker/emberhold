@@ -1,6 +1,6 @@
 // The Tidemark opens (GDD v1.150; docs/tidemark-plan.md, steps 1 and 2): a land once Act III is done (Quota), reached by
 // the Reach's Solmere road through Solmere's crossroads (regions.js SOLMERE), its overland the east coast: Brine Cross on
-// the Brine, Highmarch walled to the north-west, Tollhaven's west gate on the coast road, its harbour north-east,
+// the Brine, Highmarch walled to the north-west, Tollhaven's sea gate (its east one) round its south wall on the coast road, its harbour north-east,
 // Gullwick on the sand; Tollhaven a town with the five services and a coach stop. The Heights move to Act IV's end, kept
 // by a company that has stood in Frosthold.
 import { test } from 'node:test';
@@ -10,7 +10,7 @@ import { QS } from '../src/sim/quests.js';
 import { LANDS, SOLMERE } from '../src/sim/regions.js';
 import { days, townOf, COACH } from '../src/sim/coach.js';
 import { isWalkable } from '../src/sim/world.js';
-import { createOutdoor, TIDEMARK, oMaterialAt } from '../src/sim/outdoor.js';
+import { createOutdoor, TIDEMARK, TOLL_GATE, oMaterialAt } from '../src/sim/outdoor.js';
 
 const standIn = (sim, e) => { const p = sim.state.player; p.x = p.px = (e.x0 + e.x1) / 2; p.y = p.py = (e.y0 + e.y1) / 2; };
 const done = (sim, ...ids) => { for (const id of ids) sim.state.quests[id] = { st: QS.DONE, step: 0, n: [] }; };
@@ -52,7 +52,15 @@ test('the overland: the places on open ground, the sea and its sand, the town ga
   let sand = 0; for (let y = 60; y < 220; y += 4) if (oMaterialAt(o, 226, y) === 'sand' || oMaterialAt(o, 224, y) === 'sand') sand++;
   assert.ok(sand > 20, `a beach along the east coast (${sand})`);
   const sim = createSim(7, undefined, { scene: 'overland', region: 'tidemark' }); sim.tick();
-  const gate = sim.world.exits.find((e) => e.to === 'town'); assert.ok(gate.x0 > TIDEMARK.tollhaven[0], 'inside the west gate');
+  // the gate is the east one, as the town's own (the owner, 2026-11-28: "The overworld entrance to tollhaven is on the
+  // wrong side"): in at the sea gate, and out of the town's east gate onto the beach east of the walls
+  const gate = sim.world.exits.find((e) => e.to === 'town'); assert.ok(gate.x1 < TOLL_GATE[0] && gate.x0 > TOLL_GATE[0] - 10, 'inside the east gate');
+  assert.ok(o.arrivals.tollhaven.x > TOLL_GATE[0], 'out on the beach east of the walls');
+  // the gate reached on foot from the junction (the coast road round the south wall)
+  { const seen = new Set(), q = [[Math.floor(o.arrivals.tollhaven.x), Math.floor(o.arrivals.tollhaven.y)]]; let found = false;
+    while (q.length && !found) { const [x, y] = q.shift(); const k = x * 1000 + y; if (seen.has(k) || !isWalkable(o, x + 0.5, y + 0.5)) continue; seen.add(k);
+      if (Math.abs(x - TIDEMARK.join[0]) < 3 && Math.abs(y - TIDEMARK.join[1]) < 3) found = true; else q.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]); }
+    assert.ok(found, 'a way on foot from the gate to the junction'); }
   standIn(sim, gate); for (let i = 0; i < 5; i++) sim.tick();
   assert.equal(sim.world.kind, 'town'); assert.equal(sim.world.name, 'Tollhaven'); assert.ok(sim.state.reached.has('tollhaven'));
   assert.deepEqual(sim.world.services.map((s) => s.name).sort(), ['The Bonded Stores', 'The Chain Locker', 'The Paid Toll', 'The Quay Chapel', 'The Quay Forge']);
