@@ -46,6 +46,9 @@ const CASES = [
   { boss: 'oruth', name: 'oruth (armed)', site: 'cinderworks', depth: 0, ev: 'bossForge', keep: true, at: [0, 700, 1600, 2600, 4000, 4500] },
   { boss: 'oruth', name: 'oruth (spoiled)', site: 'cinderworks', depth: 0, ev: 'bossForge', keep: 'spoil', at: [0, 1600, 4000, 4300, 4700, 5200] },
   { boss: 'stoker', site: 'cinderworks', depth: 1, ev: 'bossVents', at: [0, 500, 1000, 1500, 2000, 2300] },
+  // (the Tidemark's Highmarch: the Champion on the bastion, Lucan in his hall, each 4 s into his fight; their sizes)
+  { boss: 'champion', site: 'highmarch', depth: 0, hold: 4000 },
+  { boss: 'lucan', site: 'highmarch', depth: 1, hold: 4000 },
 ];
 // --warn (the telegraph grammar, docs/combat-fx.md): a foe's first heavy blow, shot or heavy shot in a hall, found by its
 // attack starting (the sim's atkN and atkKind, there on a checkout before the warnings too, so a before lines up)

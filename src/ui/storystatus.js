@@ -100,7 +100,7 @@ function tidemarkLeads(state, status) {
   if (bosses.harbourmaster && !bosses.hesk) out.push({ id: 'hesk' });
   if (bosses.harbourmaster && status('ch4_keepers_light') <= QS.AVAILABLE) out.push({ id: 'lampfort' });
   if (status('ch4_brine_cross') === QS.ACTIVE) out.push({ id: 'brinecross' });   // (v1.151: the east barricade, while it's in hand)
-  // (v1.154) once Brine Cross is held: Highmarch, the Champion on its walls, then Lucan in his palace
+  // (v1.154) once Brine Cross is held: Highmarch, the Champion on its walls, then Lucan on his tower's roof
   if ((state.flags || {}).brine_held && !bosses.champion) out.push({ id: 'champion' });
   else if ((state.flags || {}).brine_held && !bosses.lucan) out.push({ id: 'lucan' });
   // (v1.156) Josse Wether's errand of Maren's on offer, the Tidemark's Chronicle (Aurelle's letters) and the Sister's

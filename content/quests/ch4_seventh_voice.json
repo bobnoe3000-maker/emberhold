@@ -11,7 +11,7 @@
   "after": [
     "ch4_brine_cross"
   ],
-  "summary": "Whoever sang the drowned up off the Mole is in Highmarch: Lucan Varro, who signs himself Lucanus, the Seventh Voice. Hester Quaile wants the company through his walls and into his palace.",
+  "summary": "Whoever sang the drowned up off the Mole is in Highmarch: Lucan Varro, who signs himself Lucanus, the Seventh Voice. Hester Quaile wants the company through his walls and into his tower.",
   "steps": [
     {
       "id": "champion",
@@ -28,7 +28,7 @@
     },
     {
       "id": "lucan",
-      "journal": "Go down to the dungeon's second floor, the Seventh's Palace. Lucan Varro is in the throne room at its end. Beat him.",
+      "journal": "Go down to the dungeon's second floor, the Seventh Tower. Lucan Varro is up on its roof. Beat him.",
       "objectives": [
         {
           "type": "boss",
@@ -41,7 +41,7 @@
     },
     {
       "id": "letters",
-      "journal": "Lucan is beaten and has sat down on the throne room's steps. Talk to him there before he goes.",
+      "journal": "Lucan is beaten and has sat down on the signal stand's steps, on the roof. Talk to him there before he goes.",
       "objectives": [
         {
           "type": "meet",

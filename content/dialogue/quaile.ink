@@ -12,7 +12,7 @@
 // west for the bridge, the League holds its east barricade, and Old Gannet breaks his lamp on it (docs/tidemark-plan.md,
 // step 5). She learns what his weekly report meant from the company, at the turn-in; Highmarch is next.
 // She gives and takes in that chapter, The Seventh Voice (ch4_seventh_voice; hers since v1.154, the owner, 2026-11-26:
-// no quest needs a companion, so Maren only says her piece and sends you here): Lucan beaten on his own steps, the
+// no quest needs a companion, so Maren only says her piece and sends you here): Lucan beaten on his tower's roof, the
 // Kindler's letters, and the road north he took after the vessel, which left days before. Act IV ends a step behind,
 // and she learns what Consigned's freight paid her for.
 
@@ -204,7 +204,7 @@ You tell Hester about the bridge: eight crews up the road, the League's three ho
 { with_maren == 1: "Maren means to go. She told me so in writing, which is new. I'd rather she went with you than on her own." }
 "There's a toll on the Highmarch road, a silver penny a head. I'll waive yours and bill Lucanus."
 + [We'll go into Highmarch. #mark: quest]
-    "North up the Highmarch road, where it leaves the coast road this side of the bridge. In at the breach. His Champion holds the walls, and past them is his palace. He'll be in the throne room, I expect, practising with the cushion." # quest: accept ch4_seventh_voice
+    "North up the Highmarch road, where it leaves the coast road this side of the bridge. In at the breach. His Champion holds the walls, and at the end of them is his tower. He'll be up on the roof, I expect, practising with the cushion." # quest: accept ch4_seventh_voice
     { boss_lucan == 1: "You've been in already? Then go back and hear what he has to say for himself. I want it word for word." }
     -> quaile_topics
 + [Not yet.]
@@ -212,12 +212,12 @@ You tell Hester about the bridge: eight crews up the road, the League's three ho
     -> quaile_topics
 
 == quaile_seventh_active ==
-"The Highmarch road, north off the coast road. In at the breach, along the walls to the Champion's bastion, then the palace and Lucanus in his throne room. Bring me back whatever he has to say."
+"The Highmarch road, north off the coast road. In at the breach, along the walls to the Champion's bastion, then the tower and Lucanus up on its roof. Bring me back whatever he has to say."
 -> quaile_topics
 
 == quaile_seventh_turnin ==
 { with_maren == 1: Maren comes in off the quay behind you and leans the boathook on the Paid Toll's doorpost. }
-You tell Hester about Highmarch: the Champion on his bastion, Lucan sitting down on his own steps, the Kindler's letters left unopened on his table, and the road north he took after them. # quest: turnin ch4_seventh_voice
+You tell Hester about Highmarch: the Champion on his bastion, Lucan sitting down on the old signal stand's steps, the Kindler's letters left unopened on his table, and the road north he took after them. # quest: turnin ch4_seventh_voice
 "Walked. Up to the Heights, in a coat cut for a coronation. He'll know all about the cold by the second night."
 "And the crate went north with this Kindler days before you got there." She taps the slate. "Freight paid at Tollhaven. I said I'd find out what I was paid for. I was paid to watch the sea while it went up the road."
 "The League will vote it a victory at the next table: the bridge held, the coast is quiet, and nobody's being crowned in the capital this year. Then they'll argue about who pays for the dinner."

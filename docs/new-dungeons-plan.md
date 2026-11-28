@@ -26,7 +26,7 @@ Anything canon doesn't fix is marked **(proposal)**. Proposals go to the world d
 | `greenwood` | the parked `root_granary`, 56, one floor (prototype) | **the Root Granary**: the walk in along the Tithe Road under the great oaks, to the broken gateway | floor 1; `rootvault` (new) below it | 56–58 |
 | `greenwood` (optional, with the water's `pools`) | the same kit | **Hollin Ford Barn**: the ford and the alder carr on the way to the barn (§8, Q3) | floor 1; `granary` (new) below it | 46–48 |
 | `pass`, `gully` | the parked `pilgrims_stair`, 62, one floor (prototype) | **the Pilgrims' Stair**, the Heights' first dungeon: the lower Stair, then the upper | both floors | 61–64 |
-| `frostkeep` | the parked `praetory`, 70, one floor (prototype) | **the Praetory**: the Empress's guard house, frozen through | floor 1; `glasskeep` (new) below it, the Glass Keep | 69–70 |
+| `frostkeep` | the parked `praetory`, 70, one floor (prototype) | **the Praetory**: the Empress's guard house, frozen through | floor 1; the parked `glass_keep` (the palace kit, frozen) below it | 69–70 |
 
 These replace two lines of the catalogue:
 
@@ -69,7 +69,7 @@ levels (`perFloor: 2`, `step: 2`). The finale follows them.
 | region boss | **The Unpaid** | the Root Granary's host as one, repeatable (world doc §10.2) | | | (§6) |
 | 61–64 | **The Pilgrims' Stair** | the Lower Stair (`pass`, `gully`, built) | the Upper Stair (`pass`, `gully`) | **the Stair's boss** (proposal, Q5) | none |
 | 65–68 | **The Soulcracks** | the Split (`glasscrack`) | the Deep Crack (`glasscrack`) | **the Soulcracks' boss** (proposal) | `glasscrack` (M) |
-| 69–72 | **The Praetory**, then **the Glass Keep** | the Guard House (`frostkeep`, built) | the Glass Keep (`glasskeep`) | **the guard-lamp's fight** (floor 1, proposal, Q6), **the Glass Legate** (floor 2) | `glasskeep` (M) |
+| 69–72 | **The Praetory**, then **the Glass Keep** | the Guard House (`frostkeep`, built) | the Glass Keep (`palace`, frozen) | **the guard-lamp's fight** (floor 1, proposal, Q6), **the Glass Legate** (floor 2) | `glasskeep` (M) |
 | 73–75 | **The Ember Throne** (finale) | its own plan | | **the Kindler** | `runeplate` (L): a plan of its own |
 | secret, 75 | **The Hospice Charnel** | one floor (`ossuary` with snow and ice) | | none: its vault | none |
 | region boss | **The First Pilgrim** | built (`ring.js`, at the head of the Stair, half past the hour) | | | |
@@ -174,8 +174,13 @@ The room names below are proposals: they're player-facing and go through the own
   | the Barracks Chapel | room | 69 | `frostkeep` | was the Mess: the guard-lamp on its chain over the altar; the floor's fight (Q6) |
   | the Praetor's Door | descent | 70 | `frostkeep` | `end` becomes `descent`: the inner door, open now, onto the Glass Keep's way |
 
-- **Floor 2, the Glass Keep (71–72)** (proposal), on the `glasskeep` kit: the crypt kit's vault and piers in black
-  glass, a frozen court, Aurelle's writing table (catalogue §5).
+- **Floor 2, the Glass Keep (71–72)**, on the `palace` kit, frozen (the owner, 2026-11-28: "the glass keep is the right
+  place"; [highmarch-floor2-proposal.md](./highmarch-floor2-proposal.md) §3). The palace that was Highmarch's second floor
+  is parked as `glass_keep` (plans.js, sites.js: the Heights, a prototype, warm and gilt as it was built). The Heights'
+  build freezes it: rime on the gilt, snow drifted in at the windows, the banners stiff, the Soulcracks' glass grown out
+  of the stone and over the chequer, a colder light. Its rooms map one to one: the Courtyard the Frozen Court, the Hall of
+  Banners the Hall of Plaques, the Study the Empress's Study, the Chapel the Long Gallery of Glass, the Throne Room the
+  Legate's Hall. (Was: a new `glasskeep` kit, the crypt's vault and piers in black glass.)
 
   | Space | Role | Lv | What it is |
   |---|---|---|---|
@@ -210,7 +215,7 @@ The room names below are proposals: they're player-facing and go through the own
   - **the Heights' Chronicle set** finishes here, and opens the Hospice Charnel (§4.5).
 - **Contract:** **69** and **72**; `boss.mjs praetory 70` and `boss.mjs praetory 72 --floor 2`.
 - **New art:**
-  - the `glasskeep` kit (M, with critic rounds against a reference from the owner);
+  - the palace kit frozen and glassed (S: a retint and one dressing family, glass growths; critic rounds against a reference from the owner);
   - the Praetorian recolour;
   - the Glass Legate's model;
   - the guard-lamp as a prop and a boss.
@@ -385,7 +390,7 @@ can be played as far as it's built.
 | H1 | **Canon + GDD** for Act VI's dungeons | the Stair's, the Soulcracks' and the Praetory's bosses, the foes' looks, the Glass Keep's door (Q2); a build sheet | S |
 | H2 | **The Pilgrims' Stair (61–64)** | the prototype un-parked as floor 1, floor 2, the families, the boss and the cornice, the Redhand's held ledge, Sister Hild, *The Frozen Hospice* and *The Pilgrims' Stair*; the contract at 63 | M |
 | H3 | **The Soulcracks (65–68)** | the `glasscrack` kit (M), the glass-touched, its boss, Prior Anselm's chapter; the contract at 66 | L |
-| H4 | **The Praetory and the Glass Keep (69–72)** | the prototype un-parked as floor 1, the `glasskeep` kit (M), the Praetorians, the guard-lamp, Brother Cobb, the Glass Legate, Aurelle's letter, the Chronicle set; the contract at 69, 72 | L |
+| H4 | **The Praetory and the Glass Keep (69–72)** | the prototype un-parked as floor 1, the parked `glass_keep` (the palace) frozen as floor 2 (S), the Praetorians, the guard-lamp, Brother Cobb, the Glass Legate, Aurelle's letter, the Chronicle set; the contract at 69, 72 | L |
 | H5 | **The Hospice Charnel** | the secret on `ossuary` | S |
 | H6 | **The Heights' art pass** | the models, critic passes | M |
 | — | **The Ember Throne** | a plan of its own | L |

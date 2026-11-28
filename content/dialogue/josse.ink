@@ -8,7 +8,7 @@
 // Chapel's window. He gives and takes in Maren's chain, The Names (GDD v1.155: a companion's chain is a townsperson's,
 // and nothing waits on her being with you): maren_the_harbour_roll (two chests in the Drowned Mole, the harbour office's
 // roll of who drowned), maren_the_prize_crews (six waves among the Gull Isles' hulks, copying the taken crews' names off
-// the beams) and maren_said_aloud (five waves in Highmarch's palace while the names are read out there; it pays the
+// the beams) and maren_said_aloud (five waves in Highmarch's Seventh Tower while the names are read out there; it pays the
 // heirloom The Name Bell, which the sim gives, never this file). He speaks of Maren; the names are hers to say. No HTML.
 
 VAR hero_name = ""
@@ -46,9 +46,9 @@ VAR q_maren_said_aloud = -1
 + { q_maren_the_prize_crews == 2 } [The names off the hulks' beams. #mark: quest ready] -> josse_crews_turnin
 + { q_maren_the_prize_crews == 0 } [Who else isn't in the book? #mark: quest] -> josse_crews_offer
 + { q_maren_the_prize_crews == 1 } [About the hulks… #mark: quest active] -> josse_crews_active
-+ { q_maren_said_aloud == 2 } [The names were said in the palace. #mark: quest ready] -> josse_aloud_turnin
++ { q_maren_said_aloud == 2 } [The names were said in the tower. #mark: quest ready] -> josse_aloud_turnin
 + { q_maren_said_aloud == 0 } [Is the book finished? #mark: quest] -> josse_aloud_offer
-+ { q_maren_said_aloud == 1 } [About the palace… #mark: quest active] -> josse_aloud_active
++ { q_maren_said_aloud == 1 } [About the tower… #mark: quest active] -> josse_aloud_active
 + [Can the Chapel help us?]
     "It raises the fallen, for a fee. The fee goes on the roof. The roof needs it." # service: temple
     -> END
@@ -104,22 +104,22 @@ Josse reads your copy through slowly, mouthing each name. Some are cut twice on 
 // ── The Names, 3: Said Aloud (content/quests/maren_said_aloud.json): the heirloom The Name Bell ──
 == josse_aloud_offer ==
 "The book's as whole as I can make it. There's one thing more, and it's the Sister's thought, not mine."
-"Most of the names in here were sung up off the Mole by one man, and walked up the Highmarch road to his palace to be given their orders. The Sister says the bound keep the last thing they hear, and that the last thing that palace heard of them should be their names, not his song."
-"I've written a fair copy, small enough to carry. Anyone can read it. You don't need to be a Sister. You only need to get every one right. The palace won't let you read in peace, so somebody holds the floor while somebody reads."
+"Most of the names in here were sung up off the Mole by one man, and walked up the Highmarch road to his tower to be given their orders. The Sister says the bound keep the last thing they hear, and that the last thing that tower heard of them should be their names, not his song."
+"I've written a fair copy, small enough to carry. Anyone can read it. You don't need to be a Sister. You only need to get every one right. The tower won't let you read in peace, so somebody holds the floor while somebody reads."
 + [We'll read them there. #mark: quest]
-    He puts the fair copy into your hands as if it might spill. "Highmarch, the second floor: the palace. Five turns of the fighting, and every name read out while you hold it. Read slow. It's a long book." # quest: accept maren_said_aloud
+    He puts the fair copy into your hands as if it might spill. "Highmarch, the second floor: the tower. Five turns of the fighting, and every name read out while you hold it. Read slow. It's a long book." # quest: accept maren_said_aloud
     -> josse_topics
 + [Not yet.]
     "Then I'll make the copy smaller. My hand's getting better at small."
     -> josse_topics
 
 == josse_aloud_active ==
-"The Seventh's Palace, Highmarch's second floor. Five waves, and the fair copy read through out loud, every name."
+"The Seventh Tower, Highmarch's second floor. Five waves, and the fair copy read through out loud, every name."
 -> josse_topics
 
 == josse_aloud_turnin ==
 You give him back the fair copy. Its corners have gone soft from being held through a fight. He turns the pages to the last and closes it.
-"Every one? Then that palace has heard them said in a plainer voice than his. Plainer's better. It's how you'd call a man in off a boat." # quest: turnin maren_said_aloud
+"Every one? Then that tower has heard them said in a plainer voice than his. Plainer's better. It's how you'd call a man in off a boat." # quest: turnin maren_said_aloud
 He picks up the handbell from beside his boot and holds it out. "It's rung once for every name in that book. The Chapel can buy another. This one knows the work."
 "The Sister will want to hear you did it. She'll say she'd have read it louder. She would."
 -> josse_topics

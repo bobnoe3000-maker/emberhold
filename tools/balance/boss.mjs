@@ -4,7 +4,7 @@
 // done (their level-6 abilities), as the difficulty contract assumes.
 //
 //   node tools/balance/boss.mjs <site> <heroLv> [seeds e.g. 1,2,3] [--src dir] [--healer cleric|shaman] [--floor N]   (--healer: who's third, v1.19;
-//   --floor: the hall on floor N, for a site with a boss on more than one: the Drowned Abbey's 1–3; default the last;
+//   --tune hp,atk: every hall boss that much on top of his own (battle.js BOSS_TUNE: a search); --party a,b,c: the three's classes (fighter,mage,cleric: the mage's slows and freezes in play); --floor: the hall on floor N, for a site with a boss on more than one: the Drowned Abbey's 1–3; default the last;
 //   --boss id: that boss in the hall in place of its own (one not yet given a hall); --off id,id: those abilities' auto-use off; 'held N %': the share of his fight the boss stood stunned, frozen or knocked down)
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
@@ -17,6 +17,9 @@ const { createSim } = await load('sim/core.js'), { isWalkable } = await load('si
 const attrs = await load('sim/attributes.js'), items = await load('sim/items.js');
 const oi = args.indexOf('--off'), OFF = oi >= 0 ? args.splice(oi, 2)[1].split(',') : [];   // --off id,id: those abilities' auto-use off for everyone
 const bi = args.indexOf('--boss'), BOSS = bi >= 0 ? args.splice(bi, 2)[1] : null;   // --boss id: that boss in the hall in place of its own (a boss not yet given a hall: v1.59's)
+const ti = args.indexOf('--tune'), TUNE = ti >= 0 ? args.splice(ti, 2)[1].split(',').map(Number) : null;   // --tune hp,atk: every hall boss this much on top of his own (battle.js BOSS_TUNE), for a search
+const pi = args.indexOf('--party'), PARTY = pi >= 0 ? args.splice(pi, 2)[1].split(',') : null;   // --party fighter,mage,cleric: the three's classes (the mage's slows and freezes measured; default fighter, rogue, the healer)
+if (TUNE) { const bt = (await load('sim/battle.js')).BOSS_TUNE; if (bt) { bt.hp = TUNE[0]; bt.atk = TUNE[1]; } }
 const [site, HL] = [args[0], +args[1]], seeds = (args[2] || '20260807,777,4242').split(',').map(Number);
 if (BOSS) { const { siteOf } = await load('sim/sites.js'), S = siteOf(site), at = FLOOR || Math.max(...Object.keys(S.bosses || { 1: 0 }).map(Number)); S.bosses = { ...(S.bosses || {}), [at]: BOSS }; }
 
@@ -25,7 +28,7 @@ for (const seed of seeds) {
   const sim = createSim(seed, undefined, { scene: 'dungeon', site });
   sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1, fighter24: 1, rogue24: 1, mage24: 1, cleric24: 1, shaman24: 1 };   // (the class trials done, as the contract assumes; older checkouts ignore it)
   sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m })));
-  sim.state.party[0].cls = 'fighter'; const want = ['fighter', 'rogue', HEALER];
+  sim.state.party[0].cls = 'fighter'; const want = PARTY || ['fighter', 'rogue', HEALER];
   sim.state.party.forEach((m, i) => { m.cls = want[i]; m.level = HL; m.attrs = null; attrs.autoAllocate(m); m.gear = items.starterKit(m); m.hp = statsFor(m).maxHp; m.mp = undefined; if (OFF.length) m.off = OFF; });
   if (sim.state.trials) for (const c of want) { sim.state.trials[c] = 1; sim.state.trials[c + '12'] = 1; }
   sim.tick();

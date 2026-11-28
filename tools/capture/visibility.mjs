@@ -28,7 +28,7 @@ export const MAPS = {
   'pens-f1': { scene: 'dungeon', site: 'proving_pens', floor: 0 }, 'pens-f2': { scene: 'dungeon', site: 'proving_pens', floor: 1 },
   'mound-f1': { scene: 'dungeon', site: 'toadking_mound', floor: 0 }, 'mound-f2': { scene: 'dungeon', site: 'toadking_mound', floor: 1 }, 'locks-f1': { scene: 'dungeon', site: 'canal_locks', floor: 0 }, 'locks-f2': { scene: 'dungeon', site: 'canal_locks', floor: 1 }, 'abbey-f1': { scene: 'dungeon', site: 'drowned_abbey', floor: 0 }, 'abbey-f2': { scene: 'dungeon', site: 'drowned_abbey', floor: 1 },
   // (the Tidemark's coast floors: docs/strand-dungeon.md)
-  'isles-f1': { scene: 'dungeon', site: 'gull_isles', floor: 0 }, 'lampfort-f1': { scene: 'dungeon', site: 'lamp_fort', floor: 0 }, 'cabin-f1': { scene: 'dungeon', site: 'sisters_cabin', floor: 0 },
+  'isles-f1': { scene: 'dungeon', site: 'gull_isles', floor: 0 }, 'highmarch-f1': { scene: 'dungeon', site: 'highmarch', floor: 0 }, 'highmarch-f2': { scene: 'dungeon', site: 'highmarch', floor: 1 }, 'lampfort-f1': { scene: 'dungeon', site: 'lamp_fort', floor: 0 }, 'cabin-f1': { scene: 'dungeon', site: 'sisters_cabin', floor: 0 },
   'granary-f1': { scene: 'dungeon', site: 'root_granary', floor: 0 },   // (the greenwood prototype, parked: docs/greenwood-dungeon.md)
 };
 // (docs/art-critic-pass-stone.md: the floors the stone-and-mine track dressed, items 6, 8, 9)

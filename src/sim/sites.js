@@ -73,7 +73,7 @@ export const SITES = {
   gull_isles: { name: 'The Gull Isles', region: 'tidemark', theme: 'cave', themes: ['cave', 'storehouse'], base: 36, perFloor: 3, floors: 2, span: 5, plan: true, family: 'fleet', rooms: [5, 5], layout: 'halls', band: true, bosses: { 2: 'hesk' }, dress: ['seacave', 'hulk'], mix: 0x9a11 },
   // (v1.154) Highmarch (41–45): the walls under siege, in through the breach, the Seventh's Champion on the great bastion;
   // then the Seventh's Palace, Lucan on his throne (he's beaten, not killed: battle.js `canticle`). Its door is the gate.
-  highmarch: { name: 'Highmarch', region: 'tidemark', theme: 'storehouse', themes: ['storehouse', 'crypt'], base: 41, perFloor: 3, floors: 2, span: 5, plan: true, family: 'siege', families: ['siege', 'palace'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 1: 'champion', 2: 'lucan' }, dress: ['ramparts', 'palace'], mix: 0x41a7 },
+  highmarch: { name: 'Highmarch', region: 'tidemark', theme: 'storehouse', themes: ['storehouse', 'crypt'], base: 41, perFloor: 3, floors: 2, span: 5, plan: true, family: 'siege', families: ['siege', 'palace'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 1: 'champion', 2: 'lucan' }, dress: ['ramparts', 'tower'], mix: 0x41a7 },
   // (v1.151) the Lamp Fort (38): the Tidemark's side vault (`side`), Old Gannet's coast light on its headland with the
   // Gull Fleet at its door; its lamp room keeps his spare wick, once (`vault`), then seals for SECRET_REST (core.js)
   lamp_fort: { name: 'The Lamp Fort', region: 'tidemark', theme: 'storehouse', base: 38, perFloor: 0, floors: 1, plan: true, family: 'fleet', rooms: [5, 5], layout: 'halls', flat: true, side: true, vault: 'gannets_spare_wick', mix: 0x1a4f },
@@ -102,6 +102,9 @@ export const SITES = {
   haddow_crypt: { name: 'The Haddow Crypt', region: 'vale', theme: 'crypt', base: 6, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [5, 5], layout: 'halls', flat: true, side: true, vault: 'the_haddow_roll', mix: 0xc4e7 },   // (the owner, 2026-11-23: "put it in the vale": the Haddows' chantry north of the east road past the crossroads, outdoor.js buildOverland `crypt`; GDD v1.140),
   // (the owner, 2026-11-23, from a reference: "start two new level dressing types, docks and harbor": the docks kit, plans.js
   // old_eel_wharf; parked, a prototype for review, on no land yet)
+  // (the owner, 2026-11-28: "the glass keep is the right place" for the palace kit: Highmarch's old second floor, plans.js
+  // glass_keep; parked, a prototype on no land until the Heights' Praetory is built over it, docs/new-dungeons-plan.md §4.2)
+  glass_keep: { name: 'The Glass Keep', region: 'heights', theme: 'crypt', base: 71, perFloor: 0, floors: 1, plan: true, family: 'palace', rooms: [5, 5], layout: 'halls', flat: true, parked: true, mix: 0x61a5 },
   old_eel_wharf: { name: 'The Old Eel Wharf', region: 'fens', theme: 'mound', base: 12, perFloor: 0, floors: 1, plan: true, family: 'drowned', rooms: [5, 5], layout: 'halls', flat: true, parked: true, mix: 0xd0c5 },
   // (the owner, 2026-11-23, from a reference: "the reaches, high up on the ramparts": the ramparts kit, plans.js high_ramparts;
   // parked, a prototype for review, on no land yet)

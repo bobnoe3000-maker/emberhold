@@ -32,26 +32,33 @@ function hall(depth, lv, seed = 20260807) {
 }
 const bossOf = (sim) => (sim.world.enemies || []).find((e) => e.boss);
 
-test('Highmarch: a band of five on the Tidemark, its plan to the rules, the walls then the palace, the Champion and Lucan', () => {
+test('Highmarch: a band of five on the Tidemark, its plan to the rules, the walls then the Seventh Tower, the Champion and Lucan', () => {
   const S = SITES.highmarch, P = PLANS.highmarch;
   assert.equal(S.region, 'tidemark'); assert.equal(levelBand('highmarch'), '41–45');
   assert.equal(bossAt('highmarch', 0), 'champion'); assert.equal(bossAt('highmarch', 1), 'lucan');
   assert.deepEqual(checkPlan(P), []);
-  assert.deepEqual(P.floors.map((f) => [...new Set(f.spaces.map((s) => s.kit))]), [['ramparts'], ['palace']]);
+  assert.deepEqual(P.floors.map((f) => [...new Set(f.spaces.map((s) => s.kit))]), [['ramparts'], ['ramparts', 'barracks', 'quota', 'crypt', 'fortwall']]);   // (v1.166: the tower, not the palace: its yard in the open, its hall and counting room, its chapel, its roof over the sea)
   assert.deepEqual(P.floors.map((f) => [Math.min(...f.spaces.map((s) => s.lv)), Math.max(...f.spaces.map((s) => s.lv))]), [[0, 2], [3, 4]]);
-  assert.ok(P.floors[1].spaces.some((s) => s.id === 'the_study' && s.role === 'offshoot'), 'the Kindler\'s letters');
-  assert.ok(DRESS.palace, 'the palace kit');
+  assert.ok(P.floors[1].spaces.some((s) => s.id === 'the_stewards_room' && s.role === 'offshoot'), 'the Kindler\'s letters');
+  assert.ok(DRESS.palace, 'the palace kit'); assert.ok(DRESS.tower, 'the tower\'s');
+  assert.equal(P.floors[1].name, 'The Seventh Tower'); assert.equal(P.floors[1].spaces.find((s) => s.boss === 'lucan').id, 'the_roof');
 });
 
-test('the gate walks into the walls, the bastion stair down into the palace; its throne and the chapel\'s empty stand', () => {
+test('the palace kept for the end of the game: the Glass Keep, parked, its plan the palace floor that was Highmarch\'s', () => {
+  const S = SITES.glass_keep, P = PLANS.glass_keep;
+  assert.equal(S.region, 'heights'); assert.ok(S.parked, 'on no land yet'); assert.deepEqual(checkPlan(P), []);
+  assert.deepEqual([...new Set(P.floors[0].spaces.map((s) => s.kit))], ['palace']); assert.ok(P.floors[0].spaces.every((s) => !s.boss), 'nobody on the throne');
+});
+
+test('the gate walks into the walls, the bastion stair down into the tower; its chapel\'s empty stand, no throne', () => {
   const sim = createSim(7, undefined, { scene: 'overland', region: 'tidemark' }); sim.tick();
   const door = sim.world.exits.find((e) => e.site === 'highmarch'), p = sim.state.player;
   p.x = p.px = (door.x0 + door.x1) / 2; p.y = p.py = (door.y0 + door.y1) / 2; for (let i = 0; i < 5; i++) sim.tick();
   assert.equal(sim.world.kind, 'dungeon'); assert.equal(sim.world.site, 'highmarch');
   assert.ok(isWalkable(sim.world, sim.state.player.x, sim.state.player.y), 'in at the breach');
-  down(sim); assert.equal(sim.state.depth, 1, 'down into the palace');
+  down(sim); assert.equal(sim.state.depth, 1, 'down into the tower');
   const props = [...sim.world.props.values()];
-  assert.equal(props.filter((k) => k === 'throne').length, 1, 'the throne'); assert.equal(props.filter((k) => k === 'reliquary').length, 1, 'where the box stood');
+  assert.equal(props.filter((k) => k === 'throne').length, 0, 'no throne: Lucan sings from the stand'); assert.equal(props.filter((k) => k === 'reliquary').length, 1, 'where the box stood');
 });
 
 test('the march\'s foes: legionaries with tower shields, siege engineers with pitch; the palace\'s drowned are the dead', () => {

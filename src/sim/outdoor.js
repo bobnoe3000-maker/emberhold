@@ -1371,11 +1371,13 @@ function buildHeights(seed) {
 // 260 × 260, north up, as the plan's overland has it: the imperial road in from Solmere at the west, over the Brine at
 // Brine Cross (a place, not a town: its houses at the bridge's two ends, the barricade at its east end where Act IV's
 // siege comes); north from the junction up the Highmarch road to the walled march-kingdom's east gate; east on the coast
-// road to Tollhaven's west gate, its harbour north-east of its walls; south-east down the beach road to Gullwick on the
+// road round Tollhaven's south wall to its sea gate on the beach (the east one), its harbour north-east of its walls; south-east down the beach road to Gullwick on the
 // sand, its ferry jetty out toward the Drowned Mole. The sea is the east and the south-east, a salt marsh along the north
 // shore toward Highmarch, the Lamp Fort on its headland. Grey field-walls and sheep inland.
 export const TIDEMARK = { cross: [46, 172], join: [100, 172], highmarch: [100, 40], tollhaven: [176, 104], gullwick: [188, 226], ferry: [204, 256],
   lampfort: [240, 148], isles: [178, 12], reef: [231, 203] };   // (reef, v1.156: the Sister's Cabin's way in)
+/** Tollhaven's gate on the overland: its east wall, the sea gate (the town's own way out is east) */
+export const TOLL_GATE = [214, TIDEMARK.tollhaven[1]];
 function buildTidemark(seed) {
   const o = makeWorld(seed, 'overland', 260, 260, 90), rng = mulberry32(streamSeed(seed, 4450)), B = (t, n = 1) => `tidemark_${t}_${n}`;
   o.name = 'The Tidemark'; o.region = 'tidemark';
@@ -1396,10 +1398,10 @@ function buildTidemark(seed) {
   const ROADS = [
     { w: 6, surface: 'dirt', imperial: true, pts: [[-30, cross[1]], [BRIDGE[0] - 14, cross[1]], [BRIDGE[0] + 14, cross[1]], join] },   // the imperial road in from Solmere, over the bridge
     { w: 6, surface: 'dirt', imperial: true, pts: [join, [112, 140], [118, 96], [116, 60], [highmarch[0] + 2, highmarch[1]]] },        // the Highmarch road north, to its east gate
-    { w: 6, surface: 'dirt', imperial: true, pts: [join, [128, 150], [150, 118], [tollhaven[0] - 12, tollhaven[1]]] },                   // the coast road east, to Tollhaven's west gate
-    { w: 4, surface: 'dirt', pts: [[146, 124], [164, 160], [178, 196], [gullwick[0], gullwick[1] - 6]] },                                // the beach road south-east to Gullwick
+    { w: 6, surface: 'dirt', imperial: true, pts: [join, [128, 150], [150, 132], [222, 132], [226, 120], [226, tollhaven[1]], [TOLL_GATE[0] + 2, tollhaven[1]]] },   // the coast road east, round Tollhaven's south wall to its sea gate (the owner, 2026-11-28: "The overworld entrance to tollhaven is on the wrong side": the town's own gate is east, its harbour north-east outside it)
+    { w: 4, surface: 'dirt', pts: [[150, 132], [164, 160], [178, 196], [gullwick[0], gullwick[1] - 6]] },                                // the beach road south-east to Gullwick
     { w: 3, surface: 'track', pts: [[168, 168], [200, 160], [lampfort[0] - 8, lampfort[1] + 2]] },                                       // out along the cliffs to the Lamp Fort
-    { w: 3, surface: 'track', pts: [[156, 110], [158, 72], [162, 36], [isles[0] - 14, isles[1] + 6]] },                                  // (v1.151) north past the salt marsh to the Gull Isles' landing
+    { w: 3, surface: 'track', pts: [[150, 132], [154, 110], [158, 72], [162, 36], [isles[0] - 14, isles[1] + 6]] },                                  // (v1.151) north past the salt marsh to the Gull Isles' landing
   ].map((r) => ({ ...r, pts: fillet(r.pts, Math.max(8, r.w * 2)) }));
   joinRoads(o, ROADS);
   o.roads.push(...ROADS);
@@ -1424,18 +1426,19 @@ function buildTidemark(seed) {
     for (const [x, y] of [[X0, Y0], [X1, Y0], [X0, Y1], [X1, Y1], [(X0 + X1) / 2, Y0], [(X0 + X1) / 2, Y1], [X0, 36]]) put(o, B('tower'), x, y, 'round', 0.1);
     putGate(o, B('gatehousey'), X1, GY);
     put(o, B('standard'), X1 + 4, GY - 5, 'rect', 0.1); put(o, B('standard'), X1 + 4, GY + 5, 'rect', 0.1); }
-  // Tollhaven from outside: grey stone on its landward sides, the gate west on the coast road, its roofs inside; the
-  // harbour beyond its north wall (the jetties and the moles laid above)
-  { const X0 = tollhaven[0], X1 = 214, Y0 = 84, Y1 = 124, GY = tollhaven[1];
+  // Tollhaven from outside: grey stone on its landward sides, the gate east on the beach (the town's own gate is its east
+  // one, the harbour north-east outside it: the owner, 2026-11-28, "The overworld entrance to tollhaven is on the wrong
+  // side"; it was west, on the coast road), its roofs inside; the harbour beyond its north wall (the jetties and moles)
+  { const X0 = tollhaven[0], X1 = TOLL_GATE[0], Y0 = 84, Y1 = 124, GY = tollhaven[1];
     // (the inn east by the wall, the house north of the gate, both off the camera's line to it: drawn on their walled tiles since the pathing fix,
     // the inn just inside the gate and the house past it, south-east of the way in, each hid it whole from the camera:
     // visibility.mjs tidemark, way:town 0 % in view)
     for (const [id, x, y] of [[B('temple'), 196, 96], [B('inn'), 201.5, 109], [B('house', 1), 184, 92], [B('workshopx'), 204, 98]]) put(o, id, x, y);
-    putWall(o, B('curtain'), true, Y0, X0, X1); putWall(o, B('curtain'), true, Y1, X0, X1); putWall(o, B('curtainy'), false, X1, Y0, Y1);
-    putWall(o, B('curtainy'), false, X0, Y0, GY - 7); putWall(o, B('curtainy'), false, X0, GY + 7, Y1);
+    putWall(o, B('curtain'), true, Y0, X0, X1); putWall(o, B('curtain'), true, Y1, X0, X1); putWall(o, B('curtainy'), false, X0, Y0, Y1);
+    putWall(o, B('curtainy'), false, X1, Y0, GY - 7); putWall(o, B('curtainy'), false, X1, GY + 7, Y1);
     for (const [x, y] of [[X0, Y0], [X1, Y0], [X0, Y1], [X1, Y1], [(X0 + X1) / 2, Y0], [(X0 + X1) / 2, Y1]]) put(o, B('tower'), x, y, 'round', 0.1);
-    putGate(o, B('gatehousey'), X0, GY);
-    put(o, B('standard'), X0 - 4, GY - 5, 'rect', 0.1); put(o, B('standard'), X0 - 4, GY + 5, 'rect', 0.1);
+    putGate(o, B('gatehousey'), X1, GY);
+    put(o, B('standard'), X1 + 4, GY - 5, 'rect', 0.1); put(o, B('standard'), X1 + 4, GY + 5, 'rect', 0.1);
     put(o, B('workshop'), 186, 78); put(o, B('longhouse'), 206, 78);                                    // the bonded warehouses on the quay
     put(o, B('tower'), 192, 28, 'round', 0.1); put(o, B('tower'), 244, 26, 'round', 0.1); }             // the chain's towers at the moles' ends
   // Gullwick (a place: its cottages on the Strand, the nets drying, the ferryman's post at the jetty's foot)
@@ -1446,7 +1449,7 @@ function buildTidemark(seed) {
   // the Lamp Fort on its headland: Old Gannet's light, a tower in a wall
   put(o, B('tower'), lampfort[0] + 2, lampfort[1] - 2, 'round', 0.1); put(o, B('wall'), lampfort[0] - 4, lampfort[1] - 8);   // (north of the door: south of it, the wall hid the door and the arrival from the camera, visibility.mjs)
   o.labels.push({ x: BRIDGE[0], y: cross[1], id: B('standard'), text: 'Brine Cross' }, { x: highmarch[0], y: highmarch[1], id: B('gatehousey'), text: 'Highmarch' },
-    { x: tollhaven[0], y: tollhaven[1], id: B('gatehousey'), text: 'Tollhaven' }, { x: gullwick[0], y: gullwick[1], id: B('cottage'), text: 'Gullwick' },
+    { x: TOLL_GATE[0], y: TOLL_GATE[1], id: B('gatehousey'), text: 'Tollhaven' }, { x: gullwick[0], y: gullwick[1], id: B('cottage'), text: 'Gullwick' },
     { x: lampfort[0], y: lampfort[1], id: B('tower'), text: 'The Lamp Fort' }, { x: 132, y: 20, text: 'The salt marsh' },
     { x: ferry[0], y: ferry[1] - 2, text: 'The ferry to the Drowned Mole', site: 'drowned_mole' },
     { x: isles[0] - 2, y: isles[1] + 2, text: 'Boats to the Gull Isles', site: 'gull_isles' });   // (the same: the landing jetty's end, a boat waiting)   // (the owner, 2026-11-26: the jetty's end read as a dead end; the boat and the ferryman waiting in it are drawn there, render3d/convert.js)
@@ -1454,8 +1457,8 @@ function buildTidemark(seed) {
 
   // THE HILLS (their own stream): Highmarch's high ground in the north-west, a range past the north and west edges
   const mrng = mulberry32(streamSeed(seed, 4452)), F = (id) => ENV_FOOT[id] || [-10, -10, 10, 10];
-  const keepOut = [cross, join, highmarch, tollhaven, gullwick, lampfort, isles, [isles[0] - 14, isles[1] + 6], [BRIDGE[0] + 18, cross[1]], reef];   // (reef: the Cabin's beach, v1.156)
-  const sights = [[BRIDGE[0] + 18, cross[1]], [highmarch[0] + 14, highmarch[1]], [tollhaven[0] - 14, tollhaven[1]], gullwick, lampfort, isles, reef];
+  const keepOut = [cross, join, highmarch, tollhaven, TOLL_GATE, [TOLL_GATE[0] + 14, TOLL_GATE[1]], gullwick, lampfort, isles, [isles[0] - 14, isles[1] + 6], [BRIDGE[0] + 18, cross[1]], reef];   // (reef: the Cabin's beach, v1.156)
+  const sights = [[BRIDGE[0] + 18, cross[1]], [highmarch[0] + 14, highmarch[1]], [TOLL_GATE[0] + 14, TOLL_GATE[1]], gullwick, lampfort, isles, reef];
   const sea = (x, y) => { const g = groundAt(o, x, y).g; return g === G.POOL || g === G.SAND; };
   const clear = (x, y, r = 18) => !keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < r) && !inFrontOf(sights, x, y, 40, 22) && !sea(x, y);
   for (const [x, y] of [[18, 40], [24, 92], [14, 132], [124, 40], [140, 66], [20, 226], [96, 234]]) {
@@ -1481,7 +1484,7 @@ function buildTidemark(seed) {
     return keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 12) || g === G.POOL ? -1 : g === G.SAND ? 0.06 : fbm(x * 0.07, y * 0.07, o.seed + 73) > 0.62 ? 0.4 : 0.06; },
     { low: ['ug_grass_1', 'ug_grass_2', 'ug_grass_1'], solid: ['rock_F', 'rock_G'], foot: ['ug_grass_2'] });
 
-  o.exits.push({ x0: tollhaven[0] + 1, y0: tollhaven[1] - 4, x1: tollhaven[0] + 8, y1: tollhaven[1] + 4, to: 'town', arrive: 'overland' });
+  o.exits.push({ x0: TOLL_GATE[0] - 8, y0: TOLL_GATE[1] - 4, x1: TOLL_GATE[0] - 1, y1: TOLL_GATE[1] + 4, to: 'town', arrive: 'overland' });   // (in at the sea gate, east)
   // the Drowned Mole's door, at the end of Gullwick's ferry jetty: the ferryman rows a company out (v1.150)
   o.exits.push({ x0: ferry[0] - 3, y0: ferry[1] - 3, x1: ferry[0] + 3, y1: ferry[1] + 1, to: 'dungeon', site: 'drowned_mole' });
   // (v1.151) the Gull Isles' door at the end of the landing jetty (the fleet's boats row a company out), and the Lamp
@@ -1495,7 +1498,7 @@ function buildTidemark(seed) {
   o.exits.push({ x0: reef[0] - 2, y0: reef[1] - 3, x1: reef[0] + 2, y1: reef[1] + 3, to: 'dungeon', site: 'sisters_cabin' });
   // the imperial road west, into Solmere (a crossroads: GDD v1.150, core.js)
   o.exits.push({ x0: -11, y0: cross[1] - 9, x1: -4, y1: cross[1] + 9, to: 'solmere' });
-  o.arrivals = { default: { x: tollhaven[0] - 14.5, y: tollhaven[1] + 0.5 }, tollhaven: { x: tollhaven[0] - 14.5, y: tollhaven[1] + 0.5 }, solmere: { x: 4.5, y: cross[1] + 0.5 },
+  o.arrivals = { default: { x: TOLL_GATE[0] + 14.5, y: TOLL_GATE[1] + 0.5 }, tollhaven: { x: TOLL_GATE[0] + 14.5, y: TOLL_GATE[1] + 0.5 }, solmere: { x: 4.5, y: cross[1] + 0.5 },
     brine_cross: { x: BRIDGE[0] - 15.5, y: cross[1] + 0.5 },   // (v1.151: the west bank, by the tollhouse; the east barricade is the stand's, camps.js) gullwick: { x: gullwick[0] + 0.5, y: gullwick[1] - 2.5 },
     drowned_mole: { x: ferry[0] - 2.5, y: ferry[1] - 8.5 },   // (back up the jetty, off the door)
     gull_isles: { x: isles[0] - 7.5, y: isles[1] + 3.5 }, lamp_fort: { x: lampfort[0] - 9.5, y: lampfort[1] + 2.5 },

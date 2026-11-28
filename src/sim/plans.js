@@ -649,9 +649,8 @@ export const PLANS = {
 
   // ── Highmarch (41–45; the Tidemark, GDD v1.154, docs/tidemark-plan.md step 6): the walled march-kingdom at the head of
   //    the Highmarch road, stormed. Floor 1 the walls under siege, in through the breach the League's engines made (the
-  //    ramparts kit: the drop and the mist below), the Seventh's Champion holding the great bastion; floor 2 the Seventh's
-  //    Palace (the `palace` kit: the crypt's dressed stone, the tavern's furniture, banners, the throne), Lucan on his
-  //    throne. A band of five, as the Mole: floor 1 at 41–43, floor 2 at 44–45 (`step` 3).
+  //    ramparts kit: the drop and the mist below), the Seventh's Champion holding the great bastion; floor 2 the Seventh
+  //    Tower (v1.166; it was the Seventh's Palace, now the Glass Keep's: below), Lucan on its roof. A band of five, as the Mole: floor 1 at 41–43, floor 2 at 44–45 (`step` 3).
   highmarch: { site: 'highmarch', name: 'Highmarch', kind: 'ramparts', base: 41, step: 3, floors: [
     { name: 'The Walls', spaces: [
       { id: 'the_breach', name: 'The Breach', role: 'entrance', x: 0, y: 38, w: 32, h: 30, shape: 'rect', lv: 0, kit: 'ramparts',
@@ -663,29 +662,35 @@ export const PLANS = {
       { id: 'the_gatehouse', name: 'The Gatehouse', role: 'room', x: 102, y: 34, w: 30, h: 30, shape: 'rect', lv: 1, kit: 'ramparts', foes: 'siege',
         dress: ['rampart_torches', 'rampart_well', 'rampart_cargo'], note: 'The gate\'s winding-room over the road, the portcullis down, the hounds kennelled under the stair.' },
       { id: 'the_great_bastion', name: 'The Great Bastion', role: 'descent', x: 46, y: 80, w: 48, h: 40, shape: 'rect', lv: 2, kit: 'ramparts', foes: 'siege', boss: 'champion',
-        dress: ['rampart_torches', 'rampart_clutter', 'stair_down'], note: 'The wall\'s great bastion over the town, and the stair down into the palace yard. The Seventh\'s Champion has drilled the wall here four years for a coronation.' },
+        dress: ['rampart_torches', 'rampart_clutter', 'stair_down'], note: 'The wall\'s great bastion over the town, and the stair down into the tower yard. The Seventh\'s Champion has drilled the wall here four years for a coronation.' },
     ], halls: [
       { from: 'the_breach', to: 'the_rampart_walk', x: 32, y: 44, w: 10, h: 10 },
       { from: 'the_rampart_walk', to: 'the_engine_tower', x: 52, y: 20, w: 10, h: 10 },
       { from: 'the_rampart_walk', to: 'the_gatehouse', x: 92, y: 44, w: 10, h: 10 },
       { from: 'the_rampart_walk', to: 'the_great_bastion', x: 48, y: 70, w: 10, h: 10 },
     ] },
-    { name: 'The Seventh\'s Palace', spaces: [
-      { id: 'the_courtyard', name: 'The Courtyard', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'rect', lv: 3, kit: 'palace',
-        dress: ['palace_lamps', 'stair_up'], note: 'The palace yard at the bastion stair\'s foot, the household\'s banners still out for the day in the capital.' },
-      { id: 'the_hall_of_banners', name: 'The Hall of Banners', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'rect', lv: 3, kit: 'palace', foes: 'palace',
-        dress: ['banners', 'standards', 'palace_lamps'], note: 'The long hall, the legions\' standards down both walls: every one the empire raised, and some it never did.' },
-      { id: 'the_study', name: 'The Study', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'rect', lv: 4, kit: 'palace', foes: 'palace',
-        dress: ['desks', 'palace_lamps', 'chest'], note: 'Lucan\'s study. The Kindler\'s letters are on the table, under the paperweight, unopened.' },
-      { id: 'the_chapel', name: 'The Chapel', role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'rect', lv: 4, kit: 'palace', foes: 'palace',
-        dress: ['reliquary', 'palace_lamps', 'rug'], note: 'Where Livia\'s box stood three hundred years. Its stand is empty and its lid lies on the floor.' },
-      { id: 'the_throne_room', name: 'The Throne Room', role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'rect', lv: 4, kit: 'palace', foes: 'palace', boss: 'lucan',
-        dress: ['throne', 'banners', 'palace_lamps'], note: 'The throne on its dais, the dais\'s steps. Lucan sings from the throne and sits down on the steps.' },
+    // (the owner, 2026-11-28: "the second floor looks like a palace.. the setting doesnt feel right for tollhaven area and
+    // what is in the first floor"; docs/highmarch-floor2-proposal.md, option A, "call it the seventh tower, just a stand")
+    // the march-lords' tower at the wall's end on the cliff over the salt marsh, the one that looks at the sea: its yard in
+    // the open as the walls are, its hall and the steward's counting room in the walls' grey stone, its chapel, and the roof
+    // over the marsh, the sea round it, the old signal stand Lucan sings from. The rooms, levels, foes and bosses the
+    // palace's were; the palace's own rooms are the Glass Keep's now (`glass_keep`, parked)
+    { name: 'The Seventh Tower', spaces: [
+      { id: 'the_tower_yard', name: 'The Tower Yard', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'rect', lv: 3, kit: 'ramparts',
+        dress: ['rampart_torches', 'rampart_cargo', 'stair_up'], note: 'Between the wall and the tower at the bastion stair\'s foot, in the open: wet flags, the wall over them, wet footprints going in at the door.' },
+      { id: 'the_muster_hall', name: 'The Muster Hall', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'rect', lv: 3, kit: 'barracks', foes: 'palace',
+        dress: ['standards', 'banners', 'hearth', 'braziers'], note: 'The tower\'s ground floor, grey stone under black beams. The drowned crews stand in ranks by ship, and down the walls the standards Lucan collected: every one the empire raised, and some it never did.' },
+      { id: 'the_stewards_room', name: 'The Steward\'s Room', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'rect', lv: 4, kit: 'quota', foes: 'palace',
+        dress: ['desk_rows', 'ledgers', 'chest'], note: 'Varro\'s counting room, three hundred years on: tally boards, the household\'s ledgers. The Kindler\'s letters are on the table under the paperweight, unopened.' },
+      { id: 'the_tower_chapel', name: 'The Tower Chapel', role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'rect', lv: 4, kit: 'crypt', foes: 'palace',
+        dress: ['reliquary', 'candles'], note: 'Small and cold, one stand in it. Livia\'s box stood there three hundred years; the stand is empty and its lid lies on the floor.' },
+      { id: 'the_roof', name: 'The Roof', role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'rect', lv: 4, kit: 'ramparts', foes: 'palace', boss: 'lucan',
+        dress: ['signal_stand', 'rampart_torches'], note: 'The tower\'s top, open to the night and the wind, the marsh and the sea below. Lucan sings from the old signal stand and sits down on its steps.' },
     ], halls: [
-      { from: 'the_courtyard', to: 'the_hall_of_banners', x: 30, y: 8, w: 10, h: 10 },
-      { from: 'the_hall_of_banners', to: 'the_study', x: 56, y: 24, w: 10, h: 10 },
-      { from: 'the_hall_of_banners', to: 'the_chapel', x: 110, y: 8, w: 10, h: 10 },
-      { from: 'the_chapel', to: 'the_throne_room', x: 132, y: 34, w: 10, h: 10 },
+      { from: 'the_tower_yard', to: 'the_muster_hall', x: 30, y: 8, w: 10, h: 10 },
+      { from: 'the_muster_hall', to: 'the_stewards_room', x: 56, y: 24, w: 10, h: 10 },
+      { from: 'the_muster_hall', to: 'the_tower_chapel', x: 110, y: 8, w: 10, h: 10 },
+      { from: 'the_tower_chapel', to: 'the_roof', x: 132, y: 34, w: 10, h: 10 },
     ] },
   ] },
 
@@ -814,6 +819,32 @@ export const PLANS = {
       { from: 'the_guard_hall', to: 'the_armoury', x: 52, y: 20, w: 10, h: 10 },
       { from: 'the_guard_hall', to: 'the_mess', x: 92, y: 44, w: 10, h: 10 },
       { from: 'the_guard_hall', to: 'the_praetors_door', x: 48, y: 70, w: 10, h: 10 },
+    ] },
+  ] },
+
+  // ── The Glass Keep (a prototype: the `palace` kit, parked; docs/highmarch-floor2-proposal.md §3, docs/new-dungeons-plan.md
+  //    §4.2): the owner, 2026-11-28, "We could use the palace level later near the end of the game" and "the glass keep is
+  //    the right place". The Empress's own house beyond the Heights' rim, the Praetory's second floor to come, on the floor
+  //    that was Highmarch's second (the Seventh's Palace) as it was built: warm, gilt, not yet frozen or glassed (the Heights'
+  //    build: rime, snow, glass grown out of the stone, a cold light; the rooms the plan's Frozen Court, Hall of Plaques,
+  //    Empress's Study, Long Gallery and Legate's Hall). Its rooms keep the palace's ids (convert.js PALACE_STORY).
+  glass_keep: { site: 'glass_keep', name: 'The Glass Keep', kind: 'palace', base: 71, flat: true, floors: [
+    { name: 'The Glass Keep', spaces: [
+      { id: 'the_courtyard', name: 'The Courtyard', role: 'entrance', x: 0, y: 0, w: 30, h: 26, shape: 'rect', lv: 0, kit: 'palace',
+        dress: ['palace_lamps', 'stair_up'], note: 'The court inside the gate, the household\'s banners still out for a day that never came.' },
+      { id: 'the_hall_of_banners', name: 'The Hall of Banners', role: 'room', x: 40, y: 2, w: 70, h: 22, shape: 'rect', lv: 0, kit: 'palace', foes: 'palace',
+        dress: ['banners', 'standards', 'palace_lamps'], note: 'The long hall, the legions\' standards down both walls: every one the empire raised, and some it never did.' },
+      { id: 'the_study', name: 'The Study', role: 'offshoot', x: 50, y: 34, w: 26, h: 22, shape: 'rect', lv: 0, kit: 'palace', foes: 'palace',
+        dress: ['desks', 'palace_lamps', 'chest'], note: 'The Empress\'s study, her writing table, her letters.' },
+      { id: 'the_chapel', name: 'The Chapel', role: 'room', x: 120, y: 0, w: 36, h: 34, shape: 'rect', lv: 0, kit: 'palace', foes: 'palace',
+        dress: ['reliquary', 'palace_lamps', 'rug'], note: 'Her chapel, the stand empty.' },
+      { id: 'the_throne_room', name: 'The Throne Room', role: 'end', x: 106, y: 44, w: 58, h: 50, shape: 'rect', lv: 0, kit: 'palace', foes: 'palace',
+        dress: ['throne', 'banners', 'palace_lamps'], note: 'The throne on its dais, and nobody on it.' },
+    ], halls: [
+      { from: 'the_courtyard', to: 'the_hall_of_banners', x: 30, y: 8, w: 10, h: 10 },
+      { from: 'the_hall_of_banners', to: 'the_study', x: 56, y: 24, w: 10, h: 10 },
+      { from: 'the_hall_of_banners', to: 'the_chapel', x: 110, y: 8, w: 10, h: 10 },
+      { from: 'the_chapel', to: 'the_throne_room', x: 132, y: 34, w: 10, h: 10 },
     ] },
   ] },
 

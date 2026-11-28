@@ -374,6 +374,22 @@ export const GOLD_DROP = 0.35;
 //           VENTS_MORE more about the hall, VENTS_R across, landing VENTS_WIND s later as VENTS_HURT of max HP.
 //           'bossVents' { id, by, x, y, n }
 /** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line' | 'swarm' | 'mud' | 'cage' | 'vespers' | 'bells' | 'issue' | 'sluice' | 'chutes' | 'scales' | 'anvil' | 'flee' | 'vents' | 'tide' | 'boarding' | 'shieldwall' | 'canticle', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
+// (the owner, 2026-11-28: "retune the bosses themselves so the right party typically finishes around 30-50 % health and
+// someone occasionally goes down"; measured with tools/balance/boss.mjs over every hall: the right party at the hall's
+// level had won 76 of 76, its lowest health a median 71 %, someone down in 4 % of fights) every dungeon hall's boss
+// strikes and holds this much harder than its own multiples say. Not the region's (event: their windows are tuned on
+// their own, tools/balance/regionboss.mjs) nor the Mere Tower's wardens (tower.mjs)
+// by: each hall's boss its own [hp, atk] (measured, each to its own: a flat 1.6× wiped the right party in every hall
+// under 10 and left the Drowned Choir unbeaten in five minutes); hp, atk: on top of every one, 1 (the harness's knob:
+// boss.mjs --tune)
+export const BOSS_TUNE = { hp: 1, atk: 1, by: /** @type {Record<string, [number, number]>} */ ({
+  quartermaster: [1.05, 1.24], goblin_chief: [1.0, 1.0], redhand_captain: [1.05, 1.12], rat_king: [1.05, 1.09], spider_queen: [1.05, 1.15],
+  robed_stranger: [1.05, 1.18], standard: [1.05, 1.33], toadking: [1.05, 1.72], vatwarden: [1.05, 1.6], drowned_choir: [1.0, 1.3],
+  abbess_below: [1.05, 1.96], foreman: [1.05, 1.48], weighmaster: [1.05, 1.45], oruth: [1.05, 1.24], stoker: [1.05, 1.54],
+  harbourmaster: [1.05, 1.6], hesk: [1.05, 1.45], champion: [1.02, 1.0], lucan: [1.05, 1.27],
+}) };
+/** a boss's tuning, its kind and entry (a hall's: BOSS_TUNE; a region's or a warden's: none) @param {string} k @param {any} B */
+const tuneOf = (k, B) => { if (!B || B.event || B.tower || k.startsWith('warden_')) return null; const t = BOSS_TUNE.by[k]; return { hp: (t ? t[0] : 1) * BOSS_TUNE.hp, atk: (t ? t[1] : 1) * BOSS_TUNE.atk }; };
 export const BOSSES = {
   redhand_captain: { name: 'Captain Garrow', like: 'brute', hp: 22, atk: 2.3, def: 1.6, speed: 3.0, xp: 12, gold: 30, mech: 'call', escort: ['cutthroat', 'crossbow'], once: true, heirloom: 'garrows_due' },
   robed_stranger: { name: 'The Robed Stranger', like: 'acolyte', hp: 38, atk: 2.8, def: 2.5, xp: 12, gold: 25, mech: 'kindle', escort: ['minion', 'minion'], once: true },
@@ -531,6 +547,12 @@ export const HOLDS = /** @type {const} */ (['stun', 'frozen', 'knocked']), BOSS_
 /** how long a hold or a root of s seconds lasts on this foe: a boss half, an elite and the rest the full time; in the Bowl
  *  a company's member its bout's share (ccK, BOUT.cc) @param {any} e @param {number} s */
 export const ccTime = (e, s) => (e.boss ? s * BOSS_CC : e.ccK ? s * e.ccK : s);
+// (the owner, 2026-11-28, after the boss crowd-control measure: a slow holds a boss as a hold does, half; a slow also
+// halves a foe's swings, so a Blizzard under a boss that stands its ground halved what he dealt for its whole span)
+/** a slow's span on a foe (a boss half) @param {any} e @param {number} s */
+export const slowTime = (e, s) => (e.boss ? s * BOSS_CC : s);
+/** a planted field's slow on a foe (a boss feels half of it: 0.5 → 0.75) @param {any} e @param {number} k */
+export const fieldSlowOf = (e, k) => (e.boss ? 1 - (1 - k) * BOSS_CC : k);
 // The Bowl (GDD §17 v1.85, docs/bowl-arena-proposal.md): a bout's rules, BOUT, live in modes.js with every kind of
 // play's (tuned by tools/balance/bowl.mjs: two healers otherwise outlast every clock); re-exported here, as it was
 export { BOUT };
@@ -756,9 +778,9 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
    * @param {number} x @param {number} y @param {number} tough @param {boolean} elite @param {any} F @param {any} [B] */
   function foe(w, k, lvl, x, y, tough, elite, F, B = null) {
     const scale = 1 + 0.14 * (lvl - 1), atkScale = 1 + 0.12 * (lvl - 1), E = ENEMIES[B ? B.like : k], M = mode();   // (M.foeHp, foeAtk: a raid's tougher foes, modes.js)
-    const hp = Math.round(E.hp * scale * tough * (elite ? 2.5 : 1) * (B ? B.hp : 1) * foeHpOf(M, lvl));
+    const T = tuneOf(k, B), hp = Math.round(E.hp * scale * tough * (elite ? 2.5 : 1) * (B ? B.hp : 1) * (T ? T.hp : 1) * foeHpOf(M, lvl));
     const u = { id: nextId++, kind: k, undead: B ? !!B.undead : F.undead(k), elite: elite || !!B, lvl, x, y, hp, maxHp: hp,
-      atk: E.atk * atkScale * tough * (elite ? 1.3 : 1) * (B ? B.atk : 1) * M.foeAtk, def: E.def * scale * (B ? B.def : 1),
+      atk: E.atk * atkScale * tough * (elite ? 1.3 : 1) * (B ? B.atk : 1) * (T ? T.atk : 1) * M.foeAtk, def: E.def * scale * (B ? B.def : 1),
       crit: E.crit, dodge: E.dodge, interval: E.interval, range: B && B.range ? B.range : E.range, speed: B && B.speed ? B.speed : E.speed, bolt: E.bolt, shield: !B && !!E.shield,
       xp: E.xp * (elite ? 3 : 1) * (B ? B.xp : 1), gold: E.gold * (elite ? 4 : 1) * (B ? B.gold : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 };
     if (B && B.body) { u.body = B.body; u.anchor = true; }   // (the Kingstone: ground it stands on, never shoved)
@@ -1572,7 +1594,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       const A = f.A; f.t -= dt; f.acc += dt;
       if (f.id === 'blades') { if (!alive(f.by)) { f.t = 0; continue; } f.x = f.by.x; f.y = f.by.y; }   // (they circle their fighter)
       const foes = foesOf(f.by, w), friends = allies(f.by);
-      if (A.slowK) for (const o of within(foes, f.x, f.y, f.r)) o.fieldSlow = Math.min(o.fieldSlow, A.slowK);
+      if (A.slowK) for (const o of within(foes, f.x, f.y, f.r)) o.fieldSlow = Math.min(o.fieldSlow, fieldSlowOf(o, A.slowK));
       if (f.id === 'sanctuary') for (const q of friends) if (alive(q) && !f.seen.includes(q.id) && hypot(q.x - f.x, q.y - f.y) < f.r) {   // a ward as they step in
         f.seen.push(q.id); const n = Math.round(statsFor(q).maxHp * A.ward * f.mult); if (n > (q.ward || 0)) { q.ward = n; bus.emit('combat', { t: 'ward', x: q.x, y: q.y, amount: n }); }
       }
@@ -1745,7 +1767,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       pick: (m, A, foes, _w, F) => { const k = knot(foes, m, F.range, A.radius, 2); return k && within(foes, k.x, k.y, A.radius).some((o) => hypot(o.x - k.x, o.y - k.y) > 2) ? k : null; },   // (two at least, always: there's nobody to draw to one)
       land(m, A, mult, tgt, w) {
         const hit = within(foesOf(m, w), tgt.x, tgt.y, A.radius), aS = skillStats(m); skillEv(A, 'land', m, tgt, false, hit);
-        for (const o of hit) { shove(o, tgt.x, tgt.y, A.pull); strikeAt(aS, o, A.power * mult, w, false); o.slow = Math.max(o.slow || 0, A.slow); }
+        for (const o of hit) { shove(o, tgt.x, tgt.y, A.pull); strikeAt(aS, o, A.power * mult, w, false); o.slow = Math.max(o.slow || 0, slowTime(o, A.slow)); }
       },
     },
     // Glacial Tomb: a knot of two within reach, or a boss or elite winding up a heavy blow. Never on ice that hasn't
@@ -1905,7 +1927,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     } else if (A.kind === 'nova') {
       const aS = { ...statsFor(m), lvl: m.level, src: m };
       const at = A.thrown && tgt ? { x: tgt.x, y: tgt.y } : m, hit = novaTargets(A, foesOf(m, w), at); skillEv(A, 'land', m, A.thrown ? tgt : m, !A.thrown, hit);   // (a thrown nova bursts where its knot stood when it was thrown)
-      for (const o of hit) { applyHit(aS, o, resolve(aS, defRaw(o), A.power * mult), isMember(o), w, true); o.slow = A.slow; }
+      for (const o of hit) { applyHit(aS, o, resolve(aS, defRaw(o), A.power * mult), isMember(o), w, true); o.slow = slowTime(o, A.slow); }
       bus.emit('combat', { t: 'heavy', x: m.x, y: m.y, party: false });
     } else if (TIER[A.kind]) TIER[A.kind].land(m, A, mult, tgt, w);
   }
