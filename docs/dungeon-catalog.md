@@ -233,6 +233,8 @@ These are three bands of five. Every site name is canon (world doc §3.7).
 
 ### 4.5 The Greenwood (46–60, Act V, *The Unpaid*): proposed
 
+*(2026-11-28: the forest kit, `greenwood`, is placed as the Root Granary's first floor, and optionally Hollin Ford Barn's: [new-dungeons-plan.md](./new-dungeons-plan.md) §1, §4.3–4.4.)*
+
 These are three bands of five. Every site name is canon (world doc §3.8).
 
 | | Dungeon | Archetype | Kits | Chapter beat |
@@ -252,6 +254,8 @@ These are three bands of five. Every site name is canon (world doc §3.8).
     secret's door.
 
 ### 4.6 The Pale Heights (61–72, then the Throne, Act VI): proposed
+
+*(2026-11-28: the ice kits are placed: `pass` and `gully` for the Pilgrims' Stair in place of the ramparts with snow, and `frostkeep` for the Praetory's first floor in place of the barracks with ice: [new-dungeons-plan.md](./new-dungeons-plan.md) §1, §4.1–4.2.)*
 
 These are three bands of four, then the finale at 73–75. Every site name is canon (world doc §3.4) unless marked.
 
