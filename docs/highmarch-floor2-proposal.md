@@ -1,6 +1,6 @@
 # Highmarch's second floor: a proposal
 
-*2026-11-28 · **Implemented** (option A). The owner: "Go with your recommendations, call it the seventh tower, just a stand, the glass keep is the right place, leave floor 1 as is." Built: plans.js `highmarch` floor 2 *The Seventh Tower* (yard `ramparts`, muster hall `barracks` drawn grey as convert.js `towerhall`, steward's room `quota`, tower chapel `crypt`, roof `ramparts` with `signal_stand`); the palace floor parked as `glass_keep`; world doc v1.81, GDD v1.166. Not yet built: the drowned fleet's lanterns below the roof and the sea under it (§6). Earlier: The owner: "The seventh voice quest is in a dungeon but the second floor looks like a
+*2026-11-28 · **Implemented** (option A). The owner: "Go with your recommendations, call it the seventh tower, just a stand, the glass keep is the right place, leave floor 1 as is." Built: plans.js `highmarch` floor 2 *The Seventh Tower* (yard `ramparts`, muster hall `barracks` drawn grey as convert.js `towerhall`, steward's room `quota`, tower chapel `crypt`, roof `ramparts` with `signal_stand`); the palace floor parked as `glass_keep`; world doc v1.81, GDD v1.166. The art pass the same day: the sea under the tower and the drowned fleet in it, their lanterns going out as Lucan sits down (§7). Earlier: The owner: "The seventh voice quest is in a dungeon but the second floor looks like a
 palace.. the setting doesnt feel right for tollhaven area and what is in the first floor.. propose something different.
 We could use the palace level later near the end of the game".*
 
@@ -189,8 +189,42 @@ work is the look.
   - the chapel is the crypt.
 - **The sim:** the same rooms, levels, foes and bosses, so balance stands. The rooms' ids are new (`the_tower_yard`,
   `the_muster_hall`, `the_stewards_room`, `the_tower_chapel`, `the_roof`); nothing saved held the old ones.
-- **Left for an art pass:**
-  - **The roof reads as a walled terrace at night,** not yet over the sea. The marsh and the sea below it are still to come.
-  - **The drowned fleet's stern-lanterns going out** as Lucan sits down are not built yet.
+- **Left for an art pass** (the first two done in §7):
+  - ~~**The roof reads as a walled terrace at night,** not yet over the sea.~~
+  - ~~**The drowned fleet's stern-lanterns going out** as Lucan sits down are not built yet.~~
   - **The ramparts' houses and misty drop** don't come through on this floor: the rooms stand too close for the street
-    behind them.
+    behind them. (Still so; the sea below now fills the drop instead.)
+
+## 7. The art pass: the sea and the fleet (2026-11-28)
+
+The owner: "Do the follow up art pass".
+
+![The roof, lanterns lit while Lucan sings (left) and out once he has sat down (right)](img/highmarch/roof-fleet.jpg)
+
+- **The sea under the tower.** The salt marsh at high water lies six units under the floor, past every parapet. It is a
+  dark sheet with a breath of the walls' mist a little over it, and it shows wherever the drop does. The roof now reads
+  as high over water, not as a walled yard on the ground.
+  - Built in `tools/render3d/world.js` as `fleetsea`; the converter sets the height (`SEA_Y`).
+- **The drowned fleet.** Five ships ride below the roof's south and east parapets, three to eight units out. Each is
+  turned and sized by its own hash.
+  - Each ship has a tarred hull, a raised stern, two masts with their yards and rags of sail.
+  - At the taffrail is a stern-lantern on its post, with its own small light pooling on the water and the hull.
+  - Built as `fleethull`; placed by convert.js `fleetPieces`.
+- **The lanterns go out.** The fleet is its own set piece, `{ fleet: { lit, pieces } }`.
+  - hybrid.js checks it every 20 frames against the story: lit while Lucan sings; out once he is spared (sitting on
+    the stand's steps), and still out on any later visit (`lucan_gone`).
+  - The swap rebuilds the floor's set pieces once, as an opened chest does.
+  - The look is canon's letter 6: the bound keep their stations as long as the stern-lantern is lit.
+- **Round 1 → 2:**
+  - The sea went from nine units down to six, and the ships from 4.5–12 units out to 2.6–7.5. At first only one mast
+    tip came into a phone's frame from the roof.
+  - The hulls went to half their wood's tone, from a third: at a third they read black on the black water.
+- **How it was checked:**
+  - `node tools/capture/rig.mjs` with the roof's shots (`at: "part:the_roof@dx,dy"`, new: an offset from the room's
+    middle), lit, then out (`flags: {"lucan_gone": true}`, new: the story as of a shot).
+  - `visibility.mjs highmarch-f2`: 7 subjects, 0 under half in view.
+  - `npm run check`: 879 pass.
+  - No sim change: balance and replays are untouched.
+- **Cost:** the floor gains two planes, five merged hulls and five small point lights (the roof's floor only). This was
+  not measured on a phone.
+

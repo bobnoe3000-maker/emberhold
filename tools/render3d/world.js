@@ -588,6 +588,7 @@ function skull(b, p, u, y, s, v) {
   b.box(cryptDark, sz(p, 0.16 * s, 0.24 * s, 0.05 * s), { at: on(p, u, y - 0.48 * s, v + 0.72 * s) });   // (the nose)
 }
 let countGlass = null;   // (the counting house's cool lamp glass: buildTavern clamp)
+let fleetWater = null, fleetHaze = null;   // (the Seventh Tower's sea and its haze: buildTavern 'fleetsea')
 let tavernGlass = null, tavernWeb = null, tavernWebFill = null, tavernEmber = null, tavernNight = null, tavernNightHi = null, tavernStar = null, tavernGrime = null;
 // the Seventh's Palace's cloth (docs/art-critic-pass-palace.md), tints on its pale weave: the household's blue (a march
 // kingdom's, gold on it), then the legions' in the hall of banners, every one the empire raised and some it never did:
@@ -1427,6 +1428,36 @@ function buildTavern(pieces) {
       b.tinted([0.62, 0.48, 0.34], () => { for (let r = 0; r < 3; r++) for (let k = 0; k < 4 - r; k++) b.tube('furniture_wood', [p.x + 1.45, FL + 0.14 + r * 0.24, p.z - 0.5 + k * 0.26 + r * 0.13], [p.x + 2.4, FL + 0.14 + r * 0.24, p.z - 0.5 + k * 0.26 + r * 0.13], 0.12, 0.12, { segments: 6 }); });   // (split logs)
       b.tinted([0.76, 0.6, 0.42], () => b.box('furniture_wood', [1.1, 0.06, 0.5], { at: [p.x - 1.75, FL + 0.9, p.z + 0.3] }));
       b.tinted([1.05, 0.72, 0.42], () => { for (let k = 0; k < 4; k++) b.lathe('linen', [{ y: 0, r: 0.14 }, { y: 0.08, r: 0.13 }, { y: 0.12, r: 0 }], { segments: 8, at: [p.x - 2.15 + k * 0.26, FL + 0.93, p.z + 0.3] }); });   // (the loaves on their board)
+    } else if (p.k === 'fleetsea') {
+      // (v1.166, the Seventh Tower's roof: docs/highmarch-floor2-proposal.md §6) the salt marsh at high water far below the
+      // tower, the drowned fleet riding in it: one dark sheet at p.y over the whole floor and well past it (the void past
+      // the roof's parapet shows it), a breath of the walls' mist a little over it
+      const PD = 60, W = p.W, D = p.D;
+      fleetWater ||= new THREE.MeshStandardMaterial({ color: '#16222e', roughness: 0.32, metalness: 0.1 });
+      const sea = new THREE.Mesh(new THREE.PlaneGeometry(W + 2 * PD, D + 2 * PD), fleetWater); sea.rotation.x = -Math.PI / 2; sea.position.set(W / 2, p.y, D / 2); sea.receiveShadow = true; sea.castShadow = false; sea.updateMatrixWorld(true); loose.push(sea);   // (loose: whole, no shadow of its own)
+      fleetHaze ||= new THREE.MeshBasicMaterial({ color: '#3c4a5a', transparent: true, opacity: 0.32, depthWrite: false });
+      const haze = new THREE.Mesh(new THREE.PlaneGeometry(W + 2 * PD, D + 2 * PD), fleetHaze); haze.rotation.x = -Math.PI / 2; haze.position.set(W / 2, p.y + 1.6, D / 2); haze.castShadow = haze.receiveShadow = false; haze.updateMatrixWorld(true); loose.push(haze);
+    } else if (p.k === 'fleethull') {
+      // one of the drowned fleet's ships riding below the tower (`lit`: her stern-lantern burning, as long as the song
+      // holds them; out once Lucan sits down, hybrid.js): a tarred hull with a raised stern, two masts with their yards,
+      // rags of sail, the lantern on its post at the taffrail. In her own frame (x stern-ward), turned p.ry, scaled p.s
+      const S = p.s || 1, c = Math.cos(p.ry || 0), sn = Math.sin(p.ry || 0);
+      b.pushMatrix(new THREE.Matrix4().makeTranslation(p.x, p.y, p.z).multiply(new THREE.Matrix4().makeRotationY(p.ry || 0)).multiply(new THREE.Matrix4().makeScale(S, S, S)));
+      b.tinted([0.5, 0.44, 0.38], () => {   // (round 1: at a third of the wood's own tone the hulls went to black on the black water)
+        b.box('furniture_wood', [4.4, 1.1, 1.3], { at: [0, 0.15, 0] });   // (her body, low in the water)
+        b.box('furniture_wood', [1.1, 0.7, 0.9], { at: [-2.6, 0.32, 0], rot: [0, 0, 0.18] });   // (the bow running up and in)
+        b.box('furniture_wood', [1.3, 0.8, 1.36], { at: [1.65, 0.95, 0] });   // (the stern castle)
+      });
+      b.tinted([0.5, 0.46, 0.4], () => { b.box('furniture_wood', [4.2, 0.06, 1.18], { at: [-0.1, 0.66, 0] }); b.box('furniture_wood', [1.24, 0.06, 1.24], { at: [1.65, 1.36, 0] }); });   // (her decks, salt-grey)
+      b.tinted([0.4, 0.36, 0.32], () => {
+        for (const [x, h] of [[-0.9, 3.4], [0.5, 2.6]]) { b.tube('furniture_wood', [x, 0.66, 0], [x, 0.66 + h, 0], 0.07, 0.05, { segments: 6 }); b.box('furniture_wood', [0.08, 0.08, 1.7 * (h / 3.4)], { at: [x, 0.66 + h * 0.82, 0] }); }
+        b.tube('furniture_wood', [-2.9, 0.62, 0], [-3.9, 1.1, 0], 0.05, 0.03, { segments: 5 });   // (the bowsprit)
+      });
+      b.tinted([0.56, 0.6, 0.56], () => { b.box('linen', [0.04, 1.1, 1.2], { at: [-0.9, 3.0, 0.05], rot: [0.12, 0, 0] }); b.box('linen', [0.04, 0.7, 0.8], { at: [0.5, 2.5, -0.04], rot: [-0.1, 0, 0] }); });   // (rags of sail)
+      b.tinted(TAV_IRON, () => b.tube('metal', [2.32, 1.36, 0], [2.32, 2.2, 0], 0.035, 0.03, { segments: 5 }));
+      b.box(p.lit ? (tavernGlass ||= new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffb45e').multiplyScalar(2.2), fog: false })) : cryptDark, [0.26, 0.32, 0.26], { at: [2.32, 2.34, 0] });   // (the stern-lantern)
+      b.pop();
+      if (p.lit) { const L = new THREE.PointLight('#ffb060', 3.2, 6.5, 2); L.position.set(p.x + c * 2.32 * S, p.y + 2.5 * S, p.z - sn * 2.32 * S); loose.push(L); }   // (its pool on the water and the hull)
     } else if (p.k === 'harbourmist') {
       // the harbour's mist: one sheet over the water at a hand over its surface, clear at the decks' edges and thick from
       // six tiles out (its alpha by each tile's distance from a deck: convert.js docksDress), faded out at the sheet's own
@@ -2740,6 +2771,7 @@ async function placeEnv(list, region) {
     if (p.canvas) { standOurs(p); continue; }
     if (p.arch) { const g = buildArch(p.arch); game.engine.scene.add(g); envSprites.push(g); continue; }
     if (p.tavern) { const g = buildTavern(p.tavern.pieces); game.engine.scene.add(g); envSprites.push(g); continue; }
+    if (p.fleet) { const g = buildTavern(p.fleet.pieces.map((q) => (q.k === 'fleethull' ? { ...q, lit: p.fleet.lit } : q))); game.engine.scene.add(g); envSprites.push(g); continue; }   // (the Seventh Tower's drowned fleet, its lanterns lit or out: hybrid.js)
     if (p.seaMask) { seaMask = p.seaMask; if (seaLv) seaAir(seaLv, seaRegion, true); continue; }
     if (p.magma) { const g = buildMagma(p.magma.cells); game.engine.scene.add(g); envSprites.push(g); continue; }
     if (p.pass) { const g = buildPass(p.pass.pieces); game.engine.scene.add(g); envSprites.push(g); continue; }   // (the pass's ledges and the Praetory's frost: docs/pass-dungeon.md)
@@ -4839,7 +4871,7 @@ function levelKey(o) {
 }
 
 /** our art's list as a key: what stands where (a chest opened is another prop's canvas, an id of its own: hybrid.js) */
-const envKeyOf = (list) => levelKey(list.map((q) => [q.id, q.x, q.z, q.prop || '', q.arch ? 1 : 0, q.tavern ? q.tavern.pieces.length : 0]));
+const envKeyOf = (list) => levelKey(list.map((q) => [q.id, q.x, q.z, q.prop || '', q.arch ? 1 : 0, q.tavern ? q.tavern.pieces.length : 0, q.fleet ? (q.fleet.lit ? 1 : 2) : 0]));
 
 /** the frame's API, for src/render3d/hybrid.js */
 const api = {

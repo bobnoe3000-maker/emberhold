@@ -18,7 +18,7 @@
 // presets: vale-rooms (every space of the Vale's authored dungeon floors, at: "part:<id>"), vale (the Hollow Vale for art critic pass 19: Thornwick and the Vale at each hour, a fighting room on six
 // dungeon floors), vale-hours, vale-dungeons, smoke (one of each). A shots file is a JSON array of
 //   { "name": "barrows-f1", "scene": "dungeon", "site": "barrows", "floor": 1, "region": "vale",
-//     "tod": "dusk", "crop": [w, h] (CSS px round what "at" stood by: a chest), "at": "room" | "medium" | "entrance" | "spawn" | "chest" | "part:<plan space id>" | [x, y], "hud": false, "bright": 1.2 }
+//     "tod": "dusk", "crop": [w, h] (CSS px round what "at" stood by: a chest), "flags": { id: true } (the story as of the shot: set before it settles), "at": "room" | "medium" | "entrance" | "spawn" | "chest" | "part:<plan space id>[@dx,dy]" | [x, y], "hud": false, "bright": 1.2 }
 // (bright: Luminati's brightness on top of the Vale's grade, world.js settings({ bright }); 1 when left out. set: any
 // other world.js settings for the shot, e.g. { "figLit": 1.2 }. --stats: each shot's world.js stats in the log)
 // Out: <out>/<renderer>/<name>.png, and with --sheet <out>/sheet.jpg (a row a shot, a column a renderer). With no
@@ -86,8 +86,9 @@ const PAGE = {
   },
   /** the hour held, the party stood (the spawn, or found as tools/dungeon/capture.mjs finds them: the first fighting room,
    *  a medium room), then a few frames to settle (a page function: each is sent to the page on its own) */
-  prep([tod, at, n, bright, set]) {
+  prep([tod, at, n, bright, set, flags]) {
     globalThis.__tod(tod);
+    if (flags) Object.assign((globalThis.__sim.state.flags ||= {}), flags);   // ("flags": the story as of that shot, e.g. {"lucan_gone": true}: the Seventh Tower's lanterns out)
     globalThis.__world3d?.world?.settings({ bright: bright || 1, ...set });
     const sim = globalThis.__sim, w = sim.world, P = sim.state.player;
     let x = P.x, y = P.y;
@@ -101,9 +102,10 @@ const PAGE = {
       if (c) [x, y] = [c[0] + 0.5 - 2, c[1] + 0.5 + 2.5];
     } else if (w.kind === 'dungeon' && at !== 'spawn') {
       const L = w.level, lv = w.roomLevels;
-      const pick = typeof at === 'string' && at.startsWith('part:') ? L.rooms.find((r) => r.part === at.slice(5)) : at === 'entrance' ? L.entrance : at === 'medium' ? L.rooms.find((r) => r.size === 'medium' && r !== L.entrance && r !== L.descentRoom)
+      const [atPart, off] = typeof at === 'string' && at.startsWith('part:') ? at.slice(5).split('@') : [null, null], [odx, ody] = off ? off.split(',').map(Number) : [0, 0];   // ("part:<id>@dx,dy": that far from the room's middle)
+      const pick = atPart ? L.rooms.find((r) => r.part === atPart) : at === 'entrance' ? L.entrance : at === 'medium' ? L.rooms.find((r) => r.size === 'medium' && r !== L.entrance && r !== L.descentRoom)
         : L.rooms.filter((r) => r !== L.entrance).sort((a, b) => (lv.get(a.id) - lv.get(b.id)) || (Math.hypot(a.cx - L.entrance.cx, a.cy - L.entrance.cy) - Math.hypot(b.cx - L.entrance.cx, b.cy - L.entrance.cy)))[0];
-      if (pick) { x = pick.cx + 0.5; y = pick.cy + 2.5; }
+      if (pick) { x = pick.cx + 0.5 + odx; y = pick.cy + 2.5 + ody; }
     }
     P.x = P.px = x; P.y = P.py = y;
     sim.state.party.forEach((m, i) => { if (m !== P) { m.x = m.px = x + 1.2 * i; m.y = m.py = y + 1; } });
@@ -146,11 +148,11 @@ async function run(renderer) {
   // a warm-up shot, thrown away: the first frame shot after the page loads came out under-exposed (the Barrow Mouth read
   // 13 first and 27 when shot again last in the same run: Luminati's lights and exposure still coming up)
   await p.evaluate(PAGE.goTo, SHOTS[0]).catch(() => false);
-  await p.evaluate(PAGE.prep, [SHOTS[0].tod || null, SHOTS[0].at || 'spawn', SETTLE * 3, SHOTS[0].bright || 1, SHOTS[0].set || {}]);
+  await p.evaluate(PAGE.prep, [SHOTS[0].tod || null, SHOTS[0].at || 'spawn', SETTLE * 3, SHOTS[0].bright || 1, SHOTS[0].set || {}, SHOTS[0].flags || null]);
   await p.evaluate(PAGE.take);
   for (const s of SHOTS) {
     const ok = await p.evaluate(PAGE.goTo, s).catch((e) => (errs.push(String(e)), false));
-    await p.evaluate(PAGE.prep, [s.tod || null, s.at || 'spawn', SETTLE, s.bright || 1, s.set || {}]);
+    await p.evaluate(PAGE.prep, [s.tod || null, s.at || 'spawn', SETTLE, s.bright || 1, s.set || {}, s.flags || null]);
     const file = join(OUT, renderer, `${s.name}.png`);
     if (s.hud) await p.screenshot({ path: file, timeout: 300000 });
     else await writeFile(file, Buffer.from((await p.evaluate(PAGE.take, s.crop || null)).split(',')[1], 'base64'));

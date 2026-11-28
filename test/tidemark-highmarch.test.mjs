@@ -37,7 +37,7 @@ test('Highmarch: a band of five on the Tidemark, its plan to the rules, the wall
   assert.equal(S.region, 'tidemark'); assert.equal(levelBand('highmarch'), '41–45');
   assert.equal(bossAt('highmarch', 0), 'champion'); assert.equal(bossAt('highmarch', 1), 'lucan');
   assert.deepEqual(checkPlan(P), []);
-  assert.deepEqual(P.floors.map((f) => [...new Set(f.spaces.map((s) => s.kit))]), [['ramparts'], ['ramparts', 'barracks', 'quota', 'crypt', 'fortwall']]);   // (v1.166: the tower, not the palace: its yard in the open, its hall and counting room, its chapel, its roof over the sea)
+  assert.deepEqual(P.floors.map((f) => [...new Set(f.spaces.map((s) => s.kit))]), [['ramparts'], ['ramparts', 'barracks', 'quota', 'crypt']]);   // (v1.166: the tower, not the palace: its yard and roof the walls' ramparts, its hall and counting room, its chapel)
   assert.deepEqual(P.floors.map((f) => [Math.min(...f.spaces.map((s) => s.lv)), Math.max(...f.spaces.map((s) => s.lv))]), [[0, 2], [3, 4]]);
   assert.ok(P.floors[1].spaces.some((s) => s.id === 'the_stewards_room' && s.role === 'offshoot'), 'the Kindler\'s letters');
   assert.ok(DRESS.palace, 'the palace kit'); assert.ok(DRESS.tower, 'the tower\'s');

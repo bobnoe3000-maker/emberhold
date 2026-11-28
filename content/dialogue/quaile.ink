@@ -204,7 +204,7 @@ You tell Hester about the bridge: eight crews up the road, the League's three ho
 { with_maren == 1: "Maren means to go. She told me so in writing, which is new. I'd rather she went with you than on her own." }
 "There's a toll on the Highmarch road, a silver penny a head. I'll waive yours and bill Lucanus."
 + [We'll go into Highmarch. #mark: quest]
-    "North up the Highmarch road, where it leaves the coast road this side of the bridge. In at the breach. His Champion holds the walls, and at the end of them is his tower. He'll be up on the roof, I expect, practising with the cushion." # quest: accept ch4_seventh_voice
+    "North up the Highmarch road, where it leaves the coast road this side of the bridge. In at the breach. His Champion holds the walls, and at the end of them is his tower. He'll be up on the roof, I expect, practising his coronation on the gulls." # quest: accept ch4_seventh_voice
     { boss_lucan == 1: "You've been in already? Then go back and hear what he has to say for himself. I want it word for word." }
     -> quaile_topics
 + [Not yet.]
