@@ -18626,10 +18626,10 @@ function Bd(e = {}) {
 		.03,
 		.022,
 		.045
-	], [6, 4]), `paw${e}`, n), t.part(W(U(.12 * e, .47, -.28), [
-		.06,
-		.09,
-		.08
+	], [6, 4]), `paw${e}`, n), t.part(W(U(.105 * e, .45, -.28), [
+		.055,
+		.105,
+		.085
 	], [8, 6]), `legU${e}`, a), t.part(G(U(.12 * e, .44, -.28), U(.12 * e, .3, -.24), .045, .03), `legU${e}`, a), t.part(G(U(.12 * e, .3, -.24), U(.12 * e, .1, -.38), .028, .022), `legL${e}`, n), t.part(G(U(.12 * e, .1, -.38), U(.12 * e, .02, -.33), .022, .02), `foot${e}`, n), t.part(W(U(.12 * e, .02, -.3), [
 		.028,
 		.02,
@@ -18647,55 +18647,79 @@ function Bd(e = {}) {
 	};
 }
 function Vd(e, { drop: t = .36 } = {}) {
-	let n = (e, t = 1) => {
-		let n = {};
-		for (let r of [1, -1]) for (let [i, a, o] of [[
-			`armU${r}`,
-			`armL${r}`,
-			r > 0 ? 0 : .12
+	let n = (t, n) => {
+		let r = e.by.get(t).userData.at, i = e.by.get(n).userData.at, a = i.y - r.y, o = i.z - r.z;
+		return {
+			R: Math.hypot(a, o),
+			f0: Math.atan2(o, -a)
+		};
+	}, r = {
+		arm: n("armU1", "paw1"),
+		leg: n("legU1", "foot1")
+	}, i = .56, a = .165, o = (e, t = 1) => {
+		let n = {}, o = 0, s = 0;
+		for (let c of [1, -1]) for (let [l, u, d, f] of [[
+			`armU${c}`,
+			`armL${c}`,
+			`paw${c}`,
+			c > 0 ? 0 : .5
 		], [
-			`legU${r}`,
-			`legL${r}`,
-			r > 0 ? .5 : .62
+			`legU${c}`,
+			`legL${c}`,
+			`foot${c}`,
+			c > 0 ? .53 : .03
 		]]) {
-			let r = J(e + o), s = Math.max(0, Md(e + o)), c = i.startsWith("arm");
-			n[i] = K(-.7 * t * r, 0, 0), n[a] = K((c ? 1 : -1) * t * s, 0, 0);
+			let c = ((e - f) % 1 + 1) % 1, p = l.startsWith("arm"), { R: m, f0: h } = p ? r.arm : r.leg, g, _ = 0;
+			if (c < i) g = Math.asin(a * (1 - 2 * c / i) / m);
+			else {
+				let e = (c - i) / .43999999999999995;
+				g = Math.asin(a / m) * (-1 + 2 * Nd(0, 1, e)), _ = Math.sin(Math.PI * Math.min(1, e * 1.15));
+			}
+			let v = h - g;
+			v *= t, _ *= t, c < i && (o += m * (Math.cos(h) - Math.cos(g)), s++), n[l] = K(v, 0, 0), p ? (n[u] = K(1.05 * _, 0, 0), n[d] = K(-v - .35 * _, 0, 0)) : (n[u] = K(.55 * _, 0, 0), n[d] = K(-v - 1 * _, 0, 0));
 		}
-		return n;
-	}, r = (e, t = .2, n = 1) => ({
+		return {
+			q: n,
+			sink: s ? o / s : 0
+		};
+	}, s = (e, t = .2, n = 1) => ({
 		tail1: K(.15, t * J(n * e), 0),
 		tail2: K(.1, t * J(n * e - .15), 0),
 		tail3: K(0, t * J(n * e - .3), 0)
 	});
 	return [
 		q(e, "Idle", 3, (e) => {
-			let t = J(e * 6), n = Y(.4, .5, .75, e), i = J((e - .4) / .35 * .5 + .25) * n;
+			let t = J(e * 6), n = Y(.4, .5, .75, e), r = J((e - .4) / .35 * .5 + .25) * n;
 			return {
 				q: {
-					...r(e, .25, 2),
-					chest: K(.02 * t, .1 * i, 0),
-					neck: K(-.1 + .03 * t, .3 * i, 0),
-					head: K(.05, .3 * i, 0),
+					...s(e, .25, 2),
+					chest: K(.02 * t, .1 * r, 0),
+					neck: K(-.1 + .03 * t, .3 * r, 0),
+					head: K(.05, .3 * r, 0),
 					jaw: K(.25 + .12 * Math.max(0, J(e * 12)), 0, 0)
 				},
 				p: { root: U(0, .004 * t, 0) }
 			};
 		}),
-		q(e, "Walk", .4, (e) => ({
-			q: {
-				...n(e),
-				...r(e, .15, 1),
-				root: K(.08 * J(e), 0, 0),
-				neck: K(.06 * J(e * 2), 0, 0),
-				jaw: K(.3, 0, 0)
-			},
-			p: { root: U(0, .03 * Math.abs(J(e)), 0) }
-		})),
+		q(e, "Walk", .4, (e) => {
+			let t = o(e), n = J(e);
+			return {
+				q: {
+					...t.q,
+					...s(e, .12, 1),
+					root: K(0, 0, .025 * n),
+					neck: K(.02 * Md(2 * e), .03 * n, 0),
+					head: K(-.02 * Md(2 * e), -.03 * n, 0),
+					jaw: K(.3, 0, 0)
+				},
+				p: { root: U(0, -t.sink, 0) }
+			};
+		}, 90),
 		q(e, "Attack", .55, (e) => {
 			let t = Y(0, .15, .3, e), n = Y(.2, .42, .8, e);
 			return {
 				q: {
-					...r(e, .3, 2),
+					...s(e, .3, 2),
 					root: K(-.1 * t + .12 * n, 0, 0),
 					neck: K(.3 * n - .3 * t, 0, 0),
 					head: K(-.2 * n, 0, 0),
@@ -18710,7 +18734,7 @@ function Vd(e, { drop: t = .36 } = {}) {
 			let t = Y(.1, .35, .8, e);
 			return {
 				q: {
-					...r(e, .25),
+					...s(e, .25),
 					neck: K(.15 * t, .5 * t, 0),
 					head: K(0, .4 * t, .3 * t),
 					jaw: K(.2 + .7 * Y(.15, .3, .45, e), 0, 0),
@@ -18720,24 +18744,24 @@ function Vd(e, { drop: t = .36 } = {}) {
 			};
 		}),
 		q(e, "Heavy", .9, (e) => {
-			let t = Y(0, .25, .38, e), i = Y(.3, .55, .85, e);
+			let t = Y(0, .25, .38, e), n = Y(.3, .55, .85, e);
 			return {
 				q: {
-					...n(.25, .8 * i),
-					...r(e, .4),
-					root: K(.2 * t - .35 * i + .2 * Y(.6, .75, .95, e), 0, 0),
-					jaw: K(.2 + .8 * i, 0, 0),
+					...o(.25, .8 * n).q,
+					...s(e, .4),
+					root: K(.2 * t - .35 * n + .2 * Y(.6, .75, .95, e), 0, 0),
+					jaw: K(.2 + .8 * n, 0, 0),
 					legU1: K(.6 * t, 0, 0),
 					"legU-1": K(.6 * t, 0, 0)
 				},
-				p: { root: U(0, -.06 * t + .22 * i, .45 * Nd(.3, .75, e)) }
+				p: { root: U(0, -.06 * t + .22 * n, .45 * Nd(.3, .75, e)) }
 			};
 		}),
 		q(e, "Hit", .4, (e) => {
 			let t = Y(0, .25, 1, e);
 			return {
 				q: {
-					...r(e, .5, 2),
+					...s(e, .5, 2),
 					neck: K(-.3 * t, .3 * t, 0),
 					head: K(-.2 * t, 0, 0),
 					jaw: K(.4 * t, 0, 0)
@@ -18756,7 +18780,7 @@ function Vd(e, { drop: t = .36 } = {}) {
 					"armU-1": K(.3 * n, 0, 0),
 					legU1: K(.4 * n, 0, 0),
 					"legU-1": K(-.3 * n, 0, 0),
-					...r(0, 0)
+					...s(0, 0)
 				},
 				p: { root: U(0, -t * n, 0) }
 			};
@@ -18765,7 +18789,7 @@ function Vd(e, { drop: t = .36 } = {}) {
 			let t = Y(.1, .4, .9, e);
 			return {
 				q: {
-					...r(e, .2),
+					...s(e, .2),
 					neck: K(-.9 * t, 0, 0),
 					head: K(-.4 * t, 0, 0),
 					jaw: K(.2 + .6 * t, 0, 0),
@@ -18902,10 +18926,10 @@ function Hd(e = {}) {
 	for (let e of [1, -1]) t.part(G(U(.035 * e, .58, .6), U(.035 * e, .6, .605), .009, .003, 3), "jaw", u);
 	t.part(G(U(0, .52, -.37), D[0], .04, .034, 6), "pelvis", a), t.part(G(D[0], D[1], .034, .02, 6), "tail1", a);
 	for (let e of [1, -1]) {
-		t.part(W(U(.15 * e, .44, .22), [
-			.07,
-			.1,
-			.08
+		t.part(W(U(.135 * e, .41, .22), [
+			.065,
+			.12,
+			.085
 		], [8, 6]), `armU${e}`, a), t.part(G(U(.15 * e, .46, .22), U(.15 * e, .25, .22), .062, .045), `armU${e}`, a), t.part(G(U(.15 * e, .25, .22), U(.15 * e, .045, .25), .042, .036), `armL${e}`, n), t.part(W(U(.15 * e, .03, .27), [
 			.045,
 			.03,
@@ -18916,10 +18940,10 @@ function Hd(e = {}) {
 			0,
 			1
 		]) t.part(G(U(.15 * e + n * .02, .012, .31), U(.15 * e + n * .022, .002, .33), .006, .002, 3), `paw${e}`, b);
-		t.part(W(U(.13 * e, .45, -.27), [
-			.075,
-			.1,
-			.09
+		t.part(W(U(.115 * e, .42, -.27), [
+			.068,
+			.12,
+			.095
 		], [8, 6]), `legU${e}`, a), t.part(G(U(.13 * e, .42, -.27), U(.13 * e, .28, -.24), .06, .045), `legU${e}`, a), t.part(G(U(.13 * e, .28, -.24), U(.13 * e, .1, -.34), .042, .034), `legL${e}`, n), t.part(G(U(.13 * e, .1, -.34), U(.13 * e, .025, -.3), .032, .03), `foot${e}`, n), t.part(W(U(.13 * e, .025, -.27), [
 			.042,
 			.028,
