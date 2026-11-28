@@ -297,12 +297,13 @@ its light, then a check of the lanes.
 2. **A cluster of 2–3** of a kind or of a family: two barrels and a crate; a heap of spoil and a lantern; a tent, its
    bedroll and its cookfire. A cluster stands against a wall or in a corner, never alone mid-floor.
 3. **A row**, only where the place is a row: pews in a nave (two blocks, an aisle 4+ tiles wide on the axis), bunks in
-   a barracks along the long walls, urn niches along a gallery, strongboxes along a vault, the bound in ranks. A row
-   runs parallel to a wall, one piece every 3–4 tiles. It is as long as the room's wall, so its count is capped by
-   the room's size (§4.3).
+   a barracks along the long walls, urn niches along a gallery, strongboxes along a vault, the bound in files. A row
+   runs parallel to a wall. Since 2026-11-28 it is laid in twos and threes with a wider gap between and another of
+   the place's pieces in a gap now and then (§4.6); only the pews and what's built keep one spacing. Its count is
+   capped by the room's size (§4.3).
 
 Never the same piece evenly spaced over the floor, and never more than three of a kind side by side unless they're a
-row. A group mixes kinds where the place would (a store's barrels with its crates and sacks).
+row. Even a row is laid in twos and threes, never four at one spacing down a line (§4.6, enforced). A group mixes kinds where the place would (a store's barrels with its crates and sacks).
 
 **Symmetry by place.** A built, formal room (a nave, the muster hall, the binding crypt, a vault) is symmetric about its
 axis: pairs either side, a centred set piece. A lived-in or dug room (a camp, a dig, a stable, a cave) is asymmetric,
@@ -429,6 +430,71 @@ southern wall so you can barely see the top"*). The camera looks from the south-
   gold lid and front over the shelves. Over every site, two seeds, three floors: 100 of 100 chests have the full band.
 - **Test:** `test/chestview.test.mjs` (fails without the band).
 
+### 4.6 Nothing lined up: no piece stamped down a line (new, enforced)
+
+The owner, 2026-11-28, with a screenshot of the Gull Isles' gun deck at level 39 (sixteen hammocks in two files, a
+cask rack every eight tiles down the wall, a lantern in every other bay and the same oilskins and shield every third):
+*"Dungeon.. dressing should have rules to not repeat and line up the same dressing"*.
+
+**The rule.** No piece is set down four times or more along one line at one spacing. *Along one line* means within 0.7
+of a tile of it, along x or along y. *At one spacing* means each step within 1.2 tiles of the first, any step from 2 to
+24 tiles. Pieces of other kinds between them don't break the line; the eye skips them. A step two tiles wider than the
+others does.
+
+**What it holds:** the movable dressing, in the sim (`world.js` props) and in what the renderer adds (`convert.js`: a
+wall's lanterns, sconces, hangings, heaps; Luminati's objects), alike.
+
+**What it doesn't hold** (`src/sim/dresslines.js`):
+- **What's built:** a colonnade's pillars, a wall's piers and posts, shoring sets, rails, a channel's tiles, the niches
+  the wall was cut with. Architecture keeps its rhythm.
+- **The rows a place is made of:** pews down a nave, two blocks either side of the aisle.
+- **Ground cover strewn by a tile's hash:** a dune's marram. It is held to §3.6, not this.
+
+**How a row is laid now** (`world.js` `brokenRow`, every recipe that set a row: bunks, cask racks, shelves, vats, hives,
+troughs, scaffolds, the bound, the net racks):
+- The piece in **twos and threes** at the row's step.
+- A gap **two to four tiles wider** between the groups.
+- Now and then **another of the place's pieces** in a gap: a sea chest or a cask between the hammocks, crates by the
+  racks, a barrel among the vats.
+- The two sides of a room **out of step**.
+- A row of alcoves (the pay chests) **leaves one bare** or emptied to its coins, never four strongboxes running.
+- A mixed wall (a storehouse's stacks, a barrow's urns and bones) **never puts the same piece three times running**.
+- **The contract's floors keep their ground.** The racks (the Quartermaster's muster hall) and a barrow's niches (the
+  Breach, the contract's arena, `smoke-test.mjs`) stay on the tiles they always stood on. One rack in each three or four
+  becomes a crate stack where it stands, and the urns and bones are drawn by hash. The line breaks; the floor the
+  balance contract is measured on doesn't move (the same tiles, checked). Moving them failed the contract at 24–30
+  and 42–45 by a wave or two, room layout alone.
+
+Every draw is a hash of the room's place, no random stream's, so a row changed moves nothing else.
+
+**How a wall's bays are dressed now** (`convert.js` `beats`, `storyPick`):
+- **Lights fall on a beat**, about every other bay, the gap two bays or three as the wall's hash has it, never the same
+  gap three times running. That applies to a timber wall's lanterns, a crypt's or a palace's sconces, an ossuary's
+  heaps of bones.
+- **No light in a run's end bay.** The next wall's pieces hang a hand away there, and burned white.
+- **A bay within reach of the room's own lamp stays bare** (the sim's lit props): the lamp is its light.
+- **The bay's piece is drawn from the place's list, never one of the last two again.** It used to cycle the list in
+  order, the same shield every third bay.
+- The strand's wrack and marram are strewn anywhere on their tiles, not on the tiles' middles. The wall-top and
+  near-wall rubble stands off its tile's middle. The counting house's ledgers go two and two, out of step.
+
+**Measured** (every site, every floor, `node tools/dungeon/dress-audit.mjs --lines`):
+
+| | Before | After |
+|---|---|---|
+| Lined-up runs, sim dressing (68 floors: 34 × 2 seeds) | 42 runs of 9 kinds: racks 14, bunks 8, strongboxes, shelves, the bound 4 each, vats, urns, cask racks. The worst: 9 bunks every 6 tiles on the gun deck, 8 strongboxes in the Long Vault, 8 bunks in the dorter, 7 racks in the Mixed Pen | **0** |
+| Lined-up runs, drawn (the same floors) | 64 runs of 16 kinds: the racks, hammocks and strongboxes drawn from those, and the renderer's own: wrack on the strand 8, ledgers 4, bone heaps 4, sconces, lanterns, rubble | **0** |
+| `--lines`, 4 seeds, 136 floors | | **0** |
+| Over a cap (§4.3) / against §4.4 | 0 / 0 | 0 / 0 |
+
+**Balance:** the boss halls these rooms hold (the Sunken Chapel's, the Proving Pens', the Cinderworks') and the Old
+Barrows' and Canal Locks' halls fight to the second as before, 3 seeds each (`boss.mjs`). The Ninth Vault's hall,
+whose pay chests changed, lost 8 of 10 over ten seeds before and 8 of 10 after. The room-level contract
+(`roomlv.mjs 300 6 6 0,2`) is unchanged: 11 waves, 5 downs, 135 gold. The smoke contract holds (`SMOKE_OK`). Captures, before and after, of ten rooms at
+dusk from the play camera (`tools/capture/rig.mjs`): [img/dungeon/lines-before-after.jpg](img/dungeon/lines-before-after.jpg).
+
+**Test:** `test/dresslines.test.mjs`, every site's every floor, both layers, and `lineRuns` itself.
+
 ### 4.5 The kits: each place's brief
 
 | Kit | The place | Its pieces (back walls · clusters · set piece · obstacles) | Its light |
@@ -441,7 +507,7 @@ southern wall so you can barely see the top"*). The camera looks from the south-
 | cellar | cellars dug into a cave | cask racks, scaffolds · barrels, spoil · the broken floor · stalagmites, boulders; still pools | lanterns |
 | nave | the drowned nave | pews in two blocks, saints · urns · the altar, the font · pillars; bog pools | candelabra |
 | cultcut | the cult's dig | chains, gibbets · sacks · the windlass · broken pillars | candles |
-| binding | the binding crypt | the bound in ranks, chains · bones · the binding circle · a ring of pillars | candles |
+| binding | the binding crypt | the bound in files of two and three, chains · bones · the binding circle · a ring of pillars | candles |
 | mound, locks, vats, abbey | the Fens' (generated) | reeds and boats; windlasses and chains; vats; candles and saints — by `DRESS` | braziers (capped, §4.3) |
 
 ## 5. The checks, and the first survey
@@ -450,6 +516,8 @@ southern wall so you can barely see the top"*). The camera looks from the south-
   hid it. It exits 1 when a subject is under half (`--warn` reports only).
 - **The browser suite** runs it on Thornwick and the Old Barrows' first floor.
 - **`node tools/dungeon/dress-audit.mjs [site…] [--over]`** lists every authored room's pieces against §4.3.
+- **`node tools/dungeon/dress-audit.mjs --lines [site…] [--seeds N]`** lists every lined-up run against §4.6, the
+  sim's dressing and what's drawn, on every site's floors.
 - **The node tests** named in each table above.
 
 **The first survey** (2026-11-11, every map in §1.1, default zoom, day): **143 subjects on 17 maps, 5 under half in

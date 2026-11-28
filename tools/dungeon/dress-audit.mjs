@@ -5,15 +5,36 @@
 //   node tools/dungeon/dress-audit.mjs [site…] [--seed N] [--over]   (--over: only the rooms over a cap, and the count)
 //   node tools/dungeon/dress-audit.mjs --clear [site…] [--seeds N]   (§4.4, keepclear.js: every site's floors, authored or
 //   generated, over N seeds: what stands on the stairs, in a doorway, or a light out in the open; the count by rule)
+//   node tools/dungeon/dress-audit.mjs --lines [site…] [--seeds N]   (§4.6, dresslines.js: every site's floors over N seeds,
+//   the sim's dressing and what the renderer draws along the walls: a piece set down four times or more along one line at
+//   one spacing; each run listed)
 import { createWorld } from '../../src/sim/world.js';
 import { PLANS } from '../../src/sim/plans.js';
 import { capOf, REPEAT } from '../../src/sim/dresscaps.js';
 import { dressingFaults } from '../../src/sim/keepclear.js';
 import { SITES } from '../../src/sim/sites.js';
+import { lineRuns } from '../../src/sim/dresslines.js';
+import { convertWorld } from '../../src/render3d/convert.js';
+import { dressPieces } from '../../src/render3d/dresspieces.js';
 
 const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : d; };
 const SEED = +opt('--seed', 20260807), OVER = args.includes('--over'), sites = args.filter((a) => !a.startsWith('--'));
 let over = 0, rooms = 0;
+if (args.includes('--lines')) {
+  const N = +opt('--seeds', 3), want = sites.filter((q) => SITES[q]); let floors = 0, runs = 0;
+  for (const [site, S] of Object.entries(SITES)) {
+    if (S.parked || (want.length && !want.includes(site))) continue;
+    for (let depth = 0; depth < (S.floors || 3); depth++) for (let s = 0; s < N; s++) {
+      let w; try { w = createWorld((SEED + s * 1013 ^ depth * 7919) >>> 0, undefined, depth, site); } catch { continue; }
+      const sim = [...w.props].map(([k, kind]) => { const [x, y] = k.split(',').map(Number); return { kind, x, y }; });
+      const all = [...lineRuns(sim).map((r) => ['sim', r]), ...lineRuns(dressPieces(convertWorld(w, {}))).map((r) => ['drawn', r])];
+      floors++; runs += all.length;
+      for (const [where, r] of all) console.log(`${site} f${depth + 1} s${s} ${where}: ${r.n} ${r.kind} every ${r.step} along ${r.axis} at ${r.at}`);
+    }
+  }
+  console.log(`${floors} floors, ${runs} lined-up runs (§4.6)`);
+  process.exit(0);
+}
 if (args.includes('--clear')) {
   const N = +opt('--seeds', 5), by = {}, want = sites.filter((q) => SITES[q]); let floors = 0, faults = 0;
   for (const [site, S] of Object.entries(SITES)) {

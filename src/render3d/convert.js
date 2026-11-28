@@ -1090,7 +1090,7 @@ function ruinWalls(W, D, tiles, heights, open, lift = null) {   // (lift(i, j): 
     if (near(i, j) && !(open(i + 1, j) || open(i, j + 1))) {     // a near wall: broken down low, its top ragged
       const h = hash('rn', i >> 1, j >> 1) % 4;
       heights[j][i] = String(3 + (h === 3 ? 2 : h === 0 ? 0 : 1)); if (NEAR_OF[tiles[j][i]]) tiles[j][i] = NEAR_OF[tiles[j][i]];
-      if (hash('rd', i, j) % 9 === 0) out.push({ i, j, h: heights[j][i], ob: (X, Z) => ({ type: 'debris', x: r2(i + 0.5), z: r2(j + 0.5), rotation: (hash('rr', i, j) % 11) * 0.5, opts: { kind: 'rubble', size: 0.38, charred: false, seed: hash('rs', i, j) % 997 } }) });
+      if (hash('rd', i, j) % 9 === 0) out.push({ i, j, h: heights[j][i], ob: (X, Z) => ({ type: 'debris', x: r2(i + 0.26 + (hash('rj', i, j) % 5) * 0.12), z: r2(j + 0.26 + (hash('rj', j, i) % 5) * 0.12), rotation: (hash('rr', i, j) % 11) * 0.5, opts: { kind: 'rubble', size: 0.38, charred: false, seed: hash('rs', i, j) % 997 } }) });
       continue;
     }
     if (!back) continue;
@@ -1107,7 +1107,7 @@ function ruinWalls(W, D, tiles, heights, open, lift = null) {   // (lift(i, j): 
     heights[j][i] = h.toString(36);
     const hs = heights[j][i], d = hash('rt', i, j) % 13, x = r2(i + 0.5), z = r2(j + 0.5);
     if (pier) out.push({ i, j, h: hs, sprite: { prop: 'candles', kind: 'candles', tx: 9000 + i, ty: 9000 + j, x, z }, ob: () => ({ type: 'fire', x, z, opts: { kind: 'brazier', size: 0.34, smoke: false, light: false, seed: hash('rf', i, j) % 997 } }) });
-    else if (d === 2 || d === 3) out.push({ i, j, h: hs, ob: () => ({ type: 'debris', x, z, rotation: (hash('rr', i, j) % 11) * 0.5, opts: { kind: 'rubble', size: 0.36, charred: false, seed: hash('rs', i, j) % 997 } }) });
+    else if (d === 2 || d === 3) out.push({ i, j, h: hs, ob: () => ({ type: 'debris', x: r2(x - 0.24 + (hash('rj', i, j) % 5) * 0.12), z: r2(z - 0.24 + (hash('rj', j, i) % 5) * 0.12), rotation: (hash('rr', i, j) % 11) * 0.5, opts: { kind: 'rubble', size: 0.36, charred: false, seed: hash('rs', i, j) % 997 } }) });   // (off the tile's middle: four on one wall's line stood at one beat, §4.6)
     else if (d === 4) out.push({ i, j, h: hs, ob: () => ({ type: 'rock', x, z, opts: { size: 0.42, seed: hash('rk', i, j) % 97 } }) });
   }
   return out;
@@ -1180,8 +1180,34 @@ function wallOf(open, W, D, x, z) {
   return !w || (n && n.d <= w.d) ? (n ? { side: 'n', z: n.z, x, d: n.d } : null) : { side: 'w', x: w.x, z, d: w.d };
 }
 /** the frame along the back walls and what hangs on them, into `trim` (world.js buildTavern) */
-function tavernDress(faces, arches, open, add, trim, roomAt = () => null, story = TAV_STORY) {
+// ── a wall's beat (docs/level-design-rules.md §4.6; the owner, 2026-11-28, of the Gull Isles' gun deck: "dressing should
+// have rules to not repeat and line up the same dressing"). A lantern in every other bay down a seventy-tile wall, a
+// shield every third, a sconce on every other pier: the eye reads the stamp, not the room. A run's lights fall about every
+// other slot, two slots apart or three as a hash of the wall has it, never the same gap three times running (so never
+// four at one spacing: src/sim/dresslines.js); its bays' pieces are drawn from the place's list, never one of the last
+// two again. Every choice a hash of the wall: the same room every visit.
+/** which of a run's n slots carry a light (or whatever keeps a beat): true at each */
+function beats(n, key, salt) {
+  const on = new Array(n).fill(false); let i = hash(salt, key) % 2, last = 0, rep = 0;
+  while (i < n) {
+    on[i] = true;
+    let g = 2 + (hash(salt, key, i) % 2);
+    if (g === last && ++rep >= 2) { g = g === 2 ? 3 : 2; rep = 0; } else if (g !== last) rep = 0;
+    last = g; i += g;
+  }
+  return on;
+}
+/** the next bay's piece from a place's list: a hash's pick, but never one of the last two picked (where the list has
+ * three kinds or more) */
+function storyPick(st, key, t, used) {
+  const kinds = [...new Set(st)];
+  let k = st[hash('sp', key, t) % st.length];
+  for (let g = 0; kinds.length > 2 && used.slice(-2).includes(k) && g < kinds.length; g++) k = kinds[(kinds.indexOf(k) + 1) % kinds.length];
+  used.push(k); return k;
+}
+function tavernDress(faces, arches, open, add, trim, roomAt = () => null, story = TAV_STORY, lamps = []) {
   const clearOf = (x, z) => arches.every((a) => Math.abs(x - a.x) > a.span / 2 + 1.2 || Math.abs(z - a.z) > 2.5);
+  const lampBy = (x, z) => lamps.some(([lx, lz]) => Math.abs(lx - x) < 2.2 && Math.abs(lz - z) < 2.2);   // (a room's own lamp within reach: the bay stays bare)
   // runs along each line of faces: a north wall's (faces 's', along x) and a west wall's (faces 'e', along z)
   const lines = new Map();
   for (const f of faces) { const key = `${f.style || 'tavern'}|` + (f.n === 's' ? `s${f.j}` : `e${f.i}`); (lines.get(key) || lines.set(key, []).get(key)).push(f.n === 's' ? f.i : f.j); }
@@ -1222,17 +1248,17 @@ function tavernDress(faces, arches, open, add, trim, roomAt = () => null, story 
       // shuttered window, the inn's name, a cool line of night through its crack
       const bays = []; for (let t = a + 2; t <= b - 2; t += 4) bays.push(t);
       const st = style === 'hall' ? HALL_STORY : story;   // (the keep's great hall: shields and arms, not the inn's plates and herbs)
-      const win = b - a >= 14 ? bays[(bays.length / 2) | 0] : null, o = hash('tv', key) % st.length;
+      const win = b - a >= 14 ? bays[(bays.length / 2) | 0] : null, lit = beats(bays.length, `${key}|${a}`, 'tl'), used = [];
       bays.forEach((t, q) => {
-        const [x, z] = P(t); if (!clearOf(x, z)) return;
+        const [x, z] = P(t); if (!clearOf(x, z) || lampBy(x, z)) return;
         if (t === win) {
           trim.push({ k: 'window', x, z, n, y: TAV_FLOOR_Y + 1.75 });
           add({ type: 'light', x: r2(x + (s ? 0 : 1.0)), z: r2(z + (s ? 1.0 : 0)), dy: 0.5, color: '#7a8fc4', intensity: 1.8, distance: 3.2, flicker: 0, nightOnly: false });   // (moonlight, blue-grey and dim: rounds 9, 10)   // (a cool sliver on the floor below it: round 6)
-        } else if (q % 2 === 0) {
+        } else if (lit[q] && q > 0 && q < bays.length - 1) {   // (on the wall's beat, every other bay or every third: §4.6; never a run's end bay, where the next wall's pieces hang a hand away and burned white)
           const light = add({ type: 'light', x: r2(x + (s ? 0 : 0.7)), z: r2(z + (s ? 0.7 : 0)), dy: 1.6, color: '#ffb468', intensity: 2.9, distance: 6, flicker: 0.1, nightOnly: false });
           trim.push({ k: 'lantern', x, z, n, y: TAV_FLOOR_Y + 2.6, light });
         } else {
-          const kind = st[(o + q) % st.length];
+          const kind = storyPick(st, key, t, used);
           trim.push(kind === 'shield' ? { k: 'shield', x, z, n, y: TAV_FLOOR_Y + 2.05, look: hash('ts', key, t) % 5 } : { k: kind, x, z, n, y: TAV_FLOOR_Y + 1.95, seed: hash('ty', key, t) % 997 });   // (between the rail and the beam, built half again as big: round 6, "dark specks")
         }
         if ((q === 0 || q === bays.length - 1) && hash('tw2', key, t) % 3 === 0) trim.push({ k: 'web2', x, z, n, y: TAV_TOP_Y - 0.36, side: q === 0 ? 1 : -1, size: 0.6 + (hash('tz', key, t) % 5) * 0.1 });   // (a web in a corner bay now and then)
@@ -1262,19 +1288,21 @@ function cryptRun(a, b, { key, s, n, P, add, trim, clearOf, story = CRYPT_STORY 
   trim.push({ k: 'plinth', x0, z0, x1, z1, n });
   const piers = [a, b]; for (let t = a + 4; t <= b - 3; t += 4) piers.push(t);
   piers.sort((p, q) => p - q);
+  const sconced = beats(piers.length, `${key}|${a}`, 'ks'); let lit = false;   // (every other sconce its light, as before)
   piers.forEach((t, q) => {
     const [x, z] = P(t); if (!clearOf(x, z)) return;
     const end = t === a ? 1 : t === b ? -1 : 0;
     trim.push({ k: 'pier', x, z, n, end, top: CR_TOP_Y });
-    if (!end && q % 2 === 1) {   // (round 17: its light held close to the pier and up, a warm wash on the pier's face and the arch beside it, so the arcade beats lit and dark)
+    if (!end && sconced[q]) {   // (on the wall's beat, §4.6: round 17: its light held close to the pier and up, a warm wash on the pier's face and the arch beside it, so the arcade beats lit and dark)
       // a sconce: an iron bracket, three candles; every other one its light (round 1: Luminati shares a dozen lights among all in view, and forty small ones left each room murk)
-      const light = q % 4 === 1 ? add({ type: 'light', x: r2(x + (s ? 0 : 0.4)), z: r2(z + (s ? 0.4 : 0)), dy: 2.1, color: '#ffb060', intensity: 3.8, distance: 4.6, flicker: 0.14, nightOnly: false }) : null;
+      lit = !lit; const light = lit ? add({ type: 'light', x: r2(x + (s ? 0 : 0.4)), z: r2(z + (s ? 0.4 : 0)), dy: 2.1, color: '#ffb060', intensity: 3.8, distance: 4.6, flicker: 0.14, nightOnly: false }) : null;
       trim.push({ k: 'sconce', x, z, n, y: TAV_FLOOR_Y + 2.1, light });
     }
   });
   // the bays between the piers, each its own story; a long wall's middle bay the light-well
   const bays = []; for (let q = 0; q < piers.length - 1; q++) if (piers[q + 1] - piers[q] >= 3) bays.push([(piers[q] + piers[q + 1]) / 2, piers[q + 1] - piers[q]]);
-  const well = s && b - a >= 14 ? bays[(bays.length / 2) | 0]?.[0] : null, o = hash('kv', key) % story.length;   // (a light-well: a long north wall's, one a room: round 2, "spills outside the room")
+  const well = s && b - a >= 14 ? bays[(bays.length / 2) | 0]?.[0] : null, o = hash('kv', key) % story.length;
+  const heaped = beats(bays.length * 2, `${key}|${a}`, 'kh').filter((_, i) => i % 2 === 1);   // (a beat at half the rate)   // (a light-well: a long north wall's, one a room: round 2, "spills outside the room")
   bays.forEach(([t, w], q) => {
     const [x, z] = P(t); if (!clearOf(x, z)) return;
     trim.push({ k: 'arcade', x, z, n, w: w - 0.5, y: TAV_FLOOR_Y, top: CR_TOP_Y });
@@ -1288,7 +1316,7 @@ function cryptRun(a, b, { key, s, n, P, add, trim, clearOf, story = CRYPT_STORY 
     trim.push({ k: kind, x, z, n, y: TAV_FLOOR_Y, seed: hash('ky', key, t) % 997 });
     // at the bay's foot, a strip of the crypt's leavings: candle stubs, a few bones, a slab fallen from a shelf (round 3:
     // "the rooms feel underdressed"); low, at the wall, where nothing walks
-    if (q % 4 === 1) trim.push({ k: hash('kf', key, t) % 3 ? 'footbones' : 'fallenslab', x, z, n, seed: hash('kg', key, t) % 997 });   // (round 10: a heap now and then, not a scatter of specks: one bay in four)
+    if (heaped[q]) trim.push({ k: hash('kf', key, t) % 3 ? 'footbones' : 'fallenslab', x, z, n, seed: hash('kg', key, t) % 997 });   // (round 10: a heap now and then, not a scatter of specks: about one bay in four, never at one beat: §4.6)
     if ((q === 0 || q === bays.length - 1) && hash('kw', key, t) % 4 === 0) trim.push({ k: 'web2', x, z, n, y: CR_TOP_Y - 0.45, side: q === 0 ? 1 : -1, size: 0.7 + (hash('kz', key, t) % 4) * 0.1 });
   });
 }
@@ -1302,9 +1330,10 @@ function ossuaryRun(a, b, { key, s, n, P, add, trim, clearOf }) {
   // skulls read as wallpaper)
   for (let t = a; t <= b; t += 3) { const [x, z] = P(Math.min(t, b)); if (clearOf(x, z)) trim.push({ k: 'pier', x, z, n, end: t === a ? 1 : t >= b ? -1 : 0, top: CR_TOP_Y }); }
   { const [x, z] = P(a + 0.7); if (clearOf(x, z)) trim.push({ k: 'skullpile', x, z, n }); }   // (a pyramid of skulls at the run's corner: round 12)
+  const heaps = beats(Math.ceil((b - a) / 3) + 1, `${key}|${a}`, 'oh');
   for (let t = a + 1.5, q = 0; t <= b - 1.5; t += 3, q++) {
     const [x, z] = P(t); if (!clearOf(x, z)) continue;
-    trim.push({ k: 'footbones', x, z, n, seed: hash('ob', key, t) % 997 });   // (a low heap at every panel's foot: round 6)
+    if (heaps[q]) trim.push({ k: 'footbones', x, z, n, seed: hash('ob', key, t) % 997 });   // (a low heap at a panel's foot, most panels but on no one beat: round 6, §4.6)
     if (q % 2 === 0) {
       const lit = q % 4 === 0, light = lit ? add({ type: 'light', x: r2(x + (s ? 0 : 0.9)), z: r2(z + (s ? 0.9 : 0)), dy: 1.4, color: '#ffb060', intensity: 1.35, distance: 5.5, flicker: 0.16, nightOnly: false }) : null;   // (round 14: higher and softer, the heap by it blew out)
       trim.push({ k: 'skullniche', x, z, n, y: TAV_FLOOR_Y, seed: hash('on', key, t) % 997, light });
@@ -1366,12 +1395,13 @@ function palaceRun(a, b, { key, s, n, P, add, trim, clearOf, roomAt }) {
   trim.push({ k: 'plinth', x0, z0, x1, z1, n, pal: 1 });
   const piers = [a, b]; for (let t = a + 4; t <= b - 3; t += 4) piers.push(t);
   piers.sort((p, q) => p - q);
+  const sconced = beats(piers.length, `${key}|${a}`, 'ps'); let lit = false;
   piers.forEach((t, q) => {
     const [x, z] = P(t); if (!clearOf(x, z)) return;
     const end = t === a ? 1 : t === b ? -1 : 0;
     trim.push({ k: 'pier', x, z, n, end, top: CR_TOP_Y, pal: 1 });
-    if (!end && q % 2 === 1) {
-      const light = q % 4 === 1 ? add({ type: 'light', x: r2(x + (s ? 0 : 0.4)), z: r2(z + (s ? 0.4 : 0)), dy: 2.1, color: '#ffbe6e', intensity: 3.6, distance: 4.6, flicker: 0.12, nightOnly: false }) : null;
+    if (!end && sconced[q]) {   // (on the wall's beat: §4.6)
+      lit = !lit; const light = lit ? add({ type: 'light', x: r2(x + (s ? 0 : 0.4)), z: r2(z + (s ? 0.4 : 0)), dy: 2.1, color: '#ffbe6e', intensity: 3.6, distance: 4.6, flicker: 0.12, nightOnly: false }) : null;
       trim.push({ k: 'sconce', x, z, n, y: TAV_FLOOR_Y + 2.1, light, gilt: 1 });
     }
   });
@@ -1917,7 +1947,7 @@ function coastDress(W, D, tiles, heights, open, looks, roomOf, add, trim, arches
   // the dunes' marram, a clump on most dune tiles (on the dune's top: its height); a boulder on an outcrop now and then
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
     const t = tiles[j][i], h = hash('dm', i, j), y = parseInt(heights[j][i], 36) * 0.5;
-    if ((t === 'Φ' && h % 5 < 3) || (t === 'G' && heights[j][i] === '7' && h % 4 === 0)) trim.push({ k: 'marram', x: r2(i + 0.3 + (h % 7) * 0.06), z: r2(j + 0.3 + ((h >> 3) % 7) * 0.06), y, seed: h % 997 });
+    if ((t === 'Φ' && h % 5 < 3) || (t === 'G' && heights[j][i] === '7' && h % 4 === 0)) trim.push({ k: 'marram', x: r2(i + 0.08 + (h % 9) * 0.105), z: r2(j + 0.08 + ((h >> 4) % 9) * 0.105), y, seed: h % 997 });   // (anywhere on its tile: on a grid's points the clumps stood in files, §4.6)
     else if (t === 'Ξ' && heights[j][i] !== '7' && h % 13 === 0) add({ type: 'rock', x: r2(i + 0.5), z: r2(j + 0.5), opts: { size: r2(0.7 + (h % 5) * 0.12), stone: 'basalt', seed: h % 97 } });
   }
   // the strand's tide line: wrack where the wet sand meets the dry, a driftwood log now and then there or at a dune's foot
@@ -1926,7 +1956,7 @@ function coastDress(W, D, tiles, heights, open, looks, roomOf, add, trim, arches
     const t = tiles[j][i], h = hash('wr', i, j), x = r2(i + 0.5), z = r2(j + 0.5);
     const line = t === 'Δ' && N8.slice(0, 4).some(([di, dj]) => tiles[j + dj]?.[i + di] === 'Λ');
     const foot = t === 'Δ' && N8.slice(0, 4).some(([di, dj]) => tiles[j + dj]?.[i + di] === 'Φ' || tiles[j + dj]?.[i + di] === 'Ξ');
-    if (line && h % 3 !== 0) trim.push({ k: 'wrack', x, z, rot: (h % 13) * 0.24, seed: h % 997 });
+    if (line && h % 5 < 3) trim.push({ k: 'wrack', x: r2(i + 0.1 + ((h >> 3) % 9) * 0.1), z: r2(j + 0.1 + ((h >> 7) % 9) * 0.1), rot: (h % 13) * 0.24, seed: h % 997 });   // (strewn along the line, not set on its tiles' middles: §4.6)
     if ((line && h % 11 === 0) || (foot && h % 9 === 0)) { if (clearOf(x, z)) trim.push({ k: 'driftwood', x, z, rot: (h % 17) * 0.37, seed: h % 997 }); }
   }
   // the sea cave's back walls: weed and barnacles at the tide line, kelp heaped at their feet, wreck timbers washed up
@@ -2581,7 +2611,7 @@ function dungeon(w, o = {}) {
     if (!KIT_LOOK[r.kit]?.ledgers) continue;
     const along = r.rw >= r.rh, n = r === L.entrance ? 2 : Math.max(2, Math.min(4, Math.floor((along ? r.rw : r.rh) / 6)));   // (the stair hall's two: round 7; round 9, half as many, a deliberate line)
     for (let q = 0; q < n; q++) {
-      const off = (q - (n - 1) / 2) * 11, gx = r.cx + (along ? off : 0), gy = r.cy + (along ? 0 : off);
+      const off = (q - (n - 1) / 2) * 11, side = n > 3 ? (q % 2 ? 1.6 : -1.6) : 0, gx = r.cx + (along ? off : side), gy = r.cy + (along ? side : off);   // (four stood in one file down the room: two and two, out of step, §4.6)
       ledgers.push({ k: 'ledger', x: r2((gx - x0) / 2), z: r2((gy - y0) / 2), rot: along ? 0 : Math.PI / 2, seed: hash('lg', r.id, q) % 997 });
     }
   }
@@ -2630,7 +2660,10 @@ function dungeon(w, o = {}) {
   const ptrim = look.pass || look.frost ? [] : null, passIce = /** @type {[number, number][]} */ ([]);   // (the pass's and the Praetory's own pieces: world.js buildPass)
   // (the room a floor tile of Luminati's is in: a palace's bays dress by what their room was for, palaceRun)
   const roomAt = (i, j) => { if (!L.plan) return null; for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const c = cells.get(`${x0 + 2 * i + dx},${y0 + 2 * j + dy}`); if (c && c.room >= 0) return L.rooms[c.room]; } return null; };
-  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim, roomAt, look === KIT_LOOK.hulk ? SHIP_STORY : TAV_STORY); if (look.palace) trim.push(...palaceRunners(w, L, X, Z)); if (L.plan) trim.push(...fenMats(w, L, X, Z)); if (look.water) docksDress(W, D, open, add, trim, stairLights.arches || [], !!look.stone); if (rampart) rampartsDress(W, D, open, rampart, add, trim, stairLights.arches || []); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
+  // (the room's own lamps, the sim's lit props: a wall bay within reach of one stays bare, the lamp its light; a pale
+  // hanging there burned white, §4.6)
+  const lamps = /** @type {[number, number][]} */ ([]); for (const [k, kind] of w.props) if (PROP_LIGHT[kind]) { const [x, y] = k.split(',').map(Number); lamps.push([X(x + 0.5), Z(y + 0.5)]); }
+  if (inside) { tavernDress(faces, stairLights.arches || [], open, add, trim, roomAt, look === KIT_LOOK.hulk ? SHIP_STORY : TAV_STORY, lamps); if (look.palace) trim.push(...palaceRunners(w, L, X, Z)); if (L.plan) trim.push(...fenMats(w, L, X, Z)); if (look.water) docksDress(W, D, open, add, trim, stairLights.arches || [], !!look.stone); if (rampart) rampartsDress(W, D, open, rampart, add, trim, stairLights.arches || []); trim.push(...ledgers, ...rings); for (const q of roomPools) add(q.front ? { type: 'light', x: q.x, z: q.z, dy: 3, color: '#ffc088', intensity: 2.3, distance: 10.4, flicker: 0, nightOnly: false } : q.mid ? { type: 'light', x: q.x, z: q.z, dy: 2.4, color: '#ffc488', intensity: 4.3, distance: 5.5, flicker: 0, nightOnly: false } : { type: 'light', x: q.x, z: q.z, dy: 2.6, color: '#ffbe80', intensity: 2.8, distance: 8, flicker: 0, nightOnly: false }); sprites.push({ tavern: { pieces: trim } }); }
   if (wood) { woodDress(W, D, wood, L, x0, y0, add, trim, stairLights.arches || []); sprites.push({ tavern: { pieces: trim } }); }
   // (a coast floor's own ground dressed, coastDress; its trim goes out with the rest's, below, or the inside's, above)
   if (coast) coastDress(W, D, tiles, heights, open, looks, roomOf, add, trim, stairLights.arches || [], L, X, Z);
