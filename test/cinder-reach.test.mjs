@@ -9,7 +9,7 @@ import { createSim } from '../src/sim/core.js';
 import { QS } from '../src/sim/quests.js';
 import { SITES, bossAt, levelBand } from '../src/sim/sites.js';
 import { PLANS, checkPlan } from '../src/sim/plans.js';
-import { BOSSES, CHUTE_S, CHUTE_WIND, CHUTE_HURT, premiumOf, PREMIUM } from '../src/sim/battle.js';
+import { BOSSES, BOSS_TUNE, CHUTE_S, CHUTE_WIND, CHUTE_HURT, premiumOf, PREMIUM } from '../src/sim/battle.js';
 import { days, townOf } from '../src/sim/coach.js';
 import { statsFor } from '../src/sim/party.js';
 import { isWalkable } from '../src/sim/world.js';
@@ -46,6 +46,12 @@ test('the Cold Seam: a band of 19–22 (v1.144), two authored floors that keep t
 });
 
 test('the Foreman\'s whistle: a load comes down on a cross under each of the company, and lands on whoever stays on it', () => {
+  // (the mechanic, not the balance: a lone hero against the Foreman at his blow before the 2026-11-28 tuning, BOSS_TUNE;
+  // at his tuned blow he dropped the hero inside a tick before his first whistle, and the visit ended)
+  const tune = BOSS_TUNE.atk; BOSS_TUNE.atk = 1 / (BOSS_TUNE.by.foreman ? BOSS_TUNE.by.foreman[1] : 1);
+  try { foremanWhistle(); } finally { BOSS_TUNE.atk = tune; }
+});
+function foremanWhistle() {
   const sim = openAllGates(createSim(20260807, undefined, { scene: 'dungeon', site: 'cold_seam' })); sim.tick();
   sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), depth: 1, floors: [] }); openAllGates(sim);
   const L = sim.world.level, r = L.descentRoom; let at = null, bd = 1e9;
@@ -64,7 +70,7 @@ test('the Foreman\'s whistle: a load comes down on a cross under each of the com
   assert.ok(tells.length >= 1 && tells.every((t) => t.kind === 'load' && Math.abs(t.wind - CHUTE_WIND) < 1e-9), 'a cross under the company, filling over the wind');
   assert.ok(lands.length >= 1 && lands[0].hit >= 1, `it landed on him (${JSON.stringify(lands[0])}, he at ${p.x.toFixed(1)},${p.y.toFixed(1)})`);
   assert.ok(hits.includes(Math.round(statsFor(h).maxHp * CHUTE_HURT)), `a share of his max HP (${hits})`);
-});
+}
 
 test('past level 18 foes carry the high premium; at 18 and under, nothing changes', () => {
   for (const lv of [1, 3, 9, 15, 18]) assert.equal(premiumOf(lv), 1 + PREMIUM * Math.max(0, lv - 3));
