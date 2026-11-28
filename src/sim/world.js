@@ -74,6 +74,7 @@ export const DRESS = {
   palace:   { rooms: ['crypt', 'storehouse', 'crypt'], decor: ['candelabra', 'banner', 'crates'], obstacles: ['pillar'] },
   // (the owner, 2026-11-23: "the reaches, high up on the ramparts": plans.js high_ramparts, docs/ramparts-dungeon.md; a
   // walled town's terraces high on its ramparts, the houses at their backs and a parapet over the drop at their fronts)
+  tower:    { rooms: ['storehouse', 'crypt', 'storehouse'], decor: ['torch', 'banner', 'barrels'], obstacles: ['pillar'] },   // (v1.166: Highmarch's second floor, the Seventh Tower)
   ramparts: { rooms: ['storehouse', 'storehouse', 'storehouse'], decor: ['barrels', 'crates', 'torch'], obstacles: ['pillar'] },
   pithead:  { rooms: ['cellar', 'storehouse', 'cave'], decor: ['lantern', 'crates', 'sacks'], obstacles: ['boulder', 'spoil', 'stalagmite'], pools: 1, pool: 'still' },
   warren:   { rooms: ['cave', 'camp', 'cave'], decor: ['spoil', 'bones', 'sacks'], obstacles: ['stalagmite', 'boulder', 'spoil'] },
@@ -381,6 +382,7 @@ function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, c
       case 'anchors': putAt(L * 0.5, -(Wd - 1), 'chains'); putAt(-L * 0.6, Wd - 1, 'chains'); break;
       case 'weed': for (const [u, v] of [[-0.3, -0.4], [0.35, 0.3], [-0.65, 0.3], [0.55, -0.35]]) putAt(u * L, v * Wd, 'puddle'); break;
       case 'wrecks': for (let u = -L * 0.5, i = 0; u <= L * 0.5 + 0.01 && i < 3; u += 12, i++) putAt(u, -Wd, 'boat'); break;
+      case 'signal_stand': putAt(0, -Wd * 0.4, 'brazier'); break;   // (the Seventh Tower's roof: the old signal stand Lucan sings from, its fire basket cold; v1.166)
       case 'lamp_stand': putAt(0, -Wd, 'brazier'); break;   // (where Lucan sang: the mole's lamp, lit by nobody)   // (round 3: into the frame, clear of the boat)   // (the wharf's derrick at the back edge, a net of cargo on its hook)
       // ── the ramparts (the owner, 2026-11-23: "the reaches, high up on the ramparts", a reference; plans.js high_ramparts,
       // docs/ramparts-dungeon.md): a walled town's terraces up on its walls, the houses along their backs (convert.js), a

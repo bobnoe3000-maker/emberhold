@@ -11,24 +11,24 @@
   "after": [
     "maren_the_prize_crews"
   ],
-  "summary": "The drowned were sung up off the Mole and given their orders in Lucan's palace at Highmarch. Maren wants their names read out there, so their names are the last thing that palace hears of them. Josse Wether has a fair copy.",
+  "summary": "The drowned were sung up off the Mole and given their orders in Lucan's tower at Highmarch. Maren wants their names read out there, so their names are the last thing that tower hears of them. Josse Wether has a fair copy.",
   "steps": [
     {
       "id": "palace",
-      "journal": "Win five waves on Highmarch's second floor, the Seventh's Palace, while Josse's fair copy of the names is read out there.",
+      "journal": "Win five waves on Highmarch's second floor, the Seventh Tower, while Josse's fair copy of the names is read out there.",
       "objectives": [
         {
           "type": "waves",
           "site": "highmarch",
           "count": 5,
           "floor": 2,
-          "label": "Waves won in the Seventh's Palace"
+          "label": "Waves won in the Seventh Tower"
         }
       ]
     }
   ],
-  "ready": "Every name was read out in the Seventh's Palace. Take the fair copy back to Josse Wether at the Quay Chapel.",
-  "done": "The names were said in Highmarch's palace, in a plainer voice than Lucan's. Josse gave you the bell he rang them with.",
+  "ready": "Every name was read out in the Seventh Tower. Take the fair copy back to Josse Wether at the Quay Chapel.",
+  "done": "The names were said in the Seventh Tower, in a plainer voice than Lucan's. Josse gave you the bell he rang them with.",
   "rewards": {
     "share": 0.45,
     "lv": 45,

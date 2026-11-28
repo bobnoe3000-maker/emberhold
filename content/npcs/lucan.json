@@ -10,5 +10,5 @@
   "portrait": "npc_lucan",
   "dialogue": "lucan",
   "knot": "lucan_hub",
-  "note": "Lucan Varro of Highmarch, who signs himself Lucanus, the Seventh Voice (world doc v1.72 §3.7, §5: handsome, educated and sincere, a tragedy who thinks he's a history; his mother called him Luke). Of the Lady Livia's household; opened her box and learned the Canticle. Beaten, not killed, in the Seventh's Palace's throne room (Highmarch, floor 2), he sits on his own steps, and is placed there only once beaten (npcs.js found, after). Spoken to, he reads the Kindler's letters from his study, says his line and walks north to the Heights after the vessel: a visitor, gone once lucan_gone is set. The meet step of The Seventh Voice."
+  "note": "Lucan Varro of Highmarch, who signs himself Lucanus, the Seventh Voice (world doc v1.72 §3.7, §5: handsome, educated and sincere, a tragedy who thinks he's a history; his mother called him Luke). Of the Lady Livia's household; opened her box and learned the Canticle. Beaten, not killed, on the Seventh Tower's roof (Highmarch, floor 2), he sits on the stand's steps, and is placed there only once beaten (npcs.js found, after). Spoken to, he reads the Kindler's letters from the steward's room, says his line and walks north to the Heights after the vessel: a visitor, gone once lucan_gone is set. The meet step of The Seventh Voice."
 }

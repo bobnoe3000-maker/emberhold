@@ -1,6 +1,6 @@
 # Highmarch's second floor: a proposal
 
-*2026-11-28 · **Proposal**. The owner: "The seventh voice quest is in a dungeon but the second floor looks like a
+*2026-11-28 · **Implemented** (option A). The owner: "Go with your recommendations, call it the seventh tower, just a stand, the glass keep is the right place, leave floor 1 as is." Built: plans.js `highmarch` floor 2 *The Seventh Tower* (yard `ramparts`, muster hall `barracks` drawn grey as convert.js `towerhall`, steward's room `quota`, tower chapel `crypt`, roof `ramparts` with `signal_stand`); the palace floor parked as `glass_keep`; world doc v1.81, GDD v1.166. Not yet built: the drowned fleet's lanterns below the roof and the sea under it (§6). Earlier: The owner: "The seventh voice quest is in a dungeon but the second floor looks like a
 palace.. the setting doesnt feel right for tollhaven area and what is in the first floor.. propose something different.
 We could use the palace level later near the end of the game".*
 
@@ -174,3 +174,23 @@ work is the look.
 4. **The palace later:** the Glass Keep (recommended), the Ember Throne's approach, or somewhere else?
 5. **Floor 1:** keep it as it is? It already reads as the Tidemark. Its houses' red roofs could go to slate to match
    the Tower (S).
+
+## 6. As built (2026-11-28)
+
+![The Seventh Tower as built: the yard, the muster hall, the roof; the steward's room, the chapel, the walls (floor 1, unchanged)](img/highmarch/tower-built.jpg)
+
+- **The name and the stand:** *the Seventh Tower*. No chair: Lucan sings from the old signal stand (a cold fire basket on
+  its stand, `signal_stand`) and sits down on its steps. Every player line moved with it ("throne room" → the roof,
+  "the Seventh's Palace" → the Seventh Tower).
+- **The rooms' looks reuse what was built:**
+  - the yard and the roof are the walls' own ramparts;
+  - the hall is Wickham Keep's great hall in the walls' grey stone;
+  - the steward's room is the counting house, with its ledger shelves and the clerks' desks;
+  - the chapel is the crypt.
+- **The sim:** the same rooms, levels, foes and bosses, so balance stands. The rooms' ids are new (`the_tower_yard`,
+  `the_muster_hall`, `the_stewards_room`, `the_tower_chapel`, `the_roof`); nothing saved held the old ones.
+- **Left for an art pass:**
+  - **The roof reads as a walled terrace at night,** not yet over the sea. The marsh and the sea below it are still to come.
+  - **The drowned fleet's stern-lanterns going out** as Lucan sits down are not built yet.
+  - **The ramparts' houses and misty drop** don't come through on this floor: the rooms stand too close for the street
+    behind them.

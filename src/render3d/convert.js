@@ -886,8 +886,13 @@ Object.assign(KIT_LOOK, {
   // dressed stone (the keep's) over its flags, not the Barrows' turf and timber: SITE_KIT
   milestone: { floor: ['ø', 'ø'], wall: 'Ƿ', cave: 'x', hour: 21.0, mix: 0, arch: 'keep_ashlar', fill: MILESTONE_FILL },
 });
+// (v1.166) the Seventh Tower's hall (Highmarch's second floor, the owner: "the setting doesnt feel right for tollhaven area
+// and what is in the first floor"): Wickham Keep's great hall, its oak frame and whole walls, in the walls' own grey stone
+// (Ŧ: the rampart's wall under a timber cap) over grey flags, the night's cold fill the walls have, the braziers warm
+Object.assign(LEGEND, { 'Ŧ': { top: 'tavern_cap', side: 'rampart_wall', walkable: false } });
+KIT_LOOK.towerhall = { floor: ['ø', 'µ'], wall: 'Ŧ', cave: 'Ŧ', hour: 21.0, mix: 18, whole: true, inside: true, arch: 'rampart_wall', fill: RAMP_FILL };
 /** a site's own look for a kit it shares (renderer only: the sim's kit stands) */
-const SITE_KIT = { ninth_milestone: { muster: 'milestone' } };
+const SITE_KIT = { ninth_milestone: { muster: 'milestone' }, highmarch: { barracks: 'towerhall' } };
 /** the sites in the Vale's stone, whose halls take their rooms' looks (dungeon) */
 const VALE_STONE = new Set(['barrows', 'wickham_keep', 'proving_pens', 'ninth_milestone']);
 /** the barrow's back walls a step taller than the ruin's (a passage wall, the mound over it) */
