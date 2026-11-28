@@ -80,6 +80,12 @@ const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', ro
 // the Mere Tower's wardens (sim tower.js): baked tall as the bosses are (tools/actor-lab variants W1–W10), named on the boss bar
 for (const id of Object.keys(WARDENS)) ENEMY_ACTOR[id] = 'boss_' + id.slice('warden_'.length);
 const BIG = /** @type {Record<string, number>} */ ({ kingstone: 2, furnace_nine: 1.54, first_pilgrim: 1.5 });   // (v1.147 the First Pilgrim: baked 2.7 men, drawn four)   // (Furnace Nine: baked tall as a boss, 2.6 men, drawn to the Kingstone's four)   // a kind drawn larger than its actor's model (hybrid.js: the figure's scale)
+// every other boss drawn twice its size (the owner, 2026-11-28: "The Grace should be 2x taller or bigger so its an obvious
+// boss. Same for all, at least 2x"): baked a third taller than a man (73 px), drawn 2.6 men, twice anything in its hall;
+// the region's giants keep their own (BIG, four men). Presentation only: the sim's reach, footprint and blows are its own
+const BOSS_BIG = 2;
+/** how much larger than its model a foe is drawn @param {any} e */
+const bigOf = (e) => BIG[e.kind] || (e.boss ? BOSS_BIG : 0);
 const UNDEAD_LOOK = new Set(SKELETONS.concat(['enemy_forgewight', 'boss_oruth', 'boss_standard', 'boss_quartermaster', 'drowned_brother', 'drowned_cantor', 'boss_bellringer', 'boss_hush', 'boss_watcher', 'boss_starroom', 'boss_choir', 'boss_abbess', 'enemy_sailor', 'enemy_bosun', 'boss_harbourmaster']));   // (they rise from the ground and shamble)
 // walk-cycle length in tiles (one full loop of the baked walk clip): frames advance with
 // distance, so this sets the stride — hero/companion run (Running_A), skeleton shamble
@@ -841,9 +847,9 @@ export function createRenderer(canvas, sim, input) {
       if (e.fled) continue;                                                      // (Vane ran: gone, no body, battle.js 'flee')
       const dead = e.hp <= 0, deadT = dead ? DEATH_T - Math.max(0, e.dead || 0) : 0;
       const a = pickAnim(e, skelAtlas, { now, x: exi, y: eyi, moving: e.moving, faceX: e.fx, faceY: e.fy, facing: true, dead, deadT, dir0: 2,
-        spawnP: e.spawn > 0 && undead ? 1 - e.spawn / 0.5 : undefined, stride: (undead ? STRIDE.skel : strideOf(skelAtlas, STRIDE.walk)) * (BIG[e.kind] || 1), seed: (e.id * 0.37) % 1 });   // (a figure drawn BIG strides as far for each step: the Kingstone's feet slid at the golem's)
+        spawnP: e.spawn > 0 && undead ? 1 - e.spawn / 0.5 : undefined, stride: (undead ? STRIDE.skel : strideOf(skelAtlas, STRIDE.walk)) * (bigOf(e) || 1), seed: (e.id * 0.37) % 1 });   // (a figure drawn BIG strides as far for each step: the Kingstone's feet slid at the golem's)
       const fade = dead ? Math.max(0, (deadT - (DEATH_T - 0.35)) / 0.35) : 0;
-      draws.push({ d: exi + eyi, fx: ex, fy: ey, h: ez * ZH, k: exi + eyi, look: { flash: e.flash > 0 ? 0.36 : 0, warn: dead ? 0 : windGlow.get(e.id) || 0, dissolve: dead ? fade : !undead && e.spawn > 0 ? e.spawn / 0.5 : 0 }, team: dead ? 0 : e.elite ? 3 : 2, atl: skelAtlas, a, uid: e.id, u: e, foe: true, big: BIG[e.kind] });   // (the living walk in out of the dark: a fade, not a rise)
+      draws.push({ d: exi + eyi, fx: ex, fy: ey, h: ez * ZH, k: exi + eyi, look: { flash: e.flash > 0 ? 0.36 : 0, warn: dead ? 0 : windGlow.get(e.id) || 0, dissolve: dead ? fade : !undead && e.spawn > 0 ? e.spawn / 0.5 : 0 }, team: dead ? 0 : e.elite ? 3 : 2, atl: skelAtlas, a, uid: e.id, u: e, foe: true, big: bigOf(e) || undefined });   // (the living walk in out of the dark: a fade, not a rise)
     }
     // bolts in flight: small glowing sprites, a little above the ground
     for (const b of sim.world.projectiles || []) {
@@ -1305,7 +1311,7 @@ export function createRenderer(canvas, sim, input) {
       octx.fillStyle = col; octx.fillRect(sx - bw / 2, sy, bw * Math.max(0, Math.min(1, frac)), bh);
     };
     if (b) {
-      for (const e of w.enemies || []) if (e.hp > 0 && !(e.spawn > 0) && !BIG[e.kind]) bar(e.x, e.y, e.hp / e.maxHp, e.elite ? '#ff9a3a' : '#d24a3c', e.elite || e.rival ? 24 : 18);   // (a rival's as long as a party member's)
+      for (const e of w.enemies || []) if (e.hp > 0 && !(e.spawn > 0) && !bigOf(e)) bar(e.x, e.y, e.hp / e.maxHp, e.elite ? '#ff9a3a' : '#d24a3c', e.elite || e.rival ? 24 : 18);   // (a rival's as long as a party member's)
       for (const m of w.allies || []) if (!m.down && m.hp > 0) bar(m.x, m.y, m.hp / maxHpOf(m), '#4f8f74', 14);   // (the Ring's other companies: a cooler green, shorter)
       party.forEach((m, i) => { if (m.down || m.fallen || (i && b.bout && b.bout.alone)) return; const x = i ? (fol[i - 1] || m).x : ix, y = i ? (fol[i - 1] || m).y : iy; const s = sim.state.party[i]; const mx = maxHpOf(s); bar(x, y, s.hp / mx, '#5aa35c', 16); });
       // the room-level · wave pill under the HUD, tinted by how far the room is above you
