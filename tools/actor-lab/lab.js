@@ -143,20 +143,40 @@ const packAnchors = (a) => Object.fromEntries(Object.entries(a).map(([k, v]) => 
 // Converted at the camera's scale (ppu px a unit; 8√2 px a tile along the screen's x). The renderer steps
 // walk frames by distance ÷ stride, so feet that match it don't skate. Null when the fit disagrees with
 // itself (the Ashbound's shuffle drags its feet): the renderer keeps its constant then.
+// A four-legged creature built in code (creatures.js: the dogs, the rat) is one skinned mesh, so its feet are the
+// vertices weighted most to each paw's or hind foot's bone (paw±1, foot±1), the same contact rule on each (the dogs'
+// pass, 2026-11-28: they took the townsfolk's 2.2 tiles a cycle and their paws skated).
+function pawsOf(c) {
+  const legs = [];
+  c.root.traverse((m) => {
+    if (!m.isSkinnedMesh || !m.visible) return;
+    const bones = m.skeleton.bones, want = new Map();
+    bones.forEach((b, i) => { if (/^(paw|foot)-?1$/.test(b.name)) want.set(i, []); });
+    if (![...want.keys()].some((i) => bones[i].name.startsWith('paw'))) return;
+    const si = m.geometry.attributes.skinIndex, sw = m.geometry.attributes.skinWeight;
+    for (let k = 0; k < si.count; k++) { let best = -1, bw = 0; for (let j = 0; j < 4; j++) if (sw.getComponent(k, j) > bw) { bw = sw.getComponent(k, j); best = si.getComponent(k, j); } if (want.has(best)) want.get(best).push(k); }
+    for (const ks of want.values()) if (ks.length) legs.push({ m, ks });
+  });
+  return legs.length >= 4 ? legs : [];
+}
 function strideOf(c, clipName, ppu, sample) {
-  const legs = []; c.root.traverse((o) => { if (o.isSkinnedMesh && o.visible && /Leg(Left|Right)|_Leg/.test(o.name)) legs.push(o); });
+  const legs = []; c.root.traverse((o) => { if (o.isSkinnedMesh && o.visible && /Leg(Left|Right)|_Leg/.test(o.name)) legs.push({ m: o, ks: null }); });
+  if (legs.length < 2) legs.push(...pawsOf(c));
   if (legs.length < 2) return null;
   const N = 72, P = [], v = new THREE.Vector3();
   for (let i = 0; i < N; i++) {
     sample(clipName, i / N); c.root.rotation.y = 0; c.root.updateMatrixWorld(true);
-    P.push(legs.map((m) => { const pos = m.geometry.attributes.position; let lo = null;
-      for (let k = 0; k < pos.count; k++) { m.getVertexPosition(k, v); v.applyMatrix4(m.matrixWorld); if (!lo || v.y < lo[0]) lo = [v.y, v.z]; }
+    P.push(legs.map(({ m, ks }) => { const pos = m.geometry.attributes.position; let lo = null;
+      for (let q = 0, n = ks ? ks.length : pos.count; q < n; q++) { const k = ks ? ks[q] : q; m.getVertexPosition(k, v); v.applyMatrix4(m.matrixWorld); if (!lo || v.y < lo[0]) lo = [v.y, v.z]; }
       return lo; }));
   }
   const floor = Math.min(...P.flat().map((q) => q[0])), segs = [];
+  // (a paw lifts a hand's breadth, not a man's foot's: down is within 2.5 cm of the floor and moving back, so the end of
+  // its swing, coming in low, isn't read as part of the stance)
+  const paws = !!legs[0].ks, on = (i, k) => (paws ? P[i][k][0] - floor < 0.025 && i > 0 && P[i][k][1] < P[i - 1][k][1] : P[i][k][0] - floor < 0.05);
   for (let k = 0; k < legs.length; k++) for (let i = 0; i < N;) {
-    if (P[i][k][0] - floor >= 0.05) { i++; continue; }
-    let j = i; while (j < N && P[j][k][0] - floor < 0.05) j++;
+    if (!on(i, k)) { i++; continue; }
+    let j = i; while (j < N && on(j, k)) j++;
     if (j - i >= 3) {                                     // slope of z over t (cycles) by least squares
       let st = 0, sz = 0, stt = 0, stz = 0; const n = j - i;
       for (let q = i; q < j; q++) { const t = q / N, z = P[q][k][1]; st += t; sz += z; stt += t * t; stz += t * z; }
@@ -186,7 +206,7 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
   const scene = new THREE.Scene(); scene.add(c.root);
   const wr = weaponRig(c, v), anchors = {};
   for (const k of Object.keys(wr)) anchors[k] = [];
-  const walkClip = clips.find((k) => k.key === 'walk' && /^(Walking|Running)_/.test(k.clip)), stride = walkClip ? strideOf(c, walkClip.clip, ppu, sample) : null;   // (a run is measured too, for the goblins; the party's renderer keeps its 4.5 regardless)
+  const walkClip = clips.find((k) => k.key === 'walk' && (/^(Walking|Running)_/.test(k.clip) || (v.creature && k.clip === 'Walk'))), stride = walkClip ? strideOf(c, walkClip.clip, ppu, sample) : null;   // (a run is measured too, for the goblins; the party's renderer keeps its 4.5 regardless)
   const mats = { alb: new Map(), emi: new Map() }, black = new THREE.MeshBasicMaterial({ color: 0 }), white = new THREE.MeshBasicMaterial({ color: 0xffffff }), unseen = new THREE.MeshBasicMaterial({ visible: false });
   let SOFT = false; c.root.traverse((o) => { if (o.isMesh && o.userData.soft) SOFT = true; });
   c.root.traverse((o) => { if (!o.isMesh) return; const eyes = /Eyes/.test(o.name), m = o.material;
@@ -466,7 +486,7 @@ window.bakeAnchors = async (v, clips) => {
   const cam = new THREE.OrthographicCamera(-W / 2 / ppu, W / 2 / ppu, H / 2 / ppu, -H / 2 / ppu, 0.1, 100);
   const pr = THREE.MathUtils.degToRad(30), yw = THREE.MathUtils.degToRad(45), tgt = new THREE.Vector3(0, box.min.y + (H * 0.5 - 6) / ppu, 0);
   cam.position.set(20 * Math.cos(pr) * Math.sin(yw), tgt.y + 20 * Math.sin(pr), 20 * Math.cos(pr) * Math.cos(yw)); cam.lookAt(tgt); cam.updateMatrixWorld(true);
-  const walkClip = clips.find((k) => k.key === 'walk' && /^(Walking|Running)_/.test(k.clip)), stride = walkClip ? strideOf(c, walkClip.clip, ppu, sample) : null;   // (a run is measured too, for the goblins; the party's renderer keeps its 4.5 regardless)
+  const walkClip = clips.find((k) => k.key === 'walk' && (/^(Walking|Running)_/.test(k.clip) || (v.creature && k.clip === 'Walk'))), stride = walkClip ? strideOf(c, walkClip.clip, ppu, sample) : null;   // (a run is measured too, for the goblins; the party's renderer keeps its 4.5 regardless)
   const wr = weaponRig(c, v), anchors = {}, frames = clips.reduce((n, k) => n + k.frames, 0);
   for (const k of Object.keys(wr)) anchors[k] = [];
   for (let dir = 0; dir < 8; dir++) {

@@ -700,7 +700,7 @@ function hound(o = {}) {
     R.part(limb(V(0.11 * s, 0.56, 0.24), V(0.11 * s, 0.27, 0.24), 0.05, 0.03), `armU${s}`, hideC);
     R.part(limb(V(0.11 * s, 0.27, 0.24), V(0.11 * s, 0.04, 0.27), 0.028, 0.022), `armL${s}`, hide);
     R.part(blob(V(0.11 * s, 0.025, 0.29), [0.03, 0.022, 0.045], [6, 4]), `paw${s}`, hide);
-    R.part(blob(V(0.12 * s, 0.47, -0.28), [0.06, 0.09, 0.08], [8, 6]), `legU${s}`, hideC);                   // the haunch
+    R.part(blob(V(0.105 * s, 0.45, -0.28), [0.055, 0.105, 0.085], [8, 6]), `legU${s}`, hideC);               // the haunch (the dogs' pass: set into the flank and run down the thigh, not a ball stood off it)
     R.part(limb(V(0.12 * s, 0.44, -0.28), V(0.12 * s, 0.3, -0.24), 0.045, 0.03), `legU${s}`, hideC);
     R.part(limb(V(0.12 * s, 0.3, -0.24), V(0.12 * s, 0.1, -0.38), 0.028, 0.022), `legL${s}`, hide);             // (the hock, back)
     R.part(limb(V(0.12 * s, 0.1, -0.38), V(0.12 * s, 0.02, -0.33), 0.022, 0.02), `foot${s}`, hide);
@@ -718,22 +718,52 @@ function hound(o = {}) {
 // paw and legU/legL/foot each side), shared by the cinder hound and the Gull Fleet's war-hound; `drop`, how far the root
 // falls when it dies onto its side (its body's height)
 function dogClips(R, { drop = 0.36 } = {}) {
-  const legs = (t, A = 1) => {                                  // a lope: the fore pair and the hind pair, half a beat apart
-    const q = {};
-    for (const s of [1, -1]) for (const [u, l, ph] of [[`armU${s}`, `armL${s}`, s > 0 ? 0 : 0.12], [`legU${s}`, `legL${s}`, s > 0 ? 0.5 : 0.62]]) {
-      const sw = S(t + ph), lift = Math.max(0, C(t + ph)), fore = u.startsWith('arm');
-      q[u] = qe(-0.7 * A * sw, 0, 0); q[l] = qe((fore ? 1.0 : -1.0) * A * lift, 0, 0);
+  // the trot (the dogs' pass, 2026-11-28: the owner, "dog like NPCs walk funny"; docs/art-critic-pass-dogs.md). It was a
+  // bound, both forelegs together and both hind legs together, each swung 40° either way like a rocking horse's, the
+  // hind's shank thrown forward of the stifle (the knee bent the wrong way), the forelegs hardly lifted, the planted paws
+  // sliding and the body pitching 5° a stride. Now a dog's trot: the diagonal pairs together (the near fore with the off
+  // hind, the hind a breath behind), each paw down a little over half the cycle and swept back under the body an even
+  // distance a frame (what the renderer's stride matches, so a planted paw stays put), then lifted and carried forward
+  // with the joints folding as a dog's do: the foreleg's wrist folds back and the paw curls under; the hind's stifle folds
+  // the shank back and the hock tips the paw up. The back rides level: it sinks only by what the swept legs lose in reach
+  // (so no paw leaves the floor while it's down, or digs in), rolls a little over the planted pair, and the head holds
+  // steady while the shoulders work under it.
+  // each leg as its top joint and its last (the wrist, the hock), the paw hung level below that: R, how far apart; f0, how
+  // far behind plumb the last stands at rest. The paw is set where it's wanted along the floor and the leg turned to it.
+  const arc = (top, end) => { const a = R.by.get(top).userData.at, b = R.by.get(end).userData.at, dy = b.y - a.y, dz = b.z - a.z; return { R: Math.hypot(dy, dz), f0: Math.atan2(dz, -dy) }; };
+  const ARC = { arm: arc('armU1', 'paw1'), leg: arc('legU1', 'foot1') };
+  const D = 0.56, Z = 0.165;                                    // the share of a cycle a paw is down; how far ahead of plumb it's set
+  const legs = (t, k = 1) => {
+    const q = {}; let sink = 0, down = 0;
+    for (const s of [1, -1]) for (const [u, l, f, ph] of [[`armU${s}`, `armL${s}`, `paw${s}`, s > 0 ? 0 : 0.5], [`legU${s}`, `legL${s}`, `foot${s}`, s > 0 ? 0.53 : 0.03]]) {
+      const w = (((t - ph) % 1) + 1) % 1, fore = u.startsWith('arm'), { R: r, f0 } = fore ? ARC.arm : ARC.leg;
+      // down: swept back under the body an even distance a frame, every leg alike, so the renderer's stride holds each
+      // planted paw still; up: carried forward through the same arc
+      let fd, lift = 0;
+      if (w < D) fd = Math.asin((Z * (1 - 2 * w / D)) / r);
+      else { const v = (w - D) / (1 - D), a0 = Math.asin(Z / r); fd = a0 * (-1 + 2 * ease(0, 1, v)); lift = Math.sin(Math.PI * Math.min(1, v * 1.15)); }
+      let th = f0 - fd;
+      th *= k; lift *= k;
+      if (w < D) { sink += r * (Math.cos(f0) - Math.cos(fd)); down++; }
+      q[u] = qe(th, 0, 0);
+      // the fore's middle joint is its wrist: it folds back and the paw curls under; the hind's stifle folds the shank
+      // back and the hock tips the paw up (the paw held level while it's down: tilted with the leg, it rocked on its
+      // round sole and slid)
+      if (fore) { q[l] = qe(1.05 * lift, 0, 0); q[f] = qe(-th - 0.35 * lift, 0, 0); }
+      else { q[l] = qe(0.55 * lift, 0, 0); q[f] = qe(-th - 1.0 * lift, 0, 0); }
     }
-    return q;
+    return { q, sink: down ? sink / down : 0 };
   };
   const tailK = (t, a = 0.2, k = 1) => ({ tail1: qe(0.15, a * S(k * t), 0), tail2: qe(0.1, a * S(k * t - 0.15), 0), tail3: qe(0, a * S(k * t - 0.3), 0) });
   return [
     clip(R, 'Idle', 3.0, (t) => { const br = S(t * 6), lk = bell(0.4, 0.5, 0.75, t), turn = S((t - 0.4) / 0.35 * 0.5 + 0.25) * lk;
       return { q: { ...tailK(t, 0.25, 2), chest: qe(0.02 * br, 0.1 * turn, 0), neck: qe(-0.1 + 0.03 * br, 0.3 * turn, 0), head: qe(0.05, 0.3 * turn, 0), jaw: qe(0.25 + 0.12 * Math.max(0, S(t * 12)), 0, 0) }, p: { root: V(0, 0.004 * br, 0) } }; }),   // (panting, a look round)
-    clip(R, 'Walk', 0.4, (t) => ({ q: { ...legs(t), ...tailK(t, 0.15, 1), root: qe(0.08 * S(t), 0, 0), neck: qe(0.06 * S(t * 2), 0, 0), jaw: qe(0.3, 0, 0) }, p: { root: V(0, 0.03 * Math.abs(S(t)), 0) } })),
+    clip(R, 'Walk', 0.4, (t) => { const g = legs(t), sw = S(t);   // (sw: which diagonal is down, near or off)
+      return { q: { ...g.q, ...tailK(t, 0.12, 1), root: qe(0, 0, 0.025 * sw), neck: qe(0.02 * C(2 * t), 0.03 * sw, 0), head: qe(-0.02 * C(2 * t), -0.03 * sw, 0), jaw: qe(0.3, 0, 0) },
+        p: { root: V(0, -g.sink, 0) } }; }, 90),   // (keyed finely: at 24 a second a cycle had ten keys and the planted paws slid between them)
     clip(R, 'Attack', 0.55, (t) => { const w = bell(0, 0.15, 0.3, t), k = bell(0.2, 0.42, 0.8, t); return { q: { ...tailK(t, 0.3, 2), root: qe(-0.1 * w + 0.12 * k, 0, 0), neck: qe(0.3 * k - 0.3 * w, 0, 0), head: qe(-0.2 * k, 0, 0), jaw: qe(0.2 + 0.8 * bell(0.18, 0.36, 0.5, t), 0, 0), armU1: qe(-0.5 * k, 0, 0), 'armU-1': qe(-0.5 * k, 0, 0) }, p: { root: V(0, 0.02 * w - 0.03 * k, 0.2 * k - 0.04 * w) } }; }),   // (a lunge and a bite)
     clip(R, 'Attack2', 0.5, (t) => { const k = bell(0.1, 0.35, 0.8, t); return { q: { ...tailK(t, 0.25), neck: qe(0.15 * k, 0.5 * k, 0), head: qe(0, 0.4 * k, 0.3 * k), jaw: qe(0.2 + 0.7 * bell(0.15, 0.3, 0.45, t), 0, 0), chest: qe(0, 0.2 * k, 0) }, p: { root: V(0.03 * k, 0, 0.08 * k) } }; }),   // (a snap, the head turned)
-    clip(R, 'Heavy', 0.9, (t) => { const c = bell(0, 0.25, 0.38, t), j = bell(0.3, 0.55, 0.85, t); return { q: { ...legs(0.25, 0.8 * j), ...tailK(t, 0.4), root: qe(0.2 * c - 0.35 * j + 0.2 * bell(0.6, 0.75, 0.95, t), 0, 0), jaw: qe(0.2 + 0.8 * j, 0, 0), legU1: qe(0.6 * c, 0, 0), 'legU-1': qe(0.6 * c, 0, 0) }, p: { root: V(0, -0.06 * c + 0.22 * j, 0.45 * ease(0.3, 0.75, t)) } }; }),   // (it crouches and springs)
+    clip(R, 'Heavy', 0.9, (t) => { const c = bell(0, 0.25, 0.38, t), j = bell(0.3, 0.55, 0.85, t); return { q: { ...legs(0.25, 0.8 * j).q, ...tailK(t, 0.4), root: qe(0.2 * c - 0.35 * j + 0.2 * bell(0.6, 0.75, 0.95, t), 0, 0), jaw: qe(0.2 + 0.8 * j, 0, 0), legU1: qe(0.6 * c, 0, 0), 'legU-1': qe(0.6 * c, 0, 0) }, p: { root: V(0, -0.06 * c + 0.22 * j, 0.45 * ease(0.3, 0.75, t)) } }; }),   // (it crouches and springs)
     clip(R, 'Hit', 0.4, (t) => { const k = bell(0, 0.25, 1, t); return { q: { ...tailK(t, 0.5, 2), neck: qe(-0.3 * k, 0.3 * k, 0), head: qe(-0.2 * k, 0, 0), jaw: qe(0.4 * k, 0, 0) }, p: { root: V(0, 0, -0.06 * k) } }; }),
     clip(R, 'Death', 1.0, (t) => { const k = ease(0, 0.6, t); return { q: { root: qe(0, 0, 1.5 * k), neck: qe(0.3 * k, 0, 0), jaw: qe(0.5 * k, 0, 0), armU1: qe(-0.5 * k, 0, 0), 'armU-1': qe(0.3 * k, 0, 0), legU1: qe(0.4 * k, 0, 0), 'legU-1': qe(-0.3 * k, 0, 0), ...tailK(0, 0) }, p: { root: V(0, -drop * k, 0) } }; }),
     clip(R, 'Cast', 1.0, (t) => { const k = bell(0.1, 0.4, 0.9, t); return { q: { ...tailK(t, 0.2), neck: qe(-0.9 * k, 0, 0), head: qe(-0.4 * k, 0, 0), jaw: qe(0.2 + 0.6 * k, 0, 0), root: qe(-0.1 * k, 0, 0) }, p: { root: V(0, 0.02 * k, 0) } }; }),   // (a howl, the muzzle up)
@@ -806,12 +836,12 @@ function warhound(o = {}) {
   R.part(limb(V(0, 0.52, -0.37), tail[0], 0.04, 0.034, 6), 'pelvis', coatC); R.part(limb(tail[0], tail[1], 0.034, 0.02, 6), 'tail1', coatC);
   // the legs: thick and straight in front, the hind's hock well let down; big round paws
   for (const s of [1, -1]) {
-    R.part(blob(V(0.15 * s, 0.44, 0.22), [0.07, 0.1, 0.08], [8, 6]), `armU${s}`, coatC);                              // the shoulder
+    R.part(blob(V(0.135 * s, 0.41, 0.22), [0.065, 0.12, 0.085], [8, 6]), `armU${s}`, coatC);                           // the shoulder (the dogs' pass: into the chest's side and down the upper arm, not a ball)
     R.part(limb(V(0.15 * s, 0.46, 0.22), V(0.15 * s, 0.25, 0.22), 0.062, 0.045), `armU${s}`, coatC);
     R.part(limb(V(0.15 * s, 0.25, 0.22), V(0.15 * s, 0.045, 0.25), 0.042, 0.036), `armL${s}`, coat);
     R.part(blob(V(0.15 * s, 0.03, 0.27), [0.045, 0.03, 0.055], [8, 5]), `paw${s}`, coat);
     for (const d of [-1, 0, 1]) R.part(limb(V(0.15 * s + d * 0.02, 0.012, 0.31), V(0.15 * s + d * 0.022, 0.002, 0.33), 0.006, 0.002, 3), `paw${s}`, claw);
-    R.part(blob(V(0.13 * s, 0.45, -0.27), [0.075, 0.1, 0.09], [8, 6]), `legU${s}`, coatC);                           // the haunch
+    R.part(blob(V(0.115 * s, 0.42, -0.27), [0.068, 0.12, 0.095], [8, 6]), `legU${s}`, coatC);                       // the haunch (the dogs' pass: set into the rump and down the thigh)
     R.part(limb(V(0.13 * s, 0.42, -0.27), V(0.13 * s, 0.28, -0.24), 0.06, 0.045), `legU${s}`, coatC);
     R.part(limb(V(0.13 * s, 0.28, -0.24), V(0.13 * s, 0.1, -0.34), 0.042, 0.034), `legL${s}`, coat);
     R.part(limb(V(0.13 * s, 0.1, -0.34), V(0.13 * s, 0.025, -0.3), 0.032, 0.03), `foot${s}`, coat);
